@@ -1,8 +1,13 @@
 import React from 'react'
+import { Button } from './components/ui/button'
 
 function App() {
   return (
-    <div className='bg-red-400 rounded-3xl'>App</div>
+    <div>
+      <Button>Hello</Button>
+      <Button variant={"secondary"}>Hello</Button>
+      <Button variant={"outline"}>Hello</Button>
+    </div>
   )
 }
 
