@@ -1,9 +1,50 @@
-import React from 'react'
+import { motion, AnimatePresence } from "framer-motion";
+import { Outlet, useLocation } from "react-router-dom";
 
-function AuthLayout() {
+const AuthLayout = () => {
+  const location = useLocation();
+
   return (
-    <div>AuthLayout</div>
-  )
-}
+    <div className="min-h-screen bg-gradient-to-br from-lavender-50 via-pastel-pink-50 to-sky-50 flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-gradient-to-br from-lavender-400 to-pastel-pink-400 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [90, 0, 90],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-gradient-to-br from-mint-400 to-sky-400 rounded-full blur-3xl"
+        />
+      </div>
 
-export default AuthLayout
+      {/* Main Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-10 w-full flex items-center justify-center"
+        >
+          {/* Nested Route renders here */}
+          <Outlet />
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default AuthLayout;

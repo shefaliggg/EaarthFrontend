@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import AuthLayout from '@/layouts/AuthLayout';
-import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import ErrorBoundary from '../../../shared/components/ErrorBoundary';
 
 const LoginForm = lazy(() => import('../components/forms/LoginForm'));
 // const TempLogin = lazy(() => import('../components/forms/TempLogin'));

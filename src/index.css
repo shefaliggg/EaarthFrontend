@@ -30,7 +30,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
 
-  --border: var(--lavender-800);
+  --border: var(--lavender-300);
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
 
