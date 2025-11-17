@@ -1,16 +1,19 @@
-import { Routes, Route } from "react-router-dom";
-import authRoutes from "../features/auth/routes/auth.routes";
+import AuthRoutes from "../features/auth/routes/AuthRoutes";
+import ErrorBoundary from "../shared/components/ErrorBoundary";
 
-const AppRoutes = () => (
-  <Routes>
-    {authRoutes.map((route) => (
-      <Route
-        key={route.path}
-        path={route.path}
-        element={route.element}
-      />
-    ))}
-  </Routes>
-);
+const AppRoutes = [
+  AuthRoutes,
+  // studioRoutes,
+  // agencyRoutes,
+  // individualRoutes,
+  {
+    path: '*',
+    element: (
+      <ErrorBoundary>
+        <NotFound />
+      </ErrorBoundary>
+    ),
+  },
+];
 
 export default AppRoutes;
