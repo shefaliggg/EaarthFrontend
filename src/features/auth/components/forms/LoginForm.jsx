@@ -3,27 +3,36 @@ import { Eye, EyeOff, QrCode, LogIn, ArrowRight, Film, Shield, Zap } from 'lucid
 import { motion } from "framer-motion";
 
 import QRCode from 'react-qr-code';
+
+// TODO: replace with your real logo asset
 // import eaarthLogo from 'figma:asset/7a01459921a79f8171eb1d487d40590f7bfe0d1e.png';
 
-export function LoginForm({ onNavigate, onLoginSuccess }) {
+export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const handleNavigate = (screen) => {
+    alert(`Navigate → ${screen}`);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLoginSuccess();
+    alert('Login successful');
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4">
-      {/* Simple Elegant Header */}
+      {/* Header */}
       <div className="text-center mb-16">
         <div className="flex justify-center mb-6">
-          <img 
-            // src={eaarthLogo} 
+          <motion.img
+            // src={eaarthLogo}
             alt="Eaarth Studios"
             className="w-64 h-auto object-contain"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           />
         </div>
         <p className="text-gray-600 font-bold uppercase tracking-widest text-sm">
@@ -31,11 +40,16 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
         </p>
       </div>
 
-      {/* Main Content - Side by Side */}
+      {/* Main Grid */}
       <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-        
-        {/* LEFT SIDE - Login Form */}
-        <div className="bg-white rounded-3xl shadow-2xl p-10 border border-lavender-100">
+
+        {/* LEFT SIDE - FORM */}
+        <motion.div
+          className="bg-white rounded-3xl shadow-2xl p-10 border border-lavender-100"
+          initial={{ opacity: 0, x: -25 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center">
@@ -47,6 +61,7 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
             {/* Email */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
@@ -86,15 +101,16 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
               </div>
             </div>
 
-            {/* Remember & Forgot */}
+            {/* Remember Me */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-lavender-600" />
                 <span className="text-sm text-gray-600 font-bold">Remember me</span>
               </label>
+
               <button
                 type="button"
-                onClick={() => onNavigate('reset-password')}
+                onClick={() => handleNavigate('reset-password')}
                 className="text-sm font-bold text-lavender-600 hover:text-lavender-700"
               >
                 Forgot password?
@@ -120,29 +136,32 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
               </div>
             </div>
 
-            {/* Quick Access Buttons */}
+            {/* Quick Links */}
             <div className="grid grid-cols-3 gap-3">
+              {/* ADMIN */}
               <button
                 type="button"
-                onClick={() => onNavigate('master-admin')}
+                onClick={() => handleNavigate('master-admin')}
                 className="flex flex-col items-center gap-2 p-4 bg-sky-50 border-2 border-sky-200 rounded-xl hover:bg-sky-100 transition-all"
               >
                 <Shield className="w-6 h-6 text-sky-600" />
                 <span className="text-xs font-bold text-sky-700">ADMIN</span>
               </button>
-              
+
+              {/* QR LOGIN */}
               <button
                 type="button"
-                onClick={() => onNavigate('qr-login')}
+                onClick={() => handleNavigate('qr-login')}
                 className="flex flex-col items-center gap-2 p-4 bg-mint-50 border-2 border-mint-200 rounded-xl hover:bg-mint-100 transition-all"
               >
                 <QrCode className="w-6 h-6 text-mint-600" />
                 <span className="text-xs font-bold text-mint-700">QR CODE</span>
               </button>
-              
+
+              {/* DEMO */}
               <button
                 type="button"
-                onClick={onLoginSuccess}
+                onClick={() => alert('Demo logged in')}
                 className="flex flex-col items-center gap-2 p-4 bg-peach-50 border-2 border-peach-200 rounded-xl hover:bg-peach-100 transition-all"
               >
                 <Zap className="w-6 h-6 text-peach-600" />
@@ -156,19 +175,24 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={() => onNavigate('validate-invite')}
+                onClick={() => handleNavigate('validate-invite')}
                 className="font-bold text-lavender-600 hover:text-lavender-700"
               >
                 Sign up with invite
               </button>
             </p>
           </div>
-        </div>
+        </motion.div>
 
-        {/* RIGHT SIDE - QR Code */}
-        <div className="bg-gradient-to-br from-lavender-500 via-pastel-pink-500 to-peach-500 rounded-3xl shadow-2xl p-10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-lavender-600 via-pastel-pink-600 to-peach-600 opacity-95 -z-10"></div>
-          
+        {/* RIGHT SIDE - QR LOGIN PANEL */}
+        <motion.div
+          className=" rounded-3xl shadow-2xl p-10 relative overflow-hidden"
+          initial={{ opacity: 0, x: 25 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className=""></div>
+
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-white/40 backdrop-blur-sm flex items-center justify-center">
               <QrCode className="w-6 h-6 text-purple-900" />
@@ -179,7 +203,7 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
             </div>
           </div>
 
-          {/* QR Code */}
+          {/* QR Box */}
           <div className="bg-white rounded-2xl p-8 mb-8 flex items-center justify-center">
             <QRCode
               value="https://eaarthstudios.com/qr-login/session-abc123"
@@ -189,57 +213,41 @@ export function LoginForm({ onNavigate, onLoginSuccess }) {
             />
           </div>
 
-          {/* Instructions */}
+          {/* Steps */}
           <div className="space-y-4">
-            <h3 className="font-bold text-lg mb-4 text-purple-900">How to use:</h3>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">1</div>
-              <p className="text-sm text-gray-800">Open Eaarth Studios mobile app</p>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">2</div>
-              <p className="text-sm text-gray-800">Tap the QR Login button</p>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">3</div>
-              <p className="text-sm text-gray-800">Scan this code with your camera</p>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">4</div>
-              <p className="text-sm text-gray-800">You'll be logged in instantly!</p>
-            </div>
+            {[ 
+              "Open Eaarth Studios mobile app",
+              "Tap the QR Login button",
+              "Scan this code with your camera",
+              "You'll be logged in instantly!"
+            ].map((text, index) => (
+              <div key={index} className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center text-purple-900 font-bold">
+                  {index + 1}
+                </div>
+                <p className="text-sm text-gray-800">{text}</p>
+              </div>
+            ))}
           </div>
 
           {/* Benefits */}
           <div className="mt-8 pt-8 border-t border-purple-900/20">
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-purple-900" />
+              {[
+                { Icon: Shield, label: "SECURE" },
+                { Icon: Zap, label: "INSTANT" },
+                { Icon: Film, label: "EASY" },
+              ].map(({ Icon, label }, i) => (
+                <div key={i} className="text-center">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-purple-900" />
+                  </div>
+                  <p className="text-xs font-bold text-purple-900">{label}</p>
                 </div>
-                <p className="text-xs font-bold text-purple-900">SECURE</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-purple-900" />
-                </div>
-                <p className="text-xs font-bold text-purple-900">INSTANT</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
-                  <Film className="w-6 h-6 text-purple-900" />
-                </div>
-                <p className="text-xs font-bold text-purple-900">EASY</p>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Footer */}
