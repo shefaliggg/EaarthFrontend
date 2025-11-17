@@ -1,29 +1,16 @@
-import React, { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import authRoutes from "../features/auth/context/AuthContext.jsx";
-
-
-
-
+import { Routes, Route } from "react-router-dom";
+import authRoutes from "../features/auth/routes/auth.routes";
 
 const AppRoutes = () => (
-//   <Suspense fallback={<LoadingScreen />}>
-    <Routes>
-
-
-      
-      {/* Authentication Routes */}
-      {authRoutes}
-
-      {/* {ProjectRoutes}
-
-      {/* Chatbot Routes */}
-      {/* {ChatbotRoutes}//  */}
-
-      {/* Fallback placeholder */}
-      {/* <Route path="*" element={<PlaceholderPage />} /> */}
-    </Routes>
-//   </Suspense>
+  <Routes>
+    {authRoutes.map((route) => (
+      <Route
+        key={route.path}
+        path={route.path}
+        element={route.element}
+      />
+    ))}
+  </Routes>
 );
 
 export default AppRoutes;

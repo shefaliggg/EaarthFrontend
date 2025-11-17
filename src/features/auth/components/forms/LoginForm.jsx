@@ -1,203 +1,250 @@
 import { useState } from 'react';
-import { Eye, EyeOff, QrCode, LogIn, Smartphone, ArrowRight, Shield } from 'lucide-react';
+import { Eye, EyeOff, QrCode, LogIn, ArrowRight, Film, Shield, Zap } from 'lucide-react';
+import { motion } from "framer-motion";
 
-export function LoginScreenUI() {
+import QRCode from 'react-qr-code';
+// import eaarthLogo from 'figma:asset/7a01459921a79f8171eb1d487d40590f7bfe0d1e.png';
+
+export function LoginForm({ onNavigate, onLoginSuccess }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-      {/* Main Container */}
-      <div className="w-full max-w-5xl">
-        {/* Logo/Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-black mb-2 text-purple-700">
-            EAARTH STUDIOS
-          </h1>
-          <p className="text-sm text-gray-600">PRODUCTION MANAGEMENT PLATFORM</p>
-        </div>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLoginSuccess();
+  };
 
-        {/* Main Card Container */}
-        <div className="grid lg:grid-cols-2 gap-4">
-          {/* Left Card - Email/Password Login */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-purple-100">
-            {/* Card Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-purple-100 border-2 border-purple-700 rounded-xl">
-                <LogIn className="w-6 h-6 text-purple-700" />
+  return (
+    <div className="w-full max-w-7xl mx-auto px-4">
+      {/* Simple Elegant Header */}
+      <div className="text-center mb-16">
+        <div className="flex justify-center mb-6">
+          <img 
+            // src={eaarthLogo} 
+            alt="Eaarth Studios"
+            className="w-64 h-auto object-contain"
+          />
+        </div>
+        <p className="text-gray-600 font-bold uppercase tracking-widest text-sm">
+          Production Management Platform
+        </p>
+      </div>
+
+      {/* Main Content - Side by Side */}
+      <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        
+        {/* LEFT SIDE - Login Form */}
+        <div className="bg-white rounded-3xl shadow-2xl p-10 border border-lavender-100">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center">
+                <LogIn className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">EMAIL LOGIN</h2>
-                <p className="text-xs text-gray-500">Sign in with your credentials</p>
-              </div>
+              <h2 className="text-3xl font-black text-gray-900">LOGIN</h2>
+            </div>
+            <p className="text-gray-500 text-sm ml-15">Welcome back! Please enter your details.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-lavender-400 focus:ring-4 focus:ring-lavender-100 outline-none transition-all text-gray-900"
+              />
             </div>
 
-            {/* Login Form */}
-            <div className="space-y-4 mt-6">
-              {/* Email Input */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Email Address
-                </label>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                Password
+              </label>
+              <div className="relative">
                 <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all placeholder:text-gray-400 text-gray-900"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-lavender-400 focus:ring-4 focus:ring-lavender-100 outline-none transition-all text-gray-900 pr-12"
                 />
-              </div>
-
-              {/* Password Input */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all placeholder:text-gray-400 text-gray-900 pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-all"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember & Forgot */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500"
-                  />
-                  <span className="text-xs text-gray-600">Remember me</span>
-                </label>
-
                 <button
                   type="button"
-                  className="text-xs font-bold text-purple-600 hover:text-purple-700 hover:underline"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  Forgot Password?
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
 
-              {/* Login Button */}
+            {/* Remember & Forgot */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-lavender-600" />
+                <span className="text-sm text-gray-600 font-bold">Remember me</span>
+              </label>
               <button
                 type="button"
-                className="w-full bg-purple-700 text-white font-bold py-4 px-6 rounded-xl hover:bg-purple-800 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group hover:scale-[1.02] transform border-2 border-purple-800"
+                onClick={() => onNavigate('reset-password')}
+                className="text-sm font-bold text-lavender-600 hover:text-lavender-700"
               >
-                <span>LOGIN</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Forgot password?
               </button>
+            </div>
 
-              {/* Divider */}
-              <div className="flex items-center gap-4 my-4">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-xs text-gray-400 font-medium">OR</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
+            {/* Login Button */}
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-lavender-500 to-pastel-pink-500 text-white font-bold py-4 rounded-xl hover:shadow-xl transition-all flex items-center justify-center gap-2 group"
+            >
+              <span>LOGIN</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            {/* Divider */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
               </div>
+              <div className="relative flex justify-center">
+                <span className="px-4 text-sm text-gray-500 bg-white font-bold">OR</span>
+              </div>
+            </div>
 
-              {/* Skip Button */}
+            {/* Quick Access Buttons */}
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
-                className="w-full bg-gray-100 text-gray-700 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 border-2 border-gray-200 text-sm"
+                onClick={() => onNavigate('master-admin')}
+                className="flex flex-col items-center gap-2 p-4 bg-sky-50 border-2 border-sky-200 rounded-xl hover:bg-sky-100 transition-all"
               >
-                Skip to Dashboard for Demo
+                <Shield className="w-6 h-6 text-sky-600" />
+                <span className="text-xs font-bold text-sky-700">ADMIN</span>
               </button>
+              
+              <button
+                type="button"
+                onClick={() => onNavigate('qr-login')}
+                className="flex flex-col items-center gap-2 p-4 bg-mint-50 border-2 border-mint-200 rounded-xl hover:bg-mint-100 transition-all"
+              >
+                <QrCode className="w-6 h-6 text-mint-600" />
+                <span className="text-xs font-bold text-mint-700">QR CODE</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={onLoginSuccess}
+                className="flex flex-col items-center gap-2 p-4 bg-peach-50 border-2 border-peach-200 rounded-xl hover:bg-peach-100 transition-all"
+              >
+                <Zap className="w-6 h-6 text-peach-600" />
+                <span className="text-xs font-bold text-peach-700">DEMO</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Sign Up Link */}
+          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <button
+                onClick={() => onNavigate('validate-invite')}
+                className="font-bold text-lavender-600 hover:text-lavender-700"
+              >
+                Sign up with invite
+              </button>
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT SIDE - QR Code */}
+        <div className="bg-gradient-to-br from-lavender-500 via-pastel-pink-500 to-peach-500 rounded-3xl shadow-2xl p-10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-lavender-600 via-pastel-pink-600 to-peach-600 opacity-95 -z-10"></div>
+          
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-white/40 backdrop-blur-sm flex items-center justify-center">
+              <QrCode className="w-6 h-6 text-purple-900" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-purple-900">QR CODE LOGIN</h2>
+              <p className="text-gray-800 text-sm">Scan with your mobile app</p>
             </div>
           </div>
 
-          {/* Right Card - QR Code Login */}
-          <div className="bg-purple-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden border-2 border-purple-800">
-            {/* Background Blur Elements */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-800/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+          {/* QR Code */}
+          <div className="bg-white rounded-2xl p-8 mb-8 flex items-center justify-center">
+            <QRCode
+              value="https://eaarthstudios.com/qr-login/session-abc123"
+              size={240}
+              level="H"
+              fgColor="#7C3AED"
+            />
+          </div>
 
-            <div className="relative z-10">
-              {/* Card Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <QrCode className="w-6 h-6 text-white" />
+          {/* Instructions */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-lg mb-4 text-purple-900">How to use:</h3>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">1</div>
+              <p className="text-sm text-gray-800">Open Eaarth Studios mobile app</p>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">2</div>
+              <p className="text-sm text-gray-800">Tap the QR Login button</p>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">3</div>
+              <p className="text-sm text-gray-800">Scan this code with your camera</p>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-lg bg-purple-900/20 flex items-center justify-center font-bold shrink-0 text-purple-900">4</div>
+              <p className="text-sm text-gray-800">You'll be logged in instantly!</p>
+            </div>
+          </div>
+
+          {/* Benefits */}
+          <div className="mt-8 pt-8 border-t border-purple-900/20">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-purple-900" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">QR CODE LOGIN</h2>
-                  <p className="text-white/90 text-xs">Instant login via mobile app</p>
-                </div>
+                <p className="text-xs font-bold text-purple-900">SECURE</p>
               </div>
-
-              {/* QR Code Section */}
-              <div className="bg-white rounded-2xl p-4 my-5">
-                <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl flex items-center justify-center p-3">
-                  {/* Simulated QR Code */}
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    {/* Core QR-pattern (same as original) */}
-                    <rect x="5" y="5" width="20" height="20" fill="#6B21A8" rx="3" />
-                    <rect x="10" y="10" width="10" height="10" fill="white" rx="2" />
-                    <rect x="75" y="5" width="20" height="20" fill="#6B21A8" rx="3" />
-                    <rect x="80" y="10" width="10" height="10" fill="white" rx="2" />
-                    <rect x="5" y="75" width="20" height="20" fill="#6B21A8" rx="3" />
-                    <rect x="10" y="80" width="10" height="10" fill="white" rx="2" />
-
-                    <circle cx="50" cy="50" r="8" fill="white" />
-                    <text x="50" y="55" fontSize="10" fontWeight="bold" fill="#6B21A8" textAnchor="middle">E</text>
-                  </svg>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-purple-900" />
                 </div>
+                <p className="text-xs font-bold text-purple-900">INSTANT</p>
               </div>
-
-              {/* Instructions */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold mb-2">HOW TO LOGIN:</h3>
-                    <ol className="space-y-1.5 text-sm text-white/90">
-                      <li>1. Open <strong>Eaarth Studios App</strong> on your phone</li>
-                      <li>2. Tap the <strong>QR Scan</strong> icon</li>
-                      <li>3. Point camera at this QR code</li>
-                      <li>4. Confirm login on your device</li>
-                    </ol>
-                  </div>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
+                  <Film className="w-6 h-6 text-purple-900" />
                 </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-center gap-3 bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                  <div className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                  </div>
-                  <span className="font-medium">Active - Ready to Scan</span>
-                </div>
-              </div>
-
-              {/* Security Info */}
-              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-white/80">
-                <Shield className="w-4 h-4" />
-                <span>Secure encrypted connection</span>
+                <p className="text-xs font-bold text-purple-900">EASY</p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
-          © 2025 Eaarth Studios. All Rights Reserved. | Multi-Tenant Production Platform
-          <br />
-          <button
-            type="button"
-            className="mt-2 text-xs text-purple-600 hover:text-purple-700 hover:underline font-bold"
-          >
-            🔐 Master Admin Access
-          </button>
-        </div>
+      {/* Footer */}
+      <div className="text-center mt-12 text-sm text-gray-500">
+        <p>© 2024 Eaarth Studios. All rights reserved.</p>
       </div>
     </div>
   );
