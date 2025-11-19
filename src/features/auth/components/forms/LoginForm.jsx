@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import QRCode from 'react-qr-code';
 
 // TODO: replace with your real logo asset
-// import eaarthLogo from 'figma:asset/7a01459921a79f8171eb1d487d40590f7bfe0d1e.png';
+import eaarthLogo from '@/assets/eaarth.png';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -22,14 +22,14 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4">
+    <div className="w-full max-w-7xl mx-auto px-20">
       {/* Header */}
       <div className="text-center mb-16">
         <div className="flex justify-center mb-6">
           <motion.img
-            // src={eaarthLogo}
+            src={eaarthLogo}
             alt="Eaarth Studios"
-            className="w-64 h-auto object-contain"
+            className="w-54 h-auto object-contain"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}

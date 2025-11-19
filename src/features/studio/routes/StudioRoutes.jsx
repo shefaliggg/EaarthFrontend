@@ -1,8 +1,8 @@
 import { lazy } from 'react';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
-import DashboardLayout from '../../../layouts/DashboardLayout';
+import StudioLayout from '../../../layouts/StudioLayout';
 import { Navigate } from 'react-router-dom';
-import StudioDashboard from '../components/StudioDashboard';
+import StudioDashboard from '../pages/StudioDashboard';
 
 // const LoginForm = lazy(() => import('../components/forms/LoginForm'));
 // const TempLogin = lazy(() => import('../components/forms/TempLogin'));
@@ -12,7 +12,7 @@ const StudioRoutes = {
   path: '/studio',
   element: (
     <ErrorBoundary>
-      <DashboardLayout/>
+      <StudioLayout/>
     </ErrorBoundary>
   ),
   children: [
