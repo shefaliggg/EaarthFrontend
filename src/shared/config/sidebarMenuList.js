@@ -9,20 +9,12 @@ function sidebarMenuList(sidebarType) {
       label: "HOME",
       page: "/home",
       icon: Icon.Home,
-      // gradient: "from-lavender-400/20 to-lavender-500/20",
-      // color: "text-lavender-600",
-      // hoverBg: "hover:bg-lavender-50",
-      // darkHoverBg: "dark:hover:bg-lavender-900/20",
     },
     {
       id: "settings",
       label: "SETTINGS",
-      page: "/settings",
+      page: "/settings/account",
       icon: Icon.Settings,
-      // gradient: "from-peach-400/20 to-peach-500/20",
-      // color: "text-peach-600",
-      // hoverBg: "hover:bg-peach-50",
-      // darkHoverBg: "dark:hover:bg-peach-900/20",
        subItems: [
         { id: "settings-account", label: "ACCOUNT", page: "/settings/account" },
         { id: "settings-password", label: "PASSWORD", page: "/settings/password" },
@@ -37,17 +29,8 @@ function sidebarMenuList(sidebarType) {
       label: "PROJECTS",
       page: "/projects",
       icon: Icon.FolderOpen,
-      gradient: "from-pastel-pink-400/20 to-pastel-pink-500/20",
-      color: "text-pastel-pink-600",
-      hoverBg: "hover:bg-pastel-pink-50",
-      darkHoverBg: "dark:hover:bg-pastel-pink-900/20",
-
       subItems: [
         { id: "projects-all", label: "ALL PROJECTS", page: "/projects" },
-
-        // -----------------------------------------------------------
-        // PROJECT: AVATAR 1
-        // -----------------------------------------------------------
         {
           id: "projects-avatar1",
           label: "AVATAR 1",

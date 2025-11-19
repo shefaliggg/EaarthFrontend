@@ -136,10 +136,8 @@
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
-  --shadow: #15012e;
-  --border: #15012e;
-  /* --border: var(--lavender-900); */
-  --input: #1f1f23;
+  --border: var(--color-purple-950);
+  --input: #2b2a35;
   --ring: var(--lavender-400);
 
   --sidebar: #111114;
