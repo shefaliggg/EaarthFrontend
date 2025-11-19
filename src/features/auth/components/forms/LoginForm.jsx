@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Eye, EyeOff, QrCode, LogIn, Smartphone, ArrowRight, Shield } from 'lucide-react';
+import { Eye, EyeOff, QrCode, LogIn, ArrowRight, Film, Shield, Zap } from 'lucide-react';
+import { motion } from "framer-motion";
+
+import QRCode from 'react-qr-code';
+
+// TODO: replace with your real logo asset
+import eaarthLogo from '@/assets/eaarth.png';
 
 export default function LoginForm({ onNavigate, onLogin }) {
   const [email, setEmail] = useState('');
@@ -12,15 +18,18 @@ export default function LoginForm({ onNavigate, onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-      {/* Main Container */}
-      <div className="w-full max-w-5xl">
-        {/* Logo/Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-black mb-2 text-purple-700">
-            EAARTH STUDIOS
-          </h1>
-          <p className="text-sm text-gray-600">PRODUCTION MANAGEMENT PLATFORM</p>
+    <div className="w-full max-w-7xl mx-auto px-20">
+      {/* Header */}
+      <div className="text-center mb-16">
+        <div className="flex justify-center mb-6">
+          <motion.img
+            src={eaarthLogo}
+            alt="Eaarth Studios"
+            className="w-54 h-auto object-contain"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          />
         </div>
 
         {/* Main Card Container */}
