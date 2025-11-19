@@ -5,12 +5,16 @@ import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import sidebarMenuList from '../config/sidebarMenuList';
 
-export default function Sidebar({ userRole = "Studio admin", userName, userEmail = "razik@eaarthstudios.com" }) {
+export default function Sidebar({ userRole = "Studio admin"}) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedItems, setExpandedItems] = useState(new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  // temporary user data
+  const userName = "Razik";
+  const userEmail = "razik@eaarthstudios.com";
 
   const toggleExpanded = (itemId) => {
     const newExpanded = new Set(expandedItems);
@@ -129,7 +133,7 @@ export default function Sidebar({ userRole = "Studio admin", userName, userEmail
           <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6'} border-b-2 border-lavender-200/50 dark:border-gray-800`}>
             <div className={`flex items-center justify-between ${isCollapsed ? 'flex-col gap-2' : 'flex-row gap-4'}`}>
 
-              <Link to="dashboard" className="flex items-center gap-3">
+              <Link to="home" className="flex items-center gap-3">
                 {!isCollapsed && (
                   <img
                     src={eaarthLogo}

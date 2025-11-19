@@ -1,5 +1,6 @@
-import React, { Component } from 'react';
-import { Empty } from '@/shared/components/ui/empty';
+import React, { Component } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/shared/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -8,39 +9,62 @@ class ErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught:", error, errorInfo);
     this.setState({ error, errorInfo });
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  // Reset boundary when navigating
+  componentDidUpdate(prevProps) {
+    if (this.props.location !== prevProps.location && this.state.hasError) {
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    }
+  }
+
+  renderDevStack() {
+    const { error, errorInfo } = this.state;
+
+    if (!error || !errorInfo) return null;
+
+    return (
+      <pre className="mt-4 max-h-[200px] overflow-auto rounded bg-muted p-3 text-xs text-red-600">
+        {error.toString()}
+        {"\n"}
+        {errorInfo.componentStack}
+      </pre>
+    );
   }
 
   render() {
-    const { hasError, error, errorInfo } = this.state;
+    const { hasError } = this.state;
+    const isDev = import.meta.env.DEV;
 
-    if (hasError) {
-      const isDev = import.meta.env.NODE_ENV === 'development';
+    if (!hasError) return this.props.children;
 
-      return (
-        <Empty
-          title="Something went wrong"
-          description={
-            isDev && error && errorInfo
-              ? (
-                <pre className="mt-2 text-sm text-red-500">
-                  {error.toString()}
-                  <br />
-                  {errorInfo.componentStack}
-                </pre>
-              )
-              : 'Please try refreshing the page or contact support.'
-          }
-        />
-      );
-    }
+    return (
+      <div className="flex h-[70vh] w-full items-center justify-center p-6">
+        <Card className="w-full max-w-lg border border-red-300 shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-red-500" />
+              <CardTitle className="text-xl">Something went wrong</CardTitle>
+            </div>
+            <CardDescription>
+              {isDev
+                ? "An unexpected error occurred. Details are shown below."
+                : "Please refresh the page or contact support."}
+            </CardDescription>
+          </CardHeader>
 
-    return this.props.children;
+          <CardContent>
+            {isDev && this.renderDevStack()}
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 }
 
