@@ -5,7 +5,7 @@ const AuthLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lavender-50 via-pastel-pink-50 to-sky-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen  flex items-center justify-center p-4 relative overflow-hidden">
       
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

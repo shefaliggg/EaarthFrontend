@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import AuthLayout from '@/layouts/AuthLayout';
 import ErrorBoundary from '../../../shared/components/ErrorBoundary';
+import Login from '../pages/Login';
 
 const LoginForm = lazy(() => import('../components/forms/LoginForm'));
 // const TempLogin = lazy(() => import('../components/forms/TempLogin'));
@@ -14,7 +15,7 @@ const AuthRoutes = {
     </ErrorBoundary>
   ),
   children: [
-    { path: 'login', element: <LoginForm /> },
+    { path: 'login', element: <Login /> },
     // { path: 'temp-login', element: <TempLogin /> },
     // { path: 'reset-password', element: <ResetPassword /> },
   ],
