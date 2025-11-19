@@ -153,7 +153,7 @@ export default function Sidebar({ userRole }) {
         <div className="fixed inset-0 bg-gradient-to-br from-lavender-500/20 to-pastel-pink-500/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsCollapsed(true)} />
       )}
       <aside
-        className={`sticky left-0 top-0 h-screen z-50 bg-gradient-to-b from-lavender-50 via-teal-50 to-pastel-pink-50 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-r-2 border-lavender-200/50 dark:border-gray-800 shadow-xl transition-all duration-300`}
+        className={`sticky left-0 top-0 h-screen z-50 bg-gradient-to-b from-lavender-50 via-teal-50 to-pastel-pink-50 dark:bg-gradient-to-b dark:from-background dark:via-slate-950 dark:to-background border-r-2 border-lavender-200/50 dark:border-gray-800 shadow-xl transition-all duration-300`}
         style={{ width: isCollapsed ? '80px' : '280px' }}
         aria-label="Main sidebar"
       >
