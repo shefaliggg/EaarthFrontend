@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
-import StudioLayout from '../../../layouts/StudioLayout';
+import DashboardLayout from '../../../layouts/DashboardLayout';
+// import Login from '../../auth/pages/Login';
 import { Navigate } from 'react-router-dom';
 import StudioDashboard from '../pages/StudioDashboard';
 

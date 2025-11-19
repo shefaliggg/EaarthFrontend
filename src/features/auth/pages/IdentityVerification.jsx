@@ -9,7 +9,7 @@ import {
   Home,
 } from "lucide-react";
 
-export default function IdentityVerificationScreen({ onNavigate, onSkip }) {
+export default function IdentityVerification({ onNavigate, onSkip }) {
   // Commented out — since you said no functions needed
   // const [idDocument, setIdDocument] = useState(null);
   // const [selfie, setSelfie] = useState(null);
