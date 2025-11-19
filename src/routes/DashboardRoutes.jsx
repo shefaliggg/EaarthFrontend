@@ -10,7 +10,7 @@ import RoleBasedDashboard from '../shared/components/RoleBasedDashboard';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
-const DashboardRoutes = {path: '/',element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
+const DashboardRoutes = {path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
     children: [
         { index: true, element: <Navigate to="home" replace /> },
         { path: 'home', element: <RoleBasedDashboard /> },

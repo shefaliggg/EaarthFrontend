@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { Suspense } from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import AppRoutes from '@/routes/AppRoutes';
