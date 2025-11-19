@@ -53,12 +53,7 @@ function DarkmodeButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`relative p-2 rounded-lg transition-all dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700
-                            }`}
-                    >
+                <button className={`relative p-2 rounded-lg transition-all dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700`}>
                     {currentTheme === "dark" || (currentTheme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
                         ? <Sun className="h-5 w-5" />
                         : <Moon className="h-5 w-5" />

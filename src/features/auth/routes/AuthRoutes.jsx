@@ -16,30 +16,30 @@ const AuthRoutes = {
   ),
   children: [
     { path: 'login', element: <Login /> },
-      {
-        path: "/temp-login",
-        element: <TemporaryLogin/>,
-      },
-      {
-        path: "/set-password",
-        element: <SetPassword/>,
-      },
-      {
-        path: "terms",
-        element: <TermsAndConditions/>,
-      },
-      {
-        path: "identity-verification",
-        element: <IdentityVerificationScreen/>,
-      },
-      {
-        path: "otp-verification",
-        element: <OTPVerification/>,
-      },
-      {
-        path: "create-password",
-        element: <CreatePasswordScreenUI/>,
-      },
+      // {
+      //   path: "/temp-login",
+      //   element: <TemporaryLogin/>,
+      // },
+      // {
+      //   path: "/set-password",
+      //   element: <SetPassword/>,
+      // },
+      // {
+      //   path: "terms",
+      //   element: <TermsAndConditions/>,
+      // },
+      // {
+      //   path: "identity-verification",
+      //   element: <IdentityVerificationScreen/>,
+      // },
+      // {
+      //   path: "otp-verification",
+      //   element: <OTPVerification/>,
+      // },
+      // {
+      //   path: "create-password",
+      //   element: <CreatePasswordScreenUI/>,
+      // },
     // { path: 'temp-login', element: <TempLogin /> },
     // { path: 'reset-password', element: <ResetPassword /> },
   ],
