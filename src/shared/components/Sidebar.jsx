@@ -1,344 +1,290 @@
-import { use, useState } from 'react';
-import { Home, FolderOpen, User, Settings, HelpCircle, LogOut, ChevronLeft, ChevronRight, ChevronDown, Sparkles, Bell, Calendar, FileText, Users, BarChart3, Moon, Sun, Building2, Briefcase, FileUser, CreditCard, Wallet, Building, FileSpreadsheet, Clock, UserCheck, Shield, Mail, Megaphone, Bot, Activity, Grid, BookOpen, CloudIcon, MessageSquare, ScrollText, CalendarClock, ListTodo, GitBranch, Package, Shirt, UtensilsCrossed, Calculator, ShoppingCart, TrendingUp, Truck, Play, FileCheck, PawPrint, Car, MapPin, ThumbsUp, Plus, CheckCircle, DollarSign } from 'lucide-react';
-import eaarthLogo from '@/assets/eaarth.png';
-import { motion } from 'framer-motion';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Sparkles,
+  HelpCircle,
+  User,
+  FileText,
+  Calendar,
+  Settings,
+  LogOut,
+} from 'lucide-react';
+import eaarthLogo from '@/assets/eaarth.png';
 import sidebarMenuList from '../config/sidebarMenuList';
 
-export default function Sidebar({ userRole = "Studio admin"}) {
+function NavChevron({ isOpen, size = 16 }) {
+  return (
+    <motion.span
+      aria-hidden
+      animate={{ rotate: isOpen ? 180 : 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      style={{ display: 'inline-flex' }}
+    >
+      <ChevronDown className={`w-${size / 4} h-${size / 4}`} />
+    </motion.span>
+  );
+}
+
+const SubItem = React.memo(function SubItem({
+  subItem,
+  depth,
+  pathname,
+  expandedItems,
+  toggleExpanded,
+  navigate,
+}) {
+  const isSubActive = pathname === subItem.page || pathname?.includes(subItem.page);
+  const hasNested = subItem.subItems && subItem.subItems.length > 0;
+  const isSubExpanded = expandedItems.has(subItem.id);
+
+  const onClick = useCallback(() => {
+    if (hasNested) toggleExpanded(subItem.id);
+    else if (subItem.page) {
+      // schedule navigation on next frame to prevent layout jank
+      requestAnimationFrame(() => {
+        navigate(subItem.page.startsWith('/') ? subItem.page : `/${subItem.page}`);
+      });
+    }
+  }, [hasNested, subItem, toggleExpanded, navigate]);
+
+  return (
+    <div key={subItem.id}>
+      <motion.button
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onClick}
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-3xl border shadow transition-all text-sm ${isSubActive ? 'bg-lavender-200 text-lavender-900 border-lavender-300 dark:bg-lavender-500 dark:text-white' : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'}`}
+        style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
+        aria-expanded={hasNested ? isSubExpanded : undefined}
+        aria-current={isSubActive ? 'page' : undefined}
+      >
+        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-white dark:bg-white' : 'bg-gray-400 dark:bg-gray-600'}`} />
+        <span className="font-semibold flex-1 text-left">{subItem.label}</span>
+        {hasNested && <NavChevron isOpen={isSubExpanded} size={12} />}
+      </motion.button>
+
+      <AnimatePresence initial={false}>
+        {hasNested && isSubExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="ml-1 mt-1 space-y-1.5"
+          >
+            {subItem.subItems.map((child) => (
+              <SubItem
+                key={child.id}
+                subItem={child}
+                depth={depth + 1}
+                pathname={pathname}
+                expandedItems={expandedItems}
+                toggleExpanded={toggleExpanded}
+                navigate={navigate}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+export default function Sidebar({ userRole }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [expandedItems, setExpandedItems] = useState(new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
+  // store expanded as array of ids for stable comparisons (Set works, but arrays + memoization is easier to reason about)
+  const [expandedItems, setExpandedItems] = useState(() => new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  // temporary user data
-  const userName = "Razik";
-  const userEmail = "razik@eaarthstudios.com";
+  // temp user data
+  const userName = 'Razik';
+  const userEmail = 'razik@eaarthstudios.com';
 
-  const toggleExpanded = (itemId) => {
-    const newExpanded = new Set(expandedItems);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.add(itemId);
-    }
-    setExpandedItems(newExpanded);
-  };
-  const handleLogout = () => {
-    navigate("/auth/login")
-  }
+  // memoize menu to avoid recomputing on each render
+  const menuItems = useMemo(() => sidebarMenuList(userRole), [userRole]);
 
-  const getUserInitials = () => {
-    if (userName) {
-      return userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    }
+  // stable toggleExpanded using useCallback
+  const toggleExpanded = useCallback((itemId) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    // use RAF to avoid blocking a paint before navigation
+    requestAnimationFrame(() => navigate('/auth/login'));
+  }, [navigate]);
+
+  const getUserInitials = useCallback(() => {
+    if (userName) return userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
     if (userEmail) {
       const emailName = userEmail.split('@')[0];
-      if (emailName.length >= 2) {
-        return emailName.slice(0, 2).toUpperCase();
-      }
+      if (emailName.length >= 2) return emailName.slice(0, 2).toUpperCase();
       return emailName[0].toUpperCase();
     }
     return 'U';
-  };
+  }, [userName, userEmail]);
 
-  const menuItems = sidebarMenuList(pathname.split("/")[1]);
+  // find first leaf page
+  const findFirstLeafPage = useCallback((item) => {
+    if (!item) return null;
+    if (item.page) return item.page;
+    if (!item.subItems || item.subItems.length === 0) return null;
+    for (const sub of item.subItems) {
+      const found = findFirstLeafPage(sub);
+      if (found) return found;
+    }
+    return null;
+  }, []);
 
-  const isPageInSubItems = (item, page) => {
-    if (!item.subItems) return false;
-
-    const checkSubItems = (subItems) => {
-      return subItems.some(sub => {
-        if (sub.page === page || page?.startsWith(sub.page + '-')) return true;
-        if (sub.subItems) return checkSubItems(sub.subItems);
-        return false;
-      });
-    };
-
-    return checkSubItems(item.subItems);
-  };
-
-  const isSubItemActive = (subItem, page) => {
-    return page === subItem.page || page?.includes(subItem.page);
-  };
-
-  // Recursive component for rendering nested sub-items
-  const renderSubItems = (subItems, depth = 0) => {
-    return subItems.map((subItem) => {
-      const isSubActive = isSubItemActive(subItem, pathname);
-      const hasNestedItems = subItem.subItems && subItem.subItems.length > 0;
-      const isSubExpanded = expandedItems.has(subItem.id);
-
-      return (
-        <div key={subItem.id}>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (hasNestedItems) {
-                toggleExpanded(subItem.id);
-              } else {
-                navigate(subItem.page);
-              }
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-1.5 rounded-3xl border dark:border-0 shadow-xs shadow-lavender-200 dark:shadow-lavender-900 transition-all text-sm ${isSubActive
-              ? 'bg-lavender-200 text-lavender-900 dark:bg-lavender-500 dark:text-white'
-              : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
-              }`}
-            style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
-          >
-            <div className={`w-1.5 h-1.5 rounded-full ${isSubActive
-              ? 'bg-white dark:bg-white'
-              : 'bg-gray-400 dark:bg-gray-600'
-              }`} />
-            <span className="font-semibold flex-1 text-left">
-              {subItem.label}
-            </span>
-            {hasNestedItems && (
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${isSubExpanded ? 'rotate-180' : ''}`}
-              />
-            )}
-          </motion.button>
-
-          {/* Nested sub-items */}
-          {hasNestedItems && isSubExpanded && (
-            <div className="ml-2 mt-1 space-y-1.5">
-              {renderSubItems(subItem.subItems, depth)}
-            </div>
-          )}
-        </div>
-      );
-    });
-  };
-
+  // render main menu
   return (
     <>
-      {/* Backdrop for mobile */}
       {!isCollapsed && (
-        <div
-          className="fixed inset-0 bg-gradient-to-br from-lavender-500/20 to-pastel-pink-500/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsCollapsed(true)}
-        />
+        <div className="fixed inset-0 bg-gradient-to-br from-lavender-500/20 to-pastel-pink-500/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsCollapsed(true)} />
       )}
-
-      {/* Side Navigation */}
       <aside
         className={`sticky left-0 top-0 h-screen z-50 bg-gradient-to-b from-lavender-50 via-teal-50 to-pastel-pink-50 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-r-2 border-lavender-200/50 dark:border-gray-800 shadow-xl transition-all duration-300`}
         style={{ width: isCollapsed ? '80px' : '280px' }}
+        aria-label="Main sidebar"
       >
         <div className="flex flex-col h-screen">
-          {/* Logo Section */}
-          <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6'} border-b-2 border-lavender-200/50 dark:border-gray-800`}>
+          <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6 px-5'} border-b-2 border-lavender-200/50 dark:border-gray-800`}>
             <div className={`flex items-center justify-between ${isCollapsed ? 'flex-col gap-2' : 'flex-row gap-4'}`}>
-
               <Link to="home" className="flex items-center gap-3">
-                {!isCollapsed && (
-                  <img
-                    src={eaarthLogo}
-                    alt="Eaarth Studios"
-                    className="w-26 h-auto object-contain"
-                  />
-                )}
-                {isCollapsed && (
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
+                {!isCollapsed ? (
+                  <img src={eaarthLogo} alt="Eaarth Studios" className="w-26 h-auto object-contain" />
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg"><Sparkles className="w-5 h-5 text-white" /></div>
                 )}
               </Link>
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="p-2 rounded-xl transition-all hover:bg-lavender-100/50 text-lavender-600 dark:hover:bg-gray-800 dark:text-gray-400"
-              >
+
+              <button onClick={() => setIsCollapsed((s) => !s)} className="p-2 rounded-xl transition-all hover:bg-lavender-100/50 text-lavender-600 dark:hover:bg-gray-800 dark:text-gray-400" aria-pressed={!isCollapsed}>
                 {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Main Navigation */}
-          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-4.5' : 'p-5 py-3'} space-y-2.5 overflow-y-auto`}>
+          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-4.5' : 'p-5 py-3'} space-y-2 overflow-y-auto`}>
+
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.page;
               const hasSubItems = item.subItems && item.subItems.length > 0;
               const isExpanded = expandedItems.has(item.id);
-              const isParentActive = isActive || isPageInSubItems(item, pathname);
+
+              const onMainClick = () => {
+                if (hasSubItems) {
+                  if (isCollapsed) {
+                    const target = findFirstLeafPage(item) || item.page;
+                    if (target) requestAnimationFrame(() => navigate(target.startsWith('/') ? target : `/${target}`));
+                  } else {
+                    toggleExpanded(item.id);
+                  }
+                } else {
+                  if (item.page) requestAnimationFrame(() => navigate(item.page.startsWith('/') ? item.page : `/${item.page}`));
+                }
+              };
 
               return (
                 <div key={item.id}>
-                  {/* Main Menu Item */}
                   <motion.button
-                    onClick={() => {
-                      if (hasSubItems && !isCollapsed) {
-                        toggleExpanded(item.id);
-                      } else {
-                        navigate(item.page);
-                      }
-                    }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center ${isCollapsed ? "py-2.5" : "gap-3 px-4 py-2"} rounded-3xl border dark:border-0 shadow-sm shadow-lavender-200 dark:shadow-lavender-900 transition-all ${isParentActive
-                      ? 'bg-gradient-to-r from-lavender-400 to-pastel-pink-400 text-white shadow-lg dark:from-lavender-600 dark:to-pastel-pink-600'
-                      : 'text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800'
-                      }`}
+                    onClick={onMainClick}
+                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow transition-all ${isActive ? 'bg-gradient-to-r from-lavender-400 to-pastel-pink-400 text-white shadow-lg dark:from-lavender-600 dark:to-pastel-pink-600' : 'text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800'}`}
+                    aria-expanded={hasSubItems ? isExpanded : undefined}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
                     {!isCollapsed && (
                       <>
-                        <span className="font-bold text-sm flex-1 text-left">
-                          {item.label}
-                        </span>
-                        {hasSubItems && (
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          />
-                        )}
+                        <span className="font-bold text-sm flex-1 text-left">{item.label}</span>
+                        {hasSubItems && <NavChevron isOpen={isExpanded} size={16} />}
                       </>
                     )}
                   </motion.button>
 
-                  {/* Sub Menu Items */}
-                  {hasSubItems && isExpanded && !isCollapsed && (
-                    <div className="ml-2 mt-1 space-y-1.5">
-                      {renderSubItems(item.subItems)}
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {hasSubItems && isExpanded && !isCollapsed && (
+                      <motion.div
+                        key={`sub-${item.id}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: 'easeInOut' }}
+                        className="ml-1 mt-1 space-y-1.5"
+                      >
+                        {item.subItems.map((sub) => (
+                          <SubItem
+                            key={sub.id}
+                            subItem={sub}
+                            depth={0}
+                            pathname={pathname}
+                            expandedItems={expandedItems}
+                            toggleExpanded={toggleExpanded}
+                            navigate={navigate}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
           </nav>
 
-          {/* Bottom Actions */}
           <div className="p-4 border-t-2 border-lavender-200/50 dark:border-gray-800 space-y-3">
-            {/* Help */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('support')}
-              className={`w-full flex items-center ${isCollapsed ? "py-2.5" : "gap-3 px-4 py-2"} rounded-3xl border dark:border-0 shadow-sm shadow-lavender-200 dark:shadow-lavender-900 transition-all text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800`}
-            >
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow-lg transition-all text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800`}>
               <HelpCircle className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
-              {!isCollapsed && (
-                <span className="font-bold text-sm">HELP & SUPPORT</span>
-              )}
+              {!isCollapsed && <span className="font-bold text-sm">HELP & SUPPORT</span>}
             </motion.button>
 
-            {/* Bottom Row: User Avatar + Logout */}
             <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
-              {/* User Avatar with Drop-up Menu */}
               <div className="relative flex-1">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center  gap-3 p-2 rounded-xl text-foreground border shadow-sm shadow-lavender-200 dark:border-0 dark:shadow-lavender-900 transition-all`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lavender-500 to-pastel-pink-500 flex items-center justify-center shrink-0">
-                    <span className="text-white font-bold text-sm">
-                      {getUserInitials()}
-                    </span>
-                  </div>
+                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => setShowUserMenu((s) => !s)} className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center gap-3 p-2 rounded-xl text-foreground border shadow transition-all`} aria-expanded={showUserMenu}>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lavender-500 to-pastel-pink-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-sm">{getUserInitials()}</span></div>
                   {!isCollapsed && (
                     <div className='leading-4 flex flex-col items-start'>
                       <p className='font-bold text-sm'>{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</p>
                       <p className='text-sm'>{userRole}</p>
                     </div>
                   )}
-                  {/* {!isCollapsed && (
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                  )} */}
                 </motion.button>
 
-                {/* Drop-up Menu */}
                 {showUserMenu && (
-                  <div
-                    className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl shadow-2xl border overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`}
-                    style={{ minWidth: isCollapsed ? '200px' : 'auto' }}
-                  >
-                    {/* User Info Header */}
+                  <div className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl shadow-2xl border overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`} style={{ minWidth: isCollapsed ? '200px' : 'auto' }}>
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lavender-500 to-pastel-pink-500 flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-sm">
-                            {getUserInitials()}
-                          </span>
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lavender-500 to-pastel-pink-500 flex items-center justify-center flex-shrink-0"><span className="text-white font-bold text-sm">{getUserInitials()}</span></div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-sm truncate text-gray-900 dark:text-white">
-                            {userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}
-                          </div>
-                          <div className="text-xs truncate text-gray-600 dark:text-gray-400">
-                            {userRole === 'master-admin' ? 'MASTER ADMIN' :
-                              userRole === 'studio-admin' ? 'STUDIO ADMIN' :
-                                userRole === 'agency-admin' ? 'AGENCY ADMIN' :
-                                  'CREW MEMBER'}
-                          </div>
+                          <div className="font-bold text-sm truncate text-gray-900 dark:text-white">{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</div>
+                          <div className="text-xs truncate text-gray-600 dark:text-gray-400">{userRole === 'master-admin' ? 'MASTER ADMIN' : userRole === 'studio-admin' ? 'STUDIO ADMIN' : userRole === 'agency-admin' ? 'AGENCY ADMIN' : 'CREW MEMBER'}</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Menu Items */}
                     <div className="p-2">
-                      <button
-                        onClick={() => {
-                          navigate('profile-general');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"
-                      >
-                        <User className="w-5 h-5" />
-                        <span className="font-bold text-sm">MY PROFILE</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          navigate('profile-documents');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"
-                      >
-                        <FileText className="w-5 h-5" />
-                        <span className="font-bold text-sm">DOCUMENTS</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          navigate('profile-calendar');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"
-                      >
-                        <Calendar className="w-5 h-5" />
-                        <span className="font-bold text-sm">CALENDAR</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          navigate('account-settings');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"
-                      >
-                        <Settings className="w-5 h-5" />
-                        <span className="font-bold text-sm">SETTINGS</span>
-                      </button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile-general')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><User className="w-5 h-5" /><span className="font-bold text-sm">MY PROFILE</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile-documents')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><FileText className="w-5 h-5" /><span className="font-bold text-sm">DOCUMENTS</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile-calendar')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Calendar className="w-5 h-5" /><span className="font-bold text-sm">CALENDAR</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('account-settings')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-lavender-50 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Settings className="w-5 h-5" /><span className="font-bold text-sm">SETTINGS</span></button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Logout Button */}
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-                onClick={handleLogout}
-                className={`${isCollapsed ? 'w-11 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0 dark:shadow dark:shadow-red-900`}
-              >
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={handleLogout} className={`${isCollapsed ? 'w-11 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0`}>
                 <LogOut className="w-5 h-5" />
-                {/* {!isCollapsed && (
-                  <span className="font-bold text-sm">LOGOUT</span>
-                )} */}
               </motion.button>
             </div>
           </div>
