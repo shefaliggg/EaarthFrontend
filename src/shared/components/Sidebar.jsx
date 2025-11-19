@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import sidebarMenuList from '../config/sidebarMenuList';
 
-export default function Sidebar({ userRole="Studio admin", userName, userEmail="razik@eaarthstudios.com" }) {
+export default function Sidebar({ userRole = "Studio admin", userName, userEmail = "razik@eaarthstudios.com" }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedItems, setExpandedItems] = useState(new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -68,7 +68,9 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
 
       return (
         <div key={subItem.id}>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               if (hasNestedItems) {
                 toggleExpanded(subItem.id);
@@ -76,7 +78,7 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
                 navigate(subItem.page);
               }
             }}
-            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm ${isSubActive
+            className={`w-full flex items-center gap-3 px-4 py-1.5 rounded-3xl border dark:border-0 shadow-xs shadow-lavender-200 dark:shadow-lavender-900 transition-all text-sm ${isSubActive
               ? 'bg-lavender-200 text-lavender-900 dark:bg-lavender-500 dark:text-white'
               : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
               }`}
@@ -86,7 +88,7 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
               ? 'bg-white dark:bg-white'
               : 'bg-gray-400 dark:bg-gray-600'
               }`} />
-            <span className="font-bold flex-1 text-left">
+            <span className="font-semibold flex-1 text-left">
               {subItem.label}
             </span>
             {hasNestedItems && (
@@ -94,12 +96,12 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
                 className={`w-3 h-3 transition-transform ${isSubExpanded ? 'rotate-180' : ''}`}
               />
             )}
-          </button>
+          </motion.button>
 
           {/* Nested sub-items */}
           {hasNestedItems && isSubExpanded && (
-            <div className="ml-2 mt-1 space-y-1">
-              {renderSubItems(subItem.subItems, depth + 1)}
+            <div className="ml-2 mt-1 space-y-1.5">
+              {renderSubItems(subItem.subItems, depth)}
             </div>
           )}
         </div>
@@ -151,7 +153,7 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
           </div>
 
           {/* Main Navigation */}
-          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-4.5' : 'p-5 py-3'} space-y-2 overflow-y-auto`}>
+          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-4.5' : 'p-5 py-3'} space-y-2.5 overflow-y-auto`}>
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.page;
@@ -172,12 +174,12 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
                     }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center ${isCollapsed ? "py-2.5" : "gap-3 px-4 py-1.5"} rounded-3xl border border-lavender-200 shadow-sm shadow-lavender-300 dark:border-gray-800 transition-all ${isParentActive
+                    className={`w-full flex items-center ${isCollapsed ? "py-2.5" : "gap-3 px-4 py-2"} rounded-3xl border dark:border-0 shadow-sm shadow-lavender-200 dark:shadow-lavender-900 transition-all ${isParentActive
                       ? 'bg-gradient-to-r from-lavender-400 to-pastel-pink-400 text-white shadow-lg dark:from-lavender-600 dark:to-pastel-pink-600'
                       : 'text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800'
                       }`}
                   >
-                    <Icon className={`size-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+                    <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
                     {!isCollapsed && (
                       <>
                         <span className="font-bold text-sm flex-1 text-left">
@@ -194,7 +196,7 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
 
                   {/* Sub Menu Items */}
                   {hasSubItems && isExpanded && !isCollapsed && (
-                    <div className="ml-4 mt-1 space-y-1">
+                    <div className="ml-2 mt-1 space-y-1.5">
                       {renderSubItems(item.subItems)}
                     </div>
                   )}
@@ -210,9 +212,9 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('support')}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-3xl border border-lavender-200 shadow-sm shadow-lavender-300 dark:border-gray-800 transition-all text-gray-700 hover:bg-lavender-100/50 dark:text-gray-300 dark:hover:bg-gray-800"
+              className={`w-full flex items-center ${isCollapsed ? "py-2.5" : "gap-3 px-4 py-2"} rounded-3xl border dark:border-0 shadow-sm shadow-lavender-200 dark:shadow-lavender-900 transition-all text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800`}
             >
-              <HelpCircle className={`size-4 ${isCollapsed ? 'mx-auto' : ''}`} />
+              <HelpCircle className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
               {!isCollapsed && (
                 <span className="font-bold text-sm">HELP & SUPPORT</span>
               )}
@@ -226,7 +228,7 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center  gap-3 p-2 rounded-2xl hover:bg-lavender-100 text-gray-700 dark:hover:bg-gray-800 dark:text-gray-300`}
+                  className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center  gap-3 p-2 rounded-xl text-foreground border shadow-sm shadow-lavender-200 dark:border-0 dark:shadow-lavender-900 transition-all`}
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lavender-500 to-pastel-pink-500 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold text-sm">
@@ -239,9 +241,9 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
                       <p className='text-sm'>{userRole}</p>
                     </div>
                   )}
-                  {!isCollapsed && (
+                  {/* {!isCollapsed && (
                     <ChevronDown className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                  )}
+                  )} */}
                 </motion.button>
 
                 {/* Drop-up Menu */}
@@ -323,15 +325,17 @@ export default function Sidebar({ userRole="Studio admin", userName, userEmail="
               </div>
 
               {/* Logout Button */}
-              <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
                 onClick={handleLogout}
-                className={`${isCollapsed ? 'w-10 h-10' : 'w-auto'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400`}
+                className={`${isCollapsed ? 'w-11 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0 dark:shadow dark:shadow-red-900`}
               >
                 <LogOut className="w-5 h-5" />
                 {/* {!isCollapsed && (
                   <span className="font-bold text-sm">LOGOUT</span>
                 )} */}
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>

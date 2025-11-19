@@ -35,6 +35,7 @@ function sidebarMenuList(sidebarType) {
     {
       id: "projects",
       label: "PROJECTS",
+      page: "/studio/projects",
       icon: Icon.FolderOpen,
       gradient: "from-pastel-pink-400/20 to-pastel-pink-500/20",
       color: "text-pastel-pink-600",

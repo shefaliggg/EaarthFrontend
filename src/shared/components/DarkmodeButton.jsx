@@ -53,7 +53,7 @@ function DarkmodeButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <motion.button 
+                <button 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className={`relative p-2 rounded-lg transition-all dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700
@@ -63,7 +63,7 @@ function DarkmodeButton() {
                         ? <Sun className="h-5 w-5" />
                         : <Moon className="h-5 w-5" />
                     }
-                </motion.button>
+                </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-45 space-y-1 absolute -right-5 top-1">
                 <DropdownMenuRadioGroup value={currentTheme} onValueChange={(value) => handleDarkMode(value)}>
