@@ -1,16 +1,15 @@
-// import { useState, useCallback } from 'react';
+// import { useState } from 'react';
 // import { authApi } from '../api/auth.api';
 
-// export const useLogin = (onSuccess, onError) => {
-//   const [email, setEmail] = useState('');
+// export const useTemporaryLogin = (onSuccess, onError) => {
 //   const [password, setPassword] = useState('');
 //   const [showPassword, setShowPassword] = useState(false);
 //   const [loading, setLoading] = useState(false);
 //   const [error, setError] = useState('');
 
-//   const handleSubmit = useCallback(async () => {
-//     if (!email || !password) {
-//       setError('Email and password are required');
+//   const handleSubmit = async (email) => {
+//     if (!password) {
+//       setError('Password is required');
 //       return false;
 //     }
 
@@ -18,27 +17,33 @@
 //     setLoading(true);
 
 //     try {
-//       const response = await authApi.login(email, password);
+//       const res = await authApi.temporaryLogin(email, password);
 
-//       if (response?.success) {
-//         onSuccess?.({ email });
+//       if (res.success) {
+//         onSuccess?.({
+//           userId: res.data.userId,
+//           email,
+//           isTemporary: true,
+//         });
+
 //         return true;
 //       }
 
+//       setError(res.message || 'Login failed');
 //       return false;
+
 //     } catch (err) {
-//       const errorMsg = err?.message || 'Something went wrong';
-//       setError(errorMsg);
-//       onError?.(errorMsg);
+//       const msg = err.message || 'Something went wrong';
+//       setError(msg);
+//       onError?.(msg);
 //       return false;
+
 //     } finally {
 //       setLoading(false);
 //     }
-//   }, [email, password, onSuccess, onError]);
+//   };
 
 //   return {
-//     email,
-//     setEmail,
 //     password,
 //     setPassword,
 //     showPassword,

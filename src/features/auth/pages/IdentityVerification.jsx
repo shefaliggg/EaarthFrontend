@@ -1,160 +1,208 @@
-import { useState } from "react";
-import {
-  ArrowLeft,
-  Upload,
-  Camera,
-  FileText,
-  CreditCard,
-  IdCard,
-  Home,
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Scan, CheckCircle, XCircle, ArrowRight, Loader } from 'lucide-react';
+import eaarthLogo from '../../../assets/eaarth.png';
 
-export default function IdentityVerificationScreen({ onNavigate, onSkip }) {
-  // Commented out — since you said no functions needed
-  // const [idDocument, setIdDocument] = useState(null);
-  // const [selfie, setSelfie] = useState(null);
+export default function identityVerification() {
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [progress, setProgress] = useState(0);
 
-  // const handleIdUpload = (e) => {
-  //   const file = e.target.files?.[0];
-  //   if (file) setIdDocument(file);
-  // };
+  // Mock photo data
+  const idPhotoData = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=cro';
+  const livePhotoData = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=cro';
 
-  // const handleSelfieUpload = (e) => {
-  //   const file = e.target.files?.[0];
-  //   if (file) setSelfie(file);
-  // };
+  useEffect(() => {
+    performVerification();
+  }, []);
+
+  const performVerification = async () => {
+    setIsVerifying(true);
+    setProgress(0);
+
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => Math.min(prev + 10, 90));
+    }, 200);
+
+    // Simulate verification process
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    clearInterval(progressInterval);
+    setProgress(100);
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Mock result - change match to false to see error state
+    const result = {
+      match: true,
+      score: 92
+    };
+
+    setVerificationResult(result);
+    setIsVerifying(false);
+  };
+
+  const handleContinue = () => {
+    console.log('Continue to terms');
+  };
+
+  const handleRetry = () => {
+    console.log('Retry verification');
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-100 via-green-100 via-pink-100 to-purple-200 relative">
-      {/* Skip Button */}
-      {onSkip && (
-        <button
-          onClick={onSkip}
-          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all text-purple-600 font-medium z-10"
-        >
-          <Home className="w-5 h-5" />
-          Skip to Dashboard
-        </button>
-      )}
-
-      <button
-        onClick={() => onNavigate("terms")}
-        className="absolute top-6 left-6 p-3 hover:bg-white/50 rounded-full transition-all bg-white/30"
-      >
-        <ArrowLeft className="w-6 h-6 text-gray-700" />
-      </button>
-
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-10">
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            EAARTH
-          </h1>
-          <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            STUDIOS
+    <div className="min-h-screen w-full flex items-start justify-center p-4">
+      <div className="w-full max-w-2xl mx-auto">
+        {/* Logo/Header */}
+        <div className="text-center mb-4">
+          <img
+            src={eaarthLogo}
+            alt="Eaarth Studios"
+            className="w-40 h-auto mx-auto mb-3"
+          />
+          <p className="text-sm text-gray-600 tracking-wide font-semibold">
+            AI FACE VERIFICATION
           </p>
         </div>
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Identity Verification
-        </h2>
-        <p className="text-center text-gray-600 mb-8">
-          Please verify your identity to continue
-        </p>
-
-        {/* Verification Steps */}
-        <div className="space-y-6">
-          {/* Step 1 */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
-                1
-              </div>
-              <h3 className="font-semibold text-lg">UPLOAD GOVERNMENT-ISSUED ID</h3>
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10 border-2 border-purple-100 w-full">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-4 bg-purple-100 border-2 border-purple-700 rounded-3xl flex-shrink-0">
+              <Scan className="w-6 md:w-7 h-6 md:h-7 text-purple-700" />
             </div>
-
-            <p className="text-sm text-gray-600 mb-4 ml-11">
-              Please upload a clear photo of your Passport, Driver's License, or National ID
-            </p>
-
-            <div className="ml-11">
-              {/* ID Type Options */}
-              <div className="flex gap-3 mb-4 flex-wrap">
-                <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg text-sm">
-                  <FileText className="w-4 h-4 text-purple-600" />
-                  <span>Passport</span>
-                </div>
-
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                  <CreditCard className="w-4 h-4 text-gray-600" />
-                  <span>Driver's License</span>
-                </div>
-
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                  <IdCard className="w-4 h-4 text-gray-600" />
-                  <span>National ID</span>
-                </div>
-              </div>
-
-              {/* Upload Box */}
-              <label className="block">
-                <input type="file" accept="image/*" className="hidden" />
-
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all">
-                  <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-600 font-medium mb-1">
-                    Click to upload ID document
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    PNG, JPG or PDF (max. 10MB)
-                  </p>
-                </div>
-              </label>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">FACE VERIFICATION</h2>
+              <p className="text-xs text-gray-500">Comparing ID and live photos</p>
             </div>
           </div>
 
-          {/* Step 2 */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
-                2
+          {/* Photo Comparison */}
+          <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+            {/* ID Photo */}
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-600 text-center">ID PHOTO</p>
+              <div className="rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-200">
+                <img src={idPhotoData} alt="ID" className="w-full h-48 md:h-56 object-cover" />
               </div>
-              <h3 className="font-semibold text-lg">CAPTURE LIVE SELFIE</h3>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4 ml-11">
-              Take a clear photo of your face. Face the camera directly and ensure good lighting
-            </p>
-
-            <div className="ml-11">
-              <label className="block">
-                <input type="file" accept="image/*" capture="user" className="hidden" />
-
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all">
-                  <Camera className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-600 font-medium mb-1">
-                    Click to capture selfie
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Use your camera to take a photo
-                  </p>
-                </div>
-              </label>
+            {/* Live Photo */}
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-600 text-center">LIVE PHOTO</p>
+              <div className="rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-200">
+                <img src={livePhotoData} alt="Live" className="w-full h-48 md:h-56 object-cover" />
+              </div>
             </div>
           </div>
+
+          {/* Verification Status */}
+          {isVerifying ? (
+            <div className="bg-purple-50 border-2 border-purple-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+              <div className="relative w-20 h-20 mx-auto mb-4">
+                <Scan className="w-20 h-20 text-purple-600 animate-pulse" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-14 h-14 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin"></div>
+                </div>
+              </div>
+              <p className="text-base md:text-lg font-bold text-purple-900 mb-3">
+                AI VERIFICATION IN PROGRESS...
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-purple-700">{progress}% Complete</p>
+            </div>
+          ) : (
+            <>
+              {verificationResult?.match ? (
+                <div className="bg-green-50 border-2 border-green-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+                  <CheckCircle className="w-16 md:w-20 h-16 md:h-20 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-xl md:text-2xl font-bold text-green-900 mb-2">
+                    VERIFICATION SUCCESSFUL!
+                  </h3>
+                  <p className="text-base md:text-lg text-green-700 mb-4">
+                    Face Match: <strong>{verificationResult.score}%</strong>
+                  </p>
+                  <div className="bg-green-100 rounded-2xl p-4">
+                    <p className="text-xs md:text-sm text-green-800">
+                      ✓ Your identity has been verified using AI facial recognition technology.
+                      Your photos match with <strong>{verificationResult.score}% confidence</strong>.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-red-50 border-2 border-red-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+                  <XCircle className="w-16 md:w-20 h-16 md:h-20 text-red-600 mx-auto mb-4" />
+                  <h3 className="text-xl md:text-2xl font-bold text-red-900 mb-2">
+                    VERIFICATION FAILED
+                  </h3>
+                  <p className="text-base md:text-lg text-red-700 mb-4">
+                    Face Match: <strong>{verificationResult?.score || 0}%</strong>
+                  </p>
+                  <div className="bg-red-100 rounded-2xl p-4 mb-4">
+                    <p className="text-xs md:text-sm text-red-800">
+                      {verificationResult?.error || 
+                        `The photos do not match sufficiently. We require at least 80% confidence for verification.`}
+                    </p>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs md:text-sm text-red-700 font-bold mb-2">
+                      COMMON ISSUES:
+                    </p>
+                    <ul className="text-xs md:text-sm text-red-600 space-y-1">
+                      <li>• Poor lighting in one or both photos</li>
+                      <li>• Face not clearly visible in ID photo</li>
+                      <li>• Wearing glasses, hat, or face covering</li>
+                      <li>• Low quality or blurry photos</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Action Buttons */}
+          {!isVerifying && (
+            <div className="space-y-4">
+              {verificationResult?.match ? (
+                <button
+                  onClick={handleContinue}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 md:py-4 rounded-3xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                >
+                  CONTINUE TO TERMS & CONDITIONS
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleRetry}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 md:py-4 rounded-3xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  >
+                    TRY AGAIN
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={performVerification}
+                    className="w-full bg-gray-100 text-gray-700 font-bold py-3.5 md:py-4 rounded-3xl hover:bg-gray-200 border-2 border-gray-200 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Loader className="w-5 h-5" />
+                    RE-RUN VERIFICATION
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Submit Button */}
-        <button
-          className="w-full font-semibold py-3 rounded-lg transition-all mt-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg"
-        >
-          SUBMIT & CONTINUE
-        </button>
-
-        <p className="text-xs text-gray-500 text-center mt-4">
-          Your documents are encrypted and securely stored
-        </p>
+        {/* Footer */}
+        <div className="text-center mt-6 text-gray-500 text-xs">
+          Step 4 of 4: AI Face Verification
+        </div>
       </div>
     </div>
   );
