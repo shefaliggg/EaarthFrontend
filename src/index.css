@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -30,6 +32,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
 
+  --shadow : #15012e;
   --border: var(--lavender-200);
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
@@ -107,54 +110,9 @@
   --sky-900: #0C4A6E;
 }
 
-/* .dark {
-  --background: rgb(10, 10, 10);
-  --foreground: #fafafa;
-
-  --card: #020013;
-  --card-foreground: #ffffff;
-
-  --popover: #1d1c27;
-  --popover-foreground: #ffffff;
-
-  --primary: var(--lavender-500);
-  --primary-foreground: #ffffff;
-
-  --secondary: var(--lavender-300);
-  --secondary-foreground: var(--lavender-950);
-
-  --muted: #2b2a35;
-  --muted-foreground: #b0b0c3;
-
-  --accent: var(--mind-400);
-  --accent-foreground: #ffffff;
-
-  --destructive: #ff6b81;
-  --destructive-foreground: #000000;
-
-  --border: #130044;
-  --input: #2b2a35;
-  --ring: var(--lavender-400);
-
-  --sidebar: #1d1c27;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: var(--lavender-400);
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #262533;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2b2a35;
-  --sidebar-ring: var(--lavender-500);
-
-  --chart-1: var(--lavender-400);
-  --chart-2: var(--pastel-pink-400);
-  --chart-3: var(--mint-400);
-  --chart-4: var(--peach-400);
-  --chart-5: var(--sky-400);
-} */
-
 .dark {
   /* Premium Dark Theme */
-  --background: #0a0a0f;
+  --background: transparent;
   --foreground: #fafafa;
 
   --card: #111114;
@@ -178,7 +136,9 @@
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
-  --border: #26262b;
+  --shadow : #15012e;
+  --border: #15012e;
+  /* --border: var(--lavender-900); */
   --input: #1f1f23;
   --ring: var(--lavender-400);
 
@@ -228,6 +188,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
+  --color-shadow: var(--shadow);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -300,7 +261,11 @@
   }
 
   html {
-    scroll-behavior: smooth
+    scroll-behavior: smooth;
+    font-family: "Outfit", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-style: normal;
   }
 
   html,
@@ -327,13 +292,16 @@
 
   body.dark {
     background: linear-gradient(135deg,
-        #0a0a0f 0%,
-        #111114 25%,
-        #15151a 50%,
-        #111114 75%,
-        #0a0a0f 100%);
-    background-attachment: fixed;
-    min-height: 100vh;
+        #07001c,
+        #000000,
+        #100016);
+    /* background: linear-gradient(135deg,
+        #1a1625,
+        #1c1a15,
+        #151a15,
+        #15191c,
+        #1a1625,
+        #1c1518); */
   }
 
 
