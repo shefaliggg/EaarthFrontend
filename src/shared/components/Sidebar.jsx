@@ -57,7 +57,7 @@ const SubItem = React.memo(function SubItem({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-3xl border shadow transition-all text-sm ${isSubActive ? 'bg-lavender-200 text-lavender-900 border-lavender-300 dark:bg-lavender-500 dark:text-white' : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'}`}
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-3xl border shadow-sm dark:shadow-shadow transition-all text-sm ${isSubActive ? `bg-lavender-200 text-lavender-900 border-lavender-300 dark:bg-lavender-500 dark:text-white` : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-violet-950 dark:hover:text-gray-300'}`}
         style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
         aria-expanded={hasNested ? isSubExpanded : undefined}
         aria-current={isSubActive ? 'page' : undefined}
@@ -164,7 +164,7 @@ export default function Sidebar({ userRole }) {
                 {!isCollapsed ? (
                   <img src={eaarthLogo} alt="Eaarth Studios" className="w-26 h-auto object-contain" />
                 ) : (
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg"><Sparkles className="w-5 h-5 text-white" /></div>
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg dark:shadow-shadow"><Sparkles className="w-5 h-5 text-white" /></div>
                 )}
               </Link>
 
@@ -201,7 +201,7 @@ export default function Sidebar({ userRole }) {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onMainClick}
-                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow transition-all ${isActive ? 'bg-gradient-to-r from-lavender-400 to-pastel-pink-400 text-white shadow-lg dark:from-lavender-600 dark:to-pastel-pink-600' : 'text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800'}`}
+                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow-sm dark:shadow-shadow transition-all ${isActive ? 'bg-gradient-to-r from-lavender-400 to-pastel-pink-400 text-white shadow-lg dark:shadow-shadow dark:from-lavender-600 dark:to-pastel-pink-600' : 'text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-violet-950'}`}
                     aria-expanded={hasSubItems ? isExpanded : undefined}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -244,7 +244,7 @@ export default function Sidebar({ userRole }) {
           </nav>
 
           <div className="p-4 border-t-2 border-lavender-200/50 dark:border-gray-800 space-y-3">
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow-lg transition-all text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800`}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-3xl border shadow-lg dark:shadow-shadow transition-all text-gray-700 hover:bg-lavender-50 dark:text-gray-300 dark:hover:bg-gray-800`}>
               <HelpCircle className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
               {!isCollapsed && <span className="font-bold text-sm">HELP & SUPPORT</span>}
             </motion.button>

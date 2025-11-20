@@ -32,7 +32,11 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
 
+<<<<<<< HEAD
   --shadow: #15012e;
+=======
+  --shadow : #15012e;
+>>>>>>> 73db6c1 (layout: change sidebar and StudioDashboard dark theme color)
   --border: var(--lavender-200);
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
@@ -110,6 +114,7 @@
   --sky-900: #0C4A6E;
 }
 
+<<<<<<< HEAD
 /* .dark {
   --background: rgb(10, 10, 10);
   --foreground: #fafafa;
@@ -157,9 +162,11 @@
   --chart-5: var(--sky-400);
 } */
 
+=======
+>>>>>>> 73db6c1 (layout: change sidebar and StudioDashboard dark theme color)
 .dark {
   /* Premium Dark Theme */
-  --background: #0a0a0f;
+  --background: transparent;
   --foreground: #fafafa;
 
   --card: #111114;
@@ -183,7 +190,9 @@
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
-  --border: #26262b;
+  --shadow : #15012e;
+  --border: #15012e;
+  /* --border: var(--lavender-900); */
   --input: #1f1f23;
   --ring: var(--lavender-400);
 
@@ -338,13 +347,16 @@
 
   body.dark {
     background: linear-gradient(135deg,
-        #0a0a0f 0%,
-        #111114 25%,
-        #15151a 50%,
-        #111114 75%,
-        #0a0a0f 100%);
-    background-attachment: fixed;
-    min-height: 100vh;
+        #07001c,
+        #000000,
+        #100016);
+    /* background: linear-gradient(135deg,
+        #1a1625,
+        #1c1a15,
+        #151a15,
+        #15191c,
+        #1a1625,
+        #1c1518); */
   }
 
 
