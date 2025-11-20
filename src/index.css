@@ -32,11 +32,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
 
-<<<<<<< HEAD
   --shadow: #15012e;
-=======
-  --shadow : #15012e;
->>>>>>> 73db6c1 (layout: change sidebar and StudioDashboard dark theme color)
   --border: var(--lavender-200);
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
@@ -114,12 +110,12 @@
   --sky-900: #0C4A6E;
 }
 
-<<<<<<< HEAD
-/* .dark {
-  --background: rgb(10, 10, 10);
+.dark {
+  /* Premium Dark Theme */
+  --background: #0b0b0e;
   --foreground: #fafafa;
 
-  --card: #020013;
+  --card: #111114;
   --card-foreground: #ffffff;
 
   --popover: #15151a;
@@ -140,57 +136,7 @@
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
-  --border: #130044;
-  --input: #2b2a35;
-  --ring: var(--lavender-400);
-
-  --sidebar: #111114;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: var(--lavender-400);
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #1a1a1f;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #26262b;
-  --sidebar-ring: var(--lavender-500);
-
-  --chart-1: var(--lavender-400);
-<<<<<<< HEAD
-=======
-  --chart-2: var(--pastel-pink-400);
-  --chart-3: var(--mint-400);
-  --chart-4: var(--peach-400);
-  --chart-5: var(--sky-400);
-} */
-
-=======
->>>>>>> 73db6c1 (layout: change sidebar and StudioDashboard dark theme color)
-.dark {
-  /* Premium Dark Theme */
-  --background: transparent;
-  --foreground: #fafafa;
-
-  --card: #111114;
-  --card-foreground: #ffffff;
-
-  --popover: #15151a;
-  --popover-foreground: #ffffff;
-
-  --primary: var(--lavender-400);
-  --primary-foreground: #000000;
-
-  --secondary: var(--slate-800);
-  --secondary-foreground: var(--slate-100);
-
-  --muted: #1a1a1f;
-  --muted-foreground: #a1a1aa;
-
-  --accent: var(--emerald-400);
-  --accent-foreground: #000000;
-
-  --destructive: #ff6b81;
-  --destructive-foreground: #000000;
-
-  --shadow : #15012e;
+  --shadow: #15012e;
   --border: #15012e;
   /* --border: var(--lavender-900); */
   --input: #1f1f23;
@@ -206,7 +152,6 @@
   --sidebar-ring: var(--lavender-500);
 
   --chart-1: var(--lavender-400);
->>>>>>> 4a8bfdc (layout: change StudioDashboard dark theme color)
   --chart-2: var(--emerald-400);
   --chart-3: var(--amber-400);
   --chart-4: var(--sky-400);
