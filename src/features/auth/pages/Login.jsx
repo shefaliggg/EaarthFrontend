@@ -34,11 +34,11 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
         userId: "12345",
         requiresOtp: true,
       };
-
+      navigate("/home");
       /** Navigate to OTP */
-      if (onNavigate) onNavigate("otp", responseData);
-      else if (onSuccess) onSuccess(responseData);
-      else navigate("/auth/otp", { state: responseData });
+      // if (onNavigate) onNavigate("otp", responseData);
+      // else if (onSuccess) onSuccess(responseData);
+      // else navigate("/auth/otp", { state: responseData });
 
     } catch (err) {
       setError("Login failed. Try again.");
