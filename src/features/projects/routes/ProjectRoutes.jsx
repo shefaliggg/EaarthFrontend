@@ -5,19 +5,20 @@ import { Navigate } from 'react-router-dom';
 import ProjectAppsRoutes from './ProjectAppsRoutes';
 
 const ProjectList = lazy(() => import('../pages/ProjectList'));
-const ProjectDetails = lazy(() => import('../pages/ProjectDetails'));
+const ProjectDetail = lazy(() => import('../pages/ProjectDetail'));
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
-const ProjectActivities = lazy(() => import('../pages/ProjectActivities'));
 
 const ProjectRoutes = {
     path: '/projects',
     children: [
         { index: true, element: <ProjectList /> },
         {
-            path: ":projectName",
-            element: <ProjectDetails />,
+            path: ":projectId",
+            element: <ProjectDetail />,
             children: [
-                { path: 'activities', element: <ProjectActivities /> },
+                // { index: true, element: <Navigate to="activities" replace /> },
+
+                // { path: 'activities', element: <Activities /> },
                 // ProjectAppsRoutes,
                 // { path: 'calendar', element: <Calendar /> },
                 // { path: 'call-sheets', element: <CallSheets /> },

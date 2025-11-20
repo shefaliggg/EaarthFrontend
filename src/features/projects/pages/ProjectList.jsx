@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Film, Calendar, Star, Users, Clock, Sparkles,
@@ -257,3 +258,14 @@ export function ProjectList() {
 
 
 export default ProjectList
+=======
+import React from 'react'
+
+function ProjectList() {
+  return (
+    <div>ProjectList</div>
+  )
+}
+
+export default ProjectList
+>>>>>>> bc8daad (refactor(routes) : refactor routes and add new routes and their pages)

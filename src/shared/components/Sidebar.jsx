@@ -16,85 +16,7 @@ import {
 import eaarthLogo from '@/assets/eaarth.png';
 import sidebarMenuList from '../config/sidebarMenuList';
 
-function NavChevron({ isOpen, size = 16 }) {
-  return (
-    <motion.span
-      aria-hidden
-      animate={{ rotate: isOpen ? 180 : 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      style={{ display: 'inline-flex' }}
-    >
-      <ChevronDown className={`w-${size / 4} h-${size / 4}`} />
-    </motion.span>
-  );
-}
-
-const SubItem = React.memo(function SubItem({
-  subItem,
-  depth,
-  pathname,
-  expandedItems,
-  toggleExpanded,
-  navigate,
-}) {
-  const isSubActive = pathname === subItem.page || pathname?.includes(subItem.page);
-  const hasNested = subItem.subItems && subItem.subItems.length > 0;
-  const isSubExpanded = expandedItems.has(subItem.id);
-
-  const onClick = useCallback(() => {
-    if (hasNested) toggleExpanded(subItem.id);
-    else if (subItem.page) {
-      // schedule navigation on next frame to prevent layout jank
-      requestAnimationFrame(() => {
-        navigate(subItem.page.startsWith('/') ? subItem.page : `/${subItem.page}`);
-      });
-    }
-  }, [hasNested, subItem, toggleExpanded, navigate]);
-
-  return (
-    <div key={subItem.id}>
-      <motion.button
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-3xl border shadow-sm dark:shadow-shadow transition-all text-sm ${isSubActive ? `bg-lavender-200 text-lavender-900 border-lavender-300 dark:bg-lavender-500 dark:text-white` : 'text-gray-600 hover:bg-lavender-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-violet-950 dark:hover:text-gray-300'}`}
-        style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
-        aria-expanded={hasNested ? isSubExpanded : undefined}
-        aria-current={isSubActive ? 'page' : undefined}
-      >
-        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-white dark:bg-white' : 'bg-gray-400 dark:bg-gray-600'}`} />
-        <span className="font-semibold flex-1 text-left">{subItem.label}</span>
-        {hasNested && <NavChevron isOpen={isSubExpanded} size={12} />}
-      </motion.button>
-
-      <AnimatePresence initial={false}>
-        {hasNested && isSubExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
-            className="ml-1 mt-1 space-y-1.5"
-          >
-            {subItem.subItems.map((child) => (
-              <SubItem
-                key={child.id}
-                subItem={child}
-                depth={depth + 1}
-                pathname={pathname}
-                expandedItems={expandedItems}
-                toggleExpanded={toggleExpanded}
-                navigate={navigate}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-});
-
-export default function Sidebar({ userRole }) {
+export default function Sidebar({ userRole = "Studio admin"}) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   // store expanded as array of ids for stable comparisons (Set works, but arrays + memoization is easier to reason about)
   const [expandedItems, setExpandedItems] = useState(() => new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
@@ -102,9 +24,22 @@ export default function Sidebar({ userRole }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  // temp user data
-  const userName = 'Razik';
-  const userEmail = 'razik@eaarthstudios.com';
+  // temporary user data
+  const userName = "Razik";
+  const userEmail = "razik@eaarthstudios.com";
+
+  const toggleExpanded = (itemId) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemId)) {
+      newExpanded.delete(itemId);
+    } else {
+      newExpanded.add(itemId);
+    }
+    setExpandedItems(newExpanded);
+  };
+  const handleLogout = () => {
+    navigate("/auth/login")
+  }
 
   // memoize menu to avoid recomputing on each render
   const menuItems = useMemo(() => sidebarMenuList(userRole), [userRole]);
@@ -160,11 +95,19 @@ export default function Sidebar({ userRole }) {
         <div className="flex flex-col h-screen">
           <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6 px-5'} border-b-2 border-lavender-200/50 dark:border-gray-800`}>
             <div className={`flex items-center justify-between ${isCollapsed ? 'flex-col gap-2' : 'flex-row gap-4'}`}>
+
               <Link to="home" className="flex items-center gap-3">
-                {!isCollapsed ? (
-                  <img src={eaarthLogo} alt="Eaarth Studios" className="w-26 h-auto object-contain" />
-                ) : (
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg dark:shadow-shadow"><Sparkles className="w-5 h-5 text-white" /></div>
+                {!isCollapsed && (
+                  <img
+                    src={eaarthLogo}
+                    alt="Eaarth Studios"
+                    className="w-26 h-auto object-contain"
+                  />
+                )}
+                {isCollapsed && (
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-lavender-400 to-pastel-pink-400 flex items-center justify-center shadow-lg">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
                 )}
               </Link>
 
