@@ -304,7 +304,7 @@ function sidebarMenuList(sidebarType) {
     });
   }
 
-  const sidebarMenu = [commonItems[0],...projectsMenuItems,commonItems[1], ...roleBasedItems];
+  const sidebarMenu = [commonItems[0],...projectsMenuItems, ...roleBasedItems, commonItems[1]];
 
   return sidebarMenu;
 }

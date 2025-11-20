@@ -3,7 +3,7 @@ import ErrorBoundary from '@/shared/components/ErrorBoundary';
 import { Navigate } from 'react-router-dom';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
-const AccountSettings = lazy(() => import('@/features/settings/pages/AccountSettings'));
+const AccountSettings = lazy(() => import('@/features/settings/pages/AccountSettings.jsx'));
 
 const SettingsRoutes = {
   path: "settings",

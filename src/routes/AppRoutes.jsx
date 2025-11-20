@@ -7,7 +7,7 @@ import { lazy } from "react";
 const NotFound = lazy(() => import('../shared/pages/NotFound'));
 
 const AppRoutes = [
-  // { path: "/", element: <Navigate to="/auth/login" replace />, },
+  { path: "/", element: <Navigate to="/auth/login" replace />, },
   AuthRoutes,
   DashboardRoutes,
   { path: '*', element: <ErrorBoundary><NotFound /></ErrorBoundary> },

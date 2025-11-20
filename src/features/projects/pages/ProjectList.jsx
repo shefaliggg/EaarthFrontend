@@ -138,7 +138,7 @@ export function ProjectList() {
   });
 
   return (
-    <div className="p-6 py-0 space-y-6">
+    <div className="p-3 py-0 space-y-6">
       <UrlBreadcrumbs />
 
       <div className="flex items-center justify-between flex-wrap gap-4">
