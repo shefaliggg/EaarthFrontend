@@ -1,137 +1,251 @@
-import { Eye, EyeOff, Lock, ArrowRight, CheckCircle, XCircle } from "lucide-react";
+import React from 'react';
+import { Eye, EyeOff, ArrowLeft, Loader, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+// import { useResetPassword } from '../hooks/useResetPassword';
+import eaarthLogo from "../../../../src/assets/eaarth.png";
 
-export default function CreatePasswordScreenUI() {
+export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNavigate, onSkip }) => {
+  const navigate = useNavigate();
+  const [email] = React.useState(initialEmail || 'mohammedshanidt08@gmail.com');
+  
+  const {
+    otp,
+    setOtp,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showNewPassword,
+    setShowNewPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    loading,
+    error,
+    success,
+    handleSubmit,
+  } = useResetPassword(onSuccess, (err) => console.error(err));
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const result = await handleSubmit(email);
+    
+    // If successful and no custom handlers, navigate to login
+    if (result && !onSuccess) {
+      setTimeout(() => {
+        if (onNavigate) {
+          onNavigate('login');
+        } else {
+          navigate('/auth/login');
+        }
+      }, 2000);
+    }
+  };
+
+  const handleBackClick = () => {
+    if (onBack) {
+      onBack();
+    } else if (onNavigate) {
+      onNavigate('login');
+    } else {
+      navigate('/auth/login');
+    }
+  };
+
+  const handleResendOTP = async () => {
+    // Add your resend OTP API call here
+    alert('OTP resent to your email');
+  };
+
+  // Success screen
+  if (success) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center p-4">
+        <div className="w-full max-w-xl bg-white rounded-3xl shadow-xl p-10 text-center border-2 border-purple-100">
+          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Password Reset Successful!</h2>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-start justify-center p-4">
+      {/* Back Button */}
+      <button
+        onClick={handleBackClick}
+        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all"
+      >
+        <ArrowLeft className="w-6 h-6 text-gray-700" />
+      </button>
 
-        {/* Logo/Header */}
+      <div className="w-full max-w-xl mx-auto">
+        {/* Logo (OUTSIDE CARD) */}
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-black mb-2 text-purple-700">EAARTH STUDIOS</h1>
-          <p className="text-sm text-gray-600">CREATE YOUR PASSWORD</p>
+          <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 h-auto mx-auto mb-3" />
+          <p className="text-sm text-gray-600 tracking-wide font-semibold">
+            RESET PASSWORD
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-purple-100">
+        {/* MAIN CARD */}
+        <div className="w-full bg-white rounded-3xl shadow-xl p-10 border-2 border-purple-100">
+          {/* Title */}
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">
+            Reset Your Password
+          </h2>
+          <p className="text-center text-gray-600 mb-8">
+            Enter the OTP sent to <span className="font-semibold">{email}</span>
+          </p>
 
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-purple-100 border-2 border-purple-700 rounded-xl">
-              <Lock className="w-6 h-6 text-purple-700" />
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
+              {error}
             </div>
+          )}
+
+          <form onSubmit={handleFormSubmit} className="space-y-5">
+            {/* OTP */}
             <div>
-              <h2 className="text-xl font-bold text-gray-900">SET PASSWORD</h2>
-              <p className="text-xs text-gray-500">Create a secure password</p>
-            </div>
-          </div>
-
-          {/* User Info (Static UI) */}
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 mb-5">
-            <p className="text-sm text-purple-900">
-              <strong>Email:</strong> example@email.com
-            </p>
-            <p className="text-sm text-purple-900">
-              <strong>Role:</strong> user
-            </p>
-          </div>
-
-          {/* Password Form (UI Only) */}
-          <div className="space-y-4">
-
-            {/* Password Input */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                Password
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Enter OTP *
               </label>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="738401"
+                required
+                maxLength={6}
+                disabled={loading}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl 
+                focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
 
+            {/* New Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Password *
+              </label>
               <div className="relative">
                 <input
-                  type="password"
-                  placeholder="Enter password"
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl 
-                  focus:ring-2 focus:ring-purple-100 focus:border-purple-500 outline-none 
-                  transition-all placeholder:text-gray-400 text-gray-900 pr-12"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  required
+                  disabled={loading}
+                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl 
+                  focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                  outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
-
-                {/* Toggle hidden (no logic) */}
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 
-                  hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-all"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                 >
-                  <Eye className="w-4 h-4" />
+                  {showNewPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                Confirm Password
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password *
               </label>
-
               <div className="relative">
                 <input
-                  type="password"
-                  placeholder="Confirm password"
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl 
-                  focus:ring-2 focus:ring-purple-100 focus:border-purple-500 outline-none 
-                  transition-all placeholder:text-gray-400 text-gray-900 pr-12"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                  disabled={loading}
+                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl 
+                  focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                  outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
-
-                {/* Toggle hidden (no logic) */}
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 
-                  hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-all"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                 >
-                  <EyeOff className="w-4 h-4" />
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Password Requirements (Static UI) */}
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <p className="text-xs font-bold text-gray-700 mb-2">
-                PASSWORD REQUIREMENTS:
-              </p>
-
-              <Requirement text="At least 8 characters" />
-              <Requirement text="One uppercase letter" />
-              <Requirement text="One lowercase letter" />
-              <Requirement text="One number" />
-              <Requirement text="One special character" />
-              <Requirement text="Passwords match" />
+            {/* Guidelines */}
+            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">
+              <p className="font-medium mb-2">Password must include:</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>8+ characters</li>
+                <li>Uppercase, lowercase, number, and special character</li>
+              </ul>
             </div>
 
-            {/* Continue Button (UI Only, always enabled) */}
+            {/* Reset Button */}
             <button
-              className="w-full bg-purple-700 text-white font-bold py-4 px-6 rounded-xl 
-              hover:bg-purple-800 hover:shadow-xl transition-all duration-300 
-              flex items-center justify-center gap-2 group transform hover:scale-105 
-              border-2 border-purple-800"
+              type="submit"
+              disabled={loading || !otp || !newPassword || !confirmPassword}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 
+              text-white font-bold py-4 rounded-xl hover:shadow-xl 
+              transition-all hover:scale-[1.02] disabled:opacity-50 
+              disabled:cursor-not-allowed disabled:hover:scale-100 
+              flex items-center justify-center gap-2"
             >
-              <span>CONTINUE</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  <span>RESETTING...</span>
+                </>
+              ) : (
+                'RESET PASSWORD'
+              )}
+            </button>
+          </form>
+
+          {/* Resend */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleResendOTP}
+              disabled={loading}
+              className="text-purple-600 hover:text-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Resend OTP
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="text-center mt-6 text-gray-500 text-xs">
-          Step 1 of 4: Password Creation
+          {/* Skip */}
+          {onSkip && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={onSkip}
+                disabled={loading}
+                className="text-gray-500 hover:text-gray-700 font-medium transition-colors disabled:opacity-50"
+              >
+                Skip
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
 
-/* Static Requirement Item (No logic, always gray) */
-function Requirement({ text }) {
-  return (
-    <div className="flex items-center gap-2">
-      <XCircle className="w-4 h-4 text-gray-300" />
-      <span className="text-xs text-gray-500">{text}</span>
-    </div>
-  );
-}
+export default ResetPasswordPage;
