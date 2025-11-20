@@ -11,7 +11,7 @@
   --primary: var(--lavender-600);
   --primary-foreground: #ffffff;
 
-  --accent: var(--mind-600);
+  --accent: var(--mint-600);
   --accent-foreground: #ffffff;
 
   --background: #FAFAFA;
@@ -32,7 +32,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
 
-  --shadow : #15012e;
+  --shadow: #15012e;
   --border: var(--lavender-200);
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
@@ -112,7 +112,7 @@
 
 .dark {
   /* Premium Dark Theme */
-  --background: transparent;
+  --background: #0b0b0e;
   --foreground: #fafafa;
 
   --card: #111114;
@@ -124,8 +124,8 @@
   --primary: var(--lavender-400);
   --primary-foreground: #000000;
 
-  --secondary: var(--slate-800);
-  --secondary-foreground: var(--slate-100);
+  --secondary: var(--lavender-900);
+  --secondary-foreground: var(--lavender-100);
 
   --muted: #1a1a1f;
   --muted-foreground: #a1a1aa;
@@ -136,7 +136,7 @@
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
-  --shadow : #15012e;
+  --shadow: #15012e;
   --border: #15012e;
   /* --border: var(--lavender-900); */
   --input: #1f1f23;

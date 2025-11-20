@@ -16,9 +16,9 @@ const DashboardLayout = () => {
       <div className="flex-1">
         <Header />
         <div className="p-6">
-          <PageTransition>
+          {/* <PageTransition> */}
             <Outlet />
-          </PageTransition>
+          {/* </PageTransition> */}
         </div>
       </div>
     </div>
