@@ -66,22 +66,22 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
         <div className="flex justify-center mb-3">
           <img src={eaarthLogo} alt="Eaarth Studios" className="w-48 h-auto object-contain" />
         </div>
-        <p className="text-gray-600 font-bold uppercase tracking-widest text-xs">
+        <p className="text-gray-600 font-medium uppercase tracking-widest text-xs">
           Production Management Platform
         </p>
       </div>
 
       {/* ---------------- Main Content Grid ---------------- */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-6">
         {/* ---------------- Left: Login Form Card ---------------- */}
-        <div className="bg-white rounded-4xl shadow-2xl p-10 border">
+        <div className="bg-white rounded-3xl shadow-lg p-6 border">
           {/* Title */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-[#7e57c2] flex items-center justify-center shadow-md">
                 <LogIn className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">LOGIN</h2>
+              <h2 className="text-2xl font-medium text-gray-900">LOGIN</h2>
             </div>
             <p className="text-gray-500 text-sm">Welcome back! Please enter your details.</p>
           </div>
@@ -97,7 +97,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
           <form onSubmit={handleFormSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
                 Email Address
               </label>
               <input
@@ -107,7 +107,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
                 placeholder="your@email.com"
                 required
                 disabled={loading}
-                className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl
+                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl
                   focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all
                   text-sm text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
@@ -115,7 +115,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
                 Password
               </label>
 
@@ -127,7 +127,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
                   placeholder="Enter your password"
                   required
                   disabled={loading}
-                  className="w-full px-5 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl
                     focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all
                     text-sm text-gray-900 pr-12 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
@@ -162,7 +162,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={loading}
-                className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors
+                className="text-xs font-medium text-purple-600 hover:text-purple-700 transition-colors
                   disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 Forgot password?
@@ -173,8 +173,8 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full bg-gradient-to-r from-purple-600 mt-5 to-pink-600 text-white font-bold py-3
-                rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed
+              className="w-full bg-[#7e57c2] mt-5 text-white font-medium py-3
+                rounded-xl hover:bg-[#7e57c2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                 shadow-md text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -190,7 +190,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
         </div>
 
         {/* ---------------- Right: QR Login Section ---------------- */}
-        <div className="rounded-4xl shadow-lg border p-10 relative overflow-hidden ">
+        <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden ">
           {/* Title */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-white/40 backdrop-blur-sm flex items-center justify-center">
@@ -203,13 +203,13 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
           </div>
 
           {/* QR Code Box */}
-          <div className="bg-white rounded-4xl py-10 m-8 mx-12 flex items-center justify-center shadow-md">
+          <div className="bg-white rounded-3xl py-8 m-8 mx-12 flex items-center justify-center shadow-md">
             <QRCode value="EAARTH-STUDIOS-LOGIN" size={240} level="H" fgColor="#7C3AED" />
           </div>
 
           {/* How-To Steps */}
           <div className="space-y-4">
-            <h3 className="font-bold text-sm mb-3 text-purple-900">How to use:</h3>
+            <h3 className="font-medium text-sm mb-3 text-purple-900">How to use:</h3>
 
             {[
               "Open Eaarth Studios mobile app",
@@ -218,7 +218,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
               "You'll be logged in instantly!",
             ].map((t, i) => (
               <div className="flex items-center gap-3" key={i}>
-                <div className="w-8 h-8 rounded-md bg-purple-900/20 flex items-center justify-center text-purple-900 text-xs font-bold">
+                <div className="w-8 h-8 rounded-md bg-purple-900/20 flex items-center justify-center text-purple-900 text-xs font-medium">
                   {i + 1}
                 </div>
                 <p className="text-xs text-gray-800">{t}</p>
@@ -238,7 +238,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
                   <div className="w-10 h-10 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
                     <Icon className="w-5 h-5 text-purple-900" />
                   </div>
-                  <p className="text-[10px] font-bold text-purple-900">{text}</p>
+                  <p className="text-[10px] font-medium text-purple-900">{text}</p>
                 </div>
               ))}
             </div>
@@ -255,3 +255,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 };
 
 export default LoginPage;
+
+
+
+

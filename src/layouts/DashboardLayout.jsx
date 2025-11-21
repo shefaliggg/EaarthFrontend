@@ -11,7 +11,7 @@ const DashboardLayout = () => {
   const user = { userType: "studio-admin" };
 
   return (
-    <div className="grid grid-cols-[auto_1fr] min-h-screen">
+    <div className="grid grid-cols-[auto_1fr] min-h-screen bg-[#f1edf5] dark:bg-[#19171c]">
       <Sidebar userRole={user?.userType} />
       <div className="flex-1">
         <Header />
@@ -26,3 +26,6 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+
+
+

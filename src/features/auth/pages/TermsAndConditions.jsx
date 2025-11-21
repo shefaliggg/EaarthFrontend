@@ -33,8 +33,8 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
         <div className="flex items-center justify-between mb-5 gap-2">
           <button
             onClick={() => onNavigate('set-password')}
-            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-2xl
-                       hover:bg-gray-50 transition-all font-semibold text-gray-600 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl
+                       hover:bg-gray-50 transition-all font-medium text-gray-600 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">BACK</span>
@@ -43,8 +43,8 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
           {onSkip && (
             <button
               onClick={onSkip}
-              className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-purple-600
-                         text-purple-600 rounded-2xl hover:bg-purple-50 transition-all font-semibold text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-purple-600
+                         text-purple-600 rounded-2xl hover:bg-purple-50 transition-all font-medium text-sm"
             >
               <Home className="w-4 h-4" />
               <span className="hidden sm:inline">SKIP</span>
@@ -53,11 +53,11 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl border-2 border-purple-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-md border border-purple-100 overflow-hidden">
 
           {/* Header */}
-          <div className="p-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="p-6 text-center">
+            <h2 className="text-2xl font-medium text-gray-900 mb-2">
               TERMS & CONDITIONS
             </h2>
             <p className="text-sm text-gray-500">
@@ -67,8 +67,8 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
 
           {/* Scrollable Terms */}
           <div className="px-6 pb-6 md:px-10">
-            <div className="bg-gray-50 border-2 border-gray-200 p-6 rounded-3xl max-h-96 overflow-y-auto mb-6">
-              <h3 className="font-bold text-purple-600 mb-2 text-lg">
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl max-h-96 overflow-y-auto mb-6">
+              <h3 className="font-medium text-purple-600 mb-2 text-lg">
                 E-AARTH PLATFORM TERMS & CONDITIONS
               </h3>
               <p className="text-xs text-gray-500 mb-4">
@@ -78,56 +78,56 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
               <div className="space-y-4 text-sm text-gray-700">
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">1. ACCEPTANCE OF TERMS</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">1. ACCEPTANCE OF TERMS</h4>
                   <p>
                     By using the E-AARTH platform, you acknowledge that you agree to be bound by these Terms and Conditions.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">2. USER RESPONSIBILITIES</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">2. USER RESPONSIBILITIES</h4>
                   <p>
                     You are responsible for keeping your account credentials secure and for all activity under your account.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">3. DATA PRIVACY</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">3. DATA PRIVACY</h4>
                   <p>
                     We are committed to protecting your personal information, which will be handled according to our Privacy Policy.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">4. PLATFORM USAGE</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">4. PLATFORM USAGE</h4>
                   <p>
                     You agree not to misuse the platform, disrupt services, or violate applicable laws.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">5. INTELLECTUAL PROPERTY</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">5. INTELLECTUAL PROPERTY</h4>
                   <p>
                     All platform content and features are owned by E-AARTH Studios and protected by copyright laws.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">6. ACCOUNT TERMINATION</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">6. ACCOUNT TERMINATION</h4>
                   <p>
                     We may suspend or terminate your account for violations of these terms.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">7. LIMITATION OF LIABILITY</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">7. LIMITATION OF LIABILITY</h4>
                   <p>
                     E-AARTH is not liable for indirect or consequential damages arising from use of the platform.
                   </p>
                 </section>
 
                 <section>
-                  <h4 className="font-bold text-gray-900 mb-1">8. CHANGES TO TERMS</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">8. CHANGES TO TERMS</h4>
                   <p>
                     We may modify these terms anytime. Continued use of the platform indicates acceptance.
                   </p>
@@ -158,7 +158,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
             <button
               onClick={handleContinue}
               disabled={!accepted}
-              className={`w-full py-4 font-bold rounded-2xl transition-all ${
+              className={`w-full py-4 font-medium rounded-2xl transition-all ${
                 accepted
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-95'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -183,3 +183,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
     </div>
   );
 }
+
+
+
+

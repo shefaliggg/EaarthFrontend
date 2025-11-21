@@ -66,14 +66,14 @@ export default function identityVerification() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10 border-2 border-purple-100 w-full">
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-6 border border-purple-100 w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-purple-100 border-2 border-purple-700 rounded-3xl flex-shrink-0">
+            <div className="p-4 bg-purple-100 border border-purple-700 rounded-2xl flex-shrink-0">
               <Scan className="w-6 md:w-7 h-6 md:h-7 text-purple-700" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">FACE VERIFICATION</h2>
+              <h2 className="text-xl md:text-xl font-medium text-gray-900">FACE VERIFICATION</h2>
               <p className="text-xs text-gray-500">Comparing ID and live photos</p>
             </div>
           </div>
@@ -82,16 +82,16 @@ export default function identityVerification() {
           <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
             {/* ID Photo */}
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-600 text-center">ID PHOTO</p>
-              <div className="rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-200">
+              <p className="text-xs font-medium text-gray-600 text-center">ID PHOTO</p>
+              <div className="rounded-2xl md:rounded-2xl overflow-hidden border border-gray-200">
                 <img src={idPhotoData} alt="ID" className="w-full h-48 md:h-56 object-cover" />
               </div>
             </div>
 
             {/* Live Photo */}
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-600 text-center">LIVE PHOTO</p>
-              <div className="rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-200">
+              <p className="text-xs font-medium text-gray-600 text-center">LIVE PHOTO</p>
+              <div className="rounded-2xl md:rounded-2xl overflow-hidden border border-gray-200">
                 <img src={livePhotoData} alt="Live" className="w-full h-48 md:h-56 object-cover" />
               </div>
             </div>
@@ -99,14 +99,14 @@ export default function identityVerification() {
 
           {/* Verification Status */}
           {isVerifying ? (
-            <div className="bg-purple-50 border-2 border-purple-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+            <div className="bg-purple-50 border border-purple-300 rounded-2xl p-6 md:p-6 text-center mb-6">
               <div className="relative w-20 h-20 mx-auto mb-4">
                 <Scan className="w-20 h-20 text-purple-600 animate-pulse" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin"></div>
+                  <div className="w-14 h-14 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin"></div>
                 </div>
               </div>
-              <p className="text-base md:text-lg font-bold text-purple-900 mb-3">
+              <p className="text-base md:text-lg font-medium text-purple-900 mb-3">
                 AI VERIFICATION IN PROGRESS...
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
@@ -120,9 +120,9 @@ export default function identityVerification() {
           ) : (
             <>
               {verificationResult?.match ? (
-                <div className="bg-green-50 border-2 border-green-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+                <div className="bg-green-50 border border-green-300 rounded-2xl p-6 md:p-6 text-center mb-6">
                   <CheckCircle className="w-16 md:w-20 h-16 md:h-20 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-xl md:text-2xl font-bold text-green-900 mb-2">
+                  <h3 className="text-xl md:text-xl font-medium text-green-900 mb-2">
                     VERIFICATION SUCCESSFUL!
                   </h3>
                   <p className="text-base md:text-lg text-green-700 mb-4">
@@ -136,9 +136,9 @@ export default function identityVerification() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-red-50 border-2 border-red-300 rounded-3xl p-6 md:p-8 text-center mb-6">
+                <div className="bg-red-50 border border-red-300 rounded-2xl p-6 md:p-6 text-center mb-6">
                   <XCircle className="w-16 md:w-20 h-16 md:h-20 text-red-600 mx-auto mb-4" />
-                  <h3 className="text-xl md:text-2xl font-bold text-red-900 mb-2">
+                  <h3 className="text-xl md:text-xl font-medium text-red-900 mb-2">
                     VERIFICATION FAILED
                   </h3>
                   <p className="text-base md:text-lg text-red-700 mb-4">
@@ -151,7 +151,7 @@ export default function identityVerification() {
                     </p>
                   </div>
                   <div className="text-left">
-                    <p className="text-xs md:text-sm text-red-700 font-bold mb-2">
+                    <p className="text-xs md:text-sm text-red-700 font-medium mb-2">
                       COMMON ISSUES:
                     </p>
                     <ul className="text-xs md:text-sm text-red-600 space-y-1">
@@ -172,7 +172,7 @@ export default function identityVerification() {
               {verificationResult?.match ? (
                 <button
                   onClick={handleContinue}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 md:py-4 rounded-3xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium py-3.5 md:py-4 rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                 >
                   CONTINUE TO TERMS & CONDITIONS
                   <ArrowRight className="w-5 h-5" />
@@ -181,14 +181,14 @@ export default function identityVerification() {
                 <>
                   <button
                     onClick={handleRetry}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 md:py-4 rounded-3xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2"
                   >
                     TRY AGAIN
                     <ArrowRight className="w-5 h-5" />
                   </button>
                   <button
                     onClick={performVerification}
-                    className="w-full bg-gray-100 text-gray-700 font-bold py-3.5 md:py-4 rounded-3xl hover:bg-gray-200 border-2 border-gray-200 flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-gray-100 text-gray-700 font-medium py-3.5 md:py-4 rounded-2xl hover:bg-gray-200 border border-gray-200 flex items-center justify-center gap-2 transition-colors"
                   >
                     <Loader className="w-5 h-5" />
                     RE-RUN VERIFICATION
@@ -207,3 +207,6 @@ export default function identityVerification() {
     </div>
   );
 }
+
+
+

@@ -103,25 +103,25 @@ export function ProfileGeneral({ isDarkMode = false }) {
         ) : (
           <button
             // onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all font-bold"
+            className="px-4 py-2 bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white rounded-lg shadow-lg font-medium"
           >
             EDIT
           </button>
         )}
       </div>
 
-      {/* Names Section */}
-      <div className={`rounded-xl p-4 md:p-6 shadow-sm border ${
+      {/* Documents Section */}
+      <div className={`rounded-xl p-4 md:p-6 shadow-md dark:shadow-shadow border ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
       }`}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className={`text-lg md:text-xl font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+          <h2 className={`text-lg md:text-lg font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
             NAMES
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-2xl">{getCountryFlag(profile.countryOfLegalNationality)}</span>
             <div className="text-right">
-              <div className={`font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div className={`font-medium flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {profile.passportLastName}, {profile.passportFirstName}
                 {isVerified && (
                   <div className="flex items-center gap-1">
@@ -273,7 +273,7 @@ export function ProfileGeneral({ isDarkMode = false }) {
       <div className={`rounded-xl p-4 md:p-6 shadow-sm border ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
       }`}>
-        <h2 className={`text-lg md:text-xl font-bold mb-4 md:mb-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+        <h2 className={`text-lg md:text-lg font-medium mb-4 md:mb-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
           PERSONAL
         </h2>
         
@@ -386,7 +386,7 @@ export function ProfileGeneral({ isDarkMode = false }) {
       <div className={`rounded-xl p-4 md:p-6 shadow-sm border ${
         isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
       }`}>
-        <h2 className={`text-lg md:text-xl font-bold mb-4 md:mb-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+        <h2 className={`text-lg md:text-lg font-medium mb-4 md:mb-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
           PROOF OF NATIONALITY
         </h2>
         
@@ -459,3 +459,6 @@ export function ProfileGeneral({ isDarkMode = false }) {
     </div>
   );
 }
+
+
+

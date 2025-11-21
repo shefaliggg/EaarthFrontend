@@ -64,17 +64,17 @@ export function ChatPanel({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-lg z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b border-gray-200">
+            <div className="bg-[#ede7f6] p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">DEPARTMENT CHAT</h2>
+                    <h2 className="text-lg font-medium text-gray-900">DEPARTMENT CHAT</h2>
                     <p className="text-sm text-gray-500">{onlineMembers.filter(m => m.status === 'online').length} members online</p>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export function ChatPanel({ isOpen, onClose }) {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-br from-gray-50/50 to-green-50/30">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
@@ -131,19 +131,19 @@ export function ChatPanel({ isOpen, onClose }) {
                   className={`flex gap-3 ${message.isOwn ? 'flex-row-reverse' : ''}`}
                 >
                   {!message.isOwn && (
-                    <div className="w-8 h-8 bg-purple-100 border-2 border-purple-700 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-purple-700">
+                    <div className="w-8 h-8 bg-purple-100 border border-purple-700 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-medium text-purple-700">
                         {message.sender.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
                   )}
                   <div className={`flex-1 max-w-[75%] ${message.isOwn ? 'flex flex-col items-end' : ''}`}>
                     {!message.isOwn && (
-                      <p className="text-xs font-bold text-gray-700 mb-1">{message.sender}</p>
+                      <p className="text-xs font-medium text-gray-700 mb-1">{message.sender}</p>
                     )}
                     <div className={`px-4 py-2.5 rounded-2xl ${
                       message.isOwn
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-tr-sm'
+                        ? 'bg-[#7e57c2] text-white rounded-tr-sm'
                         : 'bg-white text-gray-900 rounded-tl-sm shadow-sm border border-gray-200'
                     }`}>
                       <p className="text-sm">{message.message}</p>
@@ -183,7 +183,7 @@ export function ChatPanel({ isOpen, onClose }) {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
-                  className="w-12 h-12 bg-gradient-to-r from-green-400 to-emerald-400 text-white rounded-full flex items-center justify-center hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-12 h-12 bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-5 h-5" />
                 </button>
@@ -195,3 +195,6 @@ export function ChatPanel({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
+
+
+
