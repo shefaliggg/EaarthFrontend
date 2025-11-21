@@ -139,7 +139,7 @@ export function ProjectList() {
 
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             MY PROJECTS
           </h1>
           <p className="text-sm mt-1 text-gray-700 dark:text-gray-400">
@@ -165,7 +165,7 @@ export function ProjectList() {
 
 
       {/* Search Bar */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl border shadow-lg dark:shadow-shadow">
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl border shadow-sm dark:shadow-shadow">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
         <input
           type="text"

@@ -13,8 +13,11 @@ import { motion } from 'framer-motion';
 // import { Tasks } from './Tasks';
 import { useFavorites } from '../hooks/useFavorites';
 import ProjectActionGridCard from '../components/ProjectActionGridCard';
-import { CheckSquare, Star } from 'lucide-react';
+import { CheckSquare, ChevronRight, Star } from 'lucide-react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
+import ProjectActionListCard from '../components/ProjectActionListCard';
 // import { TimesheetsPage } from './TimesheetsPage';
 // import { 
 //   div, 
@@ -103,15 +106,16 @@ export default function ProjectDetails() {
   // Overview page with category cards
   return (
     <div className={`min-h-screen`}>
-      {/* Profile-Style Header */}
-      <div className={`rounded-xl border p-6 mb-6 shadow-md dark:shadow-shadow dark:bg-gray-800 dark:border-gray-700 bg-purple-50 border-purple-200`}>
-        <div className="flex items-center justify-between gap-6">
-          {/* Left: Avatar & Info */}
-          <div className="flex items-center gap-4">
+      <UrlBreadcrumbs />
+
+      <div className={`mt-6 mb-4 pb-6 border-b  `}>
+        <div className="flex items-center gap-6">
+
+          <div className="flex items-center gap-4 flex-1">
             {/* Project Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-purple-600 flex items-center justify-center">
-                <span className="text-xl font-medium text-white">
+              <div className="w-20 h-20 rounded-xl bg-purple-600 flex items-center justify-center">
+                <span className="text-xl font-bold text-white">
                   {projectInfo?.name.substring(0, 2) || 'PR'}
                 </span>
               </div>
@@ -122,7 +126,7 @@ export default function ProjectDetails() {
 
             {/* Project Info */}
             <div>
-              <h1 className={`text-xl font-semibold dark:text-white text-gray-900`}>
+              <h1 className={`text-2xl font-bold dark:text-white text-gray-900`}>
                 {projectInfo?.name || 'PROJECT'}
               </h1>
               <p className={`text-sm mt-1 dark:text-gray-400 text-gray-600`}>
@@ -180,6 +184,7 @@ export default function ProjectDetails() {
               </button>
             </div>
           </div>
+          <ViewToggleButton view={viewMode} onViewChange={setViewMode} />
         </div>
       </div>
 
@@ -195,30 +200,9 @@ export default function ProjectDetails() {
       {/* List View - Category Cards */}
       {viewMode === 'list' && (
         <div className="space-y-4">
-          {mainFeatures.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div key={feature.id}>
-                <button
-                  onClick={() => navigate(feature.id)}
-                  className="w-full flex items-center gap-4 text-left"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {feature.label}
-                    </h3>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {feature.subtitle}
-                    </p>
-                  </div>
-                  <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-                </button>
-              </div>
-            );
-          })}
+          {mainFeatures.map((feature) => (
+            <ProjectActionListCard feature={feature} key={feature.id} />
+          ))}
         </div>
       )}
     </div>

@@ -1,11 +1,11 @@
 import { lazy } from 'react';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
-import { Navigate } from 'react-router-dom';
-
 import ProjectAppsRoutes from './ProjectAppsRoutes';
 
 const ProjectList = lazy(() => import('../pages/ProjectList'));
-const ProjectDetail = lazy(() => import('../pages/ProjectDetail'));
+const ProjectActivities = lazy(() => import('../pages/ProjectActivities'));
+const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
+
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
 const ProjectRoutes = {
@@ -16,10 +16,8 @@ const ProjectRoutes = {
             path: ":projectId",
             element: <ProjectDetail />,
             children: [
-                // { index: true, element: <Navigate to="activities" replace /> },
-
-                // { path: 'activities', element: <Activities /> },
-                // ProjectAppsRoutes,
+                { path: 'activities', element: <ProjectActivities /> },
+                ProjectAppsRoutes,
                 // { path: 'calendar', element: <Calendar /> },
                 // { path: 'call-sheets', element: <CallSheets /> },
                 // { path: 'cast-crew', element: <CastCrew /> },

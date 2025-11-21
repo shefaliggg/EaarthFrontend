@@ -12,7 +12,7 @@ function ProjectActionGridCard({feature}) {
     return (
         <motion.div
             key={feature.id}
-            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-purple-500 bg-purple-50 border-purple-200 hover:border-purple-400`}
+            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-purple-500 bg-purple-50 border-purple-200 hover:border-purple-400 hover:shadow-lg dark:shadow-shadow`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}

@@ -2,10 +2,11 @@ import { lazy } from 'react';
 import ErrorBoundary from '@/shared/components/ErrorBoundary';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
+const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 
 const ProjectAppsRoutes = {
     path: "apps",
-    // element: <Apps />,
+    element: <ProjectApps />,
     children: [
         // { index: true, element: <Navigate to="props" replace /> },
 
@@ -26,7 +27,7 @@ const ProjectAppsRoutes = {
         // { path: 'timesheets', element: <Timesheets /> },
         // { path: 'cloud', element: <Cloud /> },
 
-            { path: '*', element: <NotFound /> }
+        { path: '*', element: <NotFound /> }
     ],
 };
 
