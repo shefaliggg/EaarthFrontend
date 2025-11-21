@@ -1,31 +1,45 @@
 import { lazy } from 'react';
-import ErrorBoundary from '@/shared/components/ErrorBoundary';
+
+const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
+const ProjectAppProps = lazy(() => import('../pages/ProjectApps/ProjectAppProps'));
+const ProjectAppCostume = lazy(() => import('../pages/ProjectApps/ProjectAppCostume'));
+const ProjectAppCatering = lazy(() => import('../pages/ProjectApps/ProjectAppCatering'));
+const ProjectAppAccounts = lazy(() => import('../pages/ProjectApps/ProjectAppAccounts'));
+const ProjectAppScript = lazy(() => import('../pages/ProjectApps/ProjectAppScript'));
+const ProjectAppMarket = lazy(() => import('../pages/ProjectApps/ProjectAppMarket'));
+const ProjectAppStocks = lazy(() => import('../pages/ProjectApps/ProjectAppStocks'));
+const ProjectAppTransport = lazy(() => import('../pages/ProjectApps/ProjectAppTransport'));
+const ProjectAppEPlayer = lazy(() => import('../pages/ProjectApps/ProjectAppEPlayer'));
+const ProjectAppForms = lazy(() => import('../pages/ProjectApps/ProjectAppForms'));
+const ProjectAppAnimals = lazy(() => import('../pages/ProjectApps/ProjectAppAnimals'));
+const ProjectAppVehicles = lazy(() => import('../pages/ProjectApps/ProjectAppVehicles'));
+const ProjectAppLocations = lazy(() => import('../pages/ProjectApps/ProjectAppLocations'));
+const ProjectAppApproval = lazy(() => import('../pages/ProjectApps/ProjectAppApproval'));
+const ProjectAppTimesheets = lazy(() => import('../pages/ProjectApps/ProjectAppTimesheets'));
+const ProjectAppCloud = lazy(() => import('../pages/ProjectApps/ProjectAppCloud'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
-const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 
 const ProjectAppsRoutes = {
     path: "apps",
     element: <ProjectApps />,
     children: [
-        // { index: true, element: <Navigate to="props" replace /> },
-
-        // { path: 'props', element: <Props /> },
-        // { path: 'costume', element: <Costume /> },
-        // { path: 'catering', element: <Catering /> },
-        // { path: 'accounts', element: <Accounts /> },
-        // { path: 'script', element: <Script /> },
-        // { path: 'market', element: <Market /> },
-        // { path: 'stocks', element: <Stocks /> },
-        // { path: 'transport', element: <Transport /> },
-        // { path: 'e-player', element: <EPlayer /> },
-        // { path: 'forms', element: <Forms /> },
-        // { path: 'animals', element: <Animals /> },
-        // { path: 'vehicles', element: <Vehicles /> },
-        // { path: 'locations', element: <Locations /> },
-        // { path: 'approval', element: <Approval /> },
-        // { path: 'timesheets', element: <Timesheets /> },
-        // { path: 'cloud', element: <Cloud /> },
+        { path: 'props', element: <ProjectAppProps /> },
+        { path: 'costume', element: <ProjectAppCostume /> },
+        { path: 'catering', element: <ProjectAppCatering /> },
+        { path: 'accounts', element: <ProjectAppAccounts /> },
+        { path: 'script', element: <ProjectAppScript /> },
+        { path: 'market', element: <ProjectAppMarket /> },
+        { path: 'stocks', element: <ProjectAppStocks /> },
+        { path: 'transport', element: <ProjectAppTransport /> },
+        { path: 'e-player', element: <ProjectAppEPlayer /> },
+        { path: 'forms', element: <ProjectAppForms /> },
+        { path: 'animals', element: <ProjectAppAnimals /> },
+        { path: 'vehicles', element: <ProjectAppVehicles /> },
+        { path: 'locations', element: <ProjectAppLocations /> },
+        { path: 'approval', element: <ProjectAppApproval /> },
+        { path: 'timesheets', element: <ProjectAppTimesheets /> },
+        { path: 'cloud', element: <ProjectAppCloud /> },
 
         { path: '*', element: <NotFound /> }
     ],

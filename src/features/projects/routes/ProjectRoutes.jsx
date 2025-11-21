@@ -1,10 +1,22 @@
 import { lazy } from 'react';
-import ErrorBoundary from '@/shared/components/ErrorBoundary';
 import ProjectAppsRoutes from './ProjectAppsRoutes';
 
 const ProjectList = lazy(() => import('../pages/ProjectList'));
-const ProjectActivities = lazy(() => import('../pages/ProjectActivities'));
 const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
+
+const ProjectActivities = lazy(() => import('../pages/ProjectActivities'));
+const ProjectCalendar = lazy(() => import('../pages/ProjectCalendar'));
+const ProjectCallSheets = lazy(() => import('../pages/ProjectCallSheets'));
+const ProjectCastCrew = lazy(() => import('../pages/ProjectCastCrew'));
+const ProjectCloudStorage = lazy(() => import('../pages/ProjectCloudStorage'));
+const ProjectDepartments = lazy(() => import('../pages/ProjectDepartments'));
+const ProjectNoticeBoard = lazy(() => import('../pages/ProjectNoticeBoard'));
+const ProjectOnboarding = lazy(() => import('../pages/ProjectOnboarding'));
+const ProjectChat = lazy(() => import('../pages/ProjectChat'));
+const ProjectShootingSchedule = lazy(() => import('../pages/ProjectShootingSchedule'));
+const ProjectTasks = lazy(() => import('../pages/ProjectTasks'));
+const ProjectTimeline = lazy(() => import('../pages/ProjectTimeline'));
+const ProjectSettings = lazy(() => import('../pages/ProjectSettings'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -18,18 +30,18 @@ const ProjectRoutes = {
             children: [
                 { path: 'activities', element: <ProjectActivities /> },
                 ProjectAppsRoutes,
-                // { path: 'calendar', element: <Calendar /> },
-                // { path: 'call-sheets', element: <CallSheets /> },
-                // { path: 'cast-crew', element: <CastCrew /> },
-                // { path: 'cloud-storage', element: <CloudStorage /> },
-                // { path: 'departments', element: <Departments /> },
-                // { path: 'notice-board', element: <NoticeBoard /> },
-                // { path: 'onboarding', element: <Onboarding /> },
-                // { path: 'chat', element: <ProjectChat /> },
-                // { path: 'shooting-schedule', element: <ShootingSchedule /> },
-                // { path: 'tasks', element: <Tasks /> },
-                // { path: 'timeline', element: <Timeline /> },
-                // { path: 'settings', element: <ProjectSettings /> },
+                { path: 'calendar', element: <ProjectCalendar /> },
+                { path: 'call-sheets', element: <ProjectCallSheets /> },
+                { path: 'cast-crew', element: <ProjectCastCrew /> },
+                { path: 'cloud-storage', element: <ProjectCloudStorage /> },
+                { path: 'departments', element: <ProjectDepartments /> },
+                { path: 'notice-board', element: <ProjectNoticeBoard /> },
+                { path: 'onboarding', element: <ProjectOnboarding /> },
+                { path: 'chat', element: <ProjectChat /> },
+                { path: 'shooting-schedule', element: <ProjectShootingSchedule /> },
+                { path: 'tasks', element: <ProjectTasks /> },
+                { path: 'timeline', element: <ProjectTimeline /> },
+                { path: 'settings', element: <ProjectSettings /> },
 
                 { path: '*', element: <NotFound /> }
 
