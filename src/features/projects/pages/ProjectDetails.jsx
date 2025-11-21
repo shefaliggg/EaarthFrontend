@@ -68,7 +68,7 @@ export default function ProjectDetails() {
   ];
 
   return (
-    <div className={`min-h-screen`}>
+    <div className={`min-h-screen px-2`}>
       <UrlBreadcrumbs />
 
       {isChildRoute

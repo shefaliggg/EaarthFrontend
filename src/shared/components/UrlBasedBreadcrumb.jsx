@@ -17,7 +17,7 @@ export default function UrlBreadcrumbs() {
     }
 
     const segments = pathname.split('/');
-    console.log('Segments:', segments);
+
     let accumulatedPath = '';
     const crumbs = segments.map((segment, index) => {
         const isRoot = index === 0 && segment === '';
@@ -25,7 +25,7 @@ export default function UrlBreadcrumbs() {
             return {
                 key: 'home',
                 label: 'Home',
-                href: '/',
+                href: '/home',
                 isLast: segments.length === 1,
             };
         }
