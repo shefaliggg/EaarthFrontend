@@ -1,8 +1,21 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom';
+import ProjectAppsLayout from '../../components/ProjectAppsLayout';
 
 function ProjectApps() {
+  const isChildRoute = location.pathname.split("/").length > 4;
+
   return (
-    <div>ProjectApps</div>
+    <>
+    {isChildRoute
+        ? <Outlet />
+        : <ProjectAppsLayout
+          // projectInfo={projectInfo}
+          // isFavorite={isFavorite}
+          // toggleFavorite={toggleFavorite}
+        />
+      }
+    </>
   )
 }
 

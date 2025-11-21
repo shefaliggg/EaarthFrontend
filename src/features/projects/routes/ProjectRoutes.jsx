@@ -13,7 +13,7 @@ const ProjectRoutes = {
     children: [
         { index: true, element: <ProjectList /> },
         {
-            path: ":projectId",
+            path: ":projectName",
             element: <ProjectDetail />,
             children: [
                 { path: 'activities', element: <ProjectActivities /> },

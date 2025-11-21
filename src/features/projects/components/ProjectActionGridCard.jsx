@@ -17,7 +17,7 @@ function ProjectActionGridCard({feature}) {
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={() => navigate(feature.id)}
+            onClick={() => navigate(feature.id.toLowerCase())}
         >
             {/* Favorite Star */}
             <button
