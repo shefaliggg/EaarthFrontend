@@ -11,8 +11,10 @@ import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
 import StudioRoutes from '../features/studio/routes/StudioRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
+const HelpAndSupport = lazy(() => import('../features/support/pages/Help&Support'));
 
-const DashboardRoutes = {path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
+const DashboardRoutes = {
+    path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
     children: [
         // { index: true, element: <Navigate to="home" replace /> },
         { path: 'home', element: <RoleBasedDashboard /> },
@@ -22,6 +24,7 @@ const DashboardRoutes = {path: '/', element: <ErrorBoundary><DashboardLayout /><
         SettingsRoutes,
         ProfileRoutes,
 
+        { path: 'support', element: <ErrorBoundary><HelpAndSupport /></ErrorBoundary> },
         { path: '*', element: <ErrorBoundary><NotFound /></ErrorBoundary> },
     ],
 };

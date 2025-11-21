@@ -13,7 +13,7 @@ function ProjectActionsLayout({ projectInfo, toggleFavorite, isFavorite }) {
         { id: 'calendar', label: 'CALENDAR', icon: "Calendar", subtitle: 'Manage project schedule and events' },
         { id: 'call-sheets', label: 'CALL SHEETS', icon: "BookOpen", subtitle: 'Daily call sheets and production info' },
         { id: 'cast-crew', label: 'CAST & CREW', icon: "Users", subtitle: 'Manage cast and crew members' },
-        { id: 'task-cloud-storage', label: 'CLOUD STORAGE', icon: "Cloud", subtitle: 'Access project files and documents' },
+        { id: 'cloud-storage', label: 'CLOUD STORAGE', icon: "Cloud", subtitle: 'Access project files and documents' },
         { id: 'departments', label: 'DEPARTMENTS', icon: "Layers", subtitle: 'Department organization and roles' },
         { id: 'notice-board', label: 'NOTICE BOARD', icon: "Bell", subtitle: 'Important announcements and notices' },
         { id: 'on-boarding', label: 'ON BOARDING', icon: "UserPlus", subtitle: 'Onboard new team members' },
