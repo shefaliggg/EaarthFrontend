@@ -1,0 +1,112 @@
+import { CheckSquare, Star } from 'lucide-react';
+import React, { useState } from 'react'
+import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import ProjectActionGridCard from './ProjectActionGridCard';
+import ProjectActionListCard from './ProjectActionListCard';
+
+function ProjectActionsLayout({ projectInfo, mainFeatures, toggleFavorite, isFavorite}) {
+    const [viewMode, setViewMode] = useState('grid');
+    return (
+        <>
+            <div className={`mt-6 mb-4 pb-6 border-b  `}>
+                <div className="flex items-center gap-6">
+
+                    <div className="flex items-center gap-4 flex-1">
+                        {/* Project Avatar */}
+                        <div className="relative">
+                            <div className="w-20 h-20 rounded-xl bg-purple-600 flex items-center justify-center">
+                                <span className="text-xl font-bold text-white">
+                                    {projectInfo?.name.substring(0, 2) || 'PR'}
+                                </span>
+                            </div>
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border border-white">
+                                <CheckSquare className="w-3 h-3 text-white" />
+                            </div>
+                        </div>
+
+                        {/* Project Info */}
+                        <div>
+                            <h1 className={`text-2xl font-bold dark:text-white text-gray-900`}>
+                                {projectInfo?.name || 'PROJECT'}
+                            </h1>
+                            <p className={`text-sm mt-1 dark:text-gray-400 text-gray-600`}>
+                                {projectInfo?.role || 'Project Role'} • {projectInfo?.period || 'Period'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className="px-3 py-1 bg-green-500 rounded-full flex items-center gap-1">
+                                    <CheckSquare className="w-3 h-3 text-white" />
+                                    <span className="text-xs font-medium text-white">ACTIVE PROJECT</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right: Stats & Actions */}
+                    <div className="flex items-center gap-6">
+                        {/* Stats */}
+                        <div className="flex items-center gap-6">
+                            <div className="text-center">
+                                <div className={`text-2xl font-semibold dark:text-white text-gray-900`}>
+                                    {projectInfo?.pendingTasks || 0}
+                                </div>
+                                <div className={`text-xs dark:text-gray-400 text-gray-600`}>
+                                    PENDING TASKS
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <div className={`text-2xl font-semibold dark:text-white text-gray-900`}>
+                                    {projectInfo?.upcomingEvents || 0}
+                                </div>
+                                <div className={`text-xs dark:text-gray-400 text-gray-600`}>
+                                    UPCOMING EVENTS
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <div className={`text-2xl font-semibold dark:text-white text-gray-900`}>
+                                    {projectInfo?.progress || 0}%
+                                </div>
+                                <div className={`text-xs dark:text-gray-400 text-gray-600`}>
+                                    COMPLETE
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => toggleFavorite(projectInfo?.id)}
+                                className={`p-2 rounded-lg transition-colors ${isFavorite(projectInfo?.id)
+                                    ? 'bg-purple-600 text-white'
+                                    : 'dark:text-gray-400 dark:hover:bg-gray-800 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <Star className={`w-5 h-5 ${isFavorite(projectInfo?.id) ? 'fill-white' : ''}`} />
+                            </button>
+                        </div>
+                    </div>
+                    <ViewToggleButton view={viewMode} onViewChange={setViewMode} />
+                </div>
+            </div>
+
+            {/* Grid View - Category Cards */}
+            {viewMode === 'grid' && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {mainFeatures.map((feature) => (
+                        <ProjectActionGridCard feature={feature} key={feature.id} />
+                    ))}
+                </div>
+            )}
+
+            {/* List View - Category Cards */}
+            {viewMode === 'list' && (
+                <div className="space-y-4">
+                    {mainFeatures.map((feature) => (
+                        <ProjectActionListCard feature={feature} key={feature.id} />
+                    ))}
+                </div>
+            )}
+        </>
+    )
+}
+
+export default ProjectActionsLayout
