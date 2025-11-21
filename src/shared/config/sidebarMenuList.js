@@ -15,10 +15,18 @@ function sidebarMenuList(sidebarType) {
       label: "SETTINGS",
       page: "/settings/account",
       icon: Icon.Settings,
-       subItems: [
+      subItems: [
         { id: "settings-account", label: "ACCOUNT", page: "/settings/account" },
-        { id: "settings-password", label: "PASSWORD", page: "/settings/password" },
-        { id: "settings-preferences", label: "PREFERENCES", page: "/settings/preferences" },
+        {
+          id: "settings-password",
+          label: "PASSWORD",
+          page: "/settings/password",
+        },
+        {
+          id: "settings-preferences",
+          label: "PREFERENCES",
+          page: "/settings/preferences",
+        },
       ],
     },
   ];
@@ -37,7 +45,11 @@ function sidebarMenuList(sidebarType) {
           page: "/projects/avatar-1",
 
           subItems: [
-            { id: "avatar1-activities", label: "ACTIVITIES", page: "/projects/avatar-1/activities" },
+            {
+              id: "avatar1-activities",
+              label: "ACTIVITIES",
+              page: "/projects/avatar-1/activities",
+            },
 
             // ----------------------- APPS -----------------------
             {
@@ -46,9 +58,21 @@ function sidebarMenuList(sidebarType) {
               page: "/projects/avatar-1/apps",
 
               subItems: [
-                { id: "props", label: "PROPS", page: "/projects/avatar-1/apps/props" },
-                { id: "costume", label: "COSTUME", page: "/projects/avatar-1/apps/costume" },
-                { id: "catering", label: "CATERING", page: "/projects/avatar-1/apps/catering" },
+                {
+                  id: "props",
+                  label: "PROPS",
+                  page: "/projects/avatar-1/apps/props",
+                },
+                {
+                  id: "costume",
+                  label: "COSTUME",
+                  page: "/projects/avatar-1/apps/costume",
+                },
+                {
+                  id: "catering",
+                  label: "CATERING",
+                  page: "/projects/avatar-1/apps/catering",
+                },
 
                 {
                   id: "accounts",
@@ -56,17 +80,61 @@ function sidebarMenuList(sidebarType) {
                   page: "/projects/avatar-1/apps/accounts",
 
                   subItems: [
-                    { id: "accounts-payable", label: "ACCOUNTS PAYABLE", page: "/projects/avatar-1/apps/accounts/payable" },
-                    { id: "purchase-order", label: "PURCHASE ORDER", page: "/projects/avatar-1/apps/accounts/purchase-order" },
-                    { id: "p-card", label: "P-CARD", page: "/projects/avatar-1/apps/accounts/p-card" },
-                    { id: "petty-cash", label: "PETTY CASH", page: "/projects/avatar-1/apps/accounts/petty-cash" },
-                    { id: "vat-gst", label: "VAT / GST", page: "/projects/avatar-1/apps/accounts/vat-gst" },
-                    { id: "bank-reconciliation", label: "BANK RECONCILIATION", page: "/projects/avatar-1/apps/accounts/bank-reconciliation" },
-                    { id: "payroll", label: "PAYROLL", page: "/projects/avatar-1/apps/accounts/payroll" },
-                    { id: "budget", label: "BUDGET", page: "/projects/avatar-1/apps/accounts/budget" },
-                    { id: "cashflow", label: "CASHFLOW", page: "/projects/avatar-1/apps/accounts/cashflow" },
-                    { id: "reports", label: "REPORTS", page: "/projects/avatar-1/apps/accounts/reports" },
-                    { id: "settings", label: "SETTINGS", page: "/projects/avatar-1/apps/accounts/settings" },
+                    {
+                      id: "accounts-payable",
+                      label: "ACCOUNTS PAYABLE",
+                      page: "/projects/avatar-1/apps/accounts/payable",
+                    },
+                    {
+                      id: "purchase-order",
+                      label: "PURCHASE ORDER",
+                      page: "/projects/avatar-1/apps/accounts/purchase-order",
+                    },
+                    {
+                      id: "p-card",
+                      label: "P-CARD",
+                      page: "/projects/avatar-1/apps/accounts/p-card",
+                    },
+                    {
+                      id: "petty-cash",
+                      label: "PETTY CASH",
+                      page: "/projects/avatar-1/apps/accounts/petty-cash",
+                    },
+                    {
+                      id: "vat-gst",
+                      label: "VAT / GST",
+                      page: "/projects/avatar-1/apps/accounts/vat-gst",
+                    },
+                    {
+                      id: "bank-reconciliation",
+                      label: "BANK RECONCILIATION",
+                      page: "/projects/avatar-1/apps/accounts/bank-reconciliation",
+                    },
+                    {
+                      id: "payroll",
+                      label: "PAYROLL",
+                      page: "/projects/avatar-1/apps/accounts/payroll",
+                    },
+                    {
+                      id: "budget",
+                      label: "BUDGET",
+                      page: "/projects/avatar-1/apps/accounts/budget",
+                    },
+                    {
+                      id: "cashflow",
+                      label: "CASHFLOW",
+                      page: "/projects/avatar-1/apps/accounts/cashflow",
+                    },
+                    {
+                      id: "reports",
+                      label: "REPORTS",
+                      page: "/projects/avatar-1/apps/accounts/reports",
+                    },
+                    {
+                      id: "settings",
+                      label: "SETTINGS",
+                      page: "/projects/avatar-1/apps/accounts/settings",
+                    },
                   ],
                 },
 
@@ -76,50 +144,154 @@ function sidebarMenuList(sidebarType) {
                   page: "/projects/avatar-1/apps/purchase-orders",
 
                   subItems: [
-                    { id: "po-all", label: "ALL POS", page: "/projects/avatar-1/apps/purchase-orders" },
-                    { id: "po-create", label: "CREATE PO", page: "/projects/avatar-1/apps/purchase-orders/create" },
-                    { id: "po-pending", label: "PENDING", page: "/projects/avatar-1/apps/purchase-orders/pending" },
-                    { id: "po-approved", label: "APPROVED", page: "/projects/avatar-1/apps/purchase-orders/approved" },
-                    { id: "po-vendors", label: "VENDORS", page: "/projects/avatar-1/apps/purchase-orders/vendors" },
-                    { id: "po-reports", label: "REPORTS", page: "/projects/avatar-1/apps/purchase-orders/reports" },
+                    {
+                      id: "po-all",
+                      label: "ALL POS",
+                      page: "/projects/avatar-1/apps/purchase-orders",
+                    },
+                    {
+                      id: "po-create",
+                      label: "CREATE PO",
+                      page: "/projects/avatar-1/apps/purchase-orders/create",
+                    },
+                    {
+                      id: "po-pending",
+                      label: "PENDING",
+                      page: "/projects/avatar-1/apps/purchase-orders/pending",
+                    },
+                    {
+                      id: "po-approved",
+                      label: "APPROVED",
+                      page: "/projects/avatar-1/apps/purchase-orders/approved",
+                    },
+                    {
+                      id: "po-vendors",
+                      label: "VENDORS",
+                      page: "/projects/avatar-1/apps/purchase-orders/vendors",
+                    },
+                    {
+                      id: "po-reports",
+                      label: "REPORTS",
+                      page: "/projects/avatar-1/apps/purchase-orders/reports",
+                    },
                   ],
                 },
 
-                { id: "script", label: "SCRIPT", page: "/projects/avatar-1/apps/script" },
-                { id: "market", label: "MARKET", page: "/projects/avatar-1/apps/market" },
-                { id: "stocks", label: "STOCKS", page: "/projects/avatar-1/apps/stocks" },
-                { id: "transport", label: "TRANSPORT", page: "/projects/avatar-1/apps/transport" },
-                { id: "eplayer", label: "E PLAYER", page: "/projects/avatar-1/apps/eplayer" },
+                {
+                  id: "script",
+                  label: "SCRIPT",
+                  page: "/projects/avatar-1/apps/script",
+                },
+                {
+                  id: "market",
+                  label: "MARKET",
+                  page: "/projects/avatar-1/apps/market",
+                },
+                {
+                  id: "stocks",
+                  label: "STOCKS",
+                  page: "/projects/avatar-1/apps/stocks",
+                },
+                {
+                  id: "transport",
+                  label: "TRANSPORT",
+                  page: "/projects/avatar-1/apps/transport",
+                },
+                {
+                  id: "eplayer",
+                  label: "E PLAYER",
+                  page: "/projects/avatar-1/apps/eplayer",
+                },
 
                 {
                   id: "forms",
                   label: "FORMS",
                   page: "/projects/avatar-1/apps/forms",
                   subItems: [
-                    { id: "mileage", label: "MILEAGE FORM", page: "/projects/avatar-1/apps/forms/mileage" },
-                    { id: "fuel", label: "FUEL FORM", page: "/projects/avatar-1/apps/forms/fuel" },
-                    { id: "wire-transfer", label: "WIRE TRANSFER", page: "/projects/avatar-1/apps/forms/wire-transfer" },
-                    { id: "cash-advance", label: "CASH ADVANCE", page: "/projects/avatar-1/apps/forms/cash-advance" },
-                    { id: "missing-receipts", label: "MISSING RECEIPTS", page: "/projects/avatar-1/apps/forms/missing-receipts" },
-                    { id: "payment-request", label: "PAYMENT REQUEST", page: "/projects/avatar-1/apps/forms/payment-request" },
-                    { id: "p-card-application", label: "P-CARD APPLICATION", page: "/projects/avatar-1/apps/forms/p-card-application" },
-                    { id: "p-card-form", label: "P-CARD FORM", page: "/projects/avatar-1/apps/forms/p-card" },
-                    { id: "petty-cash-form", label: "PETTY CASH FORM", page: "/projects/avatar-1/apps/forms/petty-cash" },
+                    {
+                      id: "mileage",
+                      label: "MILEAGE FORM",
+                      page: "/projects/avatar-1/apps/forms/mileage",
+                    },
+                    {
+                      id: "fuel",
+                      label: "FUEL FORM",
+                      page: "/projects/avatar-1/apps/forms/fuel",
+                    },
+                    {
+                      id: "wire-transfer",
+                      label: "WIRE TRANSFER",
+                      page: "/projects/avatar-1/apps/forms/wire-transfer",
+                    },
+                    {
+                      id: "cash-advance",
+                      label: "CASH ADVANCE",
+                      page: "/projects/avatar-1/apps/forms/cash-advance",
+                    },
+                    {
+                      id: "missing-receipts",
+                      label: "MISSING RECEIPTS",
+                      page: "/projects/avatar-1/apps/forms/missing-receipts",
+                    },
+                    {
+                      id: "payment-request",
+                      label: "PAYMENT REQUEST",
+                      page: "/projects/avatar-1/apps/forms/payment-request",
+                    },
+                    {
+                      id: "p-card-application",
+                      label: "P-CARD APPLICATION",
+                      page: "/projects/avatar-1/apps/forms/p-card-application",
+                    },
+                    {
+                      id: "p-card-form",
+                      label: "P-CARD FORM",
+                      page: "/projects/avatar-1/apps/forms/p-card",
+                    },
+                    {
+                      id: "petty-cash-form",
+                      label: "PETTY CASH FORM",
+                      page: "/projects/avatar-1/apps/forms/petty-cash",
+                    },
                   ],
                 },
 
-                { id: "cast-crew", label: "CAST & CREW", page: "/projects/avatar-1/apps/cast-crew" },
-                { id: "animals", label: "ANIMALS", page: "/projects/avatar-1/apps/animals" },
-                { id: "vehicles", label: "VEHICLES", page: "/projects/avatar-1/apps/vehicles" },
+                {
+                  id: "cast-crew",
+                  label: "CAST & CREW",
+                  page: "/projects/avatar-1/apps/cast-crew",
+                },
+                {
+                  id: "animals",
+                  label: "ANIMALS",
+                  page: "/projects/avatar-1/apps/animals",
+                },
+                {
+                  id: "vehicles",
+                  label: "VEHICLES",
+                  page: "/projects/avatar-1/apps/vehicles",
+                },
 
                 {
                   id: "locations",
                   label: "LOCATIONS",
                   page: "/projects/avatar-1/apps/locations",
                   subItems: [
-                    { id: "locations-schedule", label: "SCHEDULE", page: "/projects/avatar-1/apps/locations/schedule" },
-                    { id: "locations-settings", label: "SETTINGS", page: "/projects/avatar-1/apps/locations/settings" },
-                    { id: "locations-script", label: "SCRIPT", page: "/projects/avatar-1/apps/locations/script" },
+                    {
+                      id: "locations-schedule",
+                      label: "SCHEDULE",
+                      page: "/projects/avatar-1/apps/locations/schedule",
+                    },
+                    {
+                      id: "locations-settings",
+                      label: "SETTINGS",
+                      page: "/projects/avatar-1/apps/locations/settings",
+                    },
+                    {
+                      id: "locations-script",
+                      label: "SCRIPT",
+                      page: "/projects/avatar-1/apps/locations/script",
+                    },
                   ],
                 },
 
@@ -136,29 +308,84 @@ function sidebarMenuList(sidebarType) {
                   ],
                 },
 
-                { id: "timesheets", label: "TIMESHEETS", page: "/projects/avatar-1/apps/timesheets" },
-                { id: "approval", label: "APPROVAL", page: "/projects/avatar-1/apps/approval" },
+                {
+                  id: "timesheets",
+                  label: "TIMESHEETS",
+                  page: "/projects/avatar-1/apps/timesheets",
+                },
+                {
+                  id: "approval",
+                  label: "APPROVAL",
+                  page: "/projects/avatar-1/apps/approval",
+                },
               ],
             },
 
-            { id: "calendar", label: "CALENDAR", page: "/projects/avatar-1/calendar" },
-            { id: "call-sheets", label: "CALL SHEETS", page: "/projects/avatar-1/call-sheets" },
-            { id: "cast-crew", label: "CAST & CREW", page: "/projects/avatar-1/cast-crew" },
-            { id: "cloud-storage", label: "CLOUD STORAGE", page: "/projects/avatar-1/cloud-storage" },
-            { id: "departments", label: "DEPARTMENTS", page: "/projects/avatar-1/departments" },
-            { id: "notice-board", label: "NOTICE BOARD", page: "/projects/avatar-1/notice-board" },
-            { id: "on-boarding", label: "ON-BOARDING", page: "/projects/avatar-1/on-boarding" },
-            { id: "project-chat", label: "PROJECT CHAT", page: "/projects/avatar-1/project-chat" },
-            { id: "script", label: "SCRIPT", page: "/projects/avatar-1/script" },
-            { id: "shooting-schedule", label: "SHOOTING SCHEDULE", page: "/projects/avatar-1/shooting-schedule" },
+            {
+              id: "calendar",
+              label: "CALENDAR",
+              page: "/projects/avatar-1/calendar",
+            },
+            {
+              id: "call-sheets",
+              label: "CALL SHEETS",
+              page: "/projects/avatar-1/call-sheets",
+            },
+            {
+              id: "cast-crew",
+              label: "CAST & CREW",
+              page: "/projects/avatar-1/cast-crew",
+            },
+            {
+              id: "cloud-storage",
+              label: "CLOUD STORAGE",
+              page: "/projects/avatar-1/cloud-storage",
+            },
+            {
+              id: "departments",
+              label: "DEPARTMENTS",
+              page: "/projects/avatar-1/departments",
+            },
+            {
+              id: "notice-board",
+              label: "NOTICE BOARD",
+              page: "/projects/avatar-1/notice-board",
+            },
+            {
+              id: "on-boarding",
+              label: "ON-BOARDING",
+              page: "/projects/avatar-1/on-boarding",
+            },
+            {
+              id: "project-chat",
+              label: "PROJECT CHAT",
+              page: "/projects/avatar-1/project-chat",
+            },
+            {
+              id: "script",
+              label: "SCRIPT",
+              page: "/projects/avatar-1/script",
+            },
+            {
+              id: "shooting-schedule",
+              label: "SHOOTING SCHEDULE",
+              page: "/projects/avatar-1/shooting-schedule",
+            },
             { id: "tasks", label: "TASKS", page: "/projects/avatar-1/tasks" },
-            { id: "timeline", label: "TIMELINE", page: "/projects/avatar-1/timeline" },
-            { id: "settings", label: "SETTINGS", page: "/projects/avatar-1/settings" },
+            {
+              id: "timeline",
+              label: "TIMELINE",
+              page: "/projects/avatar-1/timeline",
+            },
+            {
+              id: "settings",
+              label: "SETTINGS",
+              page: "/projects/avatar-1/settings",
+            },
           ],
         },
       ],
     },
-
   ];
 
   // Add Master Admin specific items
@@ -175,15 +402,15 @@ function sidebarMenuList(sidebarType) {
         {
           id: "master-admin-dashboard",
           label: "DASHBOARD",
-          page: "master-admin-dashboard",
+          page: "/master-admin-dashboard",
         },
         {
           id: "master-admin-studios",
           label: "STUDIOS",
-          page: "master-admin-studios",
+          page: "/master-admin-studios",
         },
         {
-          id: "master-admin-agencies",
+          id: "/master-admin-agencies",
           label: "AGENCIES",
           page: "master-admin-agencies",
         },
@@ -226,23 +453,20 @@ function sidebarMenuList(sidebarType) {
     roleBasedItems.push({
       id: "studio-admin",
       label: "STUDIO",
+      page: "/studio/dashboard",
       icon: Icon.Building2,
-      gradient: "from-sky-400/20 to-sky-500/20",
-      color: "text-sky-600",
-      hoverBg: "hover:bg-sky-50",
-      darkHoverBg: "dark:hover:bg-sky-900/20",
       subItems: [
         {
           id: "studio-dashboard",
           label: "DASHBOARD",
-          page: "studio-dashboard",
+          page: "/studio/dashboard",
         },
-        { id: "studio-settings", label: "SETTINGS", page: "studio-settings" },
-        { id: "studio-reports", label: "REPORTS", page: "studio-reports" },
+        { id: "studio-settings", label: "SETTINGS", page: "/studio-settings" },
+        { id: "studio-reports", label: "REPORTS", page: "/studio-reports" },
         {
           id: "studio-audit-log",
           label: "📊 AUDIT LOG",
-          page: "studio-audit-log",
+          page: "/studio-audit-log",
         },
       ],
     });
@@ -304,7 +528,12 @@ function sidebarMenuList(sidebarType) {
     });
   }
 
-  const sidebarMenu = [commonItems[0],...projectsMenuItems, ...roleBasedItems, commonItems[1]];
+  const sidebarMenu = [
+    commonItems[0],
+    ...projectsMenuItems,
+    ...roleBasedItems,
+    commonItems[1],
+  ];
 
   return sidebarMenu;
 }

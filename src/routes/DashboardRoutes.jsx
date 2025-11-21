@@ -8,6 +8,7 @@ import ProjectRoutes from '../features/projects/routes/ProjectRoutes';
 import SettingsRoutes from '../features/settings/routes/SettingsRoutes';
 import RoleBasedDashboard from '../shared/components/RoleBasedDashboard';
 import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
+import StudioRoutes from '../features/studio/routes/StudioRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -16,6 +17,7 @@ const DashboardRoutes = {path: '/', element: <ErrorBoundary><DashboardLayout /><
         // { index: true, element: <Navigate to="home" replace /> },
         { path: 'home', element: <RoleBasedDashboard /> },
 
+        StudioRoutes,
         ProjectRoutes,
         SettingsRoutes,
         ProfileRoutes,
