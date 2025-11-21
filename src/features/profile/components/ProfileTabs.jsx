@@ -11,7 +11,7 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
   ];
 
   return (
-    <div className={`rounded-xl border p-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className="rounded-xl border p-4 bg-card border-border">
       <div className="flex gap-2 flex-wrap">
         {tabs.map(({ value, label, icon: Icon }) => (
           <button
@@ -19,10 +19,10 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
             onClick={() => setActiveTab(value)}
             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
               activeTab === value 
-                ? 'bg-[#7e57c2] text-white' 
-                : isDarkMode 
-                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? isDarkMode
+                  ? 'bg-lavender-400 text-black'
+                  : 'bg-primary text-primary-foreground'
+                : 'bg-muted text-foreground hover:bg-muted/80'
             }`}
           >
             <Icon className="w-4 h-4" />

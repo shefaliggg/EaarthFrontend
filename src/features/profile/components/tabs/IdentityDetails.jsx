@@ -3,7 +3,7 @@ import { Field, FileUpload } from '../common/UnifiedFields';
 
 export default function IdentityDetails({ profile, setProfile, isEditing, isDarkMode, uploads, setUploads }) {
   return (
-    <div className={`rounded-xl border p-6 shadow-md ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className="rounded-xl border p-6 shadow-md bg-card border-border">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field 
@@ -107,8 +107,8 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
         </div>
 
         {/* Proof of Nationality Section */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className="font-medium mb-4 text-foreground">
             PROOF OF NATIONALITY
           </h4>
 
@@ -122,9 +122,9 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
                   checked={profile.proofOfNationality === 'PASSPORT'} 
                   onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })} 
                   disabled={!isEditing} 
-                  className="w-4 h-4 text-[#7e57c2]" 
+                  className={`w-4 h-4 ${isDarkMode ? 'accent-lavender-400' : 'accent-primary'}`}
                 />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="text-sm text-foreground">
                   PASSPORT
                 </span>
               </label>
@@ -137,9 +137,9 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
                   checked={profile.proofOfNationality === 'BIRTH CERTIFICATE'} 
                   onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })} 
                   disabled={!isEditing} 
-                  className="w-4 h-4 text-[#7e57c2]" 
+                  className={`w-4 h-4 ${isDarkMode ? 'accent-lavender-400' : 'accent-primary'}`}
                 />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="text-sm text-foreground">
                   BIRTH CERTIFICATE
                 </span>
               </label>
@@ -152,9 +152,9 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
                   checked={profile.proofOfNationality === 'CERTIFICATE OF REGISTRATION OR NATURALISATION'} 
                   onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })} 
                   disabled={!isEditing} 
-                  className="w-4 h-4 text-[#7e57c2]" 
+                  className={`w-4 h-4 ${isDarkMode ? 'accent-lavender-400' : 'accent-primary'}`}
                 />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="text-sm text-foreground">
                   CERTIFICATE OF REGISTRATION OR NATURALISATION
                 </span>
               </label>
@@ -162,7 +162,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
 
             {/* Passport Fields */}
             {profile.proofOfNationality === 'PASSPORT' && (
-              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-muted' : 'bg-muted'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field 
                     label="PASSPORT FIRST NAME" 
@@ -229,7 +229,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
 
             {/* Birth Certificate Fields */}
             {profile.proofOfNationality === 'BIRTH CERTIFICATE' && (
-              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-muted' : 'bg-muted'}`}>
                 <FileUpload
                   fieldLabel="Birth Certificate"
                   fileName="Birth_Certificate.pdf"
@@ -254,7 +254,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
 
             {/* Certificate of Naturalisation */}
             {profile.proofOfNationality === 'CERTIFICATE OF REGISTRATION OR NATURALISATION' && (
-              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-muted' : 'bg-muted'}`}>
                 <FileUpload
                   fieldLabel="Certificate of Naturalisation"
                   fileName="Certificate_Naturalisation.pdf"

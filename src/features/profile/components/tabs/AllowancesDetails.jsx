@@ -6,12 +6,12 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
   const [useOwnVehicle, setUseOwnVehicle] = useState(true);
 
   return (
-    <div className={`rounded-xl border p-6 shadow-md ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-xl border p-6 shadow-sm ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
       <div className="space-y-6">
         {/* Vehicle Toggle */}
         <div>
           <label className="flex items-center justify-between cursor-pointer">
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
               I USE MY OWN VEHICLE
             </span>
             <input
@@ -19,15 +19,15 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
               checked={useOwnVehicle}
               onChange={(e) => setUseOwnVehicle(e.target.checked)}
               disabled={!isEditing}
-              className="w-4 h-4 text-[#7e57c2]"
+              className="w-4 h-4 text-primary accent-primary"
             />
           </label>
         </div>
 
         {/* Vehicle */}
         {useOwnVehicle && (
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="pt-6 border-t border-border">
+            <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
               <Car className="w-5 h-5" /> PERSONAL VEHICLE
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -77,7 +77,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
             {/* Document Uploads for Vehicle */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                   DRIVING LICENCE
                 </label>
                 <FileUpload
@@ -92,7 +92,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
               </div>
               
               <div>
-                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                   VEHICLE INSURANCE
                 </label>
                 <FileUpload
@@ -110,8 +110,8 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
         )}
 
         {/* Computer */}
-        <div className={useOwnVehicle ? 'pt-6 border-t border-gray-200 dark:border-gray-700' : ''}>
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className={useOwnVehicle ? 'pt-6 border-t border-border' : ''}>
+          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             💻 COMPUTER
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,8 +134,8 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
         </div>
 
         {/* Software */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             ⚙️ SOFTWARE
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -158,7 +158,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
           </div>
           
           <div className="mt-4">
-            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               SOFTWARE LICENCE
             </label>
             <FileUpload
@@ -174,8 +174,8 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
         </div>
 
         {/* Equipment */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             📦 EQUIPMENT
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -190,7 +190,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
           </div>
           
           <div className="mt-4">
-            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               EQUIPMENT INVENTORY
             </label>
             <FileUpload
@@ -206,12 +206,12 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
         </div>
 
         {/* Mobile */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             📱 MOBILE
           </h4>
           <div>
-            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               MOBILE PHONE BILL
             </label>
             <FileUpload
@@ -227,8 +227,8 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
         </div>
 
         {/* Box Rental */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             📦 BOX RENTAL
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
           </div>
           
           <div className="mt-4">
-            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               BOX INVENTORY
             </label>
             <FileUpload

@@ -114,13 +114,16 @@ export default function ProfileDashboard() {
   };
 
   return (
-    <div className={`min-h-screen p-6 ${isDarkMode ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`min-h-screen p-6 transition-colors duration-400 ${
+      isDarkMode 
+        ? 'bg-background' 
+        : 'bg-background'
+    }`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* HEADER + SUMMARY */}
         <ProfileSummary
           profile={profile}
           isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
           handleSave={handleSave}

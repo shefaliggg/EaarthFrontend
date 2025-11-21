@@ -7,11 +7,11 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
   const [sendEmailsToCrewMember, setSendEmailsToCrewMember] = useState(true);
 
   return (
-    <div className={`rounded-xl border p-6 shadow-md ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className="rounded-xl border p-6 shadow-md bg-card border-border">
       <div className="space-y-6">
         {/* Home Address Section */}
         <div>
-          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h4 className="font-medium mb-4 flex items-center gap-2 text-foreground">
             <Home className="w-5 h-5" /> HOME ADDRESS
           </h4>
           <div className="grid grid-cols-1 gap-4">
@@ -61,8 +61,8 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
         </div>
 
         {/* Contact Information Section */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className="font-medium mb-4 flex items-center gap-2 text-foreground">
             <Phone className="w-5 h-5" /> CONTACT INFORMATION
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -118,7 +118,7 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
           {/* Send emails toggle */}
           <div className="mt-4">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className="text-sm font-medium text-foreground">
                 SEND PROJECT EMAILS TO CREW MEMBER
               </span>
               <input
@@ -126,15 +126,15 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
                 checked={sendEmailsToCrewMember}
                 onChange={(e) => setSendEmailsToCrewMember(e.target.checked)}
                 disabled={!isEditing}
-                className="w-4 h-4 text-[#7e57c2]"
+                className={`w-4 h-4 ${isDarkMode ? 'accent-lavender-400' : 'accent-primary'}`}
               />
             </label>
           </div>
         </div>
 
         {/* Emergency Contact Section */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className="font-medium mb-4 flex items-center gap-2 text-foreground">
             <AlertCircle className="w-5 h-5" /> EMERGENCY CONTACT
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -167,9 +167,9 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
         </div>
 
         {/* Agent toggle */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-6 border-t border-border">
           <label className="flex items-center justify-between cursor-pointer">
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <span className="text-sm font-medium text-foreground">
               I HAVE AN AGENT
             </span>
             <input
@@ -177,15 +177,15 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
               checked={haveAgent}
               onChange={(e) => setHaveAgent(e.target.checked)}
               disabled={!isEditing}
-              className="w-4 h-4 text-[#7e57c2]"
+              className={`w-4 h-4 ${isDarkMode ? 'accent-lavender-400' : 'accent-primary'}`}
             />
           </label>
         </div>
 
         {/* Agent/Agency Details */}
         {haveAgent && (
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="pt-6 border-t border-border">
+            <h4 className="font-medium mb-4 flex items-center gap-2 text-foreground">
               <Briefcase className="w-5 h-5" /> AGENT / AGENCY
             </h4>
             <div className="grid grid-cols-1 gap-4">
@@ -289,8 +289,8 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
               </div>
 
               {/* Agent Bank Details */}
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h5 className={`font-medium mb-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <div className="mt-4 pt-4 border-t border-border">
+                <h5 className="font-medium mb-4 text-sm text-foreground">
                   AGENT BANK DETAILS
                 </h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
