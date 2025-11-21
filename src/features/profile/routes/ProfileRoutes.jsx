@@ -1,39 +1,26 @@
-import { lazy } from 'react';
-import { Navigate } from 'react-router-dom';
-import ProfileDashboard from '../pages/ProfileDashboard';
+import { lazy } from "react";
+import { Navigate } from "react-router-dom";
+// import PersonalCalendar from "../pages/PersonalCalender";
 
-const ProfileLayout = lazy(() => import('../components/ProfileLayout'));
+const ProfileLayout = lazy(() => import("../components/ProfileLayout"));
+const ProfileDashboard = lazy(() => import("../pages/ProfileDashboard"));
 
-const ProfileGeneral = lazy(() => import('../components/ProfileGenral'));
-// const ProfileContact = lazy(() => import('../pages/ProfileContact'));
-// const ProfileAllowances = lazy(() => import('../pages/ProfileAllowances'));
-// const ProfilePayment = lazy(() => import('../pages/ProfilePayment'));
-// const ProfileCompany = lazy(() => import('../pages/ProfileCompany'));
-// const ProfileDocuments = lazy(() => import('../pages/ProfileDocuments'));
-// const ProfileCalendar = lazy(() => import('../pages/ProfileCalendar'));
-
-const NotFound = lazy(() => import('@/shared/pages/NotFound'));
+// Placeholder components for other pages
+const ProfileDocuments = lazy(() => import("../pages/ProfileDocuments"));
+const PersonalCalendar = lazy(() => import("../pages/PersonalCalender"));
+const AccountSettings = lazy(() => import("../pages/AccountSettings"));
+const NotFound = lazy(() => import("@/shared/pages/NotFound"));
 
 const ProfileRoutes = {
-  path: '/profile',
-  element: <ProfileDashboard />,
+  path: "/profile",
+  element: <ProfileLayout />,
   children: [
-    { index: true, element: <Navigate to="general" replace /> },
-
-    { path: 'general', element: <ProfileGeneral /> },
-    // { path: 'contact', element: <ProfileContact /> },
-    // { path: 'allowances', element: <ProfileAllowances /> },
-    // { path: 'payment', element: <ProfilePayment /> },
-    // { path: 'company', element: <ProfileCompany /> },
-    // { path: 'documents', element: <ProfileDocuments /> },
-    // { path: 'calendar', element: <ProfileCalendar /> },
-
-    { path: '*', element: <NotFound /> }
+    { index: true, element: <ProfileDashboard /> },
+    { path: "documents", element: <ProfileDocuments /> },
+    { path: "calendar", element: <PersonalCalendar /> },
+    { path: "settings", element: <AccountSettings /> },
+    { path: "*", element: <NotFound /> },
   ],
 };
 
 export default ProfileRoutes;
-
-
-
-
