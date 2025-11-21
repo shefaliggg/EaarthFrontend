@@ -3,7 +3,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useNavigate } from 'react-router-dom';
 import * as Icon from 'lucide-react';
 
-function ProjectActionGridCard({feature}) {
+function ProjectActionGridCard({ feature }) {
     const navigate = useNavigate();
     const { favorites, toggleFavorite, isFavorite } = useFavorites('project-favorites');
     const CurrentIcon = Icon[feature.icon] || Icon.HelpCircle;
@@ -43,10 +43,11 @@ function ProjectActionGridCard({feature}) {
                 {feature.label}
             </div>
 
-            {/* Subtitle */}
-            <div className={`text-xs text-center mt-1 dark:text-gray-400 text-gray-600`}>
-                {feature.subtitle}
-            </div>
+            {feature.subtitle &&
+                <div className={`text-xs text-center mt-1 dark:text-gray-400 text-gray-600`}>
+                    {feature.subtitle}
+                </div>
+            }
         </motion.div>
     )
 }
