@@ -28,13 +28,13 @@ export const VerifyEmailPage = ({ onSuccess }) => {
         <div className="w-full max-w-lg mx-auto">
           {LogoSection}
 
-          <div className="w-full bg-white rounded-3xl shadow-xl p-10 border-2 border-purple-100">
+          <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
             <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
                 <Loader className="w-10 h-10 animate-spin text-purple-600" />
               </div>
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl font-medium text-gray-900 mb-2">
                 Verifying Your Invitation
               </h2>
               <p className="text-gray-600 text-sm">
@@ -55,14 +55,14 @@ export const VerifyEmailPage = ({ onSuccess }) => {
       <div className="w-full max-w-lg mx-auto mt-10">
         {LogoSection}
 
-        <div className="w-full bg-white rounded-3xl shadow-xl p-10 border-2 border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
               <Mail className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+              <h2 className="text-xl md:text-xl font-medium text-gray-900">
                 INVITATION STATUS
               </h2>
               <p className="text-xs text-gray-500">Email verification result</p>
@@ -72,12 +72,12 @@ export const VerifyEmailPage = ({ onSuccess }) => {
           {/* ---------------- SUCCESS ---------------- */}
           {status === 'success' && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl p-8 text-center">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 rounded-2xl p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-10 h-10 text-green-600" />
                 </div>
 
-                <h3 className="text-xl md:text-2xl font-bold text-green-900 mb-3">
+                <h3 className="text-xl md:text-xl font-medium text-green-900 mb-3">
                   INVITATION VERIFIED!
                 </h3>
 
@@ -88,14 +88,14 @@ export const VerifyEmailPage = ({ onSuccess }) => {
                 {inviteData?.email && (
                   <div className="mt-4 bg-white/60 rounded-xl p-3 border border-green-200">
                     <p className="text-xs text-gray-600 font-semibold mb-1">Email:</p>
-                    <p className="text-sm font-bold text-green-900 break-all">
+                    <p className="text-sm font-medium text-green-900 break-all">
                       {inviteData.email}
                     </p>
                   </div>
                 )}
 
                 {inviteData?.userType && (
-                  <div className="mt-3 inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-xs font-bold">
+                  <div className="mt-3 inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-xs font-medium">
                     {inviteData.userType.toUpperCase()}
                   </div>
                 )}
@@ -113,12 +113,12 @@ export const VerifyEmailPage = ({ onSuccess }) => {
           {/* ---------------- ERROR ---------------- */}
           {status === 'error' && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-300 rounded-2xl p-8 text-center">
+              <div className="bg-gradient-to-br from-red-50 to-pink-50 border border-red-300 rounded-2xl p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
                   <XCircle className="w-10 h-10 text-red-600" />
                 </div>
 
-                <h3 className="text-xl md:text-2xl font-bold text-red-900 mb-3">
+                <h3 className="text-xl md:text-xl font-medium text-red-900 mb-3">
                   VERIFICATION FAILED
                 </h3>
 
@@ -142,7 +142,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
                 </p>
                 <button
                   onClick={() => (window.location.href = '/auth/login')}
-                  className="text-purple-600 hover:text-purple-700 font-bold text-sm transition-colors"
+                  className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
                 >
                   Return to Login
                 </button>
@@ -160,3 +160,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
 };
 
 export default VerifyEmailPage;
+
+
+
+

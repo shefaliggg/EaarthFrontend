@@ -14,7 +14,7 @@ function ProjectActivities() {
                 <div className="mb-6">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <h1 className={`text-3xl font-bold mb-2 dark:text-white text-gray-900`}>
+                            <h1 className={`text-2xl font-semibold mb-2 dark:text-white text-gray-900`}>
                                 {currentPage || 'PROJECT'}
                             </h1>
                             <p className={`text-sm text-foreground`}>
@@ -26,7 +26,7 @@ function ProjectActivities() {
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900`}
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            <span className="font-bold">BACK</span>
+                            <span className="font-medium">BACK</span>
                         </button>
                     </div>
                 </div>
@@ -41,3 +41,6 @@ function ProjectActivities() {
 }
 
 export default ProjectActivities
+
+
+

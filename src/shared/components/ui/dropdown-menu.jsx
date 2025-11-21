@@ -20,7 +20,7 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
         "data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 " +
         "data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) " +
         "min-w-[10rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden " +
-        "overflow-y-auto rounded-xl border p-1 shadow-xl",
+        "overflow-y-auto rounded-xl border p-1 shadow-md",
         className
       )}
       {...props}
@@ -129,3 +129,6 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 }
+
+
+

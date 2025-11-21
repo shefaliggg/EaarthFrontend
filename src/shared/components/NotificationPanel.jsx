@@ -70,17 +70,17 @@ export function NotificationsPanel({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-lg z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 border-b border-gray-200">
+            <div className="bg-[#ede7f6] p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                     <Bell className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">NOTIFICATIONS</h2>
+                    <h2 className="text-lg font-medium text-gray-900">NOTIFICATIONS</h2>
                     <p className="text-sm text-gray-500">{unreadCount} unread</p>
                   </div>
                 </div>
@@ -96,7 +96,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filter === 'all'
                       ? 'bg-white text-purple-600 shadow-sm'
                       : 'text-gray-600 hover:bg-white/50'
@@ -106,7 +106,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                 </button>
                 <button
                   onClick={() => setFilter('unread')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filter === 'unread'
                       ? 'bg-white text-purple-600 shadow-sm'
                       : 'text-gray-600 hover:bg-white/50'
@@ -117,7 +117,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="px-3 py-2 bg-white text-purple-600 rounded-lg text-sm font-bold hover:bg-purple-50 transition-colors shadow-sm"
+                    className="px-3 py-2 bg-white text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-50 transition-colors shadow-sm"
                   >
                     MARK ALL READ
                   </button>
@@ -141,7 +141,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                       key={notification.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer group ${
+                      className={`p-4 rounded-xl border transition-all cursor-pointer group ${
                         notification.read
                           ? 'bg-gray-50 border-gray-200'
                           : 'bg-white border-purple-200 shadow-sm'
@@ -156,7 +156,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className={`font-bold text-sm ${notification.read ? 'text-gray-600' : 'text-gray-900'}`}>
+                            <h3 className={`font-medium text-sm ${notification.read ? 'text-gray-600' : 'text-gray-900'}`}>
                               {notification.title}
                             </h3>
                             {!notification.read && (
@@ -201,3 +201,6 @@ export function NotificationsPanel({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
+
+
+

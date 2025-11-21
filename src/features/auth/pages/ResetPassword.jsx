@@ -60,9 +60,9 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
   if (success) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-xl bg-white rounded-3xl shadow-xl p-10 text-center border-2 border-purple-100">
+        <div className="w-full max-w-xl bg-white rounded-2xl shadow-md p-6 text-center border border-purple-100">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Password Reset Successful!</h2>
+          <h2 className="text-2xl font-medium text-gray-900 mb-2">Password Reset Successful!</h2>
           <p className="text-gray-600">Redirecting to login...</p>
         </div>
       </div>
@@ -89,9 +89,9 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
         </div>
 
         {/* MAIN CARD */}
-        <div className="w-full bg-white rounded-3xl shadow-xl p-10 border-2 border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
           {/* Title */}
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-900">
+          <h2 className="text-2xl md:text-2xl font-medium text-center mb-2 text-gray-900">
             Reset Your Password
           </h2>
           <p className="text-center text-gray-600 mb-8">
@@ -119,7 +119,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                 required
                 maxLength={6}
                 disabled={loading}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl 
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl 
                 focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
@@ -138,7 +138,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                   placeholder="Enter new password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl 
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
                   focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
@@ -170,7 +170,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                   placeholder="Re-enter new password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl 
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
                   focus:ring-2 focus:ring-purple-500 focus:border-transparent 
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
@@ -203,7 +203,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
               type="submit"
               disabled={loading || !otp || !newPassword || !confirmPassword}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 
-              text-white font-bold py-4 rounded-xl hover:shadow-xl 
+              text-white font-medium py-4 rounded-xl hover:shadow-md 
               transition-all hover:scale-[1.02] disabled:opacity-50 
               disabled:cursor-not-allowed disabled:hover:scale-100 
               flex items-center justify-center gap-2"
@@ -249,3 +249,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
 };
 
 export default ResetPasswordPage;
+
+
+
+

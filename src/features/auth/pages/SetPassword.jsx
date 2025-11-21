@@ -42,9 +42,9 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
   if (success) {
     return (
       <div className="w-full max-w-xl mx-auto px-4">
-        <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
+        <div className="bg-white rounded-2xl shadow-md p-6 text-center">
           <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl font-medium text-gray-900 mb-2">
             Password Set Successfully!
           </h2>
           <p className="text-gray-600">Redirecting to login...</p>
@@ -59,7 +59,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={handleBackClick}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-3xl hover:bg-gray-50 transition-all font-medium text-gray-600"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all font-medium text-gray-600"
         >
           <ArrowLeft className="w-5 h-5" />
           BACK
@@ -67,10 +67,10 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
       </div>
 
       {/* Card */}
-      <div className="w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="w-full bg-white rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
-        <div className="px-6 md:px-10 py-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">SET YOUR PASSWORD</h2>
+        <div className="px-6 md:px-8 py-8 text-center">
+          <h2 className="text-2xl md:text-2xl font-medium text-gray-800 mb-2">SET YOUR PASSWORD</h2>
           <p className="text-gray-600 text-sm md:text-base">
             Create a new password to secure your account
           </p>
@@ -78,16 +78,16 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 
         {/* Email Banner */}
         <div className="px-6 md:px-10">
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-3xl p-4 mb-8 flex items-start gap-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-gray-700 break-all">
-              <span className="font-bold">EMAIL:</span> {email}
+              <span className="font-medium">EMAIL:</span> {email}
             </p>
           </div>
         </div>
 
         {/* Form */}
-        <div className="px-6 md:px-10 pb-10">
+        <div className="px-6 md:px-8 pb-10">
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>
           )}
@@ -95,7 +95,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
           <form onSubmit={handleFormSubmit} className="space-y-6">
             {/* Password */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 mb-2">NEW PASSWORD *</label>
+              <label className="block text-xs font-medium text-gray-600 mb-2">NEW PASSWORD *</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -104,7 +104,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   placeholder="ENTER NEW PASSWORD"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-3xl focus:ring-2 
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
                     focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
@@ -122,7 +122,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 mb-2">CONFIRM PASSWORD *</label>
+              <label className="block text-xs font-medium text-gray-600 mb-2">CONFIRM PASSWORD *</label>
               <div className="relative">
                 <input
                   type={showConfirm ? 'text' : 'password'}
@@ -131,7 +131,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   placeholder="RE-ENTER PASSWORD"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-3xl focus:ring-2 
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
                     focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
@@ -162,8 +162,8 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
             <button
               type="submit"
               disabled={loading || !password || !confirm}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold 
-                py-3.5 rounded-3xl mt-4 hover:opacity-90 transition-opacity disabled:opacity-50 
+              className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium 
+                py-3.5 rounded-2xl mt-4 hover:opacity-90 transition-opacity disabled:opacity-50 
                 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -180,7 +180,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <button
               onClick={handleBackToLogin}
-              className="text-purple-600 hover:text-purple-700 font-bold text-sm transition-colors"
+              className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -192,3 +192,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 };
 
 export default SetPasswordPage;
+
+
+
+

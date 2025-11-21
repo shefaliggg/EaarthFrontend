@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -6,12 +6,12 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 14px;
+  --font-size: 15px;
 
-  --primary: var(--lavender-600);
+  --primary: #7e57c2;
   --primary-foreground: #ffffff;
 
-  --accent: var(--mint-600);
+  --accent: #7e57c2;
   --accent-foreground: #ffffff;
 
   --background: #FAFAFA;
@@ -23,7 +23,7 @@
   --popover: #ffffff;
   --popover-foreground: oklch(0.145 0 0);
 
-  --secondary: var(--lavender-300);
+  --secondary: #9575cd;
   --secondary-foreground: #030213;
 
   --muted: #ececf0;
@@ -33,27 +33,44 @@
   --destructive-foreground: #ffffff;
 
   --shadow: #15012e;
-  --border: var(--lavender-200);
+  --border: #b39ddb;
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
 
-  --chart-1: var(--lavender-500);
-  --chart-2: var(--pastel-pink-500);
-  --chart-3: var(--mint-500);
-  --chart-4: var(--peach-500);
-  --chart-5: var(--sky-500);
+  --chart-1: #7e57c2;
+  --chart-2: #7e57c2;
+  --chart-3: #9575cd;
+  --chart-4: #b39ddb;
+  --chart-5: #d1c4e9;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #030213;
-  --sidebar-primary: var(--lavender-600);
+  --sidebar-primary: #7e57c2;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--lavender-100);
+  --sidebar-accent: #d1c4e9;
   --sidebar-accent-foreground: #030213;
   --sidebar-border: #eeeeee;
-  --sidebar-ring: var(--lavender-400);
+  --sidebar-ring: #7e57c2;
 
   --radius: 1rem;
+}
 
+/* Apple-style icon refinements */
+svg {
+  stroke-width: 1.5;
+}
+
+.lucide {
+  stroke-width: 1.5;
+}
+
+/* Thinner, cleaner icons in buttons and interactive elements */
+button svg, 
+a svg {
+  stroke-width: 1.75;
+}
+
+:root {
   --lavender-50: #F5F3FF;
   --lavender-100: #EDE9FE;
   --lavender-200: #DDD6FE;
@@ -258,14 +275,71 @@
 @layer base {
   * {
     @apply border-border outline-ring/50 text-foreground;
+    letter-spacing: -0.011em;
   }
 
   html {
     scroll-behavior: smooth;
-    font-family: "Outfit", sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     font-optical-sizing: auto;
-    font-weight: 500;
+    font-weight: 400;
     font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 15px;
+  }
+
+  body {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.022em;
+  }
+
+  button, input, select, textarea {
+    font-weight: 400;
+  }
+
+  /* Cleaner borders and cards */
+  .border {
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .border {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Subtle hover states */
+  button:not(:disabled):hover,
+  a:hover {
+    transition: all 0.15s ease-in-out;
+  }
+
+  /* Card styles */
+  .bg-white {
+    background-color: #ffffff;
+  }
+
+  .dark .bg-white {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Minimal shadows */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-md {
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
+      0 2px 4px -2px rgba(0, 0, 0, 0.06);
   }
 
   html,
@@ -279,75 +353,59 @@
   }
 
   body {
-    background: linear-gradient(135deg,
-        #ffecec,
-        #fff8e7,
-        #e9ffe9,
-        #e7f7ff,
-        #f3e9ff,
-        #ffe8f4);
+    background: #fafafa;
     background-attachment: fixed;
     min-height: 100vh;
   }
 
   body.dark {
-    background: linear-gradient(135deg,
-        #07001c,
-        #000000,
-        #100016);
-    /* background: linear-gradient(135deg,
-        #1a1625,
-        #1c1a15,
-        #151a15,
-        #15191c,
-        #1a1625,
-        #1c1518); */
+    background: #0f0f0f;
   }
 
 
   .shadow {
-    box-shadow: 0 4px 6px -1px rgba(167, 139, 250, 0.15),
-      0 2px 4px -1px rgba(167, 139, 250, 0.1);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
   input:not([type="checkbox"]):not([type="radio"]),
   textarea,
   select {
-    border-width: 2px;
+    border-width: 1px;
   }
 
   input:focus,
   textarea:focus,
   select:focus {
-    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
-    border-color: var(--lavender-400);
+    box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.08);
+    border-color: #7e57c2;
+    outline: none;
   }
 
   ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--lavender-50);
-    border-radius: 10px;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, var(--lavender-400), var(--pastel-pink-400));
-    border-radius: 10px;
+    background: rgba(126, 87, 194, 0.3);
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, var(--lavender-500), var(--pastel-pink-500));
+    background: rgba(126, 87, 194, 0.5);
   }
 
   .dark ::-webkit-scrollbar-track {
-    background: #1f1f1f;
+    background: transparent;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, var(--lavender-600), var(--pastel-pink-600));
+    background: rgba(126, 87, 194, 0.4);
   }
 
   ::selection {

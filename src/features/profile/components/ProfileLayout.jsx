@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 import { User, MapPin, DollarSign, CreditCard, Building, FileText, Calendar } from 'lucide-react';
 
@@ -35,9 +35,9 @@ export function ProfileLayout({ children, currentTab, onTabChange, isDarkMode = 
                 <motion.button
                   key={tab.id}
                   onClick={() => onTabChange(tab.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                     currentTab === tab.id
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                      ? 'bg-[#7e57c2] text-white shadow-lg'
                       : isDarkMode
                       ? 'text-gray-400 hover:text-white hover:bg-gray-700'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
@@ -63,3 +63,6 @@ export function ProfileLayout({ children, currentTab, onTabChange, isDarkMode = 
     </div>
   );
 }
+
+
+

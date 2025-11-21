@@ -71,9 +71,9 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
         </div>
 
         {/* Main Card */}
-        <div className="w-full bg-white rounded-3xl shadow-xl p-8 md:p-10 border-2 border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 md:p-6 border border-purple-100">
           {/* Title */}
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-2 text-gray-900">
+          <h2 className="text-xl md:text-xl font-medium text-center mb-2 text-gray-900">
             VERIFY YOUR IDENTITY
           </h2>
           <p className="text-center text-gray-600 mb-6 text-sm">
@@ -81,7 +81,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
           </p>
 
           {/* Email Info Box */}
-          <div className="bg-purple-50 border-2 border-purple-100 rounded-xl p-4 mb-8 flex items-center gap-3">
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-8 flex items-center gap-3">
             <Info className="w-5 h-5 text-purple-600" />
             <p className="text-sm text-gray-700 break-all">
               <span className="font-semibold">Email:</span> {email}
@@ -109,8 +109,8 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
                   onChange={(e) => handleInput(i, e.target.value)}
                   onKeyDown={(e) => handleBackspace(i, e)}
                   disabled={loading}
-                  className="w-12 h-14 md:w-14 md:h-16 text-center text-xl md:text-2xl font-bold 
-                  border-2 border-gray-300 rounded-xl 
+                  className="w-12 h-14 md:w-14 md:h-16 text-center text-xl md:text-xl font-semibold 
+                  border border-gray-300 rounded-xl 
                   focus:border-purple-600 focus:ring-2 focus:ring-purple-300
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
@@ -121,8 +121,8 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
             <button
               type="submit"
               disabled={loading || otp.join('').length !== 6}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold 
-              py-4 rounded-2xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02]
+              className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium 
+              py-4 rounded-2xl shadow-md hover:shadow-md transition-all hover:scale-[1.02]
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
               flex items-center justify-center gap-2"
             >
@@ -154,7 +154,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
           <div className="text-center mt-4">
             <button
               onClick={handleBackClick}
-              className="text-purple-600 hover:text-purple-700 font-bold text-sm transition-colors"
+              className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -171,3 +171,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
 };
 
 export default OTPVerificationPage;
+
+
+
+

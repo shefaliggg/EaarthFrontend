@@ -99,7 +99,7 @@ const FileUploadBox = ({
         </div>
         <div className="flex items-center gap-2">
           <button className={`p-2 rounded hover:bg-opacity-80 ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}>
-            <Download className="w-4 h-4 text-purple-600" />
+            <Download className="w-4 h-4 text-[#7e57c2]" />
           </button>
           <button
             disabled={!isEditing}
@@ -115,13 +115,13 @@ const FileUploadBox = ({
 
   if (isScanning) {
     return (
-      <div className={`border-2 rounded-lg p-4 text-center ${
-        isDarkMode ? 'border-purple-600 bg-transparent' : 'border-purple-600 bg-transparent'
+      <div className={`border rounded-lg p-4 text-center ${
+        isDarkMode ? 'border-[#7e57c2] bg-transparent' : 'border-[#7e57c2] bg-transparent'
       }`}>
         <div className="w-6 h-6 mx-auto mb-2 animate-spin">
-          <Sparkles className="w-6 h-6 text-purple-600" />
+          <Sparkles className="w-6 h-6 text-[#7e57c2]" />
         </div>
-        <p className="text-sm font-medium text-purple-600">
+        <p className="text-sm font-medium text-[#7e57c2]">
           EAARTH AI SCANNING...
         </p>
         <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -133,15 +133,15 @@ const FileUploadBox = ({
 
   return (
     <div 
-      className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
-        isDarkMode ? 'border-gray-600 bg-gray-700/30 hover:border-purple-600' : 'border-gray-300 bg-purple-50/30 hover:border-purple-600'
+      className={`border border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
+        isDarkMode ? 'border-gray-600 bg-gray-700/30 hover:border-[#7e57c2]' : 'border-gray-300 bg-[#ede7f6]/30 hover:border-[#7e57c2]'
       } ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`} 
       onClick={handleFileSelect}
     >
-      <Upload className={`w-6 h-6 mx-auto mb-2 ${isDarkMode ? 'text-gray-400' : 'text-purple-600'}`} />
+      <Upload className={`w-6 h-6 mx-auto mb-2 ${isDarkMode ? 'text-gray-400' : 'text-[#7e57c2]'}`} />
       <button
         disabled={!isEditing}
-        className={`text-sm font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-600'} disabled:opacity-50`}
+        className={`text-sm font-medium ${isDarkMode ? 'text-[#9575cd]' : 'text-[#7e57c2]'} disabled:opacity-50`}
       >
         SELECT A FILE
       </button>
@@ -374,7 +374,7 @@ export default function ProfileDashboard() {
 
   const Field = ({ label, value, onChange, type = 'text', options, cols = 1, placeholder = '', tooltip = '' }) => (
     <div className={cols === 2 ? 'md:col-span-2' : cols === 3 ? 'md:col-span-3' : ''}>
-      <label className={`block text-xs font-bold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+      <label className={`block text-xs font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         {label}
         {tooltip && <Tooltip text={tooltip} isDarkMode={isDarkMode} />}
       </label>
@@ -383,7 +383,7 @@ export default function ProfileDashboard() {
           value={value}
           onChange={onChange}
           disabled={!isEditing}
-          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-purple-500 ${
+          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-[#7e57c2] ${
             isDarkMode 
               ? 'bg-gray-900 border-gray-700 text-white disabled:opacity-50' 
               : 'bg-gray-50 border-gray-200 text-gray-900 disabled:opacity-50'
@@ -400,7 +400,7 @@ export default function ProfileDashboard() {
           disabled={!isEditing}
           placeholder={placeholder}
           rows={3}
-          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
+          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-[#7e57c2] resize-none ${
             isDarkMode 
               ? 'bg-gray-900 border-gray-700 text-white disabled:opacity-50 placeholder:text-gray-600' 
               : 'bg-gray-50 border-gray-200 text-gray-900 disabled:opacity-50 placeholder:text-gray-400'
@@ -417,7 +417,7 @@ export default function ProfileDashboard() {
                 checked={value === opt}
                 onChange={onChange}
                 disabled={!isEditing}
-                className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                className="w-4 h-4 text-[#7e57c2] focus:ring-[#7e57c2]"
               />
               <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{opt}</span>
             </label>
@@ -430,7 +430,7 @@ export default function ProfileDashboard() {
           onChange={onChange}
           disabled={!isEditing}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-purple-500 ${
+          className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-[#7e57c2] ${
             isDarkMode 
               ? 'bg-gray-900 border-gray-700 text-white disabled:opacity-50 placeholder:text-gray-600' 
               : 'bg-gray-50 border-gray-200 text-gray-900 disabled:opacity-50 placeholder:text-gray-400'
@@ -442,7 +442,7 @@ export default function ProfileDashboard() {
 
   const PhoneField = ({ label, codeValue, numberValue, onCodeChange, onNumberChange }) => (
     <div>
-      <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+      <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         {label}
       </label>
       <div className="flex gap-2">
@@ -450,7 +450,7 @@ export default function ProfileDashboard() {
           value={codeValue}
           onChange={onCodeChange}
           disabled={!isEditing}
-          className={`w-24 px-2 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-purple-500 ${
+          className={`w-24 px-2 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-[#7e57c2] ${
             isDarkMode 
               ? 'bg-gray-900 border-gray-700 text-white disabled:opacity-50' 
               : 'bg-gray-50 border-gray-200 text-gray-900 disabled:opacity-50'
@@ -465,7 +465,7 @@ export default function ProfileDashboard() {
           value={numberValue}
           onChange={onNumberChange}
           disabled={!isEditing}
-          className={`flex-1 px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-purple-500 ${
+          className={`flex-1 px-4 py-3 border rounded-xl text-sm transition-all outline-none focus:ring-2 focus:ring-[#7e57c2] ${
             isDarkMode 
               ? 'bg-gray-900 border-gray-700 text-white disabled:opacity-50' 
               : 'bg-gray-50 border-gray-200 text-gray-900 disabled:opacity-50'
@@ -490,7 +490,7 @@ export default function ProfileDashboard() {
         />
         <div className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
           checked 
-            ? 'bg-purple-600' 
+            ? 'bg-[#7e57c2]' 
             : isDarkMode 
             ? 'bg-gray-600' 
             : 'bg-gray-300'
@@ -503,7 +503,7 @@ export default function ProfileDashboard() {
     return (
       <div
         id={`section-${id}`}
-        className={`rounded-xl border p-6 ${
+        className={`rounded-xl border p-6 shadow-md dark:shadow-shadow ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-whit border-gray-200'
         }`}
       >
@@ -516,12 +516,12 @@ export default function ProfileDashboard() {
     <div className={`min-h-screen p-0 ${isDarkMode ? '' : 'bg-gray-5'}`}>
       <div className="max-w-7xl mx-auto p- space-y-6">
         {/* Header */}
-        <div className={`rounded-xl border p-6 ${isDarkMode ? 'bg-gray-80 border-gray-700' : 'bg-whit border-gray-200'}`}>
+        <div className={`rounded-xl border p-6 shadow-md dark:shadow-shadow ${isDarkMode ? 'bg-gray-80 border-gray-700' : 'bg-whit border-gray-200'}`}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <User className="w-8 h-8 text-purple-600" />
+              <User className="w-8 h-8 text-[#7e57c2]" />
               <div>
-                <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   MY PROFILE
                 </h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -540,7 +540,7 @@ export default function ProfileDashboard() {
                 onClick={() => setShowQRModal(!showQRModal)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
                   showQRModal 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-[#7e57c2] text-white' 
                     : isDarkMode 
                     ? 'bg-gray-700 text-white border border-gray-600' 
                     : 'bg-white text-gray-900 border border-gray-200'
@@ -553,7 +553,7 @@ export default function ProfileDashboard() {
                 <>
                   <button
                     onClick={handleSave}
-                    className="px-4 py-2 rounded-lg bg-purple-600 text-white flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-[#7e57c2] text-white flex items-center gap-2"
                   >
                     <Save className="w-4 h-4" />
                     SAVE CHANGES
@@ -568,7 +568,7 @@ export default function ProfileDashboard() {
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 rounded-lg bg-purple-600 text-white flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-[#7e57c2] text-white flex items-center gap-2"
                 >
                   <Edit3 className="w-4 h-4" />
                   EDIT PROFILE
@@ -579,11 +579,11 @@ export default function ProfileDashboard() {
         </div>
 
         {/* Profile Summary Card */}
-        <div className={`rounded-xl border p-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className={`rounded-xl border p-6 shadow-md dark:shadow-shadow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="relative">
-                <div className="w-20 h-20 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                <div className="w-20 h-20 rounded-xl bg-[#7e57c2] flex items-center justify-center text-white font-medium text-2xl">
                   {profile.firstName[0]}{profile.lastName[0]}
                 </div>
                 {isVerified && (
@@ -594,14 +594,14 @@ export default function ProfileDashboard() {
               </div>
 
               <div>
-                <h2 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h2 className={`text-lg font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {profile.firstName} {profile.lastName}
                 </h2>
                 <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   DIRECTOR OF PHOTOGRAPHY
                 </p>
                 {isVerified && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500 text-white text-xs font-bold">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500 text-white text-xs font-medium">
                     <BadgeCheck className="w-3 h-3" />
                     EAARTH VERIFIED
                   </span>
@@ -609,9 +609,9 @@ export default function ProfileDashboard() {
               </div>
             </div>
 
-            <div className="flex gap-8">
+            <div className="flex gap-6">
               <div className="text-center">
-                <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   12
                 </div>
                 <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -619,7 +619,7 @@ export default function ProfileDashboard() {
                 </div>
               </div>
               <div className="text-center">
-                <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   36
                 </div>
                 <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -627,7 +627,7 @@ export default function ProfileDashboard() {
                 </div>
               </div>
               <div className="text-center">
-                <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <div className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   100%
                 </div>
                 <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -640,14 +640,14 @@ export default function ProfileDashboard() {
 
         {/* QR Code Card */}
         {showQRModal && (
-          <div className={`rounded-xl border-2 border-purple-300 p-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <div className={`rounded-xl border border-purple-300 p-6 shadow-md dark:shadow-shadow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
             <div className="flex items-start gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                <div className="w-14 h-14 rounded-xl bg-[#7e57c2] flex items-center justify-center text-white font-medium text-xl">
                   <User className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h3 className={`font-medium text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {profile.firstName.toUpperCase()} {profile.lastName.toUpperCase()}
                   </h3>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -656,21 +656,21 @@ export default function ProfileDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border-4 border-purple-600">
+              <div className="bg-white p-4 rounded-xl border-2 border-[#7e57c2]">
                 <QRCode
                   value="https://eaarth.app/crew/js-2024-dop"
                   size={180}
                   level="H"
                 />
                 <div className="text-center mt-3">
-                  <div className="font-bold text-xs text-gray-900 bg-purple-100 px-2 py-1 rounded-full border-2 border-purple-300">
+                  <div className="font-medium text-xs text-gray-900 bg-purple-100 px-2 py-1 rounded-full border border-purple-300">
                     ID: JS-2024-DOP
                   </div>
                 </div>
               </div>
 
               <div className="flex-1">
-                <h4 className={`font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   SCAN TO ACCESS MY PROFILE
                 </h4>
                 <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -678,27 +678,27 @@ export default function ProfileDashboard() {
                 </p>
                 <ul className={`space-y-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   <li className="flex items-start gap-2">
-                    <span className="text-purple-600">●</span>
+                    <span className="text-[#7e57c2]">●</span>
                     <span><strong>Quick Login</strong> - Access your profile on mobile devices</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-purple-600">●</span>
+                    <span className="text-[#7e57c2]">●</span>
                     <span><strong>Digital Crew Pass</strong> - Show your credentials on set</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-purple-600">●</span>
+                    <span className="text-[#7e57c2]">●</span>
                     <span><strong>Contact Card</strong> - Share your professional info instantly</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-purple-600">●</span>
+                    <span className="text-[#7e57c2]">●</span>
                     <span><strong>Schedule Sync</strong> - View your call times and bookings</span>
                   </li>
                 </ul>
                 <div className={`mt-3 p-2 rounded-lg text-xs ${
-                  isDarkMode ? 'bg-gray-700' : 'bg-purple-50'
+                  isDarkMode ? 'bg-gray-700' : 'bg-[#ede7f6]'
                 }`}>
-                  <strong className={isDarkMode ? 'text-purple-400' : 'text-purple-700'}>Profile URL:</strong>
-                  <span className={`ml-1 ${isDarkMode ? 'text-gray-400' : 'text-purple-600'}`}>
+                  <strong className={isDarkMode ? 'text-[#9575cd]' : 'text-purple-700'}>Profile URL:</strong>
+                  <span className={`ml-1 ${isDarkMode ? 'text-gray-400' : 'text-[#7e57c2]'}`}>
                     https://eaarth.app/crew/js-2024-dop
                   </span>
                 </div>
@@ -722,7 +722,7 @@ export default function ProfileDashboard() {
                 onClick={() => setActiveTab(value)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
                   activeTab === value
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-[#7e57c2] text-white'
                     : isDarkMode
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -742,9 +742,9 @@ export default function ProfileDashboard() {
             icon={User}
             title="IDENTITY & PERSONAL"
             subtitle="Basic information, passport, and identification"
-            color="bg-purple-600 "
+            color="bg-[#7e57c2] "
           >
-            <div className="space-y-6 bg-white p-8 rounded-2xl">
+            <div className="space-y-6 bg-white p-6 rounded-2xl">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Field label="TITLE" value={profile.title} onChange={(e) => setProfile({ ...profile, title: e.target.value })} options={['MR', 'MS', 'MRS', 'DR', 'PROF']} />
                 <Field label="FIRST NAME" value={profile.firstName} onChange={(e) => setProfile({ ...profile, firstName: e.target.value.toUpperCase() })} />
@@ -761,7 +761,7 @@ export default function ProfileDashboard() {
 
               {/* PROOF OF NATIONALITY */}
               <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className={`font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   PROOF OF NATIONALITY
                   <Tooltip text="If you don't have a passport, please select & provide the alternative proof of nationality." isDarkMode={isDarkMode} />
                 </h4>
@@ -775,7 +775,7 @@ export default function ProfileDashboard() {
                         checked={profile.proofOfNationality === 'PASSPORT'}
                         onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })}
                         disabled={!isEditing}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        className="w-4 h-4 text-[#7e57c2] focus:ring-[#7e57c2]"
                       />
                       <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>PASSPORT</span>
                     </label>
@@ -787,7 +787,7 @@ export default function ProfileDashboard() {
                         checked={profile.proofOfNationality === 'BIRTH CERTIFICATE'}
                         onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })}
                         disabled={!isEditing}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        className="w-4 h-4 text-[#7e57c2] focus:ring-[#7e57c2]"
                       />
                       <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>BIRTH CERTIFICATE</span>
                     </label>
@@ -799,7 +799,7 @@ export default function ProfileDashboard() {
                         checked={profile.proofOfNationality === 'CERTIFICATE OF REGISTRATION OR NATURALISATION'}
                         onChange={(e) => setProfile({ ...profile, proofOfNationality: e.target.value })}
                         disabled={!isEditing}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        className="w-4 h-4 text-[#7e57c2] focus:ring-[#7e57c2]"
                       />
                       <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>CERTIFICATE OF REGISTRATION OR NATURALISATION</span>
                     </label>
@@ -807,7 +807,7 @@ export default function ProfileDashboard() {
 
                   {/* Passport Fields */}
                   {profile.proofOfNationality === 'PASSPORT' && (
-                    <div className="mt-6 space-y-4 bg-white p-8 rounded-2xl">
+                    <div className="mt-6 space-y-4 bg-white p-6 rounded-2xl">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Field label="PASSPORT FIRST NAME" value={profile.passportFirstName} onChange={(e) => setProfile({ ...profile, passportFirstName: e.target.value.toUpperCase() })} />
                         <Field label="PASSPORT LAST NAME" value={profile.passportLastName} onChange={(e) => setProfile({ ...profile, passportLastName: e.target.value.toUpperCase() })} />
@@ -819,7 +819,7 @@ export default function ProfileDashboard() {
 
                       {/* Passport Upload */}
                       <div>
-                        <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           UPLOAD A FILE OF YOUR PASSPORT
                         </label>
                         {uploadedPassportFile ? (
@@ -856,19 +856,19 @@ export default function ProfileDashboard() {
                             />
                             <label
                               htmlFor="passport-upload"
-                              className={`w-full px-4 py-8 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer ${
+                              className={`w-full px-4 py-8 border border-dashed rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer ${
                                 isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'
                               }`}
                             >
                               {isScanning ? (
                                 <>
-                                  <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
-                                  <span className="text-purple-600 font-medium">AI is scanning...</span>
+                                  <div className="w-12 h-12 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                                  <span className="text-[#7e57c2] font-medium">AI is scanning...</span>
                                 </>
                               ) : (
                                 <>
-                                  <Upload className="w-12 h-12 text-purple-600" />
-                                  <span className="text-purple-600 font-medium">UPLOAD PASSPORT</span>
+                                  <Upload className="w-12 h-12 text-[#7e57c2]" />
+                                  <span className="text-[#7e57c2] font-medium">UPLOAD PASSPORT</span>
                                 </>
                               )}
                             </label>
@@ -880,7 +880,7 @@ export default function ProfileDashboard() {
 
                   {/* Birth Certificate */}
                   {profile.proofOfNationality === 'BIRTH CERTIFICATE' && (
-                    <div className="mt-6 space-y-4 bg-white p-8 rounded-2xl">
+                    <div className="mt-6 space-y-4 bg-white p-6 rounded-2xl">
                       <FileUploadBox
                         fileName="Birth_Certificate.pdf"
                         isUploaded={uploadedBirthCertificate}
@@ -925,9 +925,9 @@ export default function ProfileDashboard() {
         {/* CONTACT & ADDRESS Section */}
         {activeTab === 'contact' && (
           <Section id="contact" icon={MapPin} title="CONTACT & LOCATION" subtitle="Address, phone, email, emergency contact">
-            <div className="space-y-6 bg-white p-8 rounded-2xl">
+            <div className="space-y-6 bg-white p-6 rounded-2xl">
               <div>
-                <h4 className={`font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   <Home className="w-5 h-5" />
                   HOME ADDRESS
                 </h4>
@@ -943,7 +943,7 @@ export default function ProfileDashboard() {
               </div>
 
               <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className={`font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   <Phone className="w-5 h-5" />
                   CONTACT INFORMATION
                 </h4>
@@ -968,7 +968,7 @@ export default function ProfileDashboard() {
               </div>
 
               <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className={`font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   <AlertCircle className="w-5 h-5" />
                   EMERGENCY CONTACT
                 </h4>
@@ -991,9 +991,9 @@ export default function ProfileDashboard() {
         {/* FINANCIAL Section */}
         {activeTab === 'financial' && (
           <Section id="financial" icon={DollarSign} title="FINANCIAL & TAX" subtitle="Banking, tax, NI, company details">
-            <div className="space-y-6 bg-white p-8 rounded-2xl">
+            <div className="space-y-6 bg-white p-6 rounded-2xl">
               <div>
-                <h4 className={`font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   TAX & NATIONAL INSURANCE
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1004,7 +1004,7 @@ export default function ProfileDashboard() {
               </div>
 
               <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className={`font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   PERSONAL BANK DETAILS
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1026,7 +1026,7 @@ export default function ProfileDashboard() {
 
               {useLoanOutCompany && (
                 <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className={`font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     LOAN-OUT COMPANY
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1043,7 +1043,7 @@ export default function ProfileDashboard() {
         {/* ALLOWANCES Section */}
         {activeTab === 'allowances' && (
           <Section id="allowances" icon={Car} title="ALLOWANCES & EXPENSES" subtitle="Vehicle, computer, equipment">
-            <div className="space-y-6 bg-white p-8 rounded-2xl">
+            <div className="space-y-6 bg-white p-6 rounded-2xl">
               <Toggle 
                 label="I USE MY OWN VEHICLE" 
                 checked={useOwnVehicle} 
@@ -1052,7 +1052,7 @@ export default function ProfileDashboard() {
 
               {useOwnVehicle && (
                 <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className={`font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     PERSONAL VEHICLE
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1065,7 +1065,7 @@ export default function ProfileDashboard() {
               )}
 
               <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className={`font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   💻 COMPUTER
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1090,3 +1090,7 @@ export default function ProfileDashboard() {
     </div>
   );
 }
+
+
+
+

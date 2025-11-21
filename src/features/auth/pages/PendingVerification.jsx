@@ -16,7 +16,7 @@ export function VerificationPending({ onGoToDashboard }) {
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-[50px] shadow-2xl p-12 max-w-[504px] w-full text-center">
+      <div className="bg-white rounded-[50px] shadow-lg p-12 max-w-[504px] w-full text-center">
         {/* Icon */}
         <div className="flex justify-center mb-8">
           <div className="w-[52px] h-[52px] rounded-full bg-yellow-100 flex items-center justify-center">
@@ -51,3 +51,7 @@ export function VerificationPending({ onGoToDashboard }) {
     </div>
   );
 }
+
+
+
+

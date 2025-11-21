@@ -47,14 +47,14 @@ export function VerificationResultScreen({
         <ArrowLeft className="w-6 h-6 text-gray-700" />
       </button>
 
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 text-center">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 text-center">
 
         {/* Logo */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-medium bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             EAARTH
           </h1>
-          <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <p className="text-lg font-medium bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             STUDIOS
           </p>
         </div>
@@ -75,7 +75,7 @@ export function VerificationResultScreen({
         </div>
 
         {/* Title */}
-        <h2 className="text-2xl font-bold mb-2">
+        <h2 className="text-xl font-semibold mb-2">
           {isSuccess ? "Verified Successfully!" : "Verification Failed"}
         </h2>
 
@@ -105,7 +105,7 @@ export function VerificationResultScreen({
             </button>
             <button
               onClick={() => onNavigate("contact-support")}
-              className="w-full border-2 border-purple-600 text-purple-600 font-semibold py-3 rounded-lg hover:bg-purple-50 transition-all"
+              className="w-full border border-purple-600 text-purple-600 font-semibold py-3 rounded-lg hover:bg-purple-50 transition-all"
             >
               CONTACT SUPPORT
             </button>
@@ -115,3 +115,7 @@ export function VerificationResultScreen({
     </div>
   );
 }
+
+
+
+

@@ -25,3 +25,7 @@ const DashboardRoutes = {path: '/', element: <ErrorBoundary><DashboardLayout /><
 };
 
 export default DashboardRoutes;
+
+
+
+
