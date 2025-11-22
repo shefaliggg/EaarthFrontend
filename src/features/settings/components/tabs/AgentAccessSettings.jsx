@@ -105,7 +105,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
                 value={agentEmail}
                 onChange={(e) => setAgentEmail(e.target.value)}
                 placeholder="AGENT@EXAMPLE.COM"
-                className="w-full pl-10 pr-4 py-3 rounded-lg border-2 border-input bg-input text-foreground placeholder-muted-foreground font-bold transition-all focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground placeholder-muted-foreground font-bold transition-all focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
               PERMISSIONS
             </label>
             <div className="grid md:grid-cols-2 gap-3">
-              <label className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all border-2 ${
+              <label className={`flex items-center justify-between px-4 py-3 rounded-3xl cursor-pointer transition-all border-2 ${
                 selectedPermissions.viewProfile 
                   ? 'bg-primary border-primary' 
                   : 'border-input bg-muted hover:border-primary'
@@ -131,7 +131,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
                 />
               </label>
 
-              <label className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all border-2 ${
+              <label className={`flex items-center justify-between px-4 py-3 rounded-3xl cursor-pointer transition-all border-2 ${
                 selectedPermissions.editProfile 
                   ? 'bg-primary border-primary' 
                   : 'border-input bg-muted hover:border-primary'
@@ -147,7 +147,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
                 />
               </label>
 
-              <label className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all border-2 ${
+              <label className={`flex items-center justify-between px-4 py-3 rounded-3xl cursor-pointer transition-all border-2 ${
                 selectedPermissions.manageDocuments 
                   ? 'bg-primary border-primary' 
                   : 'border-input bg-muted hover:border-primary'
@@ -163,7 +163,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
                 />
               </label>
 
-              <label className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all border-2 ${
+              <label className={`flex items-center justify-between px-4 py-3 rounded-3xl cursor-pointer transition-all border-2 ${
                 selectedPermissions.manageProjects 
                   ? 'bg-primary border-primary' 
                   : 'border-input bg-muted hover:border-primary'
@@ -183,7 +183,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
 
           <button
             onClick={handleGiveAccess}
-            className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-3xl font-bold hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2"
           >
             <UserPlus className="w-5 h-5" />
             GRANT ACCESS

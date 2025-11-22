@@ -114,11 +114,11 @@ export default function ActivityLogsSettings({ isDarkMode }) {
       case 'edit':
         return 'bg-blue-600';
       case 'document':
-        return 'bg-purple-600';
+        return 'bg-primary';
       case 'profile':
         return 'bg-orange-600';
       default:
-        return 'bg-purple-600';
+        return 'bg-primary';
     }
   };
 
@@ -133,20 +133,14 @@ export default function ActivityLogsSettings({ isDarkMode }) {
   return (
     <div className="space-y-4">
       {/* Filter and Export */}
-      <div className={`rounded-3xl border p-4 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-4 transition-colors duration-400">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Filter className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className={`px-4 py-2 rounded-lg border-2 font-bold transition-all ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-purple-200 text-gray-900'
-              } focus:ring-2 focus:ring-purple-500 outline-none`}
+              className="px-4 py-2 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="all">ALL ACTIVITY</option>
               <option value="login">LOGIN</option>
@@ -158,7 +152,7 @@ export default function ActivityLogsSettings({ isDarkMode }) {
           </div>
           <button
             onClick={handleExportLogs}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-2"
           >
             <Download className="w-4 h-4" />
             EXPORT LOGS
@@ -167,14 +161,12 @@ export default function ActivityLogsSettings({ isDarkMode }) {
       </div>
 
       {/* Activity Timeline */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Activity className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Activity className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             RECENT ACTIVITY ({filteredLogs.length})
           </h3>
         </div>
@@ -187,11 +179,7 @@ export default function ActivityLogsSettings({ isDarkMode }) {
             return (
               <div
                 key={log.id}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700 hover:border-purple-500' 
-                    : 'bg-white border-gray-200 hover:border-purple-300'
-                }`}
+                className="p-4 rounded-lg border-2 border-border bg-muted transition-all hover:border-primary"
               >
                 <div className="flex gap-4">
                   <div className={`w-12 h-12 rounded-lg ${colorClass} flex items-center justify-center flex-shrink-0`}>
@@ -200,36 +188,36 @@ export default function ActivityLogsSettings({ isDarkMode }) {
                   
                   <div className="flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1">
-                      <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <h4 className="font-bold text-foreground">
                         {log.action}
                       </h4>
-                      <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span className="text-xs font-bold text-muted-foreground">
                         {log.timestamp}
                       </span>
                     </div>
                     
-                    <p className={`text-sm mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p className="text-sm mb-3 text-muted-foreground">
                       {log.description}
                     </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="flex items-center gap-2">
-                        <Monitor className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                        <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                        <Monitor className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground">
                           {log.device}
                         </span>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <MapPin className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                        <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground">
                           {log.location}
                         </span>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Activity className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                        <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                        <Activity className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground">
                           {log.ipAddress}
                         </span>
                       </div>

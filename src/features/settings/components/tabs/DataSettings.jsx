@@ -80,7 +80,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
                 value={profile.autoSaveInterval || '5'}
                 onChange={(e) => handleChange('autoSaveInterval', e.target.value)}
                 disabled={!isEditing}
-                className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               >
                 <option value="1">1 MINUTE</option>
                 <option value="5">5 MINUTES</option>
@@ -120,7 +120,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
           <div className="pt-4">
             <button
               onClick={handleClearCache}
-              className="w-full px-6 py-3 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-muted text-foreground hover:opacity-80"
+              className="w-full px-6 py-2 rounded-3xl font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-muted text-foreground hover:opacity-80"
             >
               <Trash2 className="w-5 h-5" />
               CLEAR CACHE NOW
@@ -152,7 +152,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
               value={profile.exportFormat || 'PDF'}
               onChange={(e) => handleChange('exportFormat', e.target.value)}
               disabled={!isEditing}
-              className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+              className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="PDF">PDF</option>
               <option value="EXCEL">EXCEL</option>
@@ -172,7 +172,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
               value={profile.backupFrequency || 'weekly'}
               onChange={(e) => handleChange('backupFrequency', e.target.value)}
               disabled={!isEditing}
-              className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+              className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="daily">DAILY</option>
               <option value="weekly">WEEKLY</option>
