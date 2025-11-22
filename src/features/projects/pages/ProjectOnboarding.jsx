@@ -7,6 +7,9 @@ import { Label } from '@/shared/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
 import { Textarea } from '@/shared/components/ui/textarea';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
+import { Button } from '../../../shared/components/ui/button';
+import NewOfferModal from '../components/CrewNewOfferModal';
+import CrewOfferSendSuccessModal from '../components/CrewOfferSendSuccessModal';
 
 function ProjectOnboarding() {
   const [activeTab, setActiveTab] = useState('production-approval');
@@ -89,44 +92,6 @@ function ProjectOnboarding() {
     }
   ]);
 
-  const [jobTitles, setJobTitles] = useState([
-    {
-      id: '1',
-      isPrimary: true,
-      roleName: 'ROLE 1',
-      jobTitle: '',
-      jobTitleSuffix: '',
-      rateType: 'DAILY',
-      currency: 'GBP',
-      rateAmount: '',
-      shiftHours: '',
-      holidayPayInclusive: false,
-      rateDescription: '',
-      // Additional fields required by TabbedRoleConfiguration
-      unit: '',
-      department: '',
-      subDepartment: '',
-      regularSiteOfWork: '',
-      engagement: '',
-      startDate: '',
-      endDate: '',
-      dailyOrWeekly: '',
-      workingWeek: '',
-      workingInUK: '',
-      feePerDay: '',
-      overtimeType: 'CALCULATED',
-      customOT: {
-        nonShootOT: '',
-        shootOT: '',
-        minHrs6thDay: '',
-        sixthDayHourly: '',
-        minHrs7thDay: '',
-        seventhDayHourly: '',
-      },
-      budgetCode: '',
-    }
-  ]);
-
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -176,13 +141,12 @@ function ProjectOnboarding() {
           CREW ONBOARDING
         </h2>
         {!showNewOfferForm && activeTab === 'production-approval' && (
-          <button
+          <Button
             onClick={() => setShowNewOfferForm(true)}
-            className="px-6 py-3 rounded-lg font-bold bg-purple-700 text-white hover:bg-purple-600 dark:hover:bg-purple-800 transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             NEW OFFER
-          </button>
+          </Button>
         )}
       </div>
 
@@ -308,261 +272,12 @@ function ProjectOnboarding() {
 
       {/* New Offer Form Modal */}
       {showNewOfferForm && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-6xl my-8 rounded-xl border shadow-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                NEW OFFER
-              </h3>
-              <button
-                onClick={() => setShowNewOfferForm(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto">
-              {/* RECIPIENT SECTION */}
-              <div>
-                <h4 className="text-lg font-bold mb-4 pb-2 border-b text-purple-700 dark:text-purple-400 border-gray-200 dark:border-gray-700">
-                  RECIPIENT
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      FULL NAME <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value.toUpperCase() })}
-                      placeholder="ENTER FULL NAME"
-                      className="uppercase dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      EMAIL <span className="text-red-500">*</span>
-                      <Info className="w-4 h-4 text-gray-500 dark:text-gray-400" title="Ensure this is the recipient's preferred email address" />
-                    </Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value.toUpperCase() })}
-                      placeholder="EMAIL@EXAMPLE.COM"
-                      className="uppercase dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      MOBILE NUMBER <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      type="tel"
-                      value={formData.mobileNumber}
-                      onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                      placeholder="07XXX XXXXXX"
-                      className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="isViaAgent"
-                      checked={formData.isViaAgent}
-                      onCheckedChange={(v) => setFormData({ ...formData, isViaAgent: v })}
-                    />
-                    <Label htmlFor="isViaAgent" className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                      CHECK THE BOX IF THIS DEAL IS VIA AN AGENT
-                    </Label>
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      ALTERNATIVE CONTRACT
-                    </Label>
-                    <Select value={formData.alternativeContract} onValueChange={(v) => setFormData({ ...formData, alternativeContract: v })}>
-                      <SelectTrigger className="dark:bg-gray-900 dark:border-gray-700 dark:text-white">
-                        <SelectValue placeholder="SELECT..." />
-                      </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
-                        <SelectItem value="HOD">HOD</SelectItem>
-                        <SelectItem value="NO_CONTRACT">NO CONTRACT (ALL OTHER DOCUMENTS TO BE PROCESSED)</SelectItem>
-                        <SelectItem value="SENIOR_AGREEMENT">SENIOR AGREEMENT</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* TAX STATUS SECTION */}
-              <div>
-                <h4 className="text-lg font-bold mb-4 pb-2 border-b text-purple-700 dark:text-purple-400 border-gray-200 dark:border-gray-700">
-                  TAX STATUS
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">
-                      ALLOW AS SELF-EMPLOYED OR LOAN OUT? <span className="text-red-500">*</span>
-                    </Label>
-                    <RadioGroup value={formData.allowSelfEmployed} onValueChange={(v) => setFormData({ ...formData, allowSelfEmployed: v })}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="YES" id="selfEmpYes" />
-                        <Label htmlFor="selfEmpYes" className="text-sm font-bold text-gray-700 dark:text-gray-300">YES</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="NO" id="selfEmpNo" />
-                        <Label htmlFor="selfEmpNo" className="text-sm font-bold text-gray-700 dark:text-gray-300">NO</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      STATUS DETERMINATION REASON <span className="text-red-500">*</span>
-                    </Label>
-                    <Select value={formData.statusDeterminationReason} onValueChange={(v) => setFormData({ ...formData, statusDeterminationReason: v })}>
-                      <SelectTrigger className="dark:bg-gray-900 dark:border-gray-700 dark:text-white">
-                        <SelectValue placeholder="SELECT..." />
-                      </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-900 dark:border-gray-700">
-                        <SelectItem value="HMRC_LIST">JOB TITLE APPEARS ON HMRC LIST OF 'ROLES NORMALLY TREATED AS SELF-EMPLOYED'</SelectItem>
-                        <SelectItem value="CEST_ASSESSMENT">OUR CEST ASSESSMENT HAS CONFIRMED 'OFF-PAYROLL WORKING RULES (IR35) DO NOT APPLY'</SelectItem>
-                        <SelectItem value="LORIMER_LETTER">YOU HAVE SUPPLIED A VALID LORIMER LETTER</SelectItem>
-                        <SelectItem value="OTHER">OTHER</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formData.statusDeterminationReason === 'OTHER' && (
-                    <div>
-                      <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                        OTHER STATUS DETERMINATION REASON <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value={formData.otherStatusReason}
-                        onChange={(e) => setFormData({ ...formData, otherStatusReason: e.target.value.toUpperCase() })}
-                        placeholder="PLEASE SPECIFY"
-                        className="uppercase dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* NOTES SECTION */}
-              <div>
-                <h4 className="text-lg font-bold mb-4 pb-2 border-b text-purple-700 dark:text-purple-400 border-gray-200 dark:border-gray-700">
-                  NOTES
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      OTHER DEAL PROVISIONS
-                    </Label>
-                    <Textarea
-                      value={formData.otherDealProvisions}
-                      onChange={(e) => setFormData({ ...formData, otherDealProvisions: e.target.value.toUpperCase() })}
-                      placeholder="ENTER ADDITIONAL DEAL PROVISIONS..."
-                      maxLength={300}
-                      className="uppercase dark:bg-gray-900 dark:border-gray-700 dark:text-white resize-none"
-                      rows={3}
-                    />
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formData.otherDealProvisions.length} / 300
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                      ADDITIONAL NOTES
-                    </Label>
-                    <Textarea
-                      value={formData.additionalNotes}
-                      onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value.toUpperCase() })}
-                      placeholder="ENTER ADDITIONAL NOTES..."
-                      maxLength={300}
-                      className="uppercase dark:bg-gray-900 dark:border-gray-700 dark:text-white resize-none"
-                      rows={3}
-                    />
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formData.additionalNotes.length} / 300
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => setShowNewOfferForm(false)}
-                  className="px-8 py-3 rounded-lg font-bold transition-all bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  CANCEL
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-8 py-3 rounded-lg font-bold bg-purple-700 text-white hover:bg-purple-600 dark:hover:bg-purple-800 transition-all"
-                >
-                  SAVE OFFER
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <NewOfferModal isOpen={showNewOfferForm} onClose={() => setShowNewOfferForm(false)} onSave={handleSave}/>
       )}
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="rounded-2xl p-8 max-w-md w-full shadow-2xl bg-white dark:bg-gray-800">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
-              </div>
-
-              <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-                OFFER SENT SUCCESSFULLY!
-              </h3>
-
-              <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                  <Mail className="w-5 h-5 text-purple-700 dark:text-purple-400" />
-                  <div className="text-left flex-1">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                      EMAIL SENT
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      TO: {formData.email}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      FROM: noreply@eaarthstudios.com
-                    </p>
-                  </div>
-                  <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-
-                <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                  <Bell className="w-5 h-5 text-blue-700 dark:text-blue-400" />
-                  <div className="text-left flex-1">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                      IN-APP NOTIFICATION
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      User not on platform - Email only
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                This dialog will close automatically in 5 seconds...
-              </p>
-            </div>
-          </div>
-        </div>
+        <CrewOfferSendSuccessModal formData={formData} />
       )}
     </div>
   );
