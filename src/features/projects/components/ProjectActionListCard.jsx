@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import * as Icon from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { convertTitleToUrl } from '../../../shared/config/utils';
 
 function ProjectActionListCard({ feature }) {
     const navigate = useNavigate();
@@ -14,10 +15,9 @@ function ProjectActionListCard({ feature }) {
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={() => navigate(feature.id.toLowerCase())}
+            onClick={() => navigate(convertTitleToUrl(feature.label))}
         >
             <button
-                onClick={() => navigate(feature.id)}
                 className="w-full flex items-center gap-4 text-left"
             >
                 <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">

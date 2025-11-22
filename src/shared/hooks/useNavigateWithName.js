@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { convertTitleToUrl } from "../config/utils";
 
 export function useNavigateWithName() {
   const navigate = useNavigate();
@@ -9,12 +10,7 @@ export function useNavigateWithName() {
     basePath = "",
     storageKey = "appSlug"
   }) {
-    const urlSlug = title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
+    const urlSlug = convertTitleToUrl(title)
 
     if (uniqueCode) {
       sessionStorage.setItem(storageKey, uniqueCode);

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useFavorites } from '../hooks/useFavorites';
 import { useNavigate } from 'react-router-dom';
 import * as Icon from 'lucide-react';
+import { convertTitleToUrl } from '../../../shared/config/utils';
 
 function ProjectActionGridCard({ feature }) {
     const navigate = useNavigate();
@@ -17,7 +18,7 @@ function ProjectActionGridCard({ feature }) {
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={() => navigate(feature.id.toLowerCase())}
+            onClick={() => navigate(convertTitleToUrl(feature.label))}
         >
             {/* Favorite Star */}
             <button
