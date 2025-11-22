@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings, Save, Edit3, Activity } from 'lucide-react';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 export default function SettingsSummary({ 
   isDarkMode, 
@@ -10,8 +11,11 @@ export default function SettingsSummary({
 }) {
   return (
     <div className="space-y-4">
+      {/* Breadcrumbs */}
+      <UrlBreadcrumbs />
+
       {/* Page Header */}
-      <div className={` transition-colors duration-400`}>
+      <div className="transition-colors duration-400">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-primary">
@@ -55,17 +59,17 @@ export default function SettingsSummary({
       </div>
 
       {/* Settings Summary Card */}
-      <div className={`rounded-lg border border-border bg-card p-6 transition-colors duration-400`}>
+      <div className="rounded-lg border border-border bg-card px-6 py-5 transition-colors duration-400">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             {/* Settings Icon */}
-            <div className="w-20 h-20 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-20 h-20 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
               <Settings className="w-10 h-10 text-primary-foreground" />
             </div>
 
             {/* Settings Info */}
             <div>
-              <h2 className="text-xl font-bold text-foreground mb-1">ACCOUNT SETTINGS</h2>
+              <h2 className="text-lg font-bold text-foreground mb-1">ACCOUNT SETTINGS</h2>
               <p className="text-sm text-muted-foreground mb-2">Configure your preferences and account options</p>
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-primary/10 text-primary font-bold text-xs">
                 <Activity className="w-3 h-3" />

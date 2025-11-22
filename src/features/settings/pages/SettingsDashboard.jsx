@@ -11,6 +11,7 @@ import RegionalSettings from '../components/tabs/RegionalSettings';
 import DataSettings from '../components/tabs/DataSettings';
 import AgentAccessSettings from '../components/tabs/AgentAccessSettings';
 import ActivityLogsSettings from '../components/tabs/ActivityLogsSettings';
+import { div } from 'framer-motion/client';
 
 export default function SettingsDashboard() {
   const navigate = useNavigate();
@@ -162,72 +163,74 @@ export default function SettingsDashboard() {
         />
 
         {/* TAB CONTENTS */}
-        {activeTab === 'account' && (
-          <AccountSettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+         <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+          {activeTab === 'account' && (
+            <AccountSettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'display' && (
-          <DisplaySettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-            onToggleDarkMode={toggleDarkMode}
-          />
-        )}
+          {activeTab === 'display' && (
+            <DisplaySettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+              onToggleDarkMode={toggleDarkMode}
+            />
+          )}
 
-        {activeTab === 'notifications' && (
-          <NotificationsSettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'notifications' && (
+            <NotificationsSettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'privacy' && (
-          <PrivacySettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'privacy' && (
+            <PrivacySettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'regional' && (
-          <RegionalSettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'regional' && (
+            <RegionalSettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'data' && (
-          <DataSettings
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'data' && (
+            <DataSettings
+              profile={profile}
+              setProfile={setProfile}
+              isEditing={isEditing}
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'agent' && (
-          <AgentAccessSettings
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'agent' && (
+            <AgentAccessSettings
+              isDarkMode={isDarkMode}
+            />
+          )}
 
-        {activeTab === 'activity' && (
-          <ActivityLogsSettings
-            isDarkMode={isDarkMode}
-          />
-        )}
+          {activeTab === 'activity' && (
+            <ActivityLogsSettings
+              isDarkMode={isDarkMode}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ export default function RegionalSettings({ profile, setProfile, isEditing, isDar
   return (
     <div className="space-y-4">
       {/* Language & Locale */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-3xl border border-border bg-card p-6 transition-colors duration-400">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -59,7 +59,7 @@ export default function RegionalSettings({ profile, setProfile, isEditing, isDar
       </div>
 
       {/* Date & Time Formats */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-3xl border border-border bg-card p-6 transition-colors duration-400">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -105,7 +105,7 @@ export default function RegionalSettings({ profile, setProfile, isEditing, isDar
       </div>
 
       {/* Currency & Calendar */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-3xl border border-border bg-card p-6 transition-colors duration-400">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">

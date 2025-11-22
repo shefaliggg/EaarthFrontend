@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, Bell, Shield, Eye, Users, Globe, User } from 'lucide-react';
+import { Save, Bell, Shield, Eye, Users, Globe, User, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 // Import tab components
 import { AccountInfoTab } from '../components/settings/tabs/AccountInfoTab';
@@ -72,7 +73,25 @@ export default function AccountSettings({ isDarkMode }) {
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-4">
+    <div className="h-full overflow-y-auto  space-y-6">
+      {/* Breadcrumbs */}
+      <UrlBreadcrumbs />
+
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
+          <Settings className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            ACCOUNT SETTINGS
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your account preferences and security
+          </p>
+        </div>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

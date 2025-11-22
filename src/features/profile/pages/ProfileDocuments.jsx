@@ -1,7 +1,6 @@
-// ProfileDocuments.jsx (MAIN PAGE COMPONENT)
-
 import React, { useState } from 'react';
-import { Upload, Search, Grid, List, Eye } from 'lucide-react';
+import { Upload, Search, Grid, List, Eye, FileText } from 'lucide-react';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 import { DocumentTableRow } from '../components/Documents/DocumentTableRow';
 import { DocumentListItem } from '../components/Documents/DocumentListItem';
 import { DocumentCardPreview } from '../components/Documents/DocumentCardPreview';
@@ -38,32 +37,42 @@ export default function ProfileDocuments({ isDarkMode = false }) {
   });
 
   return (
-    <div className="h-full flex flex-col ">
+    <div className="h-full flex flex-col space-y-4">
+      {/* Breadcrumbs */}
+      <UrlBreadcrumbs />
+
+      {/* Header Section */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
+          <FileText className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            PROFILE DOCUMENTS
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage and organize your documents
+          </p>
+        </div>
+      </div>
+
       {/* Search and Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search documents..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full pl-9 pr-3 py-3 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-primary ${
-              isDarkMode 
-                ? 'bg-input border-border text-foreground placeholder-muted-foreground' 
-                : 'bg-input border-border text-foreground placeholder-muted-foreground'
-            }`}
+            className="w-full pl-9 pr-3 py-3 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-primary bg-input border-border text-foreground placeholder-muted-foreground"
           />
         </div>
         <div className="flex gap-2">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className={`px-3 py-3 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-primary ${
-              isDarkMode 
-                ? 'bg-input border-border text-foreground' 
-                : 'bg-input border-border text-foreground'
-            }`}
+            className="px-3 py-3 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-primary bg-input border-border text-foreground"
           >
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
@@ -71,7 +80,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
           </select>
           
           {/* View Mode Selector */}
-          <div className={`flex gap-1 p-1 rounded-lg bg-muted`}>
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <button
               onClick={() => setViewMode('table')}
               className={`px-2 py-1.5 rounded transition-all ${
@@ -122,7 +131,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
         <div className="flex-1 bg-card rounded-lg shadow-sm border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className={`${isDarkMode ? 'bg-muted' : 'bg-muted'} border-b border-border`}>
+              <thead className="bg-muted border-b border-border">
                 <tr>
                   <th className="px-4 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                     Document Name

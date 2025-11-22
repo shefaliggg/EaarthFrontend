@@ -14,7 +14,7 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
   ];
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-4 transition-colors duration-400">
+    <div className="rounded-3xl border border-border bg-card p-6 transition-colors duration-400">
       <div className="flex flex-wrap gap-2">
         {tabs.map(({ value, label, icon: Icon }) => (
           <button

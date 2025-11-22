@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, MapPin, Grid3x3, CalendarDays, CalendarRange } from 'lucide-react';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 export default function PersonalCalendar({ isDarkMode = false }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -115,7 +116,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
     const adjustedStartDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
     for (let i = 0; i < adjustedStartDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className={`p-2 rounded-lg ${isDarkMode ? 'bg-muted' : 'bg-muted'}`} />
+        <div key={`empty-${i}`} className="p-2 rounded-lg bg-muted" />
       );
     }
 
@@ -169,7 +170,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
     const remainingCells = totalCells - days.length;
     for (let i = 0; i < remainingCells; i++) {
       days.push(
-        <div key={`empty-end-${i}`} className={`p-2 rounded-lg ${isDarkMode ? 'bg-muted' : 'bg-muted'}`} />
+        <div key={`empty-end-${i}`} className="p-2 rounded-lg bg-muted" />
       );
     }
 
@@ -177,11 +178,14 @@ export default function PersonalCalendar({ isDarkMode = false }) {
   };
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <UrlBreadcrumbs />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Calendar className="w-6 h-6" />
             PERSONAL CALENDAR
           </h1>
@@ -197,7 +201,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
       </div>
 
       {/* View Filters */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm transition-colors duration-400">
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'day', label: 'DAY', icon: Calendar },
@@ -225,7 +229,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-colors duration-400">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('prev')}
@@ -252,7 +256,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Month View */}
       {view === 'month' && (
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
           <div className="grid grid-cols-7 gap-2 mb-2">
             {dayNames.map(day => (
               <div
@@ -272,7 +276,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Week View */}
       {view === 'week' && (
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm overflow-x-auto">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm overflow-x-auto transition-colors duration-400">
           <div className="grid grid-cols-8 gap-2 min-w-[1000px]">
             {/* Time column */}
             <div className="space-y-2">
@@ -323,7 +327,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Day View */}
       {view === 'day' && (
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Time slots */}
             <div className="space-y-2">
@@ -417,7 +421,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
             const { daysInMonth: monthDays, startingDayOfWeek: monthStart } = getDaysInMonth(monthDate);
             
             return (
-              <div key={monthName} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div key={monthName} className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
                 <h4 className="text-center font-bold mb-3 text-foreground text-xs">
                   {monthName}
                 </h4>
