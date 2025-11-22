@@ -10,16 +10,16 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3 flex-1">
         {Icon && (
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            <Icon className="w-5 h-5 text-primary-foreground" />
           </div>
         )}
         <div>
-          <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <p className="font-bold text-foreground">
             {label}
           </p>
           {description && (
-            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className="text-xs mt-1 text-muted-foreground">
               {description}
             </p>
           )}
@@ -33,9 +33,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
           disabled={!isEditing}
           className="sr-only peer"
         />
-        <div className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
-          checked ? 'bg-purple-600' : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-        } ${!isEditing ? 'opacity-50' : ''}`}></div>
+        <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary bg-muted peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border after:border-muted after:rounded-full after:h-5 after:w-5 after:transition-all ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
       </label>
     </div>
   );
@@ -43,14 +41,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
   return (
     <div className="space-y-4">
       {/* Notification Channels */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Bell className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Bell className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             NOTIFICATION CHANNELS
           </h3>
         </div>
@@ -78,14 +74,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Document & Contract Notifications */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <FileText className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             DOCUMENTS & CONTRACTS
           </h3>
         </div>
@@ -100,18 +94,14 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
           
           {profile.notifyDocumentExpiry !== false && (
             <div>
-              <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">
                 EXPIRY REMINDER PERIOD
               </label>
               <select
                 value={profile.documentExpiryDays || '180'}
                 onChange={(e) => handleChange('documentExpiryDays', e.target.value)}
                 disabled={!isEditing}
-                className={`w-full px-4 py-3 rounded-lg border-2 font-bold ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700 text-white' 
-                    : 'bg-white border-purple-200 text-gray-900'
-                } ${!isEditing ? 'opacity-50' : ''} focus:ring-2 focus:ring-purple-500 outline-none`}
+                className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               >
                 <option value="30">30 DAYS (1 MONTH)</option>
                 <option value="90">90 DAYS (3 MONTHS)</option>
@@ -137,14 +127,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Project Notifications */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             PROJECT UPDATES
           </h3>
         </div>
@@ -172,14 +160,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Tasks & Timesheets */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <CheckSquare className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <CheckSquare className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             TASKS & TIMESHEETS
           </h3>
         </div>
@@ -206,18 +192,14 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
           
           {profile.notifyTimesheetReminders !== false && (
             <div>
-              <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className="block text-xs font-bold mb-2 text-muted-foreground">
                 REMINDER DAY
               </label>
               <select
                 value={profile.timesheetReminderDay || 'friday'}
                 onChange={(e) => handleChange('timesheetReminderDay', e.target.value)}
                 disabled={!isEditing}
-                className={`w-full px-4 py-3 rounded-lg border-2 font-bold ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700 text-white' 
-                    : 'bg-white border-purple-200 text-gray-900'
-                } ${!isEditing ? 'opacity-50' : ''} focus:ring-2 focus:ring-purple-500 outline-none`}
+                className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               >
                 <option value="monday">MONDAY</option>
                 <option value="thursday">THURSDAY</option>
@@ -229,14 +211,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Approvals & Requests */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Clock className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             APPROVALS & REQUESTS
           </h3>
         </div>
@@ -264,14 +244,12 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Chat & Messages */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             CHAT & MESSAGES
           </h3>
         </div>

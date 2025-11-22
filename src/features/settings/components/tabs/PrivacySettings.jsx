@@ -10,16 +10,16 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3 flex-1">
         {Icon && (
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            <Icon className="w-5 h-5 text-primary-foreground" />
           </div>
         )}
         <div>
-          <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <p className="font-bold text-foreground">
             {label}
           </p>
           {description && (
-            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className="text-xs mt-1 text-muted-foreground">
               {description}
             </p>
           )}
@@ -33,9 +33,7 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
           disabled={!isEditing}
           className="sr-only peer"
         />
-        <div className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
-          checked ? 'bg-purple-600' : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
-        } ${!isEditing ? 'opacity-50' : ''}`}></div>
+        <div className={`w-11 h-6 rounded-full peer peer-checked:bg-primary bg-muted peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border after:border-muted after:rounded-full after:h-5 after:w-5 after:transition-all ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
       </label>
     </div>
   );
@@ -43,32 +41,26 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
   return (
     <div className="space-y-4">
       {/* Profile Visibility */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Users className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             PROFILE VISIBILITY
           </h3>
         </div>
         
         <div className="space-y-4">
           <div>
-            <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label className="block text-xs font-bold mb-2 text-muted-foreground">
               WHO CAN SEE YOUR PROFILE
             </label>
             <select
               value={profile.profileVisibility || 'team'}
               onChange={(e) => handleChange('profileVisibility', e.target.value)}
               disabled={!isEditing}
-              className={`w-full px-4 py-3 rounded-lg border-2 font-bold transition-all ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-purple-200 text-gray-900'
-              } ${!isEditing ? 'opacity-50' : ''} focus:ring-2 focus:ring-purple-500 outline-none`}
+              className="w-full px-4 py-3 rounded-lg border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="public">PUBLIC - EVERYONE</option>
               <option value="team">TEAM ONLY - MY ORGANIZATION</option>
@@ -79,14 +71,12 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Contact Information */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Shield className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             CONTACT INFORMATION
           </h3>
         </div>
@@ -110,14 +100,12 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Profile Discoverability */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Eye className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Eye className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             PROFILE DISCOVERABILITY
           </h3>
         </div>
@@ -139,14 +127,12 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Data Sharing */}
-      <div className={`rounded-3xl border p-6 transition-colors ${
-        isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-purple-200'
-      }`}>
+      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Lock className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className="font-bold text-lg text-foreground">
             DATA SHARING
           </h3>
         </div>
