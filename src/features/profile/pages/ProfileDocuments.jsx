@@ -38,7 +38,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
   });
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6">
+    <div className="h-full flex flex-col ">
       {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="flex-1 relative">
@@ -51,7 +51,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
             className={`w-full pl-9 pr-3 py-3 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-primary ${
               isDarkMode 
                 ? 'bg-input border-border text-foreground placeholder-muted-foreground' 
-                : 'bg-input border-border text-foreground'
+                : 'bg-input border-border text-foreground placeholder-muted-foreground'
             }`}
           />
         </div>

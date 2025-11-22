@@ -177,11 +177,11 @@ export default function PersonalCalendar({ isDarkMode = false }) {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 ">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Calendar className="w-6 h-6" />
             PERSONAL CALENDAR
           </h1>
@@ -197,7 +197,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
       </div>
 
       {/* View Filters */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'day', label: 'DAY', icon: Calendar },
@@ -289,13 +289,13 @@ export default function PersonalCalendar({ isDarkMode = false }) {
               const isToday = day.toDateString() === new Date().toDateString();
               return (
                 <div key={idx} className="space-y-2">
-                  <div className={`h-16 text-center rounded-lg p-2 flex flex-col items-center justify-center ${
+                  <div className={`h-12 text-center rounded-lg p-2 flex flex-col items-center justify-center ${
                     isToday 
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-foreground'
                   }`}>
                     <div className="text-[10px] font-bold">{dayNames[day.getDay()]}</div>
-                    <div className="text-xl font-bold">{day.getDate()}</div>
+                    <div className="text-sm font-bold">{day.getDate()}</div>
                   </div>
                   {hours.map(hour => (
                     <div

@@ -72,7 +72,7 @@ export default function AccountSettings({ isDarkMode }) {
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-6">
+    <div className="h-full overflow-y-auto p-4 md:p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

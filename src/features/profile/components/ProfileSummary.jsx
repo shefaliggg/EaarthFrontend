@@ -27,10 +27,10 @@ export default function ProfileSummary({
             <User className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground">
+            <h1 className="text-xl font-bold text-foreground">
               MY PROFILE
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Manage your personal information and preferences
             </p>
           </div>
@@ -39,7 +39,7 @@ export default function ProfileSummary({
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowQRModal(!showQRModal)}
-            className="px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium bg-card border-border text-foreground hover:bg-muted"
+            className="px-6 py-3 rounded-2xl border transition-all flex items-center gap-2 text-sm font-medium bg-card border-border text-foreground hover:bg-muted"
           >
             <QrCode className="w-4 h-4" />
             SHOW QR CODE
@@ -49,7 +49,7 @@ export default function ProfileSummary({
             <>
               <button 
                 onClick={handleSave} 
-                className={`px-4 py-2 rounded-lg text-primary-foreground flex items-center gap-2 hover:opacity-90 transition-all text-sm font-medium ${
+                className={`px-6 py-3 rounded-2xl text-primary-foreground flex items-center gap-2 hover:opacity-90 transition-all text-sm font-medium ${
                   isDarkMode 
                     ? 'bg-lavender-400 text-black' 
                     : 'bg-primary'
@@ -59,7 +59,7 @@ export default function ProfileSummary({
               </button>
               <button 
                 onClick={handleCancel} 
-                className="px-4 py-2 rounded-lg transition-all text-sm font-medium bg-muted text-foreground hover:bg-muted/80"
+                className="px-6 py-3 rounded-2xl transition-all text-sm font-medium bg-muted text-foreground hover:bg-muted/80"
               >
                 CANCEL
               </button>
@@ -67,7 +67,7 @@ export default function ProfileSummary({
           ) : (
             <button 
               onClick={() => setIsEditing(true)} 
-              className={`px-4 py-2 rounded-lg text-primary-foreground flex items-center gap-2 hover:opacity-90 transition-all text-sm font-medium ${
+              className={`px-6 py-3 rounded-2xl text-primary-foreground flex items-center gap-2 hover:opacity-90 transition-all text-sm font-medium ${
                 isDarkMode 
                   ? 'bg-lavender-400 text-black' 
                   : 'bg-primary'
@@ -175,7 +175,7 @@ export default function ProfileSummary({
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="relative">
-              <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg ${
+              <div className={`w-18 h-18 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg ${
                 isDarkMode 
                   ? 'bg-lavender-400 text-black' 
                   : 'bg-primary'
@@ -191,7 +191,7 @@ export default function ProfileSummary({
 
             {/* Name & Details */}
             <div>
-              <h2 className="text-base font-bold mb-1 text-foreground">
+              <h2 className="text-lg font-bold mb-1 text-foreground">
                 {profile.firstName} {profile.lastName}
               </h2>
               <p className="text-xs mb-2 text-muted-foreground">
@@ -208,7 +208,7 @@ export default function ProfileSummary({
           {/* Stats */}
           <div className="flex gap-6">
             <div className="text-center">
-              <div className="text-lg font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground">
                 12
               </div>
               <div className="text-xs text-muted-foreground">
@@ -216,7 +216,7 @@ export default function ProfileSummary({
               </div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground">
                 36
               </div>
               <div className="text-xs text-muted-foreground">
@@ -224,7 +224,7 @@ export default function ProfileSummary({
               </div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-foreground">
+              <div className="text-xl font-bold text-foreground">
                 100%
               </div>
               <div className="text-xs text-muted-foreground">

@@ -3,7 +3,7 @@ import { Field, FileUpload } from '../common/UnifiedFields';
 
 export default function IdentityDetails({ profile, setProfile, isEditing, isDarkMode, uploads, setUploads }) {
   return (
-    <div className="rounded-xl border p-6 shadow-md bg-card border-border">
+    <div className="rounded-3xl border p-6 shadow-md bg-card border-border">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field 
@@ -162,7 +162,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
 
             {/* Passport Fields */}
             {profile.proofOfNationality === 'PASSPORT' && (
-              <div className={`mt-6 space-y-4 p-6 rounded-2xl ${isDarkMode ? 'bg-muted' : 'bg-muted'}`}>
+              <div className="mt-6 space-y-4  rounded-3xl ">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field 
                     label="PASSPORT FIRST NAME" 
