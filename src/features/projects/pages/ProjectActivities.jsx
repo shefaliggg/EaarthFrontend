@@ -147,7 +147,7 @@ function ProjectActivities() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
             <ActivityIcon className="w-7 h-7" />
             PROJECT ACTIVITIES
           </h1>

@@ -1,19 +1,19 @@
 import React from 'react'
 import { Outlet, useLocation } from 'react-router-dom';
-import ProjectAppsLayout from '../../components/ProjectAppsLayout';
+import ProjectDepartmentsLayout from '../../components/ProjectDepartmentsLayout';
 
-function ProjectApps() {
+function ProjectDepartments() {
   const location = useLocation();
   const isChildRoute = location.pathname.split("/").length > 4;
 
   return (
     <>
-      {isChildRoute
+    {isChildRoute
         ? <Outlet />
-        : <ProjectAppsLayout />
+        : <ProjectDepartmentsLayout />
       }
     </>
   )
 }
 
-export default ProjectApps
+export default ProjectDepartments

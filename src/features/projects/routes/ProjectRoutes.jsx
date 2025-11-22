@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import ProjectAppsRoutes from './ProjectAppsRoutes';
+import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
 
 const ProjectList = lazy(() => import('../pages/ProjectList'));
 const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
@@ -9,7 +10,7 @@ const ProjectCalendar = lazy(() => import('../pages/ProjectCalendar'));
 const ProjectCallSheets = lazy(() => import('../pages/ProjectCallSheets'));
 const ProjectCastCrew = lazy(() => import('../pages/ProjectCastCrew'));
 const ProjectCloudStorage = lazy(() => import('../pages/ProjectCloudStorage'));
-const ProjectDepartments = lazy(() => import('../pages/ProjectDepartments'));
+const ProjectDepartments = lazy(() => import('../pages/ProjectDepartments/ProjectDepartments'));
 const ProjectNoticeBoard = lazy(() => import('../pages/ProjectNoticeBoard'));
 const ProjectOnboarding = lazy(() => import('../pages/ProjectOnboarding'));
 const ProjectChat = lazy(() => import('../pages/ProjectChat'));
@@ -29,12 +30,10 @@ const ProjectRoutes = {
             element: <ProjectDetail />,
             children: [
                 { path: 'activities', element: <ProjectActivities /> },
-                ProjectAppsRoutes,
                 { path: 'calendar', element: <ProjectCalendar /> },
                 { path: 'call-sheets', element: <ProjectCallSheets /> },
                 { path: 'cast-crew', element: <ProjectCastCrew /> },
                 { path: 'cloud-storage', element: <ProjectCloudStorage /> },
-                { path: 'departments', element: <ProjectDepartments /> },
                 { path: 'notice-board', element: <ProjectNoticeBoard /> },
                 { path: 'onboarding', element: <ProjectOnboarding /> },
                 { path: 'chat', element: <ProjectChat /> },
@@ -42,6 +41,9 @@ const ProjectRoutes = {
                 { path: 'tasks', element: <ProjectTasks /> },
                 { path: 'timeline', element: <ProjectTimeline /> },
                 { path: 'settings', element: <ProjectSettings /> },
+
+                ProjectAppsRoutes,
+                ProjectDepartmentsRoutes,
 
                 { path: '*', element: <NotFound /> }
 
