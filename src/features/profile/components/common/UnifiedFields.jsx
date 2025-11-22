@@ -1,17 +1,13 @@
 import React, { useState } from "react";
-import { Upload, FileText, CheckCircle, Sparkles, Trash2, Download } from "lucide-react";
+import { Upload, FileText, CheckCircle, Trash2, Download } from "lucide-react";
 
 /* -------------------------------------------------
    FORM FIELD WRAPPER
 ------------------------------------------------- */
-export function FormField({ label, children, cols = 1, isDarkMode }) {
+export function FormField({ label, children, cols = 1 }) {
   return (
     <div className={cols === 2 ? "md:col-span-2" : cols === 3 ? "md:col-span-3" : ""}>
-      <label
-        className={`block text-xs font-medium mb-2 ${
-          isDarkMode ? "text-gray-400" : "text-gray-600"
-        }`}
-      >
+      <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
         {label}
       </label>
       {children}
@@ -31,15 +27,18 @@ export function Field({
   cols = 1,
   placeholder = "",
   isEditing,
-  isDarkMode,
 }) {
+  const baseClasses = `
+    w-full px-4 py-2 border border-border rounded-3xl 
+    transition-all duration-300 font-normal bg-input text-foreground 
+    placeholder-muted-foreground placeholder:text-xs
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+  `;
+
   return (
     <div className={cols === 2 ? "md:col-span-2" : cols === 3 ? "md:col-span-3" : ""}>
-      <label
-        className={`block text-xs font-medium mb-2 ${
-          isDarkMode ? "text-gray-400" : "text-gray-600"
-        }`}
-      >
+      <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
         {label}
       </label>
 
@@ -48,14 +47,10 @@ export function Field({
           value={value}
           onChange={onChange}
           disabled={!isEditing}
-          className={`w-full px-4 py-3 border rounded-xl text-sm ${
-            isDarkMode
-              ? "bg-gray-900 border-gray-700 text-white"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-          }`}
+          className={baseClasses}
         >
           {options.map((opt) => (
-            <option key={opt}>{opt}</option>
+            <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
       ) : type === "textarea" ? (
@@ -65,11 +60,7 @@ export function Field({
           disabled={!isEditing}
           placeholder={placeholder}
           rows={3}
-          className={`w-full px-4 py-3 border rounded-xl text-sm ${
-            isDarkMode
-              ? "bg-gray-900 border-gray-700 text-white"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-          }`}
+          className={`${baseClasses} resize-none`}
         />
       ) : (
         <input
@@ -78,11 +69,7 @@ export function Field({
           onChange={onChange}
           disabled={!isEditing}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 border rounded-xl text-sm ${
-            isDarkMode
-              ? "bg-gray-900 border-gray-700 text-white"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-          }`}
+          className={baseClasses}
         />
       )}
     </div>
@@ -99,31 +86,31 @@ export function PhoneField({
   onCodeChange,
   onNumberChange,
   isEditing,
-  isDarkMode,
 }) {
+  const selectClasses = `
+    w-24 px-2 py-2 border border-border rounded-3xl 
+    transition-all duration-300 font-medium bg-input text-foreground 
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+  `;
+  const inputClasses = `
+    flex-1 px-4 py-2 border border-border rounded-3xl 
+    transition-all duration-300 font-normal bg-input text-foreground 
+    placeholder-muted-foreground placeholder:text-xs
+    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+  `;
+
   return (
     <div>
-      <label
-        className={`block text-xs font-medium mb-2 ${
-          isDarkMode ? "text-gray-400" : "text-gray-600"
-        }`}
-      >
+      <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
         {label}
       </label>
 
       <div className="flex gap-2">
-        <select
-          value={codeValue}
-          onChange={onCodeChange}
-          disabled={!isEditing}
-          className={`w-24 px-2 py-3 border rounded-xl text-sm ${
-            isDarkMode
-              ? "bg-gray-900 border-gray-700 text-white"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-          }`}
-        >
+        <select value={codeValue} onChange={onCodeChange} disabled={!isEditing} className={selectClasses}>
           {["+44", "+1", "+91", "+61", "+33", "+49"].map((code) => (
-            <option key={code}>{code}</option>
+            <option key={code} value={code}>{code}</option>
           ))}
         </select>
 
@@ -132,11 +119,8 @@ export function PhoneField({
           value={numberValue}
           onChange={onNumberChange}
           disabled={!isEditing}
-          className={`flex-1 px-4 py-3 border rounded-xl text-sm ${
-            isDarkMode
-              ? "bg-gray-900 border-gray-700 text-white"
-              : "bg-gray-50 border-gray-200 text-gray-900"
-          }`}
+          placeholder="Phone number"
+          className={inputClasses}
         />
       </div>
     </div>
@@ -147,13 +131,11 @@ export function PhoneField({
    FILE UPLOAD WITH AI SCANNING + VERIFIED STATE
 ------------------------------------------------- */
 export function FileUpload({
-  fieldLabel,
   fileName,
   isUploaded,
   isEditing,
   onUpload,
   onDelete,
-  isDarkMode,
 }) {
   const [isScanning, setIsScanning] = useState(false);
 
@@ -168,7 +150,6 @@ export function FileUpload({
       const file = e.target.files[0];
       if (file) {
         setIsScanning(true);
-
         setTimeout(() => {
           setIsScanning(false);
           onUpload && onUpload(file);
@@ -179,117 +160,65 @@ export function FileUpload({
     input.click();
   };
 
-  // AI Verified State
   if (isUploaded)
     return (
-      <div
-        className={`border rounded-lg p-4 flex items-center justify-between ${
-          isDarkMode ? "border-gray-600 bg-gray-700" : "border-gray-200 bg-gray-50"
-        }`}
-      >
+      <div className="border border-border rounded-lg p-3 flex items-center justify-between bg-card shadow-md">
         <div className="flex items-center gap-3">
-          <div
-            className={`p-2 rounded ${
-              isDarkMode ? "bg-gray-600" : "bg-gray-200"
-            }`}
-          >
-            <FileText className="w-6 h-6 text-gray-500" />
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted shadow-sm">
+            <FileText className="w-5 h-5 text-primary" />
           </div>
 
           <div>
-            <p
-              className={`text-sm font-medium ${
-                isDarkMode ? "text-gray-200" : "text-gray-900"
-              }`}
-            >
-              {fileName}
-            </p>
-
-            <p className="text-xs text-green-600 flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" /> AI VERIFIED & SAVED
+            <p className="text-sm font-medium text-card-foreground">{fileName}</p>
+            <p className="text-xs text-accent flex items-center gap-1 font-medium">
+              <CheckCircle className="w-3 h-3" /> AI VERIFIED
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            className={`p-2 rounded hover:bg-opacity-80 ${
-              isDarkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
-            }`}
-          >
-            <Download className="w-4 h-4 text-[#7e57c2]" />
+          <button className="p-2 rounded-3xl transition-all duration-300 hover:bg-muted/50 shadow-sm">
+            <Download className="w-4 h-4 text-primary" />
           </button>
 
           <button
             onClick={onDelete}
             disabled={!isEditing}
-            className="p-2 rounded hover:bg-red-50 disabled:opacity-50"
+            className="p-2 rounded-3xl transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
-            <Trash2 className="w-4 h-4 text-red-600" />
+            <Trash2 className="w-4 h-4 text-destructive" />
           </button>
         </div>
       </div>
     );
 
-  // AI Scanning State
   if (isScanning)
     return (
-      <div
-        className={`border rounded-lg p-4 text-center ${
-          isDarkMode
-            ? "border-[#7e57c2] bg-transparent"
-            : "border-[#7e57c2] bg-transparent"
-        }`}
-      >
-        <div className="w-6 h-6 mx-auto mb-2 animate-spin">
-          <Sparkles className="w-6 h-6 text-[#7e57c2]" />
+      <div className="border-2 border-dashed border-primary rounded-lg p-4 text-center bg-primary/5 shadow-md">
+        <div className="w-10 h-10 mx-auto mb-2">
+          <div
+            className="w-10 h-10 rounded-full border-4 animate-spin"
+            style={{
+              borderColor: "rgba(126, 87, 194, 0.3)",
+              borderTopColor: "var(--primary)",
+            }}
+          />
         </div>
-
-        <p className="text-sm font-medium text-[#7e57c2]">
-          EAARTH AI SCANNING...
-        </p>
-
-        <p
-          className={`text-xs mt-1 ${
-            isDarkMode ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
-          Extracting and verifying data...
-        </p>
+        <p className="text-sm font-semibold text-primary mb-1">AI SCANNING...</p>
+        <p className="text-xs text-muted-foreground">Extracting and verifying data...</p>
       </div>
     );
 
-  // Default Upload UI
   return (
     <div
       onClick={handleFileSelect}
-      className={`border border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
-        isDarkMode
-          ? "border-gray-600 bg-gray-700/30 hover:border-[#7e57c2]"
-          : "border-gray-300 bg-[#ede7f6]/30 hover:border-[#7e57c2]"
-      } ${!isEditing ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-muted/20 shadow-md ${
+        !isEditing ? "opacity-50 cursor-not-allowed" : ""
+      }`}
     >
-      <Upload
-        className={`w-6 h-6 mx-auto mb-2 ${
-          isDarkMode ? "text-gray-400" : "text-[#7e57c2]"
-        }`}
-      />
-
-      <div
-        className={`text-sm font-medium ${
-          isDarkMode ? "text-[#9575cd]" : "text-[#7e57c2]"
-        }`}
-      >
-        SELECT A FILE
-      </div>
-
-      <p
-        className={`text-xs mt-1 ${
-          isDarkMode ? "text-gray-500" : "text-gray-400"
-        }`}
-      >
-        PDF, JPG, PNG • Up to 5MB • AI Powered
-      </p>
+      <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />
+      <div className="text-sm font-medium text-primary mb-1">SELECT A FILE</div>
+      <p className="text-xs text-muted-foreground">PDF, JPG, PNG · Up to 5MB</p>
     </div>
   );
 }
@@ -298,5 +227,5 @@ export default {
   FormField,
   Field,
   PhoneField,
-  FileUpload
+  FileUpload,
 };

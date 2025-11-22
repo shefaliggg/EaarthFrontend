@@ -7,11 +7,11 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
   const [isVATRegistered, setIsVATRegistered] = useState(true);
 
   return (
-    <div className={`rounded-xl border p-6 shadow-md ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-xl border p-6 shadow-sm ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
       <div className="space-y-6">
         {/* Personal Tax & NI */}
         <div>
-          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             <Shield className="w-5 h-5" /> TAX & NATIONAL INSURANCE
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,13 +80,13 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
         </div>
 
         {/* Document Uploads for Tax */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h5 className={`font-medium mb-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <div className="pt-6 border-t border-border">
+          <h5 className={`font-medium mb-4 text-sm ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
             TAX DOCUMENTS
           </h5>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                 FS4 (IRISH CREW)
               </label>
               <FileUpload
@@ -101,7 +101,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
             </div>
             
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                 MOST RECENT PAYSLIP
               </label>
               <FileUpload
@@ -116,7 +116,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
             </div>
             
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                 P45
               </label>
               <FileUpload
@@ -131,7 +131,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
             </div>
             
             <div>
-              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                 VAT CERTIFICATE
               </label>
               <FileUpload
@@ -148,8 +148,8 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
         </div>
 
         {/* Personal Bank Details */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="pt-6 border-t border-border">
+          <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
             <Wallet className="w-5 h-5" /> PERSONAL BANK DETAILS
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -240,9 +240,9 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
         </div>
 
         {/* Loan-Out Company Toggle */}
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-6 border-t border-border">
           <label className="flex items-center justify-between cursor-pointer">
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
               USE LOAN-OUT COMPANY
             </span>
             <input
@@ -250,15 +250,15 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
               checked={useLoanOutCompany}
               onChange={(e) => setUseLoanOutCompany(e.target.checked)}
               disabled={!isEditing}
-              className="w-4 h-4 text-[#7e57c2]"
+              className="w-4 h-4 text-primary accent-primary"
             />
           </label>
         </div>
 
         {/* Loan-Out Company */}
         {useLoanOutCompany && (
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="pt-6 border-t border-border">
+            <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
               <Briefcase className="w-5 h-5" /> LOAN-OUT COMPANY
             </h4>
             <div className="grid grid-cols-1 gap-4">
@@ -379,7 +379,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
               {/* VAT Registration Toggle */}
               <div className="mt-4">
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-medium ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
                     COMPANY IS VAT REGISTERED
                   </span>
                   <input
@@ -387,14 +387,14 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
                     checked={isVATRegistered}
                     onChange={(e) => setIsVATRegistered(e.target.checked)}
                     disabled={!isEditing}
-                    className="w-4 h-4 text-[#7e57c2]"
+                    className="w-4 h-4 text-primary accent-primary"
                   />
                 </label>
               </div>
 
               {/* Company Certificate Upload */}
               <div className="mt-4">
-                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                   CERTIFICATE OF INCORPORATION
                 </label>
                 <FileUpload
@@ -411,7 +411,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
               {/* VAT Certificate Upload */}
               {isVATRegistered && (
                 <div className="mt-4">
-                  <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <label className={`block text-xs font-medium mb-2 ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                     VAT REGISTRATION CERTIFICATE
                   </label>
                   <FileUpload
@@ -427,8 +427,8 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
               )}
 
               {/* Company Bank Details */}
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h5 className={`font-medium mb-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <div className="mt-4 pt-4 border-t border-border">
+                <h5 className={`font-medium mb-4 text-sm ${isDarkMode ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                   COMPANY BANK DETAILS
                 </h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
