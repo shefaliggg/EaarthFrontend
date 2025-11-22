@@ -154,7 +154,7 @@ function ProjectNoticeBoard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + index * 0.05 }}
-              className="bg-white dark:bg-gray-800 shadow rounded-2xl p-5"
+              className="bg-background border shadow dark:shadow-shadow rounded-2xl p-5"
             >
               <div className="space-y-4">
                 {/* HEADER */}
@@ -268,7 +268,7 @@ function ProjectNoticeBoard() {
 
       {/* EMPTY STATE */}
       {filteredNotices.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-2xl p-12 text-center mt-4">
+        <div className=" p-24 text-center mt-4">
           <Bell className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
           <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">
             No Notices Found

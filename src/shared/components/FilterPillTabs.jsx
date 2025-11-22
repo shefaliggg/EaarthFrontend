@@ -12,6 +12,7 @@ function FilterPillTabs({ options, value, onChange }) {
                         <TabsTrigger
                             key={option.value}
                             value={option.value}
+                            className="px-3.5"
                         >
                             {Icon && <Icon className="w-4 h-4" />}
                             {option.label}

@@ -16,7 +16,7 @@ function ProjectActionsLayout({ projectInfo, toggleFavorite, isFavorite }) {
         { id: 'cloud-storage', label: 'CLOUD STORAGE', icon: "Cloud", subtitle: 'Access project files and documents' },
         { id: 'departments', label: 'DEPARTMENTS', icon: "Layers", subtitle: 'Department organization and roles' },
         { id: 'notice-board', label: 'NOTICE BOARD', icon: "Bell", subtitle: 'Important announcements and notices' },
-        { id: 'on-boarding', label: 'ON BOARDING', icon: "UserPlus", subtitle: 'Onboard new team members' },
+        { id: 'onboarding', label: 'ONBOARDING', icon: "UserPlus", subtitle: 'Onboard new team members' },
         { id: 'project-chat', label: 'PROJECT CHAT', icon: "MessageSquare", subtitle: 'Team communication and discussions' },
         { id: 'shooting-schedule', label: 'SHOOTING SCHEDULE', icon: "CalendarDays", subtitle: 'Plan and track shooting schedule' },
         { id: 'tasks', label: 'TASKS', icon: "CheckSquare", subtitle: 'Task management and tracking' },
