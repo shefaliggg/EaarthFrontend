@@ -10,6 +10,8 @@ import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 import { Button } from '../../../shared/components/ui/button';
 import NewOfferModal from '../components/CrewNewOfferModal';
 import CrewOfferSendSuccessModal from '../components/CrewOfferSendSuccessModal';
+import OnboardingStageDetailedView from '../components/OnboardingStageDetailedView';
+import CrewOfferConfiguration from '../components/CrewOfferConfiguration';
 
 function ProjectOnboarding() {
   const [activeTab, setActiveTab] = useState('production-approval');
@@ -92,6 +94,41 @@ function ProjectOnboarding() {
     }
   ]);
 
+  const STAGE_FLOW = {
+    "PRODUCTION APPROVAL": {
+      next: "ACCOUNTS APPROVAL",
+      approver: "PRODUCTION MANAGER"
+    },
+    "ACCOUNTS APPROVAL": {
+      next: "CREW APPROVAL",
+      approver: "ACCOUNTS MANAGER"
+    },
+    "CREW APPROVAL": {
+      next: "PAYROLL APPROVAL",
+      approver: "CREW MEMBER"
+    },
+    "PAYROLL APPROVAL": {
+      next: "CREW SIGN",
+      approver: "PAYROLL MANAGER"
+    },
+    "CREW SIGN": {
+      next: "PRODUCTION SIGN",
+      approver: "CREW MEMBER"
+    },
+    "PRODUCTION SIGN": {
+      next: "FINANCE SIGN",
+      approver: "PRODUCTION MANAGER"
+    },
+    "FINANCE SIGN": {
+      next: "STUDIO SIGN",
+      approver: "FINANCE MANAGER"
+    },
+    "STUDIO SIGN": {
+      next: "COMPLETED",
+      approver: "STUDIO EXECUTIVE"
+    }
+  };
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -121,6 +158,42 @@ function ProjectOnboarding() {
       additionalNotes: '',
     });
   };
+
+  function handleStageSend(offerId, stageName, offers, setOffers) {
+    const offerIndex = offers.findIndex(o => o.id === offerId);
+    if (offerIndex === -1) return;
+
+    const stageInfo = STAGE_FLOW[stageName];
+    if (!stageInfo) return;
+
+    const newOffers = [...offers];
+    const offer = newOffers[offerIndex];
+
+    // Mark current stage approved
+    offer.stages[stageName] = {
+      status: "APPROVED",
+      approver: stageInfo.approver,
+      date: new Date().toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).toUpperCase()
+    };
+
+    // Move to next stage
+    offer.currentStage = stageInfo.next;
+
+    // If next stage exists, mark as PENDING
+    if (stageInfo.next !== "COMPLETED") {
+      offer.stages[stageInfo.next].status = "PENDING";
+    }
+
+    setOffers(newOffers);
+
+    alert(`✅ ${stageName} APPROVED!\n➡️ MOVED TO ${stageInfo.next}`);
+  }
 
   const filters = [
     { value: 'production-approval', label: 'PRODUCTION APPROVAL' },
@@ -261,18 +334,169 @@ function ProjectOnboarding() {
       </div>
 
       {/* Tabs */}
-      <div className="py-4">
-        <FilterPillTabs
-          options={filters}
-          value={activeTab}
-          onChange={setActiveTab}
-        />
-      </div>
+      {activeTab !== 'edit-offer' && (
+        <div className="py-4">
+          <FilterPillTabs
+            options={filters}
+            value={activeTab}
+            onChange={setActiveTab}
+          />
+        </div>
+      )}
 
+      {/* PRODUCTION APPROVAL */}
+      {activeTab === 'production-approval' && (
+        <OnboardingStageDetailedView
+          stageName="PRODUCTION APPROVAL"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "PRODUCTION APPROVAL",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* ACCOUNTS APPROVAL */}
+      {activeTab === 'accounts-approval' && (
+        <OnboardingStageDetailedView
+          stageName="ACCOUNTS APPROVAL"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "ACCOUNTS APPROVAL",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* CREW APPROVAL */}
+      {activeTab === 'crew-approval' && (
+        <OnboardingStageDetailedView
+          stageName="CREW APPROVAL"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "CREW APPROVAL",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* PAYROLL APPROVAL */}
+      {activeTab === 'payroll-approval' && (
+        <OnboardingStageDetailedView
+          stageName="PAYROLL APPROVAL"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "PAYROLL APPROVAL",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* CREW SIGN */}
+      {activeTab === 'crew-sign' && (
+        <OnboardingStageDetailedView
+          stageName="CREW SIGN"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "CREW SIGN",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* PRODUCTION SIGN */}
+      {activeTab === 'production-sign' && (
+        <OnboardingStageDetailedView
+          stageName="PRODUCTION SIGN"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "PRODUCTION SIGN",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* FINANCE SIGN */}
+      {activeTab === 'finance-sign' && (
+        <OnboardingStageDetailedView
+          stageName="FINANCE SIGN"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "FINANCE SIGN",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {/* STUDIO SIGN */}
+      {activeTab === 'studio-sign' && (
+        <OnboardingStageDetailedView
+          stageName="STUDIO SIGN"
+          offers={offers}
+          onEdit={(offerId) => {
+            setSelectedOffer(offers.find(o => o.id === offerId));
+            setActiveTab('edit-offer');
+          }}
+          onSend={(offerId) => handleStageSend(
+            offerId,
+            "STUDIO SIGN",
+            offers,
+            setOffers
+          )}
+        />
+      )}
+
+      {activeTab === 'edit-offer' && selectedOffer && (
+        <CrewOfferConfiguration
+          onBack={() => setActiveTab('production-approval')}
+        />
+      )}
 
       {/* New Offer Form Modal */}
       {showNewOfferForm && (
-        <NewOfferModal isOpen={showNewOfferForm} onClose={() => setShowNewOfferForm(false)} onSave={handleSave}/>
+        <NewOfferModal isOpen={showNewOfferForm} onClose={() => setShowNewOfferForm(false)} onSave={handleSave} />
       )}
 
       {/* Success Modal */}

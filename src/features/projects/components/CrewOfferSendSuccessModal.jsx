@@ -1,3 +1,4 @@
+import { Bell, Check, Mail } from 'lucide-react'
 import React from 'react'
 
 function CrewOfferSendSuccessModal({ formData }) {
@@ -21,7 +22,7 @@ function CrewOfferSendSuccessModal({ formData }) {
                   EMAIL SENT
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  TO: {formData.email}
+                  TO: {formData?.email || "N/A"}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
                   FROM: noreply@eaarthstudios.com
