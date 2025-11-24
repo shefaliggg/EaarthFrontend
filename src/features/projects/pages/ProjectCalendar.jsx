@@ -292,7 +292,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
             return (
               <div
                 key={idx}
-                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-gray-200 bg-[#ede7f6]' : 'border-gray-100 hover:border-gray-300'
+                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-[#9575cd] bg-[#ede7f6]' : 'border-gray-200 hover:border-[#b39ddb]'
                   } cursor-pointer transition-all`}
               >
                 <div className={`font-bold ${isToday ? 'text-[#7e57c2]' : 'text-gray-900'}`}>
@@ -515,6 +515,4 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 }
 
 export default ProjectCalendar
-
-
 

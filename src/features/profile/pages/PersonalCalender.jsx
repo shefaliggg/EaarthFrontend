@@ -179,17 +179,13 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumbs */}
-      <UrlBreadcrumbs />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Calendar className="w-6 h-6" />
             PERSONAL CALENDAR
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your personal and project schedules</p>
         </div>
         <button
           onClick={() => setIsAddEventOpen(true)}
@@ -198,6 +194,11 @@ export default function PersonalCalendar({ isDarkMode = false }) {
           <Plus className="w-4 h-4" />
           ADD EVENT
         </button>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="-mt-3">
+        <UrlBreadcrumbs />
       </div>
 
       {/* View Filters */}

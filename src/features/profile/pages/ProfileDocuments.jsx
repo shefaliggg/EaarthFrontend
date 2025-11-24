@@ -38,9 +38,6 @@ export default function ProfileDocuments({ isDarkMode = false }) {
 
   return (
     <div className="h-full flex flex-col space-y-4">
-      {/* Breadcrumbs */}
-      <UrlBreadcrumbs />
-
       {/* Header Section */}
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
@@ -50,10 +47,12 @@ export default function ProfileDocuments({ isDarkMode = false }) {
           <h1 className="text-xl font-bold text-foreground">
             PROFILE DOCUMENTS
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and organize your documents
-          </p>
         </div>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="-mt-3">
+        <UrlBreadcrumbs />
       </div>
 
       {/* Search and Actions */}

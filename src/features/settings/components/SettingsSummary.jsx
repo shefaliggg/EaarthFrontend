@@ -11,9 +11,6 @@ export default function SettingsSummary({
 }) {
   return (
     <div className="space-y-4">
-      {/* Breadcrumbs */}
-      <UrlBreadcrumbs />
-
       {/* Page Header */}
       <div className="transition-colors duration-400">
         <div className="flex items-center justify-between">
@@ -22,8 +19,7 @@ export default function SettingsSummary({
               <Settings className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">SETTINGS</h1>
-              <p className="text-sm text-muted-foreground">Manage your account preferences and configurations</p>
+              <h1 className="text-xl font-bold text-foreground">SETTINGS</h1>
             </div>
           </div>
 
@@ -56,6 +52,11 @@ export default function SettingsSummary({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="-mt-3">
+        <UrlBreadcrumbs />
       </div>
 
       {/* Settings Summary Card */}

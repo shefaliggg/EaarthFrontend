@@ -142,16 +142,16 @@ function HelpAndSupport() {
 
   return (
     <div className="p-3 space-y-6">
-        <UrlBreadcrumbs />
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <HelpCircle className="size-12 text-[#7e57c2] dark:text-[#b39ddb] p-1.5 bg-[#ede7f6] dark:bg-gray-900 rounded-full" />
         <div>
-          <h1 className="text-2xl font-bold">HELP & SUPPORT</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Get help with Eaarth Studios platform
-          </p>
+          <h1 className="text-xl font-bold">HELP & SUPPORT</h1>
         </div>
+      </div>
+
+      <div className="-mt-3">
+        <UrlBreadcrumbs />
       </div>
 
       {/* Search */}
@@ -201,8 +201,8 @@ function HelpAndSupport() {
             onClick={() => setSelectedCategory(null)}
             className={`p-4 rounded-xl border-2 transition-all ${
               !selectedCategory
-                ? "border-gray-200 bg-[#ede7f6] dark:bg-gray-900/20"
-                : "border border-gray-200 hover:border-gray-300"
+                ? "border-[#7e57c2] bg-[#ede7f6] dark:bg-gray-900/20"
+                : "border hover:border-[#9575cd]"
             }`}
           >
             <span className="font-bold text-gray-900 dark:text-white">ALL</span>
@@ -214,8 +214,8 @@ function HelpAndSupport() {
               onClick={() => setSelectedCategory(category.category)}
               className={`p-4 rounded-xl border-2 transition-all ${
                 selectedCategory === category.category
-                  ? "border-gray-200 bg-[#ede7f6] dark:bg-gray-900/20"
-                  : "border border-gray-200 hover:border-gray-300"
+                  ? "border-[#7e57c2] bg-[#ede7f6] dark:bg-gray-900/20"
+                  : "border hover:border-[#9575cd]"
               }`}
             >
               <category.icon
@@ -312,6 +312,4 @@ function HelpAndSupport() {
 }
 
 export default HelpAndSupport;
-
-
 

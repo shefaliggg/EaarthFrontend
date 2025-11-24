@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 import { Button } from '../../../shared/components/ui/button';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 function ProjectNoticeBoard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,11 +116,15 @@ function ProjectNoticeBoard() {
   return (
     <div className="w-full space-y-4">
       {/* TITLE WRAPPER — Replace Later */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">NOTICE BOARD</h1>
-          <p className="text-gray-600 dark:text-gray-400">Important announcements and updates</p>
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">NOTICE BOARD</h1>
+          </div>
         </div>
+
+        {/* Breadcrumbs */}
+        <UrlBreadcrumbs />
       </div>
 
       {/* SEARCH CARD */}

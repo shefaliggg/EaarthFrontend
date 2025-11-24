@@ -72,8 +72,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 
           {/* Title */}
           <div className="mb-6 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">LOGIN</h2>
-            <p className="text-gray-500 text-sm">Welcome back! Please enter your details.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">LOGIN</h2>
           </div>
 
           {/* Error Message */}

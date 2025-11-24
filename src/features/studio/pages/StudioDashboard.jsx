@@ -9,6 +9,7 @@ import { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Button } from '../../../shared/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 export default function StudioDashboard({ onNavigate }) {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -166,12 +167,9 @@ export default function StudioDashboard({ onNavigate }) {
           <div className="rounded-xl border p-6 bg-background shadow-md dark:shadow-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   {studioData.name}
                 </h1>
-                <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">
-                  STUDIO ADMIN DASHBOARD
-                </p>
               </div>
 
               <Button
@@ -182,6 +180,11 @@ export default function StudioDashboard({ onNavigate }) {
                 <BarChart3 className="w-5 h-5" />
                 {showQRCode ? 'HIDE STATS' : 'SHOW QUICK STATS'}
               </Button>
+            </div>
+
+            {/* Breadcrumbs */}
+            <div className="mt-1">
+              <UrlBreadcrumbs />
             </div>
 
             {showQRCode && (

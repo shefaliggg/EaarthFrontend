@@ -50,7 +50,7 @@ function ProjectCastCrew() {
           </div>
 
           {/* Filter Button */}
-          <button className="p-2.5 rounded-lg border-2 border-gray-200 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:border-gray-300">
+          <button className="p-2.5 rounded-lg border-2 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:border-[#7e57c2]">
             <Filter className="w-5 h-5" />
           </button>
         </div>
@@ -198,7 +198,5 @@ function ProjectCastCrew() {
 }
 
 export default ProjectCastCrew
-
-
 
 

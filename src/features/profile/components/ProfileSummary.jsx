@@ -17,18 +17,12 @@ export default function ProfileSummary({
 
   return (
     <div className="space-y-4">
-      {/* Breadcrumbs */}
-      <UrlBreadcrumbs />
-
       {/* Header with Title and Buttons - Outside Card */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl font-bold text-foreground">
             MY PROFILE
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your personal information and preferences
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -64,6 +58,11 @@ export default function ProfileSummary({
             </button>
           )}
         </div>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="-mt-3">
+        <UrlBreadcrumbs />
       </div>
 
       {/* QR Code Modal - Outside Card */}
