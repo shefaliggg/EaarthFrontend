@@ -1,5 +1,6 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { triggerGlobalLogout } from "./globalLogoutConfig";
 
 export const baseURL = import.meta.env.VITE_API_URL;
 
@@ -51,16 +52,15 @@ axiosConfig.interceptors.response.use(
       } catch (err) {
         console.log("Refresh token failed", err);
         if (err.response?.status === 403) {
-          if (store.getState().authSlice.isAuthenticated) {
-            store.dispatch(logoutUser());
-            showDebouncedToast(
-              "error",
-              "You have Been Logged Out",
-              "Your session has expired. Please log in again."
-            );
-            window.location.href = "/auth";
-          }
+          triggerGlobalLogout();
+
+          showDebouncedToast(
+            "error",
+            "You have Been Logged Out",
+            "Your session has expired. Please log in again."
+          );
         }
+
         return Promise.reject(err);
       }
     }

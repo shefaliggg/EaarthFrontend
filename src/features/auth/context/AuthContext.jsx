@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { authUtils } from "../config/authUtilis"; 
-import { authService } from "../../auth/services/auth.service"; 
-import { ROUTES } from "../../../../src/constants/apiEndpoints";
+import { ROUTES } from "../../constants/apiEndpoints";
+import { authService } from "../services/auth.service";
+import { setLogoutFunction } from "../config/globalLogoutConfig";
 
 const AuthContext = createContext(null);
 
@@ -15,23 +15,28 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const init = async () => {
-      const loggedInUser = await authUtils.getCurrentUser();
-      setUser(loggedInUser);
+      const loggedUser = await authService.getCurrentUser();
+      setUser(loggedUser);
       setLoading(false);
     };
     init();
   }, []);
 
+  useEffect(() => {
+    setLogoutFunction(logout);
+  }, [logout]);
+
+
   const login = async (credentials) => {
     setLoading(true);
     try {
       const { email, password } = credentials;
-      const userData = await authUtils.login(email, password);
+      const userData = await authService.login(email, password);
       setUser(userData);
       return userData;
-    } catch (error) {
-      console.error("Login Error:", error);
-      throw error;
+    } catch (err) {
+      console.error("Login error:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -41,13 +46,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await authService.temporaryLogin(credentials);
-
-      if (!res?.success) {
-        throw new Error(res?.message || "Temporary login failed");
-      }
+      if (!res?.success) throw new Error(res?.message || "Temporary login failed");
 
       const tempData = {
-        userId: res.data?.userId,
+        userId: res.data.userId,
         email: credentials.email,
         isTemporary: true,
       };
@@ -60,22 +62,25 @@ export const AuthProvider = ({ children }) => {
       });
 
       return res;
-    } catch (error) {
-      console.error("Temporary login failed:", error);
-      throw error;
+    } catch (err) {
+      console.error("Temporary login failed:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
-    await authUtils.logout();
-    setUser(null);
-    setTempLoginData(null);
-    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+      setTempLoginData(null);
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    }
   };
 
-  const updateUser = async (newUserData) => {
+  const updateUser = (newUserData) => {
     setUser((prev) => ({ ...prev, ...newUserData }));
   };
 
@@ -97,7 +102,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-
-
-
-
