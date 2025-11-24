@@ -232,3 +232,6 @@ export default function ActivityLogsSettings({ isDarkMode }) {
     </div>
   );
 }
+
+
+

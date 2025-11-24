@@ -258,7 +258,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                 type="checkbox"
                 checked={checked}
                 onChange={(e) => onChange(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-purple-700 focus:ring-purple-700"
+                className="w-4 h-4 rounded border-gray-300 text-[#7e57c2] focus:ring-[#7e57c2]"
             />
             <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 {label}
@@ -275,7 +275,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         value={opt.value}
                         checked={value === opt.value}
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-4 h-4 border-gray-300 text-purple-700 focus:ring-purple-700"
+                        className="w-4 h-4 border-gray-300 text-[#7e57c2] focus:ring-[#7e57c2]"
                     />
                     <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {opt.label}
@@ -310,7 +310,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-3 font-bold transition-all border-b-2 ${activeTab === tab
-                            ? 'border-purple-700 text-purple-700'
+                            ? 'border-gray-200 text-[#7e57c2]'
                             : isDarkMode
                                 ? 'border-transparent text-gray-400 hover:text-gray-200'
                                 : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -358,7 +358,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Contact Information */}
                         <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                             }`}>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 CONTACT INFORMATION
                             </h3>
@@ -390,7 +390,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Engagement Details */}
                         <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                             }`}>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 ENGAGEMENT DETAILS
                             </h3>
@@ -425,7 +425,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Fees Summary */}
                         <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                             }`}>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 FEES SUMMARY
                             </h3>
@@ -460,7 +460,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Allowances Summary */}
                         <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                             }`}>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 ALLOWANCES
                             </h3>
@@ -497,7 +497,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {(formData.otherDealProvisions || formData.additionalNotes) && (
                             <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                                 }`}>
-                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                     }`}>
                                     ADDITIONAL INFORMATION
                                 </h3>
@@ -531,7 +531,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                     <div className="space-y-8">
                         {/* Recipient */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 RECIPIENT
                             </h3>
@@ -595,7 +595,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Unit and Department */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 UNIT AND DEPARTMENT
                             </h3>
@@ -638,7 +638,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Role */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 ROLE
                             </h3>
@@ -661,7 +661,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Tax Status */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 TAX STATUS
                             </h3>
@@ -696,7 +696,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Place of Work */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 PLACE OF WORK
                             </h3>
@@ -727,7 +727,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Engagement */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 ENGAGEMENT
                             </h3>
@@ -776,7 +776,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Rates */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 RATES
                             </h3>
@@ -818,7 +818,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Other */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 OTHER
                             </h3>
@@ -855,7 +855,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                     <div className="space-y-8">
                         {/* Hours */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 HOURS
                             </h3>
@@ -880,7 +880,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Hiatus 1-3 */}
                         {[1, 2, 3].map((num) => (
                             <div key={num}>
-                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                     }`}>
                                     HIATUS {num}
                                 </h3>
@@ -897,7 +897,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Pre Prep */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 PRE PREP
                             </h3>
@@ -922,7 +922,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                         {/* Blocks 1-6 */}
                         {[1, 2, 3, 4, 5, 6].map((num) => (
                             <div key={num}>
-                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                                <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                     }`}>
                                     BLOCK {num}
                                 </h3>
@@ -955,7 +955,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Wrap */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 WRAP
                             </h3>
@@ -981,7 +981,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                     <div className="space-y-8">
                         {/* Box */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 BOX
                             </h3>
@@ -1031,7 +1031,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Computer */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 COMPUTER
                             </h3>
@@ -1078,7 +1078,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Software */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 SOFTWARE
                             </h3>
@@ -1128,7 +1128,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Equipment */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 EQUIPMENT
                             </h3>
@@ -1181,7 +1181,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Mobile */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 MOBILE
                             </h3>
@@ -1226,7 +1226,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Vehicle */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 VEHICLE
                             </h3>
@@ -1287,7 +1287,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Per Diem 1 */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 PER DIEM 1
                             </h3>
@@ -1339,7 +1339,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Per Diem 2 */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 PER DIEM 2
                             </h3>
@@ -1391,7 +1391,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Living */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 LIVING
                             </h3>
@@ -1448,7 +1448,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                     <div className="space-y-8">
                         {/* Engagement Type */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 ENGAGEMENT TYPE
                             </h3>
@@ -1470,7 +1470,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Contract Template */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 CONTRACT TEMPLATE
                             </h3>
@@ -1491,7 +1491,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
 
                         {/* Special Stips */}
                         <div>
-                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-purple-400 border-gray-700' : 'text-purple-700 border-gray-200'
+                            <h3 className={`text-lg font-bold mb-4 pb-2 border-b ${isDarkMode ? 'text-[#b39ddb] border-gray-700' : 'text-[#7e57c2] border-gray-200'
                                 }`}>
                                 AVAILABLE CUSTOM FIELDS
                             </h3>
@@ -1509,7 +1509,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
                 {/* Save Button */}
                 <div className="flex justify-end pt-6 border-t border-gray-200 mt-8">
                     <Button
-                        className="bg-purple-700 hover:bg-purple-600 text-white px-8 py-3"
+                        className="bg-[#7e57c2] hover:bg-[#7e57c2] text-white px-8 py-3"
                         onClick={() => {
                             alert('OFFER SAVED SUCCESSFULLY');
                         }}
@@ -1522,3 +1522,7 @@ export default function CrewOfferConfiguration({ isDarkMode = false, onBack }) {
         </div>
     );
 }
+
+
+
+

@@ -38,7 +38,7 @@ export default function Header() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="SEARCH ANYTHING..."
                                 className="w-full pl-10 pr-4 py-1.5 rounded-xl border outline-none transition-all
-                         bg-gray-50 text-gray-900 placeholder-gray-400 focus:border-purple-500
+                         bg-gray-50 text-gray-900 placeholder-gray-400 focus:border-gray-300
                          dark:bg-slate-950 dark:text-white dark:placeholder-gray-500"
                             />
                         </div>
@@ -101,6 +101,10 @@ export default function Header() {
         </>
     );
 }
+
+
+
+
 
 
 

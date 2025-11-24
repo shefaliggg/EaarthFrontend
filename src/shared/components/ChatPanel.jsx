@@ -131,8 +131,8 @@ export function ChatPanel({ isOpen, onClose }) {
                   className={`flex gap-3 ${message.isOwn ? 'flex-row-reverse' : ''}`}
                 >
                   {!message.isOwn && (
-                    <div className="w-8 h-8 bg-purple-100 border border-purple-700 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-purple-700">
+                    <div className="w-8 h-8 bg-[#ede7f6] border border-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-medium text-[#7e57c2]">
                         {message.sender.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
@@ -195,6 +195,10 @@ export function ChatPanel({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
+
+
+
+
 
 
 

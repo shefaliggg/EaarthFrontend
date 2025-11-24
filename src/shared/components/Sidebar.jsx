@@ -57,12 +57,12 @@ const SubItem = React.memo(function SubItem({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-sm dark:shadow-shadow transition-all text-sm ${isSubActive ? `bg-[#9c78da] text-white border-[#7e57c2] dark:bg-[#7e57c2] dark:text-white` : 'text-gray-600 hover:bg-[#ede7f6] hover:text-gray-700 dark:text-white dark:hover:bg-violet-950 dark:hover:text-white'}`}
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition-all text-sm ${isSubActive ? `bg-[#f3e5f5] text-[#7e57c2]` : 'text-gray-600 hover:bg-gray-50 hover:text-gray-700 dark:text-white dark:hover:bg-gray-800 dark:hover:text-white'}`}
         style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
         aria-expanded={hasNested ? isSubExpanded : undefined}
         aria-current={isSubActive ? 'page' : undefined}
       >
-        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-white dark:bg-white' : 'bg-gray-400 dark:bg-gray-600'}`} />
+        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-[#7e57c2]' : 'bg-gray-400 dark:bg-gray-600'}`} />
         <span className="font-semibold flex-1 text-left">{subItem.label}</span>
         {hasNested && <NavChevron isOpen={isSubExpanded} size={12} />}
       </motion.button>
@@ -151,12 +151,12 @@ export default function Sidebar({ userRole }) {
         <div className="fixed inset-0 bg-[#ede7f6]/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsCollapsed(true)} />
       )}
       <aside
-        className={`sticky left-0 top-0 h-screen z-50 bg-[#ede7f6] dark:bg-background border-r-2 border-[#b39ddb]/50 dark:border-gray-800 shadow-md transition-all duration-300`}
+        className={`sticky left-0 top-0 h-screen z-50 bg-white dark:bg-background shadow-md transition-all duration-300`}
         style={{ width: isCollapsed ? '80px' : '280px' }}
         aria-label="Main sidebar"
       >
         <div className="flex flex-col h-screen">
-          <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6 px-5'} border-b-2 border-[#b39ddb]/50 dark:border-gray-800`}>
+          <div className={`${isCollapsed ? 'p-4 pb-2' : 'p-6 px-5'}`}>
             <div className={`flex items-center justify-between ${isCollapsed ? 'flex-col gap-2' : 'flex-row gap-4'}`}>
               <Link to="home" className="flex items-center gap-3">
                 {!isCollapsed ? (
@@ -199,11 +199,11 @@ export default function Sidebar({ userRole }) {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onMainClick}
-                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl border shadow-sm dark:shadow-shadow transition-all ${isActive ? 'bg-[#7e57c2] text-white shadow-lg dark:shadow-shadow' : 'text-gray-700 hover:bg-[#ede7f6] dark:text-white dark:hover:bg-violet-950'}`}
+                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all ${isActive ? 'bg-[#f3e5f5] text-[#7e57c2]' : 'text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800'}`}
                     aria-expanded={hasSubItems ? isExpanded : undefined}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${isActive ? 'text-white' : ''}`} />
+                    <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${isActive ? 'text-[#7e57c2]' : ''}`} />
                     {!isCollapsed && (
                       <>
                         <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
@@ -241,8 +241,8 @@ export default function Sidebar({ userRole }) {
             })}
           </nav>
 
-          <div className="p-4 border-t-2 border-[#b39ddb]/50 dark:border-gray-800 space-y-3">
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl border shadow-lg dark:shadow-shadow transition-all text-gray-700 hover:bg-[#ede7f6] dark:text-white dark:hover:bg-gray-800`}>
+          <div className="p-4 space-y-3">
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800`}>
               <HelpCircle className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
               {!isCollapsed && <span className="font-medium text-sm">HELP & SUPPORT</span>}
             </motion.button>
@@ -291,6 +291,10 @@ export default function Sidebar({ userRole }) {
     </>
   );
 }
+
+
+
+
 
 
 

@@ -112,7 +112,7 @@ function HelpAndSupport() {
       description: "support@eaarthstudios.com",
       action: "Send Email",
       color:
-        "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+        "bg-[#ede7f6] text-[#7e57c2] dark:bg-gray-900/30 dark:text-[#b39ddb]",
     },
     {
       icon: Phone,
@@ -145,7 +145,7 @@ function HelpAndSupport() {
         <UrlBreadcrumbs />
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <HelpCircle className="size-12 text-purple-600 dark:text-purple-300 p-1.5 bg-purple-100 dark:bg-purple-950 rounded-full" />
+        <HelpCircle className="size-12 text-[#7e57c2] dark:text-[#b39ddb] p-1.5 bg-[#ede7f6] dark:bg-gray-900 rounded-full" />
         <div>
           <h1 className="text-2xl font-bold">HELP & SUPPORT</h1>
           <p className="text-gray-600 dark:text-gray-300">
@@ -201,8 +201,8 @@ function HelpAndSupport() {
             onClick={() => setSelectedCategory(null)}
             className={`p-4 rounded-xl border-2 transition-all ${
               !selectedCategory
-                ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                : "border hover:border-purple-500"
+                ? "border-gray-200 bg-[#ede7f6] dark:bg-gray-900/20"
+                : "border border-gray-200 hover:border-gray-300"
             }`}
           >
             <span className="font-bold text-gray-900 dark:text-white">ALL</span>
@@ -214,14 +214,14 @@ function HelpAndSupport() {
               onClick={() => setSelectedCategory(category.category)}
               className={`p-4 rounded-xl border-2 transition-all ${
                 selectedCategory === category.category
-                  ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                  : "border hover:border-purple-500"
+                  ? "border-gray-200 bg-[#ede7f6] dark:bg-gray-900/20"
+                  : "border border-gray-200 hover:border-gray-300"
               }`}
             >
               <category.icon
                 className={`w-6 h-6 mx-auto mb-2 ${
                   selectedCategory === category.category
-                    ? "text-purple-600"
+                    ? "text-[#7e57c2]"
                     : "text-gray-600 dark:text-gray-400"
                 }`}
               />
@@ -262,7 +262,7 @@ function HelpAndSupport() {
                 setSupportForm({ ...supportForm, subject: e.target.value })
               }
               placeholder="BRIEFLY DESCRIBE YOUR ISSUE"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#9575cd]"
             />
           </div>
 
@@ -274,7 +274,7 @@ function HelpAndSupport() {
               onChange={(e) =>
                 setSupportForm({ ...supportForm, priority: e.target.value })
               }
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#9575cd]"
             >
               <option value="low">LOW</option>
               <option value="medium">MEDIUM</option>
@@ -293,14 +293,14 @@ function HelpAndSupport() {
               }
               rows={6}
               placeholder="DESCRIBE YOUR ISSUE IN DETAIL..."
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none resize-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none resize-none focus:ring-2 focus:ring-[#9575cd]"
             />
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full px-6 py-2 bg-lavender-700 dark:bg-lavender-600 text-white rounded-3xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full px-6 py-2 bg-[#7e57c2] dark:bg-[#7e57c2] text-white rounded-3xl font-bold hover:bg-[#9575cd] transition-all shadow-lg flex items-center justify-center gap-2"
           >
             <Send className="w-5 h-5" />
             SUBMIT TICKET
@@ -312,3 +312,6 @@ function HelpAndSupport() {
 }
 
 export default HelpAndSupport;
+
+
+

@@ -278,3 +278,6 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
     </div>
   );
 }
+
+
+

@@ -21,7 +21,7 @@ function JobTitleAutocomplete({ department, value, onChange, placeholder }) {
                 value={value}
                 onChange={(e) => handleInput(e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9575cd]"
             />
             {isOpen && filtered.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
@@ -32,7 +32,7 @@ function JobTitleAutocomplete({ department, value, onChange, placeholder }) {
                                 onChange(title);
                                 setIsOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 hover:bg-purple-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                            className="w-full text-left px-3 py-2 hover:bg-[#ede7f6] dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm"
                         >
                             {title}
                         </button>
@@ -188,11 +188,11 @@ export default function RoleConfigurationTab() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="rounded-xl border-2 p-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-purple-300 dark:border-purple-700/50">
+            <div className="rounded-xl border-2 p-6 bg-gradient-to-br from-[#ede7f6] to-blue-50 dark:from-gray-900/30 dark:to-blue-900/30 border-gray-200 dark:border-gray-700">
                 <div className="flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <Briefcase className="w-6 h-6 text-purple-700 dark:text-purple-400" />
+                            <Briefcase className="w-6 h-6 text-[#7e57c2] dark:text-[#7e57c2]" />
                             <h4 className="text-xl font-bold text-gray-900 dark:text-white">
                                 ROLE CONFIGURATION
                             </h4>
@@ -220,12 +220,12 @@ export default function RoleConfigurationTab() {
                             key={role.id}
                             onClick={() => setActiveRoleId(role.id)}
                             className={`px-6 py-4 font-bold text-sm border-r flex items-center gap-2 whitespace-nowrap transition-all ${activeRoleId === role.id
-                                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-700'
+                                ? 'bg-[#ede7f6] dark:bg-[#7e57c2]/30 text-[#7e57c2] dark:text-[#7e57c2] border-gray-200 dark:border-gray-200'
                                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                         >
                             <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${activeRoleId === role.id
-                                ? 'bg-purple-700 text-white'
+                                ? 'bg-[#7e57c2] text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}>
                                 {index + 1}
@@ -241,7 +241,7 @@ export default function RoleConfigurationTab() {
 
                     <button
                         onClick={addRole}
-                        className="px-6 py-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-all text-purple-700 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="px-6 py-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-all text-[#7e57c2] dark:text-[#7e57c2] hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                         <Plus className="w-4 h-4" />
                         ADD ROLE
@@ -292,7 +292,7 @@ export default function RoleConfigurationTab() {
                     <div className="space-y-6">
                         {/* Basic Info Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-purple-700 dark:text-purple-400">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
                                 BASIC INFORMATION
                             </h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -467,7 +467,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Rates Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-purple-700 dark:text-purple-400">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
                                 RATES
                             </h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -504,7 +504,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Overtime Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-purple-700 dark:text-purple-400">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
                                 OVERTIME
                             </h5>
 
@@ -536,7 +536,7 @@ export default function RoleConfigurationTab() {
                                 </div>
 
                                 {activeRole.overtimeType === 'CUSTOM' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 border-dashed border-purple-400 bg-purple-50 dark:bg-purple-900/20">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 border-dashed border-gray-200 bg-[#ede7f6] dark:bg-[#7e57c2]/20">
                                         <div>
                                             <label className="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300">
                                                 NON-SHOOT OT
@@ -639,7 +639,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Allowances Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-purple-700 dark:text-purple-400">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
                                 ALLOWANCES
                             </h5>
                             <RoleAllowancesSection
@@ -651,11 +651,11 @@ export default function RoleConfigurationTab() {
                         {/* Role Summary */}
                         {activeRole.feePerDay && (
                             <div className={`rounded-lg border-2 p-4 ${activeRole.isPrimary
-                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-400 dark:border-purple-500'
+                                ? 'bg-[#ede7f6] dark:bg-[#7e57c2]/20 border-gray-200 dark:border-gray-300'
                                 : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'
                                 }`}>
                                 <div className="flex items-start gap-3">
-                                    <Info className="w-5 h-5 text-purple-700 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                                    <Info className="w-5 h-5 text-[#7e57c2] dark:text-[#7e57c2] flex-shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">
                                             ROLE SUMMARY
@@ -681,7 +681,7 @@ export default function RoleConfigurationTab() {
             {jobTitles.length === 1 && (
                 <div className="rounded-lg border-2 border-dashed p-4 bg-gray-50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700">
                     <div className="flex items-start gap-3">
-                        <Info className="w-5 h-5 text-purple-700 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                        <Info className="w-5 h-5 text-[#7e57c2] dark:text-[#7e57c2] flex-shrink-0 mt-0.5" />
                         <div>
                             <p className="text-sm font-bold mb-1 text-gray-900 dark:text-white">
                                 💡 NEED MULTIPLE ROLES?
@@ -696,3 +696,6 @@ export default function RoleConfigurationTab() {
         </div>
     );
 }
+
+
+

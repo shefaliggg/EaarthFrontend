@@ -33,7 +33,7 @@
   --destructive-foreground: #ffffff;
 
   --shadow: #15012e;
-  --border: #d8caef;
+  --border: #e5e7eb;
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
 
@@ -71,16 +71,17 @@ a svg {
 }
 
 :root {
-  --lavender-50: #F5F3FF;
-  --lavender-100: #EDE9FE;
-  --lavender-200: #DDD6FE;
-  --lavender-300: #C4B5FD;
-  --lavender-400: #A78BFA;
-  --lavender-500: #8B5CF6;
-  --lavender-600: #7C3AED;
-  --lavender-700: #6D28D9;
-  --lavender-800: #5B21B6;
-  --lavender-900: #4C1D95;
+  /* Deep Purple (Material UI) - shades 50-400 only */
+  --lavender-50: #ede7f6;
+  --lavender-100: #d1c4e9;
+  --lavender-200: #b39ddb;
+  --lavender-300: #9575cd;
+  --lavender-400: #7e57c2;
+  --lavender-500: #7e57c2;
+  --lavender-600: #7e57c2;
+  --lavender-700: #7e57c2;
+  --lavender-800: #7e57c2;
+  --lavender-900: #7e57c2;
 
   --pastel-pink-50: #FFF1F8;
   --pastel-pink-100: #FFE4F1;
@@ -153,7 +154,7 @@ a svg {
   --destructive-foreground: #000000;
 
   --shadow: #15012e;
-  --border: #231d2a;
+  --border: #e5e7eb;
   /* --border: var(--lavender-900); */
   --input: #1f1f23;
   --ring: var(--lavender-400);
@@ -164,7 +165,7 @@ a svg {
   --sidebar-primary-foreground: #000000;
   --sidebar-accent: #1a1a1f;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #26262b;
+  --sidebar-border: #374151;
   --sidebar-ring: var(--lavender-500);
 
   --chart-1: var(--lavender-400);

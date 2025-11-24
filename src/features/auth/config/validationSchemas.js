@@ -89,3 +89,7 @@ export const userValidationSchema = Yup.object().shape({
   lastName: Yup.string().trim().required("Last name is required"),
   termsAgreed: termsValidation,
 });
+
+
+
+

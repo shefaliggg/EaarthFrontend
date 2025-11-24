@@ -246,3 +246,6 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
     </StyledPageWrapper>
   );
 }
+
+
+

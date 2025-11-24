@@ -23,7 +23,7 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
             className={`px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm border ${
               activeTab === value
                 ? isDarkMode
-                  ? 'bg-lavender-400 text-black'
+                  ? 'bg-[#7e57c2] text-white'
                   : 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/80'
             }`}
@@ -36,3 +36,6 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
     </div>
   );
 }
+
+
+

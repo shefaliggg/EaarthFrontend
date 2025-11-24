@@ -139,7 +139,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
           {/* Day column */}
           <div className="relative">
             {/* Header */}
-            <div className="h-16 border-b border-gray-200 flex items-center justify-center bg-purple-50">
+            <div className="h-16 border-b border-gray-200 flex items-center justify-center bg-[#ede7f6]">
               <div className="text-center">
                 <div className="font-bold text-gray-900">{daysOfWeek[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]}</div>
                 <div className="text-sm text-gray-500">{currentDate.getDate()} {monthNames[currentDate.getMonth()]}</div>
@@ -217,9 +217,9 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
             return (
               <div key={dayIndex} className="relative border-r border-gray-200 last:border-r-0">
                 {/* Header */}
-                <div className={`h-16 border-b border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-purple-50' : ''}`}>
+                <div className={`h-16 border-b border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-[#ede7f6]' : ''}`}>
                   <div className="font-bold text-gray-900 text-sm">{daysOfWeek[dayIndex].slice(0, 3)}</div>
-                  <div className={`text-lg ${isToday ? 'text-purple-600 font-bold' : 'text-gray-600'}`}>
+                  <div className={`text-lg ${isToday ? 'text-[#7e57c2] font-bold' : 'text-gray-600'}`}>
                     {date.getDate()}
                   </div>
                 </div>
@@ -292,10 +292,10 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
             return (
               <div
                 key={idx}
-                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-gray-200 bg-[#ede7f6]' : 'border-gray-100 hover:border-gray-300'
                   } cursor-pointer transition-all`}
               >
-                <div className={`font-bold ${isToday ? 'text-purple-600' : 'text-gray-900'}`}>
+                <div className={`font-bold ${isToday ? 'text-[#7e57c2]' : 'text-gray-900'}`}>
                   {day}
                 </div>
                 <div className="space-y-1 mt-1">
@@ -371,7 +371,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="border bg-gradient-to-br from-purple-950 to-purple-900 rounded-3xl p-6 shadow-lg">
+      <div className="border bg-gradient-to-br from-gray-900 to-gray-900 rounded-3xl p-6 shadow-lg">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">
@@ -389,7 +389,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
                 key={v}
                 onClick={() => setView(v)}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${view === v
-                    ? 'bg-background text-purple-600 shadow-md'
+                    ? 'bg-background text-[#7e57c2] shadow-md'
                     : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
               >
@@ -502,7 +502,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="mt-6 w-full px-6 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition-colors"
+                className="mt-6 w-full px-6 py-3 bg-[#9575cd] text-white rounded-xl font-bold hover:bg-[#7e57c2] transition-colors"
               >
                 CLOSE
               </button>
@@ -515,3 +515,6 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 }
 
 export default ProjectCalendar
+
+
+

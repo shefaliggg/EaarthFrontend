@@ -260,3 +260,6 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
     </div>
   );
 }
+
+
+

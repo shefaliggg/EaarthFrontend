@@ -60,7 +60,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
   if (success) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-xl bg-white rounded-2xl shadow-md p-6 text-center border border-purple-100">
+        <div className="w-full max-w-xl bg-white rounded-2xl shadow-md p-6 text-center border border-gray-100">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-medium text-gray-900 mb-2">Password Reset Successful!</h2>
           <p className="text-gray-600">Redirecting to login...</p>
@@ -89,7 +89,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
         </div>
 
         {/* MAIN CARD */}
-        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-gray-100">
           {/* Title */}
           <h2 className="text-2xl md:text-2xl font-medium text-center mb-2 text-gray-900">
             Reset Your Password
@@ -120,7 +120,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                 maxLength={6}
                 disabled={loading}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl 
-                focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                focus:ring-2 focus:ring-[#9575cd] focus:border-transparent 
                 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
@@ -139,7 +139,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
-                  focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                  focus:ring-2 focus:ring-[#9575cd] focus:border-transparent 
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
@@ -171,7 +171,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
-                  focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+                  focus:ring-2 focus:ring-[#9575cd] focus:border-transparent 
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <button
@@ -202,7 +202,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
             <button
               type="submit"
               disabled={loading || !otp || !newPassword || !confirmPassword}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 
+              className="w-full bg-gradient-to-r from-[#7e57c2] to-pink-600 
               text-white font-medium py-4 rounded-xl hover:shadow-md 
               transition-all hover:scale-[1.02] disabled:opacity-50 
               disabled:cursor-not-allowed disabled:hover:scale-100 
@@ -224,7 +224,7 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
             <button
               onClick={handleResendOTP}
               disabled={loading}
-              className="text-purple-600 hover:text-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-[#7e57c2] hover:text-[#7e57c2] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Resend OTP
             </button>
@@ -249,6 +249,10 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
 };
 
 export default ResetPasswordPage;
+
+
+
+
 
 
 

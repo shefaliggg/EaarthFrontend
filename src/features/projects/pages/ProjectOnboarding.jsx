@@ -224,7 +224,7 @@ function ProjectOnboarding() {
       </div>
 
       {/* WORKFLOW PROGRESS TRACKER */}
-      <div className="p-6 rounded-xl border bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800/50 dark:to-gray-800/30 border-purple-200 dark:border-gray-700">
+      <div className="p-6 rounded-xl border bg-gradient-to-br from-[#ede7f6] to-blue-50 dark:from-gray-800/50 dark:to-gray-800/30 border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-bold text-gray-900 dark:text-white">
             ONBOARDING WORKFLOW PROGRESS
@@ -235,7 +235,7 @@ function ProjectOnboarding() {
               <span className="text-gray-600 dark:text-gray-400">COMPLETED</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse"></div>
+              <div className="w-3 h-3 rounded-full bg-[#7e57c2] animate-pulse"></div>
               <span className="text-gray-600 dark:text-gray-400">IN PROGRESS</span>
             </div>
             <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ function ProjectOnboarding() {
         <div className="relative">
           <div className="absolute top-[52px] left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700"></div>
           <div
-            className="absolute top-[52px] left-0 h-1 bg-gradient-to-r from-green-500 to-purple-600 transition-all duration-500"
+            className="absolute top-[52px] left-0 h-1 bg-gradient-to-r from-green-500 to-[#7e57c2] transition-all duration-500"
             style={{ width: '22%' }}
           ></div>
 
@@ -276,16 +276,16 @@ function ProjectOnboarding() {
                     className={`relative w-[104px] h-[104px] z-1 rounded-3xl border-2 flex flex-col gap-2 items-center justify-center mb-3 transition-all ${isComplete
                       ? "bg-green-500 border-green-600"
                       : isActive
-                        ? 'bg-lavender-100 border-lavender-400 shadow-lg shadow-purple-500/50'
-                        : 'bg-lavender-100 border-lavender-100 dark:bg-gray-700 dark:border-gray-600'
+                        ? 'bg-[#ede7f6] border-gray-200 shadow-lg shadow-[#9575cd]/50'
+                        : 'bg-[#ede7f6] border-gray-100 dark:bg-gray-700 dark:border-gray-600'
                       }`}
                   >
-                    <IconComponent className={`w-8 h-8 mb-1 text-bold ${isComplete ? " text-white" : isActive ? 'text-lavender-600' : isActive ? 'text-white' : 'dark:text-gray-400 text-gray-400'}`} />
-                    <span className={`text-xs font-bold text-center leading-tight ${isComplete ? "text-white" : isActive ? 'text-lavender-600' : 'dark:text-gray-400 text-gray-600'}`}>
+                    <IconComponent className={`w-8 h-8 mb-1 text-bold ${isComplete ? " text-white" : isActive ? 'text-[#7e57c2]' : isActive ? 'text-white' : 'dark:text-gray-400 text-gray-400'}`} />
+                    <span className={`text-xs font-bold text-center leading-tight ${isComplete ? "text-white" : isActive ? 'text-[#7e57c2]' : 'dark:text-gray-400 text-gray-600'}`}>
                       {stage.label}
                     </span>
                     {isOngoing &&
-                      <div className='absolute -z-10 -top-1.1 -left-1.1 w-[102%] h-[102%] rounded-3xl bg-lavender-600 animate-pulse'></div>
+                      <div className='absolute -z-10 -top-1.1 -left-1.1 w-[102%] h-[102%] rounded-3xl bg-[#7e57c2] animate-pulse'></div>
                     }
                   </button>
                   <div className="text-center text-[10px] font-bold text-gray-600 dark:text-gray-400">
@@ -298,7 +298,7 @@ function ProjectOnboarding() {
         </div>
 
         {/* Overall Stats */}
-        <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-purple-200 dark:border-gray-700">
+        <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
           {[
             { icon: Eye, label: 'TOTAL OFFERS', value: offers.length, color: 'blue' },
             { icon: CheckCircle2, label: 'COMPLETED', value: 0, color: 'green' },
@@ -308,7 +308,7 @@ function ProjectOnboarding() {
             const colorMap = {
               blue: { bg: 'bg-blue-100 dark:bg-blue-900', icon: 'text-blue-600 dark:text-blue-400' },
               green: { bg: 'bg-green-100 dark:bg-green-900', icon: 'text-green-600 dark:text-green-400' },
-              purple: { bg: 'bg-purple-100 dark:bg-purple-900', icon: 'text-purple-600 dark:text-purple-400' },
+              purple: { bg: 'bg-[#ede7f6] dark:bg-gray-900', icon: 'text-[#7e57c2] dark:text-[#b39ddb]' },
               orange: { bg: 'bg-orange-100 dark:bg-orange-900', icon: 'text-orange-600 dark:text-orange-400' },
             };
             const IconComponent = stat.icon;
@@ -508,3 +508,6 @@ function ProjectOnboarding() {
 }
 
 export default ProjectOnboarding;
+
+
+

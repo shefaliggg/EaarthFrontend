@@ -71,7 +71,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
         </div>
 
         {/* Main Card */}
-        <div className="w-full bg-white rounded-2xl shadow-md p-6 md:p-6 border border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 md:p-6 border border-gray-100">
           {/* Title */}
           <h2 className="text-xl md:text-xl font-medium text-center mb-2 text-gray-900">
             VERIFY YOUR IDENTITY
@@ -81,8 +81,8 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
           </p>
 
           {/* Email Info Box */}
-          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-8 flex items-center gap-3">
-            <Info className="w-5 h-5 text-purple-600" />
+          <div className="bg-[#ede7f6] border border-gray-100 rounded-xl p-4 mb-8 flex items-center gap-3">
+            <Info className="w-5 h-5 text-[#7e57c2]" />
             <p className="text-sm text-gray-700 break-all">
               <span className="font-semibold">Email:</span> {email}
             </p>
@@ -111,7 +111,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
                   disabled={loading}
                   className="w-12 h-14 md:w-14 md:h-16 text-center text-xl md:text-xl font-semibold 
                   border border-gray-300 rounded-xl 
-                  focus:border-purple-600 focus:ring-2 focus:ring-purple-300
+                  focus:border-gray-200 focus:ring-2 focus:ring-[#b39ddb]
                   outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               ))}
@@ -143,7 +143,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
             <button
               onClick={handleResendClick}
               disabled={!canResend || loading}
-              className="font-medium text-purple-600 hover:text-purple-700 
+              className="font-medium text-[#7e57c2] hover:text-[#7e57c2] 
               disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
@@ -154,7 +154,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
           <div className="text-center mt-4">
             <button
               onClick={handleBackClick}
-              className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+              className="text-[#7e57c2] hover:text-[#7e57c2] font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -171,6 +171,10 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
 };
 
 export default OTPVerificationPage;
+
+
+
+
 
 
 

@@ -26,13 +26,13 @@ export function VerificationResultScreen({
   const isSuccess = status === "success";
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-100 via-green-100 via-pink-100 to-purple-200 relative">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-100 via-green-100 via-pink-100 to-[#d1c4e9] relative">
 
       {/* Skip Button only in failed case */}
       {!isSuccess && onSkip && (
         <button
           onClick={onSkip}
-          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all text-purple-600 font-medium"
+          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all text-[#7e57c2] font-medium"
         >
           <Home className="w-5 h-5" />
           Skip to Dashboard
@@ -51,10 +51,10 @@ export function VerificationResultScreen({
 
         {/* Logo */}
         <div className="mb-8">
-          <h1 className="text-4xl font-medium bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-medium bg-gradient-to-r from-[#7e57c2] to-pink-600 bg-clip-text text-transparent">
             EAARTH
           </h1>
-          <p className="text-lg font-medium bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <p className="text-lg font-medium bg-gradient-to-r from-[#7e57c2] to-pink-600 bg-clip-text text-transparent">
             STUDIOS
           </p>
         </div>
@@ -90,7 +90,7 @@ export function VerificationResultScreen({
         {/* Success Loader */}
         {isSuccess && (
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-200"></div>
           </div>
         )}
 
@@ -99,13 +99,13 @@ export function VerificationResultScreen({
           <div className="space-y-3">
             <button
               onClick={() => onNavigate("login")}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all"
+              className="w-full bg-gradient-to-r from-[#7e57c2] to-pink-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all"
             >
               BACK TO LOGIN
             </button>
             <button
               onClick={() => onNavigate("contact-support")}
-              className="w-full border border-purple-600 text-purple-600 font-semibold py-3 rounded-lg hover:bg-purple-50 transition-all"
+              className="w-full border border-gray-200 text-[#7e57c2] font-semibold py-3 rounded-lg hover:bg-[#ede7f6] transition-all"
             >
               CONTACT SUPPORT
             </button>
@@ -115,6 +115,10 @@ export function VerificationResultScreen({
     </div>
   );
 }
+
+
+
+
 
 
 

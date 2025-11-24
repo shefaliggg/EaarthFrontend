@@ -29,7 +29,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 value={profile.email}
                 onChange={(e) => handleChange('email', e.target.value.toUpperCase())}
                 disabled={!isEditing}
-                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-purple-200  text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-gray-100  text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 value={profile.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 disabled={!isEditing}
-                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-purple-200 text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-gray-100 text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('currentPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Enter current password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-purple-200 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -94,7 +94,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('newPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Enter new password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-purple-200 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -119,7 +119,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('confirmPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Confirm new password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border border-input border-purple-200 bg-background text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:ring-2 focus:ring-ring "
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -223,3 +223,6 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
     </div>
   );
 }
+
+
+

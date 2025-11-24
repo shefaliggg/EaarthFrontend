@@ -91,7 +91,7 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
               placeholder="your@email.com"
               required
               disabled={loading}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#7e57c2] focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -125,6 +125,10 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
 };
 
 export default ForgotPasswordPage;
+
+
+
+
 
 
 

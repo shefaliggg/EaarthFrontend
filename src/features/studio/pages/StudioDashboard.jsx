@@ -143,7 +143,7 @@ export default function StudioDashboard({ onNavigate }) {
       case 'shooting':
         return { color: 'bg-green-100 text-green-700 border-green-300', label: 'SHOOTING' };
       case 'wrap':
-        return { color: 'bg-[#d1c4e9] text-[#7e57c2] border-[#b39ddb]', label: 'WRAP' };
+        return { color: 'bg-[#d1c4e9] text-[#7e57c2] border-gray-200', label: 'WRAP' };
       default:
         return { color: 'bg-gray-100 text-gray-700 border-gray-300', label: status.toUpperCase() };
     }
@@ -177,7 +177,7 @@ export default function StudioDashboard({ onNavigate }) {
               <Button
                 size={"lg"}
                 onClick={() => setShowQRCode(!showQRCode)}
-                className="px-6 py-2.5 bg-[#7e57c2] hover:bg-[#7e57c2] text-white rounded-xl font-medium transition-all border border-[#7e57c2] flex items-center gap-2"
+                className="px-6 py-2.5 bg-[#7e57c2] hover:bg-[#7e57c2] text-white rounded-xl font-medium transition-all border border-gray-200 flex items-center gap-2"
               >
                 <BarChart3 className="w-5 h-5" />
                 {showQRCode ? 'HIDE STATS' : 'SHOW QUICK STATS'}
@@ -201,7 +201,7 @@ export default function StudioDashboard({ onNavigate }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Stat 1 */}
-                  <div className="p-4 rounded-lg bg-[#ede7f6] dark:bg-gray-700">
+                  <div className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-lg bg-[#7e57c2] flex items-center justify-center">
                         <FolderOpen className="w-5 h-5 text-white" />
@@ -221,7 +221,7 @@ export default function StudioDashboard({ onNavigate }) {
                   </div>
 
                   {/* Stat 2 */}
-                  <div className="p-4 rounded-lg bg-[#ede7f6] dark:bg-gray-700">
+                  <div className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-lg bg-[#7e57c2] flex items-center justify-center">
                         <Users className="w-5 h-5 text-white" />
@@ -241,7 +241,7 @@ export default function StudioDashboard({ onNavigate }) {
                   </div>
 
                   {/* Stat 3 */}
-                  <div className="p-4 rounded-lg bg-[#ede7f6] dark:bg-gray-700">
+                  <div className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-lg bg-[#7e57c2] flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-white" />
@@ -430,10 +430,10 @@ export default function StudioDashboard({ onNavigate }) {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.1 }}
                     onClick={() => navigate(action.path)}
-                    className="p-4 rounded-xl border bg-lavender-100 dark:bg-gray-900 hover:shadow-lg dark:shadow-shadow transition-all text-left group hover:bg-[#d1c4e9] dark:hover:bg-gray-700"
+                    className="p-4 rounded-xl border bg-[#ede7f6] dark:bg-gray-900 hover:shadow-lg dark:shadow-shadow transition-all text-left group hover:bg-[#d1c4e9] dark:hover:bg-gray-700"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <div className={`w-12 h-12 rounded-lg bg-lavender-600 flex items-center justify-center`}>
+                      <div className={`w-12 h-12 rounded-lg bg-[#7e57c2] flex items-center justify-center`}>
                         <Icon className="w-6 h-6 text-white" />
                       </div>
                       <ArrowRight className="w-5 h-5 text-[#7e57c2] dark:text-white group-hover:translate-x-1 transition-transform" />
@@ -478,7 +478,7 @@ export default function StudioDashboard({ onNavigate }) {
                       className="p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-slate-900 dark:border-slate-600"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#ede7f6] border border-[#b39ddb] flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 border border-gray-300 flex items-center justify-center text-2xl">
                           {project.image}
                         </div>
                         <div className="flex-1">
@@ -589,7 +589,7 @@ export default function StudioDashboard({ onNavigate }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <button
                 onClick={() => onNavigate('studio-dashboard')}
-                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-lavender-100  hover:bg-[#d1c4e9] dark:bg-lavender-900"
+                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-[#ede7f6]  hover:bg-[#d1c4e9] dark:bg-[#7e57c2]"
               >
                 <Users className="w-8 h-8 text-[#7e57c2] dark:text-white mb-3" />
                 <div className="font-medium text-[#7e57c2] dark:text-white">
@@ -602,7 +602,7 @@ export default function StudioDashboard({ onNavigate }) {
 
               <button
                 onClick={() => onNavigate('studio-settings')}
-                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-lavender-100  hover:bg-[#d1c4e9] dark:bg-lavender-900"
+                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-[#ede7f6]  hover:bg-[#d1c4e9] dark:bg-gray-900"
               >
                 <Settings className="w-8 h-8 text-[#7e57c2] dark:text-white mb-3" />
                 <div className="font-medium text-[#7e57c2] dark:text-white">
@@ -615,7 +615,7 @@ export default function StudioDashboard({ onNavigate }) {
 
               <button
                 onClick={() => onNavigate('studio-reports')}
-                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-lavender-100  hover:bg-[#d1c4e9] dark:bg-lavender-900"
+                className="p-4 rounded-xl border text-left hover:shadow-lg dark:shadow-shadow transition-all bg-[#ede7f6]  hover:bg-[#d1c4e9] dark:bg-gray-900"
               >
                 <FileText className="w-8 h-8 text-[#7e57c2] dark:text-white mb-3" />
                 <div className="font-medium text-[#7e57c2] dark:text-white">
@@ -632,6 +632,10 @@ export default function StudioDashboard({ onNavigate }) {
     </div>
   );
 }
+
+
+
+
 
 
 

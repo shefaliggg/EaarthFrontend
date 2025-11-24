@@ -78,7 +78,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
 
         <div className="text-right text-sm text-gray-600 dark:text-gray-400">
           <div className="font-bold mb-1">CURRENT STAGE</div>
-          <div className="px-4 py-2 rounded-lg font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <div className="px-4 py-2 rounded-lg font-bold bg-[#ede7f6] text-[#7e57c2] dark:bg-[#7e57c2]/30 dark:text-[#b39ddb]">
             {offer.currentStage}
           </div>
           <div className="mt-2 text-xs">
@@ -93,14 +93,14 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
           <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
             OVERALL PROGRESS
           </span>
-          <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+          <span className="text-sm font-bold text-[#7e57c2] dark:text-[#b39ddb]">
             {Math.round(getProgressPercentage())}%
           </span>
         </div>
 
         <div className="w-full h-3 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
           <div
-            className="h-full bg-gradient-to-r from-green-500 via-purple-500 to-purple-600 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-green-500 via-[#9575cd] to-[#7e57c2] transition-all duration-500"
             style={{ width: `${getProgressPercentage()}%` }}
           />
         </div>
@@ -158,7 +158,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                         ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700'
                         : ''}
                       ${stageData.status === 'PENDING'
-                        ? 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-700'
+                        ? 'bg-[#ede7f6] border-gray-100 dark:bg-[#7e57c2]/20 dark:border-gray-200'
                         : ''}
                       ${stageData.status === 'REJECTED'
                         ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
@@ -181,7 +181,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                             ${stageData.status === 'APPROVED'
                               ? 'text-green-600'
                               : stageData.status === 'PENDING'
-                              ? 'text-purple-600'
+                              ? 'text-[#7e57c2]'
                               : stageData.status === 'REJECTED'
                               ? 'text-red-600'
                               : 'text-gray-400 dark:text-gray-500'
@@ -203,11 +203,11 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                           {stageData.status === 'PENDING' && (
                             <div className="p-3 rounded-lg bg-white dark:bg-gray-900/50">
                               <div className="flex items-center gap-2 mb-1">
-                                <User className="w-4 h-4 text-purple-600" />
+                                <User className="w-4 h-4 text-[#7e57c2]" />
                                 <span className="font-bold">ASSIGNED TO:</span>
                               </div>
 
-                              <div className="ml-6 text-purple-600 dark:text-purple-400">
+                              <div className="ml-6 text-[#7e57c2] dark:text-[#7e57c2]">
                                 {stageData.approver || 'PENDING ASSIGNMENT'}
                               </div>
 
@@ -311,3 +311,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
     </div>
   );
 }
+
+
+
+

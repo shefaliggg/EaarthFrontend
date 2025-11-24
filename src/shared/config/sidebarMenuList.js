@@ -512,10 +512,10 @@ function sidebarMenuList(sidebarType) {
       id: "timesheets",
       label: "TIMESHEETS",
       icon: Icon.Clock,
-      gradient: "from-purple-400/20 to-purple-500/20",
-      color: "text-purple-600",
-      hoverBg: "hover:bg-purple-50",
-      darkHoverBg: "dark:hover:bg-purple-900/20",
+      gradient: "from-[#9575cd]/20 to-[#9575cd]/20",
+      color: "text-[#7e57c2]",
+      hoverBg: "hover:bg-[#ede7f6]",
+      darkHoverBg: "dark:hover:bg-gray-900/20",
       subItems: [
         { id: "timesheets-overview", label: "OVERVIEW", page: "timesheets" },
         { id: "timesheets-timecards", label: "TIMECARDS", page: "timecards" },
@@ -539,3 +539,7 @@ function sidebarMenuList(sidebarType) {
 }
 
 export default sidebarMenuList;
+
+
+
+

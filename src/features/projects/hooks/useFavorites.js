@@ -25,3 +25,7 @@ export function useFavorites(storageKey) {
 
   return { favorites, toggleFavorite, isFavorite };
 }
+
+
+
+

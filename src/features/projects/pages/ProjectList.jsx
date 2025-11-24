@@ -154,7 +154,7 @@ export function ProjectList() {
             onClick={() => setShowArchived(!showArchived)}
             className={`${showArchived
               ? 'bg-[#7e57c2] text-white shadow-lg dark:hover:text-black'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-[#d1c4e9] dark:hover:text-black dark:hover:bg-[#7e57c2] border hover:border-[#d1c4e9]'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:text-white dark:hover:bg-gray-700 border border-gray-200 hover:border-gray-300'
               }`}
           >
             <Archive className="w-5 h-5" />
@@ -193,7 +193,7 @@ export function ProjectList() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-3 rounded-xl font-medium flex items-center gap-3 whitespace-nowrap transition-all ${isActive
                 ? `bg-[#7e57c2] text-white shadow-lg`
-                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-[#b39ddb] dark:border-transparent'
+                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-transparent'
                 }`}
             >
               <Icon className="w-5 h-5" />
@@ -241,3 +241,7 @@ export function ProjectList() {
 
 
 export default ProjectList
+
+
+
+

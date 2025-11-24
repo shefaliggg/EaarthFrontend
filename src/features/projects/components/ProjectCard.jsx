@@ -43,12 +43,12 @@ function ProjectCard({ project, index }) {
                     storageKey: "currentProjectUniqueKey"
                 })
             }}
-            className="cursor-pointer rounded-2xl bg-background hover:bg-lavender-50 dark:hover:bg-slate-950 border shadow-lg hover:shadow-md dark:shadow-shadow transition-all overflow-hidden"
+            className="cursor-pointer rounded-2xl bg-background hover:bg-[#ede7f6] dark:hover:bg-slate-950 border shadow-lg hover:shadow-md dark:shadow-shadow transition-all overflow-hidden"
         >
             {/* Project Content */}
             <div className="p-6 space-y-4">
                 {/* Header with emoji, title and period badge */}
-                <div className="flex items-start justify-between gap-3 pb-4 border-b border-[#ede7f6] dark:border-gray-700">
+                <div className="flex items-start justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-start gap-3 flex-1">
                         <div className="text-4xl">{project.image}</div>
                         <div className="flex-1">
@@ -73,7 +73,7 @@ function ProjectCard({ project, index }) {
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-400">
                         Your Role
                     </p>
-                    <p className="font-medium text-purple-700 dark:text-lavender-400">
+                    <p className="font-medium text-[#7e57c2] dark:text-lavender-400">
                         {project.role}
                     </p>
                 </div>
@@ -107,19 +107,19 @@ function ProjectCard({ project, index }) {
                 {/* Stats Row */}
                 <div className="grid grid-cols-3 gap-3">
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Users className="w-4 h-4 mx-auto mb-1 text-lavender-700 dark:text-gray-400" />
+                        <Users className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.teamSize}
                         </p>
                     </div>
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Calendar className="w-4 h-4 mx-auto mb-1 text-lavender-700 dark:text-gray-400" />
+                        <Calendar className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.startDate.split('/')[1]}/{project.startDate.split('/')[2]}
                         </p>
                     </div>
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Award className="w-4 h-4 mx-auto mb-1 text-lavender-700 dark:text-gray-400" />
+                        <Award className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.budget}
                         </p>
@@ -156,6 +156,10 @@ function ProjectCard({ project, index }) {
 }
 
 export default ProjectCard
+
+
+
+
 
 
 

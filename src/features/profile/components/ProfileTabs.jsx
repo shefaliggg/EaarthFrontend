@@ -33,3 +33,6 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
     </div>
   );
 }
+
+
+

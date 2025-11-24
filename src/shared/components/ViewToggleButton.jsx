@@ -6,7 +6,7 @@ function ViewToggleButton({ view, onViewChange }) {
             <button
                 onClick={() => onViewChange('grid')}
                 className={`p-2 rounded-md font-semibold transition-all ${view === 'grid'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-[#7e57c2] text-white'
                     : 'bg-white text-gray-600 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
                     }`}
             >
@@ -15,7 +15,7 @@ function ViewToggleButton({ view, onViewChange }) {
             <button
                 onClick={() => onViewChange('list')}
                 className={`p-2 rounded-md font-semibold transition-all ${view === 'list'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-[#7e57c2] text-white'
                     : 'bg-white text-gray-600 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
                     }`}
             >
@@ -26,3 +26,6 @@ function ViewToggleButton({ view, onViewChange }) {
 }
 
 export default ViewToggleButton;
+
+
+

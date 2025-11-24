@@ -24,7 +24,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
       timestamp: '1 hour ago',
       read: false,
       icon: Calendar,
-      color: 'text-purple-600',
+      color: 'text-[#7e57c2]',
       project: 'AVATAR 1',
     }
   ]);
@@ -73,11 +73,11 @@ export function NotificationsPanel({ isOpen, onClose }) {
             className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-background shadow-lg z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-lavender-100 dark:bg-slate-950 p-6 border-b">
+            <div className="bg-[#ede7f6] dark:bg-slate-950 p-6 border-b">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-950 rounded-full flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-purple-600 dark:text-purple-200" />
+                  <div className="w-10 h-10 bg-[#ede7f6] dark:bg-gray-900 rounded-full flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-[#7e57c2] dark:text-[#d1c4e9]" />
                   </div>
                   <div>
                     <h2 className="text-lg font-medium">NOTIFICATIONS</h2>
@@ -98,7 +98,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                   onClick={() => setFilter('all')}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filter === 'all'
-                      ? 'bg-white dark:bg-purple-950 text-purple-600 dark:text-purple-100 shadow-sm'
+                      ? 'bg-white dark:bg-[#7e57c2] text-[#7e57c2] dark:text-[#ede7f6] shadow-sm'
                       : 'text-foreground hover:bg-white/50'
                   }`}
                 >
@@ -108,7 +108,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                   onClick={() => setFilter('unread')}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filter === 'unread'
-                      ? 'bg-white dark:bg-purple-950 text-purple-600 dark:text-purple-100 shadow-sm'
+                      ? 'bg-white dark:bg-[#7e57c2] text-[#7e57c2] dark:text-[#ede7f6] shadow-sm'
                       : 'text-foreground hover:bg-white/50'
                   }`}
                 >
@@ -117,7 +117,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="px-3 py-2 bg-white dark:bg-purple-950 text-purple-600 dark:text-purple-100 rounded-lg text-sm font-medium hover:bg-purple-50 transition-colors shadow-sm"
+                    className="px-3 py-2 bg-white dark:bg-gray-900 text-[#7e57c2] dark:text-[#ede7f6] rounded-lg text-sm font-medium hover:bg-[#ede7f6] transition-colors shadow-sm"
                   >
                     MARK ALL READ
                   </button>
@@ -150,17 +150,17 @@ export function NotificationsPanel({ isOpen, onClose }) {
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          notification.read ? 'bg-gray-200 dark:bg-gray-400' : 'bg-purple-200'
+                          notification.read ? 'bg-gray-200 dark:bg-gray-400' : 'bg-[#d1c4e9]'
                         }`}>
                           <Icon className={`w-5 h-5 ${notification.read ? 'text-gray-500 dark:text-gray-900' : notification.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className={`font-medium text-sm ${notification.read ? 'text-gray-600' : 'text-gray-900 dark:text-lavender-100'}`}>
+                            <h3 className={`font-medium text-sm ${notification.read ? 'text-gray-600' : 'text-gray-900 dark:text-[#ede7f6]'}`}>
                               {notification.title}
                             </h3>
                             {!notification.read && (
-                              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0 mt-1" />
+                              <div className="w-2 h-2 bg-[#9575cd] rounded-full flex-shrink-0 mt-1" />
                             )}
                           </div>
                           <p className={`text-sm mb-2 ${notification.read ? 'text-gray-500 dark:text-gray-800' : 'text-gray-700 dark:text-gray-400'}`}>
@@ -172,7 +172,7 @@ export function NotificationsPanel({ isOpen, onClose }) {
                               {notification.project && (
                                 <>
                                   <span className="text-gray-300">•</span>
-                                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                                  <span className="px-2 py-0.5 bg-[#ede7f6] text-[#7e57c2] rounded text-xs font-medium">
                                     {notification.project}
                                   </span>
                                 </>
@@ -201,6 +201,10 @@ export function NotificationsPanel({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
+
+
+
+
 
 
 

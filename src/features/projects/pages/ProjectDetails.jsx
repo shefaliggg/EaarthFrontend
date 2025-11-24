@@ -13,7 +13,7 @@ export default function ProjectDetails() {
     'avatar1': {
       id: 'project-avatar1',
       name: 'AVATAR 1',
-      color: 'from-purple-600 to-purple-700',
+      color: 'from-[#7e57c2] to-[#7e57c2]',
       period: 'SHOOT',
       role: 'LEAD ANIMATION ARTIST',
       progress: 70,
@@ -25,7 +25,7 @@ export default function ProjectDetails() {
     'avatar2': {
       id: 'project-avatar2',
       name: 'AVATAR 2',
-      color: 'from-purple-600 to-purple-700',
+      color: 'from-[#7e57c2] to-[#7e57c2]',
       period: 'PREP',
       role: 'CHARACTER DESIGNER',
       progress: 45,
@@ -37,7 +37,7 @@ export default function ProjectDetails() {
     'mumbai': {
       id: 'project-mumbai',
       name: 'MUMBAI CHRONICLES',
-      color: 'from-purple-600 to-purple-700',
+      color: 'from-[#7e57c2] to-[#7e57c2]',
       period: 'WRAP',
       role: 'VFX ARTIST',
       progress: 85,
@@ -65,6 +65,10 @@ export default function ProjectDetails() {
     </div>
   );
 }
+
+
+
+
 
 
 

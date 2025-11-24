@@ -105,7 +105,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400 outline-none 
+                    focus:ring-[#9575cd] focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
                 <button
@@ -132,7 +132,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400 outline-none 
+                    focus:ring-[#9575cd] focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
                 <button
@@ -180,7 +180,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <button
               onClick={handleBackToLogin}
-              className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+              className="text-[#7e57c2] hover:text-[#9575cd] font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -192,6 +192,10 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 };
 
 export default SetPasswordPage;
+
+
+
+
 
 
 

@@ -14,11 +14,11 @@ export function UploadIDPhoto() {
         </div>
 
         {/* Main Card */}
-        <div className="w-full bg-white rounded-2xl shadow-md p-6 md:p-6 border border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 md:p-6 border border-gray-100">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-purple-100 border border-purple-700 rounded-2xl flex-shrink-0">
-              <CreditCard className="w-6 md:w-7 h-6 md:h-7 text-purple-700" />
+            <div className="p-4 bg-[#ede7f6] border border-gray-200 rounded-2xl flex-shrink-0">
+              <CreditCard className="w-6 md:w-7 h-6 md:h-7 text-[#7e57c2]" />
             </div>
             <div>
               <h2 className="text-xl md:text-xl font-medium text-gray-900">UPLOAD ID PHOTO</h2>
@@ -44,8 +44,8 @@ export function UploadIDPhoto() {
           </div>
 
           {/* Upload Box */}
-          <div className="w-full border-2 border-dashed border-purple-300 rounded-2xl px-6 md:px-8 py-8 md:py-8 text-center hover:border-purple-500 hover:bg-purple-50/50 transition-all cursor-pointer">
-            <Upload className="w-12 md:w-16 h-12 md:h-16 text-purple-400 mx-auto mb-4 md:mb-6" />
+          <div className="w-full border-2 border-dashed border-gray-200 rounded-2xl px-6 md:px-8 py-8 md:py-8 text-center hover:border-gray-300 hover:bg-[#ede7f6]/50 transition-all cursor-pointer">
+            <Upload className="w-12 md:w-16 h-12 md:h-16 text-[#7e57c2] mx-auto mb-4 md:mb-6" />
             <p className="text-lg md:text-lg font-medium mb-2">CLICK TO UPLOAD OR DRAG & DROP</p>
             <p className="text-xs md:text-sm text-gray-500">Upload a clear image of your ID document</p>
           </div>
@@ -65,6 +65,10 @@ export function UploadIDPhoto() {
     </div>
   );
 }
+
+
+
+
 
 
 

@@ -62,3 +62,6 @@ export function PrivacyTab({ settings, setSettings, isEditing }) {
     </motion.div>
   );
 }
+
+
+

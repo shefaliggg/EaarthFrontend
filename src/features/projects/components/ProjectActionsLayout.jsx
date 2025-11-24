@@ -31,7 +31,7 @@ function ProjectActionsLayout({ projectInfo, toggleFavorite, isFavorite }) {
                     <div className="flex items-center gap-4 flex-1">
                         {/* Project Avatar */}
                         <div className="relative">
-                            <div className="w-20 h-20 rounded-xl bg-purple-600 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-xl bg-[#7e57c2] flex items-center justify-center">
                                 <span className="text-xl font-bold text-white">
                                     {projectInfo?.name.substring(0, 2) || 'PR'}
                                 </span>
@@ -93,7 +93,7 @@ function ProjectActionsLayout({ projectInfo, toggleFavorite, isFavorite }) {
                             <button
                                 onClick={() => toggleFavorite(projectInfo?.id)}
                                 className={`p-2 rounded-lg transition-colors ${isFavorite(projectInfo?.id)
-                                    ? 'bg-purple-600 text-white'
+                                    ? 'bg-[#7e57c2] text-white'
                                     : 'dark:text-gray-400 dark:hover:bg-gray-800 text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
@@ -127,3 +127,6 @@ function ProjectActionsLayout({ projectInfo, toggleFavorite, isFavorite }) {
 }
 
 export default ProjectActionsLayout
+
+
+

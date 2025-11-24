@@ -62,3 +62,6 @@ export function NotificationsTab({ settings, setSettings, isEditing }) {
     </motion.div>
   );
 }
+
+
+

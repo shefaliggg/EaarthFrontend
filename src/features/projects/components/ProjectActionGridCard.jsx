@@ -13,7 +13,7 @@ function ProjectActionGridCard({ feature }) {
     return (
         <motion.div
             key={feature.id}
-            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-purple-500 bg-purple-50 border-purple-200 hover:border-purple-400 hover:shadow-lg dark:shadow-shadow`}
+            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-300 bg-white border-gray-200 hover:border-gray-200 hover:shadow-lg dark:shadow-shadow`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
@@ -34,13 +34,13 @@ function ProjectActionGridCard({ feature }) {
                 <Icon.Star className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
             </button>
 
-            {/* Icon - Purple circular background with white icon */}
-            <div className="w-14 h-14 mx-auto mb-3 rounded-xl bg-purple-600 flex items-center justify-center">
-                <CurrentIcon className="w-7 h-7 text-white" />
+            {/* Icon - Deep purple icon with light background */}
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#ede7f6] dark:bg-gray-700 flex items-center justify-center">
+                <CurrentIcon className="w-7 h-7 text-[#7e57c2] dark:text-[#b39ddb]" />
             </div>
 
             {/* Label */}
-            <div className={`text-xs font-medium text-center dark:text-white text-gray-900`}>
+            <div className={`text-sm font-semibold text-center dark:text-white text-gray-900`}>
                 {feature.label}
             </div>
 
@@ -54,6 +54,10 @@ function ProjectActionGridCard({ feature }) {
 }
 
 export default ProjectActionGridCard
+
+
+
+
 
 
 

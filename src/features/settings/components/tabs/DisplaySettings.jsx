@@ -14,3 +14,6 @@ export default function AppearanceTab({ isDarkMode }) {
     </motion.div>
   );
 }
+
+
+

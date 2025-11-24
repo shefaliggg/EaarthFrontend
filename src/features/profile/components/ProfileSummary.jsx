@@ -22,18 +22,13 @@ export default function ProfileSummary({
 
       {/* Header with Title and Buttons - Outside Card */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
-            <User className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              MY PROFILE
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your personal information and preferences
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            MY PROFILE
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your personal information and preferences
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -213,3 +208,6 @@ export default function ProfileSummary({
     </div>
   );
 }
+
+
+

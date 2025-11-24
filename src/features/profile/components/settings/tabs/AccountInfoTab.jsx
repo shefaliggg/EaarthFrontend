@@ -79,3 +79,6 @@ export function AccountInfoTab({ settings, setSettings, isEditing }) {
     </motion.div>
   );
 }
+
+
+

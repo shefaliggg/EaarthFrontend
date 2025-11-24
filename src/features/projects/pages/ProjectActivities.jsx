@@ -120,7 +120,7 @@ function ProjectActivities() {
       case "file":
         return { icon: Upload, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" };
       case "event":
-        return { icon: Calendar, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/30" };
+        return { icon: Calendar, color: "text-[#9575cd]", bg: "bg-[#ede7f6] dark:bg-[#7e57c2]/30" };
       case "notice":
         return { icon: Bell, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/30" };
       case "chat":
@@ -297,3 +297,6 @@ function ProjectActivities() {
 }
 
 export default ProjectActivities
+
+
+

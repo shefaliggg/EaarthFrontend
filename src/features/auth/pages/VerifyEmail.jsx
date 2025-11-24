@@ -28,10 +28,10 @@ export const VerifyEmailPage = ({ onSuccess }) => {
         <div className="w-full max-w-lg mx-auto">
           {LogoSection}
 
-          <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
+          <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-gray-100">
             <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                <Loader className="w-10 h-10 animate-spin text-purple-600" />
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#ede7f6] to-pink-100 rounded-full flex items-center justify-center">
+                <Loader className="w-10 h-10 animate-spin text-[#7e57c2]" />
               </div>
 
               <h2 className="text-xl font-medium text-gray-900 mb-2">
@@ -55,10 +55,10 @@ export const VerifyEmailPage = ({ onSuccess }) => {
       <div className="w-full max-w-lg mx-auto mt-10">
         {LogoSection}
 
-        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-purple-100">
+        <div className="w-full bg-white rounded-2xl shadow-md p-6 border border-gray-100">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9575cd] to-pink-500 flex items-center justify-center shadow-md">
               <Mail className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -95,14 +95,14 @@ export const VerifyEmailPage = ({ onSuccess }) => {
                 )}
 
                 {inviteData?.userType && (
-                  <div className="mt-3 inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-xs font-medium">
+                  <div className="mt-3 inline-block bg-[#ede7f6] text-[#7e57c2] px-4 py-1 rounded-full text-xs font-medium">
                     {inviteData.userType.toUpperCase()}
                   </div>
                 )}
               </div>
 
               <div className="flex items-center justify-center gap-3 py-4">
-                <Loader className="w-5 h-5 animate-spin text-purple-600" />
+                <Loader className="w-5 h-5 animate-spin text-[#7e57c2]" />
                 <span className="text-sm font-medium text-gray-600">
                   Redirecting to setup...
                 </span>
@@ -142,7 +142,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
                 </p>
                 <button
                   onClick={() => (window.location.href = '/auth/login')}
-                  className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+                  className="text-[#7e57c2] hover:text-[#7e57c2] font-medium text-sm transition-colors"
                 >
                   Return to Login
                 </button>
@@ -160,6 +160,10 @@ export const VerifyEmailPage = ({ onSuccess }) => {
 };
 
 export default VerifyEmailPage;
+
+
+
+
 
 
 

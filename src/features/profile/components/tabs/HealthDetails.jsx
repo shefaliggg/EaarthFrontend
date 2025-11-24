@@ -35,3 +35,6 @@ export default function HealthDetails({ profile, setProfile, isEditing, isDarkMo
     </div>
   );
 }
+
+
+

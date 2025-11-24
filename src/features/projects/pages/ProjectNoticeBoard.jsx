@@ -161,7 +161,7 @@ function ProjectNoticeBoard() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
                     {notice.isPinned && (
-                      <Pin className="w-5 h-5 text-purple-600 fill-purple-600 flex-shrink-0 mt-1" />
+                      <Pin className="w-5 h-5 text-[#7e57c2] fill-[#7e57c2] flex-shrink-0 mt-1" />
                     )}
 
                     <div className="flex-1">
@@ -190,7 +190,7 @@ function ProjectNoticeBoard() {
                     <button
                       onClick={() => handlePin(notice.id)}
                       className={`p-2 rounded-lg transition ${notice.isPinned
-                        ? 'bg-purple-100 text-purple-600'
+                        ? 'bg-[#ede7f6] text-[#7e57c2]'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                         }`}
                     >
@@ -283,3 +283,6 @@ function ProjectNoticeBoard() {
 }
 
 export default ProjectNoticeBoard;
+
+
+

@@ -359,3 +359,6 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
     </div>
   );
 }
+
+
+

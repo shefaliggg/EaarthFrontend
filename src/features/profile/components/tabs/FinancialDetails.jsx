@@ -524,3 +524,6 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
     </div>
   );
 }
+
+
+

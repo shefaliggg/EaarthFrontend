@@ -18,11 +18,11 @@ export function LivePhotoCapture() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-6 border border-purple-100 w-full">
+        <div className="bg-white rounded-2xl shadow-md p-6 md:p-6 border border-gray-100 w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-purple-100 border border-purple-700 rounded-2xl flex-shrink-0">
-              <Camera className="w-6 md:w-7 h-6 md:h-7 text-purple-700" />
+            <div className="p-4 bg-[#ede7f6] border border-gray-200 rounded-2xl flex-shrink-0">
+              <Camera className="w-6 md:w-7 h-6 md:h-7 text-[#7e57c2]" />
             </div>
             <div>
               <h2 className="text-xl md:text-xl font-medium text-gray-900">TAKE LIVE PHOTO</h2>
@@ -56,7 +56,7 @@ export function LivePhotoCapture() {
 
             {/* Face Guide */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-40 h-52 md:w-56 md:h-72 border-2 border-purple-400 rounded-full opacity-50"></div>
+              <div className="w-40 h-52 md:w-56 md:h-72 border-2 border-gray-200 rounded-full opacity-50"></div>
             </div>
           </div>
 
@@ -90,6 +90,10 @@ export function LivePhotoCapture() {
     </div>
   );
 }
+
+
+
+
 
 
 

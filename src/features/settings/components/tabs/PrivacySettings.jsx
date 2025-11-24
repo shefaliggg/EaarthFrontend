@@ -149,3 +149,6 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
     </div>
   );
 }
+
+
+

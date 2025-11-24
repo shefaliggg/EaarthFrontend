@@ -64,7 +64,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
                             <div
                                 key={offer.id}
                                 className={`p-4 rounded-lg border transition ${selectedOffers.has(offer.id)
-                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
+                                    ? 'border-gray-300 bg-[#ede7f6] dark:bg-[#7e57c2]/30'
                                     : 'bg-yellow-50 border-yellow-200 dark:bg-gray-900 dark:border-gray-700'
                                     }`}
                             >
@@ -74,7 +74,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
                                         type="checkbox"
                                         checked={selectedOffers.has(offer.id)}
                                         onChange={() => handleSelectOffer(offer.id)}
-                                        className="w-5 h-5 mt-1 rounded border-gray-300 text-purple-700 focus:ring-purple-700"
+                                        className="w-5 h-5 mt-1 rounded border-gray-300 text-[#7e57c2] focus:ring-[#7e57c2]"
                                     />
 
                                     {/* Details */}
@@ -244,3 +244,6 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
 }
 
 export default OnboardingStageDetailedView;
+
+
+
