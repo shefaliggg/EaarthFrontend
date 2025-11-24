@@ -3,6 +3,7 @@ import { Eye, EyeOff, QrCode, Shield, Zap, Film, Loader, LogIn } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import eaarthLogo from "../../../assets/eaarth.png";
+import QRLogin from "../components/QRLogin";
 
 export const LoginPage = ({ onNavigate, onSuccess }) => {
   const navigate = useNavigate();
@@ -177,62 +178,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
             </button>
           </form>
         </div>
-
-        {/* ---------------- Right: QR Login Section ---------------- */}
-        <div className="rounded-3xl border shadow-md p-5 relative overflow-hidden h-full flex flex-col">
-          {/* Title */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-xl bg-white/40 backdrop-blur-sm flex items-center justify-center">
-              <QrCode className="w-6 h-6 text-[#9333ea]" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-[#9333ea]">QR CODE LOGIN</h2>
-              <p className="text-gray-800 text-sm">Scan with your mobile app</p>
-            </div>
-          </div>
-
-          {/* QR Code Box */}
-          <div className="rounded-3xl py-5 m-4 mx-8 flex items-center justify-center">
-            <QRCode value="EAARTH-STUDIOS-LOGIN" size={170} level="H" fgColor="#9333ea" />
-          </div>
-
-          {/* How-To Steps */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-sm mb-2 text-[#9333ea]">How to use:</h3>
-
-            {[
-              "Open Eaarth Studios mobile app",
-              "Tap the QR Login button",
-              "Scan this code with your camera",
-              "You'll be logged in instantly!",
-            ].map((t, i) => (
-              <div className="flex items-center gap-3" key={i}>
-                <div className="w-8 h-8 rounded-md bg-[#e9d5ff] flex items-center justify-center text-[#9333ea] text-xs font-medium">
-                  {i + 1}
-                </div>
-                <p className="text-xs text-gray-800">{t}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Benefits */}
-          <div className="mt-5 pt-4 border-t border-gray-100">
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { icon: Shield, text: "SECURE" },
-                { icon: Zap, text: "INSTANT" },
-                { icon: Film, text: "EASY" },
-              ].map(({ icon: Icon, text }) => (
-                <div className="text-center" key={text}>
-                  <div className="w-10 h-10 mx-auto mb-2 bg-[#e9d5ff] rounded-xl flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-[#9333ea]" />
-                  </div>
-                  <p className="text-[10px] font-medium text-[#9333ea]">{text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <QRLogin />
       </div>
 
       {/* ---------------- Footer ---------------- */}

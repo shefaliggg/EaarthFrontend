@@ -3,7 +3,6 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import AppRoutes from '@/routes/AppRoutes';
 import { Toaster } from '@/shared/components/ui/sonner';
 import LoadingScreen from '@/shared/components/LoadingScreen';
-// import { AuthProvider } from '../src/features/auth/context/AuthContext';
 
 const router = createBrowserRouter(AppRoutes);
 

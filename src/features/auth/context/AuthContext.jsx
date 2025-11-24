@@ -1,127 +1,121 @@
-// // src/shared/context/AuthContext.js
-// import React, { createContext, useContext, useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// // import { authUtils } from "../config/authUtilis"; 
-// // import { authService } from "../../auth/services/auth.service"; 
-// import { ROUTES } from "../../../../src/constants/apiEndpoints";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../constants/apiEndpoints";
+import { authService } from "../services/auth.service";
+import { setLogoutFunction } from "../config/globalLogoutConfig";
 
-// const AuthContext = createContext(null);
+const AuthContext = createContext(null);
 
-// export const AuthProvider = ({ children }) => {
-//   const navigate = useNavigate();
+export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-//   const [user, setUser] = useState(null);
-//   const [tempLoginData, setTempLoginData] = useState(null);
-//   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [tempLoginData, setTempLoginData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-//   // -------------------------------------------------
-//   // Load logged-in user when app loads
-//   // -------------------------------------------------
-//   useEffect(() => {
-//     const init = async () => {
-//       const loggedInUser = await authUtils.getCurrentUser();
-//       setUser(loggedInUser);
-//       setLoading(false);
-//     };
-//     init();
-//   }, []);
+  const noInitialLoadRoutes = [
+    "/auth/login",
+    "/auth/set-password",
+    "/auth/reset",
+    "/auth/forgot-password",
+  ];
 
-//   // -------------------------------------------------
-//   // Normal Login using utils
-//   // -------------------------------------------------
-//   const login = async (credentials) => {
-//     setLoading(true);
-//     try {
-//       const { email, password } = credentials;
-//       const userData = await authUtils.login(email, password);
-//       setUser(userData);
-//       return userData;
-//     } catch (error) {
-//       console.error("Login Error:", error);
-//       throw error;
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  useEffect(() => {
+    const init = async () => {
+      if (noInitialLoadRoutes.includes(location.pathname)) {
+        setInitialLoading(false);
+        return;
+      }
 
-//   // -------------------------------------------------
-//   // Temporary Login (SetPassword Flow)
-//   // -------------------------------------------------
-//   const temporaryLogin = async (credentials) => {
-//     setLoading(true);
-//     try {
-//       const res = await authService.temporaryLogin(credentials);
+      try {
+        const loggedInUser = await authService.getCurrentUser();
+        if (loggedInUser) setUser(loggedInUser);
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    init();
+  }, [location.pathname]);
 
-//       if (!res?.success) {
-//         throw new Error(res?.message || "Temporary login failed");
-//       }
+  const logout = useCallback(async () => {
+    await authService.logout();
+    setUser(null);
+    setTempLoginData(null);
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  }, [navigate]);
 
-//       const tempData = {
-//         userId: res.data?.userId,
-//         email: credentials.email,
-//         isTemporary: true,
-//       };
-
-//       setTempLoginData(tempData);
-
-//       navigate(ROUTES.AUTH.SET_PASSWORD, {
-//         replace: true,
-//         state: tempData,
-//       });
-
-//       return res;
-//     } catch (error) {
-//       console.error("Temporary login failed:", error);
-//       throw error;
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // -------------------------------------------------
-//   // Logout using utils
-//   // -------------------------------------------------
-//   const logout = async () => {
-//     await authUtils.logout();
-//     setUser(null);
-//     setTempLoginData(null);
-//     navigate(ROUTES.AUTH.LOGIN, { replace: true });
-//   };
-
-//   // -------------------------------------------------
-//   // Update backend user (no localStorage)
-//   // -------------------------------------------------
-//   const updateUser = async (newUserData) => {
-//     setUser((prev) => ({ ...prev, ...newUserData }));
-//   };
-
-//   return (
-//     <AuthContext.Provider
-//       value={{
-//         user,
-//         tempLoginData,
-//         login,
-//         temporaryLogin,
-//         logout,
-//         updateUser,
-//         loading,
-//       }}
-//     >
-//       {!loading && children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => useContext(AuthContext);
+  useEffect(() => {
+    setLogoutFunction(logout);
+  }, [logout]);
 
 
+  const login = async (credentials) => {
+    setLoading(true);
+    try {
+      const { email, password } = credentials;
+      const userData = await authService.login(email, password);
+      setUser(userData);
+      return userData;
+    } catch (err) {
+      console.error("Login error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const temporaryLogin = async (credentials) => {
+    setLoading(true);
+    try {
+      const res = await authService.temporaryLogin(credentials);
+      if (!res?.success) throw new Error(res?.message || "Temporary login failed");
 
+      const tempData = {
+        userId: res.data.userId,
+        email: credentials.email,
+        isTemporary: true,
+      };
 
+      setTempLoginData(tempData);
 
+      navigate(ROUTES.AUTH.SET_PASSWORD, {
+        replace: true,
+        state: tempData,
+      });
 
+      return res;
+    } catch (err) {
+      console.error("Temporary login failed:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const updateUser = (newUserData) => {
+    setUser((prev) => ({ ...prev, ...newUserData }));
+  };
 
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        tempLoginData,
+        login,
+        temporaryLogin,
+        logout,
+        updateUser,
+        loading,
+        initialLoading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-
-
+export const useAuth = () => useContext(AuthContext);
