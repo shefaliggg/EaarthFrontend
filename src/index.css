@@ -289,7 +289,7 @@ a svg {
   }
 
   body {
-    @apply text-foreground bg-background;
+    @apply text-foreground;
   }
 
   body {
@@ -348,12 +348,30 @@ a svg {
 
   body {
     background: #fafafa;
+      /* background: linear-gradient(135deg,
+        #ffecec,
+        #fff8e7,
+        #e9ffe9,
+        #e7f7ff,
+        #f3e9ff,
+        #ffe8f4); */
     background-attachment: fixed;
     min-height: 100vh;
   }
 
   body.dark {
     background: #0f0f0f;
+     /* background: linear-gradient(135deg,
+        #07001c,
+        #000000,
+        #100016); */
+    /* background: linear-gradient(135deg,
+        #1a1625,
+        #1c1a15,
+        #151a15,
+        #15191c,
+        #1a1625,
+        #1c1518); */
   }
 
 
