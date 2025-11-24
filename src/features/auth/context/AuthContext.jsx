@@ -1,6 +1,6 @@
-import { createContext, useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../../constants/apiEndpoints";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../constants/apiEndpoints";
 import { authService } from "../services/auth.service";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
 
@@ -8,19 +8,45 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [user, setUser] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [tempLoginData, setTempLoginData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const noInitialLoadRoutes = [
+    "/auth/login",
+    "/auth/set-password",
+    "/auth/reset",
+    "/auth/forgot-password",
+  ];
+
   useEffect(() => {
     const init = async () => {
-      const loggedUser = await authService.getCurrentUser();
-      setUser(loggedUser);
-      setLoading(false);
+      if (noInitialLoadRoutes.includes(location.pathname)) {
+        setInitialLoading(false);
+        return;
+      }
+
+      try {
+        const loggedInUser = await authService.getCurrentUser();
+        if (loggedInUser) setUser(loggedInUser);
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setInitialLoading(false);
+      }
     };
     init();
-  }, []);
+  }, [location.pathname]);
+
+  const logout = useCallback(async () => {
+    await authService.logout();
+    setUser(null);
+    setTempLoginData(null);
+    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     setLogoutFunction(logout);
@@ -70,16 +96,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      await authService.logout();
-    } finally {
-      setUser(null);
-      setTempLoginData(null);
-      navigate(ROUTES.AUTH.LOGIN, { replace: true });
-    }
-  };
-
   const updateUser = (newUserData) => {
     setUser((prev) => ({ ...prev, ...newUserData }));
   };
@@ -94,9 +110,10 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         loading,
+        initialLoading,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

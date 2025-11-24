@@ -17,13 +17,6 @@ class ErrorBoundary extends Component {
     this.setState({ error, errorInfo });
   }
 
-  // Reset boundary when navigating
-  componentDidUpdate(prevProps) {
-    if (this.props.location !== prevProps.location && this.state.hasError) {
-      this.setState({ hasError: false, error: null, errorInfo: null });
-    }
-  }
-
   renderDevStack() {
     const { error, errorInfo } = this.state;
 

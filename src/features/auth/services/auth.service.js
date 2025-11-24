@@ -1,12 +1,9 @@
-import { authApi } from "../api/auth.api";
+import { axiosConfig } from "../config/axiosConfig";
 
 export const authService = {
-  /** ----------------------------------------
-   * Verify invitation link
-   * ---------------------------------------- */
   verifyInviteLink: async (token, email) => {
     try {
-      const { data } = await authApi.get("/invite/verify", {
+      const { data } = await axiosConfig.get("/invite/verify", {
         params: { token, email: email.toLowerCase().trim() },
       });
       return data;
@@ -18,12 +15,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Temporary login (set-password flow)
-   * ---------------------------------------- */
   temporaryLogin: async ({ email, password }) => {
     try {
-      const { data } = await authApi.post("/auth/login/temporary", {
+      const { data } = await axiosConfig.post("/auth/login/temporary", {
         email: email.toLowerCase().trim(),
         password,
       });
@@ -47,12 +41,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Normal login (sends OTP)
-   * ---------------------------------------- */
   login: async ({ email, password, rememberMe = false }) => {
     try {
-      const { data } = await authApi.post("/auth/login", {
+      const { data } = await axiosConfig.post("/auth/login", {
         email: email.toLowerCase().trim(),
         password,
         rememberMe,
@@ -66,12 +57,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Verify login OTP
-   * ---------------------------------------- */
   verifyLoginOtp: async ({ email, otp }) => {
     try {
-      const { data } = await authApi.post("/auth/login/verify-otp", {
+      const { data } = await axiosConfig.post("/auth/login/verify-otp", {
         email: email.toLowerCase().trim(),
         otp,
       });
@@ -87,12 +75,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Set new password after temporary login
-   * ---------------------------------------- */
   setNewPassword: async ({ userId, newPassword }) => {
     try {
-      const { data } = await authApi.post("/auth/password/set-password", {
+      const { data } = await axiosConfig.post("/auth/password/set-password", {
         userId,
         newPassword,
       });
@@ -108,12 +93,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Identity verification (Face ID + documents)
-   * ---------------------------------------- */
   verifyIdentity: async (formData) => {
     try {
-      const { data } = await authApi.post("/auth/face/verify", formData, {
+      const { data } = await axiosConfig.post("/auth/face/verify", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -127,12 +109,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Forgot password → send OTP
-   * ---------------------------------------- */
   sendResetPasswordOtp: async (email) => {
     try {
-      const { data } = await authApi.post(
+      const { data } = await axiosConfig.post(
         "/auth/password/reset-password",
         { email: email.toLowerCase().trim() }
       );
@@ -148,12 +127,9 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Verify OTP & reset password
-   * ---------------------------------------- */
   verifyResetPasswordOtp: async ({ email, otp, password }) => {
     try {
-      const { data } = await authApi.post("/auth/password/verify-otp", {
+      const { data } = await axiosConfig.post("/auth/password/verify-otp", {
         email: email.toLowerCase().trim(),
         otp,
         password,
@@ -170,12 +146,18 @@ export const authService = {
     }
   },
 
-  /** ----------------------------------------
-   * Logout
-   * ---------------------------------------- */
+  getCurrentUser: async () => {
+    try {
+      const { data } = await axiosConfig.get("/auth/me");
+      return data.user;
+    } catch {
+      return null;
+    }
+  },
+
   logout: async () => {
     try {
-      await authApi.post("/auth/logout");
+      await axiosConfig.post("/auth/logout");
       return { success: true };
     } catch (error) {
       throw new Error("Logout failed.");
