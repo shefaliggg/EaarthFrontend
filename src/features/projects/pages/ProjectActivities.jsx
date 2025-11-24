@@ -120,7 +120,7 @@ function ProjectActivities() {
       case "file":
         return { icon: Upload, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" };
       case "event":
-        return { icon: Calendar, color: "text-[#9575cd]", bg: "bg-[#ede7f6] dark:bg-[#7e57c2]/30" };
+        return { icon: Calendar, color: "text-[#a855f7]", bg: "bg-[#faf5ff] dark:bg-[#9333ea]/30" };
       case "notice":
         return { icon: Bell, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/30" };
       case "chat":
@@ -233,7 +233,7 @@ function ProjectActivities() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 + index * 0.03 }}
-              className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow"
+              className="bg-white dark:bg-gray-800 p-4 rounded-xl"
             >
               <div className="flex items-start gap-4">
                 {/* Icon */}
@@ -286,7 +286,7 @@ function ProjectActivities() {
 
       {/* Empty state */}
       {filteredActivities.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl text-center shadow mt-6">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl text-center mt-6">
           <ActivityIcon className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Activities Found</h3>
           <p className="text-gray-500 dark:text-gray-400">No activities match your current filters</p>
@@ -297,6 +297,10 @@ function ProjectActivities() {
 }
 
 export default ProjectActivities
+
+
+
+
 
 
 

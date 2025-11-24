@@ -10,7 +10,7 @@ function ProjectActionListCard({ feature }) {
     return (
         <motion.div
             key={feature.id}
-            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:hover:border-gray-300 bg-background hover:border-gray-200 hover:shadow-lg dark:shadow-shadow`}
+            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:hover:border-gray-300 bg-background hover:border-gray-200`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
@@ -20,7 +20,7 @@ function ProjectActionListCard({ feature }) {
             <button
                 className="w-full flex items-center gap-4 text-left"
             >
-                <div className="w-12 h-12 rounded-xl bg-[#7e57c2] flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-[#9333ea] flex items-center justify-center flex-shrink-0">
                     <CurrentIcon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -38,6 +38,10 @@ function ProjectActionListCard({ feature }) {
 }
 
 export default ProjectActionListCard
+
+
+
+
 
 
 

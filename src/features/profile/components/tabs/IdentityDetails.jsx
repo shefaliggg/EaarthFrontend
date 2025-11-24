@@ -3,7 +3,7 @@ import { Field, FileUpload } from '../common/UnifiedFields';
 
 export default function IdentityDetails({ profile, setProfile, isEditing, isDarkMode, uploads, setUploads }) {
   return (
-    <div className="rounded-3xl border p-6 shadow-md bg-card border-border">
+    <div className="rounded-3xl border shadow-md p-6 bg-card border-border">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field 
@@ -282,6 +282,10 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
     </div>
   );
 }
+
+
+
+
 
 
 

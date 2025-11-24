@@ -55,7 +55,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
           {/* Light Mode */}
           <motion.button
             onClick={() => handleThemeChange('light')}
-            className={`relative p-6 rounded-lg border transition-all duration-300 ${
+            className={`relative p-6 rounded-lg border shadow-md transition-all duration-300 ${
               theme === 'light'
                 ? 'border-primary bg-primary/5'
                 : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30'
@@ -64,7 +64,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
             whileTap={{ scale: 0.98 }}
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="w-16 h-16 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center">
                 <Sun className="w-8 h-8 text-accent" />
               </div>
               <div>
@@ -80,7 +80,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
               <motion.div 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-md"
+                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
               >
                 <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -92,7 +92,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
           {/* Dark Mode */}
           <motion.button
             onClick={() => handleThemeChange('dark')}
-            className={`relative p-6 rounded-lg border transition-all duration-300 ${
+            className={`relative p-6 rounded-lg border shadow-md transition-all duration-300 ${
               theme === 'dark'
                 ? 'border-primary bg-primary/5'
                 : 'border-border bg-card hover:border-primary/50 hover:bg-muted/30'
@@ -101,7 +101,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
             whileTap={{ scale: 0.98 }}
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="w-16 h-16 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center">
                 <Moon className="w-8 h-8 text-primary" />
               </div>
               <div>
@@ -117,7 +117,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
               <motion.div 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-md"
+                className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
               >
                 <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -140,7 +140,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
             animate={{ opacity: 1, scale: 1 }}
             className="relative"
           >
-            <div className="rounded-lg overflow-hidden border border-border shadow-md">
+            <div className="rounded-lg overflow-hidden border border-border">
               <img
                 src={backgroundImage}
                 alt="Dashboard background"
@@ -149,7 +149,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
             </div>
             <motion.button
               onClick={handleRemoveBackground}
-              className="absolute top-3 right-3 p-2 bg-destructive text-destructive-foreground rounded-full shadow-lg hover:opacity-90 transition-all duration-300"
+              className="absolute top-3 right-3 p-2 bg-destructive text-destructive-foreground rounded-full hover:opacity-90 transition-all duration-300"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -194,7 +194,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
             backgroundPosition: 'center' 
           } : {}}
         >
-          <div className="p-6 rounded-lg bg-card/90 backdrop-blur border border-border shadow-sm">
+          <div className="p-6 rounded-lg bg-card/90 backdrop-blur border border-border">
             <h4 className="font-semibold mb-2 text-card-foreground">
               Sample Card
             </h4>
@@ -202,7 +202,7 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
               This is how your dashboard will look with the selected theme and background.
             </p>
             <motion.button 
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-all duration-300 shadow-md"
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-all duration-300"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -246,6 +246,10 @@ export function AppearanceSettings({ onThemeChange, onBackgroundChange, isDarkMo
     </StyledPageWrapper>
   );
 }
+
+
+
+
 
 
 

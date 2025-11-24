@@ -512,9 +512,9 @@ function sidebarMenuList(sidebarType) {
       id: "timesheets",
       label: "TIMESHEETS",
       icon: Icon.Clock,
-      gradient: "from-[#9575cd]/20 to-[#9575cd]/20",
-      color: "text-[#7e57c2]",
-      hoverBg: "hover:bg-[#ede7f6]",
+      gradient: "from-[#a855f7]/20 to-[#a855f7]/20",
+      color: "text-[#9333ea]",
+      hoverBg: "hover:bg-[#faf5ff]",
       darkHoverBg: "dark:hover:bg-gray-900/20",
       subItems: [
         { id: "timesheets-overview", label: "OVERVIEW", page: "timesheets" },
@@ -539,6 +539,10 @@ function sidebarMenuList(sidebarType) {
 }
 
 export default sidebarMenuList;
+
+
+
+
 
 
 

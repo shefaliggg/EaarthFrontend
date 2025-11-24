@@ -16,7 +16,7 @@ const AuthLayout = () => {
             opacity: [0.1, 0.2, 0.1],
           }}
           transition={{ duration: 20, repeat: Infinity }}
-          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-[#ede7f6] rounded-full blur-3xl"
+          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-[#faf5ff] rounded-full blur-3xl"
         />
 
         <motion.div
@@ -26,7 +26,7 @@ const AuthLayout = () => {
             opacity: [0.1, 0.2, 0.1],
           }}
           transition={{ duration: 25, repeat: Infinity }}
-          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-[#ede7f6] rounded-full blur-3xl"
+          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-[#faf5ff] rounded-full blur-3xl"
         />
       </div>
 
@@ -49,6 +49,10 @@ const AuthLayout = () => {
 };
 
 export default AuthLayout;
+
+
+
+
 
 
 

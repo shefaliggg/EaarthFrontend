@@ -41,7 +41,7 @@ function ProjectCloudStorage() {
   //     case 'image':
   //       return <Image className={`${base} text-green-500`} />;
   //     case 'video':
-  //       return <Video className={`${base} text-[#9575cd]`} />;
+  //       return <Video className={`${base} text-[#a855f7]`} />;
   //     case 'audio':
   //       return <Music className={`${base} text-pink-500`} />;
   //     case 'document':
@@ -65,7 +65,7 @@ function ProjectCloudStorage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Cloud className="w-10 h-10 text-[#9575cd]" />
+              <Cloud className="w-10 h-10 text-[#a855f7]" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">CLOUD STORAGE</h1>
                 <p className="text-sm text-gray-500">Project files and assets</p>
@@ -92,29 +92,29 @@ function ProjectCloudStorage() {
               <div className="text-sm font-bold text-gray-900">45.2 GB of 100 GB</div>
             </div>
             <div className="h-3 bg-gray-200 rounded-full overflow-hidden mt-2">
-              <div className="h-full bg-[#7e57c2] w-[45%]" />
+              <div className="h-full bg-[#9333ea] w-[45%]" />
             </div>
           </div>
         </div>
 
         {/* Quick Access */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <h2 className="text-sm font-bold text-gray-900 mb-4">QUICK ACCESS</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button className="flex items-center gap-2 p-3 bg-[#ede7f6] border border-gray-100 rounded-lg hover:bg-[#d1c4e9] transition-colors">
-              <Star className="w-5 h-5 text-[#7e57c2]" />
+            <button className="flex items-center gap-2 p-3 bg-[#faf5ff] border border-gray-100 rounded-lg hover:bg-[#e9d5ff] transition-colors">
+              <Star className="w-5 h-5 text-[#9333ea]" />
               <span className="text-sm font-medium text-gray-900">Starred</span>
             </button>
-            <button className="flex items-center gap-2 p-3 bg-[#ede7f6] border border-gray-100 rounded-lg hover:bg-[#d1c4e9] transition-colors">
-              <Share2 className="w-5 h-5 text-[#7e57c2]" />
+            <button className="flex items-center gap-2 p-3 bg-[#faf5ff] border border-gray-100 rounded-lg hover:bg-[#e9d5ff] transition-colors">
+              <Share2 className="w-5 h-5 text-[#9333ea]" />
               <span className="text-sm font-medium text-gray-900">Shared</span>
             </button>
-            <button className="flex items-center gap-2 p-3 bg-[#ede7f6] border border-gray-100 rounded-lg hover:bg-[#d1c4e9] transition-colors">
-              <Clock className="w-5 h-5 text-[#9575cd]" />
+            <button className="flex items-center gap-2 p-3 bg-[#faf5ff] border border-gray-100 rounded-lg hover:bg-[#e9d5ff] transition-colors">
+              <Clock className="w-5 h-5 text-[#a855f7]" />
               <span className="text-sm font-medium text-gray-900">Recent</span>
             </button>
-            <button className="flex items-center gap-2 p-3 bg-[#ede7f6] border border-gray-100 rounded-lg hover:bg-[#d1c4e9] transition-colors">
-              <Trash2 className="w-5 h-5 text-[#7e57c2]" />
+            <button className="flex items-center gap-2 p-3 bg-[#faf5ff] border border-gray-100 rounded-lg hover:bg-[#e9d5ff] transition-colors">
+              <Trash2 className="w-5 h-5 text-[#9333ea]" />
               <span className="text-sm font-medium text-gray-900">Trash</span>
             </button>
           </div>
@@ -126,7 +126,7 @@ function ProjectCloudStorage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="SEARCH FILES..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#9575cd] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent"
             />
           </div>
 
@@ -205,6 +205,10 @@ function ProjectCloudStorage() {
 }
 
 export default ProjectCloudStorage;
+
+
+
+
 
 
 

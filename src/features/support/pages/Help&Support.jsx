@@ -112,7 +112,7 @@ function HelpAndSupport() {
       description: "support@eaarthstudios.com",
       action: "Send Email",
       color:
-        "bg-[#ede7f6] text-[#7e57c2] dark:bg-gray-900/30 dark:text-[#b39ddb]",
+        "bg-[#faf5ff] text-[#9333ea] dark:bg-gray-900/30 dark:text-[#c084fc]",
     },
     {
       icon: Phone,
@@ -144,25 +144,27 @@ function HelpAndSupport() {
     <div className="p-3 space-y-6">
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <HelpCircle className="size-12 text-[#7e57c2] dark:text-[#b39ddb] p-1.5 bg-[#ede7f6] dark:bg-gray-900 rounded-full" />
+        <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+          <HelpCircle className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+        </div>
         <div>
           <h1 className="text-xl font-bold">HELP & SUPPORT</h1>
         </div>
       </div>
 
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
       {/* Search */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-xl border shadow-sm dark:shadow-shadow">
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl border shadow-md">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
         <input
           type="text"
           placeholder="SEARCH FOR HELP..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none"
+          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border shadow-md-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none"
         />
       </div>
 
@@ -171,7 +173,7 @@ function HelpAndSupport() {
         {supportChannels.map((channel, index) => (
           <div
             key={index}
-            className="p-5 rounded-xl bg-background shadow border dark:shadow-shadow"
+            className="p-5 rounded-xl bg-background border"
           >
             <div
               className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${channel.color}`}
@@ -192,17 +194,17 @@ function HelpAndSupport() {
       </div>
 
       {/* FAQ */}
-      <div className="p-5 rounded-xl  bg-background shadow border dark:shadow-shadow">
+      <div className="p-5 rounded-xl  bg-background border">
         <h2 className="text-lg font-bold mb-4">FREQUENTLY ASKED QUESTIONS</h2>
 
         {/* Categories */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`p-4 rounded-xl border-2 transition-all ${
+            className={`p-4 rounded-xl border shadow-md-2 transition-all ${
               !selectedCategory
-                ? "border-[#7e57c2] bg-[#ede7f6] dark:bg-gray-900/20"
-                : "border hover:border-[#9575cd]"
+                ? "border-[#9333ea] bg-[#faf5ff] dark:bg-gray-900/20"
+                : "border hover:border-[#a855f7]"
             }`}
           >
             <span className="font-bold text-gray-900 dark:text-white">ALL</span>
@@ -212,16 +214,16 @@ function HelpAndSupport() {
             <button
               key={index}
               onClick={() => setSelectedCategory(category.category)}
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-4 rounded-xl border shadow-md-2 transition-all ${
                 selectedCategory === category.category
-                  ? "border-[#7e57c2] bg-[#ede7f6] dark:bg-gray-900/20"
-                  : "border hover:border-[#9575cd]"
+                  ? "border-[#9333ea] bg-[#faf5ff] dark:bg-gray-900/20"
+                  : "border hover:border-[#a855f7]"
               }`}
             >
               <category.icon
                 className={`w-6 h-6 mx-auto mb-2 ${
                   selectedCategory === category.category
-                    ? "text-[#7e57c2]"
+                    ? "text-[#9333ea]"
                     : "text-gray-600 dark:text-gray-400"
                 }`}
               />
@@ -249,7 +251,7 @@ function HelpAndSupport() {
       </div>
 
       {/* Submit Ticket */}
-      <div className="p-5 rounded-xl  bg-background shadow border dark:shadow-shadow">
+      <div className="p-5 rounded-xl  bg-background border">
         <h2 className="text-lg font-bold mb-4">SUBMIT A SUPPORT TICKET</h2>
 
         <form onSubmit={handleSubmitTicket} className="space-y-4">
@@ -262,7 +264,7 @@ function HelpAndSupport() {
                 setSupportForm({ ...supportForm, subject: e.target.value })
               }
               placeholder="BRIEFLY DESCRIBE YOUR ISSUE"
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#9575cd]"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#a855f7]"
             />
           </div>
 
@@ -274,7 +276,7 @@ function HelpAndSupport() {
               onChange={(e) =>
                 setSupportForm({ ...supportForm, priority: e.target.value })
               }
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#9575cd]"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none focus:ring-2 focus:ring-[#a855f7]"
             >
               <option value="low">LOW</option>
               <option value="medium">MEDIUM</option>
@@ -293,14 +295,14 @@ function HelpAndSupport() {
               }
               rows={6}
               placeholder="DESCRIBE YOUR ISSUE IN DETAIL..."
-              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none resize-none focus:ring-2 focus:ring-[#9575cd]"
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 border-2  rounded-lg outline-none resize-none focus:ring-2 focus:ring-[#a855f7]"
             />
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full px-6 py-2 bg-[#7e57c2] dark:bg-[#7e57c2] text-white rounded-3xl font-bold hover:bg-[#9575cd] transition-all shadow-lg flex items-center justify-center gap-2"
+            className="w-full px-6 py-2 bg-[#9333ea] dark:bg-[#9333ea] text-white rounded-3xl font-bold hover:bg-[#a855f7] transition-all flex items-center justify-center gap-2"
           >
             <Send className="w-5 h-5" />
             SUBMIT TICKET
@@ -312,4 +314,8 @@ function HelpAndSupport() {
 }
 
 export default HelpAndSupport;
+
+
+
+
 

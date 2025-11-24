@@ -21,10 +21,10 @@ function JobTitleAutocomplete({ department, value, onChange, placeholder }) {
                 value={value}
                 onChange={(e) => handleInput(e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9575cd]"
+                className="w-full px-3 py-2 rounded-lg border shadow-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#a855f7]"
             />
             {isOpen && filtered.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto">
                     {filtered.map((title) => (
                         <button
                             key={title}
@@ -32,7 +32,7 @@ function JobTitleAutocomplete({ department, value, onChange, placeholder }) {
                                 onChange(title);
                                 setIsOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 hover:bg-[#ede7f6] dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                            className="w-full text-left px-3 py-2 hover:bg-[#faf5ff] dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm"
                         >
                             {title}
                         </button>
@@ -188,11 +188,11 @@ export default function RoleConfigurationTab() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="rounded-xl border-2 p-6 bg-gradient-to-br from-[#ede7f6] to-blue-50 dark:from-gray-900/30 dark:to-blue-900/30 border-gray-200 dark:border-gray-700">
+            <div className="rounded-xl border shadow-md-2 p-6 bg-gradient-to-br from-[#faf5ff] to-blue-50 dark:from-gray-900/30 dark:to-blue-900/30 border-gray-200 dark:border-gray-700">
                 <div className="flex items-start justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <Briefcase className="w-6 h-6 text-[#7e57c2] dark:text-[#7e57c2]" />
+                            <Briefcase className="w-6 h-6 text-[#9333ea] dark:text-[#9333ea]" />
                             <h4 className="text-xl font-bold text-gray-900 dark:text-white">
                                 ROLE CONFIGURATION
                             </h4>
@@ -212,7 +212,7 @@ export default function RoleConfigurationTab() {
             </div>
 
             {/* Role Tabs */}
-            <div className="rounded-xl border-2 overflow-hidden bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <div className="rounded-xl border shadow-md-2 overflow-hidden bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 {/* Tab Headers */}
                 <div className="flex items-center border-b overflow-x-auto bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700">
                     {jobTitles.map((role, index) => (
@@ -220,12 +220,12 @@ export default function RoleConfigurationTab() {
                             key={role.id}
                             onClick={() => setActiveRoleId(role.id)}
                             className={`px-6 py-4 font-bold text-sm border-r flex items-center gap-2 whitespace-nowrap transition-all ${activeRoleId === role.id
-                                ? 'bg-[#ede7f6] dark:bg-[#7e57c2]/30 text-[#7e57c2] dark:text-[#7e57c2] border-gray-200 dark:border-gray-200'
+                                ? 'bg-[#faf5ff] dark:bg-[#9333ea]/30 text-[#9333ea] dark:text-[#9333ea] border-gray-200 dark:border-gray-200'
                                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                         >
                             <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${activeRoleId === role.id
-                                ? 'bg-[#7e57c2] text-white'
+                                ? 'bg-[#9333ea] text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}>
                                 {index + 1}
@@ -241,7 +241,7 @@ export default function RoleConfigurationTab() {
 
                     <button
                         onClick={addRole}
-                        className="px-6 py-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-all text-[#7e57c2] dark:text-[#7e57c2] hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="px-6 py-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-all text-[#9333ea] dark:text-[#9333ea] hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                         <Plus className="w-4 h-4" />
                         ADD ROLE
@@ -258,7 +258,7 @@ export default function RoleConfigurationTab() {
                                 value={activeRole.roleName}
                                 onChange={(e) => updateRole(activeRole.id, { roleName: e.target.value.toUpperCase() })}
                                 placeholder="E.G., CHARGEHAND, STANDBY, RIGGING"
-                                className="px-3 py-2 rounded-lg border font-bold uppercase text-lg bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                className="px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-lg bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             />
 
                             {activeRole.isPrimary ? (
@@ -292,7 +292,7 @@ export default function RoleConfigurationTab() {
                     <div className="space-y-6">
                         {/* Basic Info Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#9333ea] dark:text-[#9333ea]">
                                 BASIC INFORMATION
                             </h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,7 +305,7 @@ export default function RoleConfigurationTab() {
                                         value={activeRole.unit}
                                         onChange={(e) => updateRole(activeRole.id, { unit: e.target.value.toUpperCase() })}
                                         placeholder="E.G., MAIN, SECOND UNIT"
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     />
                                 </div>
 
@@ -316,7 +316,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.department}
                                         onChange={(e) => updateRole(activeRole.id, { department: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="">SELECT DEPARTMENT...</option>
                                         {departments.map(dept => (
@@ -334,7 +334,7 @@ export default function RoleConfigurationTab() {
                                         value={activeRole.subDepartment}
                                         onChange={(e) => updateRole(activeRole.id, { subDepartment: e.target.value.toUpperCase() })}
                                         placeholder="OPTIONAL"
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     />
                                 </div>
 
@@ -359,7 +359,7 @@ export default function RoleConfigurationTab() {
                                         value={activeRole.jobTitleSuffix}
                                         onChange={(e) => updateRole(activeRole.id, { jobTitleSuffix: e.target.value.toUpperCase() })}
                                         placeholder="E.G., 'TO CAST #1'"
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     />
                                 </div>
 
@@ -372,7 +372,7 @@ export default function RoleConfigurationTab() {
                                         value={activeRole.regularSiteOfWork}
                                         onChange={(e) => updateRole(activeRole.id, { regularSiteOfWork: e.target.value.toUpperCase() })}
                                         placeholder="E.G., VARIOUS LOCATIONS"
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     />
                                 </div>
 
@@ -383,7 +383,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.engagement}
                                         onChange={(e) => updateRole(activeRole.id, { engagement: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="">SELECT...</option>
                                         <option value="PAYE">PAYE</option>
@@ -400,7 +400,7 @@ export default function RoleConfigurationTab() {
                                         type="date"
                                         value={activeRole.startDate}
                                         onChange={(e) => updateRole(activeRole.id, { startDate: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     />
                                 </div>
 
@@ -412,7 +412,7 @@ export default function RoleConfigurationTab() {
                                         type="date"
                                         value={activeRole.endDate}
                                         onChange={(e) => updateRole(activeRole.id, { endDate: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     />
                                 </div>
 
@@ -423,7 +423,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.dailyOrWeekly}
                                         onChange={(e) => updateRole(activeRole.id, { dailyOrWeekly: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="">SELECT...</option>
                                         <option value="DAILY">DAILY</option>
@@ -438,7 +438,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.workingWeek}
                                         onChange={(e) => updateRole(activeRole.id, { workingWeek: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="">SELECT...</option>
                                         <option value="5 DAYS">5 DAYS</option>
@@ -455,7 +455,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.workingInUK}
                                         onChange={(e) => updateRole(activeRole.id, { workingInUK: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="">SELECT...</option>
                                         <option value="YES">YES</option>
@@ -467,7 +467,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Rates Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#9333ea] dark:text-[#9333ea]">
                                 RATES
                             </h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -478,7 +478,7 @@ export default function RoleConfigurationTab() {
                                     <select
                                         value={activeRole.currency}
                                         onChange={(e) => updateRole(activeRole.id, { currency: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold uppercase text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
                                     >
                                         <option value="GBP">GBP £</option>
                                         <option value="USD">USD $</option>
@@ -496,7 +496,7 @@ export default function RoleConfigurationTab() {
                                         value={activeRole.feePerDay}
                                         onChange={(e) => updateRole(activeRole.id, { feePerDay: e.target.value })}
                                         placeholder="0.00"
-                                        className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                        className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     />
                                 </div>
                             </div>
@@ -504,7 +504,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Overtime Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#9333ea] dark:text-[#9333ea]">
                                 OVERTIME
                             </h5>
 
@@ -536,7 +536,7 @@ export default function RoleConfigurationTab() {
                                 </div>
 
                                 {activeRole.overtimeType === 'CUSTOM' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 border-dashed border-gray-200 bg-[#ede7f6] dark:bg-[#7e57c2]/20">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 border-dashed border-gray-200 bg-[#faf5ff] dark:bg-[#9333ea]/20">
                                         <div>
                                             <label className="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300">
                                                 NON-SHOOT OT
@@ -549,7 +549,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, nonShootOT: e.target.value }
                                                 })}
                                                 placeholder="0.00"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
 
@@ -565,7 +565,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, shootOT: e.target.value }
                                                 })}
                                                 placeholder="0.00"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
 
@@ -581,7 +581,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, minHrs6thDay: e.target.value }
                                                 })}
                                                 placeholder="0"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
 
@@ -597,7 +597,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, sixthDayHourly: e.target.value }
                                                 })}
                                                 placeholder="0.00"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
 
@@ -613,7 +613,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, minHrs7thDay: e.target.value }
                                                 })}
                                                 placeholder="0"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
 
@@ -629,7 +629,7 @@ export default function RoleConfigurationTab() {
                                                     customOT: { ...activeRole.customOT, seventhDayHourly: e.target.value }
                                                 })}
                                                 placeholder="0.00"
-                                                className="w-full px-3 py-2 rounded-lg border font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                                className="w-full px-3 py-2 rounded-lg border shadow-md font-bold text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                             />
                                         </div>
                                     </div>
@@ -639,7 +639,7 @@ export default function RoleConfigurationTab() {
 
                         {/* Allowances Section */}
                         <div>
-                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#7e57c2] dark:text-[#7e57c2]">
+                            <h5 className="text-sm font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700 text-[#9333ea] dark:text-[#9333ea]">
                                 ALLOWANCES
                             </h5>
                             <RoleAllowancesSection
@@ -651,11 +651,11 @@ export default function RoleConfigurationTab() {
                         {/* Role Summary */}
                         {activeRole.feePerDay && (
                             <div className={`rounded-lg border-2 p-4 ${activeRole.isPrimary
-                                ? 'bg-[#ede7f6] dark:bg-[#7e57c2]/20 border-gray-200 dark:border-gray-300'
+                                ? 'bg-[#faf5ff] dark:bg-[#9333ea]/20 border-gray-200 dark:border-gray-300'
                                 : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'
                                 }`}>
                                 <div className="flex items-start gap-3">
-                                    <Info className="w-5 h-5 text-[#7e57c2] dark:text-[#7e57c2] flex-shrink-0 mt-0.5" />
+                                    <Info className="w-5 h-5 text-[#9333ea] dark:text-[#9333ea] flex-shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-bold mb-2 text-gray-600 dark:text-gray-400">
                                             ROLE SUMMARY
@@ -681,7 +681,7 @@ export default function RoleConfigurationTab() {
             {jobTitles.length === 1 && (
                 <div className="rounded-lg border-2 border-dashed p-4 bg-gray-50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700">
                     <div className="flex items-start gap-3">
-                        <Info className="w-5 h-5 text-[#7e57c2] dark:text-[#7e57c2] flex-shrink-0 mt-0.5" />
+                        <Info className="w-5 h-5 text-[#9333ea] dark:text-[#9333ea] flex-shrink-0 mt-0.5" />
                         <div>
                             <p className="text-sm font-bold mb-1 text-gray-900 dark:text-white">
                                 💡 NEED MULTIPLE ROLES?
@@ -696,6 +696,10 @@ export default function RoleConfigurationTab() {
         </div>
     );
 }
+
+
+
+
 
 
 

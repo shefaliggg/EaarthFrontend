@@ -10,7 +10,7 @@ export function SecurityTab({ settings, setSettings, isEditing }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
-      className="bg-card rounded-lg p-6 shadow-md border border-border"
+      className="bg-card rounded-lg p-6 border border-border"
     >
       <div className="flex items-center gap-2 mb-4">
         <Shield className="w-5 h-5 text-primary" />
@@ -48,6 +48,10 @@ export function SecurityTab({ settings, setSettings, isEditing }) {
     </motion.div>
   );
 }
+
+
+
+
 
 
 

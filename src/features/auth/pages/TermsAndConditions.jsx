@@ -44,7 +44,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
             <button
               onClick={onSkip}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200
-                         text-[#7e57c2] rounded-2xl hover:bg-[#ede7f6] transition-all font-medium text-sm"
+                         text-[#9333ea] rounded-2xl hover:bg-[#faf5ff] transition-all font-medium text-sm"
             >
               <Home className="w-4 h-4" />
               <span className="hidden sm:inline">SKIP</span>
@@ -53,7 +53,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border shadow-md border-gray-100 overflow-hidden">
 
           {/* Header */}
           <div className="p-6 text-center">
@@ -68,7 +68,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
           {/* Scrollable Terms */}
           <div className="px-6 pb-6 md:px-10">
             <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl max-h-96 overflow-y-auto mb-6">
-              <h3 className="font-medium text-[#7e57c2] mb-2 text-lg">
+              <h3 className="font-medium text-[#9333ea] mb-2 text-lg">
                 E-AARTH PLATFORM TERMS & CONDITIONS
               </h3>
               <p className="text-xs text-gray-500 mb-4">
@@ -142,15 +142,15 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
                 type="checkbox"
                 checked={accepted}
                 onChange={(e) => setAccepted(e.target.checked)}
-                className="w-5 h-5 mt-0.5 rounded border-gray-300 text-[#7e57c2] focus:ring-2 focus:ring-[#9575cd] cursor-pointer"
+                className="w-5 h-5 mt-0.5 rounded border-gray-300 text-[#9333ea] focus:ring-2 focus:ring-[#a855f7] cursor-pointer"
                 id="accept-terms"
               />
 
               <label htmlFor="accept-terms" className="text-sm text-gray-700 cursor-pointer leading-relaxed">
                 I have read and agree to the{' '}
-                <span className="text-[#7e57c2] font-semibold hover:underline">Terms & Conditions</span>{' '}
+                <span className="text-[#9333ea] font-semibold hover:underline">Terms & Conditions</span>{' '}
                 and{' '}
-                <span className="text-[#7e57c2] font-semibold hover:underline">Privacy Policy</span>.
+                <span className="text-[#9333ea] font-semibold hover:underline">Privacy Policy</span>.
               </label>
             </div>
 
@@ -160,7 +160,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
               disabled={!accepted}
               className={`w-full py-4 font-medium rounded-2xl transition-all ${
                 accepted
-                  ? 'bg-gradient-to-r from-[#7e57c2] to-pink-600 text-white hover:opacity-95'
+                  ? 'bg-gradient-to-r from-[#9333ea] to-pink-600 text-white hover:opacity-95'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
@@ -183,6 +183,10 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
     </div>
   );
 }
+
+
+
+
 
 
 

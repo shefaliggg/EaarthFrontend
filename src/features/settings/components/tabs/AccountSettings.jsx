@@ -14,7 +14,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
   return (
     <div className="space-y-4">
       {/* Login Email */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <h3 className="font-bold mb-6 text-lg text-foreground">LOGIN EMAIL</h3>
         
         <div className="space-y-4">
@@ -29,7 +29,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 value={profile.email}
                 onChange={(e) => handleChange('email', e.target.value.toUpperCase())}
                 disabled={!isEditing}
-                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-gray-100  text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input border-gray-100  text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 value={profile.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 disabled={!isEditing}
-                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input border-gray-100 text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input border-gray-100 text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Change Password */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <h3 className="font-bold mb-6 text-lg text-foreground">CHANGE PASSWORD</h3>
         
         <div className="space-y-4">
@@ -69,7 +69,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('currentPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Enter current password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border shadow-md-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -94,7 +94,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('newPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Enter new password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border shadow-md-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -119,7 +119,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
                 onChange={(e) => handleChange('confirmPassword', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Confirm new password"
-                className="w-full pl-10 pr-12 py-2 rounded-3xl border-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-12 py-2 rounded-3xl border shadow-md-2 border-input border-gray-100 bg-input text-foreground placeholder-muted-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
               <button
                 type="button"
@@ -135,7 +135,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Security Settings */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <h3 className="font-bold mb-6 text-lg text-foreground">SECURITY OPTIONS</h3>
         
         <div className="space-y-6">
@@ -196,7 +196,7 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
             <select
               value={profile.sessionTimeout || '30'}
               onChange={(e) => handleChange('sessionTimeout', e.target.value)}
-              className="w-full px-4 py-2 rounded-3xl border border-input bg-background text-foreground font-bold transition-all focus:ring-2 focus:ring-ring outline-none"
+              className="w-full px-4 py-2 rounded-3xl border shadow-md border-input bg-background text-foreground font-bold transition-all focus:ring-2 focus:ring-ring outline-none"
             >
               <option value="15">15 MINUTES</option>
               <option value="30">30 MINUTES</option>
@@ -223,6 +223,10 @@ export default function AccountSettings({ profile, setProfile, isEditing, isDark
     </div>
   );
 }
+
+
+
+
 
 
 

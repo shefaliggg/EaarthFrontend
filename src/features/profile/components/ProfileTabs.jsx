@@ -11,7 +11,7 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
   ];
 
   return (
-    <div className="rounded-3xl border p-6 bg-card border-border">
+    <div className="rounded-3xl border shadow-md p-6 bg-card border-border">
       <div className="flex gap-2 flex-wrap">
         {tabs.map(({ value, label, icon: Icon }) => (
           <button
@@ -33,6 +33,10 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
     </div>
   );
 }
+
+
+
+
 
 
 

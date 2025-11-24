@@ -13,7 +13,7 @@ function ProjectActionGridCard({ feature }) {
     return (
         <motion.div
             key={feature.id}
-            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-300 bg-white border-gray-200 hover:border-gray-200 hover:shadow-lg dark:shadow-shadow`}
+            className={`relative rounded-xl p-6 border transition-all cursor-pointer dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-300 bg-white border-gray-200 hover:border-gray-200`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
@@ -35,8 +35,8 @@ function ProjectActionGridCard({ feature }) {
             </button>
 
             {/* Icon - Deep purple icon with light background */}
-            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#ede7f6] dark:bg-gray-700 flex items-center justify-center">
-                <CurrentIcon className="w-7 h-7 text-[#7e57c2] dark:text-[#b39ddb]" />
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#faf5ff] dark:bg-gray-700 flex items-center justify-center">
+                <CurrentIcon className="w-7 h-7 text-[#9333ea] dark:text-[#c084fc]" />
             </div>
 
             {/* Label */}
@@ -54,6 +54,10 @@ function ProjectActionGridCard({ feature }) {
 }
 
 export default ProjectActionGridCard
+
+
+
+
 
 
 

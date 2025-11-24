@@ -40,8 +40,8 @@ export default function ProfileDocuments({ isDarkMode = false }) {
     <div className="h-full flex flex-col space-y-4">
       {/* Header Section */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
-          <FileText className="w-6 h-6" />
+        <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+          <FileText className="w-5 h-5 text-[#7c3aed] dark:text-white" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">
@@ -51,7 +51,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
@@ -84,7 +84,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
               onClick={() => setViewMode('table')}
               className={`px-2 py-1.5 rounded transition-all ${
                 viewMode === 'table' 
-                  ? 'bg-card shadow-sm text-primary font-medium'
+                  ? 'bg-card text-primary font-medium'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title="Table View"
@@ -95,7 +95,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
               onClick={() => setViewMode('list')}
               className={`px-2 py-1.5 rounded transition-all ${
                 viewMode === 'list' 
-                  ? 'bg-card shadow-sm text-primary font-medium'
+                  ? 'bg-card text-primary font-medium'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title="List View"
@@ -106,7 +106,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
               onClick={() => setViewMode('preview')}
               className={`px-2 py-1.5 rounded transition-all ${
                 viewMode === 'preview' 
-                  ? 'bg-card shadow-sm text-primary font-medium'
+                  ? 'bg-card text-primary font-medium'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title="Preview View"
@@ -127,7 +127,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
 
       {/* Table View */}
       {viewMode === 'table' && (
-        <div className="flex-1 bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+        <div className="flex-1 bg-card rounded-lg border shadow-md border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted border-b border-border">
@@ -223,6 +223,10 @@ export default function ProfileDocuments({ isDarkMode = false }) {
     </div>
   );
 }
+
+
+
+
 
 
 

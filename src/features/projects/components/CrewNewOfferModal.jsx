@@ -9,7 +9,7 @@ const Input = ({ type = 'text', value, onChange, placeholder }) => (
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9575cd]"
+    className="w-full px-4 py-2 rounded-lg border shadow-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#a855f7]"
   />
 );
 
@@ -20,7 +20,7 @@ const Textarea = ({ value, onChange, placeholder, maxLength }) => (
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
     maxLength={maxLength}
-    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9575cd] resize-none"
+    className="w-full px-4 py-2 rounded-lg border shadow-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#a855f7] resize-none"
     rows={4}
   />
 );
@@ -30,7 +30,7 @@ const Select = ({ value, onChange, options }) => (
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#9575cd]"
+    className="w-full px-4 py-2 rounded-lg border shadow-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#a855f7]"
   >
     <option value="">SELECT AN OPTION</option>
     {options.map((opt) => (
@@ -48,7 +48,7 @@ const Checkbox = ({ checked, onChange, label }) => (
       type="checkbox"
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
-      className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-[#7e57c2] focus:ring-2 focus:ring-[#9575cd]"
+      className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-[#9333ea] focus:ring-2 focus:ring-[#a855f7]"
     />
     <span className="text-gray-900 dark:text-white font-medium">{label}</span>
   </label>
@@ -65,7 +65,7 @@ const RadioGroup = ({ value, onChange, options }) => (
           value={opt.value}
           checked={value === opt.value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-5 h-5 border-gray-300 dark:border-gray-600 text-[#7e57c2] focus:ring-2 focus:ring-[#9575cd]"
+          className="w-5 h-5 border-gray-300 dark:border-gray-600 text-[#9333ea] focus:ring-2 focus:ring-[#a855f7]"
         />
         <span className="text-gray-900 dark:text-white font-medium">{opt.label}</span>
       </label>
@@ -122,7 +122,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-6xl my-8 rounded-3xl border shadow-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <div className="w-full max-w-6xl my-8 rounded-3xl border shadow-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center rounded-t-3xl justify-between p-6 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -140,7 +140,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
         <div className="p-6 space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto">
           {/* RECIPIENT SECTION */}
           <div>
-            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#7e57c2] dark:text-[#b39ddb] border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#9333ea] dark:text-[#c084fc] border-gray-200 dark:border-gray-700">
               RECIPIENT
             </h4>
             <div className="space-y-4">
@@ -196,7 +196,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
 
           {/* TAX STATUS SECTION */}
           <div>
-            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#7e57c2] dark:text-[#b39ddb] border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#9333ea] dark:text-[#c084fc] border-gray-200 dark:border-gray-700">
               TAX STATUS
             </h4>
             <div className="space-y-4">
@@ -238,7 +238,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
 
           {/* ROLE CONFIGURATION */}
           <div>
-            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#7e57c2] dark:text-[#b39ddb] border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#9333ea] dark:text-[#c084fc] border-gray-200 dark:border-gray-700">
               ROLE CONFIGURATION
             </h4>
             
@@ -250,7 +250,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
 
           {/* NOTES SECTION */}
           <div>
-            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#7e57c2] dark:text-[#b39ddb] border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#9333ea] dark:text-[#c084fc] border-gray-200 dark:border-gray-700">
               NOTES
             </h4>
             <div className="space-y-4">
@@ -284,7 +284,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-8 py-3 rounded-lg font-bold bg-[#7e57c2] dark:bg-[#7e57c2] text-white hover:bg-[#7e57c2] dark:hover:bg-[#9575cd] transition-all"
+              className="px-8 py-3 rounded-lg font-bold bg-[#9333ea] dark:bg-[#9333ea] text-white hover:bg-[#9333ea] dark:hover:bg-[#a855f7] transition-all"
             >
               SAVE OFFER
             </button>
@@ -294,6 +294,10 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
     </div>
   );
 }
+
+
+
+
 
 
 

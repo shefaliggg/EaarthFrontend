@@ -125,7 +125,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 
     return (
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-[80px_1fr] bg-background rounded-xl shadow-md overflow-hidden">
+        <div className="grid grid-cols-[80px_1fr] bg-background rounded-xl overflow-hidden">
           {/* Time column */}
           <div className="border-r border-gray-200">
             <div className="h-16 border-b border-gray-200" /> {/* Header spacer */}
@@ -139,7 +139,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
           {/* Day column */}
           <div className="relative">
             {/* Header */}
-            <div className="h-16 border-b border-gray-200 flex items-center justify-center bg-[#ede7f6]">
+            <div className="h-16 border-b border-gray-200 flex items-center justify-center bg-[#faf5ff]">
               <div className="text-center">
                 <div className="font-bold text-gray-900">{daysOfWeek[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]}</div>
                 <div className="text-sm text-gray-500">{currentDate.getDate()} {monthNames[currentDate.getMonth()]}</div>
@@ -163,7 +163,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
                 return (
                   <div
                     key={event.id}
-                    className={`absolute left-2 right-2 ${colors.bg} ${colors.border} border-l-4 rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-all overflow-hidden`}
+                    className={`absolute left-2 right-2 ${colors.bg} ${colors.border} border-l-4 rounded-lg p-2 cursor-pointer hover:transition-all overflow-hidden`}
                     style={{ top: `${top}px`, height: `${height}px` }}
                     onClick={() => setSelectedEvent(event)}
                   >
@@ -198,7 +198,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 
     return (
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-[80px_repeat(7,1fr)] bg-background rounded-xl shadow-md overflow-hidden">
+        <div className="grid grid-cols-[80px_repeat(7,1fr)] bg-background rounded-xl overflow-hidden">
           {/* Time column */}
           <div className="border-r border-gray-200">
             <div className="h-16 border-b border-gray-200" /> {/* Header spacer */}
@@ -217,9 +217,9 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
             return (
               <div key={dayIndex} className="relative border-r border-gray-200 last:border-r-0">
                 {/* Header */}
-                <div className={`h-16 border-b border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-[#ede7f6]' : ''}`}>
+                <div className={`h-16 border-b border-gray-200 flex flex-col items-center justify-center ${isToday ? 'bg-[#faf5ff]' : ''}`}>
                   <div className="font-bold text-gray-900 text-sm">{daysOfWeek[dayIndex].slice(0, 3)}</div>
-                  <div className={`text-lg ${isToday ? 'text-[#7e57c2] font-bold' : 'text-gray-600'}`}>
+                  <div className={`text-lg ${isToday ? 'text-[#9333ea] font-bold' : 'text-gray-600'}`}>
                     {date.getDate()}
                   </div>
                 </div>
@@ -241,7 +241,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
                     return (
                       <div
                         key={event.id}
-                        className={`absolute left-1 right-1 ${colors.bg} ${colors.border} border-l-4 rounded p-1 text-xs cursor-pointer hover:shadow-md transition-all overflow-hidden`}
+                        className={`absolute left-1 right-1 ${colors.bg} ${colors.border} border-l-4 rounded p-1 text-xs cursor-pointer hover:transition-all overflow-hidden`}
                         style={{ top: `${top}px`, height: `${height}px` }}
                         onClick={() => setSelectedEvent(event)}
                       >
@@ -275,7 +275,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
     }
 
     return (
-      <div className="bg-background rounded-xl shadow-md p-4">
+      <div className="bg-background rounded-xl p-4">
         <div className="grid grid-cols-7 gap-2">
           {daysOfWeek.map(day => (
             <div key={day} className="text-center font-bold text-gray-700 py-2">
@@ -292,10 +292,10 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
             return (
               <div
                 key={idx}
-                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-[#9575cd] bg-[#ede7f6]' : 'border-gray-200 hover:border-[#b39ddb]'
+                className={`aspect-square border-2 rounded-lg p-2 ${isToday ? 'border-[#a855f7] bg-[#faf5ff]' : 'border-gray-200 hover:border-[#c084fc]'
                   } cursor-pointer transition-all`}
               >
-                <div className={`font-bold ${isToday ? 'text-[#7e57c2]' : 'text-gray-900'}`}>
+                <div className={`font-bold ${isToday ? 'text-[#9333ea]' : 'text-gray-900'}`}>
                   {day}
                 </div>
                 <div className="space-y-1 mt-1">
@@ -334,7 +334,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
           );
 
           return (
-            <div key={monthIndex} className="bg-background rounded-xl shadow-md p-4">
+            <div key={monthIndex} className="bg-background rounded-xl p-4">
               <h3 className="font-bold text-gray-900 mb-3 text-center">
                 {monthNames[monthIndex]}
               </h3>
@@ -344,7 +344,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
                   return (
                     <div
                       key={event.id}
-                      className={`${colors.bg} ${colors.border} border-l-4 rounded p-2 cursor-pointer hover:shadow-sm transition-all`}
+                      className={`${colors.bg} ${colors.border} border-l-4 rounded p-2 cursor-pointer hover:transition-all`}
                       onClick={() => setSelectedEvent(event)}
                     >
                       <div className={`font-bold text-xs ${colors.text}`}>{event.title}</div>
@@ -371,7 +371,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="border bg-gradient-to-br from-gray-900 to-gray-900 rounded-3xl p-6 shadow-lg">
+      <div className="border bg-gradient-to-br from-gray-900 to-gray-900 rounded-3xl p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">
@@ -389,7 +389,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
                 key={v}
                 onClick={() => setView(v)}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${view === v
-                    ? 'bg-background text-[#7e57c2] shadow-md'
+                    ? 'bg-background text-[#9333ea]'
                     : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
               >
@@ -445,7 +445,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl z-50 bg-white rounded-2xl shadow-2xl p-6"
+              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl z-50 bg-white rounded-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`bg-gradient-to-r ${getStatusColor(selectedEvent.status).bg} rounded-xl p-6 mb-4`}>
@@ -502,7 +502,7 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="mt-6 w-full px-6 py-3 bg-[#9575cd] text-white rounded-xl font-bold hover:bg-[#7e57c2] transition-colors"
+                className="mt-6 w-full px-6 py-3 bg-[#a855f7] text-white rounded-xl font-bold hover:bg-[#9333ea] transition-colors"
               >
                 CLOSE
               </button>
@@ -515,4 +515,8 @@ function ProjectCalendar({ projectName, isProjectCalendar = false }) {
 }
 
 export default ProjectCalendar
+
+
+
+
 

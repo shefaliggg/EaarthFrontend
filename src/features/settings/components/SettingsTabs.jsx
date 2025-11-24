@@ -14,7 +14,7 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
   ];
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-6 transition-colors duration-400">
+    <div className="rounded-3xl border shadow-md border-border bg-card p-6 transition-colors duration-400">
       <div className="flex flex-wrap gap-2">
         {tabs.map(({ value, label, icon: Icon }) => (
           <button
@@ -23,7 +23,7 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
             className={`px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm border ${
               activeTab === value
                 ? isDarkMode
-                  ? 'bg-[#7e57c2] text-white'
+                  ? 'bg-[#9333ea] text-white'
                   : 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-muted/80'
             }`}
@@ -36,6 +36,10 @@ export default function SettingsTabs({ activeTab, setActiveTab, isDarkMode }) {
     </div>
   );
 }
+
+
+
+
 
 
 

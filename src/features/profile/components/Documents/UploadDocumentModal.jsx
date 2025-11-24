@@ -53,7 +53,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onUpload }) => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card rounded-xl p-6 max-w-md w-full shadow-2xl border border-border"
+        className="bg-card rounded-xl p-6 max-w-md w-full border border-border"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-foreground">Upload Document</h2>
@@ -146,6 +146,10 @@ export const UploadDocumentModal = ({ isOpen, onClose, onUpload }) => {
     </div>
   );
 };
+
+
+
+
 
 
 

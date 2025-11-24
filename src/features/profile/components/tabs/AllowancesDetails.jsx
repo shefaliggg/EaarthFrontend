@@ -6,7 +6,7 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
   const [useOwnVehicle, setUseOwnVehicle] = useState(true);
 
   return (
-    <div className={`rounded-xl border p-6 shadow-sm ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
+    <div className={`rounded-xl border shadow-md p-6 ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
       <div className="space-y-6">
         {/* Vehicle Toggle */}
         <div>
@@ -260,6 +260,10 @@ export default function AllowanceDetails({ profile, setProfile, isEditing, isDar
     </div>
   );
 }
+
+
+
+
 
 
 

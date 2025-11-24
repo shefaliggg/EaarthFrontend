@@ -66,11 +66,11 @@ export default function identityVerification() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-6 border border-gray-100 w-full">
+        <div className="bg-white rounded-2xl p-6 md:p-6 border border-gray-100 w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-[#ede7f6] border border-gray-200 rounded-2xl flex-shrink-0">
-              <Scan className="w-6 md:w-7 h-6 md:h-7 text-[#7e57c2]" />
+            <div className="p-4 bg-[#faf5ff] border border-gray-200 rounded-2xl flex-shrink-0">
+              <Scan className="w-6 md:w-7 h-6 md:h-7 text-[#9333ea]" />
             </div>
             <div>
               <h2 className="text-xl md:text-xl font-medium text-gray-900">FACE VERIFICATION</h2>
@@ -99,23 +99,23 @@ export default function identityVerification() {
 
           {/* Verification Status */}
           {isVerifying ? (
-            <div className="bg-[#ede7f6] border border-gray-200 rounded-2xl p-6 md:p-6 text-center mb-6">
+            <div className="bg-[#faf5ff] border border-gray-200 rounded-2xl p-6 md:p-6 text-center mb-6">
               <div className="relative w-20 h-20 mx-auto mb-4">
-                <Scan className="w-20 h-20 text-[#7e57c2] animate-pulse" />
+                <Scan className="w-20 h-20 text-[#9333ea] animate-pulse" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 border-2 border-gray-200 border-t-[#7e57c2] rounded-full animate-spin"></div>
+                  <div className="w-14 h-14 border-2 border-gray-200 border-t-[#9333ea] rounded-full animate-spin"></div>
                 </div>
               </div>
-              <p className="text-base md:text-lg font-medium text-[#7e57c2] mb-3">
+              <p className="text-base md:text-lg font-medium text-[#9333ea] mb-3">
                 AI VERIFICATION IN PROGRESS...
               </p>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div
-                  className="bg-[#7e57c2] h-2 rounded-full transition-all duration-300"
+                  className="bg-[#9333ea] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-[#7e57c2]">{progress}% Complete</p>
+              <p className="text-sm text-[#9333ea]">{progress}% Complete</p>
             </div>
           ) : (
             <>
@@ -172,7 +172,7 @@ export default function identityVerification() {
               {verificationResult?.match ? (
                 <button
                   onClick={handleContinue}
-                  className="w-full bg-gradient-to-r from-[#7e57c2] to-pink-600 text-white font-medium py-3.5 md:py-4 rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-[#9333ea] to-pink-600 text-white font-medium py-3.5 md:py-4 rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                 >
                   CONTINUE TO TERMS & CONDITIONS
                   <ArrowRight className="w-5 h-5" />
@@ -181,7 +181,7 @@ export default function identityVerification() {
                 <>
                   <button
                     onClick={handleRetry}
-                    className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2"
+                    className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2"
                   >
                     TRY AGAIN
                     <ArrowRight className="w-5 h-5" />
@@ -207,6 +207,10 @@ export default function identityVerification() {
     </div>
   );
 }
+
+
+
+
 
 
 

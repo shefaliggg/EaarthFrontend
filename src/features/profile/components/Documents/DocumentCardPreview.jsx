@@ -13,7 +13,7 @@ export const DocumentCardPreview = ({ doc, index, onShare, onDelete }) => {
       style={{
         animation: `fadeIn 0.3s ease-out ${0.3 + index * 0.05}s both`
       }}
-      className="bg-card rounded-lg shadow-sm border border-border hover:shadow-lg transition-all overflow-hidden"
+      className="bg-card rounded-lg border shadow-md border-border hover:transition-all overflow-hidden"
     >
       {/* Document Preview */}
       <div className="h-40 bg-primary/10 border-2 border-primary/30 flex items-center justify-center relative">
@@ -88,6 +88,10 @@ export const DocumentCardPreview = ({ doc, index, onShare, onDelete }) => {
     </div>
   );
 };
+
+
+
+
 
 
 

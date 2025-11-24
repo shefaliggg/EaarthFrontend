@@ -39,7 +39,7 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
-        <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md text-center">
+        <div className="w-full max-w-md bg-white p-6 rounded-2xl text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">OTP Sent!</h2>
           <p className="text-gray-600">Check your email for the reset code</p>
@@ -62,7 +62,7 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md">
+      <div className="w-full max-w-md bg-white p-6 rounded-2xl">
         <div className="text-center mb-6">
           <img src={eaarthLogo} alt="Eaarth Studios" className="h-[45px] mx-auto" />
         </div>
@@ -91,14 +91,14 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
               placeholder="your@email.com"
               required
               disabled={loading}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#7e57c2] focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-xl border shadow-md border-gray-300 focus:ring-2 focus:ring-[#9333ea] focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || !email}
-            className="w-full py-3 rounded-xl font-medium text-white bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl font-medium text-white bg-[#9333ea] hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -125,6 +125,10 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
 };
 
 export default ForgotPasswordPage;
+
+
+
+
 
 
 

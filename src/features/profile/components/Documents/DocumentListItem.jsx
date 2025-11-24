@@ -13,7 +13,7 @@ export const DocumentListItem = ({ doc, index, onShare, onDelete }) => {
       style={{
         animation: `fadeIn 0.3s ease-out ${0.3 + index * 0.05}s both`
       }}
-      className="bg-card rounded-lg p-3 shadow-sm border border-border hover:shadow-md transition-all"
+      className="bg-card rounded-lg p-3 border border-border hover:transition-all"
     >
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div className="flex items-center gap-2 flex-1">
@@ -72,6 +72,10 @@ export const DocumentListItem = ({ doc, index, onShare, onDelete }) => {
     </div>
   );
 };
+
+
+
+
 
 
 

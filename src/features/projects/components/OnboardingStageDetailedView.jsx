@@ -54,7 +54,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
 
             {/* Pending Offers */}
             {pendingOffers.length > 0 && (
-                <div className="rounded-xl border p-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                <div className="rounded-xl border shadow-md p-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                     <h4 className="text-lg font-bold mb-4 text-yellow-700 dark:text-yellow-400">
                         ⏳ PENDING APPROVAL
                     </h4>
@@ -63,8 +63,8 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
                         {pendingOffers.map(offer => (
                             <div
                                 key={offer.id}
-                                className={`p-4 rounded-lg border transition ${selectedOffers.has(offer.id)
-                                    ? 'border-gray-300 bg-[#ede7f6] dark:bg-[#7e57c2]/30'
+                                className={`p-4 rounded-lg border shadow-md transition ${selectedOffers.has(offer.id)
+                                    ? 'border-gray-300 bg-[#faf5ff] dark:bg-[#9333ea]/30'
                                     : 'bg-yellow-50 border-yellow-200 dark:bg-gray-900 dark:border-gray-700'
                                     }`}
                             >
@@ -74,7 +74,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
                                         type="checkbox"
                                         checked={selectedOffers.has(offer.id)}
                                         onChange={() => handleSelectOffer(offer.id)}
-                                        className="w-5 h-5 mt-1 rounded border-gray-300 text-[#7e57c2] focus:ring-[#7e57c2]"
+                                        className="w-5 h-5 mt-1 rounded border-gray-300 text-[#9333ea] focus:ring-[#9333ea]"
                                     />
 
                                     {/* Details */}
@@ -140,7 +140,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
 
             {/* Completed */}
             {completedOffers.length > 0 && (
-                <div className="rounded-xl border p-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                <div className="rounded-xl border shadow-md p-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                     <h4 className="text-lg font-bold mb-4 text-green-700 dark:text-green-400">
                         ✅ COMPLETED
                     </h4>
@@ -149,7 +149,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
                         {completedOffers.map(offer => (
                             <div
                                 key={offer.id}
-                                className="p-4 rounded-lg border bg-green-50 border-green-200 dark:bg-gray-900 dark:border-gray-700"
+                                className="p-4 rounded-lg border shadow-md bg-green-50 border-green-200 dark:bg-gray-900 dark:border-gray-700"
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -200,7 +200,7 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
 
             {/* Empty State */}
             {pendingOffers.length === 0 && completedOffers.length === 0 && (
-                <div className="rounded-xl border-2 border-dashed p-16 text-center border-gray-300 dark:border-gray-700">
+                <div className="rounded-xl border shadow-md-2 border-dashed p-16 text-center border-gray-300 dark:border-gray-700">
                     <Check className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                     <h3 className="text-xl font-bold mb-2 text-gray-600 dark:text-gray-400">
                         NO OFFERS AT THIS STAGE
@@ -244,6 +244,10 @@ function OnboardingStageDetailedView({ stageName, offers, onEdit, onSend }) {
 }
 
 export default OnboardingStageDetailedView;
+
+
+
+
 
 
 

@@ -9,7 +9,7 @@ export function AccountInfoTab({ settings, setSettings, isEditing }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
-      className="bg-card rounded-lg p-6 shadow-md border border-border"
+      className="bg-card rounded-lg p-6 border border-border"
     >
       <h2 className="text-lg font-semibold text-foreground mb-4">Account Information</h2>
       
@@ -79,6 +79,10 @@ export function AccountInfoTab({ settings, setSettings, isEditing }) {
     </motion.div>
   );
 }
+
+
+
+
 
 
 

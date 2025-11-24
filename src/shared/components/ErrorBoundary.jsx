@@ -46,7 +46,7 @@ class ErrorBoundary extends Component {
 
     return (
       <div className="flex h-[70vh] w-full items-center justify-center p-6">
-        <Card className="w-full max-w-lg border border-red-300 shadow-lg">
+        <Card className="w-full max-w-lg border border-red-300">
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-6 w-6 text-red-500" />
@@ -69,6 +69,10 @@ class ErrorBoundary extends Component {
 }
 
 export default ErrorBoundary;
+
+
+
+
 
 
 

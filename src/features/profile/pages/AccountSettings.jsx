@@ -79,7 +79,7 @@ export default function AccountSettings({ isDarkMode }) {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-primary text-primary-foreground">
           <Settings className="w-6 h-6" />
         </div>
         <div>
@@ -111,7 +111,7 @@ export default function AccountSettings({ isDarkMode }) {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
                       activeTab === tab.id
-                        ? 'bg-primary text-primary-foreground shadow-md'
+                        ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-card hover:text-foreground'
                     }`}
                     whileHover={{ scale: 1.02 }}
@@ -129,7 +129,7 @@ export default function AccountSettings({ isDarkMode }) {
             isEditing ? (
               <motion.button
                 onClick={handleSave}
-                className="px-4 py-2 bg-accent text-accent-foreground rounded-lg flex items-center gap-2 hover:opacity-90 transition-all duration-300 font-medium shadow-sm"
+                className="px-4 py-2 bg-accent text-accent-foreground rounded-lg flex items-center gap-2 hover:opacity-90 transition-all duration-300 font-medium"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -139,7 +139,7 @@ export default function AccountSettings({ isDarkMode }) {
             ) : (
               <motion.button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all duration-300 font-medium shadow-md"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all duration-300 font-medium"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -202,6 +202,10 @@ export default function AccountSettings({ isDarkMode }) {
     </div>
   );
 }
+
+
+
+
 
 
 

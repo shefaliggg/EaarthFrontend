@@ -50,7 +50,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
   return (
     <div className="space-y-4">
       {/* Auto-Save Settings */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Database className="w-5 h-5 text-primary-foreground" />
@@ -80,7 +80,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
                 value={profile.autoSaveInterval || '5'}
                 onChange={(e) => handleChange('autoSaveInterval', e.target.value)}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full px-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               >
                 <option value="1">1 MINUTE</option>
                 <option value="5">5 MINUTES</option>
@@ -93,7 +93,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
       </div>
 
       {/* Storage Options */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <HardDrive className="w-5 h-5 text-primary-foreground" />
@@ -130,7 +130,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
       </div>
 
       {/* Export Settings */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Download className="w-5 h-5 text-primary-foreground" />
@@ -152,7 +152,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
               value={profile.exportFormat || 'PDF'}
               onChange={(e) => handleChange('exportFormat', e.target.value)}
               disabled={!isEditing}
-              className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+              className="w-full px-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="PDF">PDF</option>
               <option value="EXCEL">EXCEL</option>
@@ -172,7 +172,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
               value={profile.backupFrequency || 'weekly'}
               onChange={(e) => handleChange('backupFrequency', e.target.value)}
               disabled={!isEditing}
-              className="w-full px-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+              className="w-full px-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input text-foreground font-bold transition-all disabled:opacity-50 focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
             >
               <option value="daily">DAILY</option>
               <option value="weekly">WEEKLY</option>
@@ -193,7 +193,7 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
       </div>
 
       {/* Storage Usage */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <HardDrive className="w-5 h-5 text-primary-foreground" />
@@ -261,6 +261,10 @@ export default function DataSettings({ profile, setProfile, isEditing, isDarkMod
     </div>
   );
 }
+
+
+
+
 
 
 

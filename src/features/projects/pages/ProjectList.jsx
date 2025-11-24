@@ -136,10 +136,15 @@ export function ProjectList() {
   return (
     <div className="p-3 py-0 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            MY PROJECTS
-          </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+            <Film className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              MY PROJECTS
+            </h1>
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -148,8 +153,8 @@ export function ProjectList() {
             size={"lg"}
             onClick={() => setShowArchived(!showArchived)}
             className={`${showArchived
-              ? 'bg-[#7e57c2] text-white shadow-lg dark:hover:text-black'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-[#d1c4e9] dark:hover:text-black dark:hover:bg-[#7e57c2] border hover:border-[#d1c4e9]'
+              ? 'bg-[#9333ea] text-white dark:hover:text-black'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-[#e9d5ff] dark:hover:text-black dark:hover:bg-[#9333ea] border hover:border-[#e9d5ff]'
               }`}
           >
             <Archive className="w-5 h-5" />
@@ -158,22 +163,22 @@ export function ProjectList() {
         </div>
       </div>
 
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
 
       {/* Search Bar */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl border shadow-sm dark:shadow-shadow">
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl border shadow-md">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
         <input
           type="text"
           placeholder="SEARCH PROJECTS, ROLES, STUDIOS..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none"
+          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border shadow-md-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none"
         />
-        <SlidersHorizontal className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400 cursor-pointer hover:text-[#ede7f6]0 transition-colors" />
+        <SlidersHorizontal className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400 cursor-pointer hover:text-[#faf5ff]0 transition-colors" />
       </div>
 
 
@@ -191,8 +196,8 @@ export function ProjectList() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-3 rounded-xl font-medium flex items-center gap-3 whitespace-nowrap transition-all ${isActive
-                ? `bg-[#7e57c2] text-white shadow-lg`
-                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-[#b39ddb] dark:border-transparent'
+                ? `bg-[#9333ea] text-white`
+                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-[#c084fc] dark:border-transparent'
                 }`}
             >
               <Icon className="w-5 h-5" />
@@ -240,5 +245,9 @@ export function ProjectList() {
 
 
 export default ProjectList
+
+
+
+
 
 

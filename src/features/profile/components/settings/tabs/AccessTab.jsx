@@ -58,7 +58,7 @@ export function AccessTab({
       className="space-y-6"
     >
       {/* Give Access Card */}
-      <div className="bg-card rounded-lg p-6 shadow-md border border-border">
+      <div className="bg-card rounded-lg p-6 border border-border">
         <div className="flex items-start gap-3 mb-6">
           <div className="w-1 h-16 bg-primary rounded-full"></div>
           <div>
@@ -123,7 +123,7 @@ export function AccessTab({
 
           <motion.button
             onClick={handleGiveAccess}
-            className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2 font-medium shadow-md"
+            className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-2 font-medium"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -134,7 +134,7 @@ export function AccessTab({
       </div>
 
       {/* Current Agents with Access */}
-      <div className="bg-card rounded-lg p-6 shadow-md border border-border">
+      <div className="bg-card rounded-lg p-6 border border-border">
         <div className="flex items-center gap-2 mb-6">
           <Users className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">People with Access</h2>
@@ -153,7 +153,7 @@ export function AccessTab({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-4 border border-border rounded-lg hover:shadow-md transition-all duration-300 bg-muted/30"
+                className="p-4 border border-border rounded-lg hover:transition-all duration-300 bg-muted/30"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
@@ -212,6 +212,10 @@ export function AccessTab({
     </motion.div>
   );
 }
+
+
+
+
 
 
 

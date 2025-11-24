@@ -15,8 +15,8 @@ export default function SettingsSummary({
       <div className="transition-colors duration-400">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-primary">
-              <Settings className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+              <Settings className="w-5 h-5 text-[#7c3aed] dark:text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">SETTINGS</h1>
@@ -55,12 +55,12 @@ export default function SettingsSummary({
       </div>
 
       {/* Breadcrumbs */}
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
       {/* Settings Summary Card */}
-      <div className="rounded-lg border border-border bg-card px-6 py-5 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card px-6 py-5 transition-colors duration-400">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             {/* Settings Icon */}
@@ -99,6 +99,10 @@ export default function SettingsSummary({
     </div>
   );
 }
+
+
+
+
 
 
 

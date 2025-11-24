@@ -33,7 +33,7 @@ export function Field({
     transition-all duration-300 font-normal bg-input text-foreground 
     placeholder-muted-foreground placeholder:text-xs
     focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+    disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
   return (
@@ -91,14 +91,14 @@ export function PhoneField({
     w-24 px-2 py-2 border border-border rounded-3xl 
     transition-all duration-300 font-medium bg-input text-foreground 
     focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+    disabled:opacity-50 disabled:cursor-not-allowed
   `;
   const inputClasses = `
     flex-1 px-4 py-2 border border-border rounded-3xl 
     transition-all duration-300 font-normal bg-input text-foreground 
     placeholder-muted-foreground placeholder:text-xs
     focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    shadow-sm disabled:opacity-50 disabled:cursor-not-allowed
+    disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
   return (
@@ -162,9 +162,9 @@ export function FileUpload({
 
   if (isUploaded)
     return (
-      <div className="border border-border rounded-lg p-3 flex items-center justify-between bg-card shadow-md">
+      <div className="border border-border rounded-lg p-3 flex items-center justify-between bg-card">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted shadow-sm">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted">
             <FileText className="w-5 h-5 text-primary" />
           </div>
 
@@ -177,14 +177,14 @@ export function FileUpload({
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-3xl transition-all duration-300 hover:bg-muted/50 shadow-sm">
+          <button className="p-2 rounded-3xl transition-all duration-300 hover:bg-muted/50">
             <Download className="w-4 h-4 text-primary" />
           </button>
 
           <button
             onClick={onDelete}
             disabled={!isEditing}
-            className="p-2 rounded-3xl transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="p-2 rounded-3xl transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Trash2 className="w-4 h-4 text-destructive" />
           </button>
@@ -194,7 +194,7 @@ export function FileUpload({
 
   if (isScanning)
     return (
-      <div className="border-2 border-dashed border-primary rounded-lg p-4 text-center bg-primary/5 shadow-md">
+      <div className="border-2 border-dashed border-primary rounded-lg p-4 text-center bg-primary/5">
         <div className="w-10 h-10 mx-auto mb-2">
           <div
             className="w-10 h-10 rounded-full border-4 animate-spin"
@@ -212,7 +212,7 @@ export function FileUpload({
   return (
     <div
       onClick={handleFileSelect}
-      className={`border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-muted/20 shadow-md ${
+      className={`border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-muted/20 ${
         !isEditing ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
@@ -229,6 +229,10 @@ export default {
   PhoneField,
   FileUpload,
 };
+
+
+
+
 
 
 

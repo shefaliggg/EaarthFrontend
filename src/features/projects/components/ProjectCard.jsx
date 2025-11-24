@@ -43,7 +43,7 @@ function ProjectCard({ project, index }) {
                     storageKey: "currentProjectUniqueKey"
                 })
             }}
-            className="cursor-pointer rounded-2xl bg-background hover:bg-[#ede7f6] dark:hover:bg-slate-950 border shadow-lg hover:shadow-md dark:shadow-shadow transition-all overflow-hidden"
+            className="cursor-pointer rounded-2xl bg-background hover:bg-[#faf5ff] dark:hover:bg-slate-950 border hover:transition-all overflow-hidden"
         >
             {/* Project Content */}
             <div className="p-6 space-y-4">
@@ -61,7 +61,7 @@ function ProjectCard({ project, index }) {
                         </div>
                     </div>
                     {/* Period Badge - Top Right */}
-                    <Badge className={`px-3 py-1.5 rounded-xl border ${getPeriodColor(project.period)} flex items-center gap-1.5`}>
+                    <Badge className={`px-3 py-1.5 rounded-xl border shadow-md ${getPeriodColor(project.period)} flex items-center gap-1.5`}>
                         <PeriodIcon className="w-4 h-4" />
                         <span className="text-xs font-medium uppercase">{project.period}</span>
                     </Badge>
@@ -69,11 +69,11 @@ function ProjectCard({ project, index }) {
 
 
                 {/* Role */}
-                <div className="px-4 py-2 rounded-xl border bg-card">
+                <div className="px-4 py-2 rounded-xl border shadow-md bg-card">
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-400">
                         Your Role
                     </p>
-                    <p className="font-medium text-[#7e57c2] dark:text-lavender-400">
+                    <p className="font-medium text-[#9333ea] dark:text-lavender-400">
                         {project.role}
                     </p>
                 </div>
@@ -94,10 +94,10 @@ function ProjectCard({ project, index }) {
                             initial={{ width: 0 }}
                             animate={{ width: `${project.progress}%` }}
                             transition={{ delay: index * 0.1 + 0.3, duration: 0.8 }}
-                            className={`h-full rounded-full ${project.category === 'film' ? 'bg-[#7e57c2]' :
-                                project.category === 'tv' ? 'bg-[#7e57c2]' :
-                                    project.category === 'commercial' ? 'bg-[#9575cd]' :
-                                        'bg-[#b39ddb]'
+                            className={`h-full rounded-full ${project.category === 'film' ? 'bg-[#9333ea]' :
+                                project.category === 'tv' ? 'bg-[#9333ea]' :
+                                    project.category === 'commercial' ? 'bg-[#a855f7]' :
+                                        'bg-[#c084fc]'
                                 }`}
                         />
                     </div>
@@ -107,19 +107,19 @@ function ProjectCard({ project, index }) {
                 {/* Stats Row */}
                 <div className="grid grid-cols-3 gap-3">
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Users className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
+                        <Users className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.teamSize}
                         </p>
                     </div>
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Calendar className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
+                        <Calendar className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.startDate.split('/')[1]}/{project.startDate.split('/')[2]}
                         </p>
                     </div>
                     <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Award className="w-4 h-4 mx-auto mb-1 text-[#7e57c2] dark:text-gray-400" />
+                        <Award className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
                         <p className="text-xs font-medium text-gray-900 dark:text-white">
                             {project.budget}
                         </p>
@@ -156,6 +156,10 @@ function ProjectCard({ project, index }) {
 }
 
 export default ProjectCard
+
+
+
+
 
 
 

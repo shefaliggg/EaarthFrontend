@@ -83,7 +83,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
   return (
     <div className="space-y-4">
       {/* Add Agent */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <UserPlus className="w-5 h-5 text-primary-foreground" />
@@ -105,7 +105,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
                 value={agentEmail}
                 onChange={(e) => setAgentEmail(e.target.value)}
                 placeholder="AGENT@EXAMPLE.COM"
-                className="w-full pl-10 pr-4 py-2 rounded-3xl border-2 border-input bg-input text-foreground placeholder-muted-foreground font-bold transition-all focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-3xl border shadow-md-2 border-input bg-input text-foreground placeholder-muted-foreground font-bold transition-all focus:border-primary focus:ring-2 focus:ring-ring/30 outline-none"
               />
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function AgentAccessSettings({ isDarkMode }) {
       </div>
 
       {/* Current Agents with Access */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Users className="w-5 h-5 text-primary-foreground" />
@@ -277,6 +277,10 @@ export default function AgentAccessSettings({ isDarkMode }) {
     </div>
   );
 }
+
+
+
+
 
 
 

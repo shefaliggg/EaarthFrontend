@@ -57,12 +57,12 @@ const SubItem = React.memo(function SubItem({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition-all text-sm ${isSubActive ? `bg-[#f3e5f5] text-[#7e57c2]` : 'text-gray-600 hover:bg-gray-50 hover:text-gray-700 dark:text-white dark:hover:bg-gray-800 dark:hover:text-white'}`}
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition-all text-sm ${isSubActive ? `bg-[#f3e5f5] text-[#9333ea]` : 'text-gray-600 hover:bg-gray-50 hover:text-gray-700 dark:text-white dark:hover:bg-gray-800 dark:hover:text-white'}`}
         style={{ paddingLeft: `${1 + depth * 0.5}rem` }}
         aria-expanded={hasNested ? isSubExpanded : undefined}
         aria-current={isSubActive ? 'page' : undefined}
       >
-        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-[#7e57c2]' : 'bg-gray-400 dark:bg-gray-600'}`} />
+        <div className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-[#9333ea]' : 'bg-gray-400 dark:bg-gray-600'}`} />
         <span className="font-semibold flex-1 text-left">{subItem.label}</span>
         {hasNested && <NavChevron isOpen={isSubExpanded} size={12} />}
       </motion.button>
@@ -148,10 +148,10 @@ export default function Sidebar({ userRole }) {
   return (
     <>
       {!isCollapsed && (
-        <div className="fixed inset-0 bg-[#ede7f6]/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsCollapsed(true)} />
+        <div className="fixed inset-0 bg-[#faf5ff]/20 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsCollapsed(true)} />
       )}
       <aside
-        className={`sticky left-0 top-0 h-screen z-50 bg-white dark:bg-background shadow-md transition-all duration-300`}
+        className={`sticky left-0 top-0 h-screen z-50 bg-white dark:bg-background transition-all duration-300`}
         style={{ width: isCollapsed ? '80px' : '280px' }}
         aria-label="Main sidebar"
       >
@@ -162,11 +162,11 @@ export default function Sidebar({ userRole }) {
                 {!isCollapsed ? (
                   <img src={eaarthLogo} alt="Eaarth Studios" className="w-26 h-auto object-contain" />
                 ) : (
-                  <div className="w-10 h-10 rounded-2xl bg-[#7e57c2] flex items-center justify-center shadow-lg dark:shadow-shadow"><Sparkles className="w-5 h-5 text-white" /></div>
+                  <div className="w-10 h-10 rounded-2xl bg-[#9333ea] flex items-center justify-center"><Sparkles className="w-5 h-5 text-white" /></div>
                 )}
               </Link>
 
-              <button onClick={() => setIsCollapsed((s) => !s)} className="p-2 rounded-xl transition-all hover:bg-[#d1c4e9]/50 text-[#7e57c2] dark:hover:bg-gray-800 dark:text-gray-400" aria-pressed={!isCollapsed}>
+              <button onClick={() => setIsCollapsed((s) => !s)} className="p-2 rounded-xl transition-all hover:bg-[#e9d5ff]/50 text-[#9333ea] dark:hover:bg-gray-800 dark:text-gray-400" aria-pressed={!isCollapsed}>
                 {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
               </button>
             </div>
@@ -199,11 +199,11 @@ export default function Sidebar({ userRole }) {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onMainClick}
-                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all ${isActive ? 'bg-[#f3e5f5] text-[#7e57c2]' : 'text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800'}`}
+                    className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all ${isActive ? 'bg-[#f3e5f5] text-[#9333ea]' : 'text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800'}`}
                     aria-expanded={hasSubItems ? isExpanded : undefined}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${isActive ? 'text-[#7e57c2]' : ''}`} />
+                    <Icon className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${isActive ? 'text-[#9333ea]' : ''}`} />
                     {!isCollapsed && (
                       <>
                         <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
@@ -249,8 +249,8 @@ export default function Sidebar({ userRole }) {
 
             <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
               <div className="relative flex-1">
-                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => setShowUserMenu((s) => !s)} className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center gap-3 p-2 rounded-xl text-foreground border shadow transition-all`} aria-expanded={showUserMenu}>
-                  <div className="w-10 h-10 rounded-full bg-[#7e57c2] flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
+                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => setShowUserMenu((s) => !s)} className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center gap-3 p-2 rounded-xl text-foreground border transition-all`} aria-expanded={showUserMenu}>
+                  <div className="w-10 h-10 rounded-full bg-[#9333ea] flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
                   {!isCollapsed && (
                     <div className='leading-4 flex flex-col items-start'>
                       <p className='font-medium text-sm'>{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</p>
@@ -260,10 +260,10 @@ export default function Sidebar({ userRole }) {
                 </motion.button>
 
                 {showUserMenu && (
-                  <div className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl shadow-lg border overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`} style={{ minWidth: isCollapsed ? '200px' : 'auto' }}>
+                  <div className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl border shadow-md overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`} style={{ minWidth: isCollapsed ? '200px' : 'auto' }}>
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ede7f6]0 to-[#ede7f6]0 flex items-center justify-center flex-shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#faf5ff]0 to-[#faf5ff]0 flex items-center justify-center flex-shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate text-gray-900 dark:text-white">{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</div>
                           <div className="text-xs truncate text-gray-600 dark:text-gray-400">{userRole === 'master-admin' ? 'MASTER ADMIN' : userRole === 'studio-admin' ? 'STUDIO ADMIN' : userRole === 'agency-admin' ? 'AGENCY ADMIN' : 'CREW MEMBER'}</div>
@@ -272,10 +272,10 @@ export default function Sidebar({ userRole }) {
                     </div>
 
                     <div className="p-2">
-                      <button onClick={() => { requestAnimationFrame(() => navigate('/profile')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#ede7f6] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><User className="w-5 h-5" /><span className="font-medium text-sm">MY PROFILE</span></button>
-                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/documents')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#ede7f6] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><FileText className="w-5 h-5" /><span className="font-medium text-sm">DOCUMENTS</span></button>
-                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/calendar')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#ede7f6] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Calendar className="w-5 h-5" /><span className="font-medium text-sm">CALENDAR</span></button>
-                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/settings')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#ede7f6] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Settings className="w-5 h-5" /><span className="font-medium text-sm">SETTINGS</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('/profile')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><User className="w-5 h-5" /><span className="font-medium text-sm">MY PROFILE</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/documents')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><FileText className="w-5 h-5" /><span className="font-medium text-sm">DOCUMENTS</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/calendar')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Calendar className="w-5 h-5" /><span className="font-medium text-sm">CALENDAR</span></button>
+                      <button onClick={() => { requestAnimationFrame(() => navigate('profile/settings')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><Settings className="w-5 h-5" /><span className="font-medium text-sm">SETTINGS</span></button>
                     </div>
                   </div>
                 )}
@@ -291,6 +291,10 @@ export default function Sidebar({ userRole }) {
     </>
   );
 }
+
+
+
+
 
 
 

@@ -12,7 +12,7 @@ function ProjectActionTable({ files, selectedItems, toggleSelect }) {
         // onClick={() => navigate(convertTitleToUrl(feature.label))}
         >
 
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border shadow-md border-gray-200 overflow-hidden">
                 <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
@@ -29,7 +29,7 @@ function ProjectActionTable({ files, selectedItems, toggleSelect }) {
                             return (
                                 <tr
                                     key={file.id}
-                                    className={`border-b border-gray-100 hover:bg-[#ede7f6] transition-colors ${selectedItems.includes(file.id) ? 'bg-[#ede7f6]' : ''
+                                    className={`border-b border-gray-100 hover:bg-[#faf5ff] transition-colors ${selectedItems.includes(file.id) ? 'bg-[#faf5ff]' : ''
                                         }`}
                                 >
                                     <td className="px-4 py-3">
@@ -43,7 +43,7 @@ function ProjectActionTable({ files, selectedItems, toggleSelect }) {
                                     <td className="px-6 py-4 cursor-pointer" onClick={() => navigate(convertTitleToUrl(file.name))}>
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 flex-shrink-0">
-                                                <CurrentIcon className="w-6 h-6 text-[#7e57c2]" />
+                                                <CurrentIcon className="w-6 h-6 text-[#9333ea]" />
                                             </div>
                                             <div>
                                                 <div className="font-medium text-gray-900">{file.name}</div>
@@ -83,6 +83,10 @@ function ProjectActionTable({ files, selectedItems, toggleSelect }) {
 }
 
 export default ProjectActionTable
+
+
+
+
 
 
 

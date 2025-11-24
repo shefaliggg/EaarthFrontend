@@ -41,7 +41,7 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
   return (
     <div className="space-y-4">
       {/* Profile Visibility */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Users className="w-5 h-5 text-primary-foreground" />
@@ -71,7 +71,7 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Contact Information */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Shield className="w-5 h-5 text-primary-foreground" />
@@ -100,7 +100,7 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Profile Discoverability */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Eye className="w-5 h-5 text-primary-foreground" />
@@ -127,7 +127,7 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
       </div>
 
       {/* Data Sharing */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Lock className="w-5 h-5 text-primary-foreground" />
@@ -149,6 +149,10 @@ export default function PrivacySettings({ profile, setProfile, isEditing, isDark
     </div>
   );
 }
+
+
+
+
 
 
 

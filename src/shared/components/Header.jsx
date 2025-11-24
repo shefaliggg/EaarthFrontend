@@ -37,7 +37,7 @@ export default function Header() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="SEARCH ANYTHING..."
-                                className="w-full pl-10 pr-4 py-1.5 rounded-xl border outline-none transition-all
+                                className="w-full pl-10 pr-4 py-1.5 rounded-xl border shadow-md outline-none transition-all
                          bg-gray-50 text-gray-900 placeholder-gray-400 focus:border-gray-300
                          dark:bg-slate-950 dark:text-white dark:placeholder-gray-500"
                             />
@@ -59,7 +59,7 @@ export default function Header() {
                         >
                             <Bell className="w-5 h-5" />
                             {notificationCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#7e57c2] text-white text-xs font-medium rounded-full flex items-center justify-center">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#9333ea] text-white text-xs font-medium rounded-full flex items-center justify-center">
                                     {notificationCount}
                                 </span>
                             )}
@@ -76,7 +76,7 @@ export default function Header() {
                         >
                             <MessageSquare className="w-5 h-5" />
                             {messageCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#7e57c2] text-white text-xs font-medium rounded-full flex items-center justify-center">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#9333ea] text-white text-xs font-medium rounded-full flex items-center justify-center">
                                     {messageCount}
                                 </span>
                             )}
@@ -101,6 +101,10 @@ export default function Header() {
         </>
     );
 }
+
+
+
+
 
 
 

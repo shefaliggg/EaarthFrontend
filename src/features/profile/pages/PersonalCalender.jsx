@@ -181,15 +181,19 @@ export default function PersonalCalendar({ isDarkMode = false }) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Calendar className="w-6 h-6" />
-            PERSONAL CALENDAR
-          </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              PERSONAL CALENDAR
+            </h1>
+          </div>
         </div>
         <button
           onClick={() => setIsAddEventOpen(true)}
-          className="px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-all shadow-lg flex items-center gap-2"
+          className="px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-all flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           ADD EVENT
@@ -197,12 +201,12 @@ export default function PersonalCalendar({ isDarkMode = false }) {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
       {/* View Filters */}
-      <div className="rounded-lg border border-border bg-card p-6 shadow-sm transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'day', label: 'DAY', icon: Calendar },
@@ -217,7 +221,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
                 onClick={() => setView(option.value)}
                 className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
                   view === option.value
-                    ? 'bg-primary text-primary-foreground shadow-md'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
@@ -230,7 +234,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-5 transition-colors duration-400">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('prev')}
@@ -257,7 +261,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Month View */}
       {view === 'month' && (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
+        <div className="rounded-lg border shadow-md border-border bg-card p-4 transition-colors duration-400">
           <div className="grid grid-cols-7 gap-2 mb-2">
             {dayNames.map(day => (
               <div
@@ -277,7 +281,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Week View */}
       {view === 'week' && (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm overflow-x-auto transition-colors duration-400">
+        <div className="rounded-lg border shadow-md border-border bg-card p-4 overflow-x-auto transition-colors duration-400">
           <div className="grid grid-cols-8 gap-2 min-w-[1000px]">
             {/* Time column */}
             <div className="space-y-2">
@@ -305,7 +309,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
                   {hours.map(hour => (
                     <div
                       key={hour}
-                      className="h-14 rounded-lg border border-border hover:bg-primary/5 cursor-pointer transition-colors relative"
+                      className="h-14 rounded-lg border shadow-md border-border hover:bg-primary/5 cursor-pointer transition-colors relative"
                     >
                       {hour === 9 && day.getDate() === new Date().getDate() && (
                         <div className="absolute inset-1 p-1 bg-primary text-primary-foreground text-[10px] rounded flex flex-col justify-center">
@@ -328,7 +332,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
 
       {/* Day View */}
       {view === 'day' && (
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
+        <div className="rounded-lg border shadow-md border-border bg-card p-4 transition-colors duration-400">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Time slots */}
             <div className="space-y-2">
@@ -422,7 +426,7 @@ export default function PersonalCalendar({ isDarkMode = false }) {
             const { daysInMonth: monthDays, startingDayOfWeek: monthStart } = getDaysInMonth(monthDate);
             
             return (
-              <div key={monthName} className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors duration-400">
+              <div key={monthName} className="rounded-lg border shadow-md border-border bg-card p-4 transition-colors duration-400">
                 <h4 className="text-center font-bold mb-3 text-foreground text-xs">
                   {monthName}
                 </h4>
@@ -469,6 +473,10 @@ export default function PersonalCalendar({ isDarkMode = false }) {
     </div>
   );
 }
+
+
+
+
 
 
 

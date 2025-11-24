@@ -19,16 +19,21 @@ export default function ProfileSummary({
     <div className="space-y-4">
       {/* Header with Title and Buttons - Outside Card */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            MY PROFILE
-          </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+            <User className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              MY PROFILE
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowQRModal(!showQRModal)}
-            className="px-6 py-3 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium bg-card border-border text-foreground hover:bg-muted"
+            className="px-6 py-3 rounded-lg border shadow-md transition-all flex items-center gap-2 text-sm font-medium bg-card border-border text-foreground hover:bg-muted"
           >
             <QrCode className="w-4 h-4" />
             SHOW QR CODE
@@ -61,7 +66,7 @@ export default function ProfileSummary({
       </div>
 
       {/* Breadcrumbs */}
-      <div className="-mt-3">
+      <div className="-mt-3 ml-[52px]">
         <UrlBreadcrumbs />
       </div>
 
@@ -70,12 +75,12 @@ export default function ProfileSummary({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border p-6 bg-card border-border"
+          className="rounded-lg border shadow-md p-6 bg-card border-border"
         >
           <div className="flex items-start gap-6">
             {/* Left: User Info */}
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg bg-primary">
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-lg bg-primary">
                 <User className="w-7 h-7" />
               </div>
               <div>
@@ -143,17 +148,17 @@ export default function ProfileSummary({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-lg border p-6 bg-card border-border"
+        className="rounded-lg border shadow-md p-6 bg-card border-border"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl shadow-lg bg-primary">
+              <div className="w-20 h-20 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl bg-primary">
                 {profile.firstName[0]}{profile.lastName[0]}
               </div>
               {isVerified && (
-                <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5 shadow-lg">
+                <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
                   <BadgeCheck className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -207,6 +212,10 @@ export default function ProfileSummary({
     </div>
   );
 }
+
+
+
+
 
 
 

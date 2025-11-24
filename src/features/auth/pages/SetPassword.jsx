@@ -42,7 +42,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
   if (success) {
     return (
       <div className="w-full max-w-xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+        <div className="bg-white rounded-2xl p-6 text-center">
           <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
           <h2 className="text-xl font-medium text-gray-900 mb-2">
             Password Set Successfully!
@@ -67,7 +67,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
       </div>
 
       {/* Card */}
-      <div className="w-full bg-white rounded-2xl shadow-md overflow-hidden">
+      <div className="w-full bg-white rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="px-6 md:px-8 py-8 text-center">
           <h2 className="text-2xl md:text-2xl font-medium text-gray-800 mb-2">SET YOUR PASSWORD</h2>
@@ -105,7 +105,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-[#9575cd] focus:border-transparent placeholder:text-gray-400 outline-none 
+                    focus:ring-[#a855f7] focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
                 <button
@@ -132,7 +132,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-[#9575cd] focus:border-transparent placeholder:text-gray-400 outline-none 
+                    focus:ring-[#a855f7] focus:border-transparent placeholder:text-gray-400 outline-none 
                     transition-all disabled:bg-gray-100"
                 />
                 <button
@@ -162,7 +162,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
             <button
               type="submit"
               disabled={loading || !password || !confirm}
-              className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium 
+              className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium 
                 py-3.5 rounded-2xl mt-4 hover:opacity-90 transition-opacity disabled:opacity-50 
                 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -180,7 +180,7 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <button
               onClick={handleBackToLogin}
-              className="text-[#7e57c2] hover:text-[#9575cd] font-medium text-sm transition-colors"
+              className="text-[#9333ea] hover:text-[#a855f7] font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -192,6 +192,10 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 };
 
 export default SetPasswordPage;
+
+
+
+
 
 
 

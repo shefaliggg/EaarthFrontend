@@ -118,13 +118,20 @@ function ProjectNoticeBoard() {
       {/* TITLE WRAPPER — Replace Later */}
       <div className="space-y-1">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">NOTICE BOARD</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+              <Bell className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">NOTICE BOARD</h1>
+            </div>
           </div>
         </div>
 
         {/* Breadcrumbs */}
-        <UrlBreadcrumbs />
+        <div className="ml-[52px]">
+          <UrlBreadcrumbs />
+        </div>
       </div>
 
       {/* SEARCH CARD */}
@@ -159,14 +166,14 @@ function ProjectNoticeBoard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + index * 0.05 }}
-              className="bg-background border shadow dark:shadow-shadow rounded-2xl p-5"
+              className="bg-background border rounded-2xl p-5"
             >
               <div className="space-y-4">
                 {/* HEADER */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
                     {notice.isPinned && (
-                      <Pin className="w-5 h-5 text-[#7e57c2] fill-[#7e57c2] flex-shrink-0 mt-1" />
+                      <Pin className="w-5 h-5 text-[#9333ea] fill-[#9333ea] flex-shrink-0 mt-1" />
                     )}
 
                     <div className="flex-1">
@@ -195,7 +202,7 @@ function ProjectNoticeBoard() {
                     <button
                       onClick={() => handlePin(notice.id)}
                       className={`p-2 rounded-lg transition ${notice.isPinned
-                        ? 'bg-[#ede7f6] text-[#7e57c2]'
+                        ? 'bg-[#faf5ff] text-[#9333ea]'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                         }`}
                     >
@@ -288,6 +295,10 @@ function ProjectNoticeBoard() {
 }
 
 export default ProjectNoticeBoard;
+
+
+
+
 
 
 

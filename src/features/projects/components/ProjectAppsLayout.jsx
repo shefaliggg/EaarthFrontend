@@ -58,14 +58,14 @@ function ProjectAppsLayout() {
             </div>
 
             {/* Search Bar */}
-            <div className="flex items-center gap-3 pl-4 pr-3 py-2 bg-background dark:bg-slate-900 rounded-3xl border shadow-md dark:shadow-shadow">
+            <div className="flex items-center gap-3 pl-4 pr-3 py-2 bg-background dark:bg-slate-900 rounded-3xl border shadow-md">
                 <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <input
                     type="text"
                     placeholder="SEARCH APPS..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-2xl border-0 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none ring-0"
+                    className="w-full rounded-2xl border shadow-md-0 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none ring-0"
                 />
 
                 {searchQuery && (
@@ -131,6 +131,10 @@ function ProjectAppsLayout() {
 }
 
 export default ProjectAppsLayout
+
+
+
+
 
 
 

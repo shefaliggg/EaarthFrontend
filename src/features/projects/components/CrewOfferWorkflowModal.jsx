@@ -60,7 +60,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
   };
 
   return (
-    <div className={`p-6 rounded-xl border space-y-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`}>
+    <div className={`p-6 rounded-xl border shadow-md space-y-6 bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`}>
 
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -78,7 +78,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
 
         <div className="text-right text-sm text-gray-600 dark:text-gray-400">
           <div className="font-bold mb-1">CURRENT STAGE</div>
-          <div className="px-4 py-2 rounded-lg font-bold bg-[#ede7f6] text-[#7e57c2] dark:bg-[#7e57c2]/30 dark:text-[#b39ddb]">
+          <div className="px-4 py-2 rounded-lg font-bold bg-[#faf5ff] text-[#9333ea] dark:bg-[#9333ea]/30 dark:text-[#c084fc]">
             {offer.currentStage}
           </div>
           <div className="mt-2 text-xs">
@@ -93,14 +93,14 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
           <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
             OVERALL PROGRESS
           </span>
-          <span className="text-sm font-bold text-[#7e57c2] dark:text-[#b39ddb]">
+          <span className="text-sm font-bold text-[#9333ea] dark:text-[#c084fc]">
             {Math.round(getProgressPercentage())}%
           </span>
         </div>
 
         <div className="w-full h-3 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
           <div
-            className="h-full bg-gradient-to-r from-green-500 via-[#9575cd] to-[#7e57c2] transition-all duration-500"
+            className="h-full bg-gradient-to-r from-green-500 via-[#a855f7] to-[#9333ea] transition-all duration-500"
             style={{ width: `${getProgressPercentage()}%` }}
           />
         </div>
@@ -153,12 +153,12 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                   <div className={`flex-1 pb-6 ${index === stages.length - 1 ? 'pb-0' : ''}`}>
 
                     <div className={`
-                      p-4 rounded-lg border
+                      p-4 rounded-lg border shadow-md
                       ${stageData.status === 'APPROVED'
                         ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700'
                         : ''}
                       ${stageData.status === 'PENDING'
-                        ? 'bg-[#ede7f6] border-gray-100 dark:bg-[#7e57c2]/20 dark:border-gray-200'
+                        ? 'bg-[#faf5ff] border-gray-100 dark:bg-[#9333ea]/20 dark:border-gray-200'
                         : ''}
                       ${stageData.status === 'REJECTED'
                         ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
@@ -181,7 +181,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                             ${stageData.status === 'APPROVED'
                               ? 'text-green-600'
                               : stageData.status === 'PENDING'
-                              ? 'text-[#7e57c2]'
+                              ? 'text-[#9333ea]'
                               : stageData.status === 'REJECTED'
                               ? 'text-red-600'
                               : 'text-gray-400 dark:text-gray-500'
@@ -203,11 +203,11 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
                           {stageData.status === 'PENDING' && (
                             <div className="p-3 rounded-lg bg-white dark:bg-gray-900/50">
                               <div className="flex items-center gap-2 mb-1">
-                                <User className="w-4 h-4 text-[#7e57c2]" />
+                                <User className="w-4 h-4 text-[#9333ea]" />
                                 <span className="font-bold">ASSIGNED TO:</span>
                               </div>
 
-                              <div className="ml-6 text-[#7e57c2] dark:text-[#7e57c2]">
+                              <div className="ml-6 text-[#9333ea] dark:text-[#9333ea]">
                                 {stageData.approver || 'PENDING ASSIGNMENT'}
                               </div>
 
@@ -294,7 +294,7 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
 
       {/* Info for User */}
       {isUserView && (
-        <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
+        <div className="p-4 rounded-lg border shadow-md bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
             <div className="text-sm text-gray-700 dark:text-gray-300">
@@ -311,6 +311,10 @@ export function CrewOfferWorkflowModal({ offer, isUserView = false }) {
     </div>
   );
 }
+
+
+
+
 
 
 

@@ -163,7 +163,7 @@ export default function SettingsDashboard() {
         />
 
         {/* TAB CONTENTS */}
-         <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+         <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
           {activeTab === 'account' && (
             <AccountSettings
               profile={profile}
@@ -235,6 +235,10 @@ export default function SettingsDashboard() {
     </div>
   );
 }
+
+
+
+
 
 
 

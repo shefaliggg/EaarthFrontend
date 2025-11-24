@@ -7,7 +7,7 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
   const [isVATRegistered, setIsVATRegistered] = useState(true);
 
   return (
-    <div className={`rounded-xl border p-6 shadow-sm ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
+    <div className={`rounded-xl border shadow-md p-6 ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
       <div className="space-y-6">
         {/* Personal Tax & NI */}
         <div>
@@ -524,6 +524,10 @@ export default function FinanceDetails({ profile, setProfile, isEditing, isDarkM
     </div>
   );
 }
+
+
+
+
 
 
 

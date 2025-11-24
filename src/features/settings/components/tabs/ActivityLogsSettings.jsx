@@ -133,7 +133,7 @@ export default function ActivityLogsSettings({ isDarkMode }) {
   return (
     <div className="space-y-4">
       {/* Filter and Export */}
-      <div className="rounded-lg border border-border bg-card p-4 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-4 transition-colors duration-400">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-muted-foreground" />
@@ -161,7 +161,7 @@ export default function ActivityLogsSettings({ isDarkMode }) {
       </div>
 
       {/* Activity Timeline */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Activity className="w-5 h-5 text-primary-foreground" />
@@ -232,6 +232,10 @@ export default function ActivityLogsSettings({ isDarkMode }) {
     </div>
   );
 }
+
+
+
+
 
 
 

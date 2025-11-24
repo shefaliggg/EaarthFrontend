@@ -41,7 +41,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
   return (
     <div className="space-y-4">
       {/* Notification Channels */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Bell className="w-5 h-5 text-primary-foreground" />
@@ -74,7 +74,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Document & Contract Notifications */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <FileText className="w-5 h-5 text-primary-foreground" />
@@ -127,7 +127,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Project Notifications */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Calendar className="w-5 h-5 text-primary-foreground" />
@@ -160,7 +160,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Tasks & Timesheets */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <CheckSquare className="w-5 h-5 text-primary-foreground" />
@@ -211,7 +211,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Approvals & Requests */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Clock className="w-5 h-5 text-primary-foreground" />
@@ -244,7 +244,7 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
       </div>
 
       {/* Chat & Messages */}
-      <div className="rounded-lg border border-border bg-card p-6 transition-colors duration-400">
+      <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-primary-foreground" />
@@ -278,6 +278,10 @@ export default function NotificationsSettings({ profile, setProfile, isEditing, 
     </div>
   );
 }
+
+
+
+
 
 
 

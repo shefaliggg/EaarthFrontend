@@ -64,10 +64,10 @@ export function ChatPanel({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-lg z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-[#ede7f6] p-6 border-b border-gray-200">
+            <div className="bg-[#faf5ff] p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -131,8 +131,8 @@ export function ChatPanel({ isOpen, onClose }) {
                   className={`flex gap-3 ${message.isOwn ? 'flex-row-reverse' : ''}`}
                 >
                   {!message.isOwn && (
-                    <div className="w-8 h-8 bg-[#ede7f6] border border-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-[#7e57c2]">
+                    <div className="w-8 h-8 bg-[#faf5ff] border border-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-medium text-[#9333ea]">
                         {message.sender.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
@@ -143,8 +143,8 @@ export function ChatPanel({ isOpen, onClose }) {
                     )}
                     <div className={`px-4 py-2.5 rounded-2xl ${
                       message.isOwn
-                        ? 'bg-[#7e57c2] text-white rounded-tr-sm'
-                        : 'bg-white text-gray-900 rounded-tl-sm shadow-sm border border-gray-200'
+                        ? 'bg-[#9333ea] text-white rounded-tr-sm'
+                        : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200'
                     }`}>
                       <p className="text-sm">{message.message}</p>
                     </div>
@@ -183,7 +183,7 @@ export function ChatPanel({ isOpen, onClose }) {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim()}
-                  className="w-12 h-12 bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-12 h-12 bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-5 h-5" />
                 </button>
@@ -195,6 +195,10 @@ export function ChatPanel({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
+
+
+
+
 
 
 

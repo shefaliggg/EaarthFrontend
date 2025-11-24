@@ -18,11 +18,11 @@ export function LivePhotoCapture() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-md p-6 md:p-6 border border-gray-100 w-full">
+        <div className="bg-white rounded-2xl p-6 md:p-6 border border-gray-100 w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-[#ede7f6] border border-gray-200 rounded-2xl flex-shrink-0">
-              <Camera className="w-6 md:w-7 h-6 md:h-7 text-[#7e57c2]" />
+            <div className="p-4 bg-[#faf5ff] border border-gray-200 rounded-2xl flex-shrink-0">
+              <Camera className="w-6 md:w-7 h-6 md:h-7 text-[#9333ea]" />
             </div>
             <div>
               <h2 className="text-xl md:text-xl font-medium text-gray-900">TAKE LIVE PHOTO</h2>
@@ -38,7 +38,7 @@ export function LivePhotoCapture() {
                 <p className="text-sm text-blue-900 font-medium mb-2">PHOTO GUIDELINES:</p>
                 <ul className="text-xs md:text-sm text-blue-800 space-y-1">
                   <li>• Face the camera directly</li>
-                  <li>• Ensure good lighting (avoid shadows)</li>
+                  <li>• Ensure good lighting (avoids)</li>
                   <li>• Remove glasses, hats, or face coverings</li>
                   <li>• Look directly at the camera</li>
                   <li>• Maintain a neutral expression</li>
@@ -63,7 +63,7 @@ export function LivePhotoCapture() {
           {/* Action Buttons */}
           <div className="space-y-4">
             {/* Capture */}
-            <button className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2">
+            <button className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2">
               <Camera className="w-5 h-5" />
               CAPTURE PHOTO
             </button>
@@ -75,7 +75,7 @@ export function LivePhotoCapture() {
             </button>
 
             {/* Continue */}
-            <button className="w-full bg-[#7e57c2] hover:bg-[#7e57c2] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2">
+            <button className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2">
               CONTINUE TO VERIFICATION
               <ArrowRight className="w-5 h-5" />
             </button>
@@ -90,6 +90,10 @@ export function LivePhotoCapture() {
     </div>
   );
 }
+
+
+
+
 
 
 

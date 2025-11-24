@@ -7,7 +7,7 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
   const [sendEmailsToCrewMember, setSendEmailsToCrewMember] = useState(true);
 
   return (
-    <div className="rounded-xl border p-6 shadow-md bg-card border-border">
+    <div className="rounded-xl border shadow-md p-6 bg-card border-border">
       <div className="space-y-6">
         {/* Home Address Section */}
         <div>
@@ -359,6 +359,10 @@ export default function ContactDetails({ profile, setProfile, isEditing, isDarkM
     </div>
   );
 }
+
+
+
+
 
 
 

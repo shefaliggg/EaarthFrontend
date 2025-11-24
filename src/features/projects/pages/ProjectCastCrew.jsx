@@ -45,19 +45,19 @@ function ProjectCastCrew() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               placeholder="SEARCH CAST & CREW..."
-              className="w-full pl-10 px-3 py-2 rounded-lg border bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-200 outline-none focus:ring-2 focus:ring-[#9575cd]"
+              className="w-full pl-10 px-3 py-2 rounded-lg border shadow-md bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-200 outline-none focus:ring-2 focus:ring-[#a855f7]"
             />
           </div>
 
           {/* Filter Button */}
-          <button className="p-2.5 rounded-lg border-2 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:border-[#7e57c2]">
+          <button className="p-2.5 rounded-lg border-2 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:border-[#9333ea]">
             <Filter className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* CAST SECTION */}
-      <div className="bg-background rounded-xl p-4 shadow border">
+      <div className="bg-background rounded-xl p-4 border">
         <h2 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">CAST</h2>
 
         <div className="overflow-x-auto">
@@ -74,7 +74,7 @@ function ProjectCastCrew() {
 
             <tbody>
               {castMembers.map((cast, idx) => (
-                <tr key={idx} className="not-last:border-b hover:bg-[#ede7f6]/50 dark:hover:bg-gray-900">
+                <tr key={idx} className="not-last:border-b hover:bg-[#faf5ff]/50 dark:hover:bg-gray-900">
 
                   <td className="px-4 py-4 font-bold text-gray-900 dark:text-white">{cast.name}</td>
                   <td className="px-4 py-4 text-gray-700 dark:text-gray-300">{cast.role}</td>
@@ -92,7 +92,7 @@ function ProjectCastCrew() {
 
                   {/* Phone */}
                   <td className="px-4 py-4">
-                    <a href={`tel:${cast.contact}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#7e57c2]">
+                    <a href={`tel:${cast.contact}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#9333ea]">
                       <Phone className="w-4 h-4" />
                       {cast.contact}
                     </a>
@@ -121,7 +121,7 @@ function ProjectCastCrew() {
       </div>
 
       {/* CREW SECTION */}
-      <div className="bg-background rounded-xl p-4 shadow border">
+      <div className="bg-background rounded-xl p-4 border">
 
         <h2 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">CREW</h2>
 
@@ -139,7 +139,7 @@ function ProjectCastCrew() {
 
             <tbody>
               {crewMembers.map((crew, idx) => (
-                <tr key={idx} className="not-last:border-b hover:bg-[#ede7f6]/50 dark:hover:bg-gray-900">
+                <tr key={idx} className="not-last:border-b hover:bg-[#faf5ff]/50 dark:hover:bg-gray-900">
 
                   <td className="px-4 py-4 font-bold text-gray-900 dark:text-white">{crew.name}</td>
                   <td className="px-4 py-4 text-gray-700 dark:text-gray-300">{crew.role}</td>
@@ -157,7 +157,7 @@ function ProjectCastCrew() {
 
                   {/* Email */}
                   <td className="px-4 py-4">
-                    <a href={`mailto:{crew.email}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#7e57c2]">
+                    <a href={`mailto:{crew.email}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#9333ea]">
                       <Mail className="w-4 h-4" />
                       {crew.email}
                     </a>
@@ -165,7 +165,7 @@ function ProjectCastCrew() {
 
                   {/* Phone */}
                   <td className="px-4 py-4">
-                    <a href={`tel:${crew.contact}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#7e57c2]">
+                    <a href={`tel:${crew.contact}`} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-[#9333ea]">
                       <Phone className="w-4 h-4" />
                       {crew.contact}
                     </a>
@@ -198,5 +198,9 @@ function ProjectCastCrew() {
 }
 
 export default ProjectCastCrew
+
+
+
+
 
 

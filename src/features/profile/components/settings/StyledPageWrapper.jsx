@@ -71,7 +71,7 @@ export function StyledPageWrapper({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   {Icon && (
-                    <div className="w-11 h-11 bg-primary rounded-lg flex items-center justify-center shadow-md">
+                    <div className="w-11 h-11 bg-primary rounded-lg flex items-center justify-center">
                       <Icon className="w-5 h-5 text-primary-foreground" />
                     </div>
                   )}
@@ -118,7 +118,7 @@ export function StyledCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
-      className={`rounded-lg border border-border shadow-md overflow-hidden bg-card ${className}`}
+      className={`rounded-lg border shadow-md border-border overflow-hidden bg-card ${className}`}
     >
       {/* Card Header */}
       {(title || actions) && (
@@ -126,7 +126,7 @@ export function StyledCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {Icon && (
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary shadow-sm">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary">
                   <Icon className="w-4 h-4 text-primary-foreground" />
                 </div>
               )}
@@ -169,7 +169,7 @@ export function StyledFilterPills({ options, value, onChange }) {
             onClick={() => onChange(option.value)}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 border flex items-center gap-2 ${
               isActive
-                ? 'bg-primary text-primary-foreground border-transparent shadow-md'
+                ? 'bg-primary text-primary-foreground border-transparent'
                 : 'bg-card border-border text-foreground hover:border-primary hover:bg-muted/50'
             }`}
             whileHover={{ scale: 1.02 }}
@@ -241,13 +241,13 @@ export function StyledButton({
   const getVariantClasses = () => {
     switch (variant) {
       case 'primary':
-        return 'bg-primary hover:opacity-90 text-primary-foreground shadow-md hover:shadow-lg';
+        return 'bg-primary hover:opacity-90 text-primary-foreground hover:border-gray-300';
       case 'secondary':
-        return 'bg-secondary text-secondary-foreground hover:opacity-90 shadow-sm';
+        return 'bg-secondary text-secondary-foreground hover:opacity-90';
       case 'outline':
-        return 'bg-card border border-border text-foreground hover:border-primary hover:bg-muted/50 shadow-sm';
+        return 'bg-card border border-border text-foreground hover:border-primary hover:bg-muted/50';
       case 'danger':
-        return 'bg-destructive text-destructive-foreground hover:opacity-90 shadow-md hover:shadow-lg';
+        return 'bg-destructive text-destructive-foreground hover:opacity-90 hover:border-gray-300';
       default:
         return '';
     }
@@ -280,7 +280,7 @@ export function SidebarNavItem({
       onClick={onClick}
       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
         active
-          ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
+          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
           : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
       }`}
       whileHover={{ scale: 1.01 }}
@@ -306,7 +306,7 @@ export function SidebarNavItem({
 // Table Component
 export function StyledTable({ headers, children, className = '' }) {
   return (
-    <div className={`overflow-x-auto rounded-lg border border-border ${className}`}>
+    <div className={`overflow-x-auto rounded-lg border shadow-md border-border ${className}`}>
       <table className="w-full">
         <thead className="bg-muted/30 border-b border-border">
           <tr>
@@ -397,7 +397,7 @@ export function StyledAlert({ children, variant = 'info', icon: Icon, className 
   };
 
   return (
-    <div className={`rounded-lg border p-4 ${getVariantClasses()} ${className}`}>
+    <div className={`rounded-lg border shadow-md p-4 ${getVariantClasses()} ${className}`}>
       <div className="flex items-start gap-3">
         {Icon && (
           <Icon className="w-5 h-5 flex-shrink-0 mt-0.5 text-current" />
@@ -443,6 +443,10 @@ export function StyledTextarea({
     />
   );
 }
+
+
+
+
 
 
 

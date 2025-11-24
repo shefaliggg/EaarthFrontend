@@ -4,7 +4,7 @@ import React from 'react'
 function CrewOfferSendSuccessModal({ formData }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="rounded-2xl p-8 max-w-md w-full shadow-2xl bg-white dark:bg-gray-800">
+      <div className="rounded-2xl p-8 max-w-md w-full bg-white dark:bg-gray-800">
         <div className="text-center">
           <div className="w-20 h-20 mx-auto mb-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
             <Check className="w-12 h-12 text-green-600 dark:text-green-400" />
@@ -15,8 +15,8 @@ function CrewOfferSendSuccessModal({ formData }) {
           </h3>
 
           <div className="space-y-4 mb-6">
-            <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-[#ede7f6] dark:bg-gray-900/30">
-              <Mail className="w-5 h-5 text-[#7e57c2] dark:text-[#b39ddb]" />
+            <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-[#faf5ff] dark:bg-gray-900/30">
+              <Mail className="w-5 h-5 text-[#9333ea] dark:text-[#c084fc]" />
               <div className="text-left flex-1">
                 <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
                   EMAIL SENT
@@ -54,6 +54,10 @@ function CrewOfferSendSuccessModal({ formData }) {
 }
 
 export default CrewOfferSendSuccessModal
+
+
+
+
 
 
 
