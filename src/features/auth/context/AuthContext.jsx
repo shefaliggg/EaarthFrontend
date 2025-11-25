@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     init();
-  }, [location.pathname]);
+  }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();

@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { triggerGlobalLogout } from "./globalLogoutConfig";
 
-export const baseURL = import.meta.env.VITE_API_URL;
+export const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 
 const toastCache = new Map();
 const TOAST_COOLDOWN = 5000;
@@ -42,12 +42,12 @@ axiosConfig.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/refreshtoken")
+      !originalRequest.url.includes("/auth/refreshtoken")
     ) {
       originalRequest._retry = true;
 
       try {
-        await axiosConfig.post("/refreshtoken");
+        await axiosConfig.get("/auth/refreshtoken");
         return axiosConfig(originalRequest);
       } catch (err) {
         console.log("Refresh token failed", err);

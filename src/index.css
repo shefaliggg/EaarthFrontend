@@ -33,7 +33,7 @@
   --destructive-foreground: #ffffff;
 
   --shadow: #15012e;
-  --border: #e5e7eb;
+  --border: #cdd9f1;
   --input: #f3f3f5;
   --ring: oklch(0.708 0 0);
 
@@ -154,7 +154,7 @@ a svg {
   --destructive-foreground: #000000;
 
   --shadow: #15012e;
-  --border: #e5e7eb;
+  --border: #12002b;
   /* --border: var(--lavender-900); */
   --input: #1f1f23;
   --ring: var(--lavender-400);

@@ -6,6 +6,7 @@ import {
 } from '@/shared/components/ui/breadcrumb';
 import { useState } from 'react';
 import { BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
+import path from 'path';
 
 export default function UrlBreadcrumbs() {
     const { pathname } = useLocation();
@@ -50,7 +51,11 @@ export default function UrlBreadcrumbs() {
         };
     });
 
-    const filtered = crumbs.filter(c => c.label && c.label !== '');
+    const filtered = crumbs.filter(c => {
+        if(pathname === '/home' && c.label === 'Home') return false;
+        return c.label && c.label !== '';
+    });
+
 
     return (
         <nav aria-label="Breadcrumb" className="mb-4">

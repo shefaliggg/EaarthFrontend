@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save, Bell, Shield, Eye, Users, Globe, User, Settings } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
 
 // Import tab components
@@ -11,6 +10,7 @@ import { PrivacyTab } from '../components/settings/tabs/PrivacyTab';
 import { SecurityTab } from '../components/settings/tabs/SecurityTab';
 import { AccessTab } from '../components/settings/tabs/AccessTab';
 import { AppearanceTab } from '../components/settings/tabs/AppearanceTab';
+import { toast } from 'sonner';
 
 export default function AccountSettings({ isDarkMode }) {
   const [activeTab, setActiveTab] = useState('account');

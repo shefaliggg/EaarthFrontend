@@ -166,14 +166,20 @@ export default function StudioDashboard({ onNavigate }) {
           {/* Header */}
           <div className="rounded-xl border shadow-md p-6 bg-background">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-[#7c3aed] dark:text-white" />
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-[#7c3aed] dark:text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {studioData.name}
+                    </h1>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {studioData.name}
-                  </h1>
+                {/* Breadcrumbs */}
+                <div className="mt-1 ml-[52px]">
+                  <UrlBreadcrumbs />
                 </div>
               </div>
 
@@ -185,11 +191,6 @@ export default function StudioDashboard({ onNavigate }) {
                 <BarChart3 className="w-5 h-5" />
                 {showQRCode ? 'HIDE STATS' : 'SHOW QUICK STATS'}
               </Button>
-            </div>
-
-            {/* Breadcrumbs */}
-            <div className="mt-1 ml-[52px]">
-              <UrlBreadcrumbs />
             </div>
 
             {showQRCode && (
