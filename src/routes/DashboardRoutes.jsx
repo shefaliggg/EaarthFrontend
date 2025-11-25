@@ -24,8 +24,8 @@ const DashboardRoutes = {
         SettingsRoutes,
         ProfileRoutes,
 
-        { path: 'support', element: <ErrorBoundary><HelpAndSupport /></ErrorBoundary> },
-        { path: '*', element: <ErrorBoundary><NotFound /></ErrorBoundary> },
+        { path: 'support', element: <HelpAndSupport /> },
+        { path: '*', element: <NotFound /> },
     ],
 };
 

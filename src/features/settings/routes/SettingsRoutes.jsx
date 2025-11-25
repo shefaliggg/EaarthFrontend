@@ -9,11 +9,8 @@ const SettingsRoutes = {
   path: "settings",
   children: [
     { index: true, element: <SettingsDashboard /> },
-
-    // Allow tab navigation
     { path: ":tab", element: <SettingsDashboard /> },
-
-    // 404
+    
     { path: "*", element: <NotFound /> },
   ],
 };

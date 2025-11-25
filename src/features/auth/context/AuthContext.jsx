@@ -28,18 +28,20 @@ export const AuthProvider = ({ children }) => {
         setInitialLoading(false);
         return;
       }
-
-      try {
-        const loggedInUser = await authService.getCurrentUser();
-        if (loggedInUser) setUser(loggedInUser);
-      } catch (err) {
-        setUser(null);
-      } finally {
-        setInitialLoading(false);
+      if (!user) {
+      console.log("Fetching current user...");
+        try {
+          const loggedInUser = await authService.getCurrentUser();
+          if (loggedInUser) setUser(loggedInUser);
+        } catch (err) {
+          setUser(null);
+        } finally {
+          setInitialLoading(false);
+        }
       }
     };
     init();
-  }, []);
+  }, [location.pathname, user]);
 
   const logout = useCallback(async () => {
     await authService.logout();

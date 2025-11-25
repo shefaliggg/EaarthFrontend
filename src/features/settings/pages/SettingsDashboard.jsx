@@ -143,8 +143,6 @@ export default function SettingsDashboard() {
 
   return (
     <div className="min-h-screen transition-colors duration-400 ">
-      <Toaster position="top-right" richColors />
-      
       <div className="max-w-7xl mx-auto  space-y-6">
         {/* HEADER + SUMMARY */}
         <SettingsSummary

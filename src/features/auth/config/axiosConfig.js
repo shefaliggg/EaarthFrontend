@@ -2,7 +2,11 @@ import axios from "axios";
 import { toast } from "sonner";
 import { triggerGlobalLogout } from "./globalLogoutConfig";
 
-export const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
+
+export const baseURL = isDevelopment
+  ? import.meta.env.VITE_APP_ENV
+  : import.meta.env.VITE_APP_API_PROD;
 
 const toastCache = new Map();
 const TOAST_COOLDOWN = 5000;
