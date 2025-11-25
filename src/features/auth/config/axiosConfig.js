@@ -5,7 +5,7 @@ import { triggerGlobalLogout } from "./globalLogoutConfig";
 const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
 
 export const baseURL = isDevelopment
-  ? import.meta.env.VITE_APP_ENV
+  ? import.meta.env.VITE_APP_API_DEV
   : import.meta.env.VITE_APP_API_PROD;
 
 const toastCache = new Map();
@@ -56,15 +56,29 @@ axiosConfig.interceptors.response.use(
       } catch (err) {
         console.log("Refresh token failed", err);
         if (err.response?.status === 403) {
-          triggerGlobalLogout();
+          if (isDevelopment) {
+            // DEV MODE BEHAVIOUR
+            showDebouncedToast(
+              "warning",
+              "Dev Mode: Auth Expired",
+              "Token expired, but you are not being logged out in development."
+            );
 
-          showDebouncedToast(
-            "error",
-            "You have Been Logged Out",
-            "Your session has expired. Please log in again."
-          );
+            console.warn(
+              "%c[DEV MODE] Refresh token invalid → Skipped redirect to login",
+              "color: orange; font-weight: bold;"
+            );
+          } else {
+            // PRODUCTION BEHAVIOUR
+            triggerGlobalLogout();
+
+            showDebouncedToast(
+              "error",
+              "You have Been Logged Out",
+              "Your session has expired. Please log in again."
+            );
+          }
         }
-
         return Promise.reject(err);
       }
     }

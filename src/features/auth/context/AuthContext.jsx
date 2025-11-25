@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       if (!user) {
-      console.log("Fetching current user...");
+        console.log("Fetching current user...");
         try {
           const loggedInUser = await authService.getCurrentUser();
           if (loggedInUser) setUser(loggedInUser);
@@ -47,7 +47,9 @@ export const AuthProvider = ({ children }) => {
     await authService.logout();
     setUser(null);
     setTempLoginData(null);
-    navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    if (import.meta.env.VITE_APP_ENV !== "development") {
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    }
   }, [navigate]);
 
   useEffect(() => {
