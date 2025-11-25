@@ -16,7 +16,7 @@ const apiUrlMap = {
 /**
  * Get the correct API base URL based on current environment.
  */
-export function getApiUrl() {
+export default function getApiUrl() {
   const apiUrl =
     apiUrlMap[currentEnv] ||
     import.meta.env.VITE_API_DEV ||

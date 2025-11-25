@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowLeft, Info, Loader } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-// import { useOTPVerification } from '../hooks/useOTPVerification';
-import eaarthLogo from "../../../../src/assets/eaarth.png";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useOTPVerification } from '../hooks/useOTPVerification';
+import { useAuth } from '../context/AuthContext';
+import eaarthLogo from "../../../assets/eaarth.png";
 
-export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNavigate }) => {
+export const OTPVerificationPage = () => {
   const navigate = useNavigate();
-  const [email] = React.useState(propEmail || 'example@email.com');
+  const location = useLocation();
+  const { updateUser } = useAuth();
   
+  // Get data from navigation state
+  const email = location.state?.email;
+  const password = location.state?.password;
+  const rememberMe = location.state?.rememberMe || false;
+  const devOtp = location.state?.otp; // Only in dev mode
+
+  // Redirect to login if no email
+  useEffect(() => {
+    if (!email) {
+      navigate('/auth/login', { replace: true });
+    }
+  }, [email, navigate]);
+
   const {
     otp,
     loading,
     error,
-    setError,
     canResend,
     countdown,
     inputRefs,
@@ -20,36 +34,42 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
     handleBackspace,
     handleSubmit,
     handleResend,
-  } = useOTPVerification(onSuccess, (err) => console.error(err));
+  } = useOTPVerification(
+    // onSuccess - user is authenticated, update context and navigate
+    (user) => {
+      console.log('✅ OTP verified, user authenticated:', user);
+      // Update AuthContext with the authenticated user
+      updateUser(user);
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    },
+    // onError
+    (err) => {
+      console.error('❌ OTP verification error:', err);
+    }
+  );
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const result = await handleSubmit(email);
-    
-    // If successful and no custom handler, navigate
-    if (result && !onSuccess) {
-      if (onNavigate) {
-        onNavigate('dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    }
+    await handleSubmit(email);
   };
 
   const handleResendClick = async (e) => {
     e.preventDefault();
-    await handleResend(email);
+    if (password) {
+      await handleResend(email, password, rememberMe);
+    } else {
+      console.error('Cannot resend: password not available');
+    }
   };
 
   const handleBackClick = () => {
-    if (onBack) {
-      onBack();
-    } else if (onNavigate) {
-      onNavigate('login');
-    } else {
-      navigate('/auth/login');
-    }
+    navigate('/auth/login');
   };
+
+  if (!email) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen w-full flex items-start justify-center p-4">
@@ -62,7 +82,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
       </button>
 
       <div className="w-full max-w-lg mx-auto">
-        {/* Logo + Title (OUTSIDE CARD) */}
+        {/* Logo + Title */}
         <div className="text-center mb-4">
           <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 h-auto mx-auto mb-3" />
           <p className="text-sm text-gray-600 tracking-wide font-semibold">
@@ -72,7 +92,6 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
 
         {/* Main Card */}
         <div className="w-full bg-white rounded-2xl p-6 md:p-6 border border-gray-100">
-          {/* Title */}
           <h2 className="text-xl md:text-xl font-medium text-center mb-2 text-gray-900">
             VERIFY YOUR IDENTITY
           </h2>
@@ -87,6 +106,15 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
               <span className="font-semibold">Email:</span> {email}
             </p>
           </div>
+
+          {/* Dev Mode OTP Display */}
+          {devOtp && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+              <p className="text-sm text-yellow-800">
+                <span className="font-semibold">🔧 Dev Mode OTP:</span> {devOtp}
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -121,7 +149,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
             <button
               type="submit"
               disabled={loading || otp.join('').length !== 6}
-              className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium 
+              className="w-full bg-[#9333ea] hover:bg-[#7c2cc9] transition-colors text-white font-medium 
               py-4 rounded-2xl hover:transition-all hover:scale-[1.02]
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
               flex items-center justify-center gap-2"
@@ -142,8 +170,8 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
             <p className="text-gray-600 text-sm mb-2">Didn't receive the code?</p>
             <button
               onClick={handleResendClick}
-              disabled={!canResend || loading}
-              className="font-medium text-[#9333ea] hover:text-[#9333ea] 
+              disabled={!canResend || loading || !password}
+              className="font-medium text-[#9333ea] hover:text-[#7c2cc9] 
               disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
@@ -154,7 +182,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
           <div className="text-center mt-4">
             <button
               onClick={handleBackClick}
-              className="text-[#9333ea] hover:text-[#9333ea] font-medium text-sm transition-colors"
+              className="text-[#9333ea] hover:text-[#7c2cc9] font-medium text-sm transition-colors"
             >
               Back to Login
             </button>
@@ -163,7 +191,7 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
 
         {/* Footer */}
         <div className="text-center mt-6 text-gray-500 text-xs">
-          Step 3 of 4 — OTP Verification
+          Step 2 of 4 — OTP Verification
         </div>
       </div>
     </div>
@@ -171,15 +199,3 @@ export const OTPVerificationPage = ({ email: propEmail, onSuccess, onBack, onNav
 };
 
 export default OTPVerificationPage;
-
-
-
-
-
-
-
-
-
-
-
-

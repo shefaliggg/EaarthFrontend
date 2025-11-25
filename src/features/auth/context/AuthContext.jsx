@@ -13,41 +13,72 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [tempLoginData, setTempLoginData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const noInitialLoadRoutes = [
+  // Routes that don't require auth check
+  const publicRoutes = [
     "/auth/login",
     "/auth/set-password",
     "/auth/reset",
     "/auth/forgot-password",
+    "/auth/otp-verification",
   ];
+
+  const isPublicRoute = useCallback((pathname) => {
+    return publicRoutes.some(route => pathname.startsWith(route));
+  }, []);
 
   useEffect(() => {
     const init = async () => {
-      if (noInitialLoadRoutes.includes(location.pathname)) {
+      // Skip auth check for public routes
+      if (isPublicRoute(location.pathname)) {
         setInitialLoading(false);
+        setLoading(false);
         return;
       }
+
+      // Only fetch user if not already loaded
       if (!user) {
-        console.log("Fetching current user...");
         try {
           const loggedInUser = await authService.getCurrentUser();
-          if (loggedInUser) setUser(loggedInUser);
+          if (loggedInUser) {
+            setUser(loggedInUser);
+            console.log("✅ User authenticated:", loggedInUser.email);
+          } else {
+            // No user found, redirect to login if not on public route
+            if (!isPublicRoute(location.pathname)) {
+              navigate(ROUTES.AUTH.LOGIN, { replace: true });
+            }
+          }
         } catch (err) {
+          // Error fetching user - likely 401 (not authenticated)
+          console.log("ℹ️ User not authenticated");
           setUser(null);
+          // Only redirect if not already on a public route
+          if (!isPublicRoute(location.pathname)) {
+            navigate(ROUTES.AUTH.LOGIN, { replace: true });
+          }
         } finally {
           setInitialLoading(false);
+          setLoading(false);
         }
+      } else {
+        setInitialLoading(false);
+        setLoading(false);
       }
     };
+
     init();
-  }, [location.pathname, user]);
+  }, [location.pathname, user, navigate, isPublicRoute]);
 
   const logout = useCallback(async () => {
-    await authService.logout();
-    setUser(null);
-    setTempLoginData(null);
-    if (import.meta.env.VITE_APP_ENV !== "development") {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setUser(null);
+      setTempLoginData(null);
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
     }
   }, [navigate]);
@@ -55,22 +86,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     setLogoutFunction(logout);
   }, [logout]);
-
-
-  const login = async (credentials) => {
-    setLoading(true);
-    try {
-      const { email, password } = credentials;
-      const userData = await authService.login(email, password);
-      setUser(userData);
-      return userData;
-    } catch (err) {
-      console.error("Login error:", err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const temporaryLogin = async (credentials) => {
     setLoading(true);
@@ -109,7 +124,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         tempLoginData,
-        login,
         temporaryLogin,
         logout,
         updateUser,

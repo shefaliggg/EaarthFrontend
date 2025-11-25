@@ -8,10 +8,7 @@ export const authService = {
       });
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message ||
-          "Invitation link is invalid or expired."
-      );
+      throw new Error(error.response?.data?.message || "Invitation link is invalid or expired.");
     }
   },
 
@@ -22,22 +19,16 @@ export const authService = {
         password,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Temporary login failed");
-
-      const userId = data.data?.userId || data.userId;
-      const emailFromServer = data.data?.email || email;
+      if (!data?.success) throw new Error(data?.message || "Temporary login failed");
 
       return {
         success: true,
-        userId,
-        email: emailFromServer,
+        userId: data.data?.userId || data.userId,
+        email: data.data?.email || email,
         ...data,
       };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Temporary login failed."
-      );
+      throw new Error(error.response?.data?.message || "Temporary login failed.");
     }
   },
 
@@ -50,7 +41,6 @@ export const authService = {
       });
 
       if (!data?.success) throw new Error(data?.message || "Login failed");
-
       return data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "Login failed.");
@@ -64,14 +54,10 @@ export const authService = {
         otp,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "OTP verification failed");
-
+      if (!data?.success) throw new Error(data?.message || "OTP verification failed");
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "OTP verification failed."
-      );
+      throw new Error(error.response?.data?.message || "OTP verification failed.");
     }
   },
 
@@ -82,14 +68,10 @@ export const authService = {
         newPassword,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to set password");
-
+      if (!data?.success) throw new Error(data?.message || "Failed to set password");
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to set password."
-      );
+      throw new Error(error.response?.data?.message || "Failed to set password.");
     }
   },
 
@@ -100,30 +82,22 @@ export const authService = {
       });
 
       if (!data) throw new Error("No response from server");
-
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Identity verification failed."
-      );
+      throw new Error(error.response?.data?.message || "Identity verification failed.");
     }
   },
 
   sendResetPasswordOtp: async (email) => {
     try {
-      const { data } = await axiosConfig.post(
-        "/auth/password/reset-password",
-        { email: email.toLowerCase().trim() }
-      );
+      const { data } = await axiosConfig.post("/auth/password/reset-password", {
+        email: email.toLowerCase().trim(),
+      });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to send OTP");
-
+      if (!data?.success) throw new Error(data?.message || "Failed to send OTP");
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to send reset OTP."
-      );
+      throw new Error(error.response?.data?.message || "Failed to send reset OTP.");
     }
   },
 
@@ -135,23 +109,21 @@ export const authService = {
         password,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to reset password");
-
+      if (!data?.success) throw new Error(data?.message || "Failed to reset password");
       return data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to reset password."
-      );
+      throw new Error(error.response?.data?.message || "Failed to reset password.");
     }
   },
 
   getCurrentUser: async () => {
     try {
       const { data } = await axiosConfig.get("/auth/me");
-      return data.user;
-    } catch {
-      return null;
+      return data.user || null;
+    } catch (error) {
+      // If 401, return null silently (user not logged in)
+      if (error.response?.status === 401) return null;
+      throw error;
     }
   },
 

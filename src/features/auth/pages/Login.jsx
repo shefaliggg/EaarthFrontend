@@ -1,52 +1,43 @@
-import React, { useState } from "react";
-import { Eye, EyeOff, QrCode, Shield, Zap, Film, Loader, LogIn } from "lucide-react";
+import React from "react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import QRCode from "react-qr-code";
 import eaarthLogo from "../../../assets/eaarth.png";
 import QRLogin from "../components/QRLogin";
+import { useLogin } from "../hooks/useLogin";
 
-export const LoginPage = ({ onNavigate, onSuccess }) => {
+export const LoginPage = () => {
   const navigate = useNavigate();
 
-  /** ---------- Local Component State (replaces useLogin) ---------- */
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  /** ---------- Local Login Handler (instead of useLogin) ---------- */
-  const handleSubmit = async () => {
-    setError("");
-
-    if (!email || !password) {
-      setError("Email and password are required.");
-      return;
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    showPassword,
+    setShowPassword,
+    rememberMe,
+    setRememberMe,
+    loading,
+    error,
+    handleSubmit,
+  } = useLogin(
+    // onSuccess callback - navigate to OTP page with data
+    (data) => {
+      navigate("/auth/otp-verification", { 
+        state: {
+          email: data.email,
+          password: password, // Pass password for resend
+          rememberMe: data.rememberMe,
+          otpSend: data.otpSend,
+          otp: data.otp, // Only in dev mode
+        }
+      });
+    },
+    // onError callback
+    (err) => {
+      console.error("Login error:", err);
     }
-
-    try {
-      setLoading(true);
-
-      // Simulated API call — replace with real API request
-      await new Promise((res) => setTimeout(res, 1200));
-
-      const responseData = {
-        email,
-        userId: "12345",
-        requiresOtp: true,
-      };
-      navigate("/home");
-      /** Navigate to OTP */
-      // if (onNavigate) onNavigate("otp", responseData);
-      // else if (onSuccess) onSuccess(responseData);
-      // else navigate("/auth/otp", { state: responseData });
-
-    } catch (err) {
-      setError("Login failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  );
 
   /** Form Submit Handler */
   const handleFormSubmit = async (e) => {
@@ -56,15 +47,14 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 
   /** Forgot Password Handler */
   const handleForgotPassword = () => {
-    if (onNavigate) onNavigate("forgot");
-    else navigate("/auth/forgot-password");
+    navigate("/auth/forgot-password");
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8">
-      {/* ---------------- Main Content Grid ---------------- */}
+      {/* Main Content Grid */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* ---------------- Left: Login Form Card ---------------- */}
+        {/* Left: Login Form Card */}
         <div className="bg-white rounded-3xl p-8 border h-full flex flex-col">
           {/* Logo */}
           <div className="mb-8 text-center">
@@ -122,7 +112,6 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
                     text-sm text-gray-900 pr-12 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
 
-                {/* Toggle show/hide password */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -137,17 +126,17 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 
             {/* Remember Me + Forgot Password */}
             <div className="flex items-center justify-between">
-              {/* Remember Me Checkbox */}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-[#9333ea] focus:ring-[#a855f7]"
                   disabled={loading}
                 />
                 <span className="text-xs text-gray-600 font-medium">Remember me</span>
               </label>
 
-              {/* Forgot Password Button */}
               <button
                 type="button"
                 onClick={handleForgotPassword}
@@ -164,7 +153,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
               type="submit"
               disabled={loading || !email || !password}
               className="w-full bg-[#9333ea] mt-2 text-white font-medium py-2.5
-                rounded-xl hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                rounded-xl hover:bg-[#7c2cc9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                 text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -181,7 +170,7 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
         <QRLogin />
       </div>
 
-      {/* ---------------- Footer ---------------- */}
+      {/* Footer */}
       <div className="text-center mt-12 text-sm text-gray-500">
         <p>© 2024 Eaarth Studios. All rights reserved.</p>
       </div>
@@ -190,15 +179,3 @@ export const LoginPage = ({ onNavigate, onSuccess }) => {
 };
 
 export default LoginPage;
-
-
-
-
-
-
-
-
-
-
-
-

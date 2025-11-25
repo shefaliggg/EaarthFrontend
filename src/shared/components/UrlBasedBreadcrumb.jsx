@@ -1,97 +1,66 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from "react-router-dom";
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
-} from '@/shared/components/ui/breadcrumb';
-import { useState } from 'react';
-import { BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from './ui/breadcrumb';
-import path from 'path';
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 
 export default function UrlBreadcrumbs() {
     const { pathname } = useLocation();
 
     function prettifySegment(seg) {
         return seg
-            .replace(/[-_]/g, ' ')
+            .replace(/[-_]/g, " ")
             .replace(/\b\w/g, (c) => c.toUpperCase());
     }
 
-    const segments = pathname.split('/');
+    const segments = pathname.split("/").filter(Boolean);
 
-    let accumulatedPath = '';
-    const crumbs = segments.map((segment, index) => {
-        const isRoot = index === 0 && segment === '';
-        if (isRoot) {
+    // Build crumbs
+    let accumulatedPath = "";
+    const crumbs = [
+        {
+            key: "home",
+            label: "Home",
+            href: "/home",
+            isLast: segments.length === 0,
+        },
+        ...segments.map((segment, index) => {
+            accumulatedPath += `/${segment}`;
+
             return {
-                key: 'home',
-                label: 'Home',
-                href: '/home',
-                isLast: segments.length === 1,
+                key: `${segment}-${index}`,
+                label: prettifySegment(segment),
+                href: accumulatedPath,
+                isLast: index === segments.length - 1,
             };
-        }
-
-        if (segment === '') accumulatedPath = '/';
-        else if (accumulatedPath === '/' && segment === "home") return null; // skip 'home' segment at root
-        else if (accumulatedPath === '/' && segment !== "home") accumulatedPath = accumulatedPath + segment;
-        else accumulatedPath = accumulatedPath + '/' + segment;
-
-        // Decide label
-        const label = (() => {
-            return prettifySegment(segment);
-        })()
-
-        const isLast = index === segments.length - 1;
-
-        return {
-            key: `${segment}-${index}`,
-            label,
-            href: accumulatedPath,
-            isLast,
-        };
-    });
-
-    const filtered = crumbs.filter(c => {
-        if(pathname === '/home' && c.label === 'Home') return false;
-        return c.label && c.label !== '';
-    });
-
+        }),
+    ];
 
     return (
         <nav aria-label="Breadcrumb" className="mb-4">
             <Breadcrumb>
                 <BreadcrumbList>
-                    {filtered.map((c) => (
-                        <BreadcrumbItem key={c.key}>
-                            {c.isLast ? (
-                                <BreadcrumbPage>{c.label}</BreadcrumbPage>
-                            ) : (
-                                <>
-
+                    {crumbs.map((c, index) => (
+                        <div key={c.key} className="flex items-center">
+                            <BreadcrumbItem>
+                                {c.isLast ? (
+                                    <BreadcrumbPage>{c.label}</BreadcrumbPage>
+                                ) : (
                                     <BreadcrumbLink asChild>
-                                        <Link to={c.href}>
-                                            {c.label}
-                                        </Link>
+                                        <Link to={c.href}>{c.label}</Link>
                                     </BreadcrumbLink>
-                                    <BreadcrumbSeparator />
-                                </>
+                                )}
+                            </BreadcrumbItem>
 
-                            )}
-                        </BreadcrumbItem>
+                            {!c.isLast && <BreadcrumbSeparator />}
+                        </div>
                     ))}
                 </BreadcrumbList>
             </Breadcrumb>
         </nav>
     );
 }
-
-
-
-
-
-
-
-
-
-
-
