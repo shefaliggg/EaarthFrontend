@@ -449,7 +449,7 @@ function sidebarMenuList(sidebarType) {
   }
 
   // Add Studio Admin specific items
-  if (sidebarType === "studio-admin") {
+  if (sidebarType === "studio_admin") {
     roleBasedItems.push({
       id: "studio-admin",
       label: "STUDIO",

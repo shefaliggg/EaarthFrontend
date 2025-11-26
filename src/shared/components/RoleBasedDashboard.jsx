@@ -2,22 +2,16 @@
 import { lazy } from "react";
 import { toast } from "sonner";
 import Login from "../../features/auth/pages/Login";
+import { useAuth } from "../../features/auth/context/AuthContext";
 
 const StudioDashboard = lazy(() => import("@/features/studio/pages/StudioDashboard"));
 
 const RoleBasedDashboard = () => {
-    // const { user } = useAuth();
-    // Temporary user object for demonstration purposes
-    const user = { userType: "studio-admin" };
+    const { user } = useAuth();
 
-    if (!user) {
-        toast.error("User not authenticated");
-        return <Login />;
-    }
+    const type = user?.userType.at(0);
 
-    const type = user?.userType;
-
-    if (type === "studio-admin" || type === "studio-user")
+    if (type === "studio_admin")
         return <StudioDashboard />;
 
     // if (type === "agency-admin" || type === "project-user")

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import eaarthLogo from '@/assets/eaarth.png';
 import sidebarMenuList from '../config/sidebarMenuList';
+import { useAuth } from '../../features/auth/context/AuthContext';
 
 function NavChevron({ isOpen, size = 16 }) {
   return (
@@ -94,19 +95,20 @@ const SubItem = React.memo(function SubItem({
   );
 });
 
-export default function Sidebar({ userRole }) {
+export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  // store expanded as array of ids for stable comparisons (Set works, but arrays + memoization is easier to reason about)
   const [expandedItems, setExpandedItems] = useState(() => new Set(['profile', 'master-admin', 'studio-admin', 'agency-admin']));
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+    const { user } = useAuth();
+
 
   // temp user data
-  const userName = 'Razik';
-  const userEmail = 'razik@eaarthstudios.com';
+  const userName = user.displayName || "N/A";
+  const userEmail = user.email || "N/A";
+  const userRole = user?.userType.at(0) || "N/A";
 
-  // memoize menu to avoid recomputing on each render
   const menuItems = useMemo(() => sidebarMenuList(userRole), [userRole]);
 
   const toggleExpanded = useCallback((itemId) => {
@@ -123,8 +125,8 @@ export default function Sidebar({ userRole }) {
   }, [navigate]);
 
   const getUserInitials = useCallback(() => {
-    if (userName) return userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    if (userEmail) {
+    if (userName !== "N/A" || userName) return userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+    if (userEmail !== "N/A" || userEmail) {
       const emailName = userEmail.split('@')[0];
       if (emailName.length >= 2) return emailName.slice(0, 2).toUpperCase();
       return emailName[0].toUpperCase();
@@ -261,15 +263,15 @@ export default function Sidebar({ userRole }) {
 
                 {showUserMenu && (
                   <div className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl border shadow-md overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`} style={{ minWidth: isCollapsed ? '200px' : 'auto' }}>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    {/* <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#faf5ff]0 to-[#faf5ff]0 flex items-center justify-center flex-shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
+                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate text-gray-900 dark:text-white">{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</div>
-                          <div className="text-xs truncate text-gray-600 dark:text-gray-400">{userRole === 'master-admin' ? 'MASTER ADMIN' : userRole === 'studio-admin' ? 'STUDIO ADMIN' : userRole === 'agency-admin' ? 'AGENCY ADMIN' : 'CREW MEMBER'}</div>
+                          <div className="text-xs truncate text-gray-600 dark:text-gray-400">{userRole}</div>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     <div className="p-2">
                       <button onClick={() => { requestAnimationFrame(() => navigate('/profile')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><User className="w-5 h-5" /><span className="font-medium text-sm">MY PROFILE</span></button>
