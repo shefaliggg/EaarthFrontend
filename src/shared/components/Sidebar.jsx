@@ -105,9 +105,9 @@ export default function Sidebar() {
 
 
   // temp user data
-  const userName = user.displayName || "N/A";
-  const userEmail = user.email || "N/A";
-  const userRole = user?.userType.at(0) || "N/A";
+  const userName = user?.displayName || "N/A";
+  const userEmail = user?.email || "N/A";
+  const userRole = user?.userType?.at(0) || "N/A";
 
   const menuItems = useMemo(() => sidebarMenuList(userRole), [userRole]);
 

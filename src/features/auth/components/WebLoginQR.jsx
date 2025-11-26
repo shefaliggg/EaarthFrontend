@@ -5,7 +5,7 @@ import { useQrLogin } from "../hooks/useQrLogin";
 import { toast } from "sonner";
 
 function WebLoginQR() {
-  const { qrData, generateQr, loading } = useQrLogin({ type: "web" });
+  const { qrData, generateQr, loading, error } = useQrLogin({ type: "web" });
   const [secondsLeft, setSecondsLeft] = useState(60);
 
   useEffect(() => {
@@ -67,8 +67,11 @@ function WebLoginQR() {
           </div>
         )}
 
-        {loading && <div className="flex flex-col p-18 items-center justify-center gap-4 text-purple-900 text-sm font-medium animate-pulse">
+        {loading && <div className="flex flex-col p-14 items-center text-center justify-center gap-4 text-purple-900 text-sm font-medium animate-pulse">
           <QrCode className="size-20 " /> Generating QR Code
+        </div>}
+        {error && <div className="flex flex-col p-14 items-center text-center justify-center gap-4 text-red-600 text-sm font-medium">
+          <QrCode className="size-20 " /> Error Generating QR Code
         </div>}
 
         {/* QR Code */}

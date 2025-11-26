@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, BadgeCheck, Edit3, Save, QrCode } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
+import MobileloginQR from './MobileloginQR';
 
 export default function ProfileSummary({ 
   profile, 
@@ -72,76 +73,7 @@ export default function ProfileSummary({
 
       {/* QR Code Modal - Outside Card */}
       {showQRModal && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border shadow-md p-6 bg-card border-border"
-        >
-          <div className="flex items-start gap-6">
-            {/* Left: User Info */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-lg bg-primary">
-                <User className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-foreground">
-                  {profile.firstName.toUpperCase()} {profile.lastName.toUpperCase()}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  DIRECTOR OF PHOTOGRAPHY
-                </p>
-              </div>
-            </div>
-
-            {/* Center: QR Code */}
-            <div className="bg-white p-4 rounded-lg border-4 border-primary">
-              <QRCode
-                value="https://eaarth.app/crew/js-2024-dop"
-                size={180}
-                level="H"
-              />
-              {/* <div className="text-center mt-3">
-                <div className="font-bold text-xs px-2 py-1 rounded-full border-2 text-primary bg-primary/10 border-primary">
-                  ID: JS-2024-DOP
-                </div>
-              </div> */}
-            </div>
-
-            {/* Right: Info */}
-            <div className="flex-1">
-              <h4 className="font-bold text-xl mb-2 text-foreground">
-                SCAN TO ACCESS MY PROFILE
-              </h4>
-              <p className="text-sm mb-3 text-muted-foreground">
-                Use the <strong>Eaarth Phone App</strong> to scan this QR code for:
-              </p>
-              <ul className="space-y-2 text-sm text-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">●</span>
-                  <span><strong>Quick Login</strong> - Access your profile on mobile devices</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">●</span>
-                  <span><strong>Digital Crew Pass</strong> - Show your credentials on set</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">●</span>
-                  <span><strong>Contact Card</strong> - Share your professional info instantly</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">●</span>
-                  <span><strong>Schedule Sync</strong> - View your call times and bookings</span>
-                </li>
-              </ul>
-              <div className="mt-3 p-2 rounded-lg text-xs bg-muted border border-border">
-                <strong className="text-primary">Profile URL:</strong>
-                <span className="ml-1 text-muted-foreground">
-                  https://eaarth.app/crew/js-2024-dop
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <MobileloginQR  />
       )}
 
       {/* Profile Card */}

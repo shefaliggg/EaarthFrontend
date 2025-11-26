@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 import { authService } from "../services/auth.service";
 import { useAuth } from "../context/AuthContext";
@@ -9,10 +9,11 @@ export function useQrLogin({ type = "web" }) {
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [socket, setSocket] = useState(null);
+
+  const socketRef = useRef(null);
+  const pollRef = useRef(null);
 
   const navigate = useNavigate();
-
   const { updateUser } = useAuth();
 
   const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
@@ -21,14 +22,73 @@ export function useQrLogin({ type = "web" }) {
     ? import.meta.env.VITE_SOCKET_IO_API_URL_DEV
     : import.meta.env.VITE_SOCKET_IO_API_URL_PROD;
 
-  // --- Pick correct API based on type ---
   const qrGenerateMethod =
     type === "web" ? authService.generateWebQr : authService.generateMobileQr;
 
+  const handleQrApproval = useCallback(
+    async (tokenData) => {
+      try {
+        const newUser = await authService.getUserAndSetCookies(tokenData);
+        updateUser(newUser);
+
+        setQrData((prev) => ({ ...prev, status: "approved" }));
+        toast.success("Login Successful", {
+          description: "QR verified. Redirecting...",
+        });
+
+        navigate("/home");
+      } catch (err) {
+        setError(err.message);
+      }
+    },
+    [updateUser, navigate]
+  );
+
+  // fallback
+  const startPolling = useCallback(
+    (qrId) => {
+      if (pollRef.current) return; // prevent duplicate polling
+
+      console.log("⚠️ Starting fallback polling...");
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await authService.getQrStatus(qrId);
+          console.log("📡 Polling result:", status);
+
+          if (status.status === "approved") {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+            handleQrApproval(status);
+          }
+
+          if (status.status === "expired") {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+            toast.error("QR Code Expired");
+            setQrData((prev) => ({ ...prev, status: "expired" }));
+          }
+        } catch (err) {
+          console.log("Polling error:", err);
+        }
+      }, 4000);
+    },
+    [handleQrApproval]
+  );
+
   const generateQr = useCallback(async () => {
-    setQrData(null)
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
     setLoading(true);
     setError(null);
+    setQrData(null);
 
     try {
       const data = await qrGenerateMethod();
@@ -40,64 +100,74 @@ export function useQrLogin({ type = "web" }) {
         socketRoom: data.socketRoom,
         status: "pending",
       });
-      console.log("baseURL", baseURL);
 
-      const socketInstance = io(baseURL, {
+      const socket = io(baseURL, {
         transports: ["websocket"],
         path: "/socket.io/",
         withCredentials: true,
       });
-      setSocket(socketInstance);
 
-      socketInstance.on("connect", () => {
-        console.log("🔥 Socket connected:", socketInstance.id);
-        socketInstance.emit("join-qr", data.socketRoom);
+      socketRef.current = socket;
+
+      socket.on("connect", () => {
+        console.log("🔥 Socket connected:", socket.id);
+        socket.emit("join-qr", data.socketRoom);
       });
 
-      socketInstance.on("connect_error", (err) => {
+      socket.on("connect_error", (err) => {
         console.log("❌ Socket connect error:", err);
+        startPolling(data.qrId);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("⚠️ Socket disconnected");
+        startPolling(data.qrId);
       });
 
       if (type === "web") {
-        socketInstance.on("qr:approved", async (tokenData) => {
-          try {
-            const newUser = await authService.getUserAndSetCookies(tokenData);
-            updateUser(newUser);
-
-            setQrData((prev) => ({ ...prev, status: "approved" }));
-            toast.success("Login Successful", {
-              description:
-                "Your mobile device has approved the login. Redirecting...",
-            });
-
-            navigate("/home");
-          } catch (err) {
-            setError(err.message);
+        socket.on("qr:approved", (tokenData) => {
+          console.log("QR approved via socket");
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
           }
+          handleQrApproval(tokenData);
         });
       }
 
       if (type === "mobile") {
-        toast.success("Login Synced", {
-          description:
-            "Your mobile device successfully logged into your web account.",
+        socket.on("qr:mobile-approved", (tokenData) => {
+          toast.success("Login Synced", {
+            description:
+              "Your mobile device successfully logged into your web account.",
+          });
         });
       }
-
       setLoading(false);
       return data;
     } catch (err) {
+      console.log("QR Error:", err);
       setError(err.message);
       setLoading(false);
     }
-  }, [qrGenerateMethod, type, updateUser, navigate]);
+  }, [qrGenerateMethod, type, startPolling, handleQrApproval, baseURL]);
 
-  // Cleanup socket
+  // cleanup
   useEffect(() => {
     return () => {
-      if (socket) socket.disconnect();
+      if (socketRef.current) {
+        console.log("🔌 Disconnecting socket...");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+
+      if (pollRef.current) {
+        console.log("🧹 Clearing polling interval...");
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     };
-  }, [socket]);
+  }, []);
 
   return {
     qrData,
