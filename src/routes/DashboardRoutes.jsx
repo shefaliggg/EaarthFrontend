@@ -9,9 +9,10 @@ import SettingsRoutes from '../features/settings/routes/SettingsRoutes';
 import RoleBasedDashboard from '../shared/components/RoleBasedDashboard';
 import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
 import StudioRoutes from '../features/studio/routes/StudioRoutes';
+import SupportDashboard from '../features/support/pages/SupportDashboard';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
-const HelpAndSupport = lazy(() => import('../features/support/pages/Help&Support'));
+// const HelpAndSupport = lazy(() => import('../features/support/pages/Help&Support'));
 
 const DashboardRoutes = {
     path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
@@ -24,7 +25,7 @@ const DashboardRoutes = {
         SettingsRoutes,
         ProfileRoutes,
 
-        { path: 'support', element: <HelpAndSupport /> },
+        { path: 'support', element: <SupportDashboard /> },
         { path: '*', element: <NotFound /> },
     ],
 };

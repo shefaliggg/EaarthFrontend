@@ -26,32 +26,22 @@ const AuthRoutes = {
     </ErrorBoundary>
   ),
   children: [
-    // ───────────────────────────────────────────────
-    // AUTH BASICS
-    // ───────────────────────────────────────────────
+
     { path: "login", element: <Login /> },
     { path: "temp-login", element: <TemporaryLogin /> },
     { path: "otp-verification", element: <OTPVerification /> },
     { path: "set-password", element: <SetPassword /> },
 
-    // ───────────────────────────────────────────────
-    // PASSWORD RECOVERY
-    // ───────────────────────────────────────────────
+
     { path: "forgot-password", element: <ForgotPassword /> },
     { path: "reset-password", element: <ResetPassword /> },
 
-    // ───────────────────────────────────────────────
-    // KYC / IDENTITY VERIFICATION
-    // ───────────────────────────────────────────────
     { path: "identity-verification", element: <IdentityVerification /> },
     { path: "upload-id", element: <UploadIDPhoto /> },
     { path: "live-photo", element: <LivePhotoCapture /> },
     { path: "pending", element: <VerificationPending /> },
     { path: "result", element: <VerificationResultScreen /> },
 
-    // ───────────────────────────────────────────────
-    // MISC
-    // ───────────────────────────────────────────────
     { path: "terms", element: <TermsAndConditions /> },
     { path: "verify-email", element: <VerifyEmail /> },
   ],

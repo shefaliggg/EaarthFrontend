@@ -21,42 +21,38 @@ export const LoginPage = () => {
     error,
     handleSubmit,
   } = useLogin(
-    // onSuccess callback - navigate to OTP page with data
+ 
     (data) => {
       navigate("/auth/otp-verification", { 
         state: {
           email: data.email,
-          password: password, // Pass password for resend
+          password: password,
           rememberMe: data.rememberMe,
           otpSend: data.otpSend,
           otp: data.otp, // Only in dev mode
         }
       });
     },
-    // onError callback
+
     (err) => {
       console.error("Login error:", err);
     }
   );
 
-  /** Form Submit Handler */
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     await handleSubmit();
   };
 
-  /** Forgot Password Handler */
+ 
   const handleForgotPassword = () => {
     navigate("/auth/forgot-password");
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8">
-      {/* Main Content Grid */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left: Login Form Card */}
         <div className="bg-white rounded-3xl p-8 border h-full flex flex-col">
-          {/* Logo */}
           <div className="mb-8 text-center">
             <img src={eaarthLogo} alt="Eaarth Studios" className="w-48 h-auto object-contain mx-auto" />
           </div>
