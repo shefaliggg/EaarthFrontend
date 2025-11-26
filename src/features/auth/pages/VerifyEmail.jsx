@@ -1,10 +1,22 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, Loader, CheckCircle, XCircle } from 'lucide-react';
-// import { useVerifyEmail } from '../hooks/useVerifyEmail';
+import { useVerifyEmail } from '../hooks/useVerifyEmail';
 import eaarthLogo from '../../../assets/eaarth.png';
 
-export const VerifyEmailPage = ({ onSuccess }) => {
-  const { status, message, inviteData } = useVerifyEmail(onSuccess);
+export const VerifyEmailPage = () => {
+  const navigate = useNavigate();
+
+  const { status, message, inviteData } = useVerifyInvite((data) => {
+    navigate('/auth/temp-login', {
+      state: {
+        email: data.email,
+        userType: data.userType,
+        organizationId: data.organizationId,
+        organizationType: data.organizationType,
+      },
+    });
+  });
 
   const LogoSection = (
     <div className="text-center mb-6">
@@ -19,21 +31,16 @@ export const VerifyEmailPage = ({ onSuccess }) => {
     </div>
   );
 
-  // --------------------------
-  // Loading State
-  // --------------------------
   if (status === 'loading') {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50">
         <div className="w-full max-w-lg mx-auto">
           {LogoSection}
-
           <div className="w-full bg-white rounded-2xl p-6 border border-gray-100">
             <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#faf5ff] to-pink-100 rounded-full flex items-center justify-center">
                 <Loader className="w-10 h-10 animate-spin text-[#9333ea]" />
               </div>
-
               <h2 className="text-xl font-medium text-gray-900 mb-2">
                 Verifying Your Invitation
               </h2>
@@ -47,16 +54,12 @@ export const VerifyEmailPage = ({ onSuccess }) => {
     );
   }
 
-  // --------------------------
-  // Main Page (Success or Error)
-  // --------------------------
   return (
     <div className="min-h-screen w-full flex items-start justify-center p-4 bg-gray-50">
       <div className="w-full max-w-lg mx-auto mt-10">
         {LogoSection}
 
         <div className="w-full bg-white rounded-2xl p-6 border border-gray-100">
-          {/* Header */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#a855f7] to-pink-500 flex items-center justify-center">
               <Mail className="w-6 h-6 text-white" />
@@ -69,7 +72,6 @@ export const VerifyEmailPage = ({ onSuccess }) => {
             </div>
           </div>
 
-          {/* ---------------- SUCCESS ---------------- */}
           {status === 'success' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 rounded-2xl p-6 text-center">
@@ -110,7 +112,6 @@ export const VerifyEmailPage = ({ onSuccess }) => {
             </div>
           )}
 
-          {/* ---------------- ERROR ---------------- */}
           {status === 'error' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-red-50 to-pink-50 border border-red-300 rounded-2xl p-6 text-center">
@@ -141,8 +142,8 @@ export const VerifyEmailPage = ({ onSuccess }) => {
                   Need help? Contact your administrator
                 </p>
                 <button
-                  onClick={() => (window.location.href = '/auth/login')}
-                  className="text-[#9333ea] hover:text-[#9333ea] font-medium text-sm transition-colors"
+                  onClick={() => navigate('/auth/login')}
+                  className="text-[#9333ea] hover:text-[#7c2cc9] font-medium text-sm transition-colors"
                 >
                   Return to Login
                 </button>
@@ -160,15 +161,3 @@ export const VerifyEmailPage = ({ onSuccess }) => {
 };
 
 export default VerifyEmailPage;
-
-
-
-
-
-
-
-
-
-
-
-

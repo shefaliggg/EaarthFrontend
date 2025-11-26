@@ -1,11 +1,31 @@
 import { axiosConfig } from "../config/axiosConfig";
 
+// Centralized error handler
+const handleError = (error, fallback = "Something went wrong.") => {
+  throw new Error(error?.response?.data?.message || fallback);
+};
+
+// Helper to clean email
+const cleanEmail = (email) => email?.toLowerCase().trim();
+
 export const authService = {
+
+  /** ----------------------------------------
+   * VERIFY INVITATION LINK
+   * Backend path MUST match route: /auth/invite/verify
+   -----------------------------------------*/
   verifyInviteLink: async (token, email) => {
     try {
-      const { data } = await axiosConfig.get("/invite/verify", {
-        params: { token, email: email.toLowerCase().trim() },
+      const { data } = await axiosConfig.get("/auth/invite/verify", {
+        params: {
+          token,
+          email: cleanEmail(email),
+        },
       });
+
+      if (!data?.success)
+        throw new Error(data?.message || "Invalid invitation link");
+
       return data;
     } catch (error) {
       throw new Error(
@@ -15,10 +35,15 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * TEMPORARY LOGIN (using temp password)
+   -----------------------------------------*/
   temporaryLogin: async ({ email, password }) => {
     try {
+      const cleaned = cleanEmail(email);
+
       const { data } = await axiosConfig.post("/auth/login/temporary", {
-        email: email.toLowerCase().trim(),
+        email: cleaned,
         password,
       });
 
@@ -27,9 +52,9 @@ export const authService = {
 
       return {
         success: true,
-        userId: data.data?.userId || data.userId,
-        email: data.data?.email || email,
-        ...data,
+        userId: data?.data?.userId,
+        email: data?.data?.email || cleaned,
+        data,
       };
     } catch (error) {
       throw new Error(
@@ -38,25 +63,32 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * NORMAL LOGIN (send OTP)
+   -----------------------------------------*/
   login: async ({ email, password, rememberMe = false }) => {
     try {
       const { data } = await axiosConfig.post("/auth/login", {
-        email: email.toLowerCase().trim(),
+        email: cleanEmail(email),
         password,
         rememberMe,
       });
 
       if (!data?.success) throw new Error(data?.message || "Login failed");
+
       return data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || "Login failed.");
+      handleError(error, "Login failed.");
     }
   },
 
+  /** ----------------------------------------
+   * VERIFY LOGIN OTP
+   -----------------------------------------*/
   verifyLoginOtp: async ({ email, otp }) => {
     try {
       const { data } = await axiosConfig.post("/auth/login/verify-otp", {
-        email: email.toLowerCase().trim(),
+        email: cleanEmail(email),
         otp,
       });
 
@@ -70,6 +102,9 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * SET NEW PASSWORD (after temp login)
+   -----------------------------------------*/
   setNewPassword: async ({ userId, newPassword }) => {
     try {
       const { data } = await axiosConfig.post("/auth/password/set-password", {
@@ -87,6 +122,9 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * FACE VERIFICATION
+   -----------------------------------------*/
   verifyIdentity: async (formData) => {
     try {
       const { data } = await axiosConfig.post("/auth/face/verify", formData, {
@@ -94,6 +132,7 @@ export const authService = {
       });
 
       if (!data) throw new Error("No response from server");
+
       return data;
     } catch (error) {
       throw new Error(
@@ -102,10 +141,13 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * SEND RESET PASSWORD OTP
+   -----------------------------------------*/
   sendResetPasswordOtp: async (email) => {
     try {
       const { data } = await axiosConfig.post("/auth/password/reset-password", {
-        email: email.toLowerCase().trim(),
+        email: cleanEmail(email),
       });
 
       if (!data?.success)
@@ -118,10 +160,13 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * VERIFY RESET OTP + SET NEW PASSWORD
+   ----------------------------------------*/
   verifyResetPasswordOtp: async ({ email, otp, password }) => {
     try {
       const { data } = await axiosConfig.post("/auth/password/verify-otp", {
-        email: email.toLowerCase().trim(),
+        email: cleanEmail(email),
         otp,
         password,
       });
@@ -136,17 +181,22 @@ export const authService = {
     }
   },
 
+  /** ----------------------------------------
+   * GET CURRENT USER
+   -----------------------------------------*/
   getCurrentUser: async () => {
     try {
       const { data } = await axiosConfig.get("/auth/me");
-      return data.user || null;
+      return data?.user || null;
     } catch (error) {
-      // If 401, return null silently (user not logged in)
-      if (error.response?.status === 401) return null;
+      if (error?.response?.status === 401) return null;
       throw error;
     }
   },
 
+  /** ----------------------------------------
+   * LOGOUT
+   -----------------------------------------*/
   logout: async () => {
     try {
       await axiosConfig.post("/auth/logout");

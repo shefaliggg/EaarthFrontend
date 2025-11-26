@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Loader, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-// import { useForgotPassword } from '../hooks/useForgotPassword';
+import { useForgotPassword } from '../hooks/useForgotPassword';
 import eaarthLogo from '../../../assets/eaarth.png';
 
 export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {

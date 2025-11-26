@@ -10,7 +10,7 @@ export default function TermsAndConditionsScreen({ onNavigate, onSkip }) {
       alert('Please accept the terms and conditions to continue');
       return;
     }
-    onNavigate('identity-verification');
+    onNavigate('/home');
   };
 
   return (

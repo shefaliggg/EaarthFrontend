@@ -1,116 +1,177 @@
-// const API_BASE_URL = 'http://localhost:5000/api/v1';
+import { axiosConfig } from "../config/axiosConfig";
 
-// export const authApi = {
-//   // --------------------------------------------------
-//   // 1. Verify invitation
-//   // --------------------------------------------------
-//   async verifyInvitation(token, email) {
-//     const res = await fetch(
-//       `${API_BASE_URL}/invite/verify?token=${token}&email=${email}`,
-//       {
-//         method: 'GET',
-//         credentials: 'include',
-//       }
-//     );
+// Centralized error handler
+const handleError = (error, fallback = "Something went wrong.") => {
+  throw new Error(error?.response?.data?.message || fallback);
+};
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Invitation verification failed');
-//     return data;
-//   },
+// Helper to clean email
+const cleanEmail = (email) => email?.toLowerCase().trim();
 
-//   // --------------------------------------------------
-//   // 2. Temporary login (first-time login)
-//   // --------------------------------------------------
-//   async temporaryLogin(email, password) {
-//     const res = await fetch(`${API_BASE_URL}/auth/login/temporary`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ email, password }),
-//     });
+export const authApi = {
+  /** ----------------------------------------
+   * Verify Invitation Link
+   -----------------------------------------*/
+  verifyInviteLink: async (token, email) => {
+    try {
+      const { data } = await axiosConfig.get("/invite/verify", {
+        params: { token, email: cleanEmail(email) },
+      });
+      return data;
+    } catch (error) {
+      handleError(error, "Invitation link is invalid or expired.");
+    }
+  },
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Temporary login failed');
-//     return data;
-//   },
+  /** ----------------------------------------
+   * TEMPORARY LOGIN (using temp password)
+   -----------------------------------------*/
+  temporaryLogin: async ({ email, password }) => {
+    try {
+      const cleaned = cleanEmail(email);
 
-//   // --------------------------------------------------
-//   // 3. Set new password (first-time password)
-//   // --------------------------------------------------
-//   async setNewPassword(userId, newPassword) {
-//     const res = await fetch(`${API_BASE_URL}/auth/password/set-password`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ userId, newPassword }),
-//     });
+      const { data } = await axiosConfig.post("/auth/login/temporary", {
+        email: cleaned,
+        password,
+      });
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Set password failed');
-//     return data;
-//   },
+      if (!data?.success) throw new Error(data?.message || "Temporary login failed");
 
-//   // --------------------------------------------------
-//   // 4. Normal login
-//   // --------------------------------------------------
-//   async login(email, password, rememberMe = false) {
-//     const res = await fetch(`${API_BASE_URL}/auth/login`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ email, password, rememberMe }),
-//     });
+      return {
+        success: true,
+        userId: data?.data?.userId,
+        email: data?.data?.email || cleaned,
+        data,
+      };
+    } catch (error) {
+      handleError(error, "Temporary login failed.");
+    }
+  },
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Login failed');
-//     return data;
-//   },
+  /** ----------------------------------------
+   * NORMAL LOGIN (send OTP)
+   -----------------------------------------*/
+  login: async ({ email, password, rememberMe = false }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/login", {
+        email: cleanEmail(email),
+        password,
+        rememberMe,
+      });
 
-//   // --------------------------------------------------
-//   // 5. Verify OTP after login
-//   // --------------------------------------------------
-//   async verifyLoginOtp(email, otp) {
-//     const res = await fetch(`${API_BASE_URL}/auth/login/verify-otp`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ email, otp }),
-//     });
+      if (!data?.success) throw new Error(data?.message || "Login failed");
+      return data;
+    } catch (error) {
+      handleError(error, "Login failed.");
+    }
+  },
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'OTP verification failed');
-//     return data;
-//   },
+  /** ----------------------------------------
+   * VERIFY LOGIN OTP
+   -----------------------------------------*/
+  verifyLoginOtp: async ({ email, otp }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/login/verify-otp", {
+        email: cleanEmail(email),
+        otp,
+      });
 
-//   // --------------------------------------------------
-//   // 6. Send reset-password OTP
-//   // --------------------------------------------------
-//   async sendResetPasswordOtp(email) {
-//     const res = await fetch(`${API_BASE_URL}/auth/password/reset-password`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ email }),
-//     });
+      if (!data?.success) throw new Error(data?.message || "OTP verification failed");
+      return data;
+    } catch (error) {
+      handleError(error, "OTP verification failed.");
+    }
+  },
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Failed to send reset OTP');
-//     return data;
-//   },
+  /** ----------------------------------------
+   * SET NEW PASSWORD (after temp login)
+   -----------------------------------------*/
+  setNewPassword: async ({ userId, newPassword }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/set-password", {
+        userId,
+        newPassword,
+      });
 
-//   // --------------------------------------------------
-//   // 7. Verify reset-password OTP and update password
-//   // --------------------------------------------------
-//   async verifyResetPasswordOtp(email, otp, password) {
-//     const res = await fetch(`${API_BASE_URL}/auth/password/verify-otp`, {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       credentials: 'include',
-//       body: JSON.stringify({ email, otp, password }),
-//     });
+      if (!data?.success) throw new Error(data?.message || "Failed to set password");
+      return data;
+    } catch (error) {
+      handleError(error, "Failed to set password.");
+    }
+  },
 
-//     const data = await res.json();
-//     if (!res.ok) throw new Error(data.message || 'Password reset failed');
-//     return data;
-//   },
-// };
+  /** ----------------------------------------
+   * FACE VERIFICATION
+   -----------------------------------------*/
+  verifyIdentity: async (formData) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/face/verify", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (!data) throw new Error("No response from server");
+      return data;
+    } catch (error) {
+      handleError(error, "Identity verification failed.");
+    }
+  },
+
+  /** ----------------------------------------
+   * SEND RESET PASSWORD OTP
+   -----------------------------------------*/
+  sendResetPasswordOtp: async (email) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/reset-password", {
+        email: cleanEmail(email),
+      });
+
+      if (!data?.success) throw new Error(data?.message || "Failed to send OTP");
+      return data;
+    } catch (error) {
+      handleError(error, "Failed to send reset OTP.");
+    }
+  },
+
+  /** ----------------------------------------
+   * VERIFY RESET OTP + SET NEW PASSWORD
+   -----------------------------------------*/
+  verifyResetPasswordOtp: async ({ email, otp, password }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/verify-otp", {
+        email: cleanEmail(email),
+        otp,
+        password,
+      });
+
+      if (!data?.success) throw new Error(data?.message || "Failed to reset password");
+      return data;
+    } catch (error) {
+      handleError(error, "Failed to reset password.");
+    }
+  },
+
+  /** ----------------------------------------
+   * GET CURRENT USER
+   -----------------------------------------*/
+  getCurrentUser: async () => {
+    try {
+      const { data } = await axiosConfig.get("/auth/me");
+      return data?.user || null;
+    } catch (error) {
+      if (error?.response?.status === 401) return null; // auto logout silently
+      throw error;
+    }
+  },
+
+  /** ----------------------------------------
+   * LOGOUT
+   -----------------------------------------*/
+  logout: async () => {
+    try {
+      await axiosConfig.post("/auth/logout");
+      return { success: true };
+    } catch (error) {
+      handleError(error, "Logout failed.");
+    }
+  },
+};

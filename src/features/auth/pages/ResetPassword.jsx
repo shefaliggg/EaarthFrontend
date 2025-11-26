@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom';
 // import { useResetPassword } from '../hooks/useResetPassword';
 import eaarthLogo from "../../../../src/assets/eaarth.png";
 
-export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNavigate, onSkip }) => {
+export const ResetPasswordPage = ({  onSuccess, onBack, onNavigate, onSkip }) => {
   const navigate = useNavigate();
-  const [email] = React.useState(initialEmail || 'mohammedshanidt08@gmail.com');
   
   const {
     otp,
