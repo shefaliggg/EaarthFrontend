@@ -56,22 +56,17 @@ export const LoginPage = () => {
           <div className="mb-8 text-center">
             <img src={eaarthLogo} alt="Eaarth Studios" className="w-48 h-auto object-contain mx-auto" />
           </div>
-
-          {/* Title */}
           <div className="mb-6 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">LOGIN</h2>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
               {error}
             </div>
           )}
 
-          {/* Login Form */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
-            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
                 Email Address
@@ -88,8 +83,6 @@ export const LoginPage = () => {
                   text-sm text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
-
-            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
                 Password
@@ -120,7 +113,6 @@ export const LoginPage = () => {
               </div>
             </div>
 
-            {/* Remember Me + Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -144,7 +136,6 @@ export const LoginPage = () => {
               </button>
             </div>
 
-            {/* Login Button */}
             <button
               type="submit"
               disabled={loading || !email || !password}
@@ -166,7 +157,6 @@ export const LoginPage = () => {
         <QRLogin />
       </div>
 
-      {/* Footer */}
       <div className="text-center mt-12 text-sm text-gray-500">
         <p>© 2024 Eaarth Studios. All rights reserved.</p>
       </div>

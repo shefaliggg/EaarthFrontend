@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { authService } from '../services/auth.service';
 
-/**
- * Hook for OTP verification
- * Step 2: Verifies OTP and authenticates user
- */
 export const useOTPVerification = (onSuccess, onError) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -49,14 +45,12 @@ export const useOTPVerification = (onSuccess, onError) => {
     setLoading(true);
     
     try {
-      // Call verify-otp endpoint which sets auth cookies
       const response = await authService.verifyLoginOtp({ 
         email, 
         otp: otpValue 
       });
 
       if (response?.success) {
-        // User is now authenticated, cookies are set
         onSuccess?.(response.data?.user);
         return true;
       }
@@ -81,7 +75,6 @@ export const useOTPVerification = (onSuccess, onError) => {
     setOtp(['', '', '', '', '', '']);
     
     try {
-      // Resend by calling login again
       await authService.login({ email, password, rememberMe });
     } catch (err) {
       setError('Failed to resend OTP');

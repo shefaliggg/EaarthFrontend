@@ -10,13 +10,11 @@ export const OTPVerificationPage = () => {
   const location = useLocation();
   const { updateUser } = useAuth();
   
-  // Get data from navigation state
   const email = location.state?.email;
   const password = location.state?.password;
   const rememberMe = location.state?.rememberMe || false;
-  const devOtp = location.state?.otp; // Only in dev mode
+  const devOtp = location.state?.otp; 
 
-  // Redirect to login if no email
   useEffect(() => {
     if (!email) {
       navigate('/auth/login', { replace: true });
@@ -35,17 +33,15 @@ export const OTPVerificationPage = () => {
     handleSubmit,
     handleResend,
   } = useOTPVerification(
-    // onSuccess - user is authenticated, update context and navigate
     (user) => {
-      console.log('✅ OTP verified, user authenticated:', user);
-      // Update AuthContext with the authenticated user
+      console.log('OTP verified, user authenticated:', user);
+ 
       updateUser(user);
-      // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     },
     // onError
     (err) => {
-      console.error('❌ OTP verification error:', err);
+      console.error('OTP verification error:', err);
     }
   );
 
@@ -68,12 +64,12 @@ export const OTPVerificationPage = () => {
   };
 
   if (!email) {
-    return null; // Will redirect in useEffect
+    return null; 
   }
 
   return (
     <div className="min-h-screen w-full flex items-start justify-center p-4">
-      {/* Back Button */}
+
       <button
         onClick={handleBackClick}
         className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all"
@@ -82,15 +78,12 @@ export const OTPVerificationPage = () => {
       </button>
 
       <div className="w-full max-w-lg mx-auto">
-        {/* Logo + Title */}
         <div className="text-center mb-4">
           <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 h-auto mx-auto mb-3" />
           <p className="text-sm text-gray-600 tracking-wide font-semibold">
             OTP VERIFICATION
           </p>
         </div>
-
-        {/* Main Card */}
         <div className="w-full bg-white rounded-2xl p-6 md:p-6 border border-gray-100">
           <h2 className="text-xl md:text-xl font-medium text-center mb-2 text-gray-900">
             VERIFY YOUR IDENTITY
@@ -99,7 +92,6 @@ export const OTPVerificationPage = () => {
             Enter the 6-digit code sent to your email
           </p>
 
-          {/* Email Info Box */}
           <div className="bg-[#faf5ff] border border-gray-100 rounded-xl p-4 mb-8 flex items-center gap-3">
             <Info className="w-5 h-5 text-[#9333ea]" />
             <p className="text-sm text-gray-700 break-all">
@@ -107,7 +99,6 @@ export const OTPVerificationPage = () => {
             </p>
           </div>
 
-          {/* Dev Mode OTP Display */}
           {devOtp && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
               <p className="text-sm text-yellow-800">
@@ -116,7 +107,6 @@ export const OTPVerificationPage = () => {
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
               {error}
@@ -124,7 +114,6 @@ export const OTPVerificationPage = () => {
           )}
 
           <form onSubmit={handleFormSubmit}>
-            {/* OTP Inputs */}
             <div className="flex gap-3 justify-center mb-8">
               {otp.map((digit, i) => (
                 <input
@@ -145,7 +134,6 @@ export const OTPVerificationPage = () => {
               ))}
             </div>
 
-            {/* Verify Button */}
             <button
               type="submit"
               disabled={loading || otp.join('').length !== 6}
@@ -165,7 +153,6 @@ export const OTPVerificationPage = () => {
             </button>
           </form>
 
-          {/* Resend */}
           <div className="text-center mt-6">
             <p className="text-gray-600 text-sm mb-2">Didn't receive the code?</p>
             <button
@@ -178,7 +165,6 @@ export const OTPVerificationPage = () => {
             </button>
           </div>
 
-          {/* Back to Login */}
           <div className="text-center mt-4">
             <button
               onClick={handleBackClick}
@@ -189,7 +175,6 @@ export const OTPVerificationPage = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center mt-6 text-gray-500 text-xs">
           Step 2 of 4 — OTP Verification
         </div>

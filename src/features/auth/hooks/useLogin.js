@@ -26,8 +26,6 @@ export const useLogin = (onSuccess, onError) => {
       });
 
       if (response?.success) {
-        // The login endpoint only sends OTP, no tokens yet
-        // Tokens will be set when OTP is verified
         onSuccess?.({ 
           email, 
           rememberMe,
