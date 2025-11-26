@@ -100,16 +100,16 @@ export default function ProfileSummary({
                 size={180}
                 level="H"
               />
-              <div className="text-center mt-3">
+              {/* <div className="text-center mt-3">
                 <div className="font-bold text-xs px-2 py-1 rounded-full border-2 text-primary bg-primary/10 border-primary">
                   ID: JS-2024-DOP
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Right: Info */}
             <div className="flex-1">
-              <h4 className="font-bold mb-2 text-foreground">
+              <h4 className="font-bold text-xl mb-2 text-foreground">
                 SCAN TO ACCESS MY PROFILE
               </h4>
               <p className="text-sm mb-3 text-muted-foreground">

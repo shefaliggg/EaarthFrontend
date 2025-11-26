@@ -8,7 +8,6 @@ export const baseURL = isDevelopment
   ? import.meta.env.VITE_APP_API_DEV
   : import.meta.env.VITE_APP_API_PROD;
 
-console.log("base url", baseURL);
 const toastCache = new Map();
 const TOAST_COOLDOWN = 5000;
 
