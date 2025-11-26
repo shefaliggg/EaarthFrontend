@@ -84,7 +84,7 @@ export default function SupportTicketModal({ open, onClose }) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="bg-card dark:bg-card rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden border border-border"
+            className="bg-card dark:bg-card rounded-3xl shadow-2xl w-full max-w-2xl max-h-[98vh] overflow-hidden border border-border"
             onClick={(e) => e.stopPropagation()}
           >
 

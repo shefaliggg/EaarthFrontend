@@ -9,7 +9,7 @@ export const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { updateUser } = useAuth();
-  
+
   const email = location.state?.email;
   const password = location.state?.password;
   const rememberMe = location.state?.rememberMe || false;
@@ -37,7 +37,7 @@ export const OTPVerificationPage = () => {
       console.log('OTP verified, user authenticated:', user);
  
       updateUser(user);
-      navigate('/dashboard', { replace: true });
+      navigate('/home', { replace: true });
     },
     // onError
     (err) => {
