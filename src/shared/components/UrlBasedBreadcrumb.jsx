@@ -39,12 +39,16 @@ export default function UrlBreadcrumbs() {
             };
         }),
     ];
+    const filtered = crumbs.filter(c => {
+        if (pathname === '/home' && c.label === 'Home') return false;
+        return c.label && c.label !== '';
+    });
 
     return (
         <nav aria-label="Breadcrumb" className="mb-4">
             <Breadcrumb>
                 <BreadcrumbList>
-                    {crumbs.map((c, index) => (
+                    {filtered.map((c, index) => (
                         <div key={c.key} className="flex items-center">
                             <BreadcrumbItem>
                                 {c.isLast ? (

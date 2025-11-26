@@ -166,35 +166,14 @@ export const authService = {
     }
   },
 
-  approveWebQr: async (qrId) => {
-    try {
-      const { data } = await axiosConfig.post("/auth/qr-code/web/approve", {
-        qrId,
-      });
-      return data;
-    } catch (err) {
-      throw new Error(err.response?.data?.message || "Failed to approve QR.");
-    }
-  },
-
   // Mobile QR
   generateMobileQr: async () => {
     try {
       const { data } = await axiosConfig.get("/auth/qr-code/mobile/init");
+      console.log("generate mobile qr response in auth service", data)
       return data;
     } catch (err) {
       throw new Error(err.response?.data?.message || "Failed to generate QR.");
-    }
-  },
-
-  approveMobileQr: async (qrId) => {
-    try {
-      const { data } = await axiosConfig.post("/auth/qr-code/mobile/approve", {
-        qrId,
-      });
-      return data;
-    } catch (err) {
-      throw new Error(err.response?.data?.message || "Failed to approve QR.");
     }
   },
 

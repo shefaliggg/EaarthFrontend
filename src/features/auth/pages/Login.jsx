@@ -2,8 +2,8 @@ import React from "react";
 import { Eye, EyeOff, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import eaarthLogo from "../../../assets/eaarth.png";
-import QRLogin from "../components/QRLogin";
 import { useLogin } from "../hooks/useLogin";
+import WebLoginQR from "../components/WebLoginQR";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ export const LoginPage = () => {
             </button>
           </form>
         </div>
-        <QRLogin />
+        <WebLoginQR />
       </div>
 
       <div className="text-center mt-12 text-sm text-gray-500">
