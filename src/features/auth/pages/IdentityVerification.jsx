@@ -1,58 +1,108 @@
-import { useState, useEffect } from 'react';
-import { Scan, CheckCircle, XCircle, ArrowRight, Loader } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Scan, CheckCircle, XCircle, ArrowRight, Loader, ArrowLeft } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import useIdentityVerification from '../hooks/useIdentityVerification';
 import eaarthLogo from '../../../assets/eaarth.png';
 
-export default function identityVerification() {
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [verificationResult, setVerificationResult] = useState(null);
+export default function IdentityVerification() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { email, userId, idFile, selfieFile } = location.state || {};
+
+  const {
+    handleVerifyIdentity,
+    loading,
+    error,
+    verificationResult,
+  } = useIdentityVerification();
+
   const [progress, setProgress] = useState(0);
+  const [idPhotoPreview, setIdPhotoPreview] = useState(null);
+  const [selfiePreview, setSelfiePreview] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(true);
 
-  // Mock photo data
-  const idPhotoData = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=cro';
-  const livePhotoData = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=cro';
-
+  // Create image previews
   useEffect(() => {
-    performVerification();
-  }, []);
+    if (idFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => setIdPhotoPreview(reader.result);
+      reader.readAsDataURL(idFile);
+    }
 
+    if (selfieFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => setSelfiePreview(reader.result);
+      reader.readAsDataURL(selfieFile);
+    }
+  }, [idFile, selfieFile]);
+
+  // MAIN VERIFICATION FUNCTION
   const performVerification = async () => {
     setIsVerifying(true);
     setProgress(0);
 
-    // Simulate progress for better UX
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 10, 90));
+    // Start progress animation
+    const interval = setInterval(() => {
+      setProgress((p) => Math.min(p + 10, 90));
     }, 200);
 
-    // Simulate verification process
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const result = await handleVerifyIdentity({
+      userId,
+      idFile,
+      selfieFile,
+    });
 
-    clearInterval(progressInterval);
+    clearInterval(interval);
     setProgress(100);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Mock result - change match to false to see error state
-    const result = {
-      match: true,
-      score: 92
-    };
-
-    setVerificationResult(result);
-    setIsVerifying(false);
+    setTimeout(() => {
+      setIsVerifying(false);
+    }, 400);
   };
 
+  // Auto-start verification
+  useEffect(() => {
+    if (!userId || !idFile || !selfieFile) {
+      navigate('/auth/upload-id', { replace: true });
+      return;
+    }
+    performVerification();
+  }, []);
+
+  // Navigation
   const handleContinue = () => {
-    console.log('Continue to terms');
+    navigate('/auth/terms', {
+      state: { email, userId },
+    });
   };
 
   const handleRetry = () => {
-    console.log('Retry verification');
+    navigate('/auth/upload-id', {
+      replace: true,
+      state: { email, userId },
+    });
+  };
+
+  const handleBackClick = () => {
+    navigate('/auth/live-photo', {
+      state: { email, userId, idFile },
+    });
   };
 
   return (
     <div className="min-h-screen w-full flex items-start justify-center p-4">
+
+      {/* Back Button - Top Left */}
+      <button
+        onClick={handleBackClick}
+        disabled={isVerifying}
+        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all disabled:opacity-50"
+      >
+        <ArrowLeft className="w-6 h-6 text-foreground" />
+      </button>
+
       <div className="w-full max-w-2xl mx-auto">
+
         {/* Logo/Header */}
         <div className="text-center mb-4">
           <img
@@ -60,119 +110,156 @@ export default function identityVerification() {
             alt="Eaarth Studios"
             className="w-40 h-auto mx-auto mb-3"
           />
-          <p className="text-sm text-gray-600 tracking-wide font-semibold">
+          <p className="text-sm text-muted-foreground tracking-wide font-semibold">
             AI FACE VERIFICATION
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl p-6 md:p-6 border border-gray-100 w-full">
+        {/* Main Card */}
+        <div className="bg-card rounded-3xl p-6 md:p-8 border border-gray-100 w-full">
+
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-4 bg-[#faf5ff] border border-gray-200 rounded-2xl flex-shrink-0">
-              <Scan className="w-6 md:w-7 h-6 md:h-7 text-[#9333ea]" />
+            <div className="p-3 bg-lavender-50 border border-primary rounded-xl flex-shrink-0">
+              <Scan className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl md:text-xl font-medium text-gray-900">FACE VERIFICATION</h2>
-              <p className="text-xs text-gray-500">Comparing ID and live photos</p>
+              <h2 className="text-xl md:text-2xl font-medium text-foreground">
+                FACE VERIFICATION
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Comparing ID and Live Photos
+              </p>
             </div>
           </div>
 
           {/* Photo Comparison */}
           <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+
             {/* ID Photo */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-600 text-center">ID PHOTO</p>
-              <div className="rounded-2xl md:rounded-2xl overflow-hidden border border-gray-200">
-                <img src={idPhotoData} alt="ID" className="w-full h-48 md:h-56 object-cover" />
+              <p className="text-xs font-semibold text-muted-foreground text-center uppercase tracking-wide">ID Photo</p>
+              <div className="rounded-xl overflow-hidden border border-border">
+                {idPhotoPreview ? (
+                  <img src={idPhotoPreview} className="w-full h-40 md:h-48 object-cover" alt="ID Document" />
+                ) : (
+                  <div className="w-full h-40 md:h-48 bg-muted flex items-center justify-center">
+                    <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Live Photo */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-600 text-center">LIVE PHOTO</p>
-              <div className="rounded-2xl md:rounded-2xl overflow-hidden border border-gray-200">
-                <img src={livePhotoData} alt="Live" className="w-full h-48 md:h-56 object-cover" />
+              <p className="text-xs font-semibold text-muted-foreground text-center uppercase tracking-wide">Live Photo</p>
+              <div className="rounded-xl overflow-hidden border border-border">
+                {selfiePreview ? (
+                  <img src={selfiePreview} className="w-full h-40 md:h-48 object-cover" alt="Live Selfie" />
+                ) : (
+                  <div className="w-full h-40 md:h-48 bg-muted flex items-center justify-center">
+                    <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
 
-          {/* Verification Status */}
+          {/* VERIFICATION PROGRESS */}
           {isVerifying ? (
-            <div className="bg-[#faf5ff] border border-gray-200 rounded-2xl p-6 md:p-6 text-center mb-6">
-              <div className="relative w-20 h-20 mx-auto mb-4">
-                <Scan className="w-20 h-20 text-[#9333ea] animate-pulse" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 border-2 border-gray-200 border-t-[#9333ea] rounded-full animate-spin"></div>
+            <>
+              <div className="bg-lavender-50 border border-primary/30 rounded-xl p-6 text-center mb-6">
+
+                <div className="relative w-16 h-16 mx-auto mb-4">
+                  <Scan className="w-16 h-16 text-primary animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 border-4 border-lavender-200 border-t-primary rounded-full animate-spin"></div>
+                  </div>
                 </div>
+
+                <p className="text-lg font-semibold text-foreground mb-3">
+                  AI VERIFICATION IN PROGRESS...
+                </p>
+
+                <div className="w-full bg-muted rounded-full h-2 mb-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+
+                <p className="text-sm text-muted-foreground">{progress}% Complete</p>
               </div>
-              <p className="text-base md:text-lg font-medium text-[#9333ea] mb-3">
-                AI VERIFICATION IN PROGRESS...
-              </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div
-                  className="bg-[#9333ea] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <p className="text-sm text-[#9333ea]">{progress}% Complete</p>
-            </div>
+            </>
           ) : (
             <>
-              {verificationResult?.match ? (
-                <div className="bg-green-50 border border-green-300 rounded-2xl p-6 md:p-6 text-center mb-6">
-                  <CheckCircle className="w-16 md:w-20 h-16 md:h-20 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-xl md:text-xl font-medium text-green-900 mb-2">
+              {verificationResult?.verified ? (
+                <div className="bg-mint-50 border border-mint-500/30 rounded-xl p-6 text-center mb-6">
+
+                  <CheckCircle className="w-16 h-16 text-mint-600 mx-auto mb-4" />
+
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
                     VERIFICATION SUCCESSFUL!
                   </h3>
-                  <p className="text-base md:text-lg text-green-700 mb-4">
-                    Face Match: <strong>{verificationResult.score}%</strong>
+
+                  <p className="text-base text-mint-700 mb-4">
+                    Face Match: <strong>{Math.round(verificationResult?.confidence * 100)}%</strong>
                   </p>
-                  <div className="bg-green-100 rounded-2xl p-4">
-                    <p className="text-xs md:text-sm text-green-800">
-                      ✓ Your identity has been verified using AI facial recognition technology.
-                      Your photos match with <strong>{verificationResult.score}% confidence</strong>.
+
+                  <div className="bg-mint-100 rounded-xl p-3.5">
+                    <p className="text-sm text-mint-800">
+                      ✓ Your identity has been successfully verified using AI facial recognition.
+                      Confidence: <strong>{Math.round(verificationResult?.confidence * 100)}%</strong>
                     </p>
                   </div>
+
                 </div>
               ) : (
-                <div className="bg-red-50 border border-red-300 rounded-2xl p-6 md:p-6 text-center mb-6">
-                  <XCircle className="w-16 md:w-20 h-16 md:h-20 text-red-600 mx-auto mb-4" />
-                  <h3 className="text-xl md:text-xl font-medium text-red-900 mb-2">
+                /* VERIFICATION FAILED */
+                <div className="bg-red-50 border border-red-300 rounded-xl p-6 text-center mb-6">
+
+                  <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
                     VERIFICATION FAILED
                   </h3>
-                  <p className="text-base md:text-lg text-red-700 mb-4">
-                    Face Match: <strong>{verificationResult?.score || 0}%</strong>
+
+                  <p className="text-base text-destructive mb-4">
+                    Face Match: <strong>{Math.round((verificationResult?.confidence || 0) * 100)}%</strong>
                   </p>
-                  <div className="bg-red-100 rounded-2xl p-4 mb-4">
-                    <p className="text-xs md:text-sm text-red-800">
-                      {verificationResult?.error || 
-                        `The photos do not match sufficiently. We require at least 80% confidence for verification.`}
+
+                  <div className="bg-red-100 rounded-xl p-3.5 mb-4">
+                    <p className="text-sm text-destructive">
+                      {error || 'The photos do not match sufficiently. Minimum 80% confidence required.'}
                     </p>
                   </div>
+
                   <div className="text-left">
-                    <p className="text-xs md:text-sm text-red-700 font-medium mb-2">
+                    <p className="text-sm text-destructive font-semibold mb-2">
                       COMMON ISSUES:
                     </p>
-                    <ul className="text-xs md:text-sm text-red-600 space-y-1">
-                      <li>• Poor lighting in one or both photos</li>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Poor lighting</li>
                       <li>• Face not clearly visible in ID photo</li>
                       <li>• Wearing glasses, hat, or face covering</li>
-                      <li>• Low quality or blurry photos</li>
+                      <li>• Blurry or low-quality image</li>
                     </ul>
                   </div>
+
                 </div>
               )}
             </>
           )}
 
-          {/* Action Buttons */}
+          {/* ACTION BUTTONS */}
           {!isVerifying && (
-            <div className="space-y-4">
-              {verificationResult?.match ? (
+            <div className="space-y-3">
+
+              {verificationResult?.verified ? (
                 <button
                   onClick={handleContinue}
-                  className="w-full bg-gradient-to-r from-[#9333ea] to-pink-600 text-white font-medium py-3.5 md:py-4 rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  className="w-full bg-primary text-primary-foreground font-medium py-3 rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   CONTINUE TO TERMS & CONDITIONS
                   <ArrowRight className="w-5 h-5" />
@@ -181,40 +268,31 @@ export default function identityVerification() {
                 <>
                   <button
                     onClick={handleRetry}
-                    className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium py-3.5 md:py-4 rounded-2xl flex items-center justify-center gap-2"
+                    className="w-full bg-primary text-primary-foreground font-medium py-3 rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-sm"
                   >
                     TRY AGAIN
                     <ArrowRight className="w-5 h-5" />
                   </button>
+
                   <button
                     onClick={performVerification}
-                    className="w-full bg-gray-100 text-gray-700 font-medium py-3.5 md:py-4 rounded-2xl hover:bg-gray-200 border border-gray-200 flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-muted text-foreground font-medium py-3 rounded-xl hover:bg-muted/80 border border-border transition-all flex items-center justify-center gap-2 text-sm"
                   >
-                    <Loader className="w-5 h-5" />
+                    <Loader className="w-5 h-5 animate-spin" />
                     RE-RUN VERIFICATION
                   </button>
                 </>
               )}
+
             </div>
           )}
+
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-6 text-gray-500 text-xs">
-          Step 4 of 4: AI Face Verification
+        <div className="text-center mt-6 text-muted-foreground text-xs">
+          Step 5 of 5 — AI Face Verification
         </div>
       </div>
-    </div>
+    </div >
   );
 }
-
-
-
-
-
-
-
-
-
-
-

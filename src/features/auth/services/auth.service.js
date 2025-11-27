@@ -29,7 +29,7 @@ export const authService = {
         success: true,
         userId: data.data?.userId || data.userId,
         email: data.data?.email || email,
-        ...data,
+         message: data.message,
       };
     } catch (error) {
       throw new Error(
@@ -141,7 +141,6 @@ export const authService = {
       const { data } = await axiosConfig.get("/auth/me");
       return data.user || null;
     } catch (error) {
-      // If 401, return null silently (user not logged in)
       if (error.response?.status === 401) return null;
       throw error;
     }

@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
-import { authApi } from '../api/auth.api';
+import { useState, useCallback } from "react";
+import { authService } from "../services/auth.service";
 
 export const useForgotPassword = (onSuccess, onError) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const validateEmail = useCallback((email) => {
@@ -13,20 +13,20 @@ export const useForgotPassword = (onSuccess, onError) => {
 
   const handleSubmit = useCallback(async () => {
     if (!email) {
-      setError('Email is required');
+      setError("Email is required");
       return false;
     }
 
     if (!validateEmail(email)) {
-      setError('Invalid email format');
+      setError("Invalid email format");
       return false;
     }
 
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      await authApi.sendResetPasswordOtp(email);
+      await authService.sendResetPasswordOtp(email);
 
       setSuccess(true);
 
@@ -37,7 +37,7 @@ export const useForgotPassword = (onSuccess, onError) => {
 
       return true;
     } catch (err) {
-      const errorMsg = err.message || 'Failed to send OTP. Please try again.';
+      const errorMsg = err.message || "Failed to send OTP. Please try again.";
       setError(errorMsg);
       onError?.(errorMsg);
       return false;
@@ -56,11 +56,3 @@ export const useForgotPassword = (onSuccess, onError) => {
     handleSubmit,
   };
 };
-
-
-
-
-
-
-
-

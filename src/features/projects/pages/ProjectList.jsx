@@ -204,7 +204,6 @@ export function ProjectList() {
               {tab.label}
               {isActive && (
                 <span
-                  layoutId="activeTabBadge"
                   className="px-2 py-0.5 rounded-full text-xs bg-background/60 backdrop-blur-2xl text-foreground"
                 >
                   {filteredProjects.length}

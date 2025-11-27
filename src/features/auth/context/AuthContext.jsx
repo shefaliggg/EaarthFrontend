@@ -12,16 +12,22 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [tempLoginData, setTempLoginData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Routes that don't require auth check
   const publicRoutes = [
     "/auth/login",
+    "/auth/temp-login",
     "/auth/set-password",
-    "/auth/reset",
-    "/auth/forgot-password",
+    "/auth/upload-id",
+    "/auth/live-photo",
+    "/auth/identity-verification",
+    "/auth/terms",
     "/auth/otp-verification",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/invite/verify",
+    "/auth/result",
   ];
 
   const isPublicRoute = useCallback((pathname) => {
@@ -78,7 +84,6 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout error:", err);
     } finally {
       setUser(null);
-      setTempLoginData(null);
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
     }
   }, [navigate]);
@@ -86,34 +91,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     setLogoutFunction(logout);
   }, [logout]);
-
-  const temporaryLogin = async (credentials) => {
-    setLoading(true);
-    try {
-      const res = await authService.temporaryLogin(credentials);
-      if (!res?.success) throw new Error(res?.message || "Temporary login failed");
-
-      const tempData = {
-        userId: res.data.userId,
-        email: credentials.email,
-        isTemporary: true,
-      };
-
-      setTempLoginData(tempData);
-
-      navigate(ROUTES.AUTH.SET_PASSWORD, {
-        replace: true,
-        state: tempData,
-      });
-
-      return res;
-    } catch (err) {
-      console.error("Temporary login failed:", err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const updateUser = (newUserData) => {
     setUser((prev) => ({ ...prev, ...newUserData }));
@@ -123,8 +100,6 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        tempLoginData,
-        temporaryLogin,
         logout,
         updateUser,
         loading,

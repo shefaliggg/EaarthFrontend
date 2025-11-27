@@ -1,85 +1,79 @@
-// import { useState } from 'react';
-// import { authApi } from '../api/auth.api';
+import { useState } from "react";
+import { authService } from "../services/auth.service";
 
-// export const useSetPassword = (onSuccess, onError) => {
-//   const [password, setPassword] = useState('');
-//   const [confirm, setConfirm] = useState('');
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [showConfirm, setShowConfirm] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState('');
-//   const [success, setSuccess] = useState(false);
+const useSetPassword = () => {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-//   const validatePassword = (pwd) =>
-//     pwd.length >= 8 &&
-//     /[A-Z]/.test(pwd) &&
-//     /[a-z]/.test(pwd) &&
-//     /[0-9]/.test(pwd) &&
-//     /[!@#$%^&*]/.test(pwd);
+  const validatePassword = (pwd) => {
+    const minLength = pwd.length >= 8;
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[!@#$%^&*]/.test(pwd);
 
-//   const handleSubmit = async (userId, email) => {
-//     setError('');
+    return minLength && hasUpper && hasLower && hasNumber && hasSpecial;
+  };
 
-//     if (password !== confirm) {
-//       setError('Passwords do not match!');
-//       return false;
-//     }
+  const handleSubmit = async (userId, email) => {
+    if (!password || !confirm) {
+      setError("Please fill in all password fields.");
+      return false;
+    }
 
-//     if (!validatePassword(password)) {
-//       setError(
-//         'Password must be 8+ characters with uppercase, lowercase, number, and special character'
-//       );
-//       return false;
-//     }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return false;
+    }
 
-//     setLoading(true);
-//     try {
-//       const response = await authApi.setNewPassword(userId, password);
+    if (!validatePassword(password)) {
+      setError("Password must meet all requirements.");
+      return false;
+    }
 
-//       if (response.success) {
-//         setSuccess(true);
+    setError("");
+    setLoading(true);
 
-//         setTimeout(() => {
-//           onSuccess?.({ userId, email, passwordSet: true });
-//         }, 1200);
+    try {
+      const response = await authService.setNewPassword({
+        userId,
+        newPassword: password,
+      });
 
-//         return true;
-//       }
+      if (response?.success) {
+        setSuccess(true);
+        return { success: true, email, userId };
+      }
 
-//       setError(response.message || 'Unable to set password.');
-//       return false;
+      return false;
+    } catch (err) {
+      const errorMsg = err?.message || "Failed to set password.";
+      setError(errorMsg);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//     } catch (err) {
-//       const msg = err.message || 'Something went wrong';
-//       setError(msg);
-//       onError?.(msg);
-//       return false;
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  return {
+    password,
+    setPassword,
+    confirm,
+    setConfirm,
+    showPassword,
+    setShowPassword,
+    showConfirm,
+    setShowConfirm,
+    loading,
+    error,
+    success,
+    handleSubmit,
+  };
+};
 
-//   return {
-//     password,
-//     setPassword,
-//     confirm,
-//     setConfirm,
-//     showPassword,
-//     setShowPassword,
-//     showConfirm,
-//     setShowConfirm,
-//     loading,
-//     error,
-//     setError,
-//     success,
-//     handleSubmit,
-//   };
-// };
-
-
-
-
-
-
-
-
+export default useSetPassword;

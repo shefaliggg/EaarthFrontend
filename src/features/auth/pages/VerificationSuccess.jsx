@@ -1,129 +1,90 @@
 import { useEffect } from 'react';
-import { CheckCircle, XCircle, ArrowLeft, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, ArrowLeft } from 'lucide-react';
+import eaarthLogo from '../../../assets/eaarth.png';
 
-// interface VerificationResultProps {
-//   status: "success" | "failed";   
-//   onNavigate: (screen: string) => void;
-//   onSkip?: () => void;           
-// }
+export function VerificationResultScreen() {
+  const navigate = useNavigate();
 
-export function VerificationResultScreen({
-  status,
-  onNavigate,
-  onSkip,
-}) {
-
-  // Auto-redirect for success
+  // Auto-redirect to login after 3 seconds
   useEffect(() => {
-    if (status === "success") {
-      const timer = setTimeout(() => {
-        onNavigate("complete");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [status, onNavigate]);
+    const timer = setTimeout(() => {
+      navigate('/auth/login', { replace: true });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
-  const isSuccess = status === "success";
+  const handleBackClick = () => {
+    navigate(-1);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-yellow-100 via-green-100 via-pink-100 to-[#e9d5ff] relative">
-
-      {/* Skip Button only in failed case */}
-      {!isSuccess && onSkip && (
-        <button
-          onClick={onSkip}
-          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white rounded-lg transition-all text-[#9333ea] font-medium"
-        >
-          <Home className="w-5 h-5" />
-          Skip to Dashboard
-        </button>
-      )}
-
-      {/* Back button always visible for both */}
+    <div className="min-h-screen w-full flex items-start justify-center p-4">
+      
+      {/* Back Button - Top Left */}
       <button
-        onClick={() => onNavigate(isSuccess ? "complete" : "login")}
-        className="absolute top-6 left-6 p-3 hover:bg-white/50 rounded-full transition-all bg-white/30"
+        onClick={handleBackClick}
+        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all"
       >
-        <ArrowLeft className="w-6 h-6 text-gray-700" />
+        <ArrowLeft className="w-6 h-6 text-foreground" />
       </button>
 
-      <div className="w-full max-w-md bg-white rounded-2xl p-6 text-center">
+      <div className="w-full max-w-lg mx-auto">
 
-        {/* Logo */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-medium bg-gradient-to-r from-[#9333ea] to-pink-600 bg-clip-text text-transparent">
-            EAARTH
-          </h1>
-          <p className="text-lg font-medium bg-gradient-to-r from-[#9333ea] to-pink-600 bg-clip-text text-transparent">
-            STUDIOS
+        {/* Logo + Title */}
+        <div className="text-center mb-4">
+          <img
+            src={eaarthLogo}
+            alt="Eaarth Studios"
+            className="w-40 h-auto mx-auto mb-3"
+          />
+          <p className="text-sm text-muted-foreground font-semibold tracking-wide">
+            VERIFICATION SUCCESS
           </p>
         </div>
 
-        {/* Icon */}
-        <div className="mb-6">
-          <div
-            className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center 
-            ${isSuccess ? "bg-green-100" : "bg-red-100"}
-          `}
-          >
-            {isSuccess ? (
-              <CheckCircle className="w-16 h-16 text-green-600" />
-            ) : (
-              <XCircle className="w-16 h-16 text-red-600" />
-            )}
+        {/* Card */}
+        <div className="bg-card rounded-3xl border border-gray-100 overflow-hidden">
+
+          {/* Header */}
+          <div className="p-8 md:p-10 text-center">
+            
+            {/* Icon */}
+            <div className="mb-6 flex justify-center">
+              <div className="w-24 h-24 rounded-full bg-mint-50 flex items-center justify-center">
+                <CheckCircle className="w-16 h-16 text-mint-600" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-medium text-foreground mb-2">
+              Verified Successfully!
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-muted-foreground text-sm mb-8">
+              Your account has been verified and setup is complete. Redirecting to login page...
+            </p>
+
+            {/* Loading Spinner */}
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-muted border-t-primary"></div>
+            </div>
+
+            {/* Progress Text */}
+            <p className="text-xs text-muted-foreground mt-6">
+              Redirecting in a moment...
+            </p>
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="text-xl font-semibold mb-2">
-          {isSuccess ? "Verified Successfully!" : "Verification Failed"}
-        </h2>
-
-        {/* Subtitle */}
-        <p className="text-gray-600 mb-8">
-          {isSuccess
-            ? "Your account has been verified. Redirecting to your dashboard..."
-            : "The invitation link is invalid or has expired. Please contact your administrator for a new invitation."
-          }
-        </p>
-
-        {/* Success Loader */}
-        {isSuccess && (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-200"></div>
-          </div>
-        )}
-
-        {/* Failed buttons */}
-        {!isSuccess && (
-          <div className="space-y-3">
-            <button
-              onClick={() => onNavigate("login")}
-              className="w-full bg-gradient-to-r from-[#9333ea] to-pink-600 text-white font-semibold py-3 rounded-lg hover:transition-all"
-            >
-              BACK TO LOGIN
-            </button>
-            <button
-              onClick={() => onNavigate("contact-support")}
-              className="w-full border border-gray-200 text-[#9333ea] font-semibold py-3 rounded-lg hover:bg-[#faf5ff] transition-all"
-            >
-              CONTACT SUPPORT
-            </button>
-          </div>
-        )}
+        {/* Footer */}
+        <div className="text-center mt-6 text-muted-foreground text-xs">
+          Step 5 of 5 — Verification Complete
+        </div>
       </div>
     </div>
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
+export default VerificationResultScreen;

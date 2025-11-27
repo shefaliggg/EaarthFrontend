@@ -1,40 +1,32 @@
-import { useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { authService } from '../services/authService';
-import { useAuth } from '../components/context/AuthContext';
-import { ROUTES } from '../../../shared/constants/routes';
+import { useState } from "react";
+import { authService } from "../services/auth.service";
 
 const useIdentityVerification = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [faceMatchScore, setFaceMatchScore] = useState(0);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { updateUser } = useAuth();
+  const [error, setError] = useState("");
+  const [verificationResult, setVerificationResult] = useState(null);
 
-  const handleVerifyIdentity = useCallback(async ({ idFile, selfieFile }) => {
+  const handleVerifyIdentity = async ({ userId, idFile, selfieFile }) => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
+      setVerificationResult(null);
 
       if (!idFile || !selfieFile) {
-        throw new Error('Both ID document and selfie are required');
+        throw new Error("Both ID document and selfie are required");
       }
 
-      const userId = location.state?.userId;
-      const email = location.state?.email;
-
       if (!userId) {
-        throw new Error('Session expired. Please log in again.');
+        throw new Error("User ID is required");
       }
 
       // Build FormData
       const formData = new FormData();
-      formData.append('userId', userId);
-      formData.append('idDocument', idFile);
-      formData.append('selfiePhoto', selfieFile);
+      formData.append("userId", userId);
+      formData.append("idDocument", idFile);
+      formData.append("selfiePhoto", selfieFile);
 
-      console.log('Submitting identity verification:', {
+      console.log("Submitting identity verification:", {
         userId,
         idDocument: idFile.name,
         selfiePhoto: selfieFile.name,
@@ -42,59 +34,46 @@ const useIdentityVerification = () => {
 
       // Call authService.verifyIdentity
       const response = await authService.verifyIdentity(formData);
+      console.log("Verification response:", response);
 
-      console.log('Verification response:', response);
+      const result = {
+        verified: response?.verified || false,
+        confidence: response?.confidence || 0,
+        message: response?.message || "",
+        user: response?.user || null,
+      };
 
-      const confidence = response?.confidence || 0;
-      setFaceMatchScore(confidence);
+      setVerificationResult(result);
 
-      // Update user context if returned
-      if (response?.user) {
-        updateUser(response.user);
+      if (!result.verified) {
+        setError(
+          result.message ||
+            "Face verification failed. Your account is under review."
+        );
       }
 
-      // Success → Navigate to Accept Terms
-      if (response?.verified) {
-        setTimeout(() => {
-          navigate(ROUTES.AUTH.ACCEPT_TERMS, {
-            replace: true,
-            state: {
-              message: 'Identity verified successfully!',
-              confidence,
-              email,
-              userId,
-            },
-          });
-        }, 500);
-      } else {
-        setError(response?.message || 'Face verification failed. Your account is under review.');
-      }
-
+      return result;
     } catch (err) {
-      console.error('Identity verification error:', err);
+      console.error("Identity verification error:", err);
       const errorMessage =
-        err?.response?.data?.message || err?.message || 'Verification failed. Please try again.';
+        err?.response?.data?.message ||
+        err?.message ||
+        "Verification failed. Please try again.";
       setError(errorMessage);
-      setFaceMatchScore(0);
+      setVerificationResult({ verified: false, confidence: 0 });
+      return { verified: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
-  }, [location.state, updateUser, navigate]);
+  };
 
   return {
     handleVerifyIdentity,
     loading,
     error,
-    faceMatchScore,
+    verificationResult,
     setError,
   };
 };
 
 export default useIdentityVerification;
-
-
-
-
-
-
-

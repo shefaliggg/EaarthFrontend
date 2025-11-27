@@ -3,10 +3,11 @@ import AuthRoutes from "../features/auth/routes/AuthRoutes";
 import ErrorBoundary from "../shared/components/ErrorBoundary";
 import DashboardRoutes from "./DashboardRoutes";
 import { lazy } from "react";
-import RootLayout from "../layouts/RootLayout";
-import { AuthProvider } from "../features/auth/context/AuthContext";
+import RootLayout from "@/layouts/RootLayout";
+import { AuthProvider } from "@/features/auth/context/AuthContext";
 
-const NotFound = lazy(() => import('../shared/pages/NotFound'));
+const NotFound = lazy(() => import('@/shared/pages/NotFound'));
+const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmail'));
 
 const AppRoutes = [
   {
@@ -19,8 +20,11 @@ const AppRoutes = [
     ),
     children: [
       { path: "/", element: <Navigate to="/auth/login" replace />, },
+      { path: "/invite/verify", element: <VerifyEmailPage /> },
+
       AuthRoutes,
       DashboardRoutes,
+
       { path: '*', element: <NotFound /> },
     ],
   },

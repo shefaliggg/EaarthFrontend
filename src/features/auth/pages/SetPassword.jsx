@@ -1,11 +1,14 @@
-import React from 'react';
 import { Eye, EyeOff, ArrowLeft, Info, Loader, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-// import { useSetPassword } from '../hooks/useSetPassword';
+import { useNavigate, useLocation } from 'react-router-dom';
+import useSetPassword from '../hooks/useSetPassword';
+import eaarthLogo from '../../../assets/eaarth.png';
 
-export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, onComplete }) => {
+export const SetPasswordPage = () => {
   const navigate = useNavigate();
-  const email = propEmail || 'user@example.com';
+  const location = useLocation();
+
+  const userId = location.state?.userId;
+  const email = location.state?.email || 'user@example.com';
 
   const {
     password,
@@ -20,151 +23,175 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
     error,
     success,
     handleSubmit,
-  } = useSetPassword(onSuccess);
+  } = useSetPassword();
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const ok = await handleSubmit(userId, email);
+    const result = await handleSubmit(userId, email);
 
-    if (!ok) return;
-
-    if (!onSuccess && !onComplete) {
-      navigate('/auth/login');
-    } else if (onComplete) {
-      onComplete();
+    if (result && result.success) {
+      setTimeout(() => {
+        navigate('/auth/upload-id', {
+          replace: true,
+          state: { email, userId },
+        });
+      }, 1500);
     }
   };
 
-  const handleBackClick = () => onBack?.() ?? navigate('/auth/temp-login');
+  const handleBackClick = () => navigate('/auth/temp-login');
   const handleBackToLogin = () => navigate('/auth/login');
 
-  // Success State Screen
+  // SUCCESS SCREEN
   if (success) {
     return (
-      <div className="w-full max-w-xl mx-auto px-4">
-        <div className="bg-white rounded-2xl p-6 text-center">
-          <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h2 className="text-xl font-medium text-gray-900 mb-2">
-            Password Set Successfully!
-          </h2>
-          <p className="text-gray-600">Redirecting to login...</p>
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="w-full max-w-xl mx-auto">
+          <div className="bg-card rounded-3xl shadow-xl p-10 text-center border border-gray-100">
+            <CheckCircle className="w-14 h-14 text-mint-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Password Set Successfully!
+            </h2>
+            <p className="text-muted-foreground">Redirecting to ID upload...</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  // MAIN PAGE UI
   return (
-    <div className="w-full max-w-xl mx-auto px-4">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={handleBackClick}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all font-medium text-gray-600"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          BACK
-        </button>
-      </div>
+    <div className="min-h-screen w-full flex items-start justify-center p-4">
 
-      {/* Card */}
-      <div className="w-full bg-white rounded-2xl overflow-hidden">
-        {/* Header */}
-        <div className="px-6 md:px-8 py-8 text-center">
-          <h2 className="text-2xl md:text-2xl font-medium text-gray-800 mb-2">SET YOUR PASSWORD</h2>
-          <p className="text-gray-600 text-sm md:text-base">
-            Create a new password to secure your account
+      {/* Back Button - Top Left */}
+      <button
+        onClick={handleBackClick}
+        disabled={loading}
+        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all disabled:opacity-50"
+      >
+        <ArrowLeft className="w-6 h-6 text-foreground" />
+      </button>
+
+      <div className="w-full max-w-lg mx-auto">
+
+        {/* Logo + Title */}
+        <div className="text-center mb-4">
+          <img
+            src={eaarthLogo}
+            alt="Eaarth Studios"
+            className="w-40 h-auto mx-auto mb-3"
+          />
+          <p className="text-sm text-muted-foreground tracking-wide font-semibold">
+            SET NEW PASSWORD
           </p>
         </div>
 
-        {/* Email Banner */}
-        <div className="px-6 md:px-10">
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-gray-700 break-all">
-              <span className="font-medium">EMAIL:</span> {email}
+        {/* Main Card */}
+        <div className="bg-card rounded-3xl p-8 md:p-10 border border-gray-100">
+
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-2xl font-medium mb-2 text-foreground">
+              CREATE YOUR PASSWORD
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Create a new password to secure your account
             </p>
           </div>
-        </div>
 
-        {/* Form */}
-        <div className="px-6 md:px-8 pb-10">
+          {/* Email Banner */}
+          <div className="bg-lavender-50 border border-gray-100 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <Info className="w-5 h-5 text-primary" />
+            <p className="text-sm text-foreground break-all">
+              <span className="font-semibold">Email:</span> {email}
+            </p>
+          </div>
+
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>
+            <div className="bg-red-100 text-destructive p-3 rounded-lg mb-6 text-sm">
+              {error}
+            </div>
           )}
 
-          <form onSubmit={handleFormSubmit} className="space-y-6">
-            {/* Password */}
+          {/* FORM */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+
+            {/* New Password */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">NEW PASSWORD *</label>
+              <label className="block text-sm font-medium text-foreground mb-2 uppercase tracking-wide">
+                New Password
+              </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="ENTER NEW PASSWORD"
+                  placeholder="Enter new password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-[#a855f7] focus:border-transparent placeholder:text-gray-400 outline-none 
-                    transition-all disabled:bg-gray-100"
+                  className="w-full px-4 py-3 pr-12 bg-input border border-border rounded-xl 
+                             focus:border-border focus:ring-2 focus:ring-lavender-50 outline-none
+                             placeholder:text-muted-foreground transition-all disabled:bg-muted text-foreground"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 
-                    transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-2">CONFIRM PASSWORD *</label>
+              <label className="block text-sm font-medium text-foreground mb-2 uppercase tracking-wide">
+                Confirm Password
+              </label>
               <div className="relative">
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="RE-ENTER PASSWORD"
+                  placeholder="Re-enter password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-2xl focus:ring-2 
-                    focus:ring-[#a855f7] focus:border-transparent placeholder:text-gray-400 outline-none 
-                    transition-all disabled:bg-gray-100"
+                  className="w-full px-4 py-3 pr-12 bg-input border border-border rounded-xl 
+                             focus:border-border focus:ring-2 focus:ring-lavender-50 outline-none
+                             placeholder:text-muted-foreground transition-all disabled:bg-muted text-foreground"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 
-                    transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Password Requirements */}
-            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">
-              <p className="font-medium mb-2">Password must include:</p>
+            {/* Password Guidelines */}
+            <div className="bg-muted rounded-xl p-3.5 text-sm text-muted-foreground">
+              <p className="font-medium mb-2 text-foreground">Password must include:</p>
               <ul className="space-y-1 list-disc list-inside text-xs">
                 <li>8+ characters</li>
-                <li>Uppercase letter (A-Z)</li>
-                <li>Lowercase letter (a-z)</li>
-                <li>Number (0-9)</li>
-                <li>Special character (!@#$%^&*)</li>
+                <li>Uppercase letter</li>
+                <li>Lowercase letter</li>
+                <li>Number</li>
+                <li>Special character</li>
               </ul>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !password || !confirm}
-              className="w-full bg-[#9333ea] hover:bg-[#9333ea] transition-colors text-white font-medium 
-                py-3.5 rounded-2xl mt-4 hover:opacity-90 transition-opacity disabled:opacity-50 
-                disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary mt-2 text-primary-foreground font-medium py-3
+                         rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 
+                         disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               {loading ? (
                 <>
@@ -177,14 +204,22 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+          {/* Back to Login */}
+          <div className="mt-4 text-center">
             <button
               onClick={handleBackToLogin}
-              className="text-[#9333ea] hover:text-[#a855f7] font-medium text-sm transition-colors"
+              disabled={loading}
+              className="text-primary hover:text-primary/80 font-medium text-sm transition-colors disabled:opacity-50"
             >
               Back to Login
             </button>
           </div>
+
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-6 text-muted-foreground text-xs">
+          Step 2 of 5 — Set Password
         </div>
       </div>
     </div>
@@ -192,15 +227,3 @@ export const SetPasswordPage = ({ userId, email: propEmail, onSuccess, onBack, o
 };
 
 export default SetPasswordPage;
-
-
-
-
-
-
-
-
-
-
-
-
