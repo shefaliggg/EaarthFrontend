@@ -1,9 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { authService } from "../services/auth.service";
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { authService } from '../services/auth.service';
 
-export const useVerifyEmail = (onSuccess) => {
-  const [status, setStatus] = useState("loading"); // loading | success | error
-  const [message, setMessage] = useState("");
+export const useVerifyEmail = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const [status, setStatus] = useState('loading');
+  const [message, setMessage] = useState('');
   const [inviteData, setInviteData] = useState(null);
 
   const hasRun = useRef(false);
@@ -13,54 +17,48 @@ export const useVerifyEmail = (onSuccess) => {
     hasRun.current = true;
 
     const verifyInvite = async () => {
+      const token = searchParams.get('token');
+      const email = searchParams.get('email');
+
+      if (!token || !email) {
+        setStatus('error');
+        setMessage('Invalid invitation link.');
+        return;
+      }
+
       try {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-        const email = params.get("email");
-
-        // 🔍 Validate URL params
-        if (!token || !email) {
-          setStatus("error");
-          setMessage("Invalid invitation link. Token or email is missing.");
-          return;
-        }
-
-        // 🔥 API Call
         const response = await authService.verifyInviteLink(token, email);
 
-        if (!response || !response.success) {
-          setStatus("error");
-          setMessage(response?.message || "Failed to verify invitation.");
-          return;
+        if (response.success) {
+          setStatus('success');
+          setInviteData({
+            email: response.data?.email || email,
+            userType: response.data?.userType,
+            isLinkVerified: response.data?.isLinkVerified,
+            firstLogin: response.data?.firstLogin,
+          });
+
+          setTimeout(() => {
+            navigate('/auth/temp-login', {
+              replace: true,
+              state: {
+                email: response.data?.email || email,
+                fromInvite: true,
+              },
+            });
+          }, 2000);
+        } else {
+          setStatus('error');
+          setMessage(response.message || 'Verification failed.');
         }
-
-        // 🎯 Prepare structured payload
-        const data = response.data || {};
-        const payload = {
-          email: data.email,
-          userType: data.userType,
-          organizationId: data.organizationId,
-          organizationType: data.organizationType,
-          isLinkVerified: data.isLinkVerified,
-          firstLogin: data.firstLogin,
-        };
-
-        setInviteData(payload);
-        setStatus("success");
-        setMessage("Invitation verified! Redirecting...");
-
-        // ⏳ Delay redirect for UI feedback
-        setTimeout(() => {
-          onSuccess?.(payload);
-        }, 1500);
-      } catch (err) {
-        setStatus("error");
-        setMessage(err?.response?.data?.message || err.message || "Something went wrong.");
+      } catch (error) {
+        setStatus('error');
+        setMessage(error.message || 'Verification failed.');
       }
     };
 
     verifyInvite();
-  }, [onSuccess]);
+  }, [searchParams, navigate]);
 
   return { status, message, inviteData };
 };

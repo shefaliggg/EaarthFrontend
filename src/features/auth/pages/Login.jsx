@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import eaarthLogo from "../../../assets/eaarth.png";
 import { useLogin } from "../hooks/useLogin";
-import WebLoginQR from "../components/QRLogin";
+import WebLoginQR from "../components/WebLoginQR";
 
 export const LoginPage = () => {
   const navigate = useNavigate();

@@ -1,255 +1,171 @@
 import { axiosConfig } from "../config/axiosConfig";
 
-// Centralized error handler
-const handleError = (error, fallback = "Something went wrong.") => {
-  throw new Error(error?.response?.data?.message || fallback);
-};
-
-// Helper to clean email
-const cleanEmail = (email) => email?.toLowerCase().trim();
-
 export const authService = {
-
-  /** ----------------------------------------
-   * VERIFY INVITATION LINK
-   * Backend path MUST match route: /auth/invite/verify
-   -----------------------------------------*/
+  // Verify invite link
   verifyInviteLink: async (token, email) => {
     try {
-      const { data } = await axiosConfig.get("/auth/invite/verify", {
-        params: {
-          token,
-          email: cleanEmail(email),
-        },
+      const { data } = await axiosConfig.get('/invite/verify', {
+        params: { token, email: email.toLowerCase() },
       });
-
-      if (!data?.success)
-        throw new Error(data?.message || "Invalid invitation link");
-
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message ||
-          "Invitation link is invalid or expired."
+        error.response?.data?.message || 'Invitation link is invalid or expired.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * TEMPORARY LOGIN (using temp password)
-   -----------------------------------------*/
+  // Temporary login - NO TOKEN GENERATION
   temporaryLogin: async ({ email, password }) => {
     try {
-      const cleaned = cleanEmail(email);
-
-      const { data } = await axiosConfig.post("/auth/login/temporary", {
-        email: cleaned,
+      const { data } = await axiosConfig.post('/auth/login/temporary', {
+        email: email.toLowerCase().trim(),
         password,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Temporary login failed");
-
+      if (!data?.success) throw new Error(data?.message || 'Temporary login failed');
+      
       return {
         success: true,
-        userId: data?.data?.userId,
-        email: data?.data?.email || cleaned,
-        data,
+        userId: data.data?.userId || data.userId,
+        email: data.data?.email || email,
+        message: data.message,
       };
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Temporary login failed."
+        error.response?.data?.message || 'Temporary login failed.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * NORMAL LOGIN (send OTP)
-   -----------------------------------------*/
+  // Normal login - sends OTP (NO TOKEN YET)
   login: async ({ email, password, rememberMe = false }) => {
     try {
-      const { data } = await axiosConfig.post("/auth/login", {
-        email: cleanEmail(email),
+      const { data } = await axiosConfig.post('/auth/login', {
+        email: email.toLowerCase().trim(),
         password,
         rememberMe,
       });
 
-      if (!data?.success) throw new Error(data?.message || "Login failed");
-
-      return data;
-    } catch (error) {
-      handleError(error, "Login failed.");
-    }
-  },
-
-  /** ----------------------------------------
-   * VERIFY LOGIN OTP
-   -----------------------------------------*/
-  verifyLoginOtp: async ({ email, otp }) => {
-    try {
-      const { data } = await axiosConfig.post("/auth/login/verify-otp", {
-        email: cleanEmail(email),
-        otp,
-      });
-
-      if (!data?.success)
-        throw new Error(data?.message || "OTP verification failed");
+      if (!data?.success) throw new Error(data?.message || 'Login failed');
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "OTP verification failed."
+        error.response?.data?.message || 'Login failed.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * SET NEW PASSWORD (after temp login)
-   -----------------------------------------*/
+  // Verify OTP after login - GENERATES TOKENS HERE
+  verifyLoginOtp: async ({ email, otp }) => {
+    try {
+      const { data } = await axiosConfig.post('/auth/login/verify-otp', {
+        email: email.toLowerCase().trim(),
+        otp,
+      });
+
+      if (!data?.success) throw new Error(data?.message || 'OTP verification failed');
+      
+      // Tokens are set in cookies by backend
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || 'OTP verification failed.'
+      );
+    }
+  },
+
+  // Set new password - NO TOKEN GENERATION
   setNewPassword: async ({ userId, newPassword }) => {
     try {
-      const { data } = await axiosConfig.post("/auth/password/set-password", {
+      const { data } = await axiosConfig.post('/auth/password/set-password', {
         userId,
         newPassword,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to set password");
+      if (!data?.success) throw new Error(data?.message || 'Failed to set password');
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to set password."
+        error.response?.data?.message || 'Failed to set password.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * FACE VERIFICATION
-   -----------------------------------------*/
+  // Face verification - NO TOKEN GENERATION
   verifyIdentity: async (formData) => {
     try {
-      const { data } = await axiosConfig.post("/auth/face/verify", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const { data } = await axiosConfig.post('/auth/face/verify', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      if (!data) throw new Error("No response from server");
-
+      if (!data) throw new Error('No response from server');
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Identity verification failed."
+        error.response?.data?.message || 'Identity verification failed.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * SEND RESET PASSWORD OTP
-   -----------------------------------------*/
+ 
+ 
+
+  // Forgot password - send OTP
   sendResetPasswordOtp: async (email) => {
     try {
-      const { data } = await axiosConfig.post("/auth/password/reset-password", {
-        email: cleanEmail(email),
+      const { data } = await axiosConfig.post('/auth/password/reset-password', {
+        email: email.toLowerCase().trim(),
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to send OTP");
+      if (!data?.success) throw new Error(data?.message || 'Failed to send OTP');
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to send reset OTP."
+        error.response?.data?.message || 'Failed to send reset OTP.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * VERIFY RESET OTP + SET NEW PASSWORD
-   ----------------------------------------*/
+  // Verify OTP and reset password
   verifyResetPasswordOtp: async ({ email, otp, password }) => {
     try {
-      const { data } = await axiosConfig.post("/auth/password/verify-otp", {
-        email: cleanEmail(email),
+      const { data } = await axiosConfig.post('/auth/password/verify-otp', {
+        email: email.toLowerCase().trim(),
         otp,
         password,
       });
 
-      if (!data?.success)
-        throw new Error(data?.message || "Failed to reset password");
+      if (!data?.success) throw new Error(data?.message || 'Failed to reset password');
       return data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || "Failed to reset password."
+        error.response?.data?.message || 'Failed to reset password.'
       );
     }
   },
 
-  /** ----------------------------------------
-   * GET CURRENT USER
-   -----------------------------------------*/
+  // Get current user (requires valid access token)
   getCurrentUser: async () => {
     try {
-      const { data } = await axiosConfig.get("/auth/me");
-      return data?.user || null;
+      const { data } = await axiosConfig.get('/auth/me');
+      if (data?.success) {
+        return data.data?.user || data.user;
+      }
+      return null;
     } catch (error) {
-      if (error?.response?.status === 401) return null;
-      throw error;
+      return null;
     }
   },
 
-  /** ----------------------------------------
-   * LOGOUT
-   -----------------------------------------*/
   logout: async () => {
     try {
-      await axiosConfig.post("/auth/logout");
+      await axiosConfig.post('/auth/logout');
       return { success: true };
     } catch (error) {
-      throw new Error("Logout failed.");
-    }
-  },
-
-  // Web QR
-  generateWebQr: async () => {
-    try {
-      const { data } = await axiosConfig.get("/auth/qr-code/web/init");
-      return data;
-    } catch (err) {
-      throw new Error(err.response?.data?.message || "Failed to generate QR.");
-    }
-  },
-
-  // Mobile QR
-  generateMobileQr: async () => {
-    try {
-      const { data } = await axiosConfig.get("/auth/qr-code/mobile/init");
-      console.log("generate mobile qr response in auth service", data)
-      return data;
-    } catch (err) {
-      throw new Error(err.response?.data?.message || "Failed to generate QR.");
-    }
-  },
-
-  getQrStatus: async (qrId) => {
-    try {
-      const { data } = await axiosConfig.get(`/auth/qr-code/status/${qrId}`);
-      return data;
-    } catch (err) {
-      throw new Error(
-        err.response?.data?.message || "Failed to fetch QR status."
-      );
-    }
-  },
-
-  getUserAndSetCookies: async ({ accessToken, refreshToken, userId }) => {
-    try {
-      const { data } = await axiosConfig.post("/auth/set-user-credential", {
-        accessToken,
-        refreshToken,
-        userId,
-      });
-      return data.user || null;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to update user credentials."
-      );
+      throw new Error('Logout failed.');
     }
   },
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { authService } from '../services/auth.service';
 
-export const useSetPassword = (onSuccess) => {
+const useSetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -10,56 +10,50 @@ export const useSetPassword = (onSuccess) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const validatePassword = (pwd) =>
-    pwd.length >= 8 &&
-    /[A-Z]/.test(pwd) &&
-    /[a-z]/.test(pwd) &&
-    /[0-9]/.test(pwd) &&
-    /[!@#$%^&*]/.test(pwd);
+  const validatePassword = (pwd) => {
+    const minLength = pwd.length >= 8;
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[!@#$%^&*]/.test(pwd);
 
-  const handleSubmit = async (userId) => {
-    setError('');
+    return minLength && hasUpper && hasLower && hasNumber && hasSpecial;
+  };
 
-    if (!userId) {
-      setError('User ID is missing. Please try again.');
+  const handleSubmit = async (userId, email) => {
+    if (!password || !confirm) {
+      setError('Please fill in all password fields.');
       return false;
     }
 
     if (password !== confirm) {
-      setError('Passwords do not match!');
+      setError('Passwords do not match.');
       return false;
     }
 
     if (!validatePassword(password)) {
-      setError(
-        'Password must be 8+ characters with uppercase, lowercase, number, and special character'
-      );
+      setError('Password must meet all requirements.');
       return false;
     }
 
+    setError('');
     setLoading(true);
+
     try {
-      const response = await authService.setNewPassword({ userId, newPassword: password });
+      const response = await authService.setNewPassword({
+        userId,
+        newPassword: password,
+      });
 
-      if (response.success) {
+      if (response?.success) {
         setSuccess(true);
-
-        setTimeout(() => {
-          onSuccess?.({ 
-            userId, 
-            email: response.data?.email,
-            passwordSet: true 
-          });
-        }, 1200);
-
-        return true;
+        return { success: true, email, userId };
       }
 
-      setError(response.message || 'Unable to set password.');
       return false;
     } catch (err) {
-      const msg = err.message || 'Failed to set password';
-      setError(msg);
+      const errorMsg = err?.message || 'Failed to set password.';
+      setError(errorMsg);
       return false;
     } finally {
       setLoading(false);
@@ -77,8 +71,9 @@ export const useSetPassword = (onSuccess) => {
     setShowConfirm,
     loading,
     error,
-    setError,
     success,
     handleSubmit,
   };
 };
+
+export default useSetPassword;

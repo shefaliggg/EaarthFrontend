@@ -1,39 +1,39 @@
 import { useState } from 'react';
 import { authService } from '../services/auth.service';
 
-export const useIdentityVerification = () => {
+const useIdentityVerification = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationResult, setVerificationResult] = useState(null);
 
-  const handleVerifyIdentity = async ({ userId, idDocument, selfiePhoto }) => {
+  const handleVerifyIdentity = async ({ userId, idFile, selfieFile }) => {
     try {
       setLoading(true);
       setError('');
       setVerificationResult(null);
 
-      if (!idDocument || !selfiePhoto) {
+      if (!idFile || !selfieFile) {
         throw new Error('Both ID document and selfie are required');
       }
 
       if (!userId) {
-        throw new Error('User ID is missing');
+        throw new Error('User ID is required');
       }
 
       // Build FormData
       const formData = new FormData();
       formData.append('userId', userId);
-      formData.append('idDocument', idDocument);
-      formData.append('selfiePhoto', selfiePhoto);
+      formData.append('idDocument', idFile);
+      formData.append('selfiePhoto', selfieFile);
 
       console.log('Submitting identity verification:', {
         userId,
-        idDocument: idDocument.name,
-        selfiePhoto: selfiePhoto.name,
+        idDocument: idFile.name,
+        selfiePhoto: selfieFile.name,
       });
 
+      // Call authService.verifyIdentity
       const response = await authService.verifyIdentity(formData);
-
       console.log('Verification response:', response);
 
       const result = {
@@ -45,19 +45,17 @@ export const useIdentityVerification = () => {
 
       setVerificationResult(result);
 
+      if (!result.verified) {
+        setError(result.message || 'Face verification failed. Your account is under review.');
+      }
+
       return result;
     } catch (err) {
       console.error('Identity verification error:', err);
       const errorMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Verification failed. Please try again.';
+        err?.response?.data?.message || err?.message || 'Verification failed. Please try again.';
       setError(errorMessage);
-      setVerificationResult({
-        verified: false,
-        confidence: 0,
-        message: errorMessage,
-      });
+      setVerificationResult({ verified: false, confidence: 0 });
       return { verified: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -72,3 +70,5 @@ export const useIdentityVerification = () => {
     setError,
   };
 };
+
+export default useIdentityVerification;

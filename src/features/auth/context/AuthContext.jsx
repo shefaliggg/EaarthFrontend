@@ -15,13 +15,20 @@ export const AuthProvider = ({ children }) => {
   const [tempLoginData, setTempLoginData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Routes that don't require auth check
+  // All public routes that don't require authentication
   const publicRoutes = [
     "/auth/login",
+    "/auth/temp-login",
     "/auth/set-password",
-    "/auth/reset",
-    "/auth/forgot-password",
+    "/auth/upload-id",
+    "/auth/live-photo",
+    "/auth/identity-verification",
+    "/auth/terms",
     "/auth/otp-verification",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/invite/verify",
+    "/auth/result",
   ];
 
   const isPublicRoute = useCallback((pathname) => {
@@ -45,15 +52,14 @@ export const AuthProvider = ({ children }) => {
             setUser(loggedInUser);
             console.log("✅ User authenticated:", loggedInUser.email);
           } else {
-            // No user found, redirect to login if not on public route
-            if (!isPublicRoute(location.pathname)) {
-              navigate(ROUTES.AUTH.LOGIN, { replace: true });
-            }
+            // No user found, redirect to login
+            navigate(ROUTES.AUTH.LOGIN, { replace: true });
           }
         } catch (err) {
           // Error fetching user - likely 401 (not authenticated)
           console.log("ℹ️ User not authenticated");
           setUser(null);
+          
           // Only redirect if not already on a public route
           if (!isPublicRoute(location.pathname)) {
             navigate(ROUTES.AUTH.LOGIN, { replace: true });
@@ -87,34 +93,6 @@ export const AuthProvider = ({ children }) => {
     setLogoutFunction(logout);
   }, [logout]);
 
-  const temporaryLogin = async (credentials) => {
-    setLoading(true);
-    try {
-      const res = await authService.temporaryLogin(credentials);
-      if (!res?.success) throw new Error(res?.message || "Temporary login failed");
-
-      const tempData = {
-        userId: res.data.userId,
-        email: credentials.email,
-        isTemporary: true,
-      };
-
-      setTempLoginData(tempData);
-
-      navigate(ROUTES.AUTH.SET_PASSWORD, {
-        replace: true,
-        state: tempData,
-      });
-
-      return res;
-    } catch (err) {
-      console.error("Temporary login failed:", err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateUser = (newUserData) => {
     setUser((prev) => ({ ...prev, ...newUserData }));
   };
@@ -124,7 +102,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         tempLoginData,
-        temporaryLogin,
+        setTempLoginData,
         logout,
         updateUser,
         loading,
@@ -136,4 +114,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+};

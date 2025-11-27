@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { authApi } from '../api/auth.api';
+import { authService } from '../services/auth.service';
 
 export const useForgotPassword = (onSuccess, onError) => {
   const [email, setEmail] = useState('');
