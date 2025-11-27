@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Sidebar from "@/shared/components/Sidebar";
 import Header from "@/shared/components/Header";
 import PageTransition from "../shared/components/PageTransition";

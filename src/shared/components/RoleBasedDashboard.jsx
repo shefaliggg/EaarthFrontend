@@ -1,36 +1,35 @@
-// import { useAuth } from "@/shared/context/AuthContext";
-import { lazy } from "react";
+import { lazy, useEffect } from "react";
 import { toast } from "sonner";
 import Login from "../../features/auth/pages/Login";
 import { useAuth } from "../../features/auth/context/AuthContext";
+import { isDevelopment } from "../../features/auth/config/axiosConfig";
 
 const StudioDashboard = lazy(() => import("@/features/studio/pages/StudioDashboard"));
 
 const RoleBasedDashboard = () => {
     const { user } = useAuth();
+    const type = user?.userType?.[0];
 
-    const type = user?.userType.at(0);
+    // handle unknown role
+    useEffect(() => {
+        if (!type) return;
 
-    if (type === "studio_admin")
-        return <StudioDashboard />;
+        if (type !== "studio_admin"  || type !== "agency-admin" || type !== "crew") {
+            if (isDevelopment) {
+                toast.warning("Dev Mode:: Unknown user role.", {
+                    description: "The application has detected an unknown user role. Please Fix the issue if Exist",
+                });
+            } else {
+                toast.error("Unknown user role.", {
+                    description: "The application has detected an unknown user role.",
+                });
+            }
+        }
+    }, [type]);
 
-    // if (type === "agency-admin" || type === "project-user")
-    //     return <ProjectDashboard />;
+    if (type === "studio_admin") return <StudioDashboard />;
 
-    toast.error("Unknown user role");
-    return <Login />; 
+    return <Login />;
 };
 
 export default RoleBasedDashboard;
-
-
-
-
-
-
-
-
-
-
-
-

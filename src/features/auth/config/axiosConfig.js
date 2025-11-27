@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { triggerGlobalLogout } from "./globalLogoutConfig";
 
-const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
+export const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
 
 export const baseURL = isDevelopment
   ? import.meta.env.VITE_APP_API_DEV
