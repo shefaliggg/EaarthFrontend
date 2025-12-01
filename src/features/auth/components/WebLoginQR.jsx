@@ -41,7 +41,7 @@ function WebLoginQR() {
 
       {/* Title */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-white/40 backdrop-blur-sm flex items-center justify-center">
+        <div className="w-12 h-12 rounded-xl bg-background/40 backdrop-blur-sm flex items-center justify-center">
           <QrCode className="w-8 h-8 text-purple-900" />
         </div>
         <div>
@@ -51,11 +51,11 @@ function WebLoginQR() {
       </div>
 
       {/* QR Code Box */}
-      <div className={`bg-white rounded-3xl p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
+      <div className={`bg-background rounded-3xl p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
 
         {/* Expired Overlay */}
         {isExpired && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl z-10">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl z-10">
             <RotateCcw
               className="w-10 h-10 text-purple-900 cursor-pointer mb-2"
               onClick={() => {

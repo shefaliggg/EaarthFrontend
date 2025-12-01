@@ -52,7 +52,7 @@ export const LoginPage = () => {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8">
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl p-8 border h-full flex flex-col">
+        <div className="bg-background rounded-3xl p-8 border h-full flex flex-col">
           <div className="mb-8 text-center">
             <img src={eaarthLogo} alt="Eaarth Studios" className="w-48 h-auto object-contain mx-auto" />
           </div>
