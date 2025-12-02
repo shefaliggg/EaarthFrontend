@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import eaarthLogo from "../../../assets/eaarth.png";
 import { useLogin } from "../hooks/useLogin";
 import WebLoginQR from "../components/WebLoginQR";
+import { Input } from "../../../shared/components/ui/input";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -21,19 +22,17 @@ export const LoginPage = () => {
     error,
     handleSubmit,
   } = useLogin(
- 
     (data) => {
-      navigate("/auth/otp-verification", { 
+      navigate("/auth/otp-verification", {
         state: {
           email: data.email,
           password: password,
           rememberMe: data.rememberMe,
           otpSend: data.otpSend,
-          otp: data.otp, // Only in dev mode
-        }
+          otp: data.otp,
+        },
       });
     },
-
     (err) => {
       console.error("Login error:", err);
     }
@@ -44,69 +43,70 @@ export const LoginPage = () => {
     await handleSubmit();
   };
 
- 
-  const handleForgotPassword = () => {
-    navigate("/auth/forgot-password");
-  };
-
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8">
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-background rounded-3xl p-8 border h-full flex flex-col">
+
+        <div className="rounded-3xl p-8 border h-full flex flex-col bg-[var(--card)] dark:bg-slate-800 border-[var(--border)] shadow-md transition-colors">
+
           <div className="mb-8 text-center">
-            <img src={eaarthLogo} alt="Eaarth Studios" className="w-48 h-auto object-contain mx-auto" />
+            <img
+              src={eaarthLogo}
+              alt="Eaarth Studios"
+              className="w-48 h-auto object-contain mx-auto"
+            />
           </div>
+
           <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">LOGIN</h2>
+            <h2 className="text-2xl font-bold text-[var(--foreground)] dark:text-[var(--foreground-dark)]">
+              LOGIN
+            </h2>
           </div>
 
           {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            <div className="bg-[var(--destructive)] text-[var(--destructive-foreground)] p-3 rounded-lg mb-6 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleFormSubmit} className="space-y-4">
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
                 Email Address
               </label>
-              <input
+
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl
-                  focus:border-gray-200 focus:ring-2 focus:ring-[#faf5ff] outline-none transition-all
-                  text-sm text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
                 Password
               </label>
 
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl
-                    focus:border-gray-200 focus:ring-2 focus:ring-[#faf5ff] outline-none transition-all
-                    text-sm text-gray-900 pr-12 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="pr-12"
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600
-                    transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground-dark)] disabled:opacity-50 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -119,18 +119,19 @@ export const LoginPage = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-[#9333ea] focus:ring-[#a855f7]"
                   disabled={loading}
+                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
                 />
-                <span className="text-xs text-gray-600 font-medium">Remember me</span>
+                <span className="text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] font-medium">
+                  Remember me
+                </span>
               </label>
 
               <button
                 type="button"
-                onClick={handleForgotPassword}
+                onClick={() => navigate("/auth/forgot-password")}
                 disabled={loading}
-                className="text-xs font-medium text-[#9333ea] hover:text-[#a855f7] transition-colors
-                  disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="text-xs font-medium text-[var(--primary)] hover:text-[var(--secondary)] disabled:text-[var(--muted-foreground)] dark:disabled:text-[var(--muted-foreground-dark)]"
               >
                 Forgot password?
               </button>
@@ -139,9 +140,7 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full bg-[#9333ea] mt-2 text-white font-medium py-2.5
-                rounded-xl hover:bg-[#7c2cc9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                text-sm flex items-center justify-center gap-2"
+              className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--lavender-600)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
             >
               {loading ? (
                 <>
@@ -154,10 +153,11 @@ export const LoginPage = () => {
             </button>
           </form>
         </div>
+
         <WebLoginQR />
       </div>
 
-      <div className="text-center mt-12 text-sm text-gray-500">
+      <div className="text-center mt-12 text-sm text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)]">
         <p>© 2024 Eaarth Studios. All rights reserved.</p>
       </div>
     </div>

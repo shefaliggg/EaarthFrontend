@@ -1,13 +1,31 @@
-import React from 'react';
-import { Eye, EyeOff, ArrowLeft, Loader, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-// import { useResetPassword } from '../hooks/useResetPassword';
-import eaarthLogo from "../../../../src/assets/eaarth.png";
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, ArrowLeft, Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import eaarthLogo from "../../../assets/eaarth.png";
+import { Input } from "../../../shared/components/ui/input";
+import { useResetPassword } from '../hooks/useResetPassword';
 
-export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNavigate, onSkip }) => {
+export const ResetPasswordPage = () => {
   const navigate = useNavigate();
-  const [email] = React.useState(initialEmail || 'mohammedshanidt08@gmail.com');
-  
+  const location = useLocation();
+
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    const stateEmail = location.state?.email;
+
+    const storedEmail = localStorage.getItem('resetPasswordEmail');
+    
+    if (stateEmail) {
+      setEmail(stateEmail);
+      localStorage.setItem('resetPasswordEmail', stateEmail);
+    } else if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      navigate('/auth/forgot-password');
+    }
+  }, [location.state, navigate]);
+
   const {
     otp,
     setOtp,
@@ -23,224 +41,200 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
     error,
     success,
     handleSubmit,
-  } = useResetPassword(onSuccess, (err) => console.error(err));
+  } = useResetPassword(() => {
+    localStorage.removeItem('resetPasswordEmail');
+    navigate('/auth/login');
+  });
 
-  const handleFormSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    const result = await handleSubmit(email);
     
-    // If successful and no custom handlers, navigate to login
-    if (result && !onSuccess) {
-      setTimeout(() => {
-        if (onNavigate) {
-          onNavigate('login');
-        } else {
-          navigate('/auth/login');
-        }
-      }, 2000);
+    if (!email) {
+      alert('Email not found. Please request a new OTP.');
+      navigate('/auth/forgot-password');
+      return;
     }
+    
+    await handleSubmit(email);
   };
 
-  const handleBackClick = () => {
-    if (onBack) {
-      onBack();
-    } else if (onNavigate) {
-      onNavigate('login');
-    } else {
-      navigate('/auth/login');
-    }
-  };
+  if (!email) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background transition-colors">
+        <Loader className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  const handleResendOTP = async () => {
-    // Add your resend OTP API call here
-    alert('OTP resent to your email');
-  };
-
-  // Success screen
   if (success) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-xl bg-white rounded-2xl p-6 text-center border border-gray-100">
-          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-medium text-gray-900 mb-2">Password Reset Successful!</h2>
-          <p className="text-gray-600">Redirecting to login...</p>
+      <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background transition-colors">
+        <div className="w-full max-w-xl bg-card rounded-2xl p-6 text-center border border-border shadow-md transition-colors">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-medium text-foreground mb-2">
+            Password Reset Successful!
+          </h2>
+          <p className="text-muted-foreground">
+            Redirecting to login...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full flex items-start justify-center p-4">
-      {/* Back Button */}
+    <div className="min-h-screen w-full flex items-start justify-center p-4 bg-background transition-colors relative">
+
       <button
-        onClick={handleBackClick}
-        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all"
+        onClick={() => {
+          localStorage.removeItem('resetPasswordEmail');
+          navigate('/auth/forgot-password');
+        }}
+        className="absolute top-6 left-6 p-2 hover:bg-muted rounded-full transition-all"
       >
-        <ArrowLeft className="w-6 h-6 text-gray-700" />
+        <ArrowLeft className="w-6 h-6 text-foreground" />
       </button>
 
-      <div className="w-full max-w-xl mx-auto">
-        {/* Logo (OUTSIDE CARD) */}
+      <div className="w-full max-w-xl mx-auto mt-8">
+
+        {/* Logo */}
         <div className="text-center mb-6">
-          <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 h-auto mx-auto mb-3" />
-          <p className="text-sm text-gray-600 tracking-wide font-semibold">
-            RESET PASSWORD
+          <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground tracking-wide font-semibold uppercase">
+            Reset Password
           </p>
         </div>
 
-        {/* MAIN CARD */}
-        <div className="w-full bg-white rounded-2xl p-6 border border-gray-100">
-          {/* Title */}
-          <h2 className="text-2xl md:text-2xl font-medium text-center mb-2 text-gray-900">
+        {/* Card */}
+        <div className="bg-card dark:bg-slate-800 border border-border rounded-3xl p-8 shadow-md transition-colors">
+
+          <h2 className="text-2xl font-medium text-center mb-2 text-foreground">
             Reset Your Password
           </h2>
-          <p className="text-center text-gray-600 mb-8">
+          <p className="text-center text-muted-foreground mb-6 text-sm">
             Enter the OTP sent to <span className="font-semibold">{email}</span>
           </p>
 
-          {/* Error Message */}
+          {/* Error */}
           {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
-              {error}
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-lg mb-6 text-sm flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleFormSubmit} className="space-y-5">
-            {/* OTP */}
+          <form onSubmit={onSubmit} className="space-y-6">
+ 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Enter OTP *
+              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
+                OTP *
               </label>
-              <input
+              <Input
                 type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="738401"
-                required
                 maxLength={6}
+                value={otp}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  setOtp(value);
+                }}
+                placeholder="Enter 6-digit OTP"
                 disabled={loading}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl 
-                focus:ring-2 focus:ring-[#a855f7] focus:border-transparent 
-                outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="text-center text-lg tracking-widest"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Check your email for the 6-digit code
+              </p>
             </div>
 
-            {/* New Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
                 New Password *
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
-                  focus:ring-2 focus:ring-[#a855f7] focus:border-transparent 
-                  outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showNewPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
                 Confirm Password *
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter new password"
-                  required
                   disabled={loading}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl 
-                  focus:ring-2 focus:ring-[#a855f7] focus:border-transparent 
-                  outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Guidelines */}
-            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">
+             <div className="bg-[var(--input-bg)] border border-[var(--border)] rounded-xl p-4 text-sm text-[var(--muted-foreground)]">
               <p className="font-medium mb-2">Password must include:</p>
-              <ul className="space-y-1 list-disc list-inside">
+              <ul className="list-disc list-inside space-y-1">
                 <li>8+ characters</li>
-                <li>Uppercase, lowercase, number, and special character</li>
+                <li>Uppercase, lowercase, number & special character</li>
               </ul>
             </div>
 
-            {/* Reset Button */}
             <button
               type="submit"
               disabled={loading || !otp || !newPassword || !confirmPassword}
-              className="w-full bg-gradient-to-r from-[#9333ea] to-pink-600 
-              text-white font-medium py-4 rounded-xl hover:transition-all hover:scale-[1.02] disabled:opacity-50 
-              disabled:cursor-not-allowed disabled:hover:scale-100 
-              flex items-center justify-center gap-2"
+              className="w-full mt-2 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
             >
               {loading ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
-                  <span>RESETTING...</span>
+                  RESETTING PASSWORD...
                 </>
               ) : (
-                'RESET PASSWORD'
+                "RESET PASSWORD"
               )}
             </button>
+
           </form>
 
-          {/* Resend */}
           <div className="mt-6 text-center">
             <button
-              onClick={handleResendOTP}
+              onClick={() => {
+                localStorage.removeItem('resetPasswordEmail');
+                navigate('/auth/forgot-password', { state: { email } });
+              }}
               disabled={loading}
-              className="text-[#9333ea] hover:text-[#9333ea] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-primary hover:underline disabled:opacity-50"
             >
-              Resend OTP
+              Didn't receive OTP? Request new one
             </button>
           </div>
+        </div>
 
-          {/* Skip */}
-          {onSkip && (
-            <div className="mt-4 text-center">
-              <button
-                onClick={onSkip}
-                disabled={loading}
-                className="text-gray-500 hover:text-gray-700 font-medium transition-colors disabled:opacity-50"
-              >
-                Skip
-              </button>
-            </div>
-          )}
+        <div className="text-center mt-6 text-xs text-muted-foreground">
+          Step 2 of 2 — Password Recovery
         </div>
       </div>
     </div>
@@ -248,15 +242,3 @@ export const ResetPasswordPage = ({ email: initialEmail, onSuccess, onBack, onNa
 };
 
 export default ResetPasswordPage;
-
-
-
-
-
-
-
-
-
-
-
-

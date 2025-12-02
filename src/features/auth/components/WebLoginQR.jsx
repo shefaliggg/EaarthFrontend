@@ -37,7 +37,7 @@ function WebLoginQR() {
 
   const isExpired = secondsLeft === 0;
   return (
-    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden">
+    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden dark:bg-slate-800">
 
       {/* Title */}
       <div className="flex items-center gap-3 mb-8">
@@ -45,13 +45,13 @@ function WebLoginQR() {
           <QrCode className="w-8 h-8 text-purple-900" />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-purple-900">QR CODE LOGIN</h2>
-          <p className="text-gray-800 text-sm">Scan with your mobile app</p>
+          <h2 className="text-2xl font-extrabold text-[var(--foreground)]">QR CODE LOGIN</h2>
+          <p className="text-[var(--muted-foreground)] text-sm">Scan with your mobile app</p>
         </div>
       </div>
 
       {/* QR Code Box */}
-      <div className={`bg-background rounded-3xl p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
+      <div className={`bg-background dark:bg-slate-850  rounded-3xl dark:border border-2 p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
 
         {/* Expired Overlay */}
         {isExpired && (
@@ -97,7 +97,7 @@ function WebLoginQR() {
 
       {/* How-To Steps */}
       <div className="space-y-4">
-        <h3 className="font-medium text-sm mb-3 text-purple-900">How to use:</h3>
+        <h3 className="font-medium text-sm mb-3 dark:text-[var(--muted-foreground)] ">How to use:</h3>
 
         {[
           "Open Eaarth Studios mobile app",
@@ -106,10 +106,10 @@ function WebLoginQR() {
           "You'll be logged in instantly!",
         ].map((t, i) => (
           <div className="flex items-center gap-3" key={i}>
-            <div className="w-8 h-8 rounded-md bg-purple-900/20 flex items-center justify-center text-purple-900 text-xs font-medium">
+            <div className="w-8 h-8 rounded-md bg-purple-900/20 dark:bg-purple-800 flex items-center justify-center text-purple-900 dark:text-[var(--muted-foreground)] text-xs font-medium">
               {i + 1}
             </div>
-            <p className="text-xs text-gray-800">{t}</p>
+            <p className="text-xs text-[var(--muted-foreground)]">{t}</p>
           </div>
         ))}
       </div>
@@ -123,10 +123,10 @@ function WebLoginQR() {
             { icon: Film, text: "EASY" },
           ].map(({ icon: Icon, text }) => (
             <div className="text-center" key={text}>
-              <div className="w-10 h-10 mx-auto mb-2 bg-purple-900/20 rounded-xl flex items-center justify-center">
-                <Icon className="w-5 h-5 text-purple-900" />
+              <div className="w-10 h-10 mx-auto mb-2 bg-purple-900/20  dark:bg-purple-800 rounded-xl flex items-center justify-center">
+                <Icon className="w-5 h-5 text-purple-900 dark:text-[var(--muted-foreground)]" />
               </div>
-              <p className="text-[10px] font-medium text-purple-900">{text}</p>
+              <p className="text-[10px] font-medium text-purple-900 dark:text-[var(--muted-foreground)]">{text}</p>
             </div>
           ))}
         </div>
