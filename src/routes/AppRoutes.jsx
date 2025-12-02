@@ -19,7 +19,7 @@ const AppRoutes = [
       </AuthProvider>
     ),
     children: [
-      { path: "/", element: <Navigate to="/auth/login" replace />, },
+      // { path: "/", element: <Navigate to="/auth/login" replace />, },
       { path: "/invite/verify", element: <VerifyEmailPage /> },
 
       AuthRoutes,

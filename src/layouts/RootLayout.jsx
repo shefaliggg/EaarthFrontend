@@ -3,14 +3,14 @@ import { useAuth } from "@/features/auth/context/AuthContext";
 import LoadingScreen from "@/shared/components/LoadingScreen";
 
 export default function RootLayout() {
-  const { initialLoading, user } = useAuth();
+  const { initialLoading, user, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
 
   if (initialLoading) return <LoadingScreen />;
 
-  const isAuthRoute = pathname.startsWith("/auth") ;
+  const isAuthRoute = pathname.startsWith("/auth");
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
   }
 

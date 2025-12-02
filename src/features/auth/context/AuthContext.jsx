@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Routes that don't require auth check
@@ -49,17 +50,23 @@ export const AuthProvider = ({ children }) => {
           const loggedInUser = await authService.getCurrentUser();
           if (loggedInUser) {
             setUser(loggedInUser);
+            setIsAuthenticated(true);
             console.log("✅ User authenticated:", loggedInUser.email);
+            if (isPublicRoute(location.pathname)) {
+              navigate("/home", { replace: true });
+            }
           } else {
             // No user found, redirect to login if not on public route
             if (!isPublicRoute(location.pathname)) {
               navigate(ROUTES.AUTH.LOGIN, { replace: true });
+              setIsAuthenticated(false);
             }
           }
         } catch (err) {
           // Error fetching user - likely 401 (not authenticated)
           console.log("ℹ️ User not authenticated");
           setUser(null);
+          setIsAuthenticated(false);
           // Only redirect if not already on a public route
           if (!isPublicRoute(location.pathname)) {
             navigate(ROUTES.AUTH.LOGIN, { replace: true });
@@ -83,6 +90,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
+      setIsAuthenticated(false);
       setUser(null);
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
     }
@@ -103,6 +111,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         loading,
+        isAuthenticated,
         initialLoading,
       }}
     >

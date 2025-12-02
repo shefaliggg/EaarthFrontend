@@ -17,7 +17,7 @@ const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 const DashboardRoutes = {
     path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
     children: [
-        // { index: true, element: <Navigate to="home" replace /> },
+        { index: true, element: <Navigate to="home" replace /> },
         { path: 'home', element: <RoleBasedDashboard /> },
 
         StudioRoutes,

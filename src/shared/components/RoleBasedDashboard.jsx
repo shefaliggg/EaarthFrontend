@@ -8,26 +8,26 @@ const StudioDashboard = lazy(() => import("@/features/studio/pages/StudioDashboa
 
 const RoleBasedDashboard = () => {
     const { user } = useAuth();
-    const type = user?.userType?.[0];
+    const types = user?.userType || []; // ensure array
 
-    // handle unknown role
+    const validRoles = ["studio_admin", "agency-admin", "crew"];
+
     useEffect(() => {
-        if (!type) return;
+        if (types.length === 0) return;
 
-        if (type !== "studio_admin"  || type !== "agency-admin" || type !== "crew") {
-            if (isDevelopment) {
-                toast.warning("Dev Mode:: Unknown user role.", {
-                    description: "The application has detected an unknown user role. Please Fix the issue if Exist",
-                });
-            } else {
-                toast.error("Unknown user role.", {
-                    description: "The application has detected an unknown user role.",
-                });
-            }
+        const isValid = validRoles.some(role => types.includes(role));
+
+        if (!isValid) {
+            const msg = "Unknown user role.";
+            const desc = "The application has detected an unknown user role.";
+
+            isDevelopment
+                ? toast.warning("Dev Mode:: " + msg, { description: desc })
+                : toast.error(msg, { description: desc });
         }
-    }, [type]);
+    }, [types]);
 
-    if (type === "studio_admin") return <StudioDashboard />;
+    if (types.includes("studio_admin")) return <StudioDashboard />;
 
     return <Login />;
 };
