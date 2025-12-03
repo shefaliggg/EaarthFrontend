@@ -10,6 +10,8 @@ function MobileloginQR() {
     const { user } = useAuth();
     const { qrData, generateQr, loading, error } = useQrLogin({ type: "mobile" });
     const [secondsLeft, setSecondsLeft] = useState(300);
+    const isDark = document.body.classList.contains("dark");
+
 
     useEffect(() => {
         generateQr();
@@ -46,21 +48,6 @@ function MobileloginQR() {
             className="rounded-lg border shadow-md p-6 bg-card border-border"
         >
             <div className="flex items-start gap-6">
-                {/* Left: User Info */}
-                {/* <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-lg bg-primary">
-                        <User className="w-7 h-7" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-lg text-foreground">
-                            {user.legalFirstName.toUpperCase()} {user.legalLastName.toUpperCase()}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                            DIRECTOR OF PHOTOGRAPHY
-                        </p>
-                    </div>
-                </div> */}
-
                 {/* Right: Info */}
                 <div className="flex-1 space-y-6">
                     <h4 className="font-bold text-xl mb-4 text-foreground ">
@@ -120,6 +107,7 @@ function MobileloginQR() {
                             value={qrData.socketRoom}
                             size={180}
                             level="H"
+                            bgColor={isDark ? "#0F0F0F" : "#FFFFFF"}
                         />
                     )}
                     <div className="text-center mt-3">

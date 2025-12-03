@@ -5,6 +5,7 @@ import eaarthLogo from "../../../assets/eaarth.png";
 import { useLogin } from "../hooks/useLogin";
 import WebLoginQR from "../components/WebLoginQR";
 import { Input } from "../../../shared/components/ui/input";
+import DarkmodeButton from "../../../shared/components/DarkmodeButton";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -44,121 +45,126 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8">
-      <div className="grid lg:grid-cols-2 gap-6">
+    <div className="w-full">
+      <div className="flex justify-end pt-4">
+        <DarkmodeButton />
+      </div>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-30 py-8 pt-4">
+        <div className="grid lg:grid-cols-2 gap-6">
 
-        <div className="rounded-3xl p-8 border h-full flex flex-col bg-[var(--card)] dark:bg-slate-800 border-[var(--border)] shadow-md transition-colors">
+          <div className="rounded-3xl p-8 border h-full flex flex-col bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021] border-border shadow-md transition-colors">
 
-          <div className="mb-8 text-center">
-            <img
-              src={eaarthLogo}
-              alt="Eaarth Studios"
-              className="w-48 h-auto object-contain mx-auto"
-            />
-          </div>
-
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold text-[var(--foreground)] dark:text-[var(--foreground-dark)]">
-              LOGIN
-            </h2>
-          </div>
-
-          {error && (
-            <div className="bg-[var(--destructive)] text-[var(--destructive-foreground)] p-3 rounded-lg mb-6 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-
-            <div>
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
-                Email Address
-              </label>
-
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                disabled={loading}
+            <div className="mb-8 text-center">
+              <img
+                src={eaarthLogo}
+                alt="Eaarth Studios"
+                className="w-48 h-auto object-contain mx-auto"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
-                Password
-              </label>
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-bold text-[var(--foreground)] dark:text-[var(--foreground-dark)]">
+                LOGIN
+              </h2>
+            </div>
 
-              <div className="relative">
+            {error && (
+              <div className="bg-[var(--destructive)] text-[var(--destructive-foreground)] p-3 rounded-lg mb-6 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
+                  Email Address
+                </label>
+
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
                   required
                   disabled={loading}
-                  className="pr-12"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2 uppercase tracking-wide">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    disabled={loading}
+                    className="pr-12"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground-dark)] disabled:opacity-50 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={loading}
+                    className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                  />
+                  <span className="text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] font-medium">
+                    Remember me
+                  </span>
+                </label>
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => navigate("/auth/forgot-password")}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] hover:text-[var(--foreground)] dark:hover:text-[var(--foreground-dark)] disabled:opacity-50 transition-colors"
+                  className="text-xs font-medium text-[var(--primary)] hover:text-[var(--secondary)] disabled:text-[var(--muted-foreground)] dark:disabled:text-[var(--muted-foreground-dark)]"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Forgot password?
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
-                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                />
-                <span className="text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] font-medium">
-                  Remember me
-                </span>
-              </label>
 
               <button
-                type="button"
-                onClick={() => navigate("/auth/forgot-password")}
-                disabled={loading}
-                className="text-xs font-medium text-[var(--primary)] hover:text-[var(--secondary)] disabled:text-[var(--muted-foreground)] dark:disabled:text-[var(--muted-foreground-dark)]"
+                type="submit"
+                disabled={loading || !email || !password}
+                className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--lavender-600)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
               >
-                Forgot password?
+                {loading ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    <span>LOGGING IN...</span>
+                  </>
+                ) : (
+                  "LOGIN"
+                )}
               </button>
-            </div>
+            </form>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading || !email || !password}
-              className="w-full mt-2 py-2.5 rounded-xl text-sm font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--lavender-600)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-            >
-              {loading ? (
-                <>
-                  <Loader className="w-5 h-5 animate-spin" />
-                  <span>LOGGING IN...</span>
-                </>
-              ) : (
-                "LOGIN"
-              )}
-            </button>
-          </form>
+          <WebLoginQR />
         </div>
 
-        <WebLoginQR />
-      </div>
-
-      <div className="text-center mt-12 text-sm text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)]">
-        <p>© 2024 Eaarth Studios. All rights reserved.</p>
+        <div className="text-center mt-12 text-sm text-muted-foreground">
+          <p>© 2024 Eaarth Studios. All rights reserved.</p>
+        </div>
       </div>
     </div>
   );

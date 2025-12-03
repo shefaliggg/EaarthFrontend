@@ -338,24 +338,24 @@ a svg {
   }
 
   body {
-    background: #fafafa;
-      /* background: linear-gradient(135deg,
+    /* background: #fafafa; */
+      background: linear-gradient(135deg,
         #ffecec,
         #fff8e7,
         #e9ffe9,
         #e7f7ff,
         #f3e9ff,
-        #ffe8f4); */
+        #ffe8f4);
     background-attachment: fixed;
     min-height: 100vh;
   }
 
   body.dark {
-    background: #0f0f0f;
-     /* background: linear-gradient(135deg,
+    /* background: #0f0f0f; */
+     background: linear-gradient(135deg,
         #07001c,
         #000000,
-        #100016); */
+        #100016);
     /* background: linear-gradient(135deg,
         #1a1625,
         #1c1a15,

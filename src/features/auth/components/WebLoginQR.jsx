@@ -7,23 +7,8 @@ import { toast } from "sonner";
 function WebLoginQR() {
   const { qrData, generateQr, loading, error } = useQrLogin({ type: "web" });
   const [secondsLeft, setSecondsLeft] = useState(60);
+  const isDark = document.body.classList.contains("dark");
 
-  let bg = ""
-
-  useEffect(() => {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark') {
-      bg = "#0b0b0e"
-    } else if (theme === 'light') {
-      bg = "#FAFAFA"
-    } else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        bg = "#0b0b0e"
-      } else {
-        bg = "#FAFAFA"
-      }
-    }
-  }, []);
 
 
   useEffect(() => {
@@ -55,7 +40,7 @@ function WebLoginQR() {
 
   const isExpired = secondsLeft === 0;
   return (
-    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden dark:bg-slate-800">
+    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021]">
 
       {/* Title */}
       <div className="flex items-center gap-3 mb-8">
@@ -69,7 +54,7 @@ function WebLoginQR() {
       </div>
 
       {/* QR Code Box */}
-      <div className={`bg-background dark:bg-slate-850  rounded-3xl dark:border border-2 p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
+      <div className={`bg-background dark:bg-[#0e0029]  rounded-3xl dark:border border-2 p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
 
         {/* Expired Overlay */}
         {isExpired && (
@@ -98,7 +83,7 @@ function WebLoginQR() {
             value={qrData.socketRoom}
             level="H"
             fgColor="#7C3AED"
-            bgColor={bg}
+            bgColor={isDark ? "#0F0F0F" : "#FFFFFF"}
             className={`${isExpired ? "opacity-40" : ""} w-full`}
           />
         )}

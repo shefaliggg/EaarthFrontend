@@ -34,22 +34,28 @@ function DarkmodeButton() {
     }, [])
 
     function handleDarkMode(value) {
-        console.log(value)
-        setCurrentTheme(value)
+        console.log(value);
+        setCurrentTheme(value);
+
+        localStorage.setItem("theme", value);
 
         if (value === "dark") {
-            document.body.classList.add("dark")
+            document.body.classList.add("dark");
         } else if (value === "light") {
-            document.body.classList.remove("dark")
+            document.body.classList.remove("dark");
         } else {
             if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                document.body.classList.add("dark")
+                document.body.classList.add("dark");
             } else {
-                document.body.classList.remove("dark")
+                document.body.classList.remove("dark");
             }
         }
-        localStorage.setItem("theme", value);
+
+        setTimeout(() => {
+            window.dispatchEvent(new Event("theme-change"));
+        }, 0);
     }
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
