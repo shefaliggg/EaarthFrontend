@@ -57,7 +57,7 @@ export const useOTPVerification = (onSuccess, onError) => {
 
       return false;
     } catch (err) {
-      const errorMsg = err?.message || 'Invalid verification code';
+      const errorMsg = err?.response?.message || err?.message || 'Invalid verification code';
       setError(errorMsg);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

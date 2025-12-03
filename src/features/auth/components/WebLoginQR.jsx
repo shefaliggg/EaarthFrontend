@@ -38,7 +38,7 @@ function WebLoginQR() {
   const isExpired = secondsLeft === 0;
 
   return (
-    <div className="rounded-3xl shadow-lg border border-border p-6 bg-card dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] h-full flex flex-col items-center justify-center transition-colors">
+    <div className="rounded-3xl shadow-lg p-6 bg-card h-full flex flex-col items-center justify-center transition-colors">
 
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-2 mb-2 ">
@@ -52,18 +52,18 @@ function WebLoginQR() {
         </p>
       </div>
 
-      <div className="bg-background dark:bg-[#11002c] rounded-2xl border-2 border-border p-8 shadow-sm relative">
+      <div className="bg-background dark:bg-[#0d0d0d] rounded-2xl border-2 dark:border-neutral-950 p-8 shadow-sm relative">
 
         {isExpired && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-10">
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-10">
             <RotateCcw
-              className="w-8 h-8 text-white cursor-pointer mb-2"
+              className="w-8 h-8 text-foreground cursor-pointer mb-2"
               onClick={() => {
                 generateQr();
                 setSecondsLeft(60);
               }}
             />
-            <p className="text-white text-xs font-semibold">Refresh QR</p>
+            <p className=" text-foreground text-xs font-semibold">Refresh QR</p>
           </div>
         )}
         {loading && (
@@ -86,7 +86,7 @@ function WebLoginQR() {
               value={qrData.socketRoom}
               level="H"
               fgColor={isDark ? "#FFFFFF" : "#000000"}
-              bgColor={isDark ? "#11002c" : "#FFFFFF"}
+              bgColor={isDark ? "#0d0d0d" : "#FFFFFF"}
               style={{ width: "180px", height: "180px" }}
               className={isExpired ? "opacity-40" : ""}
             />

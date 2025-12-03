@@ -42,7 +42,7 @@ export const LoginPage = () => {
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
 
           {/* LEFT PANEL - LOGIN FORM */}
-          <div className="rounded-3xl py-6 px-8 bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021] border-border shadow-md transition-colors h-full flex flex-col">
+          <div className="rounded-3xl py-6 px-8 bg-card border-border shadow-md transition-colors h-full flex flex-col">
 
             <div className="text-center mb-2">
               <img src={eaarthLogo} alt="Eaarth" className="w-36 mx-auto" />
