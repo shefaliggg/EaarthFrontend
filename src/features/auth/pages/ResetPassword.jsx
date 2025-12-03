@@ -97,7 +97,6 @@ export const ResetPasswordPage = () => {
 
       <div className="w-full max-w-xl mx-auto">
 
-        {/* Logo & Title */}
         <div className="text-center mb-6">
           <img src={eaarthLogo} alt="Eaarth Studios" className="w-36 h-auto mx-auto" />
           <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold tracking-wide uppercase">
@@ -105,7 +104,6 @@ export const ResetPasswordPage = () => {
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
 
           <h2 className="text-xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">
@@ -115,7 +113,6 @@ export const ResetPasswordPage = () => {
             Enter the OTP sent to <span className="font-semibold">{email}</span>
           </p>
 
-          {/* Error Alert */}
           {error && (
             <div className="bg-red-600/20 text-red-600 dark:text-red-300 p-2 rounded-lg mb-4 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -125,7 +122,6 @@ export const ResetPasswordPage = () => {
 
           <form onSubmit={onSubmit} className="space-y-4">
  
-            {/* OTP Input */}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 OTP Code
@@ -147,7 +143,6 @@ export const ResetPasswordPage = () => {
               </p>
             </div>
 
-            {/* New Password */}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 New Password
@@ -172,7 +167,6 @@ export const ResetPasswordPage = () => {
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 Confirm Password
@@ -197,7 +191,6 @@ export const ResetPasswordPage = () => {
               </div>
             </div>
 
-            {/* Password Requirements */}
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-3">
               <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Password Requirements:
@@ -218,7 +211,6 @@ export const ResetPasswordPage = () => {
               </ul>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !otp || !newPassword || !confirmPassword}
@@ -236,7 +228,6 @@ export const ResetPasswordPage = () => {
 
           </form>
 
-          {/* Resend Link */}
           <div className="text-center mt-4">
             <button
               onClick={() => {
@@ -251,7 +242,6 @@ export const ResetPasswordPage = () => {
           </div>
         </div>
 
-        {/* Footer Text */}
         <div className="text-center mt-4 text-xs text-gray-600 dark:text-gray-400">
           Step 2 of 2 — Password Recovery
         </div>

@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     "/auth/otp-verification",
     "/auth/forgot-password",
     "/auth/reset-password",
-    "/invite/verify",
+    "/auth/verify-email",
     "/auth/result",
   ];
 

@@ -12,7 +12,7 @@ import TermsAndConditions from "../pages/TermsAndConditions";
 import VerifyEmail from "../pages/VerifyEmail";
 import ForgotPassword from "../pages/ForgotPassword";
 
-import { UploadIDPhoto } from "../components/forms/UploadIDPhoto";
+import  UploadIDPhoto  from "../components/forms/UploadIDPhoto";
 import { LivePhotoCapture } from "../components/forms/LivePhotoCapture";
 
 import { VerificationPending } from "../pages/PendingVerification";

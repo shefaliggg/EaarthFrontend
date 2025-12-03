@@ -148,11 +148,9 @@ export const LoginPage = () => {
                 Protected by Eaarth Secure Access
               </p>
 
-              {/* Benefits - Removed */}
             </div>
           </div>
 
-          {/* RIGHT PANEL - QR LOGIN */}
           <WebLoginQR />
         </div>
 
