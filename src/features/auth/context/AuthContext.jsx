@@ -86,10 +86,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
+      setLoading(true)
       await authService.logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
+      setLoading(false)
       setIsAuthenticated(false);
       setUser(null);
       navigate(ROUTES.AUTH.LOGIN, { replace: true });

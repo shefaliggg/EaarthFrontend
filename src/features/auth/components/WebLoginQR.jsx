@@ -8,6 +8,24 @@ function WebLoginQR() {
   const { qrData, generateQr, loading, error } = useQrLogin({ type: "web" });
   const [secondsLeft, setSecondsLeft] = useState(60);
 
+  let bg = ""
+
+  useEffect(() => {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark') {
+      bg = "#0b0b0e"
+    } else if (theme === 'light') {
+      bg = "#FAFAFA"
+    } else {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        bg = "#0b0b0e"
+      } else {
+        bg = "#FAFAFA"
+      }
+    }
+  }, []);
+
+
   useEffect(() => {
     generateQr();
   }, []);
@@ -45,8 +63,8 @@ function WebLoginQR() {
           <QrCode className="w-8 h-8 text-purple-900" />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-[var(--foreground)]">QR CODE LOGIN</h2>
-          <p className="text-[var(--muted-foreground)] text-sm">Scan with your mobile app</p>
+          <h2 className="text-2xl font-extrabold text-foreground">QR CODE LOGIN</h2>
+          <p className="text-muted-foreground text-sm">Scan with your mobile app</p>
         </div>
       </div>
 
@@ -80,6 +98,7 @@ function WebLoginQR() {
             value={qrData.socketRoom}
             level="H"
             fgColor="#7C3AED"
+            bgColor={bg}
             className={`${isExpired ? "opacity-40" : ""} w-full`}
           />
         )}

@@ -64,23 +64,23 @@ export function ChatPanel({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white z-50 flex flex-col"
+            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-slate-900 z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="bg-[#faf5ff] p-6 border-b border-gray-200">
+            <div className="bg-[#faf5ff] dark:bg-slate-950 p-6 border-b border-border">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-medium text-gray-900">DEPARTMENT CHAT</h2>
+                    <h2 className="text-lg font-medium dark:text-foreground">DEPARTMENT CHAT</h2>
                     <p className="text-sm text-gray-500">{onlineMembers.filter(m => m.status === 'online').length} members online</p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:bg-gray-900 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-700" />
                 </button>
@@ -94,27 +94,27 @@ export function ChatPanel({ isOpen, onClose }) {
                   placeholder="SEARCH MESSAGES..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-400 text-sm"
+                  className="w-full pl-10 pr-4 py-2 bg-lavender-100 dark:bg-slate-900 border border-border rounded-lg outline-none focus:ring-2 focus:ring-green-400 text-sm"
                 />
               </div>
             </div>
 
             {/* Online Members */}
-            <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+            <div className="bg-lavender-50 dark:bg-slate-950 px-6 py-3 border-b border-border">
               <div className="flex items-center gap-2 overflow-x-auto">
-                <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <Users className="w-4 h-4 text-gray-500 shrink-0" />
                 <div className="flex gap-2">
                   {onlineMembers.map((member, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-1.5 px-2 py-1 bg-white rounded-full text-xs font-medium whitespace-nowrap"
+                      className="flex items-center gap-1.5 px-2 py-1 bg-lavender-100 dark:bg-lavender-900 rounded-full text-xs font-medium whitespace-nowrap"
                     >
                       <div className={`w-2 h-2 rounded-full ${
                         member.status === 'online' ? 'bg-green-500' :
                         member.status === 'away' ? 'bg-yellow-500' :
                         'bg-gray-300'
                       }`} />
-                      <span className="text-gray-700">{member.name.split(' ')[0]}</span>
+                      <span className="text-gray-700 dark:text-lavender-50">{member.name.split(' ')[0]}</span>
                     </div>
                   ))}
                 </div>
@@ -122,7 +122,7 @@ export function ChatPanel({ isOpen, onClose }) {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-lavender-50 dark:bg-background">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
@@ -143,8 +143,8 @@ export function ChatPanel({ isOpen, onClose }) {
                     )}
                     <div className={`px-4 py-2.5 rounded-2xl ${
                       message.isOwn
-                        ? 'bg-[#9333ea] text-white rounded-tr-sm'
-                        : 'bg-white text-gray-900 rounded-tl-sm border border-gray-200'
+                        ? 'bg-[#9333ea] text-white dark:text-black rounded-tr-sm'
+                        : 'bg-lavender-100 dark:bg-slate-900 text-foreground rounded-tl-sm border border-border'
                     }`}>
                       <p className="text-sm">{message.message}</p>
                     </div>
@@ -155,9 +155,9 @@ export function ChatPanel({ isOpen, onClose }) {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 bg-white border-t border-gray-200">
+            <div className="p-4 bg-lavender-100 dark:bg-slate-950 border-t border-border">
               <div className="flex items-end gap-2">
-                <div className="flex-1 bg-gray-100 rounded-2xl p-3">
+                <div className="flex-1 bg-gray-100 dark:bg-slate-900 rounded-2xl p-3">
                   <textarea
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
@@ -169,7 +169,7 @@ export function ChatPanel({ isOpen, onClose }) {
                     }}
                     placeholder="TYPE YOUR MESSAGE..."
                     rows={1}
-                    className="w-full bg-transparent outline-none resize-none text-sm text-gray-900 placeholder:text-gray-500"
+                    className="w-full bg-transparent outline-none border-0 ring-0 resize-none text-sm text-foreground placeholder:text-gray-500"
                   />
                   <div className="flex items-center gap-2 mt-2">
                     <button className="p-1 hover:bg-gray-200 rounded transition-colors">

@@ -12,10 +12,12 @@ import {
   Calendar,
   Settings,
   LogOut,
+  Loader,
 } from 'lucide-react';
 import eaarthLogo from '@/assets/eaarth.png';
 import sidebarMenuList from '../config/sidebarMenuList';
 import { useAuth } from '../../features/auth/context/AuthContext';
+import { triggerGlobalLogout } from '../../features/auth/config/globalLogoutConfig';
 
 function NavChevron({ isOpen, size = 16 }) {
   return (
@@ -101,7 +103,7 @@ export default function Sidebar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-    const { user } = useAuth();
+  const { user, loading } = useAuth();
 
 
   // temp user data
@@ -120,9 +122,9 @@ export default function Sidebar() {
     });
   }, []);
 
-  const handleLogout = useCallback(() => {
-    requestAnimationFrame(() => navigate('/auth/login'));
-  }, [navigate]);
+  const handleLogout = () => {
+    triggerGlobalLogout();
+  }
 
   const getUserInitials = useCallback(() => {
     if (userName !== "N/A" || userName) return userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -284,7 +286,10 @@ export default function Sidebar() {
               </div>
 
               <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={handleLogout} className={`${isCollapsed ? 'w-11 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0`}>
-                <LogOut className="w-5 h-5" />
+                {loading 
+                ? <Loader className="w-5 h-5 animate-spin" />
+                : <LogOut className="w-5 h-5" />
+                }
               </motion.button>
             </div>
           </div>
