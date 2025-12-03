@@ -92,11 +92,11 @@ export function UploadIDPhoto() {
         </div>
 
         {/* Main Card */}
-        <div className="w-full bg-card rounded-3xl p-8 md:p-10 border border-gray-100">
+        <div className="w-full bg-card rounded-3xl p-8 md:p-10 border border-border">
           
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-lavender-50 border border-primary rounded-xl flex-shrink-0">
+            <div className="p-3 bg-lavender-50 border border-primary rounded-xl shrink-0">
               <CreditCard className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -106,7 +106,7 @@ export function UploadIDPhoto() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-lavender-50 border border-gray-100 rounded-xl p-4 mb-6">
+          <div className="bg-background border border-border rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div>

@@ -140,9 +140,9 @@ export function LivePhotoCapture() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-lavender-50 border border-gray-100 rounded-xl p-4 mb-6">
+          <div className="bg-background border border-border rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
-              <Camera className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <Camera className="w-5 h-5 text-primary mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm text-foreground font-semibold mb-2">PHOTO GUIDELINES:</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
@@ -177,7 +177,7 @@ export function LivePhotoCapture() {
           )}
 
           {/* Camera / Preview Box */}
-          <div className="relative rounded-xl overflow-hidden bg-gray-900 mb-6 w-full h-[280px] md:h-[320px]">
+          <div className="relative rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-900 mb-6 w-full h-[280px] md:h-[320px]">
 
             {showWebcam && !preview ? (
               // Live Webcam View
@@ -213,8 +213,8 @@ export function LivePhotoCapture() {
               <>
                 <div className="absolute inset-0 flex items-center justify-center text-white">
                   <div className="text-center">
-                    <Camera className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm opacity-70">Camera preview area</p>
+                    <Camera className="w-16 h-16 mx-auto mb-3 opacity-50 text-foreground" />
+                    <p className="text-sm opacity-70 text-foreground">Camera preview area</p>
                   </div>
                 </div>
               </>

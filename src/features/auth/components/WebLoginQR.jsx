@@ -40,7 +40,7 @@ function WebLoginQR() {
 
   const isExpired = secondsLeft === 0;
   return (
-    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021]">
+    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden bg-white dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021]">
 
       {/* Title */}
       <div className="flex items-center gap-3 mb-8">
@@ -82,8 +82,8 @@ function WebLoginQR() {
           <QRCode
             value={qrData.socketRoom}
             level="H"
-            fgColor="#7C3AED"
-            bgColor={isDark ? "#0F0F0F" : "#FFFFFF"}
+            fgColor={isDark ? "#AAA9F9" : "#7C3AED"}
+            bgColor={isDark ? "#0e0029" : "#FFFFFF"}
             className={`${isExpired ? "opacity-40" : ""} w-full`}
           />
         )}

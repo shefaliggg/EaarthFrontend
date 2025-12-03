@@ -107,7 +107,7 @@ function MobileloginQR() {
                             value={qrData.socketRoom}
                             size={180}
                             level="H"
-                            bgColor={isDark ? "#0F0F0F" : "#FFFFFF"}
+                            bgColor={isDark ? "#0e0029" : "#FFFFFF"}
                         />
                     )}
                     <div className="text-center mt-3">

@@ -1,12 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
+import DarkmodeButton from "../shared/components/DarkmodeButton";
 
 const AuthLayout = () => {
   const location = useLocation();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-
+      <div className="absolute top-12 right-32 z-100">
+        <DarkmodeButton />
+      </div>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
