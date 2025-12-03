@@ -156,7 +156,7 @@ export default function Sidebar() {
       )}
       <aside
         className={`sticky left-0 top-0 h-screen z-50 bg-white dark:bg-background transition-all duration-300`}
-        style={{ width: isCollapsed ? '80px' : '280px' }}
+        style={{ width: isCollapsed ? '60px' : '280px' }}
         aria-label="Main sidebar"
       >
         <div className="flex flex-col h-screen">
@@ -176,7 +176,7 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-4.5' : 'p-5 py-3'} space-y-2 overflow-y-auto`}>
+          <nav className={`flex-1 ${isCollapsed ? 'py-3 px-3.5' : 'p-5 py-3'} space-y-2 overflow-y-auto`}>
 
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -245,8 +245,8 @@ export default function Sidebar() {
             })}
           </nav>
 
-          <div className="p-4 space-y-3">
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800`}>
+          <div className={`${isCollapsed ? "p-3.5" : "p-4"} space-y-3`}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => requestAnimationFrame(() => navigate('support'))} className={`w-full flex items-center ${isCollapsed ? 'py-2.5' : 'gap-3 px-4 py-2'} rounded-2xl transition-all ${pathname === "/support" ? 'bg-[#f3e5f5] text-[#9333ea]' : 'text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-gray-800'}`}>
               <HelpCircle className={`size-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
               {!isCollapsed && <span className="font-medium text-sm">HELP & SUPPORT</span>}
             </motion.button>
@@ -254,7 +254,7 @@ export default function Sidebar() {
             <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
               <div className="relative flex-1">
                 <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={() => setShowUserMenu((s) => !s)} className={`${isCollapsed ? 'w-10 h-10 justify-center' : 'w-full justify-start'} flex items-center gap-3 p-2 rounded-xl text-foreground border transition-all`} aria-expanded={showUserMenu}>
-                  <div className="w-10 h-10 rounded-full bg-[#9333ea] flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
+                  <div className="w-9 h-9 rounded-full bg-[#9333ea] flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
                   {!isCollapsed && (
                     <div className='leading-4 flex flex-col items-start'>
                       <p className='font-medium text-sm'>{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</p>
@@ -265,15 +265,6 @@ export default function Sidebar() {
 
                 {showUserMenu && (
                   <div className={`absolute bottom-full ${isCollapsed ? 'left-0' : 'left-0 right-0'} mb-2 rounded-2xl border shadow-md overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700`} style={{ minWidth: isCollapsed ? '200px' : 'auto' }}>
-                    {/* <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0"><span className="text-white font-medium text-sm">{getUserInitials()}</span></div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate text-gray-900 dark:text-white">{userName || userEmail?.split('@')[0].toUpperCase() || 'USER'}</div>
-                          <div className="text-xs truncate text-gray-600 dark:text-gray-400">{userRole}</div>
-                        </div>
-                      </div>
-                    </div> */}
 
                     <div className="p-2">
                       <button onClick={() => { requestAnimationFrame(() => navigate('/profile')); setShowUserMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-[#faf5ff] text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300"><User className="w-5 h-5" /><span className="font-medium text-sm">MY PROFILE</span></button>
@@ -285,7 +276,7 @@ export default function Sidebar() {
                 )}
               </div>
 
-              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={handleLogout} className={`${isCollapsed ? 'w-11 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0`}>
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={handleLogout} className={`${isCollapsed ? 'w-10 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0`}>
                 {loading 
                 ? <Loader className="w-5 h-5 animate-spin" />
                 : <LogOut className="w-5 h-5" />

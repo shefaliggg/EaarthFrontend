@@ -164,7 +164,7 @@ export default function StudioDashboard({ onNavigate }) {
       <div className="min-h-screen transition-colors">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="rounded-xl border shadow-md p-6 bg-background">
+          <div className="rounded-xl border shadow-md p-6 bg-card">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3">
@@ -186,7 +186,7 @@ export default function StudioDashboard({ onNavigate }) {
               <Button
                 size={"lg"}
                 onClick={() => setShowQRCode(!showQRCode)}
-                className="px-6 py-2.5 bg-[#9333ea] hover:bg-[#9333ea] text-white rounded-xl font-medium transition-all border border-gray-200 flex items-center gap-2"
+                className="px-6 py-2.5 bg-[#9333ea] hover:bg-[#9333ea] text-white rounded-xl font-medium transition-all border border-border flex items-center gap-2"
               >
                 <BarChart3 className="w-5 h-5" />
                 {showQRCode ? 'HIDE STATS' : 'SHOW QUICK STATS'}
@@ -197,7 +197,7 @@ export default function StudioDashboard({ onNavigate }) {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-6 rounded-xl border shadow-md bg-background border-gray-200"
+                className="mt-6 p-6 rounded-xl border shadow-md bg-card border-gray-200"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium text-gray-900 dark:text-white">
@@ -309,7 +309,7 @@ export default function StudioDashboard({ onNavigate }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-2xl p-6 border bg-background border"
+              className="rounded-2xl p-6 border bg-card border"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#f3e8ff] dark:bg-[#9333ea] border flex items-center justify-center">
@@ -343,7 +343,7 @@ export default function StudioDashboard({ onNavigate }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="rounded-2xl p-6 border bg-background "
+              className="rounded-2xl p-6 border bg-card "
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#f3e8ff] dark:bg-[#9333ea] border flex items-center justify-center">
@@ -374,7 +374,7 @@ export default function StudioDashboard({ onNavigate }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="rounded-2xl p-6 border bg-background "
+              className="rounded-2xl p-6 border bg-card "
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#f3e8ff] dark:bg-[#9333ea] border flex items-center justify-center">
@@ -397,7 +397,7 @@ export default function StudioDashboard({ onNavigate }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="rounded-2xl p-6 border bg-background"
+              className="rounded-2xl p-6 border bg-card"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#f3e8ff] dark:bg-[#9333ea] border flex items-center justify-center">
@@ -425,7 +425,7 @@ export default function StudioDashboard({ onNavigate }) {
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-2xl p-6 border bg-background">
+          <div className="rounded-2xl p-6 border bg-card">
             <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
               QUICK ACTIONS
             </h2>
@@ -462,7 +462,7 @@ export default function StudioDashboard({ onNavigate }) {
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Projects */}
-            <div className="lg:col-span-2 rounded-2xl p-6 border bg-background  ">
+            <div className="lg:col-span-2 rounded-2xl p-6 border bg-card  ">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-gray-900 dark:text-white">
                   RECENT PROJECTS
@@ -519,7 +519,7 @@ export default function StudioDashboard({ onNavigate }) {
             </div>
 
             {/* Pending Tasks */}
-            <div className="rounded-2xl p-6 border bg-background">
+            <div className="rounded-2xl p-6 border bg-card">
               <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
                 PENDING TASKS
               </h2>
@@ -591,7 +591,7 @@ export default function StudioDashboard({ onNavigate }) {
           </div>
 
           {/* Studio Management */}
-          <div className="rounded-2xl p-6 border bg-background  ">
+          <div className="rounded-2xl p-6 border bg-card  ">
             <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
               STUDIO MANAGEMENT
             </h2>

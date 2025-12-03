@@ -6,7 +6,7 @@ import PageTransition from "../shared/components/PageTransition";
 const DashboardLayout = () => {
 
   return (
-    <div className="grid grid-cols-[auto_1fr] min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="grid grid-cols-[auto_1fr] min-h-screen">
       <Sidebar />
       <div className="flex-1">
         <Header />
