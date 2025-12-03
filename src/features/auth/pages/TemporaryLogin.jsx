@@ -3,6 +3,7 @@ import { Eye, EyeOff, ArrowLeft, Loader } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useTemporaryLogin from '../hooks/useTemporaryLogin';
 import eaarthLogo from '../../../assets/eaarth.png';
+import { Input } from "../../../shared/components/ui/input";
 
 export const TemporaryLoginPage = () => {
   const navigate = useNavigate();
@@ -42,98 +43,92 @@ export const TemporaryLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-start justify-center p-4">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
 
       {/* Back Button - Top Left */}
       <button
         onClick={handleBackClick}
         disabled={loading}
-        className="absolute top-6 left-6 p-2 hover:bg-white/50 rounded-full transition-all disabled:opacity-50"
+        className="absolute top-6 left-6 p-2 hover:bg-gray-200 dark:hover:bg-gray-800/30 rounded-full transition-all disabled:opacity-50"
       >
-        <ArrowLeft className="w-6 h-6 text-gray-700" />
+        <ArrowLeft className="w-6 h-6 text-gray-900 dark:text-gray-100" />
       </button>
 
-      <div className="w-full max-w-lg mx-auto">
+      <div className="w-full max-w-xl mx-auto">
 
         {/* Logo + Title */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <img
             src={eaarthLogo}
             alt="Eaarth Studios"
-            className="w-40 h-auto mx-auto mb-3"
+            className="w-36 h-auto mx-auto"
           />
-          <p className="text-sm text-gray-600 tracking-wide font-semibold">
-            TEMPORARY LOGIN
+          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold tracking-wide uppercase">
+            Temporary Login
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="w-full bg-card rounded-3xl p-8 md:p-10 border border-gray-100">
+        <div className="w-full bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
 
           {/* Header */}
-          <h2 className="text-2xl md:text-2xl font-medium text-center mb-3 text-foreground">
-            TEMPORARY LOGIN
+          <h2 className="text-xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">
+            Temporary Access
           </h2>
-          <p className="text-center text-muted-foreground mb-8 text-sm">
+          <p className="text-center text-xs text-gray-600 dark:text-gray-400 mb-4">
             Enter the temporary password sent to your email
           </p>
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-100 text-destructive p-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-600/20 text-red-600 dark:text-red-300 p-2 rounded-lg mb-4 text-xs">
               {error}
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-5">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
 
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 Email Address
               </label>
-              <input
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
                 disabled={!!propEmail || loading}
-                className={`w-full px-4 py-3.5 bg-input border border-border rounded-xl
-                  focus:border-border focus:ring-2 focus:ring-lavender-50 outline-none transition-all
-                  text-sm text-foreground disabled:bg-muted disabled:cursor-not-allowed
-                  ${propEmail ? 'bg-muted text-muted-foreground' : ''}`}
+                className={`h-10 text-sm ${propEmail ? 'opacity-60 cursor-not-allowed' : ''}`}
               />
             </div>
 
             {/* Temporary Password Field */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 Temporary Password
               </label>
 
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter temporary password"
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3.5 bg-input border border-border rounded-xl
-                    focus:border-border focus:ring-2 focus:ring-lavender-50 outline-none transition-all
-                    text-sm text-foreground pr-12 disabled:bg-muted disabled:cursor-not-allowed"
+                  className="pr-10 h-10 text-sm"
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground
-                    transition-colors disabled:opacity-50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
@@ -142,9 +137,7 @@ export const TemporaryLoginPage = () => {
             <button
               type="submit"
               disabled={loading || !password || !email}
-              className="w-full bg-primary mt-2 text-primary-foreground font-medium py-3.5
-                rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                text-sm flex items-center justify-center gap-2"
+              className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -162,7 +155,7 @@ export const TemporaryLoginPage = () => {
             <button
               onClick={handleBackClick}
               disabled={loading}
-              className="text-primary hover:text-primary/80 font-medium text-sm transition-colors disabled:opacity-50"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium text-xs transition-colors disabled:opacity-50"
             >
               Back to Login
             </button>
@@ -170,7 +163,7 @@ export const TemporaryLoginPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 text-muted-foreground text-xs">
+        <div className="text-center mt-4 text-xs text-gray-600 dark:text-gray-400">
           Step 1 of 5 — Temporary Login
         </div>
       </div>

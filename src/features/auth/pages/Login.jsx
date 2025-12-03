@@ -41,7 +41,6 @@ export const LoginPage = () => {
       <div className="max-w-5xl w-full mx-auto px-4 md:px-6">
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
 
-          {/* LEFT PANEL - LOGIN FORM */}
           <div className="rounded-3xl py-6 px-8 bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021] border-border shadow-md transition-colors h-full flex flex-col">
 
             <div className="text-center mb-2">
@@ -148,11 +147,9 @@ export const LoginPage = () => {
                 Protected by Eaarth Secure Access
               </p>
 
-              {/* Benefits - Removed */}
             </div>
           </div>
 
-          {/* RIGHT PANEL - QR LOGIN */}
           <WebLoginQR />
         </div>
 

@@ -23,13 +23,14 @@ export const useVerifyEmail = () => {
       if (!token || !email) {
         setStatus('error');
         setMessage('Invalid invitation link.');
-        return;
+        return; // ❌ no redirect
       }
 
       try {
         const response = await authService.verifyInviteLink(token, email);
 
         if (response.success) {
+          // ⭐ Successful verification UI update
           setStatus('success');
           setInviteData({
             email: response.data?.email || email,
@@ -38,6 +39,7 @@ export const useVerifyEmail = () => {
             firstLogin: response.data?.firstLogin,
           });
 
+          // ⭐ Redirect only on success
           setTimeout(() => {
             navigate('/auth/temp-login', {
               replace: true,
@@ -47,11 +49,15 @@ export const useVerifyEmail = () => {
               },
             });
           }, 2000);
+
         } else {
+          // ❌ failed: do not redirect
           setStatus('error');
           setMessage(response.message || 'Verification failed.');
         }
+
       } catch (error) {
+        // ❌ failed: do not redirect
         setStatus('error');
         setMessage(error.message || 'Verification failed.');
       }
