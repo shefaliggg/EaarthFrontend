@@ -52,7 +52,7 @@ function WebLoginQR() {
         </p>
       </div>
 
-      <div className="bg-background dark:bg-[#101828] rounded-2xl border-2 border-border p-8 shadow-sm relative">
+      <div className="bg-background dark:bg-[#11002c] rounded-2xl border-2 border-border p-8 shadow-sm relative">
 
         {isExpired && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-10">
@@ -67,14 +67,14 @@ function WebLoginQR() {
           </div>
         )}
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 animate-pulse text-muted-foreground">
+          <div className="flex flex-col items-center justify-center gap-3 p-12 px-14 animate-pulse text-muted-foreground">
             <QrCode className="size-16" />
             <p className="text-xs">Generating...</p>
           </div>
         )}
 
         {error && (
-          <div className="flex flex-col items-center justify-center gap-3 text-red-600 dark:text-red-400">
+          <div className="flex flex-col items-center justify-center gap-3 p-12 text-red-600 dark:text-red-500">
             <QrCode className="size-16" />
             <p className="text-xs">Error generating QR</p>
           </div>
@@ -86,7 +86,7 @@ function WebLoginQR() {
               value={qrData.socketRoom}
               level="H"
               fgColor={isDark ? "#FFFFFF" : "#000000"}
-              bgColor={isDark ? "#111827" : "#FFFFFF"}
+              bgColor={isDark ? "#11002c" : "#FFFFFF"}
               style={{ width: "180px", height: "180px" }}
               className={isExpired ? "opacity-40" : ""}
             />

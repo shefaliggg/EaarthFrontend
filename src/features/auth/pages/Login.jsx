@@ -37,9 +37,9 @@ export const LoginPage = () => {
   );
 
   return (
-    <div className="min-h-screen w-full py-6 flex items-center justify-center ">
+    <div className=" w-full flex py-6 items-center justify-center ">
       <div className="max-w-5xl w-full mx-auto px-4 md:px-6">
-        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div className="grid lg:grid-cols-2 gap-8 items-stretch">
 
           {/* LEFT PANEL - LOGIN FORM */}
           <div className="rounded-3xl py-6 px-8 bg-card dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021] border-border shadow-md transition-colors h-full flex flex-col">
