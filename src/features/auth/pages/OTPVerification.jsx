@@ -54,54 +54,54 @@ export const OTPVerificationPage = () => {
   if (!email) return null;
 
   return (
-    <div className="min-h-screen w-full flex items-start justify-center p-4 bg-[var(--background)]  transition-colors">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
 
       <button
         onClick={handleBackClick}
-        className="absolute top-6 left-6 p-2 hover:bg-white/10 dark:hover:bg-gray-700/30 rounded-full transition-all"
+        className="absolute top-6 left-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-800/30 rounded-full transition-all"
       >
-        <ArrowLeft className="w-6 h-6 text-[var(--foreground)] dark:text-[var(--foreground-dark)]" />
+        <ArrowLeft className="w-6 h-6" />
       </button>
 
-      <div className="w-full max-w-lg mx-auto ">
+      <div className="w-full max-w-md mx-auto">
   
-        <div className="text-center mb-6">
-          <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 h-auto mx-auto mb-3" />
-          <p className="text-sm text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] font-semibold tracking-wide">OTP VERIFICATION</p>
+        <div className="text-center mb-4">
+          <img src={eaarthLogo} alt="Eaarth Studios" className="w-36 h-auto mx-auto " />
+          <p className="text-xs text-muted-foreground font-semibold tracking-wide">OTP VERIFICATION</p>
         </div>
 
-        <div className="bg-[var(--card)] dark:bg-slate-800 border  rounded-3xl p-8 shadow-md transition-colors">
+        <div className="bg-card dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] border border-border rounded-3xl p-6 shadow-md transition-colors">
 
-          <h2 className="text-2xl font-bold text-center mb-2 text-[var(--foreground)] dark:text-[var(--foreground-dark)]">
+          <h2 className="text-xl font-bold text-center mb-2 text-foreground">
             VERIFY YOUR IDENTITY
           </h2>
-          <p className="text-center text-sm text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-6">
+          <p className="text-center text-xs text-muted-foreground mb-4">
             Enter the 6-digit code sent to your email
           </p>
 
-          <div className="bg-[var(--muted)] dark:bg-[var(--muted-dark)]  rounded-xl p-4 mb-6 flex items-center gap-3">
-            <Info className="w-5 h-5 text-[var(--primary)]" />
-            <p className="text-sm text-[var(--foreground)] dark:text-[var(--foreground-dark)] break-all">
+          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-4 flex items-center gap-3">
+            <Info className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <p className="text-sm text-foreground break-all">
               <span className="font-semibold">Email:</span> {email}
             </p>
           </div>
 
           {devOtp && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 mb-4">
+              <p className="text-xs text-yellow-800 dark:text-yellow-300">
                 <span className="font-semibold">🔧 Dev Mode OTP:</span> {devOtp}
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-[var(--destructive)] text-[var(--destructive-foreground)] p-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-600/20 text-red-600 dark:text-red-300 p-2 rounded-lg mb-4 text-xs">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleFormSubmit} className="space-y-6">
-            <div className="flex gap-3 justify-center mb-6">
+          <div className="space-y-4">
+            <div className="flex gap-2 justify-center mb-4">
               {otp.map((digit, i) => (
                 <Input
                   key={i}
@@ -113,40 +113,45 @@ export const OTPVerificationPage = () => {
                   onChange={(e) => handleInput(i, e.target.value)}
                   onKeyDown={(e) => handleBackspace(i, e)}
                   disabled={loading}
-                  className="w-12 h-14 md:w-14 md:h-16 text-center text-xl font-semibold border border-[var(--border)] dark:border-[var(--border-dark)] rounded-xl focus:ring-[var(--ring)] focus:border-[var(--primary)]"
+                  className="w-10 h-12 md:w-12 md:h-12 text-center text-lg font-semibold  border dark:border-foreground/50 rounded-xl focus:ring-2 focus:ring-purple-600"
                 />
               ))}
             </div>
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleFormSubmit}
               disabled={loading || otp.join('').length !== 6}
-              className="w-full bg-[var(--primary)] hover:bg-[var(--lavender-600)] transition-colors text-[var(--primary-foreground)] dark:text-[var(--primary-foreground-dark)] font-medium py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary hover:bg-purple-700 transition-colors text-primary-foreground font-medium py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <Loader className="w-5 h-5 animate-spin" />
-                  <span>VERIFYING...</span>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">VERIFYING...</span>
                 </>
-              ) : 'VERIFY'}
+              ) : (
+                <span className="text-sm">VERIFY</span>
+              )}
             </button>
-          </form>
+          </div>
 
-          <div className="text-center mt-6">
-            <p className="text-sm text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)] mb-2">Didn't receive the code?</p>
+          <div className="text-center mt-4">
+            <p className="text-xs text-muted-foreground mb-2">Didn't receive the code?</p>
             <button
+              type="button"
               onClick={handleResendClick}
               disabled={!canResend || loading || !password}
-              className="font-medium text-[var(--primary)] hover:text-[var(--lavender-600)] disabled:text-[var(--muted-foreground)] dark:disabled:text-[var(--muted-foreground-dark)] transition-colors"
+              className="font-medium text-primary hover:text-purple-700 disabled:text-muted-foreground transition-colors text-sm"
             >
               {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
             </button>
           </div>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-3">
             <button
+              type="button"
               onClick={handleBackClick}
-              className="text-[var(--primary)] hover:text-[var(--lavender-600)] font-medium text-sm transition-colors"
+              className="text-primary hover:text-purple-700 font-medium text-xs transition-colors"
             >
               Back to Login
             </button>
@@ -154,7 +159,7 @@ export const OTPVerificationPage = () => {
 
         </div>
 
-        <div className="text-center mt-6 text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground-dark)]">
+        <div className="text-center mt-4 text-xs text-muted-foreground">
           Step 2 of 4 — OTP Verification
         </div>
       </div>

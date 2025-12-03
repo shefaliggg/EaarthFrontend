@@ -13,7 +13,6 @@ export const ResetPasswordPage = () => {
 
   useEffect(() => {
     const stateEmail = location.state?.email;
-
     const storedEmail = localStorage.getItem('resetPasswordEmail');
     
     if (stateEmail) {
@@ -60,21 +59,21 @@ export const ResetPasswordPage = () => {
 
   if (!email) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background transition-colors">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
+        <Loader className="w-8 h-8 animate-spin text-purple-600" />
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background transition-colors">
-        <div className="w-full max-w-xl bg-card rounded-2xl p-6 text-center border border-border shadow-md transition-colors">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-medium text-foreground mb-2">
+      <div className="min-h-screen flex items-center justify-center px-4 transition-colors">
+        <div className="w-full max-w-md bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-md text-center">
+          <CheckCircle className="w-16 h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Password Reset Successful!
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
             Redirecting to login...
           </p>
         </div>
@@ -83,51 +82,53 @@ export const ResetPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-start justify-center p-4 bg-background transition-colors relative">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
 
       <button
         onClick={() => {
           localStorage.removeItem('resetPasswordEmail');
           navigate('/auth/forgot-password');
         }}
-        className="absolute top-6 left-6 p-2 hover:bg-muted rounded-full transition-all"
+        disabled={loading}
+        className="absolute top-6 left-6 p-2 hover:bg-gray-200 dark:hover:bg-gray-800/30 rounded-full transition-all disabled:opacity-50"
       >
-        <ArrowLeft className="w-6 h-6 text-foreground" />
+        <ArrowLeft className="w-6 h-6 text-gray-900 dark:text-gray-100" />
       </button>
 
-      <div className="w-full max-w-xl mx-auto mt-8">
+      <div className="w-full max-w-xl mx-auto">
 
-        {/* Logo */}
+        {/* Logo & Title */}
         <div className="text-center mb-6">
-          <img src={eaarthLogo} alt="Eaarth Studios" className="w-40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground tracking-wide font-semibold uppercase">
+          <img src={eaarthLogo} alt="Eaarth Studios" className="w-36 h-auto mx-auto" />
+          <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold tracking-wide uppercase">
             Reset Password
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-card dark:bg-slate-800 border border-border rounded-3xl p-8 shadow-md transition-colors">
+        <div className="bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
 
-          <h2 className="text-2xl font-medium text-center mb-2 text-foreground">
-            Reset Your Password
+          <h2 className="text-xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">
+            Create New Password
           </h2>
-          <p className="text-center text-muted-foreground mb-6 text-sm">
+          <p className="text-center text-xs text-gray-600 dark:text-gray-400 mb-4">
             Enter the OTP sent to <span className="font-semibold">{email}</span>
           </p>
 
-          {/* Error */}
+          {/* Error Alert */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-lg mb-6 text-sm flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-600/20 text-red-600 dark:text-red-300 p-2 rounded-lg mb-4 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-6">
+          <form onSubmit={onSubmit} className="space-y-4">
  
+            {/* OTP Input */}
             <div>
-              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
-                OTP *
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                OTP Code
               </label>
               <Input
                 type="text"
@@ -139,16 +140,17 @@ export const ResetPasswordPage = () => {
                 }}
                 placeholder="Enter 6-digit OTP"
                 disabled={loading}
-                className="text-center text-lg tracking-widest"
+                className="text-center text-lg tracking-widest h-10"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Check your email for the 6-digit code
+              <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                Check your email for the verification code
               </p>
             </div>
 
+            {/* New Password */}
             <div>
-              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
-                New Password *
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                New Password
               </label>
               <div className="relative">
                 <Input
@@ -157,22 +159,23 @@ export const ResetPasswordPage = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   disabled={loading}
-                  className="pr-12"
+                  className="pr-10 h-10 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
                 >
-                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm text-muted-foreground mb-2 uppercase tracking-wide">
-                Confirm Password *
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                Confirm Password
               </label>
               <div className="relative">
                 <Input
@@ -181,59 +184,75 @@ export const ResetPasswordPage = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter new password"
                   disabled={loading}
-                  className="pr-12"
+                  className="pr-10 h-10 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-             <div className="bg-[var(--input-bg)] border border-[var(--border)] rounded-xl p-4 text-sm text-[var(--muted-foreground)]">
-              <p className="font-medium mb-2">Password must include:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>8+ characters</li>
-                <li>Uppercase, lowercase, number & special character</li>
+            {/* Password Requirements */}
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-3">
+              <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Password Requirements:
+              </p>
+              <ul className="space-y-1 text-[10px] text-gray-700 dark:text-gray-300">
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  At least 8 characters long
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  Contains uppercase & lowercase letters
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  Includes numbers & special characters
+                </li>
               </ul>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !otp || !newPassword || !confirmPassword}
-              className="w-full mt-2 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+              className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
-                  RESETTING PASSWORD...
+                  <span>RESETTING...</span>
                 </>
               ) : (
-                "RESET PASSWORD"
+                'RESET PASSWORD'
               )}
             </button>
 
           </form>
 
-          <div className="mt-6 text-center">
+          {/* Resend Link */}
+          <div className="text-center mt-4">
             <button
               onClick={() => {
                 localStorage.removeItem('resetPasswordEmail');
                 navigate('/auth/forgot-password', { state: { email } });
               }}
               disabled={loading}
-              className="text-sm text-primary hover:underline disabled:opacity-50"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Didn't receive OTP? Request new one
             </button>
           </div>
         </div>
 
-        <div className="text-center mt-6 text-xs text-muted-foreground">
+        {/* Footer Text */}
+        <div className="text-center mt-4 text-xs text-gray-600 dark:text-gray-400">
           Step 2 of 2 — Password Recovery
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Film, QrCode, Shield, Zap, RotateCcw } from "lucide-react";
+import { QrCode, RotateCcw } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { useQrLogin } from "../hooks/useQrLogin";
@@ -8,8 +8,6 @@ function WebLoginQR() {
   const { qrData, generateQr, loading, error } = useQrLogin({ type: "web" });
   const [secondsLeft, setSecondsLeft] = useState(60);
   const isDark = document.body.classList.contains("dark");
-
-
 
   useEffect(() => {
     generateQr();
@@ -28,7 +26,7 @@ function WebLoginQR() {
 
       if (diff === 0) {
         toast.error("QR Code Expired", {
-          description: "The QR code is no longer valid. Please refresh to generate a new one.",
+          description: "Please refresh to generate a new QR code.",
         });
         clearInterval(interval);
       }
@@ -37,104 +35,79 @@ function WebLoginQR() {
     return () => clearInterval(interval);
   }, [qrData]);
 
-
   const isExpired = secondsLeft === 0;
-  return (
-    <div className="rounded-3xl shadow-lg border p-6 relative overflow-hidden bg-white dark:bg-linear-to-b from-[#250149] via-[#200352] to-[#0e0021]">
 
-      {/* Title */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-background/40 backdrop-blur-sm flex items-center justify-center">
-          <QrCode className="w-8 h-8 text-purple-900" />
+  return (
+    <div className="rounded-3xl shadow-lg border border-border p-6 bg-card dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] h-full flex flex-col items-center justify-center transition-colors">
+
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-2 mb-2 ">
+          <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <h2 className="text-lg font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            Mobile Login
+          </h2>
         </div>
-        <div>
-          <h2 className="text-2xl font-extrabold text-foreground">QR CODE LOGIN</h2>
-          <p className="text-muted-foreground text-sm">Scan with your mobile app</p>
-        </div>
+        <p className="text-xs text-muted-foreground px-10">
+          SCAN WITH THE EAARTH MOBILE APP TO LOG IN INSTANTLY
+        </p>
       </div>
 
-      {/* QR Code Box */}
-      <div className={`bg-background dark:bg-[#0e0029]  rounded-3xl dark:border border-2 p-12 pb-6 m-10 flex flex-col items-center justify-center shadow-md relative`}>
+      <div className="bg-background dark:bg-[#101828] rounded-2xl border-2 border-border p-8 shadow-sm relative">
 
-        {/* Expired Overlay */}
         {isExpired && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-3xl z-10">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-10">
             <RotateCcw
-              className="w-10 h-10 text-purple-900 cursor-pointer mb-2"
+              className="w-8 h-8 text-white cursor-pointer mb-2"
               onClick={() => {
                 generateQr();
                 setSecondsLeft(60);
               }}
             />
-            <p className="text-sm font-semibold text-purple-900">Refresh QR</p>
+            <p className="text-white text-xs font-semibold">Refresh QR</p>
+          </div>
+        )}
+        {loading && (
+          <div className="flex flex-col items-center justify-center gap-3 animate-pulse text-muted-foreground">
+            <QrCode className="size-16" />
+            <p className="text-xs">Generating...</p>
           </div>
         )}
 
-        {loading && <div className="flex flex-col p-14 items-center text-center justify-center gap-4 text-purple-900 text-sm font-medium animate-pulse">
-          <QrCode className="size-20 " /> Generating QR Code
-        </div>}
-        {error && <div className="flex flex-col p-14 items-center text-center justify-center gap-4 text-red-600 text-sm font-medium">
-          <QrCode className="size-20 " /> Error Generating QR Code
-        </div>}
-
-        {/* QR Code */}
-        {qrData && (
-          <QRCode
-            value={qrData.socketRoom}
-            level="H"
-            fgColor={isDark ? "#AAA9F9" : "#7C3AED"}
-            bgColor={isDark ? "#0e0029" : "#FFFFFF"}
-            className={`${isExpired ? "opacity-40" : ""} w-full`}
-          />
+        {error && (
+          <div className="flex flex-col items-center justify-center gap-3 text-red-600 dark:text-red-400">
+            <QrCode className="size-16" />
+            <p className="text-xs">Error generating QR</p>
+          </div>
         )}
 
         {qrData && (
-          <p className="text-center text-sm font-medium mt-6 text-purple-900">
+          <div className="flex flex-col items-center">
+            <QRCode
+              value={qrData.socketRoom}
+              level="H"
+              fgColor={isDark ? "#FFFFFF" : "#000000"}
+              bgColor={isDark ? "#111827" : "#FFFFFF"}
+              style={{ width: "180px", height: "180px" }}
+              className={isExpired ? "opacity-40" : ""}
+            />
+          </div>
+        )}
+      </div>
+
+      {qrData && (
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">
             {isExpired ? (
-              <span className="text-red-600 font-semibold">QR Expired</span>
+              <span className="text-red-500">QR Expired</span>
             ) : (
-              <>Expires in: <span className="font-bold">{secondsLeft}s</span></>
+              <>Code Expires in {secondsLeft}s</>
             )}
           </p>
-        )}
-      </div>
-
-      {/* How-To Steps */}
-      <div className="space-y-4">
-        <h3 className="font-medium text-sm mb-3 dark:text-[var(--muted-foreground)] ">How to use:</h3>
-
-        {[
-          "Open Eaarth Studios mobile app",
-          "Tap the QR Login button",
-          "Scan this code with your camera",
-          "You'll be logged in instantly!",
-        ].map((t, i) => (
-          <div className="flex items-center gap-3" key={i}>
-            <div className="w-8 h-8 rounded-md bg-purple-900/20 dark:bg-purple-800 flex items-center justify-center text-purple-900 dark:text-[var(--muted-foreground)] text-xs font-medium">
-              {i + 1}
-            </div>
-            <p className="text-xs text-[var(--muted-foreground)]">{t}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Benefits */}
-      <div className="mt-8 pt-6 border-t border-purple-900/20">
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { icon: Shield, text: "SECURE" },
-            { icon: Zap, text: "INSTANT" },
-            { icon: Film, text: "EASY" },
-          ].map(({ icon: Icon, text }) => (
-            <div className="text-center" key={text}>
-              <div className="w-10 h-10 mx-auto mb-2 bg-purple-900/20  dark:bg-purple-800 rounded-xl flex items-center justify-center">
-                <Icon className="w-5 h-5 text-purple-900 dark:text-[var(--muted-foreground)]" />
-              </div>
-              <p className="text-[10px] font-medium text-purple-900 dark:text-[var(--muted-foreground)]">{text}</p>
-            </div>
-          ))}
+          <p className="text-[10px] text-muted-foreground">
+            Open Eaarth Studios mobile app
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
