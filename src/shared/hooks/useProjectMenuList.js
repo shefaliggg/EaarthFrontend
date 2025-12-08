@@ -8,12 +8,16 @@ export function useProjectMenus(allProjects = []) {
   const match = pathname.match(/\/projects\/([^/]+)/);
   const projectName = match ? match[1] : null;
 
-  const isAllProjectRoute = pathname === "/projects"
+  const isAllProjectRoute = pathname === "/projects";
   const isProjectSubRoute = !!projectName && pathname !== "/projects";
 
   const allProjectsDropdown = {
     id: "projects",
-    triggerLabel: isProjectSubRoute ? prettifySegment(projectName) : isAllProjectRoute ? "All Projects" : "Select A Project",
+    triggerLabel: isProjectSubRoute
+      ? prettifySegment(projectName)
+      : isAllProjectRoute
+      ? "All Projects"
+      : "Select A Project",
     triggerIcon: Icon.Film,
     dropdownLabel: "Active Projects",
     align: "start",
@@ -28,6 +32,8 @@ export function useProjectMenus(allProjects = []) {
         id: p.id,
         label: p.name,
         icon: Icon.Film,
+        navigateWithName: true,
+        projectCode: `${p.name}tempcode`,
         route: `/projects/${convertTitleToUrl(p.name)}`,
       })),
     ],

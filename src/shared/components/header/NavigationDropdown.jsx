@@ -15,10 +15,13 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { triggerGlobalLogout } from "@/features/auth/config/globalLogoutConfig";
+import { useNavigateWithName } from "../../hooks/useNavigateWithName";
 
 function NavigationDropdown({ menu, displayMode = "text-icon" }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const navigateWithName = useNavigateWithName();
+
 
   const renderMenuButton = (label, Icon) => {
     if (displayMode === "icon-only") return <Icon className="w-5 h-5" />;
@@ -39,8 +42,6 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
       `${item.route}` === pathname ||
       item.subItems?.some((sub) => `${sub.route}` === pathname)
   );
-  console.log("dropdown is active", isDropdownActive)
-  console.log("current route path", pathname)
 
   return (
     <DropdownMenu>
@@ -83,7 +84,6 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
                     {item.subItems.map((sub) => {
                       const SubIcon = sub.icon;
                       const isSubActive = `${sub.route}` === pathname;
-                      console.log("isbu active", isSubActive, "sub route:", sub.route, "pathname in sub", pathname)
 
                       return (
                         <DropdownMenuItem
@@ -108,15 +108,22 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               ) : (
-                /* ✅ NORMAL ITEM */
                 <DropdownMenuItem
-                  onClick={() =>
-                    item.route ? navigate(item.route) : triggerGlobalLogout()
-                  }
+                  onClick={() => {
+                    const isIndividualProjectNavigation = item.route && item.navigateWithName
+                    return isIndividualProjectNavigation
+                      ? navigateWithName({
+                        title: item.label,
+                        uniqueCode: item.projectCode,
+                        basePath: "projects",
+                        storageKey: "currentProjectUniqueKey"
+                      })
+                      : item.route ? navigate(item.route) : triggerGlobalLogout()
+                  }}
                   className={cn(
                     isItemActive && "bg-primary text-white",
                     item.danger &&
-                      "text-destructive focus:text-destructive"
+                    "text-destructive focus:text-destructive"
                   )}
                 >
                   <ItemIcon
