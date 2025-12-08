@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -6,6 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-size: 15px;
+
   --primary: #9333ea;
   --primary-foreground: #ffffff;
 
@@ -130,7 +132,7 @@ a svg {
   --background: #0b0b0e;
   --foreground: #fafafa;
 
-  --card: #111114;
+  --card: #111117;
   --card-foreground: #ffffff;
 
   --popover: #15151a;
@@ -145,14 +147,14 @@ a svg {
   --muted: #1a1a1f;
   --muted-foreground: #a1a1aa;
 
-  --accent: var(--emerald-400);
+  --accent: #9333ea;
   --accent-foreground: #000000;
 
   --destructive: #ff6b81;
   --destructive-foreground: #000000;
 
   --shadow: #15012e;
-  --border: #12002b;
+  --border: #120022;
   /* --border: var(--lavender-900); */
   --input: #1f1f23;
   --ring: var(--lavender-400);
@@ -175,7 +177,7 @@ a svg {
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
@@ -291,17 +293,8 @@ a svg {
   }
 
   body {
+    font-size: 0.9375rem;
     line-height: 1.6;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-weight: 600;
-    letter-spacing: -0.022em;
   }
 
   button,

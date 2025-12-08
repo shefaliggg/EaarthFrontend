@@ -7,15 +7,10 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { prettifySegment } from "../config/utils";
 
 export default function UrlBreadcrumbs() {
     const { pathname } = useLocation();
-
-    function prettifySegment(seg) {
-        return seg
-            .replace(/[-_]/g, " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase());
-    }
 
     const segments = pathname.split("/").filter(Boolean);
 

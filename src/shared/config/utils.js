@@ -14,6 +14,11 @@ export const convertTitleToUrl = (title) => {
       .replace(/-+/g, "-");
 }
 
+export function prettifySegment(seg) {
+        return seg
+            .replace(/[-_]/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
 
 
 

@@ -36,9 +36,11 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
 
   const isDropdownActive = menu?.items?.some(
     (item) =>
-      `/${item.route}` === pathname ||
-      item.subItems?.some((sub) => `/${sub.route}` === pathname)
+      `${item.route}` === pathname ||
+      item.subItems?.some((sub) => `${sub.route}` === pathname)
   );
+  console.log("dropdown is active", isDropdownActive)
+  console.log("current route path", pathname)
 
   return (
     <DropdownMenu>
@@ -64,7 +66,7 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
           const ItemIcon = item.icon;
           const hasSubMenu = item.subItems && item.subItems.length > 0;
 
-          const isItemActive = `/${item.route}` === pathname;
+          const isItemActive = `${item.route}` === pathname;
 
           return (
             <React.Fragment key={item.id}>
@@ -80,7 +82,8 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
                   <DropdownMenuSubContent className="w-52">
                     {item.subItems.map((sub) => {
                       const SubIcon = sub.icon;
-                      const isSubActive = `/${sub.route}` === pathname;
+                      const isSubActive = `${sub.route}` === pathname;
+                      console.log("isbu active", isSubActive, "sub route:", sub.route, "pathname in sub", pathname)
 
                       return (
                         <DropdownMenuItem

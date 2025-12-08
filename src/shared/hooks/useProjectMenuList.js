@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import * as Icon from "lucide-react";
-import { convertTitleToUrl } from "../config/utils";
+import { convertTitleToUrl, prettifySegment } from "../config/utils";
 
 export function useProjectMenus(allProjects = []) {
   const { pathname } = useLocation();
@@ -8,12 +8,12 @@ export function useProjectMenus(allProjects = []) {
   const match = pathname.match(/\/projects\/([^/]+)/);
   const projectName = match ? match[1] : null;
 
+  const isAllProjectRoute = pathname === "/projects"
   const isProjectSubRoute = !!projectName && pathname !== "/projects";
-  console.log("project slug", projectName);
 
   const allProjectsDropdown = {
     id: "projects",
-    triggerLabel: "Project",
+    triggerLabel: isProjectSubRoute ? prettifySegment(projectName) : isAllProjectRoute ? "All Projects" : "Select A Project",
     triggerIcon: Icon.Film,
     dropdownLabel: "Active Projects",
     align: "start",
@@ -22,7 +22,7 @@ export function useProjectMenus(allProjects = []) {
         id: "all-projects",
         label: "All Projects",
         icon: Icon.Film,
-        route: "projects",
+        route: "/projects",
       },
       ...allProjects.map((p) => ({
         id: p.id,
