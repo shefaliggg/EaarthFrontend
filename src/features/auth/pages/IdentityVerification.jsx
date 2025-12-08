@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Scan, CheckCircle, XCircle, ArrowRight, Loader, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useIdentityVerification from '../hooks/useIdentityVerification';
-import eaarthLogo from '../../../assets/eaarth.png';
+import eaarthLogo from '../../../assets/eaarth.webp';
 
 export default function IdentityVerification() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowLeft } from 'lucide-react';
-import eaarthLogo from '../../../assets/eaarth.png';
+import eaarthLogo from '../../../assets/eaarth.webp';
 
 export function VerificationResultScreen() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export function VerificationResultScreen() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
-      
+
       {/* Back Button - Top Left */}
       <button
         onClick={handleBackClick}
@@ -48,7 +48,7 @@ export function VerificationResultScreen() {
 
           {/* Header */}
           <div className="text-center">
-            
+
             {/* Icon */}
             <div className="mb-6 flex justify-center">
               <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">

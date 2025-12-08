@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Shield, Loader, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import eaarthLogo from '../../../../src/assets/eaarth.png';
+import eaarthLogo from '../../../../src/assets/eaarth.webp';
 
 export default function TermsAndConditionsScreen() {
   const navigate = useNavigate();
@@ -168,11 +168,10 @@ export default function TermsAndConditionsScreen() {
           <button
             onClick={handleContinue}
             disabled={!accepted || loading}
-            className={`w-full py-3 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${
-              accepted && !loading
+            className={`w-full py-3 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-sm ${accepted && !loading
                 ? 'bg-purple-600 text-white hover:bg-purple-700'
                 : 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-600 cursor-not-allowed'
-            }`}
+              }`}
           >
             {loading ? (
               <>

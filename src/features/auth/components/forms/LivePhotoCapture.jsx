@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Camera, ArrowRight, RotateCcw, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Webcam from 'react-webcam';
-import eaarthLogo from '../../../../assets/eaarth.png';
+import eaarthLogo from '../../../../assets/eaarth.webp';
 
 export function LivePhotoCapture() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export function LivePhotoCapture() {
   const [error, setError] = useState('');
   const [showWebcam, setShowWebcam] = useState(false);
   const [cameraError, setCameraError] = useState(null);
-  
+
   const webcamRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -102,7 +102,7 @@ export function LivePhotoCapture() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
-      
+
       {/* Back Button */}
       <button
         onClick={handleBackClick}
@@ -203,7 +203,7 @@ export function LivePhotoCapture() {
                   onUserMediaError={handleWebcamError}
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Face guide overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-40 h-52 border-4 border-purple-500 dark:border-purple-400 rounded-full opacity-50"></div>

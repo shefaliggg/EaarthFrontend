@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, ArrowLeft, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import eaarthLogo from "../../../assets/eaarth.png";
+import eaarthLogo from "../../../assets/eaarth.webp";
 import { Input } from "../../../shared/components/ui/input";
 import { useResetPassword } from '../hooks/useResetPassword';
 
@@ -14,7 +14,7 @@ export const ResetPasswordPage = () => {
   useEffect(() => {
     const stateEmail = location.state?.email;
     const storedEmail = localStorage.getItem('resetPasswordEmail');
-    
+
     if (stateEmail) {
       setEmail(stateEmail);
       localStorage.setItem('resetPasswordEmail', stateEmail);
@@ -47,13 +47,13 @@ export const ResetPasswordPage = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email) {
       alert('Email not found. Please request a new OTP.');
       navigate('/auth/forgot-password');
       return;
     }
-    
+
     await handleSubmit(email);
   };
 
@@ -121,7 +121,7 @@ export const ResetPasswordPage = () => {
           )}
 
           <form onSubmit={onSubmit} className="space-y-4">
- 
+
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
                 OTP Code

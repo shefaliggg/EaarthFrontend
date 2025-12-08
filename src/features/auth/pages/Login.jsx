@@ -1,7 +1,7 @@
 import React from "react";
 import { Eye, EyeOff, Loader, Shield, Zap, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import eaarthLogo from "../../../assets/eaarth.png";
+import eaarthLogo from "../../../assets/eaarth.webp";
 import { useLogin } from "../hooks/useLogin";
 import WebLoginQR from "../components/WebLoginQR";
 import { Input } from "../../../shared/components/ui/input";

@@ -1,7 +1,7 @@
 import { Eye, EyeOff, ArrowLeft, Info, Loader, CheckCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useSetPassword from '../hooks/useSetPassword';
-import eaarthLogo from '../../../assets/eaarth.png';
+import eaarthLogo from '../../../assets/eaarth.webp';
 import { Input } from "../../../shared/components/ui/input";
 
 export const SetPasswordPage = () => {

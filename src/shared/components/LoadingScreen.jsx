@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import Mainlogo from '@/assets/eaarth.png';
+import Mainlogo from '@/assets/eaarth.webp';
 
 function LoadingScreen() {
   useEffect(() => {

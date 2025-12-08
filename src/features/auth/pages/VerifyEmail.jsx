@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, Loader, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useVerifyEmail } from '../hooks/useVerifyEmail';
-import eaarthLogo from '../../../assets/eaarth.png';
+import eaarthLogo from '../../../assets/eaarth.webp';
 
 export const VerifyEmailPage = ({ onSuccess }) => {
   const { status, message, inviteData } = useVerifyEmail(onSuccess);
@@ -13,7 +13,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
         <div className="w-full max-w-xl mx-auto">
-          
+
           {/* Logo + Title */}
           <div className="text-center mb-4">
             <img
@@ -28,7 +28,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
 
           {/* Main Card */}
           <div className="w-full bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl py-6 px-8 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
-            
+
             {/* Header */}
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="p-2 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/30 rounded-lg">
@@ -46,7 +46,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
 
             {/* Loading Animation */}
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-6 text-center">
-              
+
               <div className="relative w-16 h-16 mx-auto mb-4">
                 <Mail className="w-16 h-16 text-purple-600 dark:text-purple-400 animate-pulse" />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -57,7 +57,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
               <p className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
                 Verifying Your Invitation...
               </p>
-              
+
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 Please wait while we process your invitation
               </p>
@@ -80,7 +80,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
       <div className="w-full max-w-xl mx-auto">
-        
+
         {/* Logo + Title */}
         <div className="text-center mb-4">
           <img
@@ -115,7 +115,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
           {status === 'success' && (
             <div className="space-y-4">
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-xl p-6 text-center">
-                
+
                 <CheckCircle className="w-16 h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
 
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -158,7 +158,7 @@ export const VerifyEmailPage = ({ onSuccess }) => {
           {status === 'error' && (
             <div className="space-y-4">
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-xl p-6 text-center">
-                
+
                 <XCircle className="w-16 h-16 text-red-600 dark:text-red-400 mx-auto mb-4" />
 
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">

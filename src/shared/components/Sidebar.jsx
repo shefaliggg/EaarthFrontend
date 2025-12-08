@@ -14,7 +14,7 @@ import {
   LogOut,
   Loader,
 } from 'lucide-react';
-import eaarthLogo from '@/assets/eaarth.png';
+import eaarthLogo from '@/assets/eaarth.webp';
 import sidebarMenuList from '../config/sidebarMenuList';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { triggerGlobalLogout } from '../../features/auth/config/globalLogoutConfig';
@@ -277,9 +277,9 @@ export default function Sidebar() {
               </div>
 
               <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} onClick={handleLogout} className={`${isCollapsed ? 'w-10 h-10' : 'w-auto py-4'} flex items-center justify-center gap-2 p-3 rounded-xl transition-all bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 border dark:border-0`}>
-                {loading 
-                ? <Loader className="w-5 h-5 animate-spin" />
-                : <LogOut className="w-5 h-5" />
+                {loading
+                  ? <Loader className="w-5 h-5 animate-spin" />
+                  : <LogOut className="w-5 h-5" />
                 }
               </motion.button>
             </div>

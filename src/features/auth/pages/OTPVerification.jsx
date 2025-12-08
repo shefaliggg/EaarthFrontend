@@ -3,7 +3,7 @@ import { ArrowLeft, Info, Loader } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useOTPVerification } from '../hooks/useOTPVerification';
 import { useAuth } from '../context/AuthContext';
-import eaarthLogo from "../../../assets/eaarth.png";
+import eaarthLogo from "../../../assets/eaarth.webp";
 import { Input } from "../../../shared/components/ui/input";
 
 export const OTPVerificationPage = () => {
@@ -64,7 +64,7 @@ export const OTPVerificationPage = () => {
       </button>
 
       <div className="w-full max-w-md mx-auto">
-  
+
         <div className="text-center mb-4">
           <img src={eaarthLogo} alt="Eaarth Studios" className="w-36 h-auto mx-auto " />
           <p className="text-xs text-muted-foreground font-semibold tracking-wide">OTP VERIFICATION</p>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, CreditCard, ArrowRight, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import eaarthLogo from "../../../../assets/eaarth.png";
+import eaarthLogo from "../../../../assets/eaarth.webp";
 
 export default function UploadIDPhoto() {
   const navigate = useNavigate();
@@ -64,10 +64,10 @@ export default function UploadIDPhoto() {
 
     // Navigate to live photo page with all necessary data
     navigate('/auth/live-photo', {
-      state: { 
-        email, 
-        userId, 
-        idFile 
+      state: {
+        email,
+        userId,
+        idFile
       },
     });
   };
