@@ -11,6 +11,7 @@ import {
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "./ui/button";
 
 
 function DarkmodeButton() {
@@ -59,18 +60,23 @@ function DarkmodeButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className={`relative p-2 rounded-lg transition-all dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700`}>
+                <Button
+                    variant={"ghost"}
+                    className="relative transition-all gap-0"
+                >
                     {currentTheme === "dark" || (currentTheme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
                         ? <Sun className="h-5 w-5" />
                         : <Moon className="h-5 w-5" />
                     }
-                </button>
+                </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-45 space-y-1 absolute -right-5 top-1">
+            <DropdownMenuContent  align="end" className="w-45">
+                <DropdownMenuLabel>Platform Theme</DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup value={currentTheme} onValueChange={(value) => handleDarkMode(value)}>
-                    <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="system">System Based</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark">Dark Mode</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="light">Light Mode</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>

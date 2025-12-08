@@ -20,7 +20,7 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
         "data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 " +
         "data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) " +
         "min-w-[10rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden " +
-        "overflow-y-auto rounded-xl border shadow-md p-1",
+        "overflow-y-auto rounded-md border shadow-md px-1.5 py-2",
         className
       )}
       {...props}
@@ -38,7 +38,7 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, variant = "defaul
       "focus:bg-primary dark:focus:bg-secondary focus:text-white data-[variant=destructive]:text-destructive " +
       "data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 " +
       "data-[variant=destructive]:focus:text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground " +
-      "relative flex cursor-pointer items-center gap-2 rounded-xl px-3 py-1.5 text-sm outline-hidden select-none " +
+      "relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm outline-hidden select-none " +
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none " +
       "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -49,7 +49,7 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, variant = "defaul
 const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
   <DropdownMenuPrimitive.CheckboxItem ref={ref} checked={checked} className={cn(
     "focus:bg-primary dark:focus:bg-secondary focus:text-white relative flex cursor-pointer items-center gap-2 " +
-    "rounded-xl py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none " +
+    "rounded-md py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none " +
     "data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     className
   )} {...props}>
@@ -64,7 +64,7 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
 const DropdownMenuRadioGroup = ({ ...props }) => <DropdownMenuPrimitive.RadioGroup {...props} />
 const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
   <DropdownMenuPrimitive.RadioItem ref={ref} className={cn(
-    "focus:bg-primary dark:focus:bg-secondary focus:text-white relative flex cursor-pointer items-center gap-2 rounded-xl " +
+    "focus:bg-primary dark:focus:bg-secondary focus:text-white relative flex cursor-pointer items-center gap-2 rounded-md " +
     "py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none " +
     "data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     className
@@ -78,7 +78,7 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
   </DropdownMenuPrimitive.RadioItem>
 ))
 const DropdownMenuLabel = ({ className, inset, ...props }) => (
-  <DropdownMenuPrimitive.Label data-inset={inset} className={cn("px-2 py-1.5 text-sm font-medium data-[inset]:pl-8", className)} {...props} />
+  <DropdownMenuPrimitive.Label data-inset={inset} className={cn("px-3 py-1.5 text-sm font-medium data-[inset]:pl-8", className)} {...props} />
 )
 const DropdownMenuSeparator = ({ className, ...props }) => (
   <DropdownMenuPrimitive.Separator className={cn("bg-border -mx-1 my-1 h-px", className)} {...props} />
@@ -90,7 +90,7 @@ const DropdownMenuSub = ({ ...props }) => <DropdownMenuPrimitive.Sub {...props} 
 const DropdownMenuSubTrigger = React.forwardRef(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger ref={ref} data-inset={inset} className={cn(
     "focus:bg-primary dark:focus:bg-secondary focus:text-white data-[state=open]:bg-primary data-[state=open]:text-background " +
-    "flex cursor-pointer items-center rounded-xl px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
+    "flex cursor-pointer items-center rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
     className
   )} {...props}>
     {children}
@@ -129,14 +129,3 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 }
-
-
-
-
-
-
-
-
-
-
-
