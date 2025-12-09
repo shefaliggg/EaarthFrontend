@@ -26,7 +26,7 @@ export const LoginPage = () => {
       navigate("/auth/otp-verification", {
         state: {
           email: data.email,
-          password: password,
+          password: data.password,
           rememberMe: data.rememberMe,
           otpSend: data.otpSend,
           otp: data.otp,

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Info, Loader } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useOTPVerification } from '../hooks/useOTPVerification';
@@ -14,7 +14,7 @@ export const OTPVerificationPage = () => {
   const email = location.state?.email;
   const password = location.state?.password;
   const rememberMe = location.state?.rememberMe || false;
-  const devOtp = location.state?.otp;
+  const [devOtp, setDevOtp] = useState(location.state?.otp || null);
 
   useEffect(() => {
     if (!email) navigate('/auth/login', { replace: true });
@@ -46,7 +46,11 @@ export const OTPVerificationPage = () => {
 
   const handleResendClick = async (e) => {
     e.preventDefault();
-    if (password) await handleResend(email, password, rememberMe);
+    if (password) {
+      setDevOtp("Requesting Otp");
+      const resentResponse = await handleResend(email, password, rememberMe);
+      setDevOtp(resentResponse?.data?.otp || null);
+    }
   };
 
   const handleBackClick = () => navigate('/auth/login');
