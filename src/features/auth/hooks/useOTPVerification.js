@@ -75,7 +75,7 @@ export const useOTPVerification = (onSuccess, onError) => {
     setOtp(['', '', '', '', '', '']);
     
     try {
-      await authService.login({ email, password, rememberMe });
+      return await authService.login({ email, password, rememberMe });
     } catch (err) {
       setError('Failed to resend OTP');
       setCanResend(true);
