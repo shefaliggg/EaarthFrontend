@@ -35,7 +35,7 @@ export default function UrlBreadcrumbs() {
         }),
     ];
     const filtered = crumbs.filter(c => {
-        if (pathname === '/home' && c.label === 'Home') return false;
+        if (pathname === '/home' && c.label === 'Home' && !c.isLast) return false;
         return c.label && c.label !== '';
     });
 

@@ -17,7 +17,7 @@ export function useProjectMenus(allProjects = []) {
       ? prettifySegment(projectName)
       : isAllProjectRoute
       ? "All Projects"
-      : "Select A Project",
+      : "Projects",
     triggerIcon: Icon.Film,
     dropdownLabel: "Active Projects",
     align: "start",
