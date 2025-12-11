@@ -12,7 +12,7 @@ export default function StudioDashboard() {
         <PageHeader
           title={
             <>
-              Welcome back, <span className="text-primary">Shanid</span>
+              Welcome back, <span className="text-primary">Arun</span>
             </>
           }
           icon={"Building2"}
