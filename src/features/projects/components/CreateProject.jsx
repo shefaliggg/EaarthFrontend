@@ -34,7 +34,7 @@ export function CreateProject() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="px-4">
       <PageHeader 
         icon="Film"
         title="CREATE NEW PROJECT"

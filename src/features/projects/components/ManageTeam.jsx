@@ -88,7 +88,7 @@ export function ManageTeam() {
   );
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="px-4">
       <div className="flex items-center justify-between mb-6">
         <PageHeader 
           icon="Users"

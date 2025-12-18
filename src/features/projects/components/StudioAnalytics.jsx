@@ -57,7 +57,7 @@ export default function StudioAnalytics({ onNavigate }) {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="px-4">
       <PageHeader
         icon="Target"
         title="STUDIO ANALYTICS"
