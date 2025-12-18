@@ -34,6 +34,7 @@ export function useProjectMenus(allProjects = []) {
         icon: Icon.Film,
         navigateWithName: true,
         projectCode: `${p.name}tempcode`,
+        // This will navigate to /projects/:projectName which shows ProjectDetails
         route: `/projects/${convertTitleToUrl(p.name)}`,
       })),
     ],

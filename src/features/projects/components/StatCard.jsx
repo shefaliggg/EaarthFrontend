@@ -16,7 +16,7 @@ export function StatCard({
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="">
         <div className="flex justify-between items-start">
           <div>
             <p className="text-xs text-muted-foreground uppercase font-bold">{title}</p>

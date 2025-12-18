@@ -40,8 +40,10 @@ const ProjectRoutes = {
         { path: 'details/:projectId', element: <ProjectDetails /> },
         {
             path: ":projectName",
-            // element: <ProjectDetail />,
             children: [
+                // Project Details Dashboard - shows when you click on a project
+                { index: true, element: <ProjectDetails /> },
+        
                 // { path: 'activities', element: <ProjectActivities /> },
                 // { path: 'calendar', element: <ProjectCalendar /> },
                 // { path: 'call-sheets', element: <ProjectCallSheets /> },

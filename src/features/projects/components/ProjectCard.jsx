@@ -1,9 +1,9 @@
 import React from 'react';
 import * as Icons from 'lucide-react';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Progress } from '@/shared/components/ui/progress';
+import { Card, CardContent } from '../../../shared/components/ui/card';
+import { Badge } from '../../../shared/components/ui/badge';
+import { Button } from '../../../shared/components/ui/button';
+import { Progress } from '../../../shared/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 export function ProjectCard({
@@ -11,10 +11,6 @@ export function ProjectCard({
   name,
   status,
   phase,
-  lightColor,
-  darkColor,
-  bgLight,
-  bgDark,
   stats,
   onOpen
 }) {
@@ -35,42 +31,70 @@ export function ProjectCard({
     }
   };
 
-  const getPhaseColor = (phase) => {
+  const getPhaseStyles = (phase) => {
     switch (phase) {
       case 'Development':
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+        return {
+          badge: 'bg-muted text-muted-foreground',
+          accent: 'text-muted-foreground',
+          bg: 'bg-muted/50'
+        };
       case 'Pre-Production':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+        return {
+          badge: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+          accent: 'text-sky-600 dark:text-sky-400',
+          bg: 'bg-sky-50 dark:bg-sky-900/20'
+        };
       case 'Principal Photography':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+        return {
+          badge: 'bg-mint-100 text-mint-700 dark:bg-mint-900/30 dark:text-mint-400',
+          accent: 'text-mint-600 dark:text-mint-400',
+          bg: 'bg-mint-50 dark:bg-mint-900/20'
+        };
       case 'Post-Production':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+        return {
+          badge: 'bg-lavender-100 text-lavender-700 dark:bg-lavender-900/30 dark:text-lavender-400',
+          accent: 'text-lavender-600 dark:text-lavender-400',
+          bg: 'bg-lavender-50 dark:bg-lavender-900/20'
+        };
+      case 'Distribution':
+        return {
+          badge: 'bg-peach-100 text-peach-700 dark:bg-peach-900/30 dark:text-peach-400',
+          accent: 'text-peach-600 dark:text-peach-400',
+          bg: 'bg-peach-50 dark:bg-peach-900/20'
+        };
       default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+        return {
+          badge: 'bg-muted text-muted-foreground',
+          accent: 'text-muted-foreground',
+          bg: 'bg-muted/50'
+        };
     }
   };
 
+  const phaseStyles = getPhaseStyles(phase);
+
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:shadow-lg">
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className={cn('text-xl font-bold', darkColor)}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h3 className={cn('text-xl font-bold', phaseStyles.accent)}>
                   {name}
                 </h3>
-                <Badge className={getPhaseColor(phase)}>
+                <Badge className={cn('shrink-0', phaseStyles.badge)}>
                   {phase}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1.5">
                   {getStatusIcon(status)}
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5">
                   <Icons.Activity className="w-4 h-4" />
                   {stats.completion}% Complete
                 </span>
@@ -80,8 +104,9 @@ export function ProjectCard({
               variant="secondary"
               size="sm"
               onClick={() => onOpen(id)}
+              className="shrink-0"
             >
-              <Icons.ArrowRight className="w-4 h-4 mr-1" />
+              <Icons.ArrowRight className="w-4 h-4 mr-1.5" />
               OPEN
             </Button>
           </div>
@@ -90,16 +115,21 @@ export function ProjectCard({
           <div>
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">Overall Progress</span>
-              <span className="font-bold">{stats.completion}%</span>
+              <span className={cn('font-bold', phaseStyles.accent)}>
+                {stats.completion}%
+              </span>
             </div>
-            <Progress value={stats.completion} className="h-2" />
+            <Progress 
+              value={stats.completion} 
+              className="h-2"
+            />
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3">
-            <div className={cn('p-3 rounded-lg', bgDark)}>
+            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
               <div className="text-xs text-muted-foreground mb-1">Budget</div>
-              <div className={cn('font-bold', darkColor)}>
+              <div className={cn('font-bold text-base', phaseStyles.accent)}>
                 {formatCurrency(stats.budget)}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -107,17 +137,17 @@ export function ProjectCard({
               </div>
             </div>
 
-            <div className={cn('p-3 rounded-lg', bgDark)}>
+            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
               <div className="text-xs text-muted-foreground mb-1">Schedule</div>
-              <div className={cn('font-bold', darkColor)}>
+              <div className={cn('font-bold text-base', phaseStyles.accent)}>
                 {stats.daysShot}/{stats.totalDays}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Days shot</div>
             </div>
 
-            <div className={cn('p-3 rounded-lg', bgDark)}>
+            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
               <div className="text-xs text-muted-foreground mb-1">Team</div>
-              <div className={cn('font-bold', darkColor)}>
+              <div className={cn('font-bold text-base', phaseStyles.accent)}>
                 {stats.crewSize}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -127,30 +157,30 @@ export function ProjectCard({
           </div>
 
           {/* Status Indicators */}
-          <div className="flex items-center gap-4 pt-3 border-t border-border">
+          <div className="flex items-center gap-4 pt-3 border-t border-border flex-wrap">
             <div className="flex items-center gap-2">
               {stats.onSchedule ? (
                 <>
-                  <Icons.CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-green-600">On Schedule</span>
+                  <Icons.CheckCircle2 className="w-4 h-4 text-mint-600 dark:text-mint-400" />
+                  <span className="text-sm text-mint-600 dark:text-mint-400 font-medium">On Schedule</span>
                 </>
               ) : (
                 <>
-                  <Icons.AlertCircle className="w-4 h-4 text-red-600" />
-                  <span className="text-sm text-red-600">Behind Schedule</span>
+                  <Icons.AlertCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-sm text-destructive font-medium">Behind Schedule</span>
                 </>
               )}
             </div>
             <div className="flex items-center gap-2">
               {stats.onBudget ? (
                 <>
-                  <Icons.CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span className="text-sm text-green-600">On Budget</span>
+                  <Icons.CheckCircle2 className="w-4 h-4 text-mint-600 dark:text-mint-400" />
+                  <span className="text-sm text-mint-600 dark:text-mint-400 font-medium">On Budget</span>
                 </>
               ) : (
                 <>
-                  <Icons.AlertCircle className="w-4 h-4 text-red-600" />
-                  <span className="text-sm text-red-600">Over Budget</span>
+                  <Icons.AlertCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-sm text-destructive font-medium">Over Budget</span>
                 </>
               )}
             </div>

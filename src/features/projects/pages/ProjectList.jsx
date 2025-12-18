@@ -117,7 +117,7 @@ export function ProjectInformationDashboard() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="px-4">
       <div className="flex items-center justify-between mb-6">
         <PageHeader 
           icon="Film"
@@ -183,7 +183,7 @@ export function ProjectInformationDashboard() {
 
       {/* Quick Links */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="">
           <h3 className="font-bold mb-4">Quick Actions</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <QuickActionButton
