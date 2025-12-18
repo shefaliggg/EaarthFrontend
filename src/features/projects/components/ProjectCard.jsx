@@ -1,169 +1,162 @@
-import { Award, Calendar, CheckCircle, Clock, Pause, Play, Star, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
-import React from 'react'
-import { Badge } from '../../../shared/components/ui/badge';
-import { useNavigateWithName } from '../../../shared/hooks/useNavigateWithName';
+import React from 'react';
+import * as Icons from 'lucide-react';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Progress } from '@/shared/components/ui/progress';
+import { cn } from '@/lib/utils';
 
-function ProjectCard({ project, index }) {
-    const navigateWithName = useNavigateWithName();
-    const getPeriodIcon = (period) => {
-        switch (period) {
-            case 'prep': return Clock;
-            case 'shoot': return Play;
-            case 'wrap': return CheckCircle;
-            default: return Pause;
-        }
-    };
+export function ProjectCard({
+  id,
+  name,
+  status,
+  phase,
+  lightColor,
+  darkColor,
+  bgLight,
+  bgDark,
+  stats,
+  onOpen
+}) {
+  const formatCurrency = (amount) => {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  };
 
-    const getPeriodColor = (period) => {
-        switch (period) {
-            case 'prep': return 'bg-sky-100 text-blue-800 border-sky-300 dark:bg-sky-700/70 dark:text-sky-100 dark:border-sky-700';
-            case 'shoot': return 'bg-mint-100 text-green-800 border-mint-300 dark:bg-mint-700/70 dark:text-mint-100 dark:border-mint-700';
-            case 'wrap': return 'bg-peach-100 text-orange-800 border-peach-300 dark:bg-peach-700/70 dark:text-peach-100 dark:border-peach-700';
-            default: return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700';
-        }
-    };
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active':
+        return <Icons.Play className="w-4 h-4" />;
+      case 'paused':
+        return <Icons.Pause className="w-4 h-4" />;
+      case 'completed':
+        return <Icons.Archive className="w-4 h-4" />;
+      default:
+        return <Icons.Film className="w-4 h-4" />;
+    }
+  };
 
-    const PeriodIcon = getPeriodIcon(project.period);
+  const getPhaseColor = (phase) => {
+    switch (phase) {
+      case 'Development':
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      case 'Pre-Production':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'Principal Photography':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'Post-Production':
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+      default:
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
 
-
-    return (
-        <motion.div
-            key={project.id}
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1, duration: 0.15 }}
-            whileHover={{ scale: 1.01, y: -2 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => {
-                navigateWithName({
-                    title: project.title,
-                    uniqueCode: project.projectCode,
-                    basePath: "projects",
-                    storageKey: "currentProjectUniqueKey"
-                })
-            }}
-            className="cursor-pointer rounded-2xl bg-background hover:bg-[#faf5ff] dark:hover:bg-slate-950 border hover:transition-all overflow-hidden"
-        >
-            {/* Project Content */}
-            <div className="p-6 space-y-4">
-                {/* Header with emoji, title and period badge */}
-                <div className="flex items-start justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
-                    <div className="flex items-start gap-3 flex-1">
-                        <div className="text-4xl">{project.image}</div>
-                        <div className="flex-1">
-                            <h3 className="font-medium text-lg mb-1 text-gray-900 dark:text-white">
-                                {project.title}
-                            </h3>
-                            <p className="text-xs font-medium text-gray-700 dark:text-gray-400">
-                                {project.type}
-                            </p>
-                        </div>
-                    </div>
-                    {/* Period Badge - Top Right */}
-                    <Badge className={`px-3 py-1.5 rounded-xl border shadow-md ${getPeriodColor(project.period)} flex items-center gap-1.5`}>
-                        <PeriodIcon className="w-4 h-4" />
-                        <span className="text-xs font-medium uppercase">{project.period}</span>
-                    </Badge>
-                </div>
-
-
-                {/* Role */}
-                <div className="px-4 py-2 rounded-xl border shadow-md bg-card">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-400">
-                        Your Role
-                    </p>
-                    <p className="font-medium text-[#9333ea] dark:text-lavender-400">
-                        {project.role}
-                    </p>
-                </div>
-
-
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-400">
-                            PROGRESS
-                        </span>
-                        <span className="text-xs font-medium text-gray-900 dark:text-white">
-                            {project.progress}%
-                        </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${project.progress}%` }}
-                            transition={{ delay: index * 0.1 + 0.3, duration: 0.8 }}
-                            className={`h-full rounded-full ${project.category === 'film' ? 'bg-[#9333ea]' :
-                                project.category === 'tv' ? 'bg-[#9333ea]' :
-                                    project.category === 'commercial' ? 'bg-[#a855f7]' :
-                                        'bg-[#c084fc]'
-                                }`}
-                        />
-                    </div>
-                </div>
-
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Users className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
-                        <p className="text-xs font-medium text-gray-900 dark:text-white">
-                            {project.teamSize}
-                        </p>
-                    </div>
-                    <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Calendar className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
-                        <p className="text-xs font-medium text-gray-900 dark:text-white">
-                            {project.startDate.split('/')[1]}/{project.startDate.split('/')[2]}
-                        </p>
-                    </div>
-                    <div className="px-3 py-2 rounded-xl bg-card text-center">
-                        <Award className="w-4 h-4 mx-auto mb-1 text-[#9333ea] dark:text-gray-400" />
-                        <p className="text-xs font-medium text-gray-900 dark:text-white">
-                            {project.budget}
-                        </p>
-                    </div>
-                </div>
-
-
-                {/* Studios and Rating */}
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-2">
-                        {project.studios.map((studio, i) => (
-                            <Badge
-                                variant={"secondary"}
-                                key={i}
-                            >
-                                {studio}
-                            </Badge>
-                        ))}
-                    </div>
-
-                    {/* Rating Badge - Inline with Studios */}
-                    {project.rating && (
-                        <div className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center gap-1.5">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-800 dark:text-white">
-                                {project.rating}
-                            </span>
-                        </div>
-                    )}
-                </div>
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className={cn('text-xl font-bold', darkColor)}>
+                  {name}
+                </h3>
+                <Badge className={getPhaseColor(phase)}>
+                  {phase}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  {getStatusIcon(status)}
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Icons.Activity className="w-4 h-4" />
+                  {stats.completion}% Complete
+                </span>
+              </div>
             </div>
-        </motion.div>
-    )
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onOpen(id)}
+            >
+              <Icons.ArrowRight className="w-4 h-4 mr-1" />
+              OPEN
+            </Button>
+          </div>
+
+          {/* Progress */}
+          <div>
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-muted-foreground">Overall Progress</span>
+              <span className="font-bold">{stats.completion}%</span>
+            </div>
+            <Progress value={stats.completion} className="h-2" />
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className={cn('p-3 rounded-lg', bgDark)}>
+              <div className="text-xs text-muted-foreground mb-1">Budget</div>
+              <div className={cn('font-bold', darkColor)}>
+                {formatCurrency(stats.budget)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatCurrency(stats.spent)} spent
+              </div>
+            </div>
+
+            <div className={cn('p-3 rounded-lg', bgDark)}>
+              <div className="text-xs text-muted-foreground mb-1">Schedule</div>
+              <div className={cn('font-bold', darkColor)}>
+                {stats.daysShot}/{stats.totalDays}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">Days shot</div>
+            </div>
+
+            <div className={cn('p-3 rounded-lg', bgDark)}>
+              <div className="text-xs text-muted-foreground mb-1">Team</div>
+              <div className={cn('font-bold', darkColor)}>
+                {stats.crewSize}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {stats.department} depts
+              </div>
+            </div>
+          </div>
+
+          {/* Status Indicators */}
+          <div className="flex items-center gap-4 pt-3 border-t border-border">
+            <div className="flex items-center gap-2">
+              {stats.onSchedule ? (
+                <>
+                  <Icons.CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-600">On Schedule</span>
+                </>
+              ) : (
+                <>
+                  <Icons.AlertCircle className="w-4 h-4 text-red-600" />
+                  <span className="text-sm text-red-600">Behind Schedule</span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {stats.onBudget ? (
+                <>
+                  <Icons.CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-green-600">On Budget</span>
+                </>
+              ) : (
+                <>
+                  <Icons.AlertCircle className="w-4 h-4 text-red-600" />
+                  <span className="text-sm text-red-600">Over Budget</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
-
-export default ProjectCard
-
-
-
-
-
-
-
-
-
-
-

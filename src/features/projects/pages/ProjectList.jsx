@@ -1,252 +1,214 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Film, Calendar, Star, Users, Clock, Sparkles,
-  Play, Pause, CheckCircle, Archive, Award, TrendingUp,
-  Search, SlidersHorizontal
-} from 'lucide-react';
-import { useState } from 'react';
-import UrlBreadcrumbs from '../../../shared/components/UrlBasedBreadcrumb';
-import { Button } from '../../../shared/components/ui/button';
-import ProjectCard from '../components/ProjectCard';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import * as Icons from 'lucide-react';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { PageHeader } from '@/shared/components/PageHeader';
+import { StatCard } from '../components/StatCard';
+import { ProjectCard } from '../components/ProjectCard';
+import { QuickActionButton } from '../components/QuickActionButton';
 
+// Mock project data with live statistics
+const LIVE_PROJECTS = [
+  {
+    id: 'avatar1',
+    name: 'AVATAR 1',
+    status: 'active',
+    phase: 'Principal Photography',
+    color: 'blue',
+    lightColor: 'text-blue-600',
+    darkColor: 'text-blue-400',
+    bgLight: 'bg-blue-50',
+    bgDark: 'bg-blue-950',
+    stats: {
+      budget: 150000000,
+      spent: 89500000,
+      daysShot: 87,
+      totalDays: 120,
+      crewSize: 342,
+      department: 24,
+      completion: 72.5,
+      onSchedule: true,
+      onBudget: true,
+    }
+  },
+  {
+    id: 'avatar3',
+    name: 'AVATAR 3',
+    status: 'active',
+    phase: 'Pre-Production',
+    color: 'cyan',
+    lightColor: 'text-cyan-600',
+    darkColor: 'text-cyan-400',
+    bgLight: 'bg-cyan-50',
+    bgDark: 'bg-cyan-950',
+    stats: {
+      budget: 175000000,
+      spent: 12400000,
+      daysShot: 0,
+      totalDays: 145,
+      crewSize: 89,
+      department: 12,
+      completion: 23.5,
+      onSchedule: true,
+      onBudget: true,
+    }
+  },
+  {
+    id: 'avatar4',
+    name: 'AVATAR 4',
+    status: 'active',
+    phase: 'Development',
+    color: 'emerald',
+    lightColor: 'text-emerald-600',
+    darkColor: 'text-emerald-400',
+    bgLight: 'bg-emerald-50',
+    bgDark: 'bg-emerald-950',
+    stats: {
+      budget: 180000000,
+      spent: 5800000,
+      daysShot: 0,
+      totalDays: 150,
+      crewSize: 34,
+      department: 8,
+      completion: 8.2,
+      onSchedule: true,
+      onBudget: true,
+    }
+  },
+  {
+    id: 'scifi-thriller',
+    name: 'Untitled Sci-Fi Thriller',
+    status: 'active',
+    phase: 'Post-Production',
+    color: 'purple',
+    lightColor: 'text-purple-600',
+    darkColor: 'text-purple-400',
+    bgLight: 'bg-purple-50',
+    bgDark: 'bg-purple-950',
+    stats: {
+      budget: 85000000,
+      spent: 84200000,
+      daysShot: 68,
+      totalDays: 68,
+      crewSize: 156,
+      department: 18,
+      completion: 94.3,
+      onSchedule: false,
+      onBudget: false,
+    }
+  },
+];
 
-export function ProjectList() {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
+export function ProjectInformationDashboard() {
+  const navigate = useNavigate();
 
-  const projects = [
-    {
-      id: 'project-avatar1',
-      title: 'AVATAR 1',
-      type: 'Feature Film',
-      category: 'film',
-      period: 'shoot',
-      progress: 60,
-      role: 'LEAD ANIMATION ARTIST',
-      studios: ['Disney Studios', 'Amazon Prime'],
-      startDate: '15/01/2024',
-      endDate: '30/12/2024',
-      rating: 4.5,
-      teamSize: 125,
-      budget: '£2.5M',
-      image: '🎬',
-    },
-    {
-      id: 'project-avatar2',
-      title: 'AVATAR 2',
-      type: 'Feature Film',
-      category: 'film',
-      period: 'prep',
-      progress: 45,
-      role: 'CHARACTER DESIGNER',
-      studios: ['Disney Studios', 'Amazon Prime'],
-      startDate: '01/03/2024',
-      endDate: '15/01/2025',
-      rating: 4.2,
-      teamSize: 98,
-      budget: '£3.2M',
-      image: '🎥',
-    },
-    {
-      id: 'project-mumbai',
-      title: 'MUMBAI CHRONICLES',
-      type: 'Television Series',
-      category: 'tv',
-      period: 'wrap',
-      progress: 85,
-      role: 'ANIMATION ARTIST',
-      studios: ['Netflix', 'Hotstar'],
-      startDate: '10/06/2023',
-      endDate: '20/10/2024',
-      rating: 4.9,
-      teamSize: 67,
-      budget: '£1.8M',
-      image: '🎭',
-    },
-    {
-      id: 'project-brand',
-      title: 'COCA-COLA SUMMER CAMPAIGN',
-      type: 'Commercial',
-      category: 'commercial',
-      period: 'shoot',
-      progress: 70,
-      role: 'VFX SUPERVISOR',
-      studios: ['WPP Studios'],
-      startDate: '05/04/2024',
-      endDate: '30/06/2024',
-      rating: 4.6,
-      teamSize: 32,
-      budget: '£850K',
-      image: '🎨',
-    },
-    {
-      id: 'project-doc',
-      title: 'CLIMATE CRISIS: THE TRUTH',
-      type: 'Documentary',
-      category: 'documentary',
-      period: 'prep',
-      progress: 25,
-      role: 'MOTION GRAPHICS LEAD',
-      studios: ['BBC Studios'],
-      startDate: '01/11/2024',
-      endDate: '15/03/2025',
-      rating: 4.3,
-      teamSize: 18,
-      budget: '£620K',
-      image: '🌍',
-    },
-  ];
+  const formatCurrency = (amount) => {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  };
 
-  const archivedProjects = [
-    {
-      id: 'project-tech-doc',
-      title: 'TECH STARTUP DOC',
-      type: 'Documentary',
-      category: 'documentary',
-      period: 'wrap',
-      progress: 100,
-      role: 'MOTION GRAPHICS',
-      studios: ['Sony Pictures'],
-      startDate: '05/02/2024',
-      endDate: '15/09/2024',
-      rating: 4.7,
-      teamSize: 15,
-      budget: '£480K',
-      image: '💼',
-    },
-  ];
+  const totalBudget = LIVE_PROJECTS.reduce((sum, p) => sum + p.stats.budget, 0);
+  const totalCrew = LIVE_PROJECTS.reduce((sum, p) => sum + p.stats.crewSize, 0);
+  const totalSpent = LIVE_PROJECTS.reduce((sum, p) => sum + p.stats.spent, 0);
+  const activeProjects = LIVE_PROJECTS.filter(p => p.status === 'active').length;
 
-  const tabs = [
-    { id: 'all', label: 'ALL PROJECTS', icon: Film, color: 'lavender' },
-    { id: 'film', label: 'FILMS', icon: Film, color: 'pastel-pink' },
-    { id: 'tv', label: 'TELEVISION', icon: Play, color: 'mint' },
-    { id: 'commercial', label: 'COMMERCIALS', icon: Award, color: 'peach' },
-    { id: 'documentary', label: 'DOCUMENTARIES', icon: TrendingUp, color: 'sky' },
-  ];
-
-  const displayedProjects = showArchived ? archivedProjects : projects;
-  const filteredProjects = displayedProjects.filter(project => {
-    const matchesTab = activeTab === 'all' || project.category === activeTab;
-    const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.role.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const handleProjectOpen = (projectId) => {
+    navigate(`/projects/details/${projectId}`);
+  };
 
   return (
-    <div className="p-3 py-0 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">
-            <Film className="w-5 h-5 text-[#7c3aed] dark:text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              MY PROJECTS
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            variant={"outline"}
-            size={"lg"}
-            onClick={() => setShowArchived(!showArchived)}
-            className={`${showArchived
-              ? 'bg-[#9333ea] text-white dark:hover:text-black'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-[#e9d5ff] dark:hover:text-black dark:hover:bg-[#9333ea] border hover:border-[#e9d5ff]'
-              }`}
-          >
-            <Archive className="w-5 h-5" />
-            {showArchived ? 'SHOW ACTIVE' : 'SHOW ARCHIVED'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="-mt-3 ml-[52px]">
-        <UrlBreadcrumbs />
-      </div>
-
-
-      {/* Search Bar */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl border shadow-md">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
-        <input
-          type="text"
-          placeholder="SEARCH PROJECTS, ROLES, STUDIOS..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-2.5 rounded-2xl border shadow-md-0 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-semibold focus:outline-none"
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="flex items-center justify-between mb-6">
+        <PageHeader 
+          icon="Film"
+          title="PROJECTS"
+          subtitle="Studio Project Dashboard"
         />
-        <SlidersHorizontal className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400 cursor-pointer hover:text-[#faf5ff]0 transition-colors" />
+        
+        <Button onClick={() => navigate('/projects/create')}>
+          <Icons.Plus className="w-4 h-4 mr-2" />
+          CREATE NEW PROJECT
+        </Button>
       </div>
 
+      {/* Studio Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Active Projects"
+          value={activeProjects}
+          subtitle="Production pipeline"
+          icon="Film"
+          iconColor="text-blue-600"
+        />
 
-      {/* Tab Navigation */}
-      <motion.div
-        layout
-        transition={{ duration: 0.75, ease: "easeInOut" }}
-        className="flex gap-3 pb-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+        <StatCard
+          title="Total Budget"
+          value={formatCurrency(totalBudget)}
+          subtitle="Across all projects"
+          icon="DollarSign"
+          iconColor="text-green-600"
+          subtitleColor="text-green-600"
+          subtitleIcon="TrendingUp"
+        />
 
-          return (
-            <Button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-xl font-medium flex items-center gap-3 whitespace-nowrap transition-all ${isActive
-                ? `bg-[#9333ea] text-white`
-                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-[#c084fc] dark:border-transparent'
-                }`}
-            >
-              <Icon className="w-5 h-5" />
-              {tab.label}
-              {isActive && (
-                <span
-                  className="px-2 py-0.5 rounded-full text-xs bg-background/60 backdrop-blur-2xl text-foreground"
-                >
-                  {filteredProjects.length}
-                </span>
-              )}
-            </Button>
-          );
-        })}
-      </motion.div>
+        <StatCard
+          title="Total Crew"
+          value={totalCrew}
+          subtitle="Across all projects"
+          icon="Users"
+          iconColor="text-purple-600"
+        />
 
+        <StatCard
+          title="Total Spent"
+          value={formatCurrency(totalSpent)}
+          subtitle="On budget"
+          icon="BarChart3"
+          iconColor="text-orange-600"
+          subtitleColor="text-green-600"
+          subtitleIcon="CheckCircle2"
+        />
+      </div>
 
-      {/* Projects Grid */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab + searchQuery}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -15 }}
-          transition={{ duration: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {filteredProjects.length === 0 ? (
-            <div className="col-span-full text-center py-16 text-gray-500 dark:text-gray-400">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="font-medium text-lg">NO PROJECTS FOUND</p>
-              <p className="text-sm mt-2">TRY ADJUSTING YOUR SEARCH OR FILTERS</p>
-            </div>
-          ) : (
-            filteredProjects.map((project, index) => (
-                <ProjectCard key={project.id} project={project} index={index} />
-            ))
-          )}
-        </motion.div>
-      </AnimatePresence>
+      {/* Project Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {LIVE_PROJECTS.map((project) => (
+          <ProjectCard
+            key={project.id}
+            {...project}
+            onOpen={handleProjectOpen}
+          />
+        ))}
+      </div>
+
+      {/* Quick Links */}
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="font-bold mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <QuickActionButton
+              icon="Plus"
+              label="Create Project"
+              onClick={() => navigate('/projects/create')}
+            />
+            <QuickActionButton
+              icon="BarChart3"
+              label="View Reports"
+              onClick={() => navigate('/projects/reports')}
+            />
+            <QuickActionButton
+              icon="Users"
+              label="Manage Team"
+              onClick={() => navigate('/projects/team')}
+            />
+            <QuickActionButton
+              icon="Target"
+              label="Studio Analytics"
+              onClick={() => navigate('/projects/analytics')}
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-
-export default ProjectList
-
-
-
-
-
-
