@@ -1,5 +1,4 @@
 import * as Icon from "lucide-react";
-import React from "react";
 
 export function adminDropdownList(userRole = "studio-admin") {
   const commonListTopItems = [
@@ -51,7 +50,7 @@ export function adminDropdownList(userRole = "studio-admin") {
       {
         id: "studio-settings",
         label: "Studio Settings",
-        icon: Icon.LucideColumnsSettings,
+        icon: Icon.Settings,
         route: "/studio-settings",
       },
       {
@@ -64,6 +63,56 @@ export function adminDropdownList(userRole = "studio-admin") {
     ],
   };
 
+  const crewMenu = {
+    id: "crew-menu",
+    triggerLabel: "Crew",
+    triggerIcon: Icon.Users,
+    dropdownLabel: "Crew Menu",
+    align: "end",
+    items: [
+      {
+        id: "crew-dashboard",
+        label: "Dashboard",
+        icon: Icon.LayoutDashboard,
+        route: "/crew/dashboard",
+      },
+      {
+        id: "crew-schedule",
+        label: "My Schedule",
+        icon: Icon.Calendar,
+        route: "/crew/schedule",
+      },
+      {
+        id: "crew-tasks",
+        label: "My Tasks",
+        icon: Icon.CheckSquare,
+        route: "/crew/tasks",
+      },
+      {
+        id: "crew-notifications",
+        label: "Notifications",
+        icon: Icon.Bell,
+        route: "/crew/notifications",
+      },
+      {
+        id: "crew-profile",
+        label: "Profile",
+        icon: Icon.User,
+        route: "/crew/profile",
+        separatorBefore: true,
+      },
+      {
+        id: "crew-settings",
+        label: "Settings",
+        icon: Icon.Settings,
+        route: "/crew/settings",
+      },
+      ...commonListBottomItems
+    ],
+  };
+
   if (userRole === "studio-admin") return studioAdminMenu;
+  if (userRole === "crew") return crewMenu;
+  
   return null;
 }
