@@ -1,9 +1,13 @@
-import React from 'react';
-import { Clock, Calendar, MapPin, Video, Camera, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Calendar, MapPin, Video, Camera, FileText, CheckCircle } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Badge } from '../../../shared/components/ui/badge';
+import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
 export default function UpcomingSchedule({ isDarkMode }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState('all');
+
   const scheduleItems = [
     {
       id: 1,
@@ -72,6 +76,27 @@ export default function UpcomingSchedule({ isDarkMode }) {
     }
   ];
 
+  const statusOptions = [
+    { value: 'all', label: 'All Status' },
+    { value: 'confirmed', label: 'Confirmed', icon: CheckCircle },
+    { value: 'tentative', label: 'Tentative', icon: Clock }
+  ];
+
+  const projectOptions = [
+    { value: 'all', label: 'All Projects' },
+    { value: 'AVATAR 3', label: 'AVATAR 3' },
+    { value: 'The Crown', label: 'The Crown' }
+  ];
+
+  const filteredSchedule = scheduleItems.filter(item => {
+    // Status filter
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+    
+    // Project filter
+    if (projectFilter !== 'all' && item.project !== projectFilter) return false;
+    
+    return true;
+  });
 
   return (
     <div className="p-4 space-y-4">
@@ -86,9 +111,42 @@ export default function UpcomingSchedule({ isDarkMode }) {
         </h2>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="space-y-3">
+        {/* Status Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Status
+          </p>
+          <FilterPillTabs
+            options={statusOptions}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+
+        {/* Project Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Project
+          </p>
+          <FilterPillTabs
+            options={projectOptions}
+            value={projectFilter}
+            onChange={setProjectFilter}
+          />
+        </div>
+      </div>
+
       {/* Schedule List */}
       <div className="space-y-3">
-        {scheduleItems.map((item) => {
+        {filteredSchedule.map((item) => {
           const Icon = item.icon;
           return (
             <div

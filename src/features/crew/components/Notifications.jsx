@@ -5,9 +5,11 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Badge } from '../../../shared/components/ui/badge';
+import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
 export default function Notifications({ isDarkMode }) {
-  const [filter, setFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
 
   const notifications = [
     {
@@ -142,19 +144,37 @@ export default function Notifications({ isDarkMode }) {
     }
   ];
 
+  const statusOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'unread', label: 'Unread' },
+    { value: 'read', label: 'Read' }
+  ];
+
+  const typeOptions = [
+    { value: 'all', label: 'All Types', icon: Bell },
+    { value: 'call_time', label: 'Call Times', icon: Clock },
+    { value: 'opportunity', label: 'Opportunities', icon: Briefcase },
+    { value: 'payment', label: 'Payments', icon: DollarSign },
+    { value: 'schedule', label: 'Schedule', icon: Calendar },
+    { value: 'task', label: 'Tasks', icon: AlertCircle },
+    { value: 'profile', label: 'Profile', icon: Eye },
+    { value: 'contract', label: 'Contracts', icon: CheckCircle2 },
+    { value: 'crew', label: 'Crew', icon: Users },
+    { value: 'project', label: 'Projects', icon: Film }
+  ];
+
   const filteredNotifications = notifications.filter(notification => {
-    if (filter === 'all') return true;
-    if (filter === 'unread') return notification.unread;
-    if (filter === 'read') return !notification.unread;
+    // Status filter
+    if (statusFilter === 'unread' && !notification.unread) return false;
+    if (statusFilter === 'read' && notification.unread) return false;
+    
+    // Type filter
+    if (typeFilter !== 'all' && notification.type !== typeFilter) return false;
+    
     return true;
   });
 
   const unreadCount = notifications.filter(n => n.unread).length;
-
-  const markAllAsRead = () => {
-    console.log('Marking all as read');
-  };
-
 
   return (
     <div className="p-4 space-y-4">
@@ -175,23 +195,36 @@ export default function Notifications({ isDarkMode }) {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {['all', 'unread', 'read'].map((filterOption) => (
-          <button
-            key={filterOption}
-            onClick={() => setFilter(filterOption)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg font-bold text-xs transition-all",
-              filter === filterOption
-                ? "bg-primary text-white"
-                : isDarkMode
-                  ? "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white"
-                  : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-900"
-            )}
-          >
-            {filterOption.toUpperCase()}
-          </button>
-        ))}
+      <div className="space-y-3">
+        {/* Status Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Status
+          </p>
+          <FilterPillTabs
+            options={statusOptions}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+
+        {/* Type Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Type
+          </p>
+          <FilterPillTabs
+            options={typeOptions}
+            value={typeFilter}
+            onChange={setTypeFilter}
+          />
+        </div>
       </div>
 
       {/* Notifications List */}

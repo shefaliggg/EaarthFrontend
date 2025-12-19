@@ -1,3 +1,4 @@
+// MyProjectsPage.jsx - Updated to use CSS color variables
 import { useState } from 'react';
 import { 
   Search, 
@@ -140,18 +141,17 @@ export function MyProjectsPage({ isDarkMode, onNavigate }) {
   });
 
   return (
-    <div className=" space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <PageHeader 
           title="PROJECTS" 
           icon="LayoutGrid"
-          
         />
         
         <div className="flex gap-3">
           <Button 
-            className="bg-purple-600 hover:bg-purple-700 text-white border-none shadow-md shadow-purple-500/20"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-md"
             onClick={() => handleAIAction('Generating portfolio insights...')}
           >
             <Sparkles className="w-4 h-4 mr-2" />
@@ -159,6 +159,7 @@ export function MyProjectsPage({ isDarkMode, onNavigate }) {
           </Button>
           <Button 
             variant="outline"
+            className="border-border hover:bg-accent hover:text-accent-foreground"
             onClick={() => setShowArchived(!showArchived)}
           >
             <Archive className="w-4 h-4 mr-2" />
@@ -168,7 +169,7 @@ export function MyProjectsPage({ isDarkMode, onNavigate }) {
       </div>
 
       {/* Filters & Search Card */}
-      <Card>
+      <Card className="border-border bg-card">
         <CardContent className="">
           <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
             <ProjectTabs 
@@ -179,17 +180,17 @@ export function MyProjectsPage({ isDarkMode, onNavigate }) {
 
             <div className="flex items-center gap-4 w-full lg:w-auto">
               <div className="relative w-full lg:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
                   placeholder="Search projects..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <Button 
                 size="icon"
-                className="h-10 w-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20"
+                className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
               >
                 <Filter className="w-4 h-4" />
               </Button>
@@ -205,7 +206,7 @@ export function MyProjectsPage({ isDarkMode, onNavigate }) {
             <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold mb-2">No projects found</h3>
+            <h3 className="text-lg font-bold mb-2 text-foreground">No projects found</h3>
             <p className="text-muted-foreground mb-6">Try adjusting your filters.</p>
           </div>
         ) : (

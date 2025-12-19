@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { CheckCircle2, Clock, AlertCircle, Calendar } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Badge } from '../../../shared/components/ui/badge';
+import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
 export default function RecentTasks({ isDarkMode }) {
-  const [filter, setFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   const tasks = [
     {
@@ -84,9 +86,28 @@ export default function RecentTasks({ isDarkMode }) {
     }
   ];
 
+  const statusOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'pending', label: 'Pending', icon: Clock },
+    { value: 'completed', label: 'Completed', icon: CheckCircle2 },
+    { value: 'overdue', label: 'Overdue', icon: AlertCircle }
+  ];
+
+  const priorityOptions = [
+    { value: 'all', label: 'All Priority' },
+    { value: 'high', label: 'High' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'low', label: 'Low' }
+  ];
+
   const filteredTasks = tasks.filter(task => {
-    if (filter === 'all') return true;
-    return task.status === filter;
+    // Status filter
+    if (statusFilter !== 'all' && task.status !== statusFilter) return false;
+    
+    // Priority filter
+    if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+    
+    return true;
   });
 
   const statusConfig = {
@@ -116,7 +137,6 @@ export default function RecentTasks({ isDarkMode }) {
     low: { color: 'text-gray-600', label: 'LOW', bg: 'bg-gray-500/10', border: 'border-gray-500/30' }
   };
 
-
   return (
     <div className="p-4 space-y-4">
       {/* Compact Header */}
@@ -131,23 +151,36 @@ export default function RecentTasks({ isDarkMode }) {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {['all', 'pending', 'completed'].map((filterOption) => (
-          <button
-            key={filterOption}
-            onClick={() => setFilter(filterOption)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg font-bold text-xs transition-all",
-              filter === filterOption
-                ? "bg-primary text-white"
-                : isDarkMode
-                  ? "bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white"
-                  : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-900"
-            )}
-          >
-            {filterOption.toUpperCase()}
-          </button>
-        ))}
+      <div className="space-y-3">
+        {/* Status Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Status
+          </p>
+          <FilterPillTabs
+            options={statusOptions}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+
+        {/* Priority Filter */}
+        <div>
+          <p className={cn(
+            "text-xs font-bold uppercase tracking-wider mb-2",
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          )}>
+            Priority
+          </p>
+          <FilterPillTabs
+            options={priorityOptions}
+            value={priorityFilter}
+            onChange={setPriorityFilter}
+          />
+        </div>
       </div>
 
       {/* Tasks List */}

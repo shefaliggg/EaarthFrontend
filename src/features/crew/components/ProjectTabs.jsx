@@ -1,3 +1,4 @@
+// ProjectTabs.jsx - Updated to use CSS color variables
 import { LayoutGrid, Film, Play, Award, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +12,7 @@ const tabOptions = [
 
 export function ProjectTabs({ activeTab, onTabChange, isDarkMode }) {
   return (
-    <div className="flex flex-wrap gap-2 ">
+    <div className="flex flex-wrap gap-2">
       {tabOptions.map((option) => {
         const isActive = activeTab === option.value;
         const Icon = option.icon;
@@ -21,15 +22,13 @@ export function ProjectTabs({ activeTab, onTabChange, isDarkMode }) {
             key={option.value}
             onClick={() => onTabChange(option.value)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 outline-none",
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 outline-none",
               isActive 
-                ? "bg-purple-600 text-white shadow-md transform scale-105 shadow-purple-500/20" 
-                : isDarkMode
-                  ? "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-primary text-primary-foreground shadow-md transform scale-105" 
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-4 h-4" strokeWidth={1.75} />
             <span className="uppercase tracking-wide">{option.label}</span>
           </button>
         );

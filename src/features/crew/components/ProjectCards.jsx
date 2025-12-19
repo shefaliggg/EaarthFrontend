@@ -1,3 +1,4 @@
+// ProjectCard.jsx - Updated to use CSS color variables
 import { Star, Users, Calendar, CalendarCheck, Clapperboard, Video, Tv, Palette, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '../../../shared/components/ui/badge';
@@ -14,14 +15,46 @@ const projectIcons = {
 };
 
 const statusColors = {
-  shoot: { bg: 'bg-green-500/10', text: 'text-green-400', label: 'SHOOT' },
-  prep: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'PREP' },
-  wrap: { bg: 'bg-orange-500/10', text: 'text-orange-400', label: 'WRAP' },
-  post: { bg: 'bg-purple-500/10', text: 'text-purple-400', label: 'POST' },
-  active: { bg: 'bg-green-500/10', text: 'text-green-400', label: 'ACTIVE' },
-  completed: { bg: 'bg-gray-500/10', text: 'text-gray-400', label: 'COMPLETED' },
-  rehearsal: { bg: 'bg-gray-500/10', text: 'text-gray-400', label: 'REHEARSAL' },
-  performance: { bg: 'bg-gray-500/10', text: 'text-gray-400', label: 'PERFORMANCE' },
+  shoot: { 
+    bg: 'bg-mint-100 dark:bg-mint-900/30', 
+    text: 'text-mint-700 dark:text-mint-300', 
+    label: 'SHOOT' 
+  },
+  prep: { 
+    bg: 'bg-sky-100 dark:bg-sky-900/30', 
+    text: 'text-sky-700 dark:text-sky-300', 
+    label: 'PREP' 
+  },
+  wrap: { 
+    bg: 'bg-peach-100 dark:bg-peach-900/30', 
+    text: 'text-peach-700 dark:text-peach-300', 
+    label: 'WRAP' 
+  },
+  post: { 
+    bg: 'bg-lavender-100 dark:bg-lavender-900/30', 
+    text: 'text-lavender-700 dark:text-lavender-300', 
+    label: 'POST' 
+  },
+  active: { 
+    bg: 'bg-mint-100 dark:bg-mint-900/30', 
+    text: 'text-mint-700 dark:text-mint-300', 
+    label: 'ACTIVE' 
+  },
+  completed: { 
+    bg: 'bg-muted', 
+    text: 'text-muted-foreground', 
+    label: 'COMPLETED' 
+  },
+  rehearsal: { 
+    bg: 'bg-muted', 
+    text: 'text-muted-foreground', 
+    label: 'REHEARSAL' 
+  },
+  performance: { 
+    bg: 'bg-muted', 
+    text: 'text-muted-foreground', 
+    label: 'PERFORMANCE' 
+  },
 };
 
 export function ProjectCard({
@@ -48,19 +81,17 @@ export function ProjectCard({
     <div
       onClick={onClick}
       className={cn(
-        'relative rounded-xl p-4 border transition-all duration-300 cursor-pointer group',
-        'hover:shadow-lg hover:scale-[1.01] hover:border-primary/50',
-        isDarkMode
-          ? 'bg-gradient-to-br from-gray-900 to-gray-900/50 border-gray-800 hover:from-gray-800 hover:to-gray-900'
-          : 'bg-gradient-to-br from-white to-gray-50 border-gray-200 hover:from-gray-50 hover:to-white'
+        'relative rounded-2xl p-5 border transition-all duration-300 cursor-pointer group',
+        'hover:shadow-lg hover:scale-[1.02] hover:border-primary/50',
+        'bg-card border-border'
       )}
     >
       {/* Top Row: Rating and Status */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-4">
         {/* Rating */}
-        <div className="flex items-center gap-1">
-          <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-          <span className={cn('text-xs font-bold', isDarkMode ? 'text-white' : 'text-gray-900')}>
+        <div className="flex items-center gap-1.5">
+          <Star className="w-4 h-4 text-peach-500 fill-peach-500" />
+          <span className="text-sm font-bold text-foreground">
             {rating.toFixed(1)}
           </span>
         </div>
@@ -69,7 +100,7 @@ export function ProjectCard({
         <Badge
           variant="outline"
           className={cn(
-            'uppercase text-[10px] font-bold tracking-wider border-0 px-2 py-0.5',
+            'uppercase text-[10px] font-bold tracking-wider border-0 px-2.5 py-0.5',
             statusConfig.bg,
             statusConfig.text
           )}
@@ -79,102 +110,87 @@ export function ProjectCard({
       </div>
 
       {/* Project Icon */}
-      <div className="flex items-center justify-center mb-3">
+      <div className="flex items-center justify-center mb-4">
         <div
           className={cn(
-            'w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110',
-            isDarkMode ? 'bg-purple-900/20' : 'bg-purple-100'
+            'w-16 h-16 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110',
+            'bg-primary/10 group-hover:bg-primary/20'
           )}
         >
-          <IconComponent className={cn('w-7 h-7', 'text-purple-600')} strokeWidth={1.5} />
+          <IconComponent className="w-8 h-8 text-primary" strokeWidth={1.5} />
         </div>
       </div>
 
       {/* Project Title & Type */}
-      <div className="mb-3">
-        <h3
-          className={cn(
-            'font-bold text-sm mb-0.5 line-clamp-1',
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          )}
-        >
+      <div className="mb-4">
+        <h3 className="font-bold text-base mb-1 line-clamp-1 text-foreground group-hover:text-primary transition-colors">
           {title}
         </h3>
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
           {type}
         </p>
       </div>
 
       {/* Your Role */}
-      <div className="mb-3">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-bold">
+      <div className="mb-4">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 font-bold">
           {roleLabel || 'YOUR ROLE'}
         </p>
-        <p className={cn("text-xs font-bold line-clamp-1", isDarkMode ? "text-purple-400" : "text-purple-600")}>
+        <p className="text-sm font-bold line-clamp-1 text-primary">
           {yourRole}
         </p>
       </div>
 
       {/* Progress */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1.5">
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
             PROGRESS
           </p>
-          <span className={cn('text-xs font-bold', isDarkMode ? 'text-white' : 'text-gray-900')}>
+          <span className="text-sm font-bold text-foreground">
             {progress}%
           </span>
         </div>
-        <div
-          className={cn(
-            'h-1.5 rounded-full overflow-hidden',
-            isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
-          )}
-        >
+        <div className="h-2 rounded-full overflow-hidden bg-muted">
           <div
-            className="h-full bg-purple-600 transition-all duration-500 rounded-full"
+            className="h-full bg-primary transition-all duration-500 rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
       {/* Bottom Stats */}
-      <div
-        className={cn(
-          'grid grid-cols-3 gap-3 pt-3 border-t',
-          isDarkMode ? 'border-gray-800' : 'border-gray-200'
-        )}
-      >
+      <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
         {/* Crew Count */}
         <div className="flex flex-col items-center">
-          <Users className="w-3.5 h-3.5 text-muted-foreground mb-1" />
-          <span className={cn('text-xs font-bold', isDarkMode ? 'text-white' : 'text-gray-900')}>
+          <Users className="w-4 h-4 text-muted-foreground mb-1" strokeWidth={1.5} />
+          <span className="text-sm font-bold text-foreground">
             {crewCount}
           </span>
         </div>
 
         {/* Start Date */}
         <div className="flex flex-col items-center">
-          <Calendar className="w-3.5 h-3.5 text-muted-foreground mb-1" />
-          <span className={cn('text-[10px] font-bold', isDarkMode ? 'text-white' : 'text-gray-900')}>
+          <Calendar className="w-4 h-4 text-muted-foreground mb-1" strokeWidth={1.5} />
+          <span className="text-[10px] font-bold text-foreground">
             {new Date(startDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}
           </span>
         </div>
 
         {/* End Date */}
         <div className="flex flex-col items-center">
-          <CalendarCheck className="w-3.5 h-3.5 text-muted-foreground mb-1" />
-          <span className={cn('text-[10px] font-bold', isDarkMode ? 'text-white' : 'text-gray-900')}>
+          <CalendarCheck className="w-4 h-4 text-muted-foreground mb-1" strokeWidth={1.5} />
+          <span className="text-[10px] font-bold text-foreground">
             {new Date(endDate).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}
           </span>
         </div>
       </div>
 
       {/* Studio Name */}
-      <div className="mt-3 flex items-center justify-between text-[10px]">
-        <span className="text-muted-foreground font-medium truncate">{studio}</span>
+      <div className="mt-4 flex items-center justify-between text-[10px]">
+        <span className="text-muted-foreground font-semibold truncate">{studio}</span>
         {productionCompany && (
-          <span className="text-muted-foreground font-medium truncate ml-2">{productionCompany}</span>
+          <span className="text-muted-foreground font-semibold truncate ml-2">{productionCompany}</span>
         )}
       </div>
     </div>
