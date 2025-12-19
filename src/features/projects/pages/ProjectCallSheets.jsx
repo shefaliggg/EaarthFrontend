@@ -29,7 +29,8 @@ function ProjectCallSheets() {
   });
 
   return (
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
+
         <div className='flex justify-between pr-2'>
           <h2 className={`text-3xl font-bold text-foreground flex items-center gap-2`}>
             CALL SHEETS <Minus /> {currentProjectName}

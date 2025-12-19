@@ -10,6 +10,7 @@ import RoleBasedDashboard from '../shared/components/RoleBasedDashboard';
 import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
 import StudioRoutes from '../features/studio/routes/StudioRoutes';
 import SupportDashboard from '../features/support/pages/SupportDashboard';
+import CrewRoutes from '../features/crew/routes/CrewRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 // const HelpAndSupport = lazy(() => import('../features/support/pages/Help&Support'));
@@ -24,6 +25,7 @@ const DashboardRoutes = {
         ProjectRoutes,
         SettingsRoutes,
         ProfileRoutes,
+        CrewRoutes,
 
         { path: 'support', element: <SupportDashboard /> },
         { path: '*', element: <NotFound /> },

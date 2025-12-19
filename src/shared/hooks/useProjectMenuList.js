@@ -17,7 +17,7 @@ export function useProjectMenus(allProjects = []) {
       ? prettifySegment(projectName)
       : isAllProjectRoute
       ? "All Projects"
-      : "Select A Project",
+      : "Projects",
     triggerIcon: Icon.Film,
     dropdownLabel: "Active Projects",
     align: "start",
@@ -34,6 +34,7 @@ export function useProjectMenus(allProjects = []) {
         icon: Icon.Film,
         navigateWithName: true,
         projectCode: `${p.name}tempcode`,
+        // This will navigate to /projects/:projectName which shows ProjectDetails
         route: `/projects/${convertTitleToUrl(p.name)}`,
       })),
     ],

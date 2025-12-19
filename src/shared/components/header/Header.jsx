@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bell, MessageSquare } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DarkmodeButton from '../DarkmodeButton';
 import { NotificationsPanel } from '../NotificationPanel';
 import { ChatPanel } from '../ChatPanel';
@@ -10,6 +10,7 @@ import NavigationDropdown from './NavigationDropdown';
 import DisplayModeTrigger from './DisplayModeTrigger';
 import { adminDropdownList } from '../../config/adminDropdownNavList';
 import { useProjectMenus } from '../../hooks/useProjectMenuList';
+import { useCrewMenus } from '../../hooks/useCrewMenus';
 
 export default function Header() {
     const [showNotifications, setShowNotifications] = useState(false);
@@ -18,6 +19,7 @@ export default function Header() {
     const [notificationCount] = useState(5);
     const [messageCount] = useState(3);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const STUDIO_PROJECTS = [
         {
@@ -62,20 +64,58 @@ export default function Header() {
         },
     ];
 
-    const projectDropdownList = useProjectMenus(STUDIO_PROJECTS); //all projects from backend should be passed here
+    // Mock crew assigned projects (in production, fetch from backend based on crew member)
+    const CREW_ASSIGNED_PROJECTS = [
+        {
+            id: 'avatar1',
+            name: 'AVATAR 1',
+            status: 'active',
+            color: 'blue',
+            lightColor: 'text-blue-600',
+            darkColor: 'text-blue-400',
+            bgLight: 'bg-blue-50',
+            bgDark: 'bg-blue-950',
+        },
+        {
+            id: 'avatar3',
+            name: 'AVATAR 3',
+            status: 'active',
+            color: 'cyan',
+            lightColor: 'text-cyan-600',
+            darkColor: 'text-cyan-400',
+            bgLight: 'bg-cyan-50',
+            bgDark: 'bg-cyan-950',
+        },
+    ];
 
+    // Determine user role based on current route
+    // In a real app, this would come from your auth context/state management
+    const getUserRole = () => {
+        if (location.pathname.startsWith('/crew')) {
+            return 'crew';
+        }
+        // Default to studio-admin for other routes
+        return 'studio-admin';
+    };
+
+    const userRole = getUserRole();
+    const projectDropdownList = useProjectMenus(STUDIO_PROJECTS); // all projects from backend should be passed here
+    const crewMenuList = useCrewMenus(CREW_ASSIGNED_PROJECTS); // Get crew-specific menus with assigned projects
 
     useEffect(() => {
         if (showMessages || showNotifications) {
-            document.body.classList.add("overflow-hidden")
+            document.body.classList.add("overflow-hidden");
         } else {
-            document.body.classList.remove("overflow-hidden")
+            document.body.classList.remove("overflow-hidden");
         }
-    }, [showMessages, showNotifications])
+    }, [showMessages, showNotifications]);
 
-    const navigationMenuList = [...projectDropdownList, adminDropdownList("studio-admin")];
+    // Build navigation menu based on user role
+    const navigationMenuList = userRole === 'crew' 
+        ? [...crewMenuList, adminDropdownList(userRole)] // Show crew menus + crew dropdown for crew users
+        : [...projectDropdownList, adminDropdownList(userRole)]; // Show projects + studio admin for studio users
 
-    console.log(navigationMenuList)
+    console.log(navigationMenuList);
 
     return (
         <>
@@ -93,17 +133,18 @@ export default function Header() {
 
                     <nav className="flex items-center gap-2">
                         {navigationMenuList.map((menu) => (
-                            <NavigationDropdown
-                                key={menu.id}
-                                menu={menu}
-                                displayMode={displayMode}
-                            />
+                            menu && (
+                                <NavigationDropdown
+                                    key={menu.id}
+                                    menu={menu}
+                                    displayMode={displayMode}
+                                />
+                            )
                         ))}
                     </nav>
 
                     {/* Right: Icons */}
                     <div className="flex items-center gap-3">
-
                         {/* Notifications */}
                         <Button
                             size="sm"
@@ -156,19 +197,3 @@ export default function Header() {
         </>
     );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

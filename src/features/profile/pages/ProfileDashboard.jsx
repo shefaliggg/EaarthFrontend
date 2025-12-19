@@ -114,80 +114,71 @@ export default function ProfileDashboard() {
   };
 
   return (
-    <div className='min-h-screen  transition-colors duration-400 '>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* HEADER + SUMMARY */}
-        <ProfileSummary
+    <div className="space-y-6">
+      {/* HEADER + SUMMARY */}
+      <ProfileSummary
+        profile={profile}
+        isDarkMode={isDarkMode}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
+      />
+
+      {/* TABS */}
+      <ProfileTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* TAB CONTENTS */}
+      {activeTab === "identity" && (
+        <IdentityDetails
           profile={profile}
-          isDarkMode={isDarkMode}
+          setProfile={setProfile}
           isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
+          isDarkMode={isDarkMode}
+          uploads={uploads}
+          setUploads={setUploads}
         />
+      )}
 
-        {/* TABS */}
-        <ProfileTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+      {activeTab === "contact" && (
+        <ContactDetails
+          profile={profile}
+          setProfile={setProfile}
+          isEditing={isEditing}
           isDarkMode={isDarkMode}
         />
+      )}
 
-        {/* TAB CONTENTS */}
-        {activeTab === "identity" && (
-          <IdentityDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-            uploads={uploads}
-            setUploads={setUploads}
-          />
-        )}
+      {activeTab === "financial" && (
+        <FinanceDetails
+          profile={profile}
+          setProfile={setProfile}
+          isEditing={isEditing}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
-        {activeTab === "contact" && (
-          <ContactDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
+      {activeTab === "allowances" && (
+        <AllowanceDetails
+          profile={profile}
+          setProfile={setProfile}
+          isEditing={isEditing}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
-        {activeTab === "financial" && (
-          <FinanceDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
-
-        {activeTab === "allowances" && (
-          <AllowanceDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
-
-        {activeTab === "health" && (
-          <HealthDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            isDarkMode={isDarkMode}
-          />
-        )}
-      </div>
+      {activeTab === "health" && (
+        <HealthDetails
+          profile={profile}
+          setProfile={setProfile}
+          isEditing={isEditing}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }
-
-
-
-
-
-
-

@@ -34,7 +34,8 @@ export const OTPVerificationPage = () => {
   } = useOTPVerification(
     (user) => {
       updateUser(user);
-      navigate('/home', { replace: true });
+      // Changed: Navigate directly to /crew instead of /home
+      navigate('/crew', { replace: true });
     },
     (err) => console.error('OTP verification error:', err)
   );

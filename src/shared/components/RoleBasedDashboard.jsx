@@ -1,35 +1,42 @@
-import { lazy, useEffect } from "react";
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import Login from "../../features/auth/pages/Login";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { isDevelopment } from "../../features/auth/config/axiosConfig";
 
-const StudioDashboard = lazy(() => import("@/features/studio/pages/StudioDashboard"));
-
 const RoleBasedDashboard = () => {
-    const { user } = useAuth();
-    const types = user?.userType || []; // ensure array
+  const { user } = useAuth();
+  const types = user?.userType || []; // array
 
-    const validRoles = ["studio_admin", "agency-admin", "crew"];
+  const validRoles = ["studio_admin", "agency_admin", "crew"];
 
-    useEffect(() => {
-        if (types.length === 0) return;
+  useEffect(() => {
+    if (!types.length) return;
 
-        const isValid = validRoles.some(role => types.includes(role));
+    const isValid = validRoles.some(role => types.includes(role));
 
-        if (!isValid) {
-            const msg = "Unknown user role.";
-            const desc = "The application has detected an unknown user role.";
+    if (!isValid) {
+      const msg = "Unknown user role.";
+      const desc = "The application has detected an unknown user role.";
 
-            isDevelopment
-                ? toast.warning("Dev Mode:: " + msg, { description: desc })
-                : toast.error(msg, { description: desc });
-        }
-    }, [types]);
+      isDevelopment
+        ? toast.warning("Dev Mode:: " + msg, { description: desc })
+        : toast.error(msg, { description: desc });
+    }
+  }, [types]);
 
-    if (types.includes("studio_admin")) return <StudioDashboard />;
+  // Changed: Check crew first, then studio_admin, then agency_admin
+  if (types.includes("crew")) {
+    return <Navigate to="/crew" replace />;
+  }
+  if (types.includes("studio_admin")) {
+    return <Navigate to="/studio" replace />;
+  }
+  if (types.includes("agency_admin")) {
+    return <Navigate to="/agency" replace />;
+  }
 
-    return <Login />;
+  return <Navigate to="/auth/login" replace />;
 };
 
 export default RoleBasedDashboard;
