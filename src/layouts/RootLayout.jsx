@@ -8,7 +8,7 @@ export default function RootLayout() {
 
   if (initialLoading) return <LoadingScreen />;
 
-  const isAuthRoute = pathname.startsWith("/auth");
+  const isAuthRoute = pathname.startsWith("/auth") || pathname === "/invite/verify";
 
   if (!user && !isAuthRoute && !isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
