@@ -8,7 +8,7 @@ const RoleBasedDashboard = () => {
   const { user } = useAuth();
   const types = user?.userType || []; // array
 
-  const validRoles = ["studio_admin", "agency-admin", "crew"];
+  const validRoles = ["studio_admin", "agency_admin", "crew"];
 
   useEffect(() => {
     if (!types.length) return;
@@ -25,16 +25,14 @@ const RoleBasedDashboard = () => {
     }
   }, [types]);
 
-  // 🔑 ROLE-BASED REDIRECTS
-  if (types.includes("studio_admin")) {
-    return <Navigate to="/studio" replace />;
-  }
-
+  // Changed: Check crew first, then studio_admin, then agency_admin
   if (types.includes("crew")) {
     return <Navigate to="/crew" replace />;
   }
-
-  if (types.includes("agency-admin")) {
+  if (types.includes("studio_admin")) {
+    return <Navigate to="/studio" replace />;
+  }
+  if (types.includes("agency_admin")) {
     return <Navigate to="/agency" replace />;
   }
 
