@@ -14,7 +14,7 @@ import { useProjectMenus } from '../../hooks/useProjectMenuList';
 export default function Header() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showMessages, setShowMessages] = useState(false);
-    const [displayMode, setDisplayMode] = useState('');
+    const [displayMode, setDisplayMode] = useState('text-icon');
     const [notificationCount] = useState(5);
     const [messageCount] = useState(3);
     const navigate = useNavigate();

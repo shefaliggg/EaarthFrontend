@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Routes that don't require auth check
   const publicRoutes = [
     "/auth/login",
     "/auth/temp-login",
@@ -29,6 +28,7 @@ export const AuthProvider = ({ children }) => {
     "/auth/reset-password",
     "/auth/verify-email",
     "/auth/result",
+    "/invite/verify",
   ];
 
   const isPublicRoute = useCallback((pathname) => {
