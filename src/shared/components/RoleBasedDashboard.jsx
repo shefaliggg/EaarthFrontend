@@ -6,7 +6,7 @@ import { isDevelopment } from "../../features/auth/config/axiosConfig";
 
 const RoleBasedDashboard = () => {
   const { user } = useAuth();
-  const types = user?.userType || []; // array
+  const types = user?.userType || [];
 
   const validRoles = ["studio_admin", "agency_admin", "crew"];
 
@@ -25,7 +25,6 @@ const RoleBasedDashboard = () => {
     }
   }, [types]);
 
-  // Changed: Check crew first, then studio_admin, then agency_admin
   if (types.includes("crew")) {
     return <Navigate to="/crew" replace />;
   }

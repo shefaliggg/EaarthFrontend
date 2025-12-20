@@ -54,22 +54,21 @@ axiosConfig.interceptors.response.use(
         await axiosConfig.get("/auth/refreshtoken");
         return axiosConfig(originalRequest);
       } catch (err) {
-        console.log("Refresh token failed", err);
+        const errorCode = err.response?.data?.errorCode;
+
+        if (errorCode === "REFRESH_TOKEN_MISSING") {
+          console.info("[Auth] Refresh token missing → silent ignore");
+          return Promise.reject(err);
+        }
+
         if (err.response?.status === 403) {
           if (isDevelopment) {
-            // DEV MODE BEHAVIOUR
             showDebouncedToast(
               "warning",
               "Dev Mode: Auth Expired",
               "Token expired, but you are not being logged out in development."
             );
-
-            console.warn(
-              "%c[DEV MODE] Refresh token invalid → Skipped redirect to login",
-              "color: orange; font-weight: bold;"
-            );
           } else {
-            // PRODUCTION BEHAVIOUR
             triggerGlobalLogout();
 
             showDebouncedToast(
@@ -79,6 +78,7 @@ axiosConfig.interceptors.response.use(
             );
           }
         }
+
         return Promise.reject(err);
       }
     }
