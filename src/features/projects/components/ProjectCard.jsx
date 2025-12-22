@@ -23,9 +23,12 @@ export function ProjectCard({
       case 'active':
         return <Icons.Play className="w-4 h-4" />;
       case 'paused':
+      case 'on_hold':
         return <Icons.Pause className="w-4 h-4" />;
       case 'completed':
         return <Icons.Archive className="w-4 h-4" />;
+      case 'cancelled':
+        return <Icons.XCircle className="w-4 h-4" />;
       default:
         return <Icons.Film className="w-4 h-4" />;
     }
@@ -92,7 +95,7 @@ export function ProjectCard({
               <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1.5">
                   {getStatusIcon(status)}
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Icons.Activity className="w-4 h-4" />

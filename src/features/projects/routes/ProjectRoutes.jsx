@@ -3,7 +3,7 @@ import ProjectAppsRoutes from './ProjectAppsRoutes';
 import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
 
 // Dashboard and Main Pages
-import { ProjectInformationDashboard } from '../pages/ProjectList'
+import ProjectList  from '../pages/ProjectList'
 import  CreateProject  from '../components/CreateProject';
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
@@ -32,7 +32,7 @@ const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 const ProjectRoutes = {
     path: '/projects',
     children: [
-        { index: true, element: <ProjectInformationDashboard /> },
+        { index: true, element: <ProjectList /> },
         { path: 'create', element: <CreateProject /> },
         { path: 'reports', element: <ViewReports /> },
         { path: 'team', element: <ManageTeam /> },
