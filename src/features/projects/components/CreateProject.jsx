@@ -5,21 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Textarea } from '@/shared/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { PageHeader } from '@/shared/components/PageHeader';
 
-export function CreateProject() {
+export default function CreateProject() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    phase: '',
-    budget: '',
-    startDate: '',
-    endDate: '',
-    director: '',
-    producer: '',
-    description: ''
+    // Project Details
+    title: '',
+    projectType: '',
+    
+    // Contact (from timesheet settings)
+    contactPerson: '',
+    contactEmail: '',
+    contactPhone: '',
+    
+    // Overall Dates
+    prepStart: '',
+    prepEnd: '',
+    shootStart: '',
+    shootEnd: ''
   });
 
   const handleChange = (field, value) => {
@@ -34,131 +39,180 @@ export function CreateProject() {
   };
 
   return (
-    <div className="px-4">
+    <div className="px-4 pb-8">
       <PageHeader 
         icon="Film"
         title="CREATE NEW PROJECT"
         subtitle="Set up a new production project"
       />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* Project Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Project Information</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Icons.FileText className="w-5 h-5" />
+              Project Details
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Project Name */}
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
+              <Label htmlFor="title">Title *</Label>
               <Input
-                id="name"
-                placeholder="Enter project name"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
+                id="title"
+                placeholder="Enter project title"
+                value={formData.title}
+                onChange={(e) => handleChange('title', e.target.value)}
                 required
               />
             </div>
 
-            {/* Project Phase */}
             <div className="space-y-2">
-              <Label htmlFor="phase">Production Phase *</Label>
-              <Select value={formData.phase} onValueChange={(value) => handleChange('phase', value)}>
+              <Label htmlFor="projectType">Project Type *</Label>
+              <Select value={formData.projectType} onValueChange={(value) => handleChange('projectType', value)} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select phase" />
+                  <SelectValue placeholder="Select one below" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="development">Development</SelectItem>
-                  <SelectItem value="pre-production">Pre-Production</SelectItem>
-                  <SelectItem value="principal-photography">Principal Photography</SelectItem>
-                  <SelectItem value="post-production">Post-Production</SelectItem>
+                  <SelectItem value="feature-film">Feature Film</SelectItem>
+                  <SelectItem value="television">Television</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Budget */}
+        {/* Contact (from timesheet settings) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Icons.User className="w-5 h-5" />
+              Contact Page (from Timesheet Setting)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="budget">Budget (USD) *</Label>
+              <Label htmlFor="contactPerson">Contact Person *</Label>
               <Input
-                id="budget"
-                type="number"
-                placeholder="150000000"
-                value={formData.budget}
-                onChange={(e) => handleChange('budget', e.target.value)}
+                id="contactPerson"
+                placeholder="Enter contact person name"
+                value={formData.contactPerson}
+                onChange={(e) => handleChange('contactPerson', e.target.value)}
                 required
               />
             </div>
 
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date *</Label>
+                <Label htmlFor="contactEmail">Email *</Label>
                 <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleChange('startDate', e.target.value)}
+                  id="contactEmail"
+                  type="email"
+                  placeholder="contact@example.com"
+                  value={formData.contactEmail}
+                  onChange={(e) => handleChange('contactEmail', e.target.value)}
                   required
                 />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date *</Label>
+                <Label htmlFor="contactPhone">Phone *</Label>
                 <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleChange('endDate', e.target.value)}
+                  id="contactPhone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={formData.contactPhone}
+                  onChange={(e) => handleChange('contactPhone', e.target.value)}
                   required
                 />
               </div>
-            </div>
-
-            {/* Key Personnel */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="director">Director</Label>
-                <Input
-                  id="director"
-                  placeholder="Enter director name"
-                  value={formData.director}
-                  onChange={(e) => handleChange('director', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="producer">Producer</Label>
-                <Input
-                  id="producer"
-                  placeholder="Enter producer name"
-                  value={formData.producer}
-                  onChange={(e) => handleChange('producer', e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Project Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter project description and synopsis"
-                rows={4}
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" className="flex-1">
-                <Icons.Save className="w-4 h-4 mr-2" />
-                Create Project
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/projects')}>
-                <Icons.ArrowLeft className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Overall Dates */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Icons.Calendar className="w-5 h-5" />
+              Overall Dates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Prep Phase */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Prep Phase</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prepStart">Prep Start *</Label>
+                  <Input
+                    id="prepStart"
+                    type="date"
+                    value={formData.prepStart}
+                    onChange={(e) => handleChange('prepStart', e.target.value)}
+                    placeholder="06/01/2025"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="prepEnd">Prep End *</Label>
+                  <Input
+                    id="prepEnd"
+                    type="date"
+                    value={formData.prepEnd}
+                    onChange={(e) => handleChange('prepEnd', e.target.value)}
+                    placeholder="15/02/2025"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Shoot Phase */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Shoot Phase</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="shootStart">Shoot Start *</Label>
+                  <Input
+                    id="shootStart"
+                    type="date"
+                    value={formData.shootStart}
+                    onChange={(e) => handleChange('shootStart', e.target.value)}
+                    placeholder="16/02/2025"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="shootEnd">Shoot End *</Label>
+                  <Input
+                    id="shootEnd"
+                    type="date"
+                    value={formData.shootEnd}
+                    onChange={(e) => handleChange('shootEnd', e.target.value)}
+                    placeholder="30/05/2025"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button type="submit" className="flex-1">
+            <Icons.Save className="w-4 h-4 mr-2" />
+            Create Project
+          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate('/projects')}>
+            <Icons.X className="w-4 h-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -4,7 +4,7 @@ import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
 
 // Dashboard and Main Pages
 import { ProjectInformationDashboard } from '../pages/ProjectList'
-import { CreateProject } from '../components/CreateProject';
+import  CreateProject  from '../components/CreateProject';
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import  StudioAnalytics  from '../components/StudioAnalytics';
