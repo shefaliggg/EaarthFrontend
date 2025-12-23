@@ -20,6 +20,7 @@ const initialState = {
   search: "",
   projectType: "",
   country: "",
+  studioId: "", // Added studioId filter
   sort: "newest",
   total: 0,
   page: 1,
@@ -67,6 +68,10 @@ const projectSlice = createSlice({
 
     setCountry(state, action) {
       state.country = action.payload;
+    },
+
+    setStudioId(state, action) {
+      state.studioId = action.payload;
     },
 
     setSort(state, action) {
@@ -184,6 +189,7 @@ export const {
   setSearch,
   setProjectType,
   setCountry,
+  setStudioId,
   setSort,
   setError,
   clearError,

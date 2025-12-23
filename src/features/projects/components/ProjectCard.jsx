@@ -11,6 +11,8 @@ export function ProjectCard({
   name,
   status,
   phase,
+  studioName,
+  studioCode,
   stats,
   onOpen
 }) {
@@ -97,6 +99,12 @@ export function ProjectCard({
                   {getStatusIcon(status)}
                   {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
                 </span>
+                {studioName && (
+                  <span className="flex items-center gap-1.5">
+                    <Icons.Building className="w-4 h-4" />
+                    {studioName} {studioCode && `(${studioCode})`}
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <Icons.Activity className="w-4 h-4" />
                   {stats.completion}% Complete

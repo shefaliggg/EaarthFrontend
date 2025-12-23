@@ -16,6 +16,7 @@ import {
   setSearch,
   setProjectType,
   setCountry,
+  setStudioId,
   setSort,
   clearError,
   clearSuccessMessage,
@@ -31,6 +32,7 @@ export const useProject = () => {
       search: projectState.search,
       projectType: projectState.projectType,
       country: projectState.country,
+      studioId: projectState.studioId, // Added studioId filter
       page: projectState.page,
       limit: projectState.limit,
       sort: projectState.sort,
@@ -49,6 +51,7 @@ export const useProject = () => {
     projectState.search,
     projectState.projectType,
     projectState.country,
+    projectState.studioId,
     projectState.page,
     projectState.limit,
     projectState.sort,
@@ -126,6 +129,13 @@ export const useProject = () => {
     [dispatch]
   );
 
+  const updateStudioId = useCallback(
+    (studioId) => {
+      dispatch(setStudioId(studioId));
+    },
+    [dispatch]
+  );
+
   const updateSort = useCallback(
     (sort) => {
       dispatch(setSort(sort));
@@ -169,6 +179,7 @@ export const useProject = () => {
     search: projectState.search,
     projectType: projectState.projectType,
     country: projectState.country,
+    studioId: projectState.studioId, // Added studioId
     sort: projectState.sort,
     total: projectState.total,
     page: projectState.page,
@@ -187,6 +198,7 @@ export const useProject = () => {
     updateSearch,
     updateProjectType,
     updateCountry,
+    updateStudioId, // Added updateStudioId
     updateSort,
     updatePage,
     updateLimit,

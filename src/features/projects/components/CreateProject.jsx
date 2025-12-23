@@ -6,7 +6,6 @@ import { Button } from '../../../shared/components/ui/button';
 import { Input } from '../../../shared/components/ui/input';
 import { Label } from '../../../shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components/ui/select';
-import { Textarea } from '../../../shared/components/ui/textarea';
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { useProject } from '../hooks/useProject';
 import { toast } from 'sonner';
@@ -17,8 +16,8 @@ export default function CreateProject() {
 
   const [formData, setFormData] = useState({
     projectName: '',
-    description: '',
     projectType: '',
+    studioId: '',
     country: '',
     prepStartDate: '',
     prepEndDate: '',
@@ -30,8 +29,12 @@ export default function CreateProject() {
 
   const [errors, setErrors] = useState({});
 
+  // TODO: Fetch studios from your API
+  const [studios, setStudios] = useState([
+    { _id: '69494aa6df29472c2c6b5d8f', studioName: 'Rainbow Studios', studioCode: 'STO-000016' },
+  ]);
+
   useEffect(() => {
-    // Cleanup on unmount
     return () => {
       resetState();
     };
@@ -53,7 +56,6 @@ export default function CreateProject() {
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -70,7 +72,6 @@ export default function CreateProject() {
       wrapEndDate
     } = formData;
 
-    // Convert to Date objects for comparison
     const prepStart = new Date(prepStartDate);
     const prepEnd = new Date(prepEndDate);
     const shootStart = new Date(shootStartDate);
@@ -105,19 +106,17 @@ export default function CreateProject() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate dates
+    if (!formData.studioId) {
+      toast.error('Please select a studio');
+      return;
+    }
+
     if (!validateDates()) {
       toast.error('Please fix the date validation errors');
       return;
     }
 
-    const result = await createProject(formData);
-    
-    if (result.type === 'project/create/fulfilled') {
-      // Success is handled in useEffect
-    } else {
-      // Error is handled in useEffect
-    }
+    await createProject(formData);
   };
 
   return (
@@ -125,7 +124,7 @@ export default function CreateProject() {
       <PageHeader 
         icon="Film"
         title="CREATE NEW PROJECT"
-        subtitle="Set up a new production project"
+        
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -153,18 +152,6 @@ export default function CreateProject() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter project description (optional)"
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                maxLength={500}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="projectType">Project Type *</Label>
               <Select 
                 value={formData.projectType} 
@@ -177,6 +164,26 @@ export default function CreateProject() {
                 <SelectContent>
                   <SelectItem value="Feature Film">Feature Film</SelectItem>
                   <SelectItem value="Television">Television</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="studioId">Studio *</Label>
+              <Select 
+                value={formData.studioId} 
+                onValueChange={(value) => handleChange('studioId', value)} 
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select studio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {studios.map((studio) => (
+                    <SelectItem key={studio._id} value={studio._id}>
+                      {studio.studioName} ({studio.studioCode})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

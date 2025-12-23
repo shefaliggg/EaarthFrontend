@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import { ProjectCard } from '../components/ProjectCard';
 import { QuickActionButton } from '../components/QuickActionButton';
+import { ProjectFilters } from '../components/ProjectFilters';
 import { useProject } from '../hooks/useProject';
 import { toast } from 'sonner';
 
@@ -20,7 +19,7 @@ export default function ProjectList() {
     error,
     search,
     projectType,
-    country,
+    studioId,
     sort,
     page,
     pages,
@@ -28,18 +27,21 @@ export default function ProjectList() {
     fetchProjects,
     updateSearch,
     updateProjectType,
-    updateCountry,
+    updateStudioId,
     updateSort,
     updatePage,
     clearErrorMessage,
   } = useProject();
 
-  // Fetch projects on mount and when filters change
+  // TODO: Replace with actual API call to fetch studios
+  const [studios] = React.useState([
+    { _id: '69494aa6df29472c2c6b5d8f', studioName: 'Rainbow Studios', studioCode: 'STO-000016' },
+  ]);
+
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -55,8 +57,8 @@ export default function ProjectList() {
     updateProjectType(value === 'all' ? '' : value);
   };
 
-  const handleCountryChange = (e) => {
-    updateCountry(e.target.value);
+  const handleStudioChange = (value) => {
+    updateStudioId(value === 'all' ? '' : value);
   };
 
   const handleSortChange = (value) => {
@@ -71,9 +73,7 @@ export default function ProjectList() {
     navigate(`/projects/${projectId}`);
   };
 
-  // Transform project data to match ProjectCard props
   const transformProjectData = (project) => {
-    // Calculate project phase based on dates
     const getProjectPhase = () => {
       const now = new Date();
       const prepStart = new Date(project.prepStartDate);
@@ -91,7 +91,6 @@ export default function ProjectList() {
       return 'Development';
     };
 
-    // Calculate completion percentage
     const getCompletionPercentage = () => {
       const now = new Date();
       const start = new Date(project.prepStartDate);
@@ -105,7 +104,6 @@ export default function ProjectList() {
       return Math.round((elapsed / total) * 100);
     };
 
-    // Calculate days progress
     const getDaysProgress = () => {
       const now = new Date();
       const start = new Date(project.prepStartDate);
@@ -128,13 +126,15 @@ export default function ProjectList() {
       name: project.projectName,
       status: project.status || 'active',
       phase: getProjectPhase(),
+      studioName: project.studioId?.studioName || 'No Studio',
+      studioCode: project.studioId?.studioCode || 'N/A',
       stats: {
-        budget: 100000000, // Default budget (you can add this field to your schema)
-        spent: Math.round(100000000 * (completion / 100)), // Estimated spent
+        budget: 100000000,
+        spent: Math.round(100000000 * (completion / 100)),
         daysShot: daysProgress.elapsed,
         totalDays: daysProgress.total,
-        crewSize: 0, // Can be added later
-        department: 0, // Can be added later
+        crewSize: 0,
+        department: 0,
         completion: completion,
         onSchedule: completion <= 100,
         onBudget: true,
@@ -142,13 +142,9 @@ export default function ProjectList() {
     };
   };
 
-  // Calculate overview stats
   const activeProjects = projects.filter(p => p.status === 'active').length;
   const totalProjects = projects.length;
-
-  const formatCurrency = (amount) => {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  };
+  const uniqueStudios = [...new Set(projects.map(p => p.studioId?._id).filter(Boolean))];
 
   return (
     <div className="px-4 pb-8">
@@ -156,7 +152,7 @@ export default function ProjectList() {
         <PageHeader 
           icon="Film"
           title="PROJECTS"
-          subtitle="Studio Project Dashboard"
+          
         />
         
         <Button onClick={() => navigate('/projects/create')}>
@@ -196,63 +192,28 @@ export default function ProjectList() {
         />
 
         <StatCard
-          title="Countries"
-          value={new Set(projects.map(p => p.country)).size}
-          subtitle="Locations"
-          icon="Globe"
+          title="Studios"
+          value={uniqueStudios.length}
+          subtitle="Active studios"
+          icon="Building"
           iconColor="text-orange-600"
         />
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Search projects..."
-                value={search}
-                onChange={handleSearchChange}
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Select value={projectType || 'all'} onValueChange={handleProjectTypeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Project Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="Feature Film">Feature Film</SelectItem>
-                  <SelectItem value="Television">Television</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                placeholder="Filter by country..."
-                value={country}
-                onChange={handleCountryChange}
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Select value={sort} onValueChange={handleSortChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="name">Name (A-Z)</SelectItem>
-                  <SelectItem value="prepStartDate">Prep Start Date</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <CardContent className="">
+          <ProjectFilters
+            search={search}
+            onSearchChange={handleSearchChange}
+            studioId={studioId}
+            onStudioChange={handleStudioChange}
+            projectType={projectType}
+            onProjectTypeChange={handleProjectTypeChange}
+            sort={sort}
+            onSortChange={handleSortChange}
+            studios={studios}
+          />
         </CardContent>
       </Card>
 
@@ -277,7 +238,6 @@ export default function ProjectList() {
         </Card>
       ) : (
         <>
-          {/* Project Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
             {projects.map((project) => (
               <ProjectCard
@@ -288,7 +248,6 @@ export default function ProjectList() {
             ))}
           </div>
 
-          {/* Pagination */}
           {pages > 1 && (
             <div className="flex items-center justify-center gap-2 mb-6">
               <Button
@@ -317,7 +276,6 @@ export default function ProjectList() {
         </>
       )}
 
-      {/* Quick Links */}
       {projects.length > 0 && (
         <Card>
           <CardContent className="pt-6">
