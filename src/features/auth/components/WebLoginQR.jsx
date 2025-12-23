@@ -80,7 +80,7 @@ function WebLoginQR() {
           </div>
         )}
 
-        {qrData && (
+        {qrData && qrData.socketRoom && (
           <div className="flex flex-col items-center">
             <QRCode
               value={qrData.socketRoom}

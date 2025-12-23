@@ -1,272 +1,257 @@
-import { useState } from "react";
-import { Ticket as TicketIcon, HelpCircle, Book, Plus } from "lucide-react";
-import MyTickets from "../components/MyTickets";
-import FAQ from "../components/FAQ";
-import Resources from "../components/Resources";
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { RecentTickets } from "../components/RecentTickets";
+import { TicketDetail } from "../components/TicketDetail";
 import SupportTicketModal from "../components/SupportTicketModal";
+import { getSupportTickets, getSupportTicketById, addTicketMessage } from "../service/supportService";
 
 export default function SupportDashboard() {
-  const [activeView, setActiveView] = useState("tickets");
-  const [showModal, setShowModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sendingReply, setSendingReply] = useState(false);
 
-  const tickets = [
-    {
-      id: "TKT-2024-001",
-      subject: "Unable to export project timeline to PDF",
-      description:
-        "When I try to export the project timeline to PDF format, the download fails with an error message. I've tried multiple times with different browsers.",
-      status: "in-progress",
-      priority: "high",
-      category: "Technical Issue",
-      created: new Date(Date.now() - 86400000),
-      updated: new Date(Date.now() - 3600000),
-      assignedTo: "Sarah Chen",
-      responses: [
-        {
-          id: "resp-1",
-          author: "You",
-          role: "user",
-          message:
-            "When I try to export the project timeline to PDF format, the download fails with an error message. I've tried multiple times with different browsers.",
-          timestamp: new Date(Date.now() - 86400000),
-        },
-        {
-          id: "resp-2",
-          author: "Sarah Chen",
-          role: "support",
-          message:
-            "Thank you for reporting this issue. I've escalated this to our development team. Can you please try clearing your browser cache and attempting the export again?",
-          timestamp: new Date(Date.now() - 82800000),
-        },
-      ],
-      attachments: [
-        {
-          id: "att-1",
-          name: "error-screenshot.png",
-          size: "245 KB",
-          type: "image/png",
-        },
-      ],
-    },
-    {
-      id: "TKT-2024-002",
-      subject: "Question about crew member permissions",
-      description:
-        "How do I set different permission levels for different crew members on the same project?",
-      status: "resolved",
-      priority: "medium",
-      category: "Account & Permissions",
-      created: new Date(Date.now() - 172800000),
-      updated: new Date(Date.now() - 7200000),
-      assignedTo: "Mike Johnson",
-      responses: [],
-    },
-    {
-      id: "TKT-2024-003",
-      subject: "Billing inquiry for studio plan upgrade",
-      description:
-        "I need information about upgrading from the Basic plan to the Studio plan. What are the pricing differences?",
-      status: "open",
-      priority: "low",
-      category: "Billing & Payments",
-      created: new Date(Date.now() - 259200000),
-      updated: new Date(Date.now() - 259200000),
-      responses: [],
-    },
-  ];
+  // Transform ticket data from API format to UI format
+  const transformTicket = (ticket) => ({
+    id: ticket.ticketID || ticket._id,
+    _id: ticket._id,
+    ticketID: ticket.ticketID,
+    subject: ticket.subject,
+    description: ticket.initialDescription,
+    status: ticket.status,
+    priority: ticket.priority,
+    category: ticket.category,
+    created: new Date(ticket.createdAt),
+    updated: new Date(ticket.updatedAt),
+    assignedTo: ticket.assignedTo?.name || null,
+    responses: ticket.messages?.map(msg => ({
+      id: msg._id,
+      author: msg.senderName || 'Unknown',
+      role: msg.sender === 'user' ? 'user' : 'support',
+      message: msg.content,
+      timestamp: new Date(msg.createdAt),
+      attachments: msg.attachments?.map(att => ({
+        fileName: att.fileName,
+        fileSize: att.fileSize,
+        fileType: att.fileType,
+        fileUrl: att.downloadUrl || att.fileUrl,
+      })) || [],
+    })) || [],
+    attachments: ticket.attachments || [],
+  });
 
-  const faqs = [
-    {
-      id: "faq-1",
-      question: "How do I add crew members to my project?",
-      answer:
-        'Navigate to Project Settings > Standard Crew, then click "Add Crew Member". You can search for existing users or invite new ones via email. Once added, you can customize their permissions and access levels.',
-      category: "Projects",
-      helpful: 45,
-    },
-    {
-      id: "faq-2",
-      question: "What are the different user roles and permissions?",
-      answer:
-        "Eaarth Studios has 4 main roles: Master Admin (full platform access), Studio Admin (manage studio projects), Agency Admin (manage agency projects and crew), and Crew (project-specific access). Each role has customizable permissions that can be adjusted at the project level.",
-      category: "Users & Permissions",
-      helpful: 38,
-    },
-    {
-      id: "faq-3",
-      question: "How do I export project data?",
-      answer:
-        "Go to your project dashboard, click the Export button in the top right corner, and select your preferred format (CSV, PDF, or Excel). You can customize which data fields to include in the export settings.",
-      category: "Projects",
-      helpful: 52,
-    },
-    {
-      id: "faq-4",
-      question: "Can I customize notification preferences?",
-      answer:
-        "Yes! Go to Project Settings > Notifications to customize email and in-app notifications for different events like project updates, crew changes, deadline reminders, and approval requests.",
-      category: "Settings",
-      helpful: 29,
-    },
-    {
-      id: "faq-5",
-      question: "How does the timecard approval process work?",
-      answer:
-        "Crew members submit timecards weekly. Department heads review and approve them, then they go to the production accountant for final approval. You can track the status in the Timecards section.",
-      category: "Timecards & Payroll",
-      helpful: 61,
-    },
-    {
-      id: "faq-6",
-      question: "What file formats are supported for uploads?",
-      answer:
-        "We support most common file formats including PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, MP4, and MOV. Maximum file size is 100MB per upload.",
-      category: "Technical",
-      helpful: 33,
-    },
-  ];
+  // Fetch tickets from API
+  const loadTickets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getSupportTickets();
+      
+      if (response.success) {
+        const transformedTickets = response.data.map(transformTicket);
+        
+        setTickets(transformedTickets);
+        
+        // Auto-select first ticket if none selected and fetch its full details
+        if (!selectedTicket && transformedTickets.length > 0) {
+          // Fetch full ticket details including messages
+          const ticketDetails = await getSupportTicketById(transformedTickets[0]._id);
+          if (ticketDetails.success) {
+            setSelectedTicket(transformTicket(ticketDetails.data));
+          } else {
+            setSelectedTicket(transformedTickets[0]);
+          }
+        } else if (selectedTicket) {
+          // Update selected ticket with fresh data after reload
+          const updatedTicket = transformedTickets.find(
+            t => t._id === selectedTicket._id || t.id === selectedTicket.id
+          );
+          if (updatedTicket) {
+            setSelectedTicket(updatedTicket);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading tickets:', err);
+      setError(err.message || 'Failed to load tickets');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const resources = [
-    {
-      id: "res-1",
-      title: "Getting Started with Eaarth Studios",
-      type: "Guide",
-      duration: "10 min read",
-      category: "Getting Started",
-      description:
-        "A comprehensive guide to setting up your studio and first project",
-    },
-    {
-      id: "res-2",
-      title: "Project Management Best Practices",
-      type: "Video",
+  // Reload only the selected ticket's messages (not the full ticket list)
+  const reloadTicketMessages = async () => {
+    if (!selectedTicket?._id) return;
+    
+    try {
+      const response = await getSupportTicketById(selectedTicket._id);
+      if (response.success) {
+        const updatedTicket = transformTicket(response.data);
+        setSelectedTicket(updatedTicket);
+        
+        // Also update in tickets list
+        setTickets(prev => prev.map(t => 
+          t._id === updatedTicket._id ? updatedTicket : t
+        ));
+      }
+    } catch (err) {
+      console.error('Error reloading ticket:', err);
+    }
+  };
 
-      duration: "15 min",
-      category: "Tutorials",
-      description: "Learn how to effectively manage your production projects",
-    },
-    {
-      id: "res-3",
-      title: "API Documentation",
-      type: "Documentation",
+  // Load tickets on mount
+  useEffect(() => {
+    loadTickets();
+  }, []);
 
-      duration: "30 min read",
-      category: "Developers",
-      description: "Complete API reference for integrating with Eaarth Studios",
-    },
-    {
-      id: "res-4",
-      title: "Multi-tenant Studio Setup",
-      type: "Video",
+  // Handle ticket selection - fetch full details including messages
+  const handleSelectTicket = async (ticket) => {
+    try {
+      const response = await getSupportTicketById(ticket._id);
+      if (response.success) {
+        setSelectedTicket(transformTicket(response.data));
+      } else {
+        setSelectedTicket(ticket);
+      }
+    } catch (err) {
+      console.error('Error fetching ticket details:', err);
+      setSelectedTicket(ticket);
+    }
+  };
 
-      duration: "12 min",
-      category: "Getting Started",
-      description: "Configure your studio for multiple production companies",
-    },
-    {
-      id: "res-5",
-      title: "Timecard & Payroll Management",
-      type: "Guide",
+  // Handlers
+  const handleSendReply = async (message, attachments = [], voiceNote = null) => {
+    if (!selectedTicket?._id) {
+      alert('Error: Ticket ID is missing. Please refresh the page.');
+      return;
+    }
+    
+    setSendingReply(true);
+    try {
+      const formData = new FormData();
+      
+      // Add text content
+      if (message.trim()) {
+        formData.append('content', message);
+      }
+      
+      // Add attachments (photos/videos)
+      if (attachments.length > 0) {
+        attachments.forEach((attachment) => {
+          formData.append('attachments', attachment.file);
+        });
+      }
+      
+      // Add voice note
+      if (voiceNote?.blob) {
+        formData.append('voiceNote', voiceNote.blob, 'voice-message.webm');
+      }
+      
+      await addTicketMessage(selectedTicket._id, formData);
+      
+      // Only reload the current ticket's messages, not all tickets
+      await reloadTicketMessages();
+    } catch (err) {
+      console.error('Error sending reply:', err);
+      alert('Failed to send reply. Please try again.');
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
-      duration: "20 min read",
-      category: "Tutorials",
-      description:
-        "Master the timecard approval workflow and payroll processing",
-    },
-    {
-      id: "res-6",
-      title: "Security & Compliance Guide",
-      type: "Documentation",
+  const handleCreateTicket = () => {
+    setShowModal(true);
+  };
 
-      duration: "15 min read",
-      category: "Security",
-      description:
-        "Learn about our security measures and compliance certifications",
-    },
-  ];
+  const handleTicketCreated = () => {
+    // Reload tickets after creating a new one
+    loadTickets();
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 text-foreground">
-              Help & Support
-            </h1>
-            <p className="text-muted-foreground">
-              Get help with your questions or report an issue
-            </p>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 font-bold"
-          >
-            <Plus className="w-5 h-5" />
-            New Ticket
-          </button>
+    <div className="min-h-screen container mx-auto space-y-4">
+      {/* Page Header */}
+      <PageHeader
+        title="Help & Support"
+        subtitle="View and manage your support tickets"
+        icon="MessageSquare"
+        primaryAction={{
+          label: 'New Ticket',
+          icon: 'Plus',
+          clickAction: handleCreateTicket
+        }}
+      />
+
+      {/* Chat-Style Layout */}
+      <div className="grid grid-cols-12 gap-0 border border-border rounded-xl overflow-hidden bg-card shadow-sm" style={{ height: 'calc(100vh - 180px)' }}>
+        {/* Left Sidebar - Ticket List */}
+        <div className="col-span-3 border-r border-border overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-sm text-muted-foreground">Loading tickets...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full p-4">
+              <div className="text-center">
+                <p className="text-sm text-destructive mb-2">Error loading tickets</p>
+                <button 
+                  onClick={loadTickets}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="flex items-center justify-center h-full p-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">No tickets yet</p>
+                <button 
+                  onClick={handleCreateTicket}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Create your first ticket
+                </button>
+              </div>
+            </div>
+          ) : (
+            <RecentTickets
+              tickets={tickets}
+              selectedTicket={selectedTicket}
+              onSelectTicket={handleSelectTicket}
+            />
+          )}
         </div>
-        <div className="flex justify-center">
-          <div className="inline-flex gap-2 p-1 rounded-full bg-muted">
-            <button
-              onClick={() => setActiveView("tickets")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-bold ${
-                activeView === "tickets"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
-              }`}
-            >
-              <TicketIcon className="w-4 h-4" />
-              My Tickets
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
-                  activeView === "tickets"
-                    ? "bg-primary-foreground/20"
-                    : "bg-muted"
-                }`}
-              >
-                {tickets.length}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveView("faq")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-bold ${
-                activeView === "faq"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
-              }`}
-            >
-              <HelpCircle className="w-4 h-4" />
-              FAQ
-            </button>
-            <button
-              onClick={() => setActiveView("resources")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-bold ${
-                activeView === "resources"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
-              }`}
-            >
-              <Book className="w-4 h-4" />
-              Resources
-            </button>
-          </div>
+
+        {/* Right - Chat Area */}
+        <div className="col-span-9 flex flex-col overflow-hidden">
+          {selectedTicket ? (
+            <TicketDetail
+              ticket={selectedTicket}
+              onSendReply={handleSendReply}
+              sendingReply={sendingReply}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Select a ticket to view details</p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div>
-        {activeView === "tickets" && (
-          <MyTickets tickets={tickets} onTicketClick={setSelectedTicket} />
-        )}
-        {activeView === "faq" && (
-          <FAQ faqs={faqs} onCreateTicket={() => setShowModal(true)} />
-        )}
-        {activeView === "resources" && <Resources resources={resources} />}
-      </div>
-
+      {/* Create Ticket Modal */}
       <SupportTicketModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          handleTicketCreated();
+        }}
       />
     </div>
   );
