@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
-  createProject,
-  getAllProjects,
-  getProjectById,
-  updateProject,
-  deleteProject,
+  createProjectAPI,
+  getAllProjectsAPI,
+  getProjectByIdAPI,
+  updateProjectAPI,
+  deleteProjectAPI,
 } from "../service/Project.service";
 
 export const createProjectThunk = createAsyncThunk(
@@ -14,6 +14,7 @@ export const createProjectThunk = createAsyncThunk(
       const payload = {
         projectName: values.projectName,
         projectType: values.projectType,
+        studioId: values.studioId,
         prepStartDate: values.prepStartDate,
         prepEndDate: values.prepEndDate,
         shootStartDate: values.shootStartDate,
@@ -21,10 +22,9 @@ export const createProjectThunk = createAsyncThunk(
         wrapStartDate: values.wrapStartDate,
         wrapEndDate: values.wrapEndDate,
         country: values.country,
-        description: values.description || "",
       };
 
-      const response = await createProject(payload);
+      const response = await createProjectAPI(payload);
       return response;
     } catch (err) {
       return rejectWithValue(
@@ -40,7 +40,7 @@ export const getAllProjectsThunk = createAsyncThunk(
   "project/getAllProjects",
   async (filters = {}, { rejectWithValue }) => {
     try {
-      const response = await getAllProjects(filters);
+      const response = await getAllProjectsAPI(filters);
       return {
         projects: response.data || [],
         total: response.pagination?.total || 0,
@@ -62,7 +62,7 @@ export const getProjectByIdThunk = createAsyncThunk(
   "project/getProjectById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await getProjectById(id);
+      const response = await getProjectByIdAPI(id);
       return response.data;
     } catch (err) {
       return rejectWithValue(
@@ -81,6 +81,7 @@ export const updateProjectThunk = createAsyncThunk(
       const payload = {
         projectName: values.projectName,
         projectType: values.projectType,
+        studioId: values.studioId,
         prepStartDate: values.prepStartDate,
         prepEndDate: values.prepEndDate,
         shootStartDate: values.shootStartDate,
@@ -88,10 +89,16 @@ export const updateProjectThunk = createAsyncThunk(
         wrapStartDate: values.wrapStartDate,
         wrapEndDate: values.wrapEndDate,
         country: values.country,
-        description: values.description,
       };
 
-      const response = await updateProject(id, payload);
+      // Remove undefined values
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key];
+        }
+      });
+
+      const response = await updateProjectAPI(id, payload);
       return response;
     } catch (err) {
       return rejectWithValue(
@@ -107,7 +114,7 @@ export const deleteProjectThunk = createAsyncThunk(
   "project/delete",
   async (id, { rejectWithValue }) => {
     try {
-      await deleteProject(id);
+      await deleteProjectAPI(id);
       return id;
     } catch (err) {
       return rejectWithValue(
