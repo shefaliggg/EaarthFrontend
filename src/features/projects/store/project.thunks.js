@@ -1,12 +1,17 @@
+// src/features/project/store/project.thunks.js
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   createProjectAPI,
+  submitProjectForApprovalAPI,
   getAllProjectsAPI,
   getProjectByIdAPI,
   updateProjectAPI,
   deleteProjectAPI,
 } from "../service/Project.service";
 
+/**
+ * CREATE PROJECT (Draft status)
+ */
 export const createProjectThunk = createAsyncThunk(
   "project/create",
   async (values, { rejectWithValue }) => {
@@ -28,14 +33,32 @@ export const createProjectThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to create project"
+        err?.response?.data?.message || "Failed to create project"
       );
     }
   }
 );
 
+/**
+ * SUBMIT PROJECT FOR APPROVAL
+ */
+export const submitProjectForApprovalThunk = createAsyncThunk(
+  "project/submitForApproval",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await submitProjectForApprovalAPI(id);
+      return response;
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to submit project for approval"
+      );
+    }
+  }
+);
+
+/**
+ * GET ALL PROJECTS (User's projects only)
+ */
 export const getAllProjectsThunk = createAsyncThunk(
   "project/getAllProjects",
   async (filters = {}, { rejectWithValue }) => {
@@ -50,30 +73,32 @@ export const getAllProjectsThunk = createAsyncThunk(
       };
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to fetch projects"
+        err?.response?.data?.message || "Failed to fetch projects"
       );
     }
   }
 );
 
+/**
+ * GET PROJECT BY ID
+ */
 export const getProjectByIdThunk = createAsyncThunk(
   "project/getProjectById",
   async (id, { rejectWithValue }) => {
     try {
       const response = await getProjectByIdAPI(id);
-      return response.data;
+      return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to fetch project details"
+        err?.response?.data?.message || "Failed to fetch project details"
       );
     }
   }
 );
 
+/**
+ * UPDATE PROJECT (Only for approved projects)
+ */
 export const updateProjectThunk = createAsyncThunk(
   "project/update",
   async ({ id, values }, { rejectWithValue }) => {
@@ -102,14 +127,15 @@ export const updateProjectThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to update project"
+        err?.response?.data?.message || "Failed to update project"
       );
     }
   }
 );
 
+/**
+ * DELETE PROJECT
+ */
 export const deleteProjectThunk = createAsyncThunk(
   "project/delete",
   async (id, { rejectWithValue }) => {
@@ -118,9 +144,7 @@ export const deleteProjectThunk = createAsyncThunk(
       return id;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to delete project"
+        err?.response?.data?.message || "Failed to delete project"
       );
     }
   }

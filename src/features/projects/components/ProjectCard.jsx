@@ -1,83 +1,38 @@
+// src/features/project/components/ProjectCard.jsx
 import React from 'react';
 import * as Icons from 'lucide-react';
-import { Card, CardContent } from '../../../shared/components/ui/card';
-import { Badge } from '../../../shared/components/ui/badge';
-import { Button } from '../../../shared/components/ui/button';
-import { Progress } from '../../../shared/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { ApprovalStatusBadge, OperationalStatusBadge } from './ProjectStatusBadge';
+import ActionsMenu from '@/shared/components/ActionsMenu';
 
 export function ProjectCard({
-  id,
-  name,
-  status,
-  phase,
-  studioName,
-  studioCode,
-  stats,
-  onOpen
+  project,
+  onOpen,
+  onEdit,
+  onDelete,
+  onSubmitForApproval,
+  isSubmitting = false,
+  isDeleting = false,
 }) {
-  const formatCurrency = (amount) => {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  };
+  const {
+    _id,
+    projectName,
+    projectCode,
+    projectType,
+    approvalStatus,
+    status,
+    studioId,
+    country,
+    rejectionReason,
+    createdAt,
+  } = project;
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'active':
-        return <Icons.Play className="w-4 h-4" />;
-      case 'paused':
-      case 'on_hold':
-        return <Icons.Pause className="w-4 h-4" />;
-      case 'completed':
-        return <Icons.Archive className="w-4 h-4" />;
-      case 'cancelled':
-        return <Icons.XCircle className="w-4 h-4" />;
-      default:
-        return <Icons.Film className="w-4 h-4" />;
-    }
-  };
-
-  const getPhaseStyles = (phase) => {
-    switch (phase) {
-      case 'Development':
-        return {
-          badge: 'bg-muted text-muted-foreground',
-          accent: 'text-muted-foreground',
-          bg: 'bg-muted/50'
-        };
-      case 'Pre-Production':
-        return {
-          badge: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
-          accent: 'text-sky-600 dark:text-sky-400',
-          bg: 'bg-sky-50 dark:bg-sky-900/20'
-        };
-      case 'Principal Photography':
-        return {
-          badge: 'bg-mint-100 text-mint-700 dark:bg-mint-900/30 dark:text-mint-400',
-          accent: 'text-mint-600 dark:text-mint-400',
-          bg: 'bg-mint-50 dark:bg-mint-900/20'
-        };
-      case 'Post-Production':
-        return {
-          badge: 'bg-lavender-100 text-lavender-700 dark:bg-lavender-900/30 dark:text-lavender-400',
-          accent: 'text-lavender-600 dark:text-lavender-400',
-          bg: 'bg-lavender-50 dark:bg-lavender-900/20'
-        };
-      case 'Distribution':
-        return {
-          badge: 'bg-peach-100 text-peach-700 dark:bg-peach-900/30 dark:text-peach-400',
-          accent: 'text-peach-600 dark:text-peach-400',
-          bg: 'bg-peach-50 dark:bg-peach-900/20'
-        };
-      default:
-        return {
-          badge: 'bg-muted text-muted-foreground',
-          accent: 'text-muted-foreground',
-          bg: 'bg-muted/50'
-        };
-    }
-  };
-
-  const phaseStyles = getPhaseStyles(phase);
+  // Check what actions are available based on approval status
+  const canEdit = approvalStatus === 'draft' || approvalStatus === 'rejected' || approvalStatus === 'approved';
+  const canDelete = approvalStatus === 'draft' || approvalStatus === 'rejected';
+  const canSubmit = approvalStatus === 'draft' || approvalStatus === 'rejected';
+  const canView = approvalStatus === 'approved';
 
   return (
     <Card className="transition-all duration-200 hover:shadow-lg">
@@ -87,114 +42,126 @@ export function ProjectCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h3 className={cn('text-xl font-bold', phaseStyles.accent)}>
-                  {name}
-                </h3>
-                <Badge className={cn('shrink-0', phaseStyles.badge)}>
-                  {phase}
-                </Badge>
+                <h3 className="text-xl font-bold">{projectName}</h3>
+                <ApprovalStatusBadge status={approvalStatus} />
+                {approvalStatus === 'approved' && (
+                  <OperationalStatusBadge status={status} />
+                )}
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1.5">
-                  {getStatusIcon(status)}
-                  {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                  <Icons.Hash className="w-4 h-4" />
+                  {projectCode}
                 </span>
-                {studioName && (
+                <span className="flex items-center gap-1.5">
+                  <Icons.Film className="w-4 h-4" />
+                  {projectType}
+                </span>
+                {studioId && (
                   <span className="flex items-center gap-1.5">
                     <Icons.Building className="w-4 h-4" />
-                    {studioName} {studioCode && `(${studioCode})`}
+                    {studioId.studioName}
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <Icons.Activity className="w-4 h-4" />
-                  {stats.completion}% Complete
+                  <Icons.MapPin className="w-4 h-4" />
+                  {country}
                 </span>
               </div>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onOpen(id)}
-              className="shrink-0"
-            >
-              <Icons.ArrowRight className="w-4 h-4 mr-1.5" />
-              OPEN
-            </Button>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Primary Actions based on status */}
+              {approvalStatus === 'pending' && (
+                <Button size="sm" variant="secondary" disabled>
+                  <Icons.Clock className="w-4 h-4 mr-1" />
+                  Waiting for Approval
+                </Button>
+              )}
+
+              {canSubmit && (
+                <Button
+                  size="sm"
+                  onClick={() => onSubmitForApproval(_id)}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Icons.Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
+                    <Icons.Send className="w-4 h-4 mr-1" />
+                  )}
+                  Submit for Approval
+                </Button>
+              )}
+
+              {canView && (
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => onOpen(_id)}
+                >
+                  <Icons.Eye className="w-4 h-4 mr-1" />
+                  View Details
+                </Button>
+              )}
+
+              {/* Actions Menu */}
+              <ActionsMenu
+                actions={[
+                  canView && {
+                    label: "View Details",
+                    icon: "Eye",
+                    onClick: () => onOpen(_id),
+                  },
+                  canEdit && {
+                    label: "Edit Project",
+                    icon: "Edit",
+                    onClick: () => onEdit(_id),
+                    separatorBefore: canView,
+                  },
+                  canSubmit && {
+                    label: "Submit for Approval",
+                    icon: "Send",
+                    onClick: () => onSubmitForApproval(_id),
+                    separatorBefore: !canView && canEdit,
+                  },
+                  canDelete && {
+                    label: "Delete Project",
+                    icon: "Trash2",
+                    onClick: () => onDelete(_id),
+                    destructive: true,
+                    separatorBefore: true,
+                  },
+                ].filter(Boolean)}
+              />
+            </div>
           </div>
 
-          {/* Progress */}
-          <div>
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Overall Progress</span>
-              <span className={cn('font-bold', phaseStyles.accent)}>
-                {stats.completion}%
+          {/* Rejection Reason Alert */}
+          {approvalStatus === 'rejected' && rejectionReason && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <div className="flex items-start gap-2">
+                <Icons.AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-900 mb-1">Rejection Reason:</p>
+                  <p className="text-sm text-red-700">{rejectionReason}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Project Info */}
+          <div className="flex items-center justify-between text-sm pt-3 border-t border-border">
+            <span className="text-muted-foreground">
+              Created: {new Date(createdAt).toLocaleDateString()}
+            </span>
+            {approvalStatus === 'draft' && (
+              <span className="text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <Icons.AlertCircle className="w-4 h-4" />
+                Submit for approval to activate
               </span>
-            </div>
-            <Progress 
-              value={stats.completion} 
-              className="h-2"
-            />
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
-              <div className="text-xs text-muted-foreground mb-1">Budget</div>
-              <div className={cn('font-bold text-base', phaseStyles.accent)}>
-                {formatCurrency(stats.budget)}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {formatCurrency(stats.spent)} spent
-              </div>
-            </div>
-
-            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
-              <div className="text-xs text-muted-foreground mb-1">Schedule</div>
-              <div className={cn('font-bold text-base', phaseStyles.accent)}>
-                {stats.daysShot}/{stats.totalDays}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">Days shot</div>
-            </div>
-
-            <div className={cn('p-3 rounded-lg border border-border', phaseStyles.bg)}>
-              <div className="text-xs text-muted-foreground mb-1">Team</div>
-              <div className={cn('font-bold text-base', phaseStyles.accent)}>
-                {stats.crewSize}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {stats.department} depts
-              </div>
-            </div>
-          </div>
-
-          {/* Status Indicators */}
-          <div className="flex items-center gap-4 pt-3 border-t border-border flex-wrap">
-            <div className="flex items-center gap-2">
-              {stats.onSchedule ? (
-                <>
-                  <Icons.CheckCircle2 className="w-4 h-4 text-mint-600 dark:text-mint-400" />
-                  <span className="text-sm text-mint-600 dark:text-mint-400 font-medium">On Schedule</span>
-                </>
-              ) : (
-                <>
-                  <Icons.AlertCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-sm text-destructive font-medium">Behind Schedule</span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {stats.onBudget ? (
-                <>
-                  <Icons.CheckCircle2 className="w-4 h-4 text-mint-600 dark:text-mint-400" />
-                  <span className="text-sm text-mint-600 dark:text-mint-400 font-medium">On Budget</span>
-                </>
-              ) : (
-                <>
-                  <Icons.AlertCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-sm text-destructive font-medium">Over Budget</span>
-                </>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </CardContent>

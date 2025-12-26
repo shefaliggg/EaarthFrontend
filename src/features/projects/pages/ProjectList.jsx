@@ -1,46 +1,77 @@
-import React, { useEffect } from 'react';
+// src/features/project/pages/ProjectList.jsx
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import { ProjectCard } from '../components/ProjectCard';
-import { QuickActionButton } from '../components/QuickActionButton';
-import { ProjectFilters } from '../components/ProjectFilters';
 import { useProject } from '../hooks/useProject';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog';
 
 export default function ProjectList() {
   const navigate = useNavigate();
   const {
     projects,
     isFetching,
+    isSubmitting,
+    isDeleting,
     error,
+    successMessage,
     search,
     projectType,
-    studioId,
+    approvalStatus,
     sort,
     page,
     pages,
     total,
     fetchProjects,
+    submitForApproval,
+    deleteProject,
     updateSearch,
     updateProjectType,
-    updateStudioId,
+    updateApprovalStatus,
     updateSort,
     updatePage,
     clearErrorMessage,
+    clearSuccessMessage,
   } = useProject();
 
-  // TODO: Replace with actual API call to fetch studios
-  const [studios] = React.useState([
-    { _id: '69494aa6df29472c2c6b5d8f', studioName: 'Rainbow Studios', studioCode: 'STO-000016' },
-  ]);
+  const [filters, setFilters] = useState({
+    search: '',
+    approvalStatus: 'all',
+    projectType: 'all',
+  });
 
+  // Dialogs
+  const [submitDialog, setSubmitDialog] = useState({ isOpen: false, projectId: null });
+  const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, projectId: null });
+
+  // Fetch projects on mount and when filters change
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    const apiFilters = {
+      search: filters.search || undefined,
+      approvalStatus: filters.approvalStatus === 'all' ? undefined : filters.approvalStatus,
+      projectType: filters.projectType === 'all' ? undefined : filters.projectType,
+      page,
+      limit: 10,
+      sort,
+    };
+    fetchProjects(apiFilters);
+  }, [page, sort]);
 
   useEffect(() => {
     if (error) {
@@ -49,178 +80,184 @@ export default function ProjectList() {
     }
   }, [error, clearErrorMessage]);
 
-  const handleSearchChange = (e) => {
-    updateSearch(e.target.value);
-  };
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      clearSuccessMessage();
+    }
+  }, [successMessage, clearSuccessMessage]);
 
-  const handleProjectTypeChange = (value) => {
-    updateProjectType(value === 'all' ? '' : value);
-  };
-
-  const handleStudioChange = (value) => {
-    updateStudioId(value === 'all' ? '' : value);
-  };
-
-  const handleSortChange = (value) => {
-    updateSort(value);
-  };
-
-  const handlePageChange = (newPage) => {
-    updatePage(newPage);
+  const handleApplyFilters = () => {
+    updatePage(1); // Reset to first page
+    const apiFilters = {
+      search: filters.search || undefined,
+      approvalStatus: filters.approvalStatus === 'all' ? undefined : filters.approvalStatus,
+      projectType: filters.projectType === 'all' ? undefined : filters.projectType,
+      page: 1,
+      limit: 10,
+      sort,
+    };
+    fetchProjects(apiFilters);
   };
 
   const handleProjectOpen = (projectId) => {
     navigate(`/projects/${projectId}`);
   };
 
-  const transformProjectData = (project) => {
-    const getProjectPhase = () => {
-      const now = new Date();
-      const prepStart = new Date(project.prepStartDate);
-      const prepEnd = new Date(project.prepEndDate);
-      const shootStart = new Date(project.shootStartDate);
-      const shootEnd = new Date(project.shootEndDate);
-      const wrapStart = new Date(project.wrapStartDate);
-      const wrapEnd = new Date(project.wrapEndDate);
-
-      if (now < prepStart) return 'Development';
-      if (now >= prepStart && now <= prepEnd) return 'Pre-Production';
-      if (now >= shootStart && now <= shootEnd) return 'Principal Photography';
-      if (now >= wrapStart && now <= wrapEnd) return 'Post-Production';
-      if (now > wrapEnd) return 'Distribution';
-      return 'Development';
-    };
-
-    const getCompletionPercentage = () => {
-      const now = new Date();
-      const start = new Date(project.prepStartDate);
-      const end = new Date(project.wrapEndDate);
-      
-      if (now < start) return 0;
-      if (now > end) return 100;
-      
-      const total = end - start;
-      const elapsed = now - start;
-      return Math.round((elapsed / total) * 100);
-    };
-
-    const getDaysProgress = () => {
-      const now = new Date();
-      const start = new Date(project.prepStartDate);
-      const end = new Date(project.wrapEndDate);
-      
-      const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-      const elapsedDays = Math.ceil((now - start) / (1000 * 60 * 60 * 24));
-      
-      return {
-        elapsed: Math.max(0, Math.min(elapsedDays, totalDays)),
-        total: totalDays
-      };
-    };
-
-    const completion = getCompletionPercentage();
-    const daysProgress = getDaysProgress();
-
-    return {
-      id: project._id,
-      name: project.projectName,
-      status: project.status || 'active',
-      phase: getProjectPhase(),
-      studioName: project.studioId?.studioName || 'No Studio',
-      studioCode: project.studioId?.studioCode || 'N/A',
-      stats: {
-        budget: 100000000,
-        spent: Math.round(100000000 * (completion / 100)),
-        daysShot: daysProgress.elapsed,
-        totalDays: daysProgress.total,
-        crewSize: 0,
-        department: 0,
-        completion: completion,
-        onSchedule: completion <= 100,
-        onBudget: true,
-      }
-    };
+  const handleProjectEdit = (projectId) => {
+    navigate(`/projects/${projectId}/edit`);
   };
 
-  const activeProjects = projects.filter(p => p.status === 'active').length;
-  const totalProjects = projects.length;
-  const uniqueStudios = [...new Set(projects.map(p => p.studioId?._id).filter(Boolean))];
+  const handleSubmitForApproval = (projectId) => {
+    setSubmitDialog({ isOpen: true, projectId });
+  };
+
+  const confirmSubmitForApproval = async () => {
+    if (!submitDialog.projectId) return;
+    const result = await submitForApproval(submitDialog.projectId);
+    if (!result.error) {
+      setSubmitDialog({ isOpen: false, projectId: null });
+    }
+  };
+
+  const handleDeleteProject = (projectId) => {
+    setDeleteDialog({ isOpen: true, projectId });
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!deleteDialog.projectId) return;
+    const result = await deleteProject(deleteDialog.projectId);
+    if (!result.error) {
+      setDeleteDialog({ isOpen: false, projectId: null });
+    }
+  };
+
+  // Calculate real stats from projects
+  const stats = {
+    active: projects.filter(p => p.approvalStatus === 'approved' && p.status === 'active').length,
+    draft: projects.filter(p => p.approvalStatus === 'draft').length,
+    pending: projects.filter(p => p.approvalStatus === 'pending').length,
+    rejected: projects.filter(p => p.approvalStatus === 'rejected').length,
+  };
 
   return (
     <div className="px-4 pb-8">
       <div className="flex items-center justify-between mb-6">
-        <PageHeader 
-          icon="Film"
-          title="PROJECTS"
-          
-        />
-        
+        <PageHeader icon="Film" title="MY PROJECTS" />
         <Button onClick={() => navigate('/projects/create')}>
           <Icons.Plus className="w-4 h-4 mr-2" />
           CREATE NEW PROJECT
         </Button>
       </div>
 
-      {/* Studio Overview Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Active Projects"
-          value={activeProjects}
-          subtitle="Production pipeline"
-          icon="Film"
-          iconColor="text-blue-600"
-        />
-
-        <StatCard
-          title="Total Projects"
-          value={totalProjects}
-          subtitle="All time"
-          icon="Folder"
-          iconColor="text-purple-600"
-        />
-
-        <StatCard
-          title="This Month"
-          value={projects.filter(p => {
-            const created = new Date(p.createdAt);
-            const now = new Date();
-            return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-          }).length}
-          subtitle="New projects"
-          icon="TrendingUp"
+          value={stats.active}
+          subtitle="Approved & Active"
+          icon="CheckCircle"
           iconColor="text-green-600"
         />
-
         <StatCard
-          title="Studios"
-          value={uniqueStudios.length}
-          subtitle="Active studios"
-          icon="Building"
-          iconColor="text-orange-600"
+          title="Draft Projects"
+          value={stats.draft}
+          subtitle="Not submitted"
+          icon="FileText"
+          iconColor="text-gray-600"
+        />
+        <StatCard
+          title="Pending Approval"
+          value={stats.pending}
+          subtitle="Under review"
+          icon="Clock"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          title="Rejected"
+          value={stats.rejected}
+          subtitle="Need revision"
+          icon="XCircle"
+          iconColor="text-red-600"
         />
       </div>
 
       {/* Search and Filters */}
       <Card className="mb-6">
-        <CardContent className="">
-          <ProjectFilters
-            search={search}
-            onSearchChange={handleSearchChange}
-            studioId={studioId}
-            onStudioChange={handleStudioChange}
-            projectType={projectType}
-            onProjectTypeChange={handleProjectTypeChange}
-            sort={sort}
-            onSortChange={handleSortChange}
-            studios={studios}
-          />
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="md:col-span-2">
+              <Input
+                placeholder="Search projects by name, code, or country..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+
+            <Select 
+              value={filters.approvalStatus} 
+              onValueChange={(value) => setFilters(prev => ({ ...prev, approvalStatus: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Approval Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select 
+              value={filters.projectType} 
+              onValueChange={(value) => setFilters(prev => ({ ...prev, projectType: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Project Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Feature Film">Feature Film</SelectItem>
+                <SelectItem value="Television">Television</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-3">
+            <Button onClick={handleApplyFilters} disabled={isFetching}>
+              {isFetching ? (
+                <>
+                  <Icons.Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                'Apply Filters'
+              )}
+            </Button>
+
+            <Select value={sort} onValueChange={updateSort}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="name">Name (A-Z)</SelectItem>
+                <SelectItem value="prepStartDate">Start Date</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
       {/* Projects List */}
-      {isFetching ? (
+      {isFetching && projects.length === 0 ? (
         <div className="flex items-center justify-center py-12">
           <Icons.Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-sm text-gray-600">Loading projects...</span>
         </div>
       ) : projects.length === 0 ? (
         <Card>
@@ -228,7 +265,9 @@ export default function ProjectList() {
             <Icons.FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">No projects found</h3>
             <p className="text-muted-foreground mb-4">
-              Get started by creating your first project
+              {filters.search || filters.approvalStatus !== 'all' || filters.projectType !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Get started by creating your first project'}
             </p>
             <Button onClick={() => navigate('/projects/create')}>
               <Icons.Plus className="w-4 h-4 mr-2" />
@@ -238,36 +277,40 @@ export default function ProjectList() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="space-y-4 mb-6">
             {projects.map((project) => (
               <ProjectCard
                 key={project._id}
-                {...transformProjectData(project)}
+                project={project}
                 onOpen={handleProjectOpen}
+                onEdit={handleProjectEdit}
+                onDelete={handleDeleteProject}
+                onSubmitForApproval={handleSubmitForApproval}
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
               />
             ))}
           </div>
 
+          {/* Pagination */}
           {pages > 1 && (
-            <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
+                onClick={() => updatePage(page - 1)}
+                disabled={page === 1 || isFetching}
               >
                 <Icons.ChevronLeft className="w-4 h-4" />
               </Button>
-              
               <span className="text-sm">
                 Page {page} of {pages} ({total} total)
               </span>
-              
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === pages}
+                onClick={() => updatePage(page + 1)}
+                disabled={page === pages || isFetching}
               >
                 <Icons.ChevronRight className="w-4 h-4" />
               </Button>
@@ -276,35 +319,54 @@ export default function ProjectList() {
         </>
       )}
 
-      {projects.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="font-bold mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <QuickActionButton
-                icon="Plus"
-                label="Create Project"
-                onClick={() => navigate('/projects/create')}
-              />
-              <QuickActionButton
-                icon="BarChart3"
-                label="View Reports"
-                onClick={() => navigate('/projects/reports')}
-              />
-              <QuickActionButton
-                icon="Users"
-                label="Manage Team"
-                onClick={() => navigate('/projects/team')}
-              />
-              <QuickActionButton
-                icon="Target"
-                label="Studio Analytics"
-                onClick={() => navigate('/projects/analytics')}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Submit for Approval Dialog */}
+      <AlertDialog
+        open={submitDialog.isOpen}
+        onOpenChange={(open) => !open && setSubmitDialog({ isOpen: false, projectId: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit Project for Approval</AlertDialogTitle>
+            <AlertDialogDescription>
+              Once submitted, you cannot edit the project until the admin reviews it.
+              Are you sure you want to submit this project for approval?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmitForApproval} disabled={isSubmitting}>
+              {isSubmitting && <Icons.Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Submit for Approval
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={(open) => !open && setDeleteDialog({ isOpen: false, projectId: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this project? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting && <Icons.Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

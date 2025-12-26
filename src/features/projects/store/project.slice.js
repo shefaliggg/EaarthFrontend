@@ -1,6 +1,8 @@
+// src/features/project/store/project.slice.js
 import { createSlice } from "@reduxjs/toolkit";
 import {
   createProjectThunk,
+  submitProjectForApprovalThunk,
   getAllProjectsThunk,
   getProjectByIdThunk,
   updateProjectThunk,
@@ -11,6 +13,7 @@ const initialState = {
   projects: [],
   currentProject: null,
   isCreating: false,
+  isSubmitting: false,
   isFetching: false,
   isFetchingDetails: false,
   isUpdating: false,
@@ -20,7 +23,8 @@ const initialState = {
   search: "",
   projectType: "",
   country: "",
-  studioId: "", // Added studioId filter
+  studioId: "",
+  approvalStatus: "", // Added approval status filter
   sort: "newest",
   total: 0,
   page: 1,
@@ -34,6 +38,7 @@ const projectSlice = createSlice({
   reducers: {
     resetProjectState(state) {
       state.isCreating = false;
+      state.isSubmitting = false;
       state.isUpdating = false;
       state.isDeleting = false;
       state.error = null;
@@ -74,6 +79,10 @@ const projectSlice = createSlice({
       state.studioId = action.payload;
     },
 
+    setApprovalStatus(state, action) {
+      state.approvalStatus = action.payload;
+    },
+
     setSort(state, action) {
       state.sort = action.payload;
     },
@@ -92,7 +101,7 @@ const projectSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Create project
+      // ========== CREATE PROJECT ==========
       .addCase(createProjectThunk.pending, (state) => {
         state.isCreating = true;
         state.error = null;
@@ -102,14 +111,37 @@ const projectSlice = createSlice({
         state.isCreating = false;
         state.projects.unshift(action.payload);
         state.total += 1;
-        state.successMessage = "Project created successfully";
+        state.successMessage = "Project created as draft. Submit for approval to activate.";
       })
       .addCase(createProjectThunk.rejected, (state, action) => {
         state.isCreating = false;
         state.error = action.payload;
       })
 
-      // Get all projects
+      // ========== SUBMIT FOR APPROVAL ==========
+      .addCase(submitProjectForApprovalThunk.pending, (state) => {
+        state.isSubmitting = true;
+        state.error = null;
+      })
+      .addCase(submitProjectForApprovalThunk.fulfilled, (state, action) => {
+        state.isSubmitting = false;
+        // Update project in list
+        const index = state.projects.findIndex(p => p._id === action.payload._id);
+        if (index !== -1) {
+          state.projects[index] = action.payload;
+        }
+        // Update current project if viewing
+        if (state.currentProject?._id === action.payload._id) {
+          state.currentProject = action.payload;
+        }
+        state.successMessage = "Project submitted for admin approval";
+      })
+      .addCase(submitProjectForApprovalThunk.rejected, (state, action) => {
+        state.isSubmitting = false;
+        state.error = action.payload;
+      })
+
+      // ========== GET ALL PROJECTS ==========
       .addCase(getAllProjectsThunk.pending, (state) => {
         state.isFetching = true;
         state.error = null;
@@ -127,7 +159,7 @@ const projectSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Get project by ID
+      // ========== GET PROJECT BY ID ==========
       .addCase(getProjectByIdThunk.pending, (state) => {
         state.isFetchingDetails = true;
         state.error = null;
@@ -141,7 +173,7 @@ const projectSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Update project
+      // ========== UPDATE PROJECT ==========
       .addCase(updateProjectThunk.pending, (state) => {
         state.isUpdating = true;
         state.error = null;
@@ -161,7 +193,7 @@ const projectSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Delete project
+      // ========== DELETE PROJECT ==========
       .addCase(deleteProjectThunk.pending, (state) => {
         state.isDeleting = true;
         state.error = null;
@@ -190,6 +222,7 @@ export const {
   setProjectType,
   setCountry,
   setStudioId,
+  setApprovalStatus,
   setSort,
   setError,
   clearError,

@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from 'react';
+// src/features/project/pages/CreateProject.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/ui/card';
-import { Button } from '../../../shared/components/ui/button';
-import { Input } from '../../../shared/components/ui/input';
-import { Label } from '../../../shared/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components/ui/select';
-import { PageHeader } from '../../../shared/components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { PageHeader } from '@/shared/components/PageHeader';
 import { useProject } from '../hooks/useProject';
 import { toast } from 'sonner';
+import { useSelector } from 'react-redux';
 
 export default function CreateProject() {
   const navigate = useNavigate();
-  const { createProject, isCreating, error, successMessage, resetState, clearErrorMessage } = useProject();
+  const { createProject, isCreating, error, successMessage, resetState, clearErrorMessage, clearSuccessMessage } = useProject();
+  
+  // Get user's studios from Redux state
+  const user = useSelector((state) => {
+    if (state.auth?.user) return state.auth.user;
+    if (state.user?.user) return state.user.user;
+    if (state.authentication?.user) return state.authentication.user;
+    if (state.user) return state.user;
+    return null;
+  });
 
   const [formData, setFormData] = useState({
     projectName: '',
@@ -29,15 +41,34 @@ export default function CreateProject() {
 
   const [errors, setErrors] = useState({});
 
-  // TODO: Fetch studios from your API
-  const [studios, setStudios] = useState([
-    { _id: '69494aa6df29472c2c6b5d8f', studioName: 'Rainbow Studios', studioCode: 'STO-000016' },
-  ]);
+  // Use useMemo to prevent infinite loops
+  const finalStudios = useMemo(() => {
+    const studios = user?.studios?.filter(s => s.role === 'studio_admin') || [];
+    
+    // TEMPORARY FALLBACK
+    if (studios.length > 0) {
+      return studios;
+    }
+    
+    return [{
+      studioId: '69494aa6df29472c2c6b5d8f',
+      role: 'studio_admin'
+    }];
+  }, [user]);
+
+  // Auto-select studio if only one (runs once)
+  useEffect(() => {
+    if (finalStudios.length === 1 && !formData.studioId) {
+      const studioId = typeof finalStudios[0].studioId === 'object' 
+        ? finalStudios[0].studioId._id || finalStudios[0].studioId.$oid
+        : finalStudios[0].studioId;
+      
+      setFormData(prev => ({ ...prev, studioId }));
+    }
+  }, []); // Empty array - runs only once
 
   useEffect(() => {
-    return () => {
-      resetState();
-    };
+    return () => resetState();
   }, [resetState]);
 
   useEffect(() => {
@@ -50,9 +81,10 @@ export default function CreateProject() {
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
+      clearSuccessMessage();
       navigate('/projects');
     }
-  }, [successMessage, navigate]);
+  }, [successMessage, navigate, clearSuccessMessage]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -82,19 +114,15 @@ export default function CreateProject() {
     if (prepEnd <= prepStart) {
       newErrors.prepEndDate = 'Prep end date must be after prep start date';
     }
-
     if (shootStart <= prepEnd) {
       newErrors.shootStartDate = 'Shoot start date must be after prep end date';
     }
-
     if (shootEnd <= shootStart) {
       newErrors.shootEndDate = 'Shoot end date must be after shoot start date';
     }
-
     if (wrapStart <= shootEnd) {
       newErrors.wrapStartDate = 'Wrap start date must be after shoot end date';
     }
-
     if (wrapEnd <= wrapStart) {
       newErrors.wrapEndDate = 'Wrap end date must be after wrap start date';
     }
@@ -121,15 +149,16 @@ export default function CreateProject() {
 
   return (
     <div className="px-4 pb-8">
-      <PageHeader 
-        icon="Film"
-        title="CREATE NEW PROJECT"
-        
-      />
+      <PageHeader icon="Film" title="CREATE NEW PROJECT" />
+
+      <Alert className="mb-6 bg-blue-50 border-blue-200">
+        <Icons.Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-900">
+          Your project will be created as a <strong>Draft</strong>. You'll need to submit it for admin approval before it becomes active.
+        </AlertDescription>
+      </Alert>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* Project Details */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -139,7 +168,9 @@ export default function CreateProject() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="projectName">Project Name *</Label>
+              <Label htmlFor="projectName">
+                Project Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="projectName"
                 placeholder="Enter project name"
@@ -152,11 +183,12 @@ export default function CreateProject() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="projectType">Project Type *</Label>
+              <Label htmlFor="projectType">
+                Project Type <span className="text-red-500">*</span>
+              </Label>
               <Select 
                 value={formData.projectType} 
-                onValueChange={(value) => handleChange('projectType', value)} 
-                required
+                onValueChange={(value) => handleChange('projectType', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select project type" />
@@ -169,27 +201,46 @@ export default function CreateProject() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="studioId">Studio *</Label>
+              <Label htmlFor="studioId">
+                Studio <span className="text-red-500">*</span>
+              </Label>
               <Select 
                 value={formData.studioId} 
-                onValueChange={(value) => handleChange('studioId', value)} 
-                required
+                onValueChange={(value) => handleChange('studioId', value)}
+                disabled={finalStudios.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select studio" />
+                  <SelectValue placeholder={finalStudios.length === 0 ? "No studios available" : "Select studio"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {studios.map((studio) => (
-                    <SelectItem key={studio._id} value={studio._id}>
-                      {studio.studioName} ({studio.studioCode})
-                    </SelectItem>
-                  ))}
+                  {finalStudios.map((studio, index) => {
+                    const studioId = typeof studio.studioId === 'object' 
+                      ? studio.studioId._id || studio.studioId.$oid
+                      : studio.studioId;
+                    
+                    const studioName = typeof studio.studioId === 'object'
+                      ? studio.studioId.studioName
+                      : 'Rainbow Studios';
+                    
+                    return (
+                      <SelectItem key={studioId || index} value={studioId}>
+                        {studioName}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {finalStudios.length === 0 && (
+                <p className="text-sm text-red-500">
+                  You don't have studio admin access. Please contact your administrator.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country">
+                Country <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="country"
                 placeholder="Enter country"
@@ -203,21 +254,22 @@ export default function CreateProject() {
           </CardContent>
         </Card>
 
-        {/* Overall Dates */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Icons.Calendar className="w-5 h-5" />
-              Overall Dates
+              Production Timeline
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Prep Phase */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Prep Phase</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Prep Phase
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="prepStartDate">Prep Start *</Label>
+                  <Label htmlFor="prepStartDate">Prep Start <span className="text-red-500">*</span></Label>
                   <Input
                     id="prepStartDate"
                     type="date"
@@ -226,9 +278,8 @@ export default function CreateProject() {
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="prepEndDate">Prep End *</Label>
+                  <Label htmlFor="prepEndDate">Prep End <span className="text-red-500">*</span></Label>
                   <Input
                     id="prepEndDate"
                     type="date"
@@ -237,19 +288,19 @@ export default function CreateProject() {
                     required
                     className={errors.prepEndDate ? 'border-red-500' : ''}
                   />
-                  {errors.prepEndDate && (
-                    <p className="text-sm text-red-500">{errors.prepEndDate}</p>
-                  )}
+                  {errors.prepEndDate && <p className="text-sm text-red-500">{errors.prepEndDate}</p>}
                 </div>
               </div>
             </div>
 
             {/* Shoot Phase */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Shoot Phase</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Shoot Phase
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="shootStartDate">Shoot Start *</Label>
+                  <Label htmlFor="shootStartDate">Shoot Start <span className="text-red-500">*</span></Label>
                   <Input
                     id="shootStartDate"
                     type="date"
@@ -258,13 +309,10 @@ export default function CreateProject() {
                     required
                     className={errors.shootStartDate ? 'border-red-500' : ''}
                   />
-                  {errors.shootStartDate && (
-                    <p className="text-sm text-red-500">{errors.shootStartDate}</p>
-                  )}
+                  {errors.shootStartDate && <p className="text-sm text-red-500">{errors.shootStartDate}</p>}
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="shootEndDate">Shoot End *</Label>
+                  <Label htmlFor="shootEndDate">Shoot End <span className="text-red-500">*</span></Label>
                   <Input
                     id="shootEndDate"
                     type="date"
@@ -273,19 +321,19 @@ export default function CreateProject() {
                     required
                     className={errors.shootEndDate ? 'border-red-500' : ''}
                   />
-                  {errors.shootEndDate && (
-                    <p className="text-sm text-red-500">{errors.shootEndDate}</p>
-                  )}
+                  {errors.shootEndDate && <p className="text-sm text-red-500">{errors.shootEndDate}</p>}
                 </div>
               </div>
             </div>
 
             {/* Wrap Phase */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Wrap Phase</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Wrap Phase
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="wrapStartDate">Wrap Start *</Label>
+                  <Label htmlFor="wrapStartDate">Wrap Start <span className="text-red-500">*</span></Label>
                   <Input
                     id="wrapStartDate"
                     type="date"
@@ -294,13 +342,10 @@ export default function CreateProject() {
                     required
                     className={errors.wrapStartDate ? 'border-red-500' : ''}
                   />
-                  {errors.wrapStartDate && (
-                    <p className="text-sm text-red-500">{errors.wrapStartDate}</p>
-                  )}
+                  {errors.wrapStartDate && <p className="text-sm text-red-500">{errors.wrapStartDate}</p>}
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="wrapEndDate">Wrap End *</Label>
+                  <Label htmlFor="wrapEndDate">Wrap End <span className="text-red-500">*</span></Label>
                   <Input
                     id="wrapEndDate"
                     type="date"
@@ -309,18 +354,19 @@ export default function CreateProject() {
                     required
                     className={errors.wrapEndDate ? 'border-red-500' : ''}
                   />
-                  {errors.wrapEndDate && (
-                    <p className="text-sm text-red-500">{errors.wrapEndDate}</p>
-                  )}
+                  {errors.wrapEndDate && <p className="text-sm text-red-500">{errors.wrapEndDate}</p>}
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button type="submit" className="flex-1" disabled={isCreating}>
+          <Button 
+            type="submit" 
+            className="flex-1" 
+            disabled={isCreating || finalStudios.length === 0}
+          >
             {isCreating ? (
               <>
                 <Icons.Loader2 className="w-4 h-4 mr-2 animate-spin" />

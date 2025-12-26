@@ -1,208 +1,209 @@
-import { useDispatch, useSelector } from "react-redux";
-import { useCallback } from "react";
+// src/features/project/hooks/useProject.js
+import { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   createProjectThunk,
+  submitProjectForApprovalThunk,
   getAllProjectsThunk,
   getProjectByIdThunk,
   updateProjectThunk,
   deleteProjectThunk,
-} from "../store/project.thunks";
+} from '../store/project.thunks';
 import {
   resetProjectState,
   clearCurrentProject,
-  clearAllProjects,
-  setPageLimit,
   setCurrentPage,
   setSearch,
   setProjectType,
-  setCountry,
   setStudioId,
+  setApprovalStatus,
   setSort,
   clearError,
   clearSuccessMessage,
-} from "../store/project.slice";
+} from '../store/project.slice';
 
 export const useProject = () => {
   const dispatch = useDispatch();
-  const projectState = useSelector((state) => state.project);
+  const {
+    projects,
+    currentProject,
+    isCreating,
+    isSubmitting,
+    isFetching,
+    isFetchingDetails,
+    isUpdating,
+    isDeleting,
+    error,
+    successMessage,
+    search,
+    projectType,
+    studioId,
+    approvalStatus,
+    sort,
+    page,
+    pages,
+    total,
+    limit,
+  } = useSelector((state) => state.project);
 
-  // Fetch all projects with current filters
-  const fetchProjects = useCallback(() => {
-    const filters = {
-      search: projectState.search,
-      projectType: projectState.projectType,
-      country: projectState.country,
-      studioId: projectState.studioId, // Added studioId filter
-      page: projectState.page,
-      limit: projectState.limit,
-      sort: projectState.sort,
-    };
-
-    // Remove empty filters
-    Object.keys(filters).forEach(key => {
-      if (filters[key] === "" || filters[key] === null || filters[key] === undefined) {
-        delete filters[key];
-      }
-    });
-
+  // Fetch projects with filters
+  const fetchProjects = useCallback((filters = {}) => {
     dispatch(getAllProjectsThunk(filters));
-  }, [
-    dispatch,
-    projectState.search,
-    projectState.projectType,
-    projectState.country,
-    projectState.studioId,
-    projectState.page,
-    projectState.limit,
-    projectState.sort,
-  ]);
+  }, [dispatch]);
 
-  // Create a new project
-  const createProject = useCallback(
-    async (projectData) => {
-      const result = await dispatch(createProjectThunk(projectData));
-      return result;
-    },
-    [dispatch]
-  );
+  // Create project (as draft)
+  const createProject = async (values) => {
+    const result = await dispatch(createProjectThunk(values));
+    return result;
+  };
+
+  // Submit project for approval
+  const submitForApproval = async (id) => {
+    const result = await dispatch(submitProjectForApprovalThunk(id));
+    if (!result.error) {
+      // Refresh the list after successful submission
+      const filters = {
+        search: search || undefined,
+        projectType: projectType || undefined,
+        studioId: studioId || undefined,
+        approvalStatus: approvalStatus || undefined,
+        sort,
+        page,
+        limit,
+      };
+      fetchProjects(filters);
+    }
+    return result;
+  };
 
   // Get project by ID
-  const fetchProjectById = useCallback(
-    (id) => {
-      dispatch(getProjectByIdThunk(id));
-    },
-    [dispatch]
-  );
+  const fetchProjectById = async (id) => {
+    const result = await dispatch(getProjectByIdThunk(id));
+    return result;
+  };
 
-  // Update project
-  const updateProject = useCallback(
-    async (id, projectData) => {
-      const result = await dispatch(updateProjectThunk({ id, values: projectData }));
-      return result;
-    },
-    [dispatch]
-  );
+  // Update project (only for approved projects)
+  const updateProject = async (id, values) => {
+    const result = await dispatch(updateProjectThunk({ id, values }));
+    if (!result.error) {
+      // Refresh the list after successful update
+      const filters = {
+        search: search || undefined,
+        projectType: projectType || undefined,
+        studioId: studioId || undefined,
+        approvalStatus: approvalStatus || undefined,
+        sort,
+        page,
+        limit,
+      };
+      fetchProjects(filters);
+    }
+    return result;
+  };
 
   // Delete project
-  const deleteProject = useCallback(
-    async (id) => {
-      const result = await dispatch(deleteProjectThunk(id));
-      return result;
-    },
-    [dispatch]
-  );
+  const deleteProject = async (id) => {
+    const result = await dispatch(deleteProjectThunk(id));
+    if (!result.error) {
+      // Refresh the list after successful deletion
+      const filters = {
+        search: search || undefined,
+        projectType: projectType || undefined,
+        studioId: studioId || undefined,
+        approvalStatus: approvalStatus || undefined,
+        sort,
+        page,
+        limit,
+      };
+      fetchProjects(filters);
+    }
+    return result;
+  };
 
-  // Reset state
-  const resetState = useCallback(() => {
+  // Filter updates
+  const updateSearch = (value) => {
+    dispatch(setSearch(value));
+  };
+
+  const updateProjectType = (value) => {
+    dispatch(setProjectType(value));
+  };
+
+  const updateStudioId = (value) => {
+    dispatch(setStudioId(value));
+  };
+
+  const updateApprovalStatus = (value) => {
+    dispatch(setApprovalStatus(value));
+  };
+
+  const updateSort = (value) => {
+    dispatch(setSort(value));
+  };
+
+  const updatePage = (value) => {
+    dispatch(setCurrentPage(value));
+  };
+
+  // State management
+  const resetState = () => {
     dispatch(resetProjectState());
-  }, [dispatch]);
+  };
 
-  // Clear current project
-  const clearCurrent = useCallback(() => {
+  const clearCurrentProjectData = () => {
     dispatch(clearCurrentProject());
-  }, [dispatch]);
+  };
 
-  // Clear all projects
-  const clearAll = useCallback(() => {
-    dispatch(clearAllProjects());
-  }, [dispatch]);
-
-  // Set filters
-  const updateSearch = useCallback(
-    (search) => {
-      dispatch(setSearch(search));
-    },
-    [dispatch]
-  );
-
-  const updateProjectType = useCallback(
-    (type) => {
-      dispatch(setProjectType(type));
-    },
-    [dispatch]
-  );
-
-  const updateCountry = useCallback(
-    (country) => {
-      dispatch(setCountry(country));
-    },
-    [dispatch]
-  );
-
-  const updateStudioId = useCallback(
-    (studioId) => {
-      dispatch(setStudioId(studioId));
-    },
-    [dispatch]
-  );
-
-  const updateSort = useCallback(
-    (sort) => {
-      dispatch(setSort(sort));
-    },
-    [dispatch]
-  );
-
-  const updatePage = useCallback(
-    (page) => {
-      dispatch(setCurrentPage(page));
-    },
-    [dispatch]
-  );
-
-  const updateLimit = useCallback(
-    (limit) => {
-      dispatch(setPageLimit(limit));
-    },
-    [dispatch]
-  );
-
-  const clearErrorMessage = useCallback(() => {
+  const clearErrorMessage = () => {
     dispatch(clearError());
-  }, [dispatch]);
+  };
 
-  const clearSuccess = useCallback(() => {
+  const clearSuccessMsg = () => {
     dispatch(clearSuccessMessage());
-  }, [dispatch]);
+  };
 
   return {
     // State
-    projects: projectState.projects,
-    currentProject: projectState.currentProject,
-    isCreating: projectState.isCreating,
-    isFetching: projectState.isFetching,
-    isFetchingDetails: projectState.isFetchingDetails,
-    isUpdating: projectState.isUpdating,
-    isDeleting: projectState.isDeleting,
-    error: projectState.error,
-    successMessage: projectState.successMessage,
-    search: projectState.search,
-    projectType: projectState.projectType,
-    country: projectState.country,
-    studioId: projectState.studioId, // Added studioId
-    sort: projectState.sort,
-    total: projectState.total,
-    page: projectState.page,
-    pages: projectState.pages,
-    limit: projectState.limit,
+    projects,
+    currentProject,
+    isCreating,
+    isSubmitting,
+    isFetching,
+    isFetchingDetails,
+    isUpdating,
+    isDeleting,
+    error,
+    successMessage,
+    search,
+    projectType,
+    studioId,
+    approvalStatus,
+    sort,
+    page,
+    pages,
+    total,
+    limit,
 
     // Actions
-    fetchProjects,
     createProject,
+    submitForApproval,
+    fetchProjects,
     fetchProjectById,
     updateProject,
     deleteProject,
-    resetState,
-    clearCurrent,
-    clearAll,
+
+    // Filters
     updateSearch,
     updateProjectType,
-    updateCountry,
-    updateStudioId, // Added updateStudioId
+    updateStudioId,
+    updateApprovalStatus,
     updateSort,
     updatePage,
-    updateLimit,
+
+    // State management
+    resetState,
+    clearCurrentProjectData,
     clearErrorMessage,
-    clearSuccess,
+    clearSuccessMessage: clearSuccessMsg,
   };
 };
