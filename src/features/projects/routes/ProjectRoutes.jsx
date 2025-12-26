@@ -3,12 +3,13 @@ import ProjectAppsRoutes from './ProjectAppsRoutes';
 import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
 
 // Dashboard and Main Pages
-import { ProjectInformationDashboard } from '../pages/ProjectList'
-import { CreateProject } from '../components/CreateProject';
+import ProjectList  from '../pages/ProjectList'
+import  CreateProject  from '../components/CreateProject';
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import  StudioAnalytics  from '../components/StudioAnalytics';
 import  ProjectDetails  from '../pages/ProjectDetails';
+import EditProject from '../components/EditProject';
 
 // const ProjectList = lazy(() => import('../pages/ProjectList'));
 // const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
@@ -32,11 +33,12 @@ const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 const ProjectRoutes = {
     path: '/projects',
     children: [
-        { index: true, element: <ProjectInformationDashboard /> },
+        { index: true, element: <ProjectList /> },
         { path: 'create', element: <CreateProject /> },
         { path: 'reports', element: <ViewReports /> },
         { path: 'team', element: <ManageTeam /> },
         { path: 'analytics', element: <StudioAnalytics /> },
+        { path: ':id/edit', element: <EditProject /> },
         { path: 'details/:projectId', element: <ProjectDetails /> },
         {
             path: ":projectName",

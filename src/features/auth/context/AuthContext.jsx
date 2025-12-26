@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ROUTES } from "../../../constants/apiEndpoints";
+import { API_ROUTE } from "../../../constants/apiEndpoints";
 import { authService } from "../services/auth.service";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
 
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
           } else {
             // No user found, redirect to login if not on public route
             if (!isPublicRoute(location.pathname)) {
-              navigate(ROUTES.AUTH.LOGIN, { replace: true });
+              navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
               setIsAuthenticated(false);
             }
           }
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           // Only redirect if not already on a public route
           if (!isPublicRoute(location.pathname)) {
-            navigate(ROUTES.AUTH.LOGIN, { replace: true });
+            navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
           }
         } finally {
           setInitialLoading(false);
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false)
       setIsAuthenticated(false);
       setUser(null);
-      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+      navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
     }
   }, [navigate]);
 

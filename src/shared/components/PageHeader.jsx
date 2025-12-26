@@ -1,8 +1,10 @@
+import React from "react";
 import * as Icons from "lucide-react";
 import UrlBasedBreadcrumbs from "./UrlBasedBreadcrumb";
 import { cn } from "@/shared/config/utils";
+import { Button } from "./ui/button";
 
-export function PageHeader({ title, subtitle, icon }) {
+export function PageHeader({ title, subtitle, icon, primaryAction, extraActions }) {
   // ✅ Convert main icon string → component
   const IconComponent = icon && Icons[icon] ? Icons[icon] : null;
 
@@ -33,6 +35,24 @@ export function PageHeader({ title, subtitle, icon }) {
 
               <UrlBasedBreadcrumbs />
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            {extraActions && <div>{extraActions}</div>}
+            
+            {primaryAction && (
+              <Button
+                onClick={primaryAction.clickAction}
+                className="font-bold"
+                size="lg"
+              >
+                {primaryAction.icon && Icons[primaryAction.icon] && (
+                  React.createElement(Icons[primaryAction.icon], { className: "w-4 h-4 mr-2" })
+                )}
+                {primaryAction.label}
+              </Button>
+            )}
           </div>
         </div>
       </div>
