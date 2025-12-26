@@ -3,6 +3,8 @@ import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { isDevelopment } from "../../features/auth/config/axiosConfig";
+import CrewDashboard from "../../features/crew/pages/CrewDashboard";
+import StudioDashboard from "../../features/studio/pages/StudioDashboard";
 
 const RoleBasedDashboard = () => {
   const { user } = useAuth();
@@ -26,16 +28,13 @@ const RoleBasedDashboard = () => {
   }, [types]);
 
   if (types.includes("crew")) {
-    return <Navigate to="/crew" replace />;
+    return <CrewDashboard />
   }
   if (types.includes("studio_admin")) {
-    return <Navigate to="/studio" replace />;
+    return <StudioDashboard />
+  } else {
+    return <StudioDashboard />
   }
-  if (types.includes("agency_admin")) {
-    return <Navigate to="/agency" replace />;
-  }
-
-  return <Navigate to="/auth/login" replace />;
 };
 
 export default RoleBasedDashboard;

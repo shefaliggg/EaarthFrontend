@@ -10,8 +10,12 @@ export default function RootLayout() {
 
   const isAuthRoute = pathname.startsWith("/auth") || pathname === "/invite/verify";
 
-  if (!user && !isAuthRoute && !isAuthenticated) {
+  if (!isAuthenticated && !isAuthRoute) {
     return <Navigate to="/auth/login" replace />;
+  }
+
+  if (isAuthenticated && user && isAuthRoute) {
+    return <Navigate to="/home" replace />;
   }
 
   return <Outlet />;

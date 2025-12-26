@@ -37,7 +37,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const init = async () => {
-      // Skip auth check for public routes
       if (isPublicRoute(location.pathname)) {
         setInitialLoading(false);
         setLoading(false);

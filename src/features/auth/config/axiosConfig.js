@@ -41,12 +41,12 @@ axiosConfig.interceptors.response.use(
 
   async (error) => {
     const originalRequest = error.config;
-
+    const errorCode = error.response?.data?.errorCode;
     // ACCESS TOKEN EXPIRED → REFRESH
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refreshtoken")
+      errorCode === "ACCESS_TOKEN_EXPIRED" &&
+      !originalRequest._retry
     ) {
       originalRequest._retry = true;
 
