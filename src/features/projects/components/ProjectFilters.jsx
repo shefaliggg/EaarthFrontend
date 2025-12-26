@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 export function ProjectFilters({
   search,
   onSearchChange,
+  approvalStatus,
+  onApprovalStatusChange,
   studioId,
   onStudioChange,
   projectType,
@@ -32,8 +34,22 @@ export function ProjectFilters({
           </div>
         </div>
 
-        {/* Three Filters - Takes remaining 50% width */}
+        {/* Four Filters - Takes remaining 50% width */}
         <div className="flex-1 flex items-center gap-3">
+          {/* Approval Status Filter */}
+          <Select value={approvalStatus || 'all'} onValueChange={onApprovalStatusChange}>
+            <SelectTrigger className="h-10 rounded-full border-2">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
           {/* Studio Filter */}
           <Select value={studioId || 'all'} onValueChange={onStudioChange}>
             <SelectTrigger className="h-10 rounded-full border-2">

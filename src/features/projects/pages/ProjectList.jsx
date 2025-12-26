@@ -4,11 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import { ProjectCard } from '../components/ProjectCard';
+import { ProjectFilters } from '../components/ProjectFilters';
 import { useProject } from '../hooks/useProject';
 import { toast } from 'sonner';
 import {
@@ -54,6 +53,7 @@ export default function ProjectList() {
     search: '',
     approvalStatus: 'all',
     projectType: 'all',
+    studioId: 'all',
   });
 
   // Dialogs
@@ -66,12 +66,13 @@ export default function ProjectList() {
       search: filters.search || undefined,
       approvalStatus: filters.approvalStatus === 'all' ? undefined : filters.approvalStatus,
       projectType: filters.projectType === 'all' ? undefined : filters.projectType,
+      studioId: filters.studioId === 'all' ? undefined : filters.studioId,
       page,
       limit: 10,
       sort,
     };
     fetchProjects(apiFilters);
-  }, [page, sort]);
+  }, [page, sort, filters]);
 
   useEffect(() => {
     if (error) {
@@ -86,19 +87,6 @@ export default function ProjectList() {
       clearSuccessMessage();
     }
   }, [successMessage, clearSuccessMessage]);
-
-  const handleApplyFilters = () => {
-    updatePage(1); // Reset to first page
-    const apiFilters = {
-      search: filters.search || undefined,
-      approvalStatus: filters.approvalStatus === 'all' ? undefined : filters.approvalStatus,
-      projectType: filters.projectType === 'all' ? undefined : filters.projectType,
-      page: 1,
-      limit: 10,
-      sort,
-    };
-    fetchProjects(apiFilters);
-  };
 
   const handleProjectOpen = (projectId) => {
     navigate(`/projects/${projectId}`);
@@ -139,6 +127,9 @@ export default function ProjectList() {
     pending: projects.filter(p => p.approvalStatus === 'pending').length,
     rejected: projects.filter(p => p.approvalStatus === 'rejected').length,
   };
+
+  // Extract unique studios from projects (if you have studios data, pass it here)
+  const studios = []; // Replace with your actual studios data if available
 
   return (
     <div className="px-4 pb-8">
@@ -182,76 +173,25 @@ export default function ProjectList() {
         />
       </div>
 
-      {/* Search and Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="md:col-span-2">
-              <Input
-                placeholder="Search projects by name, code, or country..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="w-full"
-              />
-            </div>
-
-            <Select 
-              value={filters.approvalStatus} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, approvalStatus: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Approval Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select 
-              value={filters.projectType} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, projectType: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Project Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Feature Film">Feature Film</SelectItem>
-                <SelectItem value="Television">Television</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-3">
-            <Button onClick={handleApplyFilters} disabled={isFetching}>
-              {isFetching ? (
-                <>
-                  <Icons.Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                'Apply Filters'
-              )}
-            </Button>
-
-            <Select value={sort} onValueChange={updateSort}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="name">Name (A-Z)</SelectItem>
-                <SelectItem value="prepStartDate">Start Date</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters */}
+      {/* Filters */}
+<Card className="mb-6">
+  <CardContent className="">
+    <ProjectFilters
+      search={filters.search}
+      onSearchChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+      approvalStatus={filters.approvalStatus}
+      onApprovalStatusChange={(value) => setFilters(prev => ({ ...prev, approvalStatus: value }))}
+      studioId={filters.studioId}
+      onStudioChange={(value) => setFilters(prev => ({ ...prev, studioId: value }))}
+      projectType={filters.projectType}
+      onProjectTypeChange={(value) => setFilters(prev => ({ ...prev, projectType: value }))}
+      sort={sort}
+      onSortChange={updateSort}
+      studios={studios}
+    />
+  </CardContent>
+</Card>
 
       {/* Projects List */}
       {isFetching && projects.length === 0 ? (
