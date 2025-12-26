@@ -144,20 +144,20 @@ export function ProjectCard({
             </div>
           </div>
 
-          {/* Rejection Reason Alert */}
+          {/* Rejection Reason Alert - UPDATED WITH DARK MODE */}
           {approvalStatus === 'rejected' && rejectionReason && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-950/30 dark:border-red-900/50">
               <div className="flex items-start gap-2">
-                <Icons.AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                <Icons.AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900 mb-1">Rejection Reason:</p>
-                  <p className="text-sm text-red-700">{rejectionReason}</p>
+                  <p className="text-sm font-medium text-red-900 dark:text-red-300 mb-1">Rejection Reason:</p>
+                  <p className="text-sm text-red-700 dark:text-red-400">{rejectionReason}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Project Info */}
+          {/* Project Info - UPDATED WITH DARK MODE */}
           <div className="flex items-center justify-between text-sm pt-3 border-t border-border">
             <span className="text-muted-foreground">
               Created: {new Date(createdAt).toLocaleDateString()}
