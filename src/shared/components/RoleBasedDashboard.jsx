@@ -1,40 +1,38 @@
-import { useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { toast } from "sonner";
+import { lazy, Suspense } from "react";
 import { useAuth } from "../../features/auth/context/AuthContext";
-import { isDevelopment } from "../../features/auth/config/axiosConfig";
-import CrewDashboard from "../../features/crew/pages/CrewDashboard";
-import StudioDashboard from "../../features/studio/pages/StudioDashboard";
+import LoadingScreen from "./LoadingScreen";
+
+const CrewDashboard = lazy(() => import("../../features/crew/pages/CrewDashboard"));
+const StudioDashboard = lazy(() => import("../../features/studio/pages/StudioDashboard"));
+const NoAffiliationDashboard = lazy(() => import("../../features/auth/pages/NoAffiliationDashboard"));
+
 
 const RoleBasedDashboard = () => {
   const { user } = useAuth();
-  const types = user?.userType || [];
+  const userType = user?.userType ?? "";
 
-  const validRoles = ["studio_admin", "agency_admin", "crew"];
+  const renderDashboard = () => {
+    switch (userType) {
+      case "crew":
+        return <CrewDashboard />;
 
-  useEffect(() => {
-    if (!types.length) return;
+      case "studio_admin":
+        return <StudioDashboard />;
 
-    const isValid = validRoles.some(role => types.includes(role));
+      case "agency_admin":
+        return <StudioDashboard />;
 
-    if (!isValid) {
-      const msg = "Unknown user role.";
-      const desc = "The application has detected an unknown user role.";
-
-      isDevelopment
-        ? toast.warning("Dev Mode:: " + msg, { description: desc })
-        : toast.error(msg, { description: desc });
+      case "":
+      default:
+        return <NoAffiliationDashboard />;
     }
-  }, [types]);
+  };
 
-  if (types.includes("crew")) {
-    return <CrewDashboard />
-  }
-  if (types.includes("studio_admin")) {
-    return <StudioDashboard />
-  } else {
-    return <StudioDashboard />
-  }
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      {renderDashboard()}
+    </Suspense>
+  );
 };
 
 export default RoleBasedDashboard;
