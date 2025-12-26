@@ -9,6 +9,7 @@ import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import  StudioAnalytics  from '../components/StudioAnalytics';
 import  ProjectDetails  from '../pages/ProjectDetails';
+import EditProject from '../components/EditProject';
 
 // const ProjectList = lazy(() => import('../pages/ProjectList'));
 // const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
@@ -37,6 +38,7 @@ const ProjectRoutes = {
         { path: 'reports', element: <ViewReports /> },
         { path: 'team', element: <ManageTeam /> },
         { path: 'analytics', element: <StudioAnalytics /> },
+        { path: ':id/edit', element: <EditProject /> },
         { path: 'details/:projectId', element: <ProjectDetails /> },
         {
             path: ":projectName",

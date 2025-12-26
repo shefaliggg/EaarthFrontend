@@ -1,5 +1,6 @@
 // src/features/project/components/ProjectCard.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -9,12 +10,13 @@ import ActionsMenu from '@/shared/components/ActionsMenu';
 export function ProjectCard({
   project,
   onOpen,
-  onEdit,
   onDelete,
   onSubmitForApproval,
   isSubmitting = false,
   isDeleting = false,
 }) {
+  const navigate = useNavigate();
+  
   const {
     _id,
     projectName,
@@ -33,6 +35,10 @@ export function ProjectCard({
   const canDelete = approvalStatus === 'draft' || approvalStatus === 'rejected';
   const canSubmit = approvalStatus === 'draft' || approvalStatus === 'rejected';
   const canView = approvalStatus === 'approved';
+
+  const handleEdit = () => {
+    navigate(`/projects/${_id}/edit`);
+  };
 
   return (
     <Card className="transition-all duration-200 hover:shadow-lg">
@@ -117,7 +123,7 @@ export function ProjectCard({
                   canEdit && {
                     label: "Edit Project",
                     icon: "Edit",
-                    onClick: () => onEdit(_id),
+                    onClick: handleEdit,
                     separatorBefore: canView,
                   },
                   canSubmit && {
