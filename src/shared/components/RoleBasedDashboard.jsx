@@ -22,7 +22,7 @@ const RoleBasedDashboard = () => {
       case "agency_admin":
         return <StudioDashboard />;
 
-      case "":
+      case "none":
       default:
         return <NoAffiliationDashboard />;
     }
