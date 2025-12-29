@@ -85,8 +85,8 @@ export const agencyValidationSchema = Yup.object().shape({
 });
 
 export const userValidationSchema = Yup.object().shape({
-  firstName: Yup.string().trim().required("First name is required"),
-  lastName: Yup.string().trim().required("Last name is required"),
+  firstName: Yup.string().trim().required("Legal first name is required"),
+  lastName: Yup.string().trim().required("Legal last name is required"),
   termsAgreed: termsValidation,
 });
 

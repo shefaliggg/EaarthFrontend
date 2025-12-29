@@ -85,24 +85,24 @@ export const UploadDocumentModal = ({ isOpen, onClose, onUpload }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">First Name</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Legal First Name</label>
             <input
               type="text"
               value={uploadForm.firstName}
               onChange={(e) => setUploadForm({ ...uploadForm, firstName: e.target.value.toUpperCase() })}
               className="w-full px-4 py-2.5 bg-input border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary text-foreground"
-              placeholder="FIRST NAME"
+              placeholder="LEGAL FIRST NAME"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Last Name</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Legal Last Name</label>
             <input
               type="text"
               value={uploadForm.lastName}
               onChange={(e) => setUploadForm({ ...uploadForm, lastName: e.target.value.toUpperCase() })}
               className="w-full px-4 py-2.5 bg-input border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary text-foreground"
-              placeholder="LAST NAME"
+              placeholder="LEGAL LAST NAME"
             />
           </div>
 

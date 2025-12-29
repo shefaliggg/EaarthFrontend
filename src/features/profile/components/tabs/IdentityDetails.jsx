@@ -16,7 +16,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
           />
           
           <Field 
-            label="FIRST NAME" 
+            label="LEGAL FIRST NAME" 
             value={profile.firstName} 
             onChange={(e) => setProfile({ ...profile, firstName: e.target.value.toUpperCase() })} 
             isEditing={isEditing} 
@@ -24,7 +24,7 @@ export default function IdentityDetails({ profile, setProfile, isEditing, isDark
           />
           
           <Field 
-            label="LAST NAME" 
+            label="LEGAL LAST NAME" 
             value={profile.lastName} 
             onChange={(e) => setProfile({ ...profile, lastName: e.target.value.toUpperCase() })} 
             isEditing={isEditing} 
