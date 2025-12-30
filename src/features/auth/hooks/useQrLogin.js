@@ -25,9 +25,13 @@ export function useQrLogin({ type = "web" }) {
   const qrGenerateMethod =
     type === "web" ? authService.generateWebQr : authService.generateMobileQr;
 
+  /**
+   * Handle QR approval from socket or polling
+   */
   const handleQrApproval = useCallback(
     async (tokenData) => {
       try {
+        // tokenData must include accessToken, refreshToken, userId
         const newUser = await authService.getUserAndSetCookies(tokenData);
         updateUser(newUser);
 
@@ -38,22 +42,29 @@ export function useQrLogin({ type = "web" }) {
 
         navigate("/home");
       } catch (err) {
-        setError(err.message);
+        console.error("QR approval failed:", err);
+        setError(err.message || "Failed to approve QR login");
+        toast.error(err.message || "Failed to approve QR login");
       }
     },
     [updateUser, navigate]
   );
 
-  // fallback
+  /**
+   * Fallback polling if socket fails
+   */
   const startPolling = useCallback(
     (qrId) => {
-      if (pollRef.current) return; // prevent duplicate polling
+      if (pollRef.current) return;
 
-      console.log("⚠️ Starting fallback polling...");
+      console.log("⚠️ Starting fallback polling for QR:", qrId);
 
       pollRef.current = setInterval(async () => {
         try {
           const status = await authService.getQrStatus(qrId);
+
+          if (!status) return;
+
           console.log("📡 Polling result:", status);
 
           if (status.status === "approved") {
@@ -69,30 +80,35 @@ export function useQrLogin({ type = "web" }) {
             setQrData((prev) => ({ ...prev, status: "expired" }));
           }
         } catch (err) {
-          console.log("Polling error:", err);
+          console.error("Polling error:", err);
         }
       }, 4000);
     },
     [handleQrApproval]
   );
 
+  /**
+   * Generate QR (web or mobile)
+   */
   const generateQr = useCallback(async () => {
+    // Cleanup previous connections
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
-
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
+
     setLoading(true);
     setError(null);
     setQrData(null);
 
     try {
       const data = await qrGenerateMethod();
-      console.log("QR response:", data);
+
+      if (!data.qrId) throw new Error("Invalid QR data returned from server");
 
       setQrData({
         qrId: data.qrId,
@@ -101,6 +117,7 @@ export function useQrLogin({ type = "web" }) {
         status: "pending",
       });
 
+      // Initialize socket
       const socket = io(baseURL, {
         transports: ["websocket"],
         path: "/socket.io/",
@@ -115,18 +132,19 @@ export function useQrLogin({ type = "web" }) {
       });
 
       socket.on("connect_error", (err) => {
-        console.log("❌ Socket connect error:", err);
+        console.warn("❌ Socket connection error:", err.message);
         startPolling(data.qrId);
       });
 
       socket.on("disconnect", () => {
-        console.log("⚠️ Socket disconnected");
+        console.warn("⚠️ Socket disconnected, fallback to polling");
         startPolling(data.qrId);
       });
 
+      // Web QR approval event
       if (type === "web") {
         socket.on("qr:approved", (tokenData) => {
-          console.log("QR approved via socket");
+          console.log("✅ QR approved via socket:", tokenData);
           if (pollRef.current) {
             clearInterval(pollRef.current);
             pollRef.current = null;
@@ -135,24 +153,28 @@ export function useQrLogin({ type = "web" }) {
         });
       }
 
+      // Mobile QR sync event
       if (type === "mobile") {
-        socket.on("qr:mobile-approved", (tokenData) => {
+        socket.on("qr:mobile-approved", () => {
           toast.success("Login Synced", {
-            description:
-              "Your mobile device successfully logged into your web account.",
+            description: "Mobile device successfully logged into web account",
           });
         });
       }
+
       setLoading(false);
       return data;
     } catch (err) {
-      console.log("QR Error:", err);
-      setError(err.message);
+      console.error("QR generation error:", err);
+      const message =
+        err.response?.data?.message || err.message || "Failed to generate QR";
+      setError(message);
+      toast.error(message);
       setLoading(false);
     }
   }, [qrGenerateMethod, type, startPolling, handleQrApproval, baseURL]);
 
-  // cleanup
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (socketRef.current) {
@@ -160,7 +182,6 @@ export function useQrLogin({ type = "web" }) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
-
       if (pollRef.current) {
         console.log("🧹 Clearing polling interval...");
         clearInterval(pollRef.current);

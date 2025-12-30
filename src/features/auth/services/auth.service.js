@@ -74,35 +74,44 @@ export const authService = {
   /**
    * Generate QR for web login
    */
-  generateWebQr: async () => {
-    const { data } = await axiosConfig.post("/auth/qr/generate/web");
-    
-    if (!data?.success) {
-      throw new Error(data?.message || "Failed to generate QR");
-    }
-    
-    return data?.data || data;
-  },
-
   /**
-   * Generate QR for mobile login
-   */
-  generateMobileQr: async () => {
-    const { data } = await axiosConfig.post("/auth/qr/generate/mobile");
-    
-    if (!data?.success) {
-      throw new Error(data?.message || "Failed to generate QR");
-    }
-    
-    return data?.data || data;
-  },
+ * Generate QR for web login
+ */
+generateWebQr: async () => {
+  try {
+    const { data } = await axiosConfig.get("/auth/qr-code/web/init"); // must match backend
+    return {
+      qrId: data.qrId,
+      expiresAt: data.expiresAt,
+      socketRoom: data.socketRoom,
+    };
+  } catch (err) {
+    throw new Error(err.response?.data?.message || "Failed to generate QR.");
+  }
+},
+
+/**
+ * Generate QR for mobile login
+ */
+generateMobileQr: async () => {
+  try {
+    const { data } = await axiosConfig.get("/auth/qr-code/mobile/init"); // must match backend
+    return {
+      qrId: data.qrId,
+      expiresAt: data.expiresAt,
+      socketRoom: data.socketRoom,
+    };
+  } catch (err) {
+    throw new Error(err.response?.data?.message || "Failed to generate QR.");
+  }
+},
 
   /**
    * Get QR status (for polling fallback)
    */
   getQrStatus: async (qrId) => {
     const { data } = await axiosConfig.get(`/auth/qr/status/${qrId}`);
-    return data?.data || data;
+    return data;
   },
 };
 

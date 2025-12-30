@@ -4,7 +4,7 @@ import { Bot, User, X, ArrowRight, Loader2, Sparkles, BotIcon } from "lucide-rea
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { cn } from "@/shared/config/utils";
-import { Input } from "../../../../shared/components/ui/input";
+import { Input } from "../../../shared/components/ui/input";
 
 export default function AiChatWidget() {
     const [open, setOpen] = useState(false);
