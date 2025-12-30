@@ -1,51 +1,64 @@
-import { useState, useCallback } from 'react';
-import { authService } from '../services/auth.service';
+// src/features/auth/hooks/useLogin.js
+import { useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginUserThunk } from "../store/user.thunks";
+import { clearUserError } from "../store/user.slice";
+import { toast } from "sonner";
 
-export const useLogin = (onSuccess, onError) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export const useLogin = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { isLoggingIn, error } = useSelector((state) => state.user);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (e) => {
+    if (e) e.preventDefault();
+    
+    // Validate inputs
     if (!email || !password) {
-      setError('Email and password are required');
-      return false;
+      toast.error("Please fill in all fields");
+      return;
     }
 
-    setError('');
-    setLoading(true);
+    // Clear any previous errors
+    dispatch(clearUserError());
 
     try {
-      const response = await authService.login({ 
-        email, 
-        password, 
-        rememberMe 
-      });
+      const resultAction = await dispatch(
+        loginUserThunk({ email, password, rememberMe })
+      );
 
-      if (response?.success) {
-        onSuccess?.({ 
-          email, 
-          rememberMe,
-          otpSend: response.data?.otpSend,
-          otp: response.data?.otp // only in dev mode
+      if (loginUserThunk.fulfilled.match(resultAction)) {
+        const response = resultAction.payload;
+        
+        console.log("✅ Login successful, navigating to OTP");
+
+        // Navigate to OTP screen with required state
+        navigate("/auth/otp-verification", {
+          state: {
+            email: email.toLowerCase().trim(),
+            password, // Keep password for resend OTP
+            rememberMe,
+            otpSend: response?.data?.otpSend || false,
+            devOtp: response?.data?.otp, // Only in development
+          },
         });
-
-        return true;
+      } else {
+        // Handle error from thunk
+        const errorMessage = resultAction.payload || "Login failed";
+        toast.error(errorMessage);
       }
-
-      return false;
     } catch (err) {
-      const errorMsg = err?.message || 'Login failed. Please try again.';
-      setError(errorMsg);
-      onError?.(errorMsg);
-      return false;
-    } finally {
-      setLoading(false);
+      console.error("Login error:", err);
+      toast.error(err.message || "An error occurred during login");
     }
-  }, [email, password, rememberMe, onSuccess, onError]);
+  }, [dispatch, email, password, rememberMe, navigate]);
 
   return {
     email,
@@ -56,9 +69,10 @@ export const useLogin = (onSuccess, onError) => {
     setShowPassword,
     rememberMe,
     setRememberMe,
-    loading,
+    loading: isLoggingIn,
     error,
-    setError,
     handleSubmit,
   };
 };
+
+export default useLogin;

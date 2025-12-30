@@ -1,119 +1,118 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+// src/features/auth/context/AuthContext.jsx
+import {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
 import { API_ROUTE } from "../../../constants/apiEndpoints";
-import { authService } from "../services/auth.service";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
 
 const AuthContext = createContext(null);
 
+const PUBLIC_ROUTES = [
+  "/auth/login",
+  "/auth/temp-login",
+  "/auth/set-password",
+  "/auth/upload-id",
+  "/auth/live-photo",
+  "/auth/identity-verification",
+  "/auth/terms",
+  "/auth/otp-verification",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/result",
+  "/invite/verify",
+];
+
 export const AuthProvider = ({ children }) => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [user, setUser] = useState(null);
+  const { currentUser, isAuthenticated, isFetching } = useSelector(
+    (state) => state.user
+  );
+
   const [initialLoading, setInitialLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const publicRoutes = [
-    "/auth/login",
-    "/auth/temp-login",
-    "/auth/set-password",
-    "/auth/upload-id",
-    "/auth/live-photo",
-    "/auth/identity-verification",
-    "/auth/terms",
-    "/auth/otp-verification",
-    "/auth/forgot-password",
-    "/auth/reset-password",
-    "/auth/verify-email",
-    "/auth/result",
-    "/invite/verify",
-  ];
+  const isPublicRoute = useCallback(
+    (pathname) => PUBLIC_ROUTES.some((route) => pathname.startsWith(route)),
+    []
+  );
 
-  const isPublicRoute = useCallback((pathname) => {
-    return publicRoutes.some(route => pathname.startsWith(route));
-  }, []);
-
+  /* -------------------------------------------------------------------------- */
+  /*                            INITIAL AUTH CHECK                              */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
-    const init = async () => {
-      if (isPublicRoute(location.pathname)) {
+    const initAuth = async () => {
+      try {
+        await dispatch(getCurrentUserThunk()).unwrap();
+      } catch {
+        // silent fail → handled by route guard
+      } finally {
         setInitialLoading(false);
-        setLoading(false);
-        return;
-      }
-
-      // Only fetch user if not already loaded
-      if (!user) {
-        try {
-          const loggedInUser = await authService.getCurrentUser();
-          if (loggedInUser) {
-            setUser(loggedInUser);
-            setIsAuthenticated(true);
-            console.log("✅ User authenticated:", loggedInUser.email);
-            if (isPublicRoute(location.pathname)) {
-              navigate("/home", { replace: true });
-            }
-          } else {
-            // No user found, redirect to login if not on public route
-            if (!isPublicRoute(location.pathname)) {
-              navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
-              setIsAuthenticated(false);
-            }
-          }
-        } catch (err) {
-          // Error fetching user - likely 401 (not authenticated)
-          console.log("ℹ️ User not authenticated");
-          setUser(null);
-          setIsAuthenticated(false);
-          // Only redirect if not already on a public route
-          if (!isPublicRoute(location.pathname)) {
-            navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
-          }
-        } finally {
-          setInitialLoading(false);
-          setLoading(false);
-        }
-      } else {
-        setInitialLoading(false);
-        setLoading(false);
       }
     };
 
-    init();
-  }, [location.pathname, user, navigate, isPublicRoute]);
+    initAuth();
+  }, [dispatch]);
 
+  /* -------------------------------------------------------------------------- */
+  /*                              ROUTE GUARD                                   */
+  /* -------------------------------------------------------------------------- */
+  useEffect(() => {
+    if (initialLoading) return;
+
+    const isPublic = isPublicRoute(location.pathname);
+
+    if (!isAuthenticated && !isPublic) {
+      navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
+    }
+
+    if (isAuthenticated && isPublic) {
+      navigate("/home", { replace: true });
+    }
+  }, [
+    isAuthenticated,
+    location.pathname,
+    initialLoading,
+    navigate,
+    isPublicRoute,
+  ]);
+
+  /* -------------------------------------------------------------------------- */
+  /*                                  LOGOUT                                    */
+  /* -------------------------------------------------------------------------- */
   const logout = useCallback(async () => {
     try {
-      setLoading(true)
-      await authService.logout();
+      await dispatch(logoutUserThunk()).unwrap();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      setLoading(false)
-      setIsAuthenticated(false);
-      setUser(null);
       navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
     }
-  }, [navigate]);
+  }, [dispatch, navigate]);
 
+  /* ---------------------------- GLOBAL LOGOUT ---------------------------- */
   useEffect(() => {
     setLogoutFunction(logout);
   }, [logout]);
 
-  const updateUser = (newUserData) => {
-    setUser((prev) => ({ ...prev, ...newUserData }));
-  };
-
   return (
     <AuthContext.Provider
       value={{
-        user,
-        logout,
-        updateUser,
-        loading,
+        user: currentUser,
         isAuthenticated,
+        loading: isFetching,
         initialLoading,
+        logout,
       }}
     >
       {children}
@@ -121,4 +120,12 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+};
+
+export default AuthContext;

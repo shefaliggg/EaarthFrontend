@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Info, Loader } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useOTPVerification } from '../hooks/useOTPVerification';
-import { useAuth } from '../context/AuthContext';
+// src/features/auth/pages/OTPVerificationPage.jsx
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, Info, Loader } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useOTPVerification } from "../hooks/useOTPVerification";
+import { useAuth } from "../context/AuthContext";
 import eaarthLogo from "../../../assets/eaarth.webp";
 import { Input } from "../../../shared/components/ui/input";
 
@@ -17,7 +18,7 @@ export const OTPVerificationPage = () => {
   const [devOtp, setDevOtp] = useState(location.state?.otp || null);
 
   useEffect(() => {
-    if (!email) navigate('/auth/login', { replace: true });
+    if (!email) navigate("/auth/login", { replace: true });
   }, [email, navigate]);
 
   const {
@@ -29,32 +30,22 @@ export const OTPVerificationPage = () => {
     inputRefs,
     handleInput,
     handleBackspace,
+    handlePaste,
     handleSubmit,
     handleResend,
-  } = useOTPVerification(
-    (user) => {
-      updateUser(user);
-      // Changed: Navigate directly to /crew instead of /home
-      navigate('/home', { replace: true });
-    },
-    (err) => console.error('OTP verification error:', err)
-  );
+  } = useOTPVerification();
 
-  const handleFormSubmit = async (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    await handleSubmit(email);
+    handleSubmit();
   };
 
-  const handleResendClick = async (e) => {
+  const handleResendClick = (e) => {
     e.preventDefault();
-    if (password) {
-      setDevOtp("Requesting Otp");
-      const resentResponse = await handleResend(email, password, rememberMe);
-      setDevOtp(resentResponse?.data?.otp || null);
-    }
+    handleResend();
   };
 
-  const handleBackClick = () => navigate('/auth/login');
+  const handleBackClick = () => navigate("/auth/login");
 
   if (!email) return null;
 
@@ -118,7 +109,7 @@ export const OTPVerificationPage = () => {
                   onChange={(e) => handleInput(i, e.target.value)}
                   onKeyDown={(e) => handleBackspace(i, e)}
                   disabled={loading}
-                  className="w-10 h-12 md:w-12 md:h-12 text-center text-lg font-semibold  border dark:border-foreground/50 rounded-xl focus:ring-2 focus:ring-purple-600"
+                  className="w-10 h-12 md:w-12 md:h-12 text-center text-lg font-semibold border dark:border-foreground/50 rounded-xl focus:ring-2 focus:ring-purple-600"
                 />
               ))}
             </div>
@@ -126,7 +117,7 @@ export const OTPVerificationPage = () => {
             <button
               type="button"
               onClick={handleFormSubmit}
-              disabled={loading || otp.join('').length !== 6}
+              disabled={loading || otp.join("").length !== 6}
               className="w-full bg-primary hover:bg-purple-700 transition-colors text-primary-foreground font-medium py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -148,7 +139,7 @@ export const OTPVerificationPage = () => {
               disabled={!canResend || loading || !password}
               className="font-medium text-primary hover:text-purple-700 disabled:text-muted-foreground transition-colors text-sm"
             >
-              {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
+              {canResend ? "Resend Code" : `Resend in ${countdown}s`}
             </button>
           </div>
 

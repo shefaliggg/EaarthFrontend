@@ -3,14 +3,13 @@
  * @description Handles environment-based API URL configuration for Vite
  */
 
-// 🌍 Determine current environment (Vite)
 export const currentEnv = import.meta.env.VITE_APP_ENV || "development";
 
 // 🧭 Map each environment to its base API URL
 const apiUrlMap = {
-  development: import.meta.env.VITE_API_DEV,
-  staging: import.meta.env.VITE_API_STAGING,
-  production: import.meta.env.VITE_API_PROD,
+  development: import.meta.env.VITE_APP_API_DEV,
+  staging: import.meta.env.VITE_APP_API_STAGING,
+  production: import.meta.env.VITE_APP_API_PROD,
 };
 
 /**
@@ -19,7 +18,7 @@ const apiUrlMap = {
 export default function getApiUrl() {
   const apiUrl =
     apiUrlMap[currentEnv] ||
-    import.meta.env.VITE_API_DEV ||
+    import.meta.env.VITE_APP_API_DEV ||
     "http://localhost:5000/api/v1";
 
   if (!apiUrl.startsWith("http")) {
@@ -28,14 +27,15 @@ export default function getApiUrl() {
     );
     return "http://localhost:5000/api/v1";
   }
-
-  console.log(
-    `%c🌍 EAARTH Environment: %c${currentEnv}%c → API: %c${apiUrl}`,
-    "color: cyan; font-weight: bold;",
-    "color: yellow; font-weight: bold;",
-    "color: white;",
-    "color: lightgreen; font-weight: bold;"
-  );
+  if (currentEnv === "development") {
+    console.log(
+      `%c🌍 EAARTH Environment: %c${currentEnv}%c → API: %c${apiUrl}`,
+      "color: cyan; font-weight: bold;",
+      "color: yellow; font-weight: bold;",
+      "color: white;",
+      "color: lightgreen; font-weight: bold;"
+    );
+  }
 
   return apiUrl;
 }
@@ -44,11 +44,3 @@ export default function getApiUrl() {
 export const isDevelopment = () => currentEnv === "development";
 export const isStaging = () => currentEnv === "staging";
 export const isProduction = () => currentEnv === "production";
-
-
-
-
-
-
-
-
