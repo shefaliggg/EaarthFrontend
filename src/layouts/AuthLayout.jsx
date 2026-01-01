@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Outlet, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import DarkmodeButton from "../shared/components/DarkmodeButton";
+import SuspenseOutlet from "../shared/components/SuspenseOutlet";
 
 const AuthLayout = () => {
   const location = useLocation();
@@ -41,9 +42,9 @@ const AuthLayout = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="relative z-10 w-full max-w-7xl mx-auto flex items-center justify-center px-4"
+          className="relative z-10 w-full container mx-auto flex items-center justify-center px-4"
         >
-          <Outlet />
+          <SuspenseOutlet />
         </motion.div>
       </AnimatePresence>
 

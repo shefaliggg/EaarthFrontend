@@ -175,23 +175,23 @@ export default function ProjectList() {
 
       {/* Filters */}
       {/* Filters */}
-<Card className="mb-6">
-  <CardContent className="">
-    <ProjectFilters
-      search={filters.search}
-      onSearchChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-      approvalStatus={filters.approvalStatus}
-      onApprovalStatusChange={(value) => setFilters(prev => ({ ...prev, approvalStatus: value }))}
-      studioId={filters.studioId}
-      onStudioChange={(value) => setFilters(prev => ({ ...prev, studioId: value }))}
-      projectType={filters.projectType}
-      onProjectTypeChange={(value) => setFilters(prev => ({ ...prev, projectType: value }))}
-      sort={sort}
-      onSortChange={updateSort}
-      studios={studios}
-    />
-  </CardContent>
-</Card>
+      <Card className="mb-6">
+        <CardContent className="">
+          <ProjectFilters
+            search={filters.search}
+            onSearchChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            approvalStatus={filters.approvalStatus}
+            onApprovalStatusChange={(value) => setFilters(prev => ({ ...prev, approvalStatus: value }))}
+            studioId={filters.studioId}
+            onStudioChange={(value) => setFilters(prev => ({ ...prev, studioId: value }))}
+            projectType={filters.projectType}
+            onProjectTypeChange={(value) => setFilters(prev => ({ ...prev, projectType: value }))}
+            sort={sort}
+            onSortChange={updateSort}
+            studios={studios}
+          />
+        </CardContent>
+      </Card>
 
       {/* Projects List */}
       {isFetching && projects.length === 0 ? (

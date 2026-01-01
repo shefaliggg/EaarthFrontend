@@ -40,7 +40,7 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 transition-colors">
-        <div className="w-full max-w-md bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] border border-gray-200 dark:border-gray-700 p-8 rounded-3xl shadow-md text-center">
+        <div className="w-full max-w-md bg-card border p-8 rounded-3xl shadow-md text-center">
           <CheckCircle className="w-16 h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">OTP Sent!</h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Check your email for the reset code</p>
@@ -70,7 +70,7 @@ export const ForgotPasswordPage = ({ onNavigate, onBack, onSuccess }) => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
+        <div className="bg-card rounded-3xl p-6 border shadow-md transition-colors">
           <h2 className="text-xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">
             Reset Your Password
           </h2>
