@@ -11,8 +11,9 @@ export const getCurrentUserThunk = createAsyncThunk(
   "user/getCurrent",
   async (_, { rejectWithValue }) => {
     try {
-      const user = await authService.getCurrentUser();
-      return user;
+      const response = await authService.getCurrentUser();
+            console.log("current user res", response.data.user)
+      return response.data.user;
     } catch (err) {
       console.error("❌ Get current user error:", err);
       return rejectWithValue(err?.message || "Failed to fetch user");

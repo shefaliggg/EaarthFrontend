@@ -37,8 +37,8 @@ export const authService = {
   // GET CURRENT USER
   getCurrentUser: async () => {
     try {
-      const { data } = await axiosConfig.get("/auth/me");
-      return data?.data?.user || null;
+      const response = await axiosConfig.get("/auth/me");
+      return response.data;
     } catch (error) {
       if (error.response?.status === 401) return null;
       throw error;
@@ -75,7 +75,7 @@ export const authService = {
    * Generate QR for web login
    */
   generateWebQr: async () => {
-    const { data } = await axiosConfig.post("/auth/qr/generate/web");
+    const { data } = await axiosConfig.get("/auth/qr-code/web/init");
     
     if (!data?.success) {
       throw new Error(data?.message || "Failed to generate QR");
@@ -88,7 +88,7 @@ export const authService = {
    * Generate QR for mobile login
    */
   generateMobileQr: async () => {
-    const { data } = await axiosConfig.post("/auth/qr/generate/mobile");
+    const { data } = await axiosConfig.get("/auth/qr-code/mobile/init");
     
     if (!data?.success) {
       throw new Error(data?.message || "Failed to generate QR");

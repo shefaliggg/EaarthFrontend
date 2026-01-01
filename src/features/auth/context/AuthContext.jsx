@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
 import { API_ROUTE } from "../../../constants/apiEndpoints";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
+import { clearUserData, setCurrentUser } from "../store/user.slice";
 
 const AuthContext = createContext(null);
 
@@ -34,7 +35,6 @@ const PUBLIC_ROUTES = [
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const { currentUser, isAuthenticated, isFetching } = useSelector(
     (state) => state.user
@@ -42,65 +42,38 @@ export const AuthProvider = ({ children }) => {
 
   const [initialLoading, setInitialLoading] = useState(true);
 
-  const isPublicRoute = useCallback(
-    (pathname) => PUBLIC_ROUTES.some((route) => pathname.startsWith(route)),
-    []
-  );
-
-  /* -------------------------------------------------------------------------- */
-  /*                            INITIAL AUTH CHECK                              */
-  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await dispatch(getCurrentUserThunk()).unwrap();
-      } catch {
-        // silent fail → handled by route guard
+        if (!currentUser) {
+          await dispatch(getCurrentUserThunk()).unwrap();
+        }
+      } catch (error) {
+        dispatch(clearUserData());
       } finally {
         setInitialLoading(false);
       }
     };
 
     initAuth();
-  }, [dispatch]);
+  }, []);
 
-  /* -------------------------------------------------------------------------- */
-  /*                              ROUTE GUARD                                   */
-  /* -------------------------------------------------------------------------- */
-  useEffect(() => {
-    if (initialLoading) return;
+  // LOGIN
+  const login = useCallback((adminData) => {
+    dispatch(setCurrentUser(adminData));
+  }, []);
 
-    const isPublic = isPublicRoute(location.pathname);
 
-    if (!isAuthenticated && !isPublic) {
-      navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
-    }
-
-    if (isAuthenticated && isPublic) {
-      navigate("/home", { replace: true });
-    }
-  }, [
-    isAuthenticated,
-    location.pathname,
-    initialLoading,
-    navigate,
-    isPublicRoute,
-  ]);
-
-  /* -------------------------------------------------------------------------- */
-  /*                                  LOGOUT                                    */
-  /* -------------------------------------------------------------------------- */
   const logout = useCallback(async () => {
     try {
       await dispatch(logoutUserThunk()).unwrap();
-    } catch (err) {
-      console.error("Logout error:", err);
     } finally {
+      dispatch(clearUserData());
       navigate(API_ROUTE.AUTH.LOGIN, { replace: true });
     }
   }, [dispatch, navigate]);
 
-  /* ---------------------------- GLOBAL LOGOUT ---------------------------- */
+
   useEffect(() => {
     setLogoutFunction(logout);
   }, [logout]);
@@ -112,6 +85,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading: isFetching,
         initialLoading,
+        login,
         logout,
       }}
     >

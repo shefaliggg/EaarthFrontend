@@ -1,12 +1,18 @@
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import { useAuth } from "@/features/auth/context/AuthContext";
+import SuspenseOutlet from "../shared/components/SuspenseOutlet";
 import LoadingScreen from "@/shared/components/LoadingScreen";
 
 export default function RootLayout() {
-  const { initialLoading, user, isAuthenticated } = useAuth();
+  const { initialLoading, isAuthenticated } = useAuth();
   const { pathname } = useLocation();
+  const user = useSelector((state) => state.user.currentUser);
 
-  if (initialLoading) return <LoadingScreen />;
+  if (initialLoading) {
+    return <LoadingScreen />;
+  }
 
   const isAuthRoute = pathname.startsWith("/auth") || pathname === "/invite/verify";
 
@@ -18,5 +24,5 @@ export default function RootLayout() {
     return <Navigate to="/home" replace />;
   }
 
-  return <Outlet />;
+  return <SuspenseOutlet />;
 }
