@@ -1,5 +1,5 @@
 import React from "react";
-import { Eye, EyeOff, Loader, Shield, Zap, Film } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import eaarthLogo from "../../../assets/eaarth.webp";
 import { useLogin } from "../hooks/useLogin";
@@ -21,23 +21,10 @@ export const LoginPage = () => {
     loading,
     error,
     handleSubmit,
-  } = useLogin(
-    (data) => {
-      navigate("/auth/otp-verification", {
-        state: {
-          email: data.email,
-          password: data.password,
-          rememberMe: data.rememberMe,
-          otpSend: data.otpSend,
-          otp: data.otp,
-        },
-      });
-    },
-    (err) => console.error("Login error:", err)
-  );
+  } = useLogin();
 
   return (
-    <div className=" w-full flex py-6 items-center justify-center ">
+    <div className="w-full flex py-6 items-center justify-center">
       <div className="max-w-5xl w-full mx-auto px-4 md:px-6">
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
 
@@ -63,6 +50,7 @@ export const LoginPage = () => {
 
             <div className="space-y-4 flex-1 flex flex-col">
 
+              {/* Email */}
               <div>
                 <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                   Email address
@@ -78,11 +66,11 @@ export const LoginPage = () => {
                 />
               </div>
 
+              {/* Password */}
               <div>
                 <label className="block text-xs mb-1 text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                   Password
                 </label>
-
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -98,12 +86,14 @@ export const LoginPage = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
+              {/* Remember me + forgot password */}
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -111,7 +101,7 @@ export const LoginPage = () => {
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     disabled={loading}
-                    className="w-3 h-3"
+                    className="w-4 h-4"
                   />
                   <span className="text-[10px] text-gray-600 dark:text-gray-400">Remember me</span>
                 </label>
@@ -126,13 +116,14 @@ export const LoginPage = () => {
                 </button>
               </div>
 
+              {/* Login Button */}
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
                 className="w-full py-2 rounded-xl bg-purple-600 text-white 
-                    hover:bg-purple-700 flex items-center justify-center gap-2 
-                    disabled:opacity-50 transition-colors font-semibold"
+                  hover:bg-purple-700 flex items-center justify-center gap-2 
+                  disabled:opacity-50 transition-colors font-semibold"
               >
                 {loading ? (
                   <>
@@ -151,6 +142,7 @@ export const LoginPage = () => {
             </div>
           </div>
 
+          {/* RIGHT PANEL - QR LOGIN */}
           <WebLoginQR />
         </div>
 
