@@ -5,6 +5,7 @@ import { triggerGlobalLogout } from "./globalLogoutConfig";
 
 export const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
 
+export const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
 export const baseURL = getApiUrl();
 
 const toastCache = new Map();
@@ -57,7 +58,13 @@ let refreshPromise = null;
 
 // ---- RESPONSE INTERCEPTOR ----
 axiosConfig.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // ✅ DEBUG: Log successful responses
+    if (isDevelopment) {
+      console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    }
+    return response;
+  },
 
   async (error) => {
     const originalRequest = error.config;
@@ -79,10 +86,13 @@ axiosConfig.interceptors.response.use(
     if (
       status === 401 &&
       (errorCode === "ACCESS_TOKEN_EXPIRED" ||
-        errorCode === "NO_ACCESS_TOKEN") &&
+        errorCode === "NO_ACCESS_TOKEN" ||
+        errorCode === "INVALID_ACCESS_TOKEN") &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
+
+      console.log('🔄 Attempting token refresh...');
 
       try {
         if (!isRefreshing) {
