@@ -28,6 +28,7 @@ import { Progress } from '@/shared/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { MetricsCard } from '../../../shared/components/MetricsCard';
 
 // Mock project detail data - matches ProjectDashboardPage data
 const PROJECT_DETAIL = {
@@ -130,46 +131,46 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
       <PageHeader
         icon="Film"
         title={project.name}
-        subtitle={`${project.phase} - Principal Photography in Progress`}
+        subtext={`${project.phase} - Principal Photography in Progress`}
       />
 
       {/* Key Metrics Row - Using StatCard Component */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard
+        <MetricsCard
           title="Budget Status"
           value={formatCurrency(project.stats.spent)}
-          subtitle={`of ${formatCurrency(project.stats.budget)} (${budgetPercentage.toFixed(1)}% spent)`}
+          subtext={`of ${formatCurrency(project.stats.budget)} (${budgetPercentage.toFixed(1)}% spent)`}
           icon="DollarSign"
           iconColor={budgetPercentage > 90 ? "text-red-600" : "text-green-600"}
-          subtitleColor="text-muted-foreground"
+          subtextColor="text-muted-foreground"
         />
         
-        <StatCard
+        <MetricsCard
           title="Schedule"
           value={`${project.stats.daysShot}/${project.stats.totalDays}`}
-          subtitle="Days shot - On Track"
+          subtext="Days shot - On Track"
           icon="Calendar"
           iconColor="text-blue-600"
-          subtitleColor="text-muted-foreground"
+          subtextColor="text-muted-foreground"
         />
         
-        <StatCard
+        <MetricsCard
           title="Crew Size"
           value={project.stats.crewSize}
-          subtitle="+12 this week"
+          subtext="+12 this week"
           icon="Users"
           iconColor="text-purple-600"
-          subtitleColor="text-green-600"
-          subtitleIcon="TrendingUp"
+          subtextColor="text-green-600"
+          subtextIcon="TrendingUp"
         />
         
-        <StatCard
+        <MetricsCard
           title="Completion"
           value={`${project.stats.completion}%`}
-          subtitle={project.phase}
+          subtext={project.phase}
           icon="Target"
           iconColor="text-orange-600"
-          subtitleColor="text-muted-foreground"
+          subtextColor="text-muted-foreground"
         />
       </div>
 

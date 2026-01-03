@@ -1,12 +1,14 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { cn } from "@/shared/config/utils";
+import { SmartIcon } from "./SmartIcon";
 
 export function MetricsCard({
   title,
   subtext,
+  subtextColor,
   value,
   valueColor = "text-foreground",
-  icon: Icon,
+  icon,
   iconBg,
   iconColor = "text-blue-500",
 }) {
@@ -15,7 +17,7 @@ export function MetricsCard({
       <CardContent className="p-0 space-y-6">
         <div className="flex items-start justify-between">
 
-          <div>
+          <div className="space-y-3">
             <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               {title}
             </p>
@@ -25,20 +27,23 @@ export function MetricsCard({
             </p>
 
             {subtext && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className={cn("text-sm mt-1", subtextColor ? subtextColor : "text-muted-foreground")}>
                 {subtext}
               </p>
             )}
           </div>
 
-          {Icon && (
+          {icon && (
             <div
               className={cn(
                 "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                 iconBg
               )}
             >
-              <Icon className={cn("w-5 h-5", iconColor)} />
+              <SmartIcon
+                icon={icon}
+                className={cn("w-5 h-5", iconColor)}
+              />
             </div>
           )}
 

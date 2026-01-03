@@ -2,6 +2,10 @@ import React, { useMemo, useState } from 'react'
 import { PageHeader } from '../../../../shared/components/PageHeader'
 import { Award, CircleDollarSign, Timer } from 'lucide-react';
 import MiniInfoPills from '../../../../shared/components/badges/MiniInfoPills';
+import FilterPillTabs from '../../../../shared/components/FilterPillTabs';
+import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
+import SearchBar from '../../../../shared/components/SearchBar';
+import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
 
 function ProjectTimesheets() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
@@ -149,14 +153,7 @@ function ProjectTimesheets() {
 
   const sortedYears = Object.keys(weeksByYear).map(Number).sort((a, b) => b - a);
 
-  const quickStats = [
-    {
-      key: "approved",
-      value: weeks.filter(w => w.status === "approved").length,
-      valueText: "Approved",
-      icon: "Award",
-      color: "purple",
-    },
+  const commonStats = useMemo(() => [
     {
       key: "hours",
       value: totalHours.toFixed(1),
@@ -174,7 +171,173 @@ function ProjectTimesheets() {
       icon: "CircleDollarSign",
       color: "emerald",
     },
-  ];
+  ], [totalHours, totalEarnings]);
+
+  const tabSpecificStats = useMemo(() => {
+    if (activeTab === "timesheets") {
+      return [
+        {
+          key: "submitted",
+          value: weeks.filter(w => w.status !== "not-started").length,
+          valueText: "Submitted",
+          icon: "Clock",
+          color: "purple",
+        },
+        {
+          key: "approved",
+          value: weeks.filter(w => w.status === "approved").length,
+          valueText: "Approved",
+          icon: "Award",
+          color: "purple",
+        },
+      ];
+    }
+
+    // expenses
+    return [
+      {
+        key: "claimed",
+        value: totalExpenses.toFixed(2),
+        valueText: "Claimed",
+        icon: "Fuel",
+        color: "purple",
+      },
+      {
+        key: "approved-expenses",
+        value: weeks.filter(w => w.expenseStatus === "approved").length,
+        valueText: "Approved",
+        icon: "Award",
+        color: "purple",
+      },
+    ];
+  }, [activeTab, weeks, totalExpenses]);
+
+  const quickStats = useMemo(
+    () => [...tabSpecificStats, ...commonStats],
+    [tabSpecificStats, commonStats]
+  );
+
+  // these stats should come from backend in fututre 
+  const getTimesheetStats = ({
+    weeks,
+    thisMonthWeeks,
+    thisMonthEarnings,
+    thisMonthHours,
+    totalEarnings,
+  }) => [
+      {
+        label: "This Month",
+        value: `£${thisMonthEarnings.toLocaleString("en-GB", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+        icon: "DollarSign",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        subLabel: `${thisMonthWeeks.filter(w => w.status === "approved").length} weeks approved`,
+      },
+
+      {
+        label: "This Month Hours",
+        value: thisMonthHours.toFixed(1),
+        icon: "Timer",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30",
+        iconColor: "text-blue-600 dark:text-blue-400",
+        subLabel: `${(thisMonthHours / 40).toFixed(1)} weeks equivalent`,
+      },
+
+      {
+        label: "Pending Approval",
+        value: weeks.filter(w => w.status === "submitted").length,
+        icon: "Clock",
+        iconBg: "bg-amber-100 dark:bg-amber-900/30",
+        iconColor: "text-amber-600 dark:text-amber-400",
+        subLabel: `${weeks
+          .filter(w => w.status === "submitted")
+          .reduce((sum, w) => sum + (w.totalHours || 0), 0)
+          .toFixed(1)} hours pending`,
+      },
+
+      {
+        label: "All Time",
+        value: `£${totalEarnings.toLocaleString("en-GB", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+        icon: "Award",
+        iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
+        subLabel: `${weeks.filter(w => w.status === "approved").length} weeks approved`,
+      },
+    ];
+
+  const getExpenseStats = ({
+    weeks,
+    thisMonthWeeks,
+    thisMonthExpenses,
+    parseAmount,
+  }) => [
+      {
+        label: "This Month",
+        value: `£${thisMonthExpenses.toFixed(2)}`,
+        icon: "Fuel",
+        iconBg: "bg-orange-100 dark:bg-orange-900/30",
+        iconColor: "text-orange-600 dark:text-orange-400",
+        subLabel: `${thisMonthWeeks.filter(w => w.expenseStatus === "approved").length} claims approved`,
+      },
+
+      {
+        label: "Fuel Claims",
+        value: weeks.filter(w => w.expenseType === "fuel").length,
+        icon: "Fuel",
+        iconBg: "bg-red-100 dark:bg-red-900/30",
+        iconColor: "text-red-600 dark:text-red-400",
+        subLabel: `£${weeks
+          .filter(w => w.expenseType === "fuel")
+          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+          .toFixed(2)} total`,
+      },
+
+      {
+        label: "Mileage Claims",
+        value: weeks.filter(w => w.expenseType === "mileage").length,
+        icon: "Car",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30",
+        iconColor: "text-blue-600 dark:text-blue-400",
+        subLabel: `£${weeks
+          .filter(w => w.expenseType === "mileage")
+          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+          .toFixed(2)} total`,
+      },
+
+      {
+        label: "Pending Approval",
+        value: weeks.filter(w => w.expenseStatus === "submitted").length,
+        icon: "Clock",
+        iconBg: "bg-amber-100 dark:bg-amber-900/30",
+        iconColor: "text-amber-600 dark:text-amber-400",
+        subLabel: `£${weeks
+          .filter(w => w.expenseStatus === "submitted")
+          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+          .toFixed(2)} pending`,
+      },
+    ];
+
+  const primaryStats =
+    activeTab === "timesheets"
+      ? getTimesheetStats({
+        weeks,
+        thisMonthWeeks,
+        thisMonthEarnings,
+        thisMonthHours,
+        totalEarnings,
+      })
+      : getExpenseStats({
+        weeks,
+        thisMonthWeeks,
+        thisMonthExpenses,
+        parseAmount,
+      });
 
   return (
     <div className='space-y-6 container mx-auto'>
@@ -184,7 +347,7 @@ function ProjectTimesheets() {
         initials={"LK"}
         subtitle={`LUKE GREENAN - ELECTRICAL - SHOOTING ELECTRICAL`}
       />
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mt-2">
         {quickStats.map(stat => (
           <MiniInfoPills
             key={stat.key}
@@ -195,6 +358,48 @@ function ProjectTimesheets() {
           />
         ))}
       </div>
+      <FilterPillTabs
+        options={[
+          { value: "timesheets", label: "Timesheets", icon: "Clock" },
+          { value: "expenses", label: "Fuel and Mileage", icon: "Fuel" },
+        ]}
+        value={activeTab}
+        onChange={(value) => setActiveTab(value)}
+      />
+      <PrimaryStats stats={primaryStats} gridColumns={4} />
+
+      <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
+        <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
+        <FilterPillTabs
+          options={[
+            {
+              value: "all",
+              label: "All",
+            },
+            {
+              value: "approved",
+              label: "Approved",
+            },
+            {
+              value: "submitted",
+              label: "Pending",
+            },
+            {
+              value: "draft",
+              label: "Draft",
+            },
+            {
+              value: "not-started",
+              label: "New",
+            },
+          ]}
+          value={statusFilter}
+          onChange={(value) => setStatusFilter(value)}
+          transparentBg={false}
+        />
+        <ViewToggleButton view={viewMode} onViewChange={setViewMode}/>
+      </div>
+
     </div>
   )
 }

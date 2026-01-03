@@ -46,3 +46,4 @@ export function capitalizeFirstLetter(text = "", mode = "first") {
 
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+

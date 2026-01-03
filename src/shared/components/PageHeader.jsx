@@ -10,6 +10,7 @@ export function PageHeader({
   image,
   initials,
   icon,
+  extraContents,
   extraActions,
   primaryAction,
   secondaryActions,
@@ -77,6 +78,8 @@ export function PageHeader({
             )}
 
             <UrlBasedBreadcrumbs />
+
+            {extraContents}
           </div>
         </div>
 
