@@ -132,7 +132,7 @@ export default function ProjectList() {
   const studios = []; // Replace with your actual studios data if available
 
   return (
-    <div className="px-4 pb-8">
+    <div className='space-y-6 container mx-auto'>
       <div className="flex items-center justify-between mb-6">
         <PageHeader icon="Film" title="MY PROJECTS" />
         <Button onClick={() => navigate('/projects/create')}>

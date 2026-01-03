@@ -126,7 +126,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
   const budgetPercentage = (project.stats.spent / project.stats.budget) * 100;
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+   <div className='space-y-6 container mx-auto'>
       <PageHeader
         icon="Film"
         title={project.name}

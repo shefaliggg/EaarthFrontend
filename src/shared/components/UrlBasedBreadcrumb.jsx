@@ -7,10 +7,15 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
-import { prettifySegment } from "../config/utils";
 
-export default function UrlBreadcrumbs() {
+export default function UrlBasedBreadcrumbs() {
     const { pathname } = useLocation();
+
+    function prettifySegment(seg) {
+        return seg
+            .replace(/[-_]/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
 
     const segments = pathname.split("/").filter(Boolean);
 
@@ -34,13 +39,14 @@ export default function UrlBreadcrumbs() {
             };
         }),
     ];
+
     const filtered = crumbs.filter(c => {
         if (pathname === '/home' && c.label === 'Home' && !c.isLast) return false;
         return c.label && c.label !== '';
     });
 
     return (
-        <nav aria-label="Breadcrumb" className="mb-4">
+        <nav aria-label="Breadcrumb">
             <Breadcrumb>
                 <BreadcrumbList>
                     {filtered.map((c, index) => (
