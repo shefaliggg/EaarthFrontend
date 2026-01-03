@@ -14,6 +14,9 @@ export function adminDropdownList(userRole = "studio-admin") {
       icon: Icon.Briefcase,
       route: "/staff",
     },
+  ];
+
+  const commonListBottomItems = [
     {
       id: "profile",
       label: "Profile",
@@ -21,9 +24,6 @@ export function adminDropdownList(userRole = "studio-admin") {
       route: "/profile",
       separatorBefore: true,
     },
-  ];
-
-  const commonListBottomItems = [
     {
       id: "support",
       label: "Help and Support",
@@ -71,12 +71,6 @@ export function adminDropdownList(userRole = "studio-admin") {
     align: "end",
     items: [
       {
-        id: "crew-dashboard",
-        label: "Dashboard",
-        icon: Icon.LayoutDashboard,
-        route: "/crew/dashboard",
-      },
-      {
         id: "crew-schedule",
         label: "My Schedule",
         icon: Icon.Calendar,
@@ -93,13 +87,6 @@ export function adminDropdownList(userRole = "studio-admin") {
         label: "Notifications",
         icon: Icon.Bell,
         route: "/crew/notifications",
-      },
-      {
-        id: "crew-profile",
-        label: "Profile",
-        icon: Icon.User,
-        route: "/crew/profile",
-        separatorBefore: true,
       },
       {
         id: "crew-settings",

@@ -10,7 +10,8 @@ import NavigationDropdown from './NavigationDropdown';
 import DisplayModeTrigger from './DisplayModeTrigger';
 import { adminDropdownList } from '../../config/adminDropdownNavList';
 import { useProjectMenus } from '../../hooks/useProjectMenuList';
-import { useCrewMenus } from '../../hooks/useCrewMenus';
+// import { useCrewMenus } from '../../hooks/useCrewMenus';
+import { useSelector } from 'react-redux';
 
 export default function Header() {
     const [showNotifications, setShowNotifications] = useState(false);
@@ -19,7 +20,10 @@ export default function Header() {
     const [notificationCount] = useState(5);
     const [messageCount] = useState(3);
     const navigate = useNavigate();
-    const location = useLocation();
+
+    const { currentUser } = useSelector(state => state.user);
+    // const userType = currentUser?.userType ?? "";
+    const userType = "crew" //temporary for development
 
     const STUDIO_PROJECTS = [
         {
@@ -88,19 +92,8 @@ export default function Header() {
         },
     ];
 
-    // Determine user role based on current route
-    // In a real app, this would come from your auth context/state management
-    const getUserRole = () => {
-        if (location.pathname.startsWith('/crew')) {
-            return 'crew';
-        }
-        // Default to studio-admin for other routes
-        return 'studio-admin';
-    };
-
-    const userRole = getUserRole();
-    const projectDropdownList = useProjectMenus(STUDIO_PROJECTS); // all projects from backend should be passed here
-    const crewMenuList = useCrewMenus(CREW_ASSIGNED_PROJECTS); // Get crew-specific menus with assigned projects
+    const studioAdminprojectDropdownList = useProjectMenus(STUDIO_PROJECTS); // all projects from backend should be passed here
+    const CrewprojectDropdownList =  useProjectMenus(CREW_ASSIGNED_PROJECTS); // Get crew-specific menus with assigned projects
 
     useEffect(() => {
         if (showMessages || showNotifications) {
@@ -111,11 +104,9 @@ export default function Header() {
     }, [showMessages, showNotifications]);
 
     // Build navigation menu based on user role
-    const navigationMenuList = userRole === 'crew' 
-        ? [...crewMenuList, adminDropdownList(userRole)] // Show crew menus + crew dropdown for crew users
-        : [...projectDropdownList, adminDropdownList(userRole)]; // Show projects + studio admin for studio users
-
-    console.log(navigationMenuList);
+    const navigationMenuList = userType === 'crew'
+        ? [...CrewprojectDropdownList, adminDropdownList(userType)] // Show crew menus + crew dropdown for crew users
+        : [...studioAdminprojectDropdownList, adminDropdownList(userType)]; // Show projects + studio admin for studio users
 
     return (
         <>

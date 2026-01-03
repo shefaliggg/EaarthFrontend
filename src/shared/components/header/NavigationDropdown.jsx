@@ -59,9 +59,13 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align={menu.align || "start"} className="w-56">
-        <DropdownMenuLabel>{menu.dropdownLabel}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align={menu.align || "start"}>
+        {menu.dropdownLabel && (
+          <>
+            <DropdownMenuLabel>{menu.dropdownLabel}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
         {menu.items.map((item) => {
           const ItemIcon = item.icon;
@@ -75,12 +79,23 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
 
               {hasSubMenu ? (
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2">
-                    <ItemIcon className="w-5 h-5" />
-                    {item.label}
-                  </DropdownMenuSubTrigger>
-
-                  <DropdownMenuSubContent className="w-52">
+                  {(() => {
+                    const isSubMenuActive = item.subItems.some(
+                      (sub) => `${sub.route}` === pathname
+                    );
+                    return (
+                      <DropdownMenuSubTrigger
+                        className={cn(
+                          "flex items-center gap-2",
+                          isSubMenuActive && "bg-accent/20",
+                        )}
+                      >
+                        <ItemIcon className="w-4 h-4 mr-1" />
+                        {item.label}
+                      </DropdownMenuSubTrigger>
+                    );
+                  })()}
+                  <DropdownMenuSubContent>
                     {item.subItems.map((sub) => {
                       const SubIcon = sub.icon;
                       const isSubActive = `${sub.route}` === pathname;
@@ -96,7 +111,7 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
                           {SubIcon && (
                             <SubIcon
                               className={cn(
-                                "w-5 h-5 mr-2",
+                                "w-5 h-5",
                                 isSubActive ? "text-white" : "text-foreground"
                               )}
                             />
@@ -110,8 +125,8 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
               ) : (
                 <DropdownMenuItem
                   onClick={() => {
-                    const isIndividualProjectNavigation = item.route && item.navigateWithName
-                    return isIndividualProjectNavigation
+                    const isNavigateWithName = item.route && item.navigateWithName
+                    return isNavigateWithName
                       ? navigateWithName({
                         title: item.label,
                         uniqueCode: item.projectCode,
@@ -129,7 +144,7 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
                   <ItemIcon
                     className={cn(
                       isItemActive ? "text-white" : "text-foreground",
-                      "w-5 h-5 mr-2"
+                      "w-5 h-5 mr-1"
                     )}
                   />
                   {item.label}

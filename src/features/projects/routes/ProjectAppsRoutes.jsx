@@ -15,14 +15,14 @@ const ProjectAppAnimals = lazy(() => import('../pages/ProjectApps/ProjectAppAnim
 const ProjectAppVehicles = lazy(() => import('../pages/ProjectApps/ProjectAppVehicles'));
 const ProjectAppLocations = lazy(() => import('../pages/ProjectApps/ProjectAppLocations'));
 const ProjectAppApproval = lazy(() => import('../pages/ProjectApps/ProjectAppApproval'));
-const ProjectAppTimesheets = lazy(() => import('../pages/ProjectApps/ProjectAppTimesheets'));
+const ProjectTimesheets = lazy(() => import('../pages/ProjectApps/ProjectTimesheets'));
+const ProjectOnboarding = lazy(() => import('../pages/ProjectApps/ProjectOnboarding'));
 const ProjectAppCloud = lazy(() => import('../pages/ProjectApps/ProjectAppCloud'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
 const ProjectAppsRoutes = {
-    path: "apps",
-    element: <ProjectApps />,
+    path: "",
     children: [
         { path: 'props', element: <ProjectAppProps /> },
         { path: 'costume', element: <ProjectAppCostume /> },
@@ -38,7 +38,8 @@ const ProjectAppsRoutes = {
         { path: 'vehicles', element: <ProjectAppVehicles /> },
         { path: 'locations', element: <ProjectAppLocations /> },
         { path: 'approval', element: <ProjectAppApproval /> },
-        { path: 'timesheets', element: <ProjectAppTimesheets /> },
+        { path: 'timesheets', element: <ProjectTimesheets /> },
+        { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 
         { path: '*', element: <NotFound /> }

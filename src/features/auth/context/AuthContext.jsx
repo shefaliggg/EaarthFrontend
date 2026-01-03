@@ -1,4 +1,3 @@
-// src/features/auth/context/AuthContext.jsx
 import {
   createContext,
   useState,
@@ -7,7 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
 import { API_ROUTE } from "../../../constants/apiEndpoints";
@@ -15,22 +14,6 @@ import { setLogoutFunction } from "../config/globalLogoutConfig";
 import { clearUserData, setCurrentUser } from "../store/user.slice";
 
 const AuthContext = createContext(null);
-
-const PUBLIC_ROUTES = [
-  "/auth/login",
-  "/auth/temp-login",
-  "/auth/set-password",
-  "/auth/upload-id",
-  "/auth/live-photo",
-  "/auth/identity-verification",
-  "/auth/terms",
-  "/auth/otp-verification",
-  "/auth/forgot-password",
-  "/auth/reset-password",
-  "/auth/verify-email",
-  "/auth/result",
-  "/invite/verify",
-];
 
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();

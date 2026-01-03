@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import * as Icon from "lucide-react";
-import { convertTitleToUrl, prettifySegment } from "../config/utils";
+import { convertTitleToUrl, prettifySegment, convertToPrettyText } from "../config/utils";
 
 export function useProjectMenus(allProjects = []) {
   const { pathname } = useLocation();
@@ -44,9 +44,21 @@ export function useProjectMenus(allProjects = []) {
     id: "project-applications",
     triggerLabel: "Project Applications",
     triggerIcon: Icon.LayoutGrid,
-    dropdownLabel: `Project Applications - ${projectName}`,
+    dropdownLabel: `Project Applications - ${convertToPrettyText(projectName)}`,
     align: "start",
     items: [
+      {
+        id: "crew-onboarding",
+        label: "Crew Onboarding",
+        icon: Icon.UserPlus,
+        route: `/projects/${projectName}/onboarding`,
+      },
+      {
+        id: "hod-timesheet-approval",
+        label: "Timesheets",
+        icon: Icon.Clock,
+        route: `/projects/${projectName}/timesheets`,
+      },
       {
         id: "project-calendar",
         label: "Project Calendar",
@@ -150,12 +162,6 @@ export function useProjectMenus(allProjects = []) {
         route: `/projects/${projectName}/cloud`,
       },
       {
-        id: "hod-timesheet-approval",
-        label: "Timesheets",
-        icon: Icon.Clock,
-        route: `/projects/${projectName}/hod-timesheet-approval`,
-      },
-      {
         id: "project-notice-board",
         label: "Notice Board",
         icon: Icon.Megaphone,
@@ -230,7 +236,7 @@ export function useProjectMenus(allProjects = []) {
     id: "ai-analytics",
     triggerLabel: "AI & Analytics",
     triggerIcon: Icon.Bot,
-    dropdownLabel: `AI & Analytics - ${projectName}`,
+    dropdownLabel: `AI & Analytics - ${convertToPrettyText(projectName)}`,
     align: "start",
     items: [
       {
@@ -294,7 +300,7 @@ export function useProjectMenus(allProjects = []) {
     id: "project-settings",
     triggerLabel: "Project Settings",
     triggerIcon: Icon.Settings,
-    dropdownLabel: `Project Settings - ${projectName}`,
+    dropdownLabel: `Project Settings -${convertToPrettyText(projectName)}`,
     align: "start",
     items: [
       {

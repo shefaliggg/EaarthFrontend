@@ -19,8 +19,8 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
         "data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 " +
         "data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 " +
         "data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) " +
-        "min-w-[10rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden " +
-        "overflow-y-auto rounded-md border shadow-md px-1.5 py-2",
+        "min-w-56 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden " +
+        "overflow-y-auto rounded-md border shadow-md px-1.5 py-2 space-y-0.5",
         className
       )}
       {...props}
@@ -29,26 +29,32 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
 ))
 
 const DropdownMenuGroup = ({ ...props }) => <DropdownMenuPrimitive.Group {...props} />
-const DropdownMenuItem = React.forwardRef(({ className, inset, variant = "default", ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    data-inset={inset}
-    data-variant={variant}
-    className={cn(
-      "focus:bg-primary dark:focus:bg-secondary focus:text-white data-[variant=destructive]:text-destructive " +
-      "data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 " +
-      "data-[variant=destructive]:focus:text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground " +
-      "relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm outline-hidden select-none " +
-      "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none " +
-      "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-      className
-    )}
-    {...props}
-  />
-))
+const DropdownMenuItem = React.forwardRef(
+  ({ className, inset, variant = "default", ...props }, ref) => (
+    <DropdownMenuPrimitive.Item
+      ref={ref}
+      data-inset={inset}
+      data-variant={variant}
+      className={cn(
+        "group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm outline-hidden select-none " +
+        "focus:bg-primary dark:focus:bg-secondary focus:text-background " +
+        "data-[variant=destructive]:text-destructive " +
+        "data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 " +
+        "data-[variant=destructive]:focus:text-destructive " +
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 " +
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 " +
+        "[&_svg]:text-muted-foreground " +
+        "group-focus:[&_svg]:text-background",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+
 const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
   <DropdownMenuPrimitive.CheckboxItem ref={ref} checked={checked} className={cn(
-    "focus:bg-primary dark:focus:bg-secondary focus:text-white relative flex cursor-pointer items-center gap-2 " +
+    "focus:bg-primary dark:focus:bg-secondary focus:text-background relative flex cursor-pointer items-center gap-2 " +
     "rounded-md py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none " +
     "data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     className
@@ -64,7 +70,7 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
 const DropdownMenuRadioGroup = ({ ...props }) => <DropdownMenuPrimitive.RadioGroup {...props} />
 const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
   <DropdownMenuPrimitive.RadioItem ref={ref} className={cn(
-    "focus:bg-primary dark:focus:bg-secondary focus:text-white relative flex cursor-pointer items-center gap-2 rounded-md " +
+    "focus:bg-primary dark:focus:bg-secondary focus:text-background relative flex cursor-pointer items-center gap-2 rounded-md " +
     "py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none " +
     "data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     className
@@ -78,7 +84,7 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
   </DropdownMenuPrimitive.RadioItem>
 ))
 const DropdownMenuLabel = ({ className, inset, ...props }) => (
-  <DropdownMenuPrimitive.Label data-inset={inset} className={cn("px-3 py-1.5 text-sm font-medium data-[inset]:pl-8", className)} {...props} />
+  <DropdownMenuPrimitive.Label data-inset={inset} className={cn("px-3 py-1.5 text-sm font-medium data-[inset]:pl-8 text-muted-foreground", className)} {...props} />
 )
 const DropdownMenuSeparator = ({ className, ...props }) => (
   <DropdownMenuPrimitive.Separator className={cn("bg-border -mx-1 my-1 h-px", className)} {...props} />
@@ -89,8 +95,8 @@ const DropdownMenuShortcut = ({ className, ...props }) => (
 const DropdownMenuSub = ({ ...props }) => <DropdownMenuPrimitive.Sub {...props} />
 const DropdownMenuSubTrigger = React.forwardRef(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger ref={ref} data-inset={inset} className={cn(
-    "focus:bg-primary dark:focus:bg-secondary focus:text-white data-[state=open]:bg-primary data-[state=open]:text-background " +
-    "flex cursor-pointer items-center rounded-md px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
+    "focus:bg-primary dark:focus:bg-secondary focus:text-background data-[state=open]:bg-primary data-[state=open]:text-background " +
+    "flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
     className
   )} {...props}>
     {children}
@@ -104,8 +110,8 @@ const DropdownMenuSubContent = React.forwardRef(({ className, ...props }, ref) =
       "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out " +
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 " +
       "data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 " +
-      "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] " +
-      "origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-2xl border shadow-md p-1",
+      "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-52 " +
+      "origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-2xl border shadow-md p-1 space-y-0.5",
       className
     )}
     {...props}

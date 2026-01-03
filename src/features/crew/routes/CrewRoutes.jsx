@@ -19,9 +19,7 @@ const PlaceholderPage = ({ title }) => (
 const CrewRoutes = {
   path: '/crew',
   children: [
-    { index: true, element: <Navigate to="dashboard" replace /> },
-    { path: 'dashboard', element: <CrewDashboard /> },
-    
+    { index: true,  element: <CrewDashboard /> },
     // Projects Routes
     { path: 'projects', element: <MyProjectsPage title="My Projects" /> },
     { path: 'projects/:projectName', element: <PlaceholderPage title="Project Details" /> },
