@@ -5,14 +5,20 @@ import StudioActiveProjectsCard from "../components/StudioActiveProjectsCard";
 import StudioMilestonesCard from "../components/StudioMilestonesCard";
 
 import Metrics from "../../../shared/components/Metrics";
+import { useSelector } from "react-redux";
+import { getFullName } from "../../../shared/config/utils";
+
 export default function StudioDashboard() {
+  const { currentUser } = useSelector((state) => state.user);
+  console.log("user data", currentUser)
+
   return (
     <>
       <div className="space-y-6">
         <PageHeader
           title={
             <>
-              Welcome back, <span className="text-primary">Arun</span>
+              Welcome back, <span className="text-primary">{getFullName(currentUser)}</span>
             </>
           }
           icon={"Building2"}

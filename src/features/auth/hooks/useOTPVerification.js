@@ -6,15 +6,16 @@ import { verifyLoginOtpThunk, loginUserThunk } from "../store/user.thunks";
 import { clearUserError } from "../store/user.slice";
 import { toast } from "sonner";
 
-export const useOTPVerification = () => {
+export const useOTPVerification = ({ setDevOtp }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
   const { email, rememberMe, password, devOtp } = location.state || {};
 
-  const { isLoggingIn, error } = useSelector((state) => state.user);
+  const { isVerifying, error } = useSelector((state) => state.user);
 
+  const [resending, setResending] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [canResend, setCanResend] = useState(false);
   const [countdown, setCountdown] = useState(30);
@@ -61,11 +62,14 @@ export const useOTPVerification = () => {
     [otp]
   );
 
-  const handleBackspace = useCallback((index, e) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  }, [otp]);
+  const handleBackspace = useCallback(
+    (index, e) => {
+      if (e.key === "Backspace" && !otp[index] && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    },
+    [otp]
+  );
 
   const handlePaste = useCallback((e) => {
     e.preventDefault();
@@ -117,6 +121,8 @@ export const useOTPVerification = () => {
     setCanResend(false);
     setCountdown(30);
     setOtp(["", "", "", "", "", ""]);
+    setResending(true);
+    setDevOtp("waiting for otp...");
 
     try {
       const resultAction = await dispatch(
@@ -124,8 +130,11 @@ export const useOTPVerification = () => {
       );
 
       if (loginUserThunk.fulfilled.match(resultAction)) {
+        const response = resultAction.payload;
+
         toast.success("OTP resent successfully");
         inputRefs.current[0]?.focus();
+        setDevOtp(response?.data?.otp);
       } else {
         toast.error("Failed to resend OTP");
         setCanResend(true);
@@ -134,13 +143,16 @@ export const useOTPVerification = () => {
       console.error("Resend OTP error:", err);
       toast.error("Failed to resend OTP");
       setCanResend(true);
+    } finally {
+      setResending(false);
     }
-  }, [dispatch, email, password, rememberMe, canResend]);
+  }, [dispatch, email, password, rememberMe, canResend, setDevOtp]);
 
   return {
     otp,
     setOtp,
-    loading: isLoggingIn,
+    loading: isVerifying,
+    resending,
     error,
     canResend,
     countdown,

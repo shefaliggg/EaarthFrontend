@@ -2,6 +2,43 @@
 import { axiosConfig } from "../config/axiosConfig";
 
 export const authService = {
+  verifyInviteLink: async (token, email) => {
+    try {
+      const { data } = await axiosConfig.get("/invite/verify", {
+        params: { token, email: email.toLowerCase().trim() },
+      });
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Invitation link is invalid or expired."
+      );
+    }
+  },
+
+  temporaryLogin: async ({ email, password }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/login/temporary", {
+        email: email.toLowerCase().trim(),
+        password,
+      });
+
+      if (!data?.success)
+        throw new Error(data?.message || "Temporary login failed");
+
+      return {
+        success: true,
+        userId: data.data?.userId || data.userId,
+        email: data.data?.email || email,
+        message: data.message,
+      };
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Temporary login failed."
+      );
+    }
+  },
+
   /**
    * Login - Verify credentials and send OTP
    */
@@ -29,8 +66,6 @@ export const authService = {
     if (!data?.success) {
       throw new Error(data?.message || "OTP verification failed");
     }
-
-    // Backend should set cookies here
     return data?.data?.user || null;
   },
 
@@ -70,31 +105,29 @@ export const authService = {
     return data?.data?.user || null;
   },
 
-
   /**
    * Generate QR for web login
    */
   generateWebQr: async () => {
-    const { data } = await axiosConfig.get("/auth/qr-code/web/init");
-    
-    if (!data?.success) {
-      throw new Error(data?.message || "Failed to generate QR");
+    try {
+      const { data } = await axiosConfig.get("/auth/qr-code/web/init");
+      return data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || "Failed to generate QR.");
     }
-    
-    return data?.data || data;
   },
 
   /**
    * Generate QR for mobile login
    */
   generateMobileQr: async () => {
-    const { data } = await axiosConfig.get("/auth/qr-code/mobile/init");
-    
-    if (!data?.success) {
-      throw new Error(data?.message || "Failed to generate QR");
+    try {
+      const { data } = await axiosConfig.get("/auth/qr-code/mobile/init");
+      console.log("generate mobile qr response in auth service", data);
+      return data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || "Failed to generate QR.");
     }
-    
-    return data?.data || data;
   },
 
   /**

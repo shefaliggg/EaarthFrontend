@@ -6,16 +6,16 @@ import { useOTPVerification } from "../hooks/useOTPVerification";
 import { useAuth } from "../context/AuthContext";
 import eaarthLogo from "../../../assets/eaarth.webp";
 import { Input } from "../../../shared/components/ui/input";
+import { Button } from "../../../shared/components/ui/button";
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { updateUser } = useAuth();
 
   const email = location.state?.email;
   const password = location.state?.password;
   const rememberMe = location.state?.rememberMe || false;
-  const [devOtp, setDevOtp] = useState(location.state?.otp || null);
+  const [devOtp, setDevOtp] = useState(location.state?.devOtp || null);
 
   useEffect(() => {
     if (!email) navigate("/auth/login", { replace: true });
@@ -24,16 +24,16 @@ export const OTPVerificationPage = () => {
   const {
     otp,
     loading,
+    resending,
     error,
     canResend,
     countdown,
     inputRefs,
     handleInput,
     handleBackspace,
-    handlePaste,
     handleSubmit,
     handleResend,
-  } = useOTPVerification();
+  } = useOTPVerification({ setDevOtp });
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -55,6 +55,7 @@ export const OTPVerificationPage = () => {
       <button
         onClick={handleBackClick}
         className="absolute top-6 left-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-800/30 rounded-full transition-all"
+        disabled={loading}
       >
         <ArrowLeft className="w-6 h-6" />
       </button>
@@ -96,7 +97,7 @@ export const OTPVerificationPage = () => {
             </div>
           )}
 
-          <div className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <div className="flex gap-2 justify-center mb-4">
               {otp.map((digit, i) => (
                 <Input
@@ -115,8 +116,7 @@ export const OTPVerificationPage = () => {
             </div>
 
             <button
-              type="button"
-              onClick={handleFormSubmit}
+              type="submit"
               disabled={loading || otp.join("").length !== 6}
               className="w-full bg-primary hover:bg-purple-700 transition-colors text-primary-foreground font-medium py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -129,18 +129,28 @@ export const OTPVerificationPage = () => {
                 <span className="text-sm">VERIFY</span>
               )}
             </button>
-          </div>
+          </form>
 
           <div className="text-center mt-4">
             <p className="text-xs text-muted-foreground mb-2">Didn't receive the code?</p>
-            <button
+            <Button
               type="button"
+              variant={"link"}
               onClick={handleResendClick}
-              disabled={!canResend || loading || !password}
+              disabled={!canResend || resending || !password}
               className="font-medium text-primary hover:text-purple-700 disabled:text-muted-foreground transition-colors text-sm"
             >
-              {canResend ? "Resend Code" : `Resend in ${countdown}s`}
-            </button>
+              {resending ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : canResend ? (
+                'Resend Code'
+              ) : (
+                `Resend in ${countdown}s`
+              )}
+            </Button>
           </div>
 
           <div className="text-center mt-3">
@@ -156,10 +166,10 @@ export const OTPVerificationPage = () => {
         </div>
 
         <div className="text-center mt-4 text-xs text-muted-foreground">
-          Step 2 of 4 — OTP Verification
+          Admin Authentication — Step 2 of 2
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

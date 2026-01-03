@@ -1,4 +1,3 @@
-// src/features/auth/store/user.slice.js
 import { createSlice } from "@reduxjs/toolkit";
 import {
   getCurrentUserThunk,
@@ -18,6 +17,7 @@ const initialState = {
   isAuthenticated: false,
   isFetching: false,
   isLoggingIn: false,
+  isVerifying: false,
   isUpdating: false,
   error: null,
   successMessage: null,
@@ -89,17 +89,17 @@ const userSlice = createSlice({
 
       // ==================== VERIFY OTP ====================
       .addCase(verifyLoginOtpThunk.pending, (state) => {
-        state.isLoggingIn = true;
+        state.isVerifying = true;
         state.error = null;
       })
       .addCase(verifyLoginOtpThunk.fulfilled, (state, action) => {
-        state.isLoggingIn = false;
+        state.isVerifying = false;
         state.currentUser = action.payload;
         state.isAuthenticated = true;
         state.successMessage = "Login successful";
       })
       .addCase(verifyLoginOtpThunk.rejected, (state, action) => {
-        state.isLoggingIn = false;
+        state.isVerifying = false;
         state.error = action.payload;
       })
 

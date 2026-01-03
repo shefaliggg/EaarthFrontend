@@ -12,11 +12,12 @@ export const getCurrentUserThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await authService.getCurrentUser();
-            console.log("current user res", response.data.user)
+      console.log("current user res", response.data.user);
       return response.data.user;
     } catch (err) {
-      console.error("❌ Get current user error:", err);
-      return rejectWithValue(err?.message || "Failed to fetch user");
+      return rejectWithValue(
+        err?.response?.data?.message || err?.message || "Failed to fetch user"
+      );
     }
   }
 );
@@ -49,7 +50,7 @@ export const verifyLoginOtpThunk = createAsyncThunk(
       return user;
     } catch (err) {
       console.error("❌ OTP verification error:", err);
-      return rejectWithValue(err?.message || "Invalid OTP");
+      return rejectWithValue( err?.response?.data?.message || err?.message || "Invalid OTP");
     }
   }
 );
@@ -134,7 +135,9 @@ export const updateUserTypeThunk = createAsyncThunk(
       ];
 
       if (!validUserTypes.includes(normalizedUserType)) {
-        throw new Error(`Invalid user type. Must be one of: ${validUserTypes.join(", ")}`);
+        throw new Error(
+          `Invalid user type. Must be one of: ${validUserTypes.join(", ")}`
+        );
       }
 
       const updatedUser = await userService.updateUserType(normalizedUserType);
