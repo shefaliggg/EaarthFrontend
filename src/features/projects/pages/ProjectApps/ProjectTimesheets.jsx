@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { PageHeader } from '../../../../shared/components/PageHeader'
-import { Award, CircleDollarSign, Timer } from 'lucide-react';
+import { ArrowUpRight, Award, Calendar, Car, ChevronDown, CircleDollarSign, DollarSign, Eye, Fuel, Plus, Timer, X, Zap } from 'lucide-react';
 import MiniInfoPills from '../../../../shared/components/badges/MiniInfoPills';
 import FilterPillTabs from '../../../../shared/components/FilterPillTabs';
 import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
 import SearchBar from '../../../../shared/components/SearchBar';
 import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
+import { Button } from '../../../../shared/components/ui/button';
+import { motion, AnimatePresence } from "framer-motion"
+import { getStatusBadge } from '../../../../shared/config/utils';
 
 function ProjectTimesheets() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
@@ -13,6 +16,8 @@ function ProjectTimesheets() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
+
+  const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
 
   const generateMockWeekData = () => {
     const weeks = [];
@@ -339,6 +344,44 @@ function ProjectTimesheets() {
         parseAmount,
       });
 
+  const isCurrentWeek = (weekEnding) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayOfWeek = today.getDay();
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+    const currentWeekEnding = new Date(today);
+    currentWeekEnding.setDate(today.getDate() + daysUntilSunday);
+    currentWeekEnding.setHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(weekEnding);
+    weekEnd.setHours(0, 0, 0, 0);
+
+    return weekEnd.getTime() === currentWeekEnding.getTime();
+  };
+
+  const isFutureWeek = (weekEnding) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekEnding);
+    weekEnd.setHours(0, 0, 0, 0);
+    return weekEnd > today;
+  };
+
+  // Get mini calendar for week
+  const getWeekDays = (weekStart, weekEnding) => {
+    const days = [];
+    const start = new Date(weekStart);
+    const end = new Date(weekEnding);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push({
+        day: d.toLocaleString('en-US', { weekday: 'short' }),
+        date: d.getDate()
+      });
+    }
+    return days;
+  };
+
   return (
     <div className='space-y-6 container mx-auto'>
       <PageHeader
@@ -368,38 +411,552 @@ function ProjectTimesheets() {
       />
       <PrimaryStats stats={primaryStats} gridColumns={4} />
 
-      <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
-        <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
-        <FilterPillTabs
-          options={[
-            {
-              value: "all",
-              label: "All",
-            },
-            {
-              value: "approved",
-              label: "Approved",
-            },
-            {
-              value: "submitted",
-              label: "Pending",
-            },
-            {
-              value: "draft",
-              label: "Draft",
-            },
-            {
-              value: "not-started",
-              label: "New",
-            },
-          ]}
-          value={statusFilter}
-          onChange={(value) => setStatusFilter(value)}
-          transparentBg={false}
-        />
-        <ViewToggleButton view={viewMode} onViewChange={setViewMode}/>
+      <div>
+        <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
+          <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
+          <FilterPillTabs
+            options={[
+              {
+                value: "all",
+                label: "All",
+              },
+              {
+                value: "approved",
+                label: "Approved",
+              },
+              {
+                value: "submitted",
+                label: "Pending",
+              },
+              {
+                value: "draft",
+                label: "Draft",
+              },
+              {
+                value: "not-started",
+                label: "New",
+              },
+            ]}
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value)}
+            transparentBg={false}
+          />
+          <ViewToggleButton view={viewMode} onViewChange={setViewMode} />
+        </div>
+        <div className='flex flex-row items-center justify-between py-2 border-b'>
+          {filteredWeeks.length !== weeks.length && (
+            <div className="text-center">
+              <span className={`text-sm text-muted-foreground`}>
+                Showing <span className="font-bold text-purple-600">{filteredWeeks.length}</span> of {weeks.length} weeks
+              </span>
+            </div>
+          )}
+
+          {(searchQuery || statusFilter !== 'all') && (
+            <div className="flex items-center gap-2 pt-4">
+              <span className="text-xs font-bold text-gray-500">Active filters:</span>
+              {searchQuery && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <span className="text-xs font-bold text-purple-700 dark:text-purple-400">Search: "{searchQuery}"</span>
+                  <button onClick={() => setSearchQuery('')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {statusFilter !== 'all' && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
+                  <span className="text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">Status: {statusFilter}</span>
+                  <button onClick={() => setStatusFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                }}
+              // className="ml-2 text-xs font-bold text-gray-500 hover:text-purple-600 transition-colors"
+              >
+                Clear all
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
+      <div>
+        {sortedYears.length > 0 ? (
+          <div className="space-y-6">
+            {sortedYears.map((year, yearIdx) => {
+              const yearWeeks = weeksByYear[year].sort((a, b) =>
+                new Date(b.weekEnding).getTime() - new Date(a.weekEnding).getTime()
+              );
+              const isExpanded = expandedYears.includes(year);
+
+              return (
+                <motion.div
+                  key={year}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: yearIdx * 0.1 }}
+                  className={`bg-card rounded-2xl border shadow-xl overflow-hidden`}
+                >
+                  {/* Year Header */}
+                  <button
+                    // onClick={() => toggleYear(year)}
+                    className={`w-full px-8 py-6 flex items-center justify-between transition-all bg-background hover:bg-gray-100 dark:bg-gray-950 border-b group`}
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className={`text-2xl font-black`}>{year}</h2>
+                        <span className={`text-sm text-muted-foreground font-semibold`}>
+                          {yearWeeks.length} week{yearWeeks.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <ChevronDown className={`w-6 h-6 text-muted-foreground`} />
+                    </motion.div>
+                  </button>
+
+                  {/* Week Cards */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        {viewMode === 'grid' ? (
+                          // Grid View
+                          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {yearWeeks.map((week, idx) => {
+                              const displayStatus = activeTab === 'expenses' ? (week.expenseStatus || 'not-started') : week.status;
+                              const statusConfig = getStatusBadge(displayStatus);
+                              const isCurrent = isCurrentWeek(week.weekEnding);
+                              const isFuture = isFutureWeek(week.weekEnding);
+                              const weekDays = getWeekDays(week.weekStart, week.weekEnding);
+
+                              const handleCardClick = () => {
+                                // if (activeTab === 'expenses') {
+                                //   if (onEditExpenses) {
+                                //     onEditExpenses(week.weekEnding);
+                                //   }
+                                // } else {
+                                //   onWeekClick(week.weekEnding);
+                                // }
+                              };
+
+                              return (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: idx * 0.05 }}
+                                  className={`relative rounded-2xl border-2 transition-all ${isCurrent
+                                    ? 'border-purple-500 shadow-xl shadow-purple-500/20'
+                                    : "border"
+                                    } hover:bg-lavender-200 cursor-pointer overflow-hidden group hover:scale-105 hover:shadow-2xl`}
+                                  onClick={handleCardClick}
+                                >
+                                  {/* Gradient Overlay on Hover */}
+                                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/5 group-hover:to-pink-600/5 transition-all duration-300" />
+
+                                  {/* Current Week Indicator */}
+                                  {isCurrent && (
+                                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500" />
+                                  )}
+
+                                  <div className="p-6 relative">
+                                    {/* Week Range & Actions */}
+                                    <div className="flex items-start justify-between mb-4">
+                                      <div className="flex-1">
+                                        <div className={`text-lg font-black mb-1`}>
+                                          {formatWeekRange(week.weekStart, week.weekEnding)}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {isCurrent && (
+                                            <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-md">
+                                              <Zap className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                                              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                                                Current
+                                              </span>
+                                            </div>
+                                          )}
+                                          {isFuture && (
+                                            <div className={`text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md`}>
+                                              Future
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Quick Actions */}
+                                      {activeTab === 'timesheets' && (
+                                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          {(week.status === 'approved' || week.status === 'submitted') && week.expenseType && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                // onViewExpenses(week.weekEnding);
+                                              }}
+                                              className={`p-2.5 rounded-xl border transition-all hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-600/20 dark:hover:border-purple-500  hover:scale-110`}
+                                              title="View Expenses"
+                                            >
+                                              {week.expenseType === 'fuel' ? (
+                                                <Fuel className="w-4 h-4 text-purple-600" />
+                                              ) : (
+                                                <Car className="w-4 h-4 text-purple-600" />
+                                              )}
+                                            </button>
+                                          )}
+
+                                          {(week.status === 'approved' || week.status === 'submitted') && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                // onDownloadPDF(week.weekEnding);
+                                              }}
+                                              className={`p-2.5 rounded-xl border transition-all hover:bg-purple-50 hover:border-purple-300  dark:hover:bg-purple-600/20 dark:hover:border-purple-500 hover:scale-110`}
+                                              title="Download PDF"
+                                            >
+                                              <Download className="w-4 h-4 text-purple-600" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Expense Type Badge */}
+                                      {activeTab === 'expenses' && week.expenseType && displayStatus !== 'not-started' && (
+                                        <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 shadow-lg ${week.expenseType === 'fuel'
+                                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                                          : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                                          }`}>
+                                          {week.expenseType === 'fuel' ? (
+                                            <>
+                                              <Fuel className="w-3.5 h-3.5" />
+                                              Fuel
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Car className="w-3.5 h-3.5" />
+                                              Mileage
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Mini Week Calendar */}
+                                    <div className="grid grid-cols-7 gap-1 mb-4">
+                                      {weekDays.map((day, i) => (
+                                        <div key={i} className="text-center">
+                                          <div className="text-[9px] font-bold text-gray-400 mb-1">{day.day[0]}</div>
+                                          <div className={`w-full aspect-square rounded-md flex items-center justify-center text-[10px] font-bold ${[5, 6].includes(i)
+                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                                            }`}>
+                                            {day.date}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Status Badge */}
+                                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${statusConfig.color} mb-4 shadow-sm`}>
+                                      {statusConfig.icon}
+                                      {statusConfig.label}
+                                    </div>
+
+                                    {/* Week Details */}
+                                    {displayStatus !== 'not-started' && (
+                                      <div className={`space-y-2.5 pt-4 border-t`}>
+                                        {activeTab === 'timesheets' ? (
+                                          <>
+                                            {week.totalHours !== undefined && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground flex items-center gap-2`}>
+                                                  <Timer className="w-3.5 h-3.5" />
+                                                  Hours:
+                                                </span>
+                                                <span className={`font-bold`}>{week.totalHours}</span>
+                                              </div>
+                                            )}
+                                            {week.totalAmount && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground flex items-center gap-2`}>
+                                                  <DollarSign className="w-3.5 h-3.5" />
+                                                  Amount:
+                                                </span>
+                                                <span className={`font-black  text-purple-600 dark:text-purple-400`}>{week.totalAmount}</span>
+                                              </div>
+                                            )}
+                                            {week.submittedDate && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground`}>Submitted:</span>
+                                                <span className={`text-xs text-muted-foreground`}>{week.submittedDate}</span>
+                                              </div>
+                                            )}
+                                            {week.approvedDate && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground`}>Approved:</span>
+                                                <span className={`text-xs text-muted-foreground`}>{week.approvedDate}</span>
+                                              </div>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <>
+                                            {week.expenseAmount && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground flex items-center gap-2`}>
+                                                  {week.expenseType === 'fuel' ? <Fuel className="w-3.5 h-3.5" /> : <Car className="w-3.5 h-3.5" />}
+                                                  Total:
+                                                </span>
+                                                <span className={`font-black  text-purple-600 dark:text-purple-400`}>{week.expenseAmount}</span>
+                                              </div>
+                                            )}
+                                            {week.expenseType === 'mileage' && (
+                                              <div className="flex justify-between items-center">
+                                                <span className={`text-xs font-semibold text-muted-foreground`}>Rate:</span>
+                                                <span className={`text-xs text-muted-foreground font-mono`}>£0.45/mile</span>
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
+
+                                        {/* Progress Bar for Hours */}
+                                        {activeTab === 'timesheets' && week.totalHours && (
+                                          <div className="pt-2">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                              <span className="text-[10px] font-bold text-gray-400">Progress</span>
+                                              <span className="text-[10px] font-bold text-purple-600">{((week.totalHours / 40) * 100).toFixed(0)}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                                              <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${Math.min((week.totalHours / 40) * 100, 100)}%` }}
+                                                transition={{ duration: 0.8, delay: 0.2 }}
+                                                className="bg-gradient-to-r from-purple-600 to-pink-600 h-full rounded-full"
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Click Indicator */}
+                                    <div className={`mt-4 pt-4 border-t  text-center`}>
+                                      <span className={`text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-purple-600 transition-colors flex items-center justify-center gap-2`}>
+                                        {activeTab === 'expenses' ? (
+                                          displayStatus === 'not-started' ? (
+                                            <>
+                                              <Plus className="w-3.5 h-3.5" />
+                                              Add Expenses
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Eye className="w-3.5 h-3.5" />
+                                              View/Edit
+                                            </>
+                                          )
+                                        ) : (
+                                          <>
+                                            {week.status === 'not-started' ? <Plus className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                            {week.status === 'not-started' ? 'Create' : 'View'} Timesheet
+                                          </>
+                                        )}
+                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                      </span>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          // List View
+                          <div className="p-6 space-y-3">
+                            {yearWeeks.map((week, idx) => {
+                              const displayStatus = activeTab === 'expenses' ? (week.expenseStatus || 'not-started') : week.status;
+                              const statusConfig = getStatusBadge(displayStatus);
+                              const isCurrent = isCurrentWeek(week.weekEnding);
+
+                              const handleCardClick = () => {
+                                // if (activeTab === 'expenses') {
+                                //   if (onEditExpenses) {
+                                //     // onEditExpenses(week.weekEnding);
+                                //   }
+                                // } else {
+                                //   // onWeekClick(week.weekEnding);
+                                // }
+                              };
+
+                              return (
+                                <motion.div
+                                  key={idx}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: idx * 0.03 }}
+                                  className={`relative rounded-xl border-2 transition-all ${isCurrent
+                                    ? 'border-purple-500 shadow-lg shadow-purple-500/20'
+                                    : ""
+                                    } bg-card hover:bg-lavender-200 dark:bg-violet-950 cursor-pointer overflow-hidden group hover:shadow-xl`}
+                                  onClick={handleCardClick}
+                                >
+                                  <div className="p-5 flex items-center gap-6">
+                                    {/* Week Info */}
+                                    <div className="flex-1 flex items-center gap-6">
+                                      <div className="w-24">
+                                        <div className={`text-sm font-black `}>
+                                          {formatWeekRange(week.weekStart, week.weekEnding)}
+                                        </div>
+                                        {isCurrent && (
+                                          <div className="flex items-center gap-1 mt-1">
+                                            <Zap className="w-3 h-3 text-purple-600" />
+                                            <span className="text-[9px] font-bold uppercase text-purple-600">Current</span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Status */}
+                                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-bold ${statusConfig.color}`}>
+                                        {statusConfig.icon}
+                                        {statusConfig.label}
+                                      </div>
+
+                                      {/* Details */}
+                                      {displayStatus !== 'not-started' && (
+                                        <div className="flex items-center gap-6">
+                                          {activeTab === 'timesheets' ? (
+                                            <>
+                                              {week.totalHours !== undefined && (
+                                                <div className="flex items-center gap-2">
+                                                  <Timer className="w-4 h-4 text-gray-400" />
+                                                  <span className={`font-bold `}>{week.totalHours}h</span>
+                                                </div>
+                                              )}
+                                              {week.totalAmount && (
+                                                <div className="flex items-center gap-2">
+                                                  <DollarSign className="w-4 h-4 text-gray-400" />
+                                                  <span className={`font-black text-purple-600 dark:text-purple-400`}>{week.totalAmount}</span>
+                                                </div>
+                                              )}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {week.expenseType && (
+                                                <div className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${week.expenseType === 'fuel'
+                                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                  }`}>
+                                                  {week.expenseType}
+                                                </div>
+                                              )}
+                                              {week.expenseAmount && (
+                                                <div className="flex items-center gap-2">
+                                                  <DollarSign className="w-4 h-4 text-gray-400" />
+                                                  <span className={`font-black text-purple-600 dark:text-purple-400`}>{week.expenseAmount}</span>
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {activeTab === 'timesheets' && (week.status === 'approved' || week.status === 'submitted') && (
+                                        <>
+                                          {week.expenseType && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                // onViewExpenses(week.weekEnding);
+                                              }}
+                                              className={`p-2 rounded-lg border  transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30`}
+                                              title="View Expenses"
+                                            >
+                                              {week.expenseType === 'fuel' ? (
+                                                <Fuel className="w-4 h-4 text-purple-600" />
+                                              ) : (
+                                                <Car className="w-4 h-4 text-purple-600" />
+                                              )}
+                                            </button>
+                                          )}
+                                          {/* {onDownloadPDF && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDownloadPDF(week.weekEnding);
+                                              }}
+                                              className={`p-2 rounded-lg border  transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30`}
+                                              title="Download PDF"
+                                            >
+                                              <Download className="w-4 h-4 text-purple-600" />
+                                            </button>
+                                          )} */}
+                                        </>
+                                      )}
+                                      <ArrowUpRight className={`w-5 h-5 text-muted-foreground`} />
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          // Empty State
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`bg-card rounded-2xl border  p-16 text-center shadow-xl`}
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+              <FileText className={`w-12 h-12 text-muted-foreground`} />
+            </div>
+            <h3 className={`text-xl font-black  mb-3`}>
+              {searchQuery || statusFilter !== 'all' ? 'No Results Found' : 'No Timesheets Yet'}
+            </h3>
+            <p className={`text-muted-foreground mb-6 max-w-md mx-auto`}>
+              {searchQuery || statusFilter !== 'all'
+                ? 'Try adjusting your search or filters to find what you\'re looking for.'
+                : 'Your timesheets will appear here once you start creating them.'}
+            </p>
+            {(searchQuery || statusFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                }}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all"
+              >
+                Clear Filters
+              </button>
+            )}
+          </motion.div>
+        )}
+      </div>
     </div>
   )
 }

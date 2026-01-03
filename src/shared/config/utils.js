@@ -47,3 +47,36 @@ export function capitalizeFirstLetter(text = "", mode = "first") {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+export function getStatusBadge(status) {
+  const map = {
+    accepted:
+      "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400",
+    synced:
+      "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400",
+    approved:
+      "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400",
+
+    active:
+      "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+    live: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+
+    pending:
+      "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+    pending_verification:
+      "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+    syncing:
+      "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+
+    ended:
+      "bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+    deactivated:
+      "bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+
+    inactive: "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+    rejected: "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+    suspended:
+      "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+  };
+
+  return map[status] || "bg-muted text-muted-foreground";
+}
