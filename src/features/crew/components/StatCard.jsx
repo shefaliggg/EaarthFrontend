@@ -15,19 +15,21 @@ export function StageCard({ stage, count, isSelected, isAction, onClick }) {
       onClick={onClick}
       data-testid={`card-stage-${stage.label.toLowerCase().replace(/\s+/g, '-')}`}
     >
-      <CardContent className=" flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">{stage.label}</p>
+      <CardContent className="p flex flex-col items-center text-center gap-2.5">
+        <IconComponent className={cn("w-7 h-7 flex-shrink-0", stage.color)} />
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground font-semibold truncate leading-tight mb-1">
+            {stage.label}
+          </p>
           {count !== null ? (
-            <p className="text-2xl font-bold mt-0.5">{count}</p>
+            <p className="text-2xl font-bold leading-none">{count}</p>
           ) : (
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center justify-center gap-1.5 mt-1">
               <Plus className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">New</span>
+              <span className="text-xs font-semibold text-primary">New</span>
             </div>
           )}
         </div>
-        <IconComponent className={cn("w-6 h-6", stage.color)} />
       </CardContent>
     </Card>
   );
