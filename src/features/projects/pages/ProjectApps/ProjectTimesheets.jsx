@@ -15,6 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/shared/components/ui/accordion";
+import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 
 
 function ProjectTimesheets() {
@@ -496,7 +497,7 @@ function ProjectTimesheets() {
 
       <Accordion
         type="single"
-        defaultValue={[String(new Date().getFullYear())]}
+        defaultValue={String(new Date().getFullYear())}
         className="space-y-3"
       >
         {sortedYears.map((year) => {
@@ -505,6 +506,21 @@ function ProjectTimesheets() {
               new Date(b.weekEnding).getTime() -
               new Date(a.weekEnding).getTime()
           );
+
+          const futureWeeks = yearWeeks.filter(w => isFutureWeek(w.weekEnding))
+          const currentWeek = yearWeeks.find(w => isCurrentWeek(w.weekEnding))
+          const pastWeeks = yearWeeks.filter(
+            w => !isFutureWeek(w.weekEnding) && !isCurrentWeek(w.weekEnding)
+          )
+
+          let defaultInnerSection = undefined;
+          if (currentWeek) {
+            defaultInnerSection = "current";
+          } else if (pastWeeks.length > 0) {
+            defaultInnerSection = "past";
+          } else if (futureWeeks.length > 0) {
+            defaultInnerSection = "future";
+          }
 
           return (
             <AccordionItem
@@ -532,61 +548,116 @@ function ProjectTimesheets() {
               </AccordionTrigger>
 
               {/* Year Content */}
-              <AccordionContent className="p-0">
-                {viewMode === "grid" ? (
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                    {yearWeeks.map((week, idx) => (
+              <AccordionContent className="p-6 space-y-4">
+                {futureWeeks.length > 0 && (
+                  <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+                    <AccordionItem value="future">
+                      <AccordionTrigger className="hover:no-underline text-sm uppercase p-3 px-5 shadow border rounded-3xl text-muted-foreground text-bold group">
+                        <span className='flex gap-2 items-center'>
+                          Future Weeks
+                          <StatusBadge status={'information'} label={`Total ${futureWeeks.length}`} size="sm" />
+                          <StatusBadge status={'pending'} label={`${futureWeeks.filter(week => {
+                            const displayStatus =
+                              viewMode === "expenses"
+                                ? week.expenseStatus || "not-started"
+                                : week.status
+
+                            return displayStatus === "draft"
+                          }).length} Draft`} size="sm" />
+                        </span>
+                      </AccordionTrigger>
+
+                      <AccordionContent className="py-4 space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                          {futureWeeks.map((week, idx) => (
+                            <WeekCard
+                              key={idx}
+                              week={{
+                                ...week,
+                                range: formatWeekRange(
+                                  week.weekStart,
+                                  week.weekEnding
+                                ),
+                              }}
+                              view={viewMode}
+                              mode={activeTab}
+                              isFuture
+                              weekDays={getWeekDays(
+                                week.weekStart,
+                                week.weekEnding
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+
+                {/* Current week */}
+                {currentWeek && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-bold text-purple-600 uppercase">
+                      Current Week
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-4">
                       <WeekCard
-                        key={idx}
+                        fullWidth={true}
                         week={{
-                          ...week,
+                          ...currentWeek,
                           range: formatWeekRange(
-                            week.weekStart,
-                            week.weekEnding
+                            currentWeek.weekStart,
+                            currentWeek.weekEnding
                           ),
                         }}
                         view={viewMode}
                         mode={activeTab}
-                        isCurrent={isCurrentWeek(week.weekEnding)}
-                        isFuture={isFutureWeek(week.weekEnding)}
+                        isCurrent
                         weekDays={getWeekDays(
-                          week.weekStart,
-                          week.weekEnding
+                          currentWeek.weekStart,
+                          currentWeek.weekEnding
                         )}
-                        onClick={(weekEnding) =>
-                          console.log("Week clicked:", weekEnding)
-                        }
-                        onDownloadPDF={(weekEnding) =>
-                          console.log("Download PDF for:", weekEnding)
-                        }
-                        onViewExpenses={(weekEnding) =>
-                          console.log("View expenses for:", weekEnding)
-                        }
-                        onEditExpenses={(weekEnding) =>
-                          console.log("Edit expenses for:", weekEnding)
-                        }
                       />
-                    ))}
+                    </div>
                   </div>
-                ) : (
-                  <div className="p-6 space-y-3">
-                    {yearWeeks.map((week, idx) => (
-                      <WeekCard
-                        key={idx}
-                        week={{
-                          ...week,
-                          range: formatWeekRange(
-                            week.weekStart,
-                            week.weekEnding
-                          ),
-                        }}
-                        view={viewMode}
-                        mode={activeTab}
-                        isCurrent={isCurrentWeek(week.weekEnding)}
-                        isFuture={isFutureWeek(week.weekEnding)}
-                      />
-                    ))}
-                  </div>
+                )}
+
+                {/* Past weeks */}
+                {pastWeeks.length > 0 && (
+                  <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+                    <AccordionItem value="past">
+                      <AccordionTrigger className="hover:no-underline text-sm uppercase p-3 px-5 shadow border rounded-3xl text-muted-foreground text-bold group">
+                        <span className='flex gap-2 items-center'>
+                          Past Weeks
+                          <StatusBadge status={'information'} label={`Total ${pastWeeks.length}`} size="sm" />
+                        </span>
+                      </AccordionTrigger>
+
+                      <AccordionContent className="py-4 space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                          {pastWeeks.map((week, idx) => (
+                            <WeekCard
+                              key={idx}
+                              week={{
+                                ...week,
+                                range: formatWeekRange(
+                                  week.weekStart,
+                                  week.weekEnding
+                                ),
+                              }}
+                              view={viewMode}
+                              mode={activeTab}
+                              weekDays={getWeekDays(
+                                week.weekStart,
+                                week.weekEnding
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 )}
               </AccordionContent>
             </AccordionItem>

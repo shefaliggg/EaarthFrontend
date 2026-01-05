@@ -19,6 +19,7 @@ import { Card } from "../../../../shared/components/ui/card";
 import { Progress } from "../../../../shared/components/ui/progress";
 
 export function WeekCard({
+    fullWidth = false,
     week,
     view = "grid",
     mode = "timesheets",
@@ -141,24 +142,25 @@ export function WeekCard({
                     </div>
                     <div className="flex items-center gap-2 mb-6">
                         {isCurrent && (
-                            <StatusBadge label={"Current"} icon={"Zap"} size="sm" className={"text-primary bg-purple-200"} />
+                            <StatusBadge label={"Current"} icon={"Zap"} size={fullWidth ? "md" : "sm"} className={"text-primary bg-purple-200"} />
                         )}
                         {isFuture && (
-                            <StatusBadge status={'future'} label={"Future"} size="sm" />
+                            <StatusBadge status={'future'} label={"Future"} size={fullWidth ? "md" : "sm"} />
                         )}
-                        <StatusBadge status={displayStatus} size="sm" />
+                        <StatusBadge status={displayStatus} size={fullWidth ? "md" : "sm"} />
                     </div>
 
                     {/* Mini Week Calendar */}
                     {weekDays.length > 0 && (
-                        <div className="grid grid-cols-7 gap-1 mb-4">
+                        <div className={`grid grid-cols-7 mb-4 ${fullWidth ? "gap-3" : "gap-1"}`}>
                             {weekDays.map((day, i) => (
                                 <div key={i} className="text-center">
                                     <div className="text-[9px] font-bold text-gray-400 mb-1">
                                         {day.day[0]}
                                     </div>
                                     <div className={cn(
-                                        "w-full aspect-square rounded-md flex items-center justify-center text-[10px] font-bold",
+                                        "w-full rounded-md flex items-center justify-center text-[10px] font-bold group-hover:border",
+                                        fullWidth ? "aspect-video" : "aspect-square",
                                         [5, 6].includes(i)
                                             ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                                             : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
@@ -270,7 +272,7 @@ export function WeekCard({
         <Card
             onClick={handleCardClick}
             className={cn(
-                "relative rounded-xl border transition-all group cursor-pointer overflow-hidden p-4",
+                "relative rounded-xl border transition-all group cursor-pointer overflow-hidden p-2",
                 isCurrent
                     ? "border-purple-400 bg-purple-50/40 dark:bg-purple-900/20 shadow-md"
                     : "border",
@@ -287,58 +289,99 @@ export function WeekCard({
                     <div className="text-sm font-black leading-tight">
                         {week.range}
                     </div>
-
-                    <div className="flex items-center gap-1 mt-1">
-                        {isCurrent && (
-                            <span className="text-[10px] font-bold uppercase text-purple-600 flex items-center gap-1">
-                                <Zap className="w-3 h-3" />
-                                Current
-                            </span>
-                        )}
-                        {isFuture && (
-                            <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                                Future
-                            </span>
-                        )}
-                    </div>
                 </div>
 
                 {/* CENTER: Status + Metrics */}
                 <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-3">
-                        <StatusBadge status={displayStatus} size="sm" />
+                    <div className="flex items-center gap-6">
+                        <div className="space-y-2">
+                            <div className="space-x-3">
+                                {isCurrent && (
+                                    <StatusBadge label={"Current"} icon={"Zap"} size={fullWidth ? "md" : "sm"} className={"text-primary bg-purple-200"} />
+                                )}
+                                {isFuture && (
+                                    <StatusBadge status={'future'} label={"Future"} size={fullWidth ? "md" : "sm"} />
+                                )}
+                                <StatusBadge status={displayStatus} size={fullWidth ? "md" : "sm"} />
+                            </div>
+                            {mode === "timesheets" && displayStatus !== "not-started" && (
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    {week.submittedDate && (
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            Submitted {week.submittedDate}
+                                        </span>
+                                    )}
 
-                        {mode === "timesheets" && week.totalHours !== undefined && (
-                            <span className="flex items-center gap-1.5 text-sm font-semibold">
-                                <Timer className="w-4 h-4 text-muted-foreground" />
-                                {week.totalHours}h
-                            </span>
-                        )}
+                                    {week.approvedDate && (
+                                        <span className="flex items-center gap-1">
+                                            <FileText className="w-3 h-3" />
+                                            Approved {week.approvedDate}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            {mode === "expenses" && displayStatus !== "not-started" && (
+                                <div className="flex items-center gap-4 text-xs">
+                                    <span className="flex items-center gap-1 font-semibold">
+                                        {week.expenseType === "fuel" ? (
+                                            <Fuel className="w-3.5 h-3.5" />
+                                        ) : (
+                                            <Car className="w-3.5 h-3.5" />
+                                        )}
+                                        {week.expenseType}
+                                    </span>
 
-                        {week.totalAmount && (
-                            <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
-                                <DollarSign className="w-4 h-4" />
-                                {week.totalAmount}
-                            </span>
-                        )}
+                                    {week.expenseAmount && (
+                                        <span className="font-bold text-purple-600">
+                                            {week.expenseAmount}
+                                        </span>
+                                    )}
+
+                                    {week.expenseType === "mileage" && (
+                                        <span className="font-mono text-muted-foreground">
+                                            £0.45 / mile
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                                {mode === "timesheets" && week.totalHours !== undefined && (
+                                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                                        <Timer className="w-4 h-4 text-muted-foreground" />
+                                        {week.totalHours}h
+                                    </span>
+                                )}
+
+                                {week.totalAmount && (
+                                    <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
+                                        <DollarSign className="w-4 h-4" />
+                                        {week.totalAmount}
+                                    </span>
+                                )}
+                            </div>
+                            {/* Progress (timesheets only) */}
+                            {mode === "timesheets" && week.totalHours && (
+                                <div className="flex items-center gap-2">
+                                    <Progress
+                                        value={Math.min((week.totalHours / 40) * 100, 100)}
+                                        className="h-1.5 w-40"
+                                    />
+                                    <span className="text-[10px] font-bold text-muted-foreground">
+                                        {Math.round((week.totalHours / 40) * 100)}%
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Progress (timesheets only) */}
-                    {mode === "timesheets" && week.totalHours && (
-                        <div className="flex items-center gap-2">
-                            <Progress
-                                value={Math.min((week.totalHours / 40) * 100, 100)}
-                                className="h-1.5 w-40"
-                            />
-                            <span className="text-[10px] font-bold text-muted-foreground">
-                                {Math.round((week.totalHours / 40) * 100)}%
-                            </span>
-                        </div>
-                    )}
+
                 </div>
 
                 {/* RIGHT: Actions */}
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2">
                     {mode === "timesheets" &&
                         (week.status === "approved" || week.status === "submitted") && (
                             <>
