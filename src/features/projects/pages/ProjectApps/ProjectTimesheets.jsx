@@ -9,6 +9,7 @@ import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleBu
 import { Button } from '../../../../shared/components/ui/button';
 import { motion, AnimatePresence } from "framer-motion"
 import { getStatusBadge } from '../../../../shared/config/statusBadgeConfig';
+import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 
 function ProjectTimesheets() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
@@ -675,10 +676,7 @@ function ProjectTimesheets() {
                                     </div>
 
                                     {/* Status Badge */}
-                                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 font-bold ${statusConfig.color} mb-4 shadow-sm`}>
-                                      {statusConfig.icon}
-                                      {statusConfig.label}
-                                    </div>
+                                    <StatusBadge status={displayStatus} size='lg'/>
 
                                     {/* Week Details */}
                                     {displayStatus !== 'not-started' && (
