@@ -1,25 +1,31 @@
-// shared/components/SmartIcon.jsx
 import * as LucideIcons from "lucide-react";
-import { cn } from "@/shared/config/utils";
-import { currentEnv } from "../config/enviroment";
+import React from "react";
+import { cn } from "../config/utils";
 
-export function SmartIcon({ icon, className }) {
-  if (typeof icon === "function") {
-    const IconComponent = icon;
-    return <IconComponent className={cn(className)} />;
-  }
+export function SmartIcon({ icon, className, size = "md" }) {
+  const iconSizes = {
+    sm: "w-3 h-3",
+    md: "w-4 h-4",
+    lg: "w-5 h-5",
+  };
 
   if (typeof icon === "string") {
     const IconComponent = LucideIcons[icon];
 
     if (!IconComponent) {
-      if (currentEnv === "development") {
-        console.warn(`SmartIcon: Lucide icon "${icon}" not found`);
-      }
+      console.warn(`Unknown lucide icon: ${icon}`);
       return null;
     }
 
-    return <IconComponent className={cn(className)} />;
+    return (
+      <IconComponent className={cn(className, iconSizes[size])} />
+    );
+  }
+
+  if (icon) {
+    return React.createElement(icon, {
+      className: cn(className, iconSizes[size]),
+    });
   }
 
   return null;

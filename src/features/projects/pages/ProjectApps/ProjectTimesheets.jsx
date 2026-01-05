@@ -501,10 +501,6 @@ function ProjectTimesheets() {
               return (
                 <motion.div
                   key={year}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: yearIdx * 0.1 }}
                   className={`bg-card rounded-2xl border shadow-xl overflow-hidden`}
                 >
                   {/* Year Header */}
@@ -531,8 +527,75 @@ function ProjectTimesheets() {
                     </motion.div>
                   </button>
 
+                  {viewMode === 'grid' ? (
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                      {yearWeeks.map((week, idx) => (
+                        <WeekCard
+                          key={idx}
+                          week={{
+                            ...week,
+                            range: formatWeekRange(week.weekStart, week.weekEnding),
+                          }}
+                          view={viewMode}
+                          mode={activeTab}
+                          isCurrent={isCurrentWeek(week.weekEnding)}
+                          isFuture={isFutureWeek(week.weekEnding)}
+                          weekDays={getWeekDays(week.weekStart, week.weekEnding)}
+                          onClick={(weekEnding) => {
+                            // Handle week click
+                            console.log('Week clicked:', weekEnding);
+                          }}
+                          onDownloadPDF={(weekEnding) => {
+                            // Handle PDF download
+                            console.log('Download PDF for:', weekEnding);
+                          }}
+                          onViewExpenses={(weekEnding) => {
+                            // Handle view expenses
+                            console.log('View expenses for:', weekEnding);
+                          }}
+                          onEditExpenses={(weekEnding) => {
+                            // Handle edit expenses
+                            console.log('Edit expenses for:', weekEnding);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 space-y-3">
+                      {yearWeeks.map((week, idx) => (
+                        <WeekCard
+                          key={idx}
+                          week={{
+                            ...week,
+                            range: formatWeekRange(week.weekStart, week.weekEnding),
+                          }}
+                          view={viewMode}
+                          mode={activeTab}
+                          isCurrent={isCurrentWeek(week.weekEnding)}
+                          isFuture={isFutureWeek(week.weekEnding)}
+                          onClick={(weekEnding) => {
+                            // Handle week click
+                            console.log('Week clicked:', weekEnding);
+                          }}
+                          onDownloadPDF={(weekEnding) => {
+                            // Handle PDF download
+                            console.log('Download PDF for:', weekEnding);
+                          }}
+                          onViewExpenses={(weekEnding) => {
+                            // Handle view expenses
+                            console.log('View expenses for:', weekEnding);
+                          }}
+                          onEditExpenses={(weekEnding) => {
+                            // Handle edit expenses
+                            console.log('Edit expenses for:', weekEnding);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Week Cards */}
-                  <AnimatePresence>
+                  {/* <AnimatePresence>
                     {isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
@@ -541,75 +604,10 @@ function ProjectTimesheets() {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                       >
-                        {viewMode === 'grid' ? (
-                          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {yearWeeks.map((week, idx) => (
-                              <WeekCard
-                                key={idx}
-                                week={{
-                                  ...week,
-                                  range: formatWeekRange(week.weekStart, week.weekEnding),
-                                }}
-                                view={viewMode}
-                                mode={activeTab}
-                                isCurrent={isCurrentWeek(week.weekEnding)}
-                                isFuture={isFutureWeek(week.weekEnding)}
-                                weekDays={getWeekDays(week.weekStart, week.weekEnding)}
-                                onClick={(weekEnding) => {
-                                  // Handle week click
-                                  console.log('Week clicked:', weekEnding);
-                                }}
-                                onDownloadPDF={(weekEnding) => {
-                                  // Handle PDF download
-                                  console.log('Download PDF for:', weekEnding);
-                                }}
-                                onViewExpenses={(weekEnding) => {
-                                  // Handle view expenses
-                                  console.log('View expenses for:', weekEnding);
-                                }}
-                                onEditExpenses={(weekEnding) => {
-                                  // Handle edit expenses
-                                  console.log('Edit expenses for:', weekEnding);
-                                }}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="p-6 space-y-3">
-                            {yearWeeks.map((week, idx) => (
-                              <WeekCard
-                                key={idx}
-                                week={{
-                                  ...week,
-                                  range: formatWeekRange(week.weekStart, week.weekEnding),
-                                }}
-                                view={viewMode}
-                                mode={activeTab}
-                                isCurrent={isCurrentWeek(week.weekEnding)}
-                                isFuture={isFutureWeek(week.weekEnding)}
-                                onClick={(weekEnding) => {
-                                  // Handle week click
-                                  console.log('Week clicked:', weekEnding);
-                                }}
-                                onDownloadPDF={(weekEnding) => {
-                                  // Handle PDF download
-                                  console.log('Download PDF for:', weekEnding);
-                                }}
-                                onViewExpenses={(weekEnding) => {
-                                  // Handle view expenses
-                                  console.log('View expenses for:', weekEnding);
-                                }}
-                                onEditExpenses={(weekEnding) => {
-                                  // Handle edit expenses
-                                  console.log('Edit expenses for:', weekEnding);
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
+                    
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                  </AnimatePresence> */}
                 </motion.div>
               );
             })}
