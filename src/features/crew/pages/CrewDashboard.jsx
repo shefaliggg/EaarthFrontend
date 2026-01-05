@@ -1,115 +1,245 @@
-import React from 'react';
-import {
-  Film, Calendar, Eye, CheckCircle2,
-  Download, DollarSign, Clock, Users
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { PageHeader } from '../../../shared/components/PageHeader';
-import { StatCard } from '../components/StatCard';
-import UpcomingSchedule from '../components/UpcomingSchedule';
-import Notifications from '../components/Notifications';
-import RecentTasks from '../components/RecentTasks';
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { toast } from "sonner";
+import { 
+  Plus, 
+  FileText, 
+  CheckCircle, 
+  Send,
+  UserCheck,
+  DollarSign,
+  PenTool,
+  Building2,
+  Star,
+  Clock,
+  Download,
+  Filter
+} from "lucide-react";
 
-export default function CrewDashboard({ isDarkMode = false }) {
+// Import reusable components
+import { PageHeader } from '@/shared/components/PageHeader';
+import SearchBar from '@/shared/components/SearchBar';
+import  PrimaryStats  from '../../..//shared/components/wrappers/PrimaryStats';
+import { WorkflowStages } from '../components/WorkflowStages';
+import { OffersTable } from '../components/OffersTable.jsx';
 
-  // 🔹 MOCK USER DATA
-  const userData = {
-    name: 'Michael Chen',
-    role: 'Director of Photography',
-    department: 'Camera',
-    memberSince: 'February 2024',
-    profileCompletion: 92,
-    lastUpdated: '1 week ago'
+const WORKFLOW_STATS = [
+  { 
+    label: "All Contracts", 
+    value: 802, 
+    icon: FileText, 
+    color: "text-slate-600", 
+    trend: "+12%",
+    trendIcon: "TrendingUp",
+    trendColor: "text-green-500"
+  },
+  { 
+    label: "Accepted", 
+    value: 624, 
+    icon: CheckCircle, 
+    color: "text-green-600", 
+    bgColor: "bg-green-50 dark:bg-green-900/20", 
+    trend: "+8%",
+    trendIcon: "TrendingUp",
+    trendColor: "text-green-500"
+  },
+  { 
+    label: "Ended", 
+    value: 178, 
+    icon: FileText, 
+    color: "text-slate-500", 
+    trend: "-2%",
+    trendIcon: "TrendingUp",
+    trendColor: "text-red-500"
+  },
+];
+
+const WORKFLOW_STAGES = [
+  { label: "Create Offer", statusKey: null, icon: Plus, color: "text-primary", isAction: true },
+  { label: "Offer Sent", statusKey: "OFFER SENT", icon: Send, color: "text-blue-600" },
+  { label: "Crew Accepted", statusKey: "CREW ACCEPTED", icon: UserCheck, color: "text-green-600" },
+  { label: "Production Check", statusKey: "PRODUCTION CHECK", icon: CheckCircle, color: "text-green-500" },
+  { label: "Accounts Checks", statusKey: "ACCOUNTS CHECK", icon: DollarSign, color: "text-emerald-600" },
+  { label: "Crew Sign", statusKey: "CREW SIGN", icon: PenTool, color: "text-orange-500" },
+  { label: "UPM Sign", statusKey: "UPM SIGN", icon: PenTool, color: "text-purple-500" },
+  { label: "FC Sign", statusKey: "FC SIGN", icon: Building2, color: "text-blue-500" },
+  { label: "Studio Sign", statusKey: "STUDIO SIGN", icon: Star, color: "text-pink-500" },
+  { label: "Contracts", statusKey: "CONTRACTED", icon: FileText, color: "text-slate-600" },
+];
+
+const ROLE_PAGE_TITLES = {
+  CREW: "My Offers",
+  PRODUCTION_ADMIN: "Crew Onboarding",
+  ACCOUNTS_ADMIN: "Accounts Review",
+  UPM: "Contracts Awaiting UPM Approval",
+  FC: "Contracts Awaiting FC Approval",
+  STUDIO: "Contracts Awaiting Studio Approval",
+};
+
+function getStatusLabel(status) {
+  const labels = {
+    "DRAFT": "DRAFT",
+    "SENT_TO_CREW": "OFFER SENT",
+    "NEEDS_REVISION": "REQUIRES ATTENTION",
+    "CREW_ACCEPTED": "CREW ACCEPTED",
+    "PRODUCTION_CHECK": "PRODUCTION CHECK",
+    "ACCOUNTS_CHECK": "ACCOUNTS CHECK",
+    "PENDING_CREW_SIGNATURE": "CREW SIGN",
+    "PENDING_UPM_SIGNATURE": "UPM SIGN",
+    "PENDING_FC_SIGNATURE": "FC SIGN",
+    "PENDING_STUDIO_SIGNATURE": "STUDIO SIGN",
+    "COMPLETED": "CONTRACTED",
+  };
+  return labels[status] || status;
+}
+
+export default function CrewOnboarding() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const selectedRole = "PRODUCTION_ADMIN";
+
+  useEffect(() => {
+    const mockOffers = [
+      { id: 1, fullName: "John Smith", status: "SENT_TO_CREW", roles: [{ jobTitle: "Director of Photography", department: "Camera", rateType: "Weekly" }], contractType: "LOAN_OUT", productionName: "Project Alpha" },
+      { id: 2, fullName: "Sarah Johnson", status: "CREW_ACCEPTED", roles: [{ jobTitle: "Production Designer", department: "Art", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Beta" },
+      { id: 3, fullName: "Mike Chen", status: "PRODUCTION_CHECK", roles: [{ jobTitle: "Sound Mixer", department: "Sound", rateType: "Daily" }], contractType: "LOAN_OUT", productionName: "Project Gamma" },
+      { id: 4, fullName: "Emily Davis", status: "ACCOUNTS_CHECK", roles: [{ jobTitle: "Costume Designer", department: "Wardrobe", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Delta" },
+      { id: 5, fullName: "Robert Wilson", status: "PENDING_CREW_SIGNATURE", roles: [{ jobTitle: "Gaffer", department: "Electric", rateType: "Daily" }], contractType: "LOAN_OUT", productionName: "Project Epsilon" },
+      { id: 6, fullName: "Lisa Anderson", status: "PENDING_UPM_SIGNATURE", roles: [{ jobTitle: "Key Grip", department: "Grip", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Zeta" },
+      { id: 7, fullName: "David Martinez", status: "PENDING_FC_SIGNATURE", roles: [{ jobTitle: "1st AD", department: "Production", rateType: "Weekly" }], contractType: "LOAN_OUT", productionName: "Project Eta" },
+      { id: 8, fullName: "Jennifer Taylor", status: "PENDING_STUDIO_SIGNATURE", roles: [{ jobTitle: "Editor", department: "Post Production", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Theta" },
+      { id: 9, fullName: "James Brown", status: "COMPLETED", roles: [{ jobTitle: "Script Supervisor", department: "Production", rateType: "Daily" }], contractType: "LOAN_OUT", productionName: "Project Iota" },
+      { id: 10, fullName: "Maria Garcia", status: "SENT_TO_CREW", roles: [{ jobTitle: "Makeup Artist", department: "Hair & Makeup", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Kappa" },
+      { id: 11, fullName: "Thomas Lee", status: "CREW_ACCEPTED", roles: [{ jobTitle: "VFX Supervisor", department: "Visual Effects", rateType: "Weekly" }], contractType: "LOAN_OUT", productionName: "Project Lambda" },
+      { id: 12, fullName: "Amanda White", status: "PRODUCTION_CHECK", roles: [{ jobTitle: "Location Manager", department: "Locations", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Mu" },
+      { id: 13, fullName: "Christopher Harris", status: "DRAFT", roles: [{ jobTitle: "Stunt Coordinator", department: "Stunts", rateType: "Daily" }], contractType: "LOAN_OUT", productionName: "Project Nu" },
+      { id: 14, fullName: "Jessica Martin", status: "NEEDS_REVISION", roles: [{ jobTitle: "Casting Director", department: "Casting", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Xi" },
+      { id: 15, fullName: "Daniel Thompson", status: "COMPLETED", roles: [{ jobTitle: "Cinematographer", department: "Camera", rateType: "Weekly" }], contractType: "LOAN_OUT", productionName: "Project Omicron" },
+    ];
+    
+    setOffers(mockOffers);
+  }, []);
+
+  const seedMockData = () => {
+    toast.success("Mock data seeded successfully", {
+      description: "Sample offers at different workflow stages have been created"
+    });
   };
 
-  // 🔹 MOCK STATS
-  const stats = {
-    activeProjects: 2,
-    upcomingCalls: 5,
-    projectsCompleted: 18,
-    profileViews: 456,
-    portfolioDownloads: 34,
-    daysBooked: 45,
-    monthlyIncome: 12500,
-    availabilityDays: 15
+  const filteredOffers = useMemo(() => {
+    let result = offers;
+    
+    if (searchQuery) {
+      result = result.filter(offer =>
+        offer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (offer.roles && Array.isArray(offer.roles) && offer.roles.some((r) => 
+          (r?.jobTitle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (r?.department || "").toLowerCase().includes(searchQuery.toLowerCase())
+        )) ||
+        (offer.productionName?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    if (selectedStage !== null) {
+      result = result.filter(offer => getStatusLabel(offer.status) === selectedStage);
+    }
+    
+    return result;
+  }, [searchQuery, selectedStage, offers]);
+
+  const statusCounts = useMemo(() => {
+    const counts = {};
+    offers.forEach(offer => {
+      const label = getStatusLabel(offer.status);
+      counts[label] = (counts[label] || 0) + 1;
+    });
+    return counts;
+  }, [offers]);
+
+  const handleStageClick = (stage) => {
+    if (stage.isAction) {
+      navigate("/offers/new");
+    } else {
+      setSelectedStage(selectedStage === stage.statusKey ? null : stage.statusKey);
+    }
   };
 
   return (
-    <div className="px-4">
+    <div className="">
       <div className="space-y-6">
-        
-        {/* Page Header */}
-        <PageHeader 
-          title="CREW DASHBOARD"
-          subtitle={`Welcome back, ${userData.name} • ${userData.role}`}
+        <PageHeader
+          title={ROLE_PAGE_TITLES[selectedRole] || "CREW ONBOARDING"}
+          subtitle="Viewing as: Production Admin"
           icon="Users"
+          secondaryActions={[
+            {
+              label: "Seed Demo Data",
+              icon: "Database",
+              variant: "outline",
+              clickAction: seedMockData
+            }
+          ]}
         />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard 
-            label="Active Projects" 
-            value={stats.activeProjects} 
-            icon={Film}
-            color="text-primary"
-            isDarkMode={isDarkMode}
-          />
-          <StatCard 
-            label="Upcoming Call Times" 
-            value={stats.upcomingCalls} 
-            icon={Clock}
-            color="text-green-600"
-            isDarkMode={isDarkMode}
-          />
-          <StatCard 
-            label="Profile Views" 
-            value={stats.profileViews} 
-            icon={Eye}
-            trend={22}
-            trendLabel="vs. last month"
-            color="text-purple-600"
-            isDarkMode={isDarkMode}
-          />
-          <StatCard 
-            label="Days Booked" 
-            value={stats.daysBooked} 
-            icon={Calendar}
-            trend={18}
-            trendLabel="vs. last year"
-            color="text-orange-600"
-            isDarkMode={isDarkMode}
-          />
-        </div>
+        <PrimaryStats stats={WORKFLOW_STATS} gridColumns={3} />
 
-        {/* TWO COLUMN GRID: Upcoming Schedule + Recent Tasks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* UPCOMING SCHEDULE */}
-          <div className={cn(
-            "rounded-xl border overflow-hidden",
-            isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
-          )}>
-            <UpcomingSchedule isDarkMode={isDarkMode} />
+        <WorkflowStages 
+          stages={WORKFLOW_STAGES}
+          statusCounts={statusCounts}
+          selectedStage={selectedStage}
+          onStageClick={handleStageClick}
+        />
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <SearchBar
+                placeholder="Search by name, role, or department..."
+                value={searchQuery}
+                onValueChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 w-full sm:max-w-md"
+              />
+              <div className="flex gap-2">
+                {selectedStage && (
+                  <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary">
+                    {WORKFLOW_STAGES.find(s => s.statusKey === selectedStage)?.label || selectedStage}
+                    <button onClick={() => setSelectedStage(null)} className="ml-1 hover:text-primary/70">×</button>
+                  </Badge>
+                )}
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Filter className="w-4 h-4" /> Filter
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Download className="w-4 h-4" /> Export
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <div className="p-4 border-b bg-muted/30">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">All Offers ({filteredOffers.length})</h3>
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                <Clock className="w-3 h-3 mr-1" />
+                Updated 2 min ago
+              </Badge>
+            </div>
           </div>
-
-          {/* RECENT TASKS */}
-          <div className={cn(
-            "rounded-xl border overflow-hidden",
-            isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
-          )}>
-            <RecentTasks isDarkMode={isDarkMode} />
-          </div>
-        </div>
-
-        {/* NOTIFICATIONS - Full Width */}
-        <div className={cn(
-          "rounded-xl border overflow-hidden",
-          isDarkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
-        )}>
-          <Notifications isDarkMode={isDarkMode} />
-        </div>
-
-        
-
+          
+          <OffersTable 
+            offers={filteredOffers}
+            isLoading={isLoading}
+            onNavigate={navigate}
+          />
+        </Card>
       </div>
     </div>
   );
