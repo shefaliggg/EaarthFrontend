@@ -76,7 +76,7 @@ export function WeekCard({
 
                 {/* Current Week Indicator */}
                 {isCurrent && (
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500" />
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 to-purple-900" />
                 )}
 
                 <div className="p-5 relative flex flex-col gap-2 h-full">
@@ -248,7 +248,7 @@ export function WeekCard({
                                 ) : (
                                     <>
                                         <Eye className="w-3.5 h-3.5" />
-                                        View/Edit
+                                        View or Edit
                                     </>
                                 )
                             ) : (
@@ -270,107 +270,100 @@ export function WeekCard({
         <Card
             onClick={handleCardClick}
             className={cn(
-                "relative rounded-xl border-2 transition-all group cursor-pointer overflow-hidden",
+                "relative rounded-xl border transition-all group cursor-pointer overflow-hidden p-4",
                 isCurrent
-                    ? 'border-purple-500 shadow-lg shadow-purple-500/20'
+                    ? "border-purple-400 bg-purple-50/40 dark:bg-purple-900/20 shadow-md"
                     : "border",
-                "bg-card hover:bg-lavender-200 dark:hover:bg-lavender-900/20 hover:shadow-xl"
+                "hover:bg-lavender-200 dark:hover:bg-lavender-900/20"
             )}
         >
-            <div className="p-5 flex items-center gap-6">
-                {/* Week Info */}
-                <div className="flex-1 flex items-center gap-6">
-                    <div className="w-24">
-                        <div className="text-sm font-black">
-                            {week.range}
-                        </div>
+            {isCurrent && (
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-purple-500 to-purple-900" />
+            )}
+
+            <div className="p-4 pl-6 flex items-center gap-6">
+                {/* LEFT: Week */}
+                <div className="w-28 shrink-0">
+                    <div className="text-sm font-black leading-tight">
+                        {week.range}
+                    </div>
+
+                    <div className="flex items-center gap-1 mt-1">
                         {isCurrent && (
-                            <div className="flex items-center gap-1 mt-1">
-                                <Zap className="w-3 h-3 text-purple-600" />
-                                <span className="text-[9px] font-bold uppercase text-purple-600">
-                                    Current
-                                </span>
-                            </div>
+                            <span className="text-[10px] font-bold uppercase text-purple-600 flex items-center gap-1">
+                                <Zap className="w-3 h-3" />
+                                Current
+                            </span>
+                        )}
+                        {isFuture && (
+                            <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                                Future
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* CENTER: Status + Metrics */}
+                <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-3">
+                        <StatusBadge status={displayStatus} size="sm" />
+
+                        {mode === "timesheets" && week.totalHours !== undefined && (
+                            <span className="flex items-center gap-1.5 text-sm font-semibold">
+                                <Timer className="w-4 h-4 text-muted-foreground" />
+                                {week.totalHours}h
+                            </span>
+                        )}
+
+                        {week.totalAmount && (
+                            <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
+                                <DollarSign className="w-4 h-4" />
+                                {week.totalAmount}
+                            </span>
                         )}
                     </div>
 
-                    {/* Status */}
-                    <StatusBadge status={displayStatus} size="sm" />
-
-                    {/* Details */}
-                    {displayStatus !== 'not-started' && (
-                        <div className="flex items-center gap-6">
-                            {mode === 'timesheets' ? (
-                                <>
-                                    {week.totalHours !== undefined && (
-                                        <div className="flex items-center gap-2">
-                                            <Timer className="w-4 h-4 text-gray-400" />
-                                            <span className="font-bold">{week.totalHours}h</span>
-                                        </div>
-                                    )}
-                                    {week.totalAmount && (
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-gray-400" />
-                                            <span className="font-black text-purple-600 dark:text-purple-400">
-                                                {week.totalAmount}
-                                            </span>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {week.expenseType && (
-                                        <div className={cn(
-                                            "px-3 py-1 rounded-lg text-[10px] font-bold uppercase",
-                                            week.expenseType === 'fuel'
-                                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                        )}>
-                                            {week.expenseType}
-                                        </div>
-                                    )}
-                                    {week.expenseAmount && (
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-gray-400" />
-                                            <span className="font-black text-purple-600 dark:text-purple-400">
-                                                {week.expenseAmount}
-                                            </span>
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                    {/* Progress (timesheets only) */}
+                    {mode === "timesheets" && week.totalHours && (
+                        <div className="flex items-center gap-2">
+                            <Progress
+                                value={Math.min((week.totalHours / 40) * 100, 100)}
+                                className="h-1.5 w-40"
+                            />
+                            <span className="text-[10px] font-bold text-muted-foreground">
+                                {Math.round((week.totalHours / 40) * 100)}%
+                            </span>
                         </div>
                     )}
                 </div>
 
-                {/* Actions */}
+                {/* RIGHT: Actions */}
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {mode === 'timesheets' && (week.status === 'approved' || week.status === 'submitted') && (
-                        <>
-                            {week.expenseType && (
-                                <button
-                                    onClick={handleExpenseClick}
-                                    className="p-2 rounded-lg border transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                                    title="View Expenses"
-                                >
-                                    {week.expenseType === 'fuel' ? (
-                                        <Fuel className="w-4 h-4 text-purple-600" />
-                                    ) : (
-                                        <Car className="w-4 h-4 text-purple-600" />
-                                    )}
-                                </button>
-                            )}
-                            {onDownloadPDF && (
+                    {mode === "timesheets" &&
+                        (week.status === "approved" || week.status === "submitted") && (
+                            <>
+                                {week.expenseType && (
+                                    <button
+                                        onClick={handleExpenseClick}
+                                        className="p-2 rounded-lg border hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                                    >
+                                        {week.expenseType === "fuel" ? (
+                                            <Fuel className="w-4 h-4 text-purple-600" />
+                                        ) : (
+                                            <Car className="w-4 h-4 text-purple-600" />
+                                        )}
+                                    </button>
+                                )}
+
                                 <button
                                     onClick={handleDownloadClick}
-                                    className="p-2 rounded-lg border transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                                    title="Download PDF"
+                                    className="p-2 rounded-lg border hover:bg-purple-100 dark:hover:bg-purple-900/30"
                                 >
                                     <Download className="w-4 h-4 text-purple-600" />
                                 </button>
-                            )}
-                        </>
-                    )}
+                            </>
+                        )}
+
                     <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
                 </div>
             </div>

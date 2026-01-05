@@ -8,9 +8,14 @@ import SearchBar from '../../../../shared/components/SearchBar';
 import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
 import { Button } from '../../../../shared/components/ui/button';
 import { motion, AnimatePresence } from "framer-motion"
-import { getStatusBadge } from '../../../../shared/config/statusBadgeConfig';
-import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 import { WeekCard } from '../../components/projectTimesheets/WeekCard';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/shared/components/ui/accordion";
+
 
 function ProjectTimesheets() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
@@ -489,170 +494,107 @@ function ProjectTimesheets() {
         </div>
       </div>
 
-      <div>
-        {sortedYears.length > 0 ? (
-          <div className="space-y-6">
-            {sortedYears.map((year, yearIdx) => {
-              const yearWeeks = weeksByYear[year].sort((a, b) =>
-                new Date(b.weekEnding).getTime() - new Date(a.weekEnding).getTime()
-              );
-              const isExpanded = expandedYears.includes(year);
+      <Accordion
+        type="single"
+        defaultValue={[String(new Date().getFullYear())]}
+        className="space-y-3"
+      >
+        {sortedYears.map((year) => {
+          const yearWeeks = weeksByYear[year].sort(
+            (a, b) =>
+              new Date(b.weekEnding).getTime() -
+              new Date(a.weekEnding).getTime()
+          );
 
-              return (
-                <motion.div
-                  key={year}
-                  className={`bg-card rounded-2xl border shadow-xl overflow-hidden`}
-                >
-                  {/* Year Header */}
-                  <button
-                    // onClick={() => toggleYear(year)}
-                    className={`w-full px-8 py-6 flex items-center justify-between transition-all bg-background hover:bg-gray-100 dark:bg-gray-950 border-b group`}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                        <Calendar className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className={`text-2xl font-black`}>{year}</h2>
-                        <span className={`text-sm text-muted-foreground font-semibold`}>
-                          {yearWeeks.length} week{yearWeeks.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
+          return (
+            <AccordionItem
+              key={year}
+              value={String(year)}
+              className="bg-card rounded-2xl border shadow-xl overflow-hidden"
+            >
+              {/* Year Header */}
+              <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b group">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-6">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-600 to-purple-900 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Calendar className="w-6 h-6 text-white" />
                     </div>
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <ChevronDown className={`w-6 h-6 text-muted-foreground`} />
-                    </motion.div>
-                  </button>
 
-                  {viewMode === 'grid' ? (
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
-                      {yearWeeks.map((week, idx) => (
-                        <WeekCard
-                          key={idx}
-                          week={{
-                            ...week,
-                            range: formatWeekRange(week.weekStart, week.weekEnding),
-                          }}
-                          view={viewMode}
-                          mode={activeTab}
-                          isCurrent={isCurrentWeek(week.weekEnding)}
-                          isFuture={isFutureWeek(week.weekEnding)}
-                          weekDays={getWeekDays(week.weekStart, week.weekEnding)}
-                          onClick={(weekEnding) => {
-                            // Handle week click
-                            console.log('Week clicked:', weekEnding);
-                          }}
-                          onDownloadPDF={(weekEnding) => {
-                            // Handle PDF download
-                            console.log('Download PDF for:', weekEnding);
-                          }}
-                          onViewExpenses={(weekEnding) => {
-                            // Handle view expenses
-                            console.log('View expenses for:', weekEnding);
-                          }}
-                          onEditExpenses={(weekEnding) => {
-                            // Handle edit expenses
-                            console.log('Edit expenses for:', weekEnding);
-                          }}
-                        />
-                      ))}
+                    <div className="text-left">
+                      <h2 className="text-2xl font-black">{year}</h2>
+                      <span className="text-sm text-muted-foreground font-semibold">
+                        {yearWeeks.length} week
+                        {yearWeeks.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="p-6 space-y-3">
-                      {yearWeeks.map((week, idx) => (
-                        <WeekCard
-                          key={idx}
-                          week={{
-                            ...week,
-                            range: formatWeekRange(week.weekStart, week.weekEnding),
-                          }}
-                          view={viewMode}
-                          mode={activeTab}
-                          isCurrent={isCurrentWeek(week.weekEnding)}
-                          isFuture={isFutureWeek(week.weekEnding)}
-                          onClick={(weekEnding) => {
-                            // Handle week click
-                            console.log('Week clicked:', weekEnding);
-                          }}
-                          onDownloadPDF={(weekEnding) => {
-                            // Handle PDF download
-                            console.log('Download PDF for:', weekEnding);
-                          }}
-                          onViewExpenses={(weekEnding) => {
-                            // Handle view expenses
-                            console.log('View expenses for:', weekEnding);
-                          }}
-                          onEditExpenses={(weekEnding) => {
-                            // Handle edit expenses
-                            console.log('Edit expenses for:', weekEnding);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  </div>
+                </div>
+              </AccordionTrigger>
 
-                  {/* Week Cards */}
-                  {/* <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                      >
-                    
-                      </motion.div>
-                    )}
-                  </AnimatePresence> */}
-                </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          // Empty State
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`bg-card rounded-2xl border  p-16 text-center shadow-xl`}
-          >
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
-              <FileText className={`w-12 h-12 text-muted-foreground`} />
-            </div>
-            <h3 className={`text-xl font-black  mb-3`}>
-              {searchQuery || statusFilter !== 'all' ? 'No Results Found' : 'No Timesheets Yet'}
-            </h3>
-            <p className={`text-muted-foreground mb-6 max-w-md mx-auto`}>
-              {searchQuery || statusFilter !== 'all'
-                ? 'Try adjusting your search or filters to find what you\'re looking for.'
-                : 'Your timesheets will appear here once you start creating them.'}
-            </p>
-            {(searchQuery || statusFilter !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('all');
-                }}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all"
-              >
-                Clear Filters
-              </button>
-            )}
-          </motion.div>
-        )}
-      </div>
+              {/* Year Content */}
+              <AccordionContent className="p-0">
+                {viewMode === "grid" ? (
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    {yearWeeks.map((week, idx) => (
+                      <WeekCard
+                        key={idx}
+                        week={{
+                          ...week,
+                          range: formatWeekRange(
+                            week.weekStart,
+                            week.weekEnding
+                          ),
+                        }}
+                        view={viewMode}
+                        mode={activeTab}
+                        isCurrent={isCurrentWeek(week.weekEnding)}
+                        isFuture={isFutureWeek(week.weekEnding)}
+                        weekDays={getWeekDays(
+                          week.weekStart,
+                          week.weekEnding
+                        )}
+                        onClick={(weekEnding) =>
+                          console.log("Week clicked:", weekEnding)
+                        }
+                        onDownloadPDF={(weekEnding) =>
+                          console.log("Download PDF for:", weekEnding)
+                        }
+                        onViewExpenses={(weekEnding) =>
+                          console.log("View expenses for:", weekEnding)
+                        }
+                        onEditExpenses={(weekEnding) =>
+                          console.log("Edit expenses for:", weekEnding)
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 space-y-3">
+                    {yearWeeks.map((week, idx) => (
+                      <WeekCard
+                        key={idx}
+                        week={{
+                          ...week,
+                          range: formatWeekRange(
+                            week.weekStart,
+                            week.weekEnding
+                          ),
+                        }}
+                        view={viewMode}
+                        mode={activeTab}
+                        isCurrent={isCurrentWeek(week.weekEnding)}
+                        isFuture={isFutureWeek(week.weekEnding)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
     </div>
   )
 }
 
 export default ProjectTimesheets
-
-
-
-
-
-
-
