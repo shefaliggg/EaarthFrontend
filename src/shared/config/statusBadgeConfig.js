@@ -32,7 +32,7 @@ const STATUS_META = {
   approved: "success",
   submitted: "success",
   synced: "success",
-  future: "info",
+  information: "info",
 
   draft: "warning",
   pending: "warning",
