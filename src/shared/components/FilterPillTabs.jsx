@@ -2,6 +2,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import * as Icons from "lucide-react";
 import { Circle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { SmartIcon } from "./SmartIcon";
 
 function FilterPillTabs({
     options,
@@ -34,13 +35,6 @@ function FilterPillTabs({
                     }`}
             >
                 {options.map((option) => {
-                    const Icon =
-                        typeof option.icon === "function"
-                            ? option.icon
-                            : typeof option.icon === "string"
-                                ? Icons[option.icon] || Circle
-                                : null;
-
                     const tabValue = navigatable ? option.route : option.value;
 
                     return (
@@ -49,7 +43,7 @@ function FilterPillTabs({
                             value={tabValue}
                             className={`px-3.5 py-1.5 bg-background/60 ${fullWidth ? "py-2" : ""}`}
                         >
-                            {Icon && <Icon className="w-4 h-4 mr-1.5" />}
+                            {option.icon && <SmartIcon icon={option.icon} className="w-4 h-4 mr-1.5" />}
                             {option.label}
                         </TabsTrigger>
                     );

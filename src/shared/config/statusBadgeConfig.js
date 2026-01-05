@@ -32,6 +32,7 @@ const STATUS_META = {
   approved: "success",
   submitted: "success",
   synced: "success",
+  future: "info",
 
   draft: "warning",
   pending: "warning",
@@ -43,6 +44,7 @@ const STATUS_META = {
 };
 
 export function getStatusBadge(status, label) {
+  console.log("status", status)
   const group = STATUS_META[status];
 
   if (!group) {
