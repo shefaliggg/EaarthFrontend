@@ -36,7 +36,7 @@ function FilterPillTabs({
             >
                 {options.map((option) => {
                     const tabValue = navigatable ? option.route : option.value;
-
+                    console.log("icon inbdfg", option.icon)
                     return (
                         <TabsTrigger
                             key={tabValue}
