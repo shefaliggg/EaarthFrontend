@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { PageHeader } from '../../../../shared/components/PageHeader'
-import { ArrowUpRight, Award, Calendar, Car, ChevronDown, CircleDollarSign, DollarSign, Eye, Fuel, Plus, Timer, X, Zap } from 'lucide-react';
+import { ArrowUpRight, Award, Calendar, Car, ChevronDown, CircleDollarSign, DollarSign, Download, Eye, Fuel, Plus, Timer, X, Zap } from 'lucide-react';
 import MiniInfoPills from '../../../../shared/components/badges/MiniInfoPills';
 import FilterPillTabs from '../../../../shared/components/FilterPillTabs';
 import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
@@ -8,7 +8,7 @@ import SearchBar from '../../../../shared/components/SearchBar';
 import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
 import { Button } from '../../../../shared/components/ui/button';
 import { motion, AnimatePresence } from "framer-motion"
-import { getStatusBadge } from '../../../../shared/config/utils';
+import { getStatusBadge } from '../../../../shared/config/statusBadgeConfig';
 
 function ProjectTimesheets() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
@@ -386,9 +386,9 @@ function ProjectTimesheets() {
     <div className='space-y-6 container mx-auto'>
       <PageHeader
         icon="Film"
-        title={"MY TIMESHEETS & EXPENSES"}
+        title={"My Timesheet and Expenses"}
         initials={"LK"}
-        subtitle={`LUKE GREENAN - ELECTRICAL - SHOOTING ELECTRICAL`}
+        subtitle={`Luke green - Electrical`}
       />
       <div className="flex items-center gap-3 mt-2">
         {quickStats.map(stat => (
@@ -605,7 +605,7 @@ function ProjectTimesheets() {
 
                                       {/* Quick Actions */}
                                       {activeTab === 'timesheets' && (
-                                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-1.5 transition-opacity">
                                           {(week.status === 'approved' || week.status === 'submitted') && week.expenseType && (
                                             <button
                                               onClick={(e) => {

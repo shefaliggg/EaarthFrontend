@@ -19,11 +19,13 @@ export default function PrimaryStats({ stats, gridColumns }) {
         <MetricsCard
           key={index}
           title={stat.label}
+          subtext={stat.subLabel}
+          subtextColor={stat.subLabelColor}
           value={stat.value}
           valueColor={stat.color}
           icon={stat.icon}
-          subtext={stat.subLabel}
-          subtextColor={stat.subLabelColor}
+          iconBg={stat.iconBg}
+          iconColor={stat.iconColor}
         />
       ))}
     </div>
