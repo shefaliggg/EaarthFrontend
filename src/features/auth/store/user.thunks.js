@@ -4,13 +4,14 @@ import { authService } from "../services/auth.service";
 import * as userService from "../services/user.service";
 
 /**
- * 🔐 Get current logged-in user
- * Handles persistent login by checking cookies or token
+ * ✅ GET CURRENT USER - For persistent login
+ * Returns null on error to prevent infinite loops
  */
 export const getCurrentUserThunk = createAsyncThunk(
-  "user/getCurrent",
+  "user/getCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
+<<<<<<< HEAD
       const response = await authService.getCurrentUser();
       console.log("current user res", response.data.user);
       return response.data.user;
@@ -18,63 +19,81 @@ export const getCurrentUserThunk = createAsyncThunk(
       return rejectWithValue(
         err?.response?.data?.message || err?.message || "Failed to fetch user"
       );
+=======
+      console.log("🔄 getCurrentUserThunk - Starting...");
+      
+      const user = await authService.getCurrentUser();
+      
+      if (!user) {
+        console.log("ℹ️  No user session found");
+        // ✅ Return null instead of rejecting
+        // This prevents error states and allows app to show login
+        return null;
+      }
+      
+      console.log("✅ getCurrentUserThunk - Success:", user.email);
+      return user;
+      
+    } catch (err) {
+      console.error("❌ getCurrentUserThunk error:", {
+        status: err.response?.status,
+        message: err.message,
+      });
+      
+      // ✅ ALWAYS return null for errors during initial load
+      // This prevents infinite loops and allows the app to continue
+      return null;
+>>>>>>> shanid/project
     }
   }
 );
 
 /**
- * 🔑 Login (email + password) - Sends OTP
+ * ✅ LOGIN - Send credentials and get OTP
  */
 export const loginUserThunk = createAsyncThunk(
   "user/login",
   async ({ email, password, rememberMe }, { rejectWithValue }) => {
     try {
       const response = await authService.login({ email, password, rememberMe });
-      return response; // Could be { success, message }
+      return response;
     } catch (err) {
-      console.error("❌ Login error:", err);
-      return rejectWithValue(err?.message || "Login failed");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Login failed"
+      );
     }
   }
 );
 
 /**
- * 🔢 Verify OTP - Completes login
+ * ✅ VERIFY OTP - Complete login
  */
 export const verifyLoginOtpThunk = createAsyncThunk(
   "user/verifyOtp",
   async ({ email, otp }, { rejectWithValue }) => {
     try {
       const user = await authService.verifyLoginOtp({ email, otp });
-      if (!user) throw new Error("No user returned after OTP verification");
+      
+      if (!user) {
+        throw new Error("No user returned after OTP verification");
+      }
+      
       return user;
     } catch (err) {
+<<<<<<< HEAD
       console.error("❌ OTP verification error:", err);
       return rejectWithValue( err?.response?.data?.message || err?.message || "Invalid OTP");
+=======
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Invalid OTP"
+      );
+>>>>>>> shanid/project
     }
   }
 );
 
 /**
- * 📲 QR / Token login - Set cookies and get user
- */
-export const getUserAndSetCookiesThunk = createAsyncThunk(
-  "user/qrLogin",
-  async (tokenPayload, { rejectWithValue }) => {
-    try {
-      const user = await authService.getUserAndSetCookies(tokenPayload);
-      if (!user) throw new Error("No user returned from QR login");
-      return user;
-    } catch (err) {
-      console.error("❌ QR login error:", err);
-      return rejectWithValue(err?.message || "QR login failed");
-    }
-  }
-);
-
-/**
- * 🚪 Logout user
- * Force logout on frontend even if API fails
+ * ✅ LOGOUT
  */
 export const logoutUserThunk = createAsyncThunk(
   "user/logout",
@@ -83,14 +102,54 @@ export const logoutUserThunk = createAsyncThunk(
       await authService.logout();
       return true;
     } catch (err) {
-      console.error("❌ Logout API error:", err);
+      console.error("Logout error:", err);
+      // Always succeed logout on frontend even if API fails
       return true;
     }
   }
 );
 
 /**
- * 👤 Update user profile
+ * QR CODE LOGIN
+ */
+export const getUserAndSetCookiesThunk = createAsyncThunk(
+  "user/qrLogin",
+  async (tokenPayload, { rejectWithValue }) => {
+    try {
+      const user = await authService.getUserAndSetCookies(tokenPayload);
+      
+      if (!user) {
+        throw new Error("No user returned from QR login");
+      }
+      
+      return user;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "QR login failed"
+      );
+    }
+  }
+);
+
+/**
+ * TEMPORARY LOGIN
+ */
+export const temporaryLoginThunk = createAsyncThunk(
+  "user/temporaryLogin",
+  async ({ email, password }, { rejectWithValue }) => {
+    try {
+      const response = await authService.temporaryLogin({ email, password });
+      return response;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Temporary login failed"
+      );
+    }
+  }
+);
+
+/**
+ * UPDATE PROFILE
  */
 export const updateUserProfileThunk = createAsyncThunk(
   "user/updateProfile",
@@ -99,25 +158,21 @@ export const updateUserProfileThunk = createAsyncThunk(
       const updatedUser = await userService.updateUserProfile(payload);
       return updatedUser;
     } catch (err) {
-      console.error("❌ Update profile error:", err);
-      return rejectWithValue(err?.message || "Failed to update profile");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to update profile"
+      );
     }
   }
 );
 
 /**
- * 🏷️ Update user type
- * Ensures userType is a string (frontend normalization)
+ * UPDATE USER TYPE
  */
 export const updateUserTypeThunk = createAsyncThunk(
   "user/updateType",
   async (userType, { rejectWithValue }) => {
     try {
-      let normalizedUserType = userType;
-
-      if (Array.isArray(userType)) {
-        normalizedUserType = userType[0];
-      }
+      let normalizedUserType = Array.isArray(userType) ? userType[0] : userType;
 
       if (!normalizedUserType || typeof normalizedUserType !== "string") {
         throw new Error("Invalid user type. Must be a string");
@@ -143,14 +198,15 @@ export const updateUserTypeThunk = createAsyncThunk(
       const updatedUser = await userService.updateUserType(normalizedUserType);
       return updatedUser;
     } catch (err) {
-      console.error("❌ Update user type error:", err);
-      return rejectWithValue(err?.message || "Failed to update user type");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to update user type"
+      );
     }
   }
 );
 
 /**
- * 📋 Get user activity log
+ * GET ACTIVITY LOG
  */
 export const getUserActivityLogThunk = createAsyncThunk(
   "user/getActivityLog",
@@ -159,14 +215,15 @@ export const getUserActivityLogThunk = createAsyncThunk(
       const activityLog = await userService.getUserActivityLog();
       return activityLog;
     } catch (err) {
-      console.error("❌ Get activity log error:", err);
-      return rejectWithValue(err?.message || "Failed to fetch activity log");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to fetch activity log"
+      );
     }
   }
 );
 
 /**
- * 🏢 Get user studios
+ * GET STUDIOS
  */
 export const getUserStudiosThunk = createAsyncThunk(
   "user/getStudios",
@@ -175,14 +232,15 @@ export const getUserStudiosThunk = createAsyncThunk(
       const studios = await userService.getUserStudios();
       return studios;
     } catch (err) {
-      console.error("❌ Get studios error:", err);
-      return rejectWithValue(err?.message || "Failed to fetch studios");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to fetch studios"
+      );
     }
   }
 );
 
 /**
- * 🏢 Get user agencies
+ * GET AGENCIES
  */
 export const getUserAgenciesThunk = createAsyncThunk(
   "user/getAgencies",
@@ -191,8 +249,9 @@ export const getUserAgenciesThunk = createAsyncThunk(
       const agencies = await userService.getUserAgencies();
       return agencies;
     } catch (err) {
-      console.error("❌ Get agencies error:", err);
-      return rejectWithValue(err?.message || "Failed to fetch agencies");
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Failed to fetch agencies"
+      );
     }
   }
 );
@@ -202,6 +261,7 @@ export default {
   loginUserThunk,
   verifyLoginOtpThunk,
   getUserAndSetCookiesThunk,
+  temporaryLoginThunk,
   logoutUserThunk,
   updateUserProfileThunk,
   updateUserTypeThunk,
