@@ -134,7 +134,7 @@ export const authService = {
    * Get QR status (for polling fallback)
    */
   getQrStatus: async (qrId) => {
-    const { data } = await axiosConfig.get(`/auth/qr/status/${qrId}`);
+    const { data } = await axiosConfig.get(`/auth/qr-code/status/${qrId}`);
     return data?.data || data;
   },
 };

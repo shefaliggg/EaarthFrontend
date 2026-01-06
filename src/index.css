@@ -342,12 +342,12 @@ a svg {
   body {
     /* background: #fafafa; */
     background: linear-gradient(135deg,
-        #ffecec,
-        #fff8e7,
+        #f3ebeb,
+        #fcf9f0,
         #e9ffe9,
         #e7f7ff,
         #f3e9ff,
-        #ffe8f4);
+        #f8edf2);
     background-attachment: fixed;
     min-height: 100vh;
   }

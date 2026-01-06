@@ -8,7 +8,7 @@ import SearchBar from '../../../../shared/components/SearchBar';
 import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
 import { Button } from '../../../../shared/components/ui/button';
 import { motion, AnimatePresence } from "framer-motion"
-import { WeekCard } from '../../components/projectTimesheets/WeekCard';
+import { WeekCard } from '../components/WeekCard';
 import {
   Accordion,
   AccordionContent,
@@ -18,7 +18,7 @@ import {
 import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 
 
-function ProjectTimesheets() {
+function TimesheetsDashboard() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
   const [activeTab, setActiveTab] = useState('timesheets');
   const [searchQuery, setSearchQuery] = useState('');
@@ -352,28 +352,37 @@ function ProjectTimesheets() {
         parseAmount,
       });
 
-  const isCurrentWeek = (weekEnding) => {
+  const getCurrentWeekEnding = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
     const dayOfWeek = today.getDay();
     const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-    const currentWeekEnding = new Date(today);
-    currentWeekEnding.setDate(today.getDate() + daysUntilSunday);
-    currentWeekEnding.setHours(0, 0, 0, 0);
 
-    const weekEnd = new Date(weekEnding);
-    weekEnd.setHours(0, 0, 0, 0);
+    const weekEnding = new Date(today);
+    weekEnding.setDate(today.getDate() + daysUntilSunday);
+    weekEnding.setHours(0, 0, 0, 0);
 
-    return weekEnd.getTime() === currentWeekEnding.getTime();
+    return weekEnding;
   };
 
-  const isFutureWeek = (weekEnding) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekEnding);
-    weekEnd.setHours(0, 0, 0, 0);
-    return weekEnd > today;
-  };
+const isCurrentWeek = (weekEnding) => {
+  const currentWeekEnding = getCurrentWeekEnding();
+
+  const weekEnd = new Date(weekEnding);
+  weekEnd.setHours(0, 0, 0, 0);
+
+  return weekEnd.getTime() === currentWeekEnding.getTime();
+};
+
+const isFutureWeek = (weekEnding) => {
+  const currentWeekEnding = getCurrentWeekEnding();
+
+  const weekEnd = new Date(weekEnding);
+  weekEnd.setHours(0, 0, 0, 0);
+
+  return weekEnd > currentWeekEnding;
+};
 
   // Get mini calendar for week
   const getWeekDays = (weekStart, weekEnding) => {
@@ -383,10 +392,14 @@ function ProjectTimesheets() {
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       days.push({
-        day: d.toLocaleString('en-US', { weekday: 'short' }),
-        date: d.getDate()
+        day: d.toLocaleString("en-US", { weekday: "short" }),
+        date: d.getDate(),
+
+        // ✅ real date for comparisons (today highlight, etc.)
+        fullDate: new Date(d).toISOString().split("T")[0],
       });
     }
+
     return days;
   };
 
@@ -568,7 +581,7 @@ function ProjectTimesheets() {
                       </AccordionTrigger>
 
                       <AccordionContent className="py-4 space-y-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                        <div className={`grid grid-cols-1 gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 " : ""}`}>
                           {futureWeeks.map((week, idx) => (
                             <WeekCard
                               key={idx}
@@ -635,7 +648,7 @@ function ProjectTimesheets() {
                       </AccordionTrigger>
 
                       <AccordionContent className="py-4 space-y-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+                        <div className={`grid grid-cols-1 gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 " : ""}`}>
                           {pastWeeks.map((week, idx) => (
                             <WeekCard
                               key={idx}
@@ -668,4 +681,4 @@ function ProjectTimesheets() {
   )
 }
 
-export default ProjectTimesheets
+export default TimesheetsDashboard

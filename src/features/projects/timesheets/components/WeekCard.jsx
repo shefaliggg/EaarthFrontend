@@ -17,6 +17,7 @@ import { cn } from "@/shared/config/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "../../../../shared/components/ui/card";
 import { Progress } from "../../../../shared/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 export function WeekCard({
     fullWidth = false,
@@ -26,11 +27,11 @@ export function WeekCard({
     isCurrent,
     isFuture,
     weekDays = [],
-    onClick,
     onDownloadPDF,
     onViewExpenses,
     onEditExpenses,
 }) {
+    const navigate = useNavigate();
     const displayStatus =
         mode === "expenses"
             ? week.expenseStatus || "not-started"
@@ -42,8 +43,8 @@ export function WeekCard({
         e.stopPropagation();
         if (mode === "expenses" && onEditExpenses) {
             onEditExpenses(week.weekEnding);
-        } else if (onClick) {
-            onClick(week.weekEnding);
+        } else {
+            navigate(week.weekEnding);
         }
     };
 
@@ -61,6 +62,16 @@ export function WeekCard({
         }
     };
 
+    const isToday = (day) => {
+        const today = new Date();
+
+        return (
+            day.fullDate &&
+            new Date(day.fullDate).toDateString() === today.toDateString()
+        );
+    };
+
+
     // Grid View
     if (isGrid) {
         return (
@@ -69,16 +80,11 @@ export function WeekCard({
                 className={cn(
                     "relative rounded-2xl border-2 transition-all group overflow-hidden p-0",
                     isCurrent
-                        ? "border-purple-500 shadow-xl shadow-purple-500/20"
+                        ? "border-purple-300 shadow-lg shadow-purple-500/10"
                         : "border",
                     "hover:bg-lavender-100/30 dark:hover:bg-lavender-900/20 hover:shadow-lg"
                 )}
             >
-
-                {/* Current Week Indicator */}
-                {isCurrent && (
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 to-purple-900" />
-                )}
 
                 <div className="p-5 relative flex flex-col gap-2 h-full">
                     {/* Week Range & Actions */}
@@ -142,7 +148,7 @@ export function WeekCard({
                     </div>
                     <div className="flex items-center gap-2 mb-6">
                         {isCurrent && (
-                            <StatusBadge label={"Current"} icon={"Zap"} size={fullWidth ? "md" : "sm"} className={"text-primary bg-purple-200"} />
+                            <StatusBadge label={"Current"} icon={"Zap"} size={fullWidth ? "md" : "sm"} className={"bg-purple-100 text-purple-700 dark:bg-purple-900/40"} />
                         )}
                         {isFuture && (
                             <StatusBadge status={'future'} label={"Future"} size={fullWidth ? "md" : "sm"} />
@@ -158,13 +164,20 @@ export function WeekCard({
                                     <div className="text-[9px] font-bold text-gray-400 mb-1">
                                         {day.day[0]}
                                     </div>
-                                    <div className={cn(
-                                        "w-full rounded-md flex items-center justify-center text-[10px] font-bold group-hover:border",
-                                        fullWidth ? "aspect-video" : "aspect-square",
-                                        [5, 6].includes(i)
-                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                                    )}>
+                                    <div
+                                        className={cn(
+                                            "w-full rounded-md flex items-center justify-center text-[10px] font-bold transition-all",
+                                            fullWidth ? "h-10" : "aspect-square",
+
+                                            isToday(day) &&
+                                            "bg-purple-600 text-white ring-2 ring-purple-400",
+
+                                            !isToday(day) &&
+                                            ([5, 6].includes(i)
+                                                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                                                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400")
+                                        )}
+                                    >
                                         {day.date}
                                     </div>
                                 </div>
@@ -274,20 +287,16 @@ export function WeekCard({
             className={cn(
                 "relative rounded-xl border transition-all group cursor-pointer overflow-hidden p-2",
                 isCurrent
-                    ? "border-purple-400 bg-purple-50/40 dark:bg-purple-900/20 shadow-md"
+                    ? "border-purple-300 shadow-lg shadow-purple-500/10"
                     : "border",
                 "hover:bg-lavender-200 dark:hover:bg-lavender-900/20"
             )}
         >
-            {isCurrent && (
-                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-purple-500 to-purple-900" />
-            )}
-
-            <div className="p-4 pl-6 flex items-center gap-6">
+            <div className="p-4 pl-6 flex items-center gap-8">
                 {/* LEFT: Week */}
                 <div className="w-28 shrink-0">
                     <div className="text-sm font-black leading-tight">
-                        {week.range}
+                        {week.range.toUpperCase()}
                     </div>
                 </div>
 
@@ -295,14 +304,14 @@ export function WeekCard({
                 <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-6">
                         <div className="space-y-2">
-                            <div className="space-x-3">
+                            <div className="flex items-center gap-2">
                                 {isCurrent && (
-                                    <StatusBadge label={"Current"} icon={"Zap"} size={fullWidth ? "md" : "sm"} className={"text-primary bg-purple-200"} />
+                                    <StatusBadge label={"Current"} icon={"Zap"} size={"md"} className={"bg-purple-100 text-purple-700 dark:bg-purple-900/40"} />
                                 )}
                                 {isFuture && (
-                                    <StatusBadge status={'future'} label={"Future"} size={fullWidth ? "md" : "sm"} />
+                                    <StatusBadge status={'information'} label={"Future"} size={"md"} />
                                 )}
-                                <StatusBadge status={displayStatus} size={fullWidth ? "md" : "sm"} />
+                                <StatusBadge status={displayStatus} size={"md"} />
                             </div>
                             {mode === "timesheets" && displayStatus !== "not-started" && (
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -322,66 +331,92 @@ export function WeekCard({
                                 </div>
                             )}
                         </div>
-                        <div className="space-y-1">
-                            {mode === "expenses" && displayStatus !== "not-started" && (
-                                <div className="flex items-center gap-4 text-xs">
-                                    <span className="flex items-center gap-1 font-semibold">
-                                        {week.expenseType === "fuel" ? (
-                                            <Fuel className="w-3.5 h-3.5" />
-                                        ) : (
-                                            <Car className="w-3.5 h-3.5" />
-                                        )}
-                                        {week.expenseType}
-                                    </span>
+                    </div>
+                </div>
 
-                                    {week.expenseAmount && (
-                                        <span className="font-bold text-purple-600">
-                                            {week.expenseAmount}
-                                        </span>
-                                    )}
-
-                                    {week.expenseType === "mileage" && (
-                                        <span className="font-mono text-muted-foreground">
-                                            £0.45 / mile
-                                        </span>
-                                    )}
+                {weekDays.length > 0 && (
+                    <div className={`grid grid-cols-7 mb-4 gap-2`}>
+                        {weekDays.map((day, i) => (
+                            <div key={i} className="text-center">
+                                <div className="text-[9px] font-bold text-gray-400 mb-1">
+                                    {day.day[0]}
                                 </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                                {mode === "timesheets" && week.totalHours !== undefined && (
-                                    <span className="flex items-center gap-1.5 text-sm font-semibold">
-                                        <Timer className="w-4 h-4 text-muted-foreground" />
-                                        {week.totalHours}h
+                                <div
+                                    className={cn(
+                                        "w-8 rounded-md flex items-center justify-center text-[10px] font-bold transition-all",
+                                        "aspect-square",
+
+                                        isToday(day) &&
+                                        "bg-purple-600 text-white ring-2 ring-purple-400",
+
+                                        !isToday(day) &&
+                                        ([5, 6].includes(i)
+                                            ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                                            : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400")
+                                    )}
+                                >
+                                    {day.date}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* RIGHT: Actions */}
+                <div className="flex items-center gap-8">
+                    <div className="space-y-1">
+                        {mode === "expenses" && displayStatus !== "not-started" && (
+                            <div className="flex items-center gap-4 text-xs">
+                                <span className="flex items-center gap-1 font-semibold">
+                                    {week.expenseType === "fuel" ? (
+                                        <Fuel className="w-3.5 h-3.5" />
+                                    ) : (
+                                        <Car className="w-3.5 h-3.5" />
+                                    )}
+                                    {week.expenseType}
+                                </span>
+
+                                {week.expenseAmount && (
+                                    <span className="font-bold text-purple-600">
+                                        {week.expenseAmount}
                                     </span>
                                 )}
 
-                                {week.totalAmount && (
-                                    <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
-                                        <DollarSign className="w-4 h-4" />
-                                        {week.totalAmount}
+                                {week.expenseType === "mileage" && (
+                                    <span className="font-mono text-muted-foreground">
+                                        £0.45 / mile
                                     </span>
                                 )}
                             </div>
-                            {/* Progress (timesheets only) */}
-                            {mode === "timesheets" && week.totalHours && (
-                                <div className="flex items-center gap-2">
-                                    <Progress
-                                        value={Math.min((week.totalHours / 40) * 100, 100)}
-                                        className="h-1.5 w-40"
-                                    />
-                                    <span className="text-[10px] font-bold text-muted-foreground">
-                                        {Math.round((week.totalHours / 40) * 100)}%
-                                    </span>
-                                </div>
+                        )}
+                        <div className="flex items-center gap-3">
+                            {mode === "timesheets" && week.totalHours !== undefined && (
+                                <span className="flex items-center gap-1.5 text-sm font-semibold">
+                                    <Timer className="w-4 h-4 text-muted-foreground" />
+                                    {week.totalHours}h
+                                </span>
+                            )}
+
+                            {week.totalAmount && (
+                                <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
+                                    {/* <DollarSign className="w-4 h-4" /> */}
+                                    {week.totalAmount}
+                                </span>
                             )}
                         </div>
+                        {/* Progress (timesheets only) */}
+                        {mode === "timesheets" && week.totalHours && (
+                            <div className="flex items-center gap-2">
+                                <Progress
+                                    value={Math.min((week.totalHours / 40) * 100, 100)}
+                                    className="h-1.5 w-40"
+                                />
+                                <span className="text-[10px] font-bold text-muted-foreground">
+                                    {Math.round((week.totalHours / 40) * 100)}%
+                                </span>
+                            </div>
+                        )}
                     </div>
-
-
-                </div>
-
-                {/* RIGHT: Actions */}
-                <div className="flex items-center gap-2">
                     {mode === "timesheets" &&
                         (week.status === "approved" || week.status === "submitted") && (
                             <>
