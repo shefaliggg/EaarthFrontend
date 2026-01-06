@@ -11,15 +11,6 @@ export const getCurrentUserThunk = createAsyncThunk(
   "user/getCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-<<<<<<< HEAD
-      const response = await authService.getCurrentUser();
-      console.log("current user res", response.data.user);
-      return response.data.user;
-    } catch (err) {
-      return rejectWithValue(
-        err?.response?.data?.message || err?.message || "Failed to fetch user"
-      );
-=======
       console.log("🔄 getCurrentUserThunk - Starting...");
       
       const user = await authService.getCurrentUser();
@@ -43,7 +34,6 @@ export const getCurrentUserThunk = createAsyncThunk(
       // ✅ ALWAYS return null for errors during initial load
       // This prevents infinite loops and allows the app to continue
       return null;
->>>>>>> shanid/project
     }
   }
 );
@@ -80,14 +70,9 @@ export const verifyLoginOtpThunk = createAsyncThunk(
       
       return user;
     } catch (err) {
-<<<<<<< HEAD
-      console.error("❌ OTP verification error:", err);
-      return rejectWithValue( err?.response?.data?.message || err?.message || "Invalid OTP");
-=======
       return rejectWithValue(
         err.response?.data?.message || err.message || "Invalid OTP"
       );
->>>>>>> shanid/project
     }
   }
 );

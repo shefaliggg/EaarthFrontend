@@ -1,74 +1,37 @@
 import {
   createContext,
-  useContext,
   useState,
   useEffect,
+  useContext,
   useCallback,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
-=======
-import { useNavigate, useLocation } from "react-router-dom";
->>>>>>> shanid/project
 
 import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
-import { clearUserData } from "../store/user.slice";
+import { API_ROUTE } from "../../../constants/apiEndpoints";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
 import { clearUserData, setCurrentUser } from "../store/user.slice";
 
 const AuthContext = createContext(null);
 
-<<<<<<< HEAD
-=======
-const PUBLIC_ROUTES = [
-  "/auth/login",
-  "/auth/temp-login",
-  "/auth/set-password",
-  "/auth/forgot-password",
-  "/auth/reset-password",
-  "/auth/otp-verification",
-  "/auth/verify-email",
-  "/invite/verify",
-];
-
->>>>>>> shanid/project
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { currentUser, isFetching } = useSelector((state) => state.user);
-  const [initialLoading, setInitialLoading] = useState(true);
-
-<<<<<<< HEAD
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (!currentUser) {
-          await dispatch(getCurrentUserThunk()).unwrap();
-        }
-      } catch (error) {
-=======
-  const isPublicRoute = useCallback(
-    (pathname) => PUBLIC_ROUTES.some((route) => pathname.startsWith(route)),
-    []
+  const { currentUser, isAuthenticated, isFetching } = useSelector(
+    (state) => state.user
   );
 
-  // ✅ INITIAL AUTH CHECK - Same pattern as admin
+  const [initialLoading, setInitialLoading] = useState(true);
+
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log("🔄 Checking user authentication...");
-        
-        // Only fetch if we don't have currentUser
         if (!currentUser) {
           await dispatch(getCurrentUserThunk()).unwrap();
-          console.log("✅ User authenticated");
         }
       } catch (error) {
-        console.log("ℹ️  No valid user session");
-        // Clear user data on error
->>>>>>> shanid/project
         dispatch(clearUserData());
       } finally {
         setInitialLoading(false);
@@ -76,42 +39,16 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-<<<<<<< HEAD
   }, []);
 
   // LOGIN
   const login = useCallback((adminData) => {
     dispatch(setCurrentUser(adminData));
   }, []);
-=======
-  }, []); // Only run once on mount
-
-  // ✅ ROUTE GUARD - Only after initial loading is done
-  useEffect(() => {
-    if (initialLoading) return;
->>>>>>> shanid/project
 
 
-<<<<<<< HEAD
-=======
-    // Redirect to login if not authenticated and trying to access protected route
-    if (!currentUser && !isPublic) {
-      console.log("⚠️  Not authenticated, redirecting to login");
-      navigate("/auth/login", { replace: true });
-    }
-
-    // Redirect to home if authenticated and trying to access public route
-    if (currentUser && isPublic) {
-      console.log("✅ Already authenticated, redirecting to home");
-      navigate("/home", { replace: true });
-    }
-  }, [currentUser, location.pathname, initialLoading, navigate, isPublicRoute]);
-
-  // ✅ LOGOUT
->>>>>>> shanid/project
   const logout = useCallback(async () => {
     try {
-      console.log("🚪 Logging out user...");
       await dispatch(logoutUserThunk()).unwrap();
     } finally {
       dispatch(clearUserData());
@@ -128,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user: currentUser,
-        isAuthenticated: !!currentUser,
+        isAuthenticated,
         loading: isFetching,
         initialLoading,
         login,
