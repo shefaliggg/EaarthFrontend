@@ -6,11 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-<<<<<<< HEAD
-import { useNavigate } from "react-router-dom";
-=======
 import { useNavigate, useLocation } from "react-router-dom";
->>>>>>> shanid/project
 
 import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
 import { clearUserData } from "../store/user.slice";
@@ -19,8 +15,6 @@ import { clearUserData, setCurrentUser } from "../store/user.slice";
 
 const AuthContext = createContext(null);
 
-<<<<<<< HEAD
-=======
 const PUBLIC_ROUTES = [
   "/auth/login",
   "/auth/temp-login",
@@ -32,7 +26,6 @@ const PUBLIC_ROUTES = [
   "/invite/verify",
 ];
 
->>>>>>> shanid/project
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -40,15 +33,6 @@ export const AuthProvider = ({ children }) => {
   const { currentUser, isFetching } = useSelector((state) => state.user);
   const [initialLoading, setInitialLoading] = useState(true);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (!currentUser) {
-          await dispatch(getCurrentUserThunk()).unwrap();
-        }
-      } catch (error) {
-=======
   const isPublicRoute = useCallback(
     (pathname) => PUBLIC_ROUTES.some((route) => pathname.startsWith(route)),
     []
@@ -68,7 +52,6 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.log("ℹ️  No valid user session");
         // Clear user data on error
->>>>>>> shanid/project
         dispatch(clearUserData());
       } finally {
         setInitialLoading(false);
@@ -76,24 +59,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-<<<<<<< HEAD
-  }, []);
-
-  // LOGIN
-  const login = useCallback((adminData) => {
-    dispatch(setCurrentUser(adminData));
-  }, []);
-=======
   }, []); // Only run once on mount
 
   // ✅ ROUTE GUARD - Only after initial loading is done
   useEffect(() => {
     if (initialLoading) return;
->>>>>>> shanid/project
 
 
-<<<<<<< HEAD
-=======
     // Redirect to login if not authenticated and trying to access protected route
     if (!currentUser && !isPublic) {
       console.log("⚠️  Not authenticated, redirecting to login");
@@ -108,7 +80,6 @@ export const AuthProvider = ({ children }) => {
   }, [currentUser, location.pathname, initialLoading, navigate, isPublicRoute]);
 
   // ✅ LOGOUT
->>>>>>> shanid/project
   const logout = useCallback(async () => {
     try {
       console.log("🚪 Logging out user...");
