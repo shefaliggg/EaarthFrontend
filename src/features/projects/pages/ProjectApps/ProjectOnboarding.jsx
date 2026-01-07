@@ -16,15 +16,17 @@ import {
   Star,
   Clock,
   Download,
-  Filter
+  Filter,
+  XCircle,
+  FileX
 } from "lucide-react";
 
 // Import reusable components
 import { PageHeader } from '@/shared/components/PageHeader';
 import SearchBar from '@/shared/components/SearchBar';
-import  PrimaryStats  from '../../../../shared/components/wrappers/PrimaryStats.jsx';
-import { WorkflowStages } from '../../components/WorkflowStages.jsx';
-import { OffersTable } from '../../components/OffersTable.jsx';
+import PrimaryStats  from '../../../../shared/components/wrappers/PrimaryStats';
+import { WorkflowStages } from '../../projects/components/WorkflowStages';
+import { OffersTable } from '../../projects/components/OffersTable.jsx';
 
 const WORKFLOW_STATS = [
   { 
@@ -37,6 +39,16 @@ const WORKFLOW_STATS = [
     trendColor: "text-green-500"
   },
   { 
+    label: "Pending", 
+    value: 156, 
+    icon: Clock, 
+    color: "text-amber-600", 
+    bgColor: "bg-amber-50 dark:bg-amber-900/20", 
+    trend: "+5%",
+    trendIcon: "TrendingUp",
+    trendColor: "text-amber-500"
+  },
+  { 
     label: "Accepted", 
     value: 624, 
     icon: CheckCircle, 
@@ -47,10 +59,21 @@ const WORKFLOW_STATS = [
     trendColor: "text-green-500"
   },
   { 
+    label: "Rejected", 
+    value: 22, 
+    icon: XCircle, 
+    color: "text-red-600", 
+    bgColor: "bg-red-50 dark:bg-red-900/20", 
+    trend: "-3%",
+    trendIcon: "TrendingUp",
+    trendColor: "text-red-500"
+  },
+  { 
     label: "Ended", 
     value: 178, 
-    icon: FileText, 
+    icon: FileX, 
     color: "text-slate-500", 
+    bgColor: "bg-slate-50 dark:bg-slate-900/20",
     trend: "-2%",
     trendIcon: "TrendingUp",
     trendColor: "text-red-500"
@@ -58,7 +81,6 @@ const WORKFLOW_STATS = [
 ];
 
 const WORKFLOW_STAGES = [
-  { label: "Create Offer", statusKey: null, icon: Plus, color: "text-primary", isAction: true },
   { label: "Offer Sent", statusKey: "OFFER SENT", icon: Send, color: "text-blue-600" },
   { label: "Crew Accepted", statusKey: "CREW ACCEPTED", icon: UserCheck, color: "text-green-600" },
   { label: "Production Check", statusKey: "PRODUCTION CHECK", icon: CheckCircle, color: "text-green-500" },
@@ -67,7 +89,7 @@ const WORKFLOW_STAGES = [
   { label: "UPM Sign", statusKey: "UPM SIGN", icon: PenTool, color: "text-purple-500" },
   { label: "FC Sign", statusKey: "FC SIGN", icon: Building2, color: "text-blue-500" },
   { label: "Studio Sign", statusKey: "STUDIO SIGN", icon: Star, color: "text-pink-500" },
-  { label: "Contracts", statusKey: "CONTRACTED", icon: FileText, color: "text-slate-600" },
+  // { label: "Contracts", statusKey: "CONTRACTED", icon: FileText, color: "text-slate-600" },
 ];
 
 const ROLE_PAGE_TITLES = {
@@ -126,12 +148,6 @@ export default function CrewOnboarding() {
     setOffers(mockOffers);
   }, []);
 
-  const seedMockData = () => {
-    toast.success("Mock data seeded successfully", {
-      description: "Sample offers at different workflow stages have been created"
-    });
-  };
-
   const filteredOffers = useMemo(() => {
     let result = offers;
     
@@ -163,11 +179,7 @@ export default function CrewOnboarding() {
   }, [offers]);
 
   const handleStageClick = (stage) => {
-    if (stage.isAction) {
-      navigate("/offers/new");
-    } else {
-      setSelectedStage(selectedStage === stage.statusKey ? null : stage.statusKey);
-    }
+    setSelectedStage(selectedStage === stage.statusKey ? null : stage.statusKey);
   };
 
   return (
@@ -177,17 +189,15 @@ export default function CrewOnboarding() {
           title={ROLE_PAGE_TITLES[selectedRole] || "CREW ONBOARDING"}
           subtitle="Viewing as: Production Admin"
           icon="Users"
-          secondaryActions={[
-            {
-              label: "Seed Demo Data",
-              icon: "Database",
-              variant: "outline",
-              clickAction: seedMockData
-            }
-          ]}
+          primaryAction={{
+            label: "Create Offer",
+            icon: "Plus",
+            variant: "default",
+            clickAction: () => navigate("/offers/new")
+          }}
         />
 
-        <PrimaryStats stats={WORKFLOW_STATS} gridColumns={3} />
+        <PrimaryStats stats={WORKFLOW_STATS} gridColumns={5} />
 
         <WorkflowStages 
           stages={WORKFLOW_STAGES}
@@ -197,7 +207,7 @@ export default function CrewOnboarding() {
         />
 
         <Card className="border-0 shadow-sm">
-          <CardContent className="">
+          <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <SearchBar
                 placeholder="Search by name, role, or department..."
