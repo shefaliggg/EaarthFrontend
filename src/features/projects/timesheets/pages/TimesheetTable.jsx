@@ -1,5 +1,5 @@
 import { Shield } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { generateMockCrewData } from "../config/mockCrewData(temp)";
 import { SalarySidebar } from "../components/Salarysidebar";
@@ -12,7 +12,7 @@ function TimesheetTable() {
     const [approveViewMode, setApproveViewMode] = useState("single");
     // 'list' | 'single'
 
-    const [isCrewSelfView, setIsCrewSelfView] = useState(false);
+    const [isCrewSelfView, setIsCrewSelfView] = useState(true);
 
     /* ---------------- WEEK / ROUTING ---------------- */
     const [selectedWeek, setSelectedWeek] = useState(
@@ -52,6 +52,25 @@ function TimesheetTable() {
 
     const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
     const [editingExpenses, setEditingExpenses] = useState(false);
+
+    const getDaysForWeek = (weekEndingDate) => {
+        const end = new Date(weekEndingDate);
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(end);
+            d.setDate(end.getDate() - i);
+            days.push({
+                date: d.toISOString().split('T')[0],
+                day: d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase(),
+                dayNum: d.getDate(),
+                month: d.toLocaleDateString('en-GB', { month: 'short' }),
+                year: d.getFullYear(),
+                label: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
+            });
+        }
+        return days;
+    };
+    const daysOfWeek = useMemo(() => getDaysForWeek(selectedWeek), [selectedWeek]);
 
     const mockData = generateMockCrewData();
     const [allCrewMembers] = useState(mockData.map(crew => ({
@@ -212,7 +231,7 @@ function TimesheetTable() {
 
         // 2. Initialize Buckets for aggregation
         // We will aggregate by "Key" (e.g. "Camera O/T") + "Rate" to group identical items
-        // Structure: Map<string, { label: string, rate: number, units: number, category: string }>
+        // Structure: Map<string, { label, rate: number, units: number, category }>
         const itemsMap = new Map();
 
         const addToBucket = (category, label, rate, units, paidTill, paidTillColor) => {
@@ -389,6 +408,312 @@ function TimesheetTable() {
         setSelectedWeek(allWeeks[newIndex]);
     };
 
+    const getTimesheetStorageKey = (crewId, weekEnding) => {
+    return `timesheet_${crewId}_${weekEnding}`;
+  };
+
+  const saveTimesheetToStorage = (crewId, weekEnding, data) => {
+    try {
+      const key = getTimesheetStorageKey(crewId, weekEnding);
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Failed to save timesheet to localStorage:', error);
+    }
+  };
+
+    const loadTimesheetFromStorage = (crewId, weekEnding) => {
+        try {
+            const key = getTimesheetStorageKey(crewId, weekEnding);
+            const stored = localStorage.getItem(key);
+            return stored ? JSON.parse(stored) : null;
+        } catch (error) {
+            console.error('Failed to load timesheet from localStorage:', error);
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        const weekStatus = getWeekStatus(selectedWeek);
+        const isFutureWeek = weekStatus === 'future';
+        const isPastWeek = weekStatus === 'past';
+        const isCurrentWeek = weekStatus === 'current';
+
+        // First, try to load saved data from localStorage
+        const currentCrew = currentUserRole === 'Crew' ? crewInfo : selectedCrewInfo;
+        const crewId = currentCrew?.id || `${currentCrew?.firstName || ''}_${currentCrew?.lastName || ''}` || 'default';
+        const savedData = loadTimesheetFromStorage(crewId, selectedWeek);
+
+        // If saved data exists, use it instead of regenerating
+        if (savedData && savedData.length > 0) {
+            setEntries(savedData);
+            return;
+        }
+
+        // Otherwise, generate new entries from calendar data
+        setEntries(daysOfWeek.map((d, i) => {
+            // Check if calendar data exists for this date
+            const calendarData = calendarSchedule?.[d.date];
+
+            // Generate data for past weeks AND current week using calendar schedule
+            // DON'T populate future weeks - they should start empty
+            if (!isFutureWeek && calendarData && calendarData.dayType && calendarData.dayType !== 'Rest') {
+                // Count consecutive work days to determine 6th/7th day
+                const consecutiveWorkDays = i; // Simplified - in real scenario would check previous entries
+                const isSixthDay = consecutiveWorkDays === 5;
+                const isSeventhDay = consecutiveWorkDays === 6;
+
+                // Generate realistic crew times (can arrive before/after call, wrap before/after unit wrap)
+                const generateCrewTimes = (unitCall, unitWrap) => {
+                    const [callHour, callMin] = unitCall.split(':').map(Number);
+                    const [wrapHour, wrapMin] = unitWrap.split(':').map(Number);
+
+                    // 60% chance crew arrives BEFORE call time (prep work)
+                    // 40% chance crew arrives AFTER call time (not needed for setup)
+                    const arriveEarly = Math.random() < 0.6;
+                    const timeVariation = 15 + Math.floor(Math.random() * 30); // 15-45 mins variation
+
+                    // Calculate crew in time
+                    let crewInMin = arriveEarly ? callMin - timeVariation : callMin + timeVariation;
+                    let crewInHour = callHour;
+
+                    if (crewInMin < 0) {
+                        crewInMin += 60;
+                        crewInHour -= 1;
+                        if (crewInHour < 0) crewInHour += 24;
+                    } else if (crewInMin >= 60) {
+                        crewInMin -= 60;
+                        crewInHour += 1;
+                        if (crewInHour >= 24) crewInHour -= 24;
+                    }
+
+                    // 70% chance crew wraps AFTER unit wrap (cleanup, packing)
+                    // 30% chance crew wraps BEFORE unit wrap (work finished early)
+                    const wrapLate = Math.random() < 0.7;
+                    const wrapVariation = 10 + Math.floor(Math.random() * 35); // 10-45 mins variation
+
+                    // Calculate crew out time
+                    let crewOutMin = wrapLate ? wrapMin + wrapVariation : wrapMin - wrapVariation;
+                    let crewOutHour = wrapHour;
+                    let isNextDay = false;
+
+                    if (crewOutMin < 0) {
+                        crewOutMin += 60;
+                        crewOutHour -= 1;
+                    } else if (crewOutMin >= 60) {
+                        crewOutMin -= 60;
+                        crewOutHour += 1;
+                    }
+
+                    if (crewOutHour >= 24) {
+                        crewOutHour -= 24;
+                        isNextDay = true;
+                    }
+
+                    const crewInTime = `${String(crewInHour).padStart(2, '0')}:${String(crewInMin).padStart(2, '0')}`;
+                    const crewOutTime = `${String(crewOutHour).padStart(2, '0')}:${String(crewOutMin).padStart(2, '0')}`;
+
+                    return { crewInTime, crewOutTime, isNextDay };
+                };
+
+                // Calculate PACT/BECTU overtime based on actual hours worked
+                const calculatePACTOvertime = (inTime, outTime, nextDay) => {
+                    const [inHour, inMin] = inTime.split(':').map(Number);
+                    const [outHour, outMin] = outTime.split(':').map(Number);
+
+                    // Convert to minutes from midnight
+                    const inMinutes = inHour * 60 + inMin;
+                    let outMinutes = outHour * 60 + outMin;
+                    if (nextDay) outMinutes += 24 * 60;
+
+                    const totalMinutes = outMinutes - inMinutes;
+                    const totalHours = totalMinutes / 60;
+
+                    // PACT/BECTU Film Agreement:
+                    // - Standard day: 10 hours (inclusive of 1 hour meal break)
+                    // - After 10 hours: Time and a half for next 2 hours (hours 11-12)
+                    // - After 12 hours: Double time
+                    // - Pre-call (before 07:00): Additional premium
+                    // - Post-wrap (after 19:00): Additional premium
+
+                    let preOT = 0;
+                    let postOT = 0;
+                    let cameraOT = 0;
+                    let enhancedOT = 0;
+
+                    // Pre-call premium (before 07:00)
+                    if (inHour < 7) {
+                        preOT = 1;
+                    }
+
+                    // Calculate camera OT (time and a half for hours 11-12, double time after)
+                    if (totalHours > 10) {
+                        const overtimeHours = totalHours - 10;
+                        // Round to quarter-hour increments
+                        const roundToQuarter = (hours) => Math.ceil(hours * 4) / 4;
+
+                        if (overtimeHours <= 2) {
+                            // Hours 11-12: time and a half
+                            cameraOT = roundToQuarter(overtimeHours);
+                        } else {
+                            // First 2 hours at time and a half, rest at double time
+                            cameraOT = 2.0;
+                            enhancedOT = roundToQuarter(overtimeHours - 2);
+                        }
+                    }
+
+                    // Post-wrap premium (working past 19:00)
+                    if ((nextDay && outHour >= 0) || (!nextDay && outHour >= 19)) {
+                        postOT = 1;
+                    }
+
+                    return { preOT, cameraOT, postOT, enhancedOT };
+                };
+
+                const { crewInTime, crewOutTime, isNextDay } = generateCrewTimes(
+                    calendarData.unitCall || '07:00',
+                    calendarData.unitWrap || '17:30'
+                );
+
+                const { preOT, cameraOT, postOT, enhancedOT } = calculatePACTOvertime(
+                    crewInTime,
+                    crewOutTime,
+                    isNextDay
+                );
+
+                return {
+                    ...d,
+                    status: isPastWeek ? 'submitted' : 'not-started', // Past weeks are submitted, current is editable
+                    dayType: 'Work',
+                    unit: calendarData.unit || 'Main',
+                    workplace: calendarData.workplaces || ['On Set'],
+                    workplaceLocation: calendarData.workplaces?.[0] || 'Studio',
+                    set: calendarData.set || '', // Set information from calendar
+
+                    // Crew actual times (different from calendar times)
+                    inTime: crewInTime,
+                    inDateTime: '',
+                    outTime: crewOutTime,
+                    outDateTime: '',
+                    nextDay: isNextDay,
+                    isFlatDay: false,
+
+                    // Pay Units based on calendar and 6th/7th day rules
+                    standardDay: isSixthDay || isSeventhDay ? 0 : 1, // 6th/7th day gets 0 salary
+                    sixthDay: isSixthDay ? 1 : 0,
+                    seventhDay: isSeventhDay ? 1 : 0,
+                    publicHoliday: calendarData.isPublicHoliday ? 1 : 0,
+                    travelDay: 0,
+
+                    upgrade: '',
+                    isUpgraded: false,
+                    upgradeRole: '',
+                    upgradeRate: 0,
+                    mealStatus: 'Per calendar day',
+
+                    // Allowances calculated from actual crew times and PACT/BECTU rules
+                    paidTravel: parseFloat(calendarData.travelTo || '0') > 0 ? 1 : 0,
+                    cameraOT: cameraOT,
+                    preOT: preOT,
+                    postOT: postOT,
+                    bta: calendarData.workplaces && calendarData.workplaces.length > 0 ? 1 : 0,
+                    dawn: calendarData.dawn === 'Paid' ? 1 : 0,
+                    night: calendarData.nightPenalty === 'Paid' ? 1 : 0,
+                    lateMeal: 0,
+                    brokenMeal: 0,
+                    travel: parseFloat(calendarData.travelTo || '0') + parseFloat(calendarData.travelFrom || '0'),
+                    otherOT: 0,
+                    breakfast: true,
+                    lunch: true,
+                    dinner: true,
+                    perDiemShoot: 0,
+
+                    // Expenses
+                    fuel: 0,
+                    mileage: 0,
+                    computer: 0,
+                    software: 0,
+                    box: i === 0 ? 1 : 0, // Box rental on first day
+                    equipment: 0,
+                    vehicle: 0,
+                    mobile: 0,
+                    living: 0,
+                    perDiemNon: 0,
+                    mealsAllowance: 0,
+                    turnaround: 0,
+                    additionalHour: 0,
+                    enhancedOT: enhancedOT,
+
+                    notes: calendarData.notes || '',
+                    deptApproval: 'ARC'
+                };
+            }
+
+            // Default Rest day for future weeks and weekend days
+            return {
+                ...d,
+                status: 'not-started',
+                dayType: 'Rest',
+                unit: 'Main',
+                workplace: [],
+                workplaceLocation: '',
+                set: '',
+
+                // Pay Units Init - Don't auto-set standardDay=1 for Work days until time is entered
+                standardDay: 0, // Changed: Start at 0, will be set to 1 when time entered or flat day clicked
+                sixthDay: 0,
+                seventhDay: 0,
+                publicHoliday: 0,
+                travelDay: 0,
+
+                upgrade: '',
+                isUpgraded: false,
+                upgradeRole: '',
+                upgradeRate: 0,
+                inTime: '',
+                inDateTime: '',
+                outTime: '',
+                outDateTime: '',
+                nextDay: false,
+                isFlatDay: false,
+                mealStatus: 'Per calendar day',
+                paidTravel: 0,
+                cameraOT: 0,
+                preOT: 0,
+                postOT: 0,
+                bta: 0,
+                dawn: 0,
+                night: 0,
+                lateMeal: 0,
+                brokenMeal: 0,
+                travel: 0,
+                otherOT: 0,
+                breakfast: false,
+                lunch: false,
+                dinner: false,
+                perDiemShoot: 0,
+
+                // Init new fields
+                fuel: 0,
+                mileage: 0,
+                computer: 0,
+                software: 0,
+                box: 0,
+                equipment: 0,
+                vehicle: 0,
+                mobile: 0,
+                living: 0,
+                perDiemNon: 0,
+                mealsAllowance: 0,
+                turnaround: 0,
+                additionalHour: 0,
+                enhancedOT: 0,
+
+                notes: '',
+                deptApproval: 'ARC'
+            };
+        }));
+    }, [selectedWeek, calendarSchedule, daysOfWeek, selectedCrewInfo, currentUserRole]);
+
     return (
         <div className="grid grid-cols-1 gap-8 items-start">
 
@@ -424,6 +749,9 @@ function TimesheetTable() {
                                         shouldBeReadOnly = isPastWeek;
                                     }
 
+                                    console.log('entries prop', entries);
+                                    // console.log('entriesToRender', entriesToRender);
+
                                     return (
                                         <>
                                             {shouldBeReadOnly && (
@@ -448,7 +776,6 @@ function TimesheetTable() {
                                             )}
 
                                             <SalarySidebar
-                                                isDarkMode={isDarkMode}
                                                 allowanceCaps={allowanceCaps}
                                                 setAllowanceCaps={setAllowanceCaps}
                                                 crewInfo={selectedCrewInfo}

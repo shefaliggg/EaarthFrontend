@@ -8,7 +8,7 @@ import {
     MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Popover,PopoverContent,PopoverTrigger } from '../../../../shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../../shared/components/ui/popover';
 import { TimesheetHeaderButtons } from './TimesheetHeaderButtons';
 import { WeekCompletionIndicator } from './WeekCompletionIndicator';
 import { TimesheetStatusWatermark } from './TimesheetStatusWatermark';
@@ -1554,7 +1554,7 @@ export function SalarySidebar({
     }
 
     return (
-        <div className={`relative h-full w-full flex flex-col ${theme.bg} ${theme.text} overflow-hidden font-sans text-[10px]`}>
+        <div className={`relative h-full w-full flex flex-col bg-background overflow-hidden font-sans text-[10px]`}>
 
             {/* TOP HEADER - Compact (with Loan Out company name support) */}
             <div className={`flex-none px-4 py-3 border-b  flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
@@ -1986,7 +1986,7 @@ export function SalarySidebar({
                                 { label: 'Accounts', name: 'Dan Palmer', date: '18 Dec 10:45', code: 'AC-441', role: 'Financial Controller' },
                                 { label: 'Payroll', name: '', date: '', code: '', role: '' }
                             ].map((sig) => (
-                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full ${theme.card} `}>
+                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full bg-card `}>
                                     {/* APPROVED Stamp - Only show when signed */}
                                     {sig.name && (
                                         <div
