@@ -15,7 +15,6 @@ const ProjectAppAnimals = lazy(() => import('../pages/ProjectApps/ProjectAppAnim
 const ProjectAppVehicles = lazy(() => import('../pages/ProjectApps/ProjectAppVehicles'));
 const ProjectAppLocations = lazy(() => import('../pages/ProjectApps/ProjectAppLocations'));
 const ProjectAppApproval = lazy(() => import('../pages/ProjectApps/ProjectAppApproval'));
-const ProjectTimesheets = lazy(() => import('../pages/ProjectApps/ProjectTimesheets'));
 const ProjectOnboarding = lazy(() => import('../pages/ProjectApps/ProjectOnboarding'));
 const ProjectAppCloud = lazy(() => import('../pages/ProjectApps/ProjectAppCloud'));
 
@@ -38,7 +37,6 @@ const ProjectAppsRoutes = {
         { path: 'vehicles', element: <ProjectAppVehicles /> },
         { path: 'locations', element: <ProjectAppLocations /> },
         { path: 'approval', element: <ProjectAppApproval /> },
-        { path: 'timesheets', element: <ProjectTimesheets /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 

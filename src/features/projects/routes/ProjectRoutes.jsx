@@ -3,13 +3,14 @@ import ProjectAppsRoutes from './ProjectAppsRoutes';
 import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
 
 // Dashboard and Main Pages
-import ProjectList  from '../pages/ProjectList'
-import  CreateProject  from '../components/CreateProject';
+import ProjectList from '../pages/ProjectList'
+import CreateProject from '../components/CreateProject';
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
-import  StudioAnalytics  from '../components/StudioAnalytics';
-import  ProjectDetails  from '../pages/ProjectDetails';
+import StudioAnalytics from '../components/StudioAnalytics';
+import ProjectDetails from '../pages/ProjectDetails';
 import EditProject from '../components/EditProject';
+import ProjectTimesheetsRoutes from './ProjectTimesheetsRotues';
 
 // const ProjectList = lazy(() => import('../pages/ProjectList'));
 // const ProjectDetail = lazy(() => import('../pages/ProjectDetails'));
@@ -45,7 +46,7 @@ const ProjectRoutes = {
             children: [
                 // Project Details Dashboard - shows when you click on a project
                 { index: true, element: <ProjectDetails /> },
-        
+
                 // { path: 'activities', element: <ProjectActivities /> },
                 // { path: 'calendar', element: <ProjectCalendar /> },
                 // { path: 'call-sheets', element: <ProjectCallSheets /> },
@@ -59,6 +60,7 @@ const ProjectRoutes = {
                 // { path: 'timeline', element: <ProjectTimeline /> },
                 // { path: 'settings', element: <ProjectSettings /> },
 
+                ProjectTimesheetsRoutes,
                 ProjectAppsRoutes,
                 ProjectDepartmentsRoutes,
 
