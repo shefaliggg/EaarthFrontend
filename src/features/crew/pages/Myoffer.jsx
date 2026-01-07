@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "../../../shared/components/ui/card";
 import { Button } from "../../../shared/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../../shared/components/ui/dialog";
@@ -53,7 +54,8 @@ function OffersSection({
   offers, 
   onRequestChange, 
   onAccept, 
-  isAccepting 
+  isAccepting,
+  onView
 }) {
   if (offers.length === 0) return null;
 
@@ -71,6 +73,7 @@ function OffersSection({
             onRequestChange={onRequestChange}
             onAccept={onAccept}
             isAccepting={isAccepting}
+            onView={onView}
           />
         ))}
       </div>
@@ -230,6 +233,7 @@ const MOCK_OFFERS = [
 
 // Main MyOffer Component
 export default function MyOffer() {
+  const navigate = useNavigate();
   const [showChangeDialog, setShowChangeDialog] = useState(false);
   const [changeReason, setChangeReason] = useState("");
   const [changeFields, setChangeFields] = useState("");
@@ -252,6 +256,16 @@ export default function MyOffer() {
       setIsAccepting(false);
       alert("Offer accepted successfully!");
     }, 1000);
+  };
+
+  const handleViewOffer = (offerId) => {
+    // Get current project name from URL or use a default
+    const pathParts = window.location.pathname.split('/');
+    const projectNameIndex = pathParts.indexOf('projects') + 1;
+    const projectName = pathParts[projectNameIndex] || 'default-project';
+    
+    // Navigate to viewoffers page with the offer ID
+    navigate(`/projects/${projectName}/viewoffers?id=${offerId}`);
   };
 
   const submitChangeRequest = () => {
@@ -299,6 +313,7 @@ export default function MyOffer() {
               onRequestChange={handleRequestChange}
               onAccept={handleAccept}
               isAccepting={isAccepting}
+              onView={handleViewOffer}
             />
 
             <OffersSection
@@ -310,6 +325,7 @@ export default function MyOffer() {
               onRequestChange={handleRequestChange}
               onAccept={handleAccept}
               isAccepting={isAccepting}
+              onView={handleViewOffer}
             />
 
             <OffersSection
@@ -321,6 +337,7 @@ export default function MyOffer() {
               onRequestChange={handleRequestChange}
               onAccept={handleAccept}
               isAccepting={isAccepting}
+              onView={handleViewOffer}
             />
           </div>
         )}

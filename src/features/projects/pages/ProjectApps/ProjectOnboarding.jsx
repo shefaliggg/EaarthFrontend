@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -89,7 +89,6 @@ const WORKFLOW_STAGES = [
   { label: "UPM Sign", statusKey: "UPM SIGN", icon: PenTool, color: "text-purple-500" },
   { label: "FC Sign", statusKey: "FC SIGN", icon: Building2, color: "text-blue-500" },
   { label: "Studio Sign", statusKey: "STUDIO SIGN", icon: Star, color: "text-pink-500" },
-  // { label: "Contracts", statusKey: "CONTRACTED", icon: FileText, color: "text-slate-600" },
 ];
 
 const ROLE_PAGE_TITLES = {
@@ -118,8 +117,9 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
-export default function CrewOnboarding() {
+export default function ProjectOnboarding() {
   const navigate = useNavigate();
+  const { projectName } = useParams(); // Get projectName from URL params
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStage, setSelectedStage] = useState(null);
   const [offers, setOffers] = useState([]);
@@ -182,6 +182,17 @@ export default function CrewOnboarding() {
     setSelectedStage(selectedStage === stage.statusKey ? null : stage.statusKey);
   };
 
+  // Fixed navigation function
+  const handleCreateOffer = () => {
+    if (projectName) {
+      // Navigate to createoffers within the current project context
+      navigate(`/projects/${projectName}/createoffers`);
+    } else {
+      // Fallback if projectName is not available
+      navigate('/projects/createoffers');
+    }
+  };
+
   return (
     <div className="">
       <div className="space-y-6">
@@ -193,7 +204,7 @@ export default function CrewOnboarding() {
             label: "Create Offer",
             icon: "Plus",
             variant: "default",
-            clickAction: () => navigate("/offers/new")
+            clickAction: handleCreateOffer, // Use the fixed handler
           }}
         />
 

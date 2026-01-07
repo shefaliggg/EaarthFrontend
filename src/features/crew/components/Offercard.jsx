@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardHeader } from "../../../shared/components/ui/card";
 import { Button } from "../../../shared/components/ui/button";
 import { Badge } from "../../../shared/components/ui/badge";
@@ -46,12 +47,18 @@ const STATUS_CONFIG = {
 };
 
 // OfferCard Component
-export function OfferCard({ offer, onRequestChange, onAccept, isAccepting }) {
+export function OfferCard({ offer, onRequestChange, onAccept, isAccepting, onView }) {
   const statusConfig = STATUS_CONFIG[offer.status] || { label: offer.status, variant: "secondary" };
   const primaryRole = offer.roles?.[0] || {};
 
+  const handleViewClick = () => {
+    if (onView) {
+      onView(offer.id);
+    }
+  };
+
   return (
-    <Card className="overflow-hidden " data-testid={`card-offer-${offer.id}`}>
+    <Card className="overflow-hidden" data-testid={`card-offer-${offer.id}`}>
       <CardHeader className="px-6 py-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
@@ -76,7 +83,12 @@ export function OfferCard({ offer, onRequestChange, onAccept, isAccepting }) {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" data-testid={`button-view-offer-${offer.id}`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleViewClick}
+              data-testid={`button-view-offer-${offer.id}`}
+            >
               <Eye className="w-4 h-4 mr-1" /> View
             </Button>
             {offer.status === "SENT_TO_CREW" && (
@@ -147,6 +159,10 @@ export default function OfferCardDemo() {
     }, 1000);
   };
 
+  const handleView = (offerId) => {
+    alert(`Navigate to view offer ${offerId}`);
+  };
+
   return (
     <div className="p-6 min-h-screen bg-background">
       <div className="max-w-4xl mx-auto">
@@ -155,6 +171,7 @@ export default function OfferCardDemo() {
           offer={sampleOffer}
           onRequestChange={handleRequestChange}
           onAccept={handleAccept}
+          onView={handleView}
           isAccepting={isAccepting}
         />
       </div>

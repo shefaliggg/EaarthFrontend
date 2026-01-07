@@ -1,5 +1,7 @@
 import { lazy } from 'react';
 import MyOffer from '../../crew/pages/Myoffer';
+import ViewOffer from '../../crew/pages/ViewOffers';
+import CreateOffer from '../../crew/pages/CreateOffer';
 
 const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 const ProjectAppProps = lazy(() => import('../pages/ProjectApps/ProjectAppProps'));
@@ -24,22 +26,24 @@ const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 const ProjectAppsRoutes = {
     path: "",
     children: [
-        { path: 'props', element: <ProjectAppProps /> },
-        { path: 'costume', element: <ProjectAppCostume /> },
-        { path: 'catering', element: <ProjectAppCatering /> },
-        { path: 'accounts', element: <ProjectAppAccounts /> },
-        { path: 'script', element: <ProjectAppScript /> },
-        { path: 'market', element: <ProjectAppMarket /> },
-        { path: 'stocks', element: <ProjectAppStocks /> },
-        { path: 'transport', element: <ProjectAppTransport /> },
-        { path: 'e-player', element: <ProjectAppEPlayer /> },
-        { path: 'forms', element: <ProjectAppForms /> },
-        { path: 'animals', element: <ProjectAppAnimals /> },
-        { path: 'vehicles', element: <ProjectAppVehicles /> },
-        { path: 'locations', element: <ProjectAppLocations /> },
-        { path: 'approval', element: <ProjectAppApproval /> },
+        // { path: 'props', element: <ProjectAppProps /> },
+        // { path: 'costume', element: <ProjectAppCostume /> },
+        // { path: 'catering', element: <ProjectAppCatering /> },
+        // { path: 'accounts', element: <ProjectAppAccounts /> },
+        // { path: 'script', element: <ProjectAppScript /> },
+        // { path: 'market', element: <ProjectAppMarket /> },
+        // { path: 'stocks', element: <ProjectAppStocks /> },
+        // { path: 'transport', element: <ProjectAppTransport /> },
+        // { path: 'e-player', element: <ProjectAppEPlayer /> },
+        // { path: 'forms', element: <ProjectAppForms /> },
+        // { path: 'animals', element: <ProjectAppAnimals /> },
+        // { path: 'vehicles', element: <ProjectAppVehicles /> },
+        // { path: 'locations', element: <ProjectAppLocations /> },
+        // { path: 'approval', element: <ProjectAppApproval /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'offers', element: <MyOffer /> },
+        { path: 'viewoffers', element: <ViewOffer /> },
+        { path: 'createoffers', element: <CreateOffer /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 
         { path: '*', element: <NotFound /> }
