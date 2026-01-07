@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import MyOffer from '../../crew/pages/Myoffer';
 
 const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 const ProjectAppProps = lazy(() => import('../pages/ProjectApps/ProjectAppProps'));
@@ -38,6 +39,7 @@ const ProjectAppsRoutes = {
         { path: 'locations', element: <ProjectAppLocations /> },
         { path: 'approval', element: <ProjectAppApproval /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
+        { path: 'offers', element: <MyOffer /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 
         { path: '*', element: <NotFound /> }

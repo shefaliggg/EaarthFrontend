@@ -25,8 +25,8 @@ import {
 import { PageHeader } from '@/shared/components/PageHeader';
 import SearchBar from '@/shared/components/SearchBar';
 import PrimaryStats  from '../../../../shared/components/wrappers/PrimaryStats';
-import { WorkflowStages } from '../../projects/components/WorkflowStages';
-import { OffersTable } from '../../projects/components/OffersTable.jsx';
+import { WorkflowStages } from '../../../projects/components/WorkflowStages';
+import { OffersTable } from '../../../projects/components/OffersTable.jsx';
 
 const WORKFLOW_STATS = [
   { 
@@ -207,7 +207,7 @@ export default function CrewOnboarding() {
         />
 
         <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
+          <CardContent className="">
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <SearchBar
                 placeholder="Search by name, role, or department..."

@@ -1,46 +1,16 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card } from "@/shared/components/ui/card";
-import { Button } from "@/shared/components/ui/button";
-import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/shared/components/ui/dialog";
-import { Textarea } from "@/shared/components/ui/textarea";
-import { Label } from "@/shared/components/ui/label";
+import { Card } from "../../../shared/components/ui/card";
+import { Button } from "../../../shared/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../../shared/components/ui/dialog";
+import { Textarea } from "../../../shared/components/ui/textarea";
+import { Label } from "../../../shared/components/ui/label";
 import { 
   FileText, 
-  AlertCircle, 
   MessageSquare, 
   User, 
   CheckCircle
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { PageHeader } from '@/shared/components/PageHeader';
-import { OfferCard } from './OfferCard';
-
-// Loading Skeleton Component
-function LoadingSkeleton() {
-  return (
-    <div className="p-6 space-y-4">
-      <Skeleton className="h-8 w-64" />
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-32 w-full" />
-    </div>
-  );
-}
-
-// Error State Component
-function ErrorState() {
-  return (
-    <div className="p-6">
-      <Card className="p-6 text-center">
-        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Error Loading Offers</h3>
-        <p className="text-muted-foreground">Unable to load your offers.</p>
-      </Card>
-    </div>
-  );
-}
+import { OfferCard } from "../components/Offercard";
 
 // Empty State Component
 function EmptyState() {
@@ -170,87 +140,151 @@ function ChangeRequestDialog({
   );
 }
 
+// Mock data for demonstration - All cards show the same data
+const MOCK_OFFERS = [
+  {
+    id: 1,
+    status: "SENT_TO_CREW",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  },
+  {
+    id: 2,
+    status: "SENT_TO_CREW",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  },
+  {
+    id: 3,
+    status: "PENDING_CREW_SIGNATURE",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  },
+  {
+    id: 4,
+    status: "PENDING_CREW_SIGNATURE",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  },
+  {
+    id: 5,
+    status: "COMPLETED",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  },
+  {
+    id: 6,
+    status: "COMPLETED",
+    productionName: "The Great Adventure",
+    roles: [{
+      jobTitle: "Director of Photography",
+      department: "Camera",
+      subDepartment: "Main Unit",
+      contractRate: 2500,
+      rateType: "WEEKLY",
+      startDate: "2026-02-01",
+      endDate: "2026-04-30"
+    }]
+  }
+];
+
 // Main MyOffer Component
 export default function MyOffer() {
-  const { toast } = useToast();
   const [showChangeDialog, setShowChangeDialog] = useState(false);
   const [changeReason, setChangeReason] = useState("");
   const [changeFields, setChangeFields] = useState("");
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { data: offers = [], isLoading, error } = useQuery({
-    queryKey: ["/api/my-offers"],
-  });
-
-  const acceptMutation = useMutation({
-    mutationFn: async (offerId) => {
-      return apiRequest("POST", `/api/offers/${offerId}/accept`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/my-offers"] });
-      toast({ title: "Offer accepted successfully" });
-    },
-    onError: () => {
-      toast({ title: "Failed to accept offer", variant: "destructive" });
-    }
-  });
-
-  const changeRequestMutation = useMutation({
-    mutationFn: async ({ offerId, reason, fieldsRequested }) => {
-      return apiRequest("POST", `/api/offers/${offerId}/change-requests`, {
-        reason,
-        fieldsRequested,
-        status: "PENDING"
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/my-offers"] });
-      setShowChangeDialog(false);
-      setChangeReason("");
-      setChangeFields("");
-      toast({ title: "Change request submitted" });
-    },
-    onError: () => {
-      toast({ title: "Failed to submit change request", variant: "destructive" });
-    }
-  });
+  // Use mock data
+  const offers = MOCK_OFFERS;
 
   const handleRequestChange = (offer) => {
     setSelectedOffer(offer);
     setShowChangeDialog(true);
   };
 
-  const submitChangeRequest = () => {
-    if (!selectedOffer || !changeReason.trim()) return;
-    changeRequestMutation.mutate({
-      offerId: selectedOffer.id,
-      reason: changeReason,
-      fieldsRequested: changeFields.split(",").map(f => f.trim()).filter(Boolean)
-    });
+  const handleAccept = (offerId) => {
+    setIsAccepting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsAccepting(false);
+      alert("Offer accepted successfully!");
+    }, 1000);
   };
 
-  if (isLoading) return <LoadingSkeleton />;
-  if (error) return <ErrorState />;
+  const submitChangeRequest = () => {
+    if (!selectedOffer || !changeReason.trim()) return;
+    setIsSubmitting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setShowChangeDialog(false);
+      setChangeReason("");
+      setChangeFields("");
+      alert("Change request submitted!");
+    }, 1000);
+  };
 
   const pendingOffers = offers.filter(o => ["SENT_TO_CREW", "NEEDS_REVISION"].includes(o.status));
   const inProgressOffers = offers.filter(o => ["CREW_ACCEPTED", "PRODUCTION_CHECK", "ACCOUNTS_CHECK", "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE"].includes(o.status));
   const completedOffers = offers.filter(o => o.status === "COMPLETED");
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <PageHeader
-          title="My Offers"
-          subtitle="View and manage your crew offers"
-          icon="User"
-          extraContents={
-            <OffersSummary 
-              pendingCount={pendingOffers.length}
-              inProgressCount={inProgressOffers.length}
-              signedCount={completedOffers.length}
-            />
-          }
-        />
+    <div className="">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight" data-testid="text-my-offers-title">My Offers</h1>
+            <p className="text-muted-foreground mt-0.5">View and manage your crew offers</p>
+          </div>
+          <OffersSummary 
+            pendingCount={pendingOffers.length}
+            inProgressCount={inProgressOffers.length}
+            signedCount={completedOffers.length}
+          />
+        </div>
 
         {offers.length === 0 ? (
           <EmptyState />
@@ -263,8 +297,8 @@ export default function MyOffer() {
               count={pendingOffers.length}
               offers={pendingOffers}
               onRequestChange={handleRequestChange}
-              onAccept={(id) => acceptMutation.mutate(id)}
-              isAccepting={acceptMutation.isPending}
+              onAccept={handleAccept}
+              isAccepting={isAccepting}
             />
 
             <OffersSection
@@ -274,8 +308,8 @@ export default function MyOffer() {
               count={inProgressOffers.length}
               offers={inProgressOffers}
               onRequestChange={handleRequestChange}
-              onAccept={(id) => acceptMutation.mutate(id)}
-              isAccepting={acceptMutation.isPending}
+              onAccept={handleAccept}
+              isAccepting={isAccepting}
             />
 
             <OffersSection
@@ -285,8 +319,8 @@ export default function MyOffer() {
               count={completedOffers.length}
               offers={completedOffers}
               onRequestChange={handleRequestChange}
-              onAccept={(id) => acceptMutation.mutate(id)}
-              isAccepting={acceptMutation.isPending}
+              onAccept={handleAccept}
+              isAccepting={isAccepting}
             />
           </div>
         )}
@@ -300,7 +334,7 @@ export default function MyOffer() {
         changeFields={changeFields}
         setChangeFields={setChangeFields}
         onSubmit={submitChangeRequest}
-        isSubmitting={changeRequestMutation.isPending}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
