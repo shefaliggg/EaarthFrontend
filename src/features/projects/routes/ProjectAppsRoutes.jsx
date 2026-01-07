@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import MyOffer from '../../crew/pages/Myoffer';
 import ViewOffer from '../../crew/pages/ViewOffers';
 import CreateOffer from '../../crew/pages/CreateOffer';
+import Contracts from '../../crew/pages/Contracts';
 
 const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 const ProjectAppProps = lazy(() => import('../pages/ProjectApps/ProjectAppProps'));
@@ -44,6 +45,7 @@ const ProjectAppsRoutes = {
         { path: 'offers', element: <MyOffer /> },
         { path: 'viewoffers', element: <ViewOffer /> },
         { path: 'createoffers', element: <CreateOffer /> },
+        { path: 'contracts', element: <Contracts /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 
         { path: '*', element: <NotFound /> }

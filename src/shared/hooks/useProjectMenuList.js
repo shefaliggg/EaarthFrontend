@@ -60,6 +60,12 @@ export function useProjectMenus(allProjects = []) {
         route: `/projects/${projectName}/offers`,
       },
       {
+        id: "contracts",
+        label: "Contracts",
+        icon: Icon.UserPlus,
+        route: `/projects/${projectName}/contracts`,
+      },
+      {
         id: "hod-timesheet-approval",
         label: "Timesheets",
         icon: Icon.Clock,
