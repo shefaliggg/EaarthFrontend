@@ -1,4 +1,3 @@
-// src/features/auth/store/user.thunks.js
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { authService } from "../services/auth.service";
 import * as userService from "../services/user.service";
@@ -12,27 +11,19 @@ export const getCurrentUserThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       console.log("🔄 getCurrentUserThunk - Starting...");
-      
+
       const user = await authService.getCurrentUser();
-      
+
       if (!user) {
-        console.log("ℹ️  No user session found");
-        // ✅ Return null instead of rejecting
-        // This prevents error states and allows app to show login
+        console.log("ℹ️ No user session found");
         return null;
       }
-      
+
       console.log("✅ getCurrentUserThunk - Success:", user.email);
       return user;
-      
+
     } catch (err) {
-      console.error("❌ getCurrentUserThunk error:", {
-        status: err.response?.status,
-        message: err.message,
-      });
-      
-      // ✅ ALWAYS return null for errors during initial load
-      // This prevents infinite loops and allows the app to continue
+      console.error("❌ getCurrentUserThunk error:", err.message);
       return null;
     }
   }

@@ -66,15 +66,15 @@ export const authService = {
   },
 
   // GET CURRENT USER
-  getCurrentUser: async () => {
-    try {
-      const response = await axiosConfig.get("/auth/me");
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 401) return null;
-      throw error;
-    }
-  },
+getCurrentUser: async () => {
+  try {
+    const response = await axiosConfig.get("/auth/me");
+    return response.data.data.user; // ✅ return the actual user
+  } catch (error) {
+    if (error.response?.status === 401) return null;
+    throw error;
+  }
+},
 
   forgotPassword: async (email) => {
     const { data } = await axiosConfig.post("/auth/password/forgot", {
