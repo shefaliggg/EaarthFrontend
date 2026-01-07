@@ -1,22 +1,24 @@
 import { lazy } from 'react';
-import TimesheetsLayout from '../layouts/TimesheetsLayout';
+import TimesheetDetailsLayout from '../layouts/TimesheetDetailsLayout';
 
-const TimesheetsDashboard = lazy(() => import('../timesheets/pages/TimesheetsDashboard'));
+const CrewTimesheetsDashboard = lazy(() => import('../timesheets/pages/CrewTimesheetsDashboard'));
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
+const TimesheetCalender = lazy(() => import('../timesheets/pages/TimesheetCalender'));
+const TimesheetSettings = lazy(() => import('../timesheets/pages/TimesheetSettings'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
 const ProjectTimesheetsRoutes = {
     path: "timesheets",
     children: [
-        { index: true, element: <TimesheetsDashboard /> },
+        { index: true, element: <CrewTimesheetsDashboard /> },
         {
             path: ':week',
-            element: <TimesheetsLayout />,
+            element: <TimesheetDetailsLayout />,
             children: [
                 { index: true, element: <TimesheetTable /> },
-                { path: 'calender', element: <TimesheetTable /> },
-                { path: 'settings', element: <TimesheetTable /> },
+                { path: 'calender', element: <TimesheetCalender /> },
+                { path: 'settings', element: <TimesheetSettings /> },
             ]
         },
 

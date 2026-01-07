@@ -18,7 +18,7 @@ import {
 import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 
 
-function TimesheetsDashboard() {
+function CrewTimesheetsDashboard() {
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
   const [activeTab, setActiveTab] = useState('timesheets');
   const [searchQuery, setSearchQuery] = useState('');
@@ -681,4 +681,4 @@ const isFutureWeek = (weekEnding) => {
   )
 }
 
-export default TimesheetsDashboard
+export default CrewTimesheetsDashboard

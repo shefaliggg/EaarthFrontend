@@ -1,11 +1,9 @@
+import { Shield } from "lucide-react";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ApprovalWorkflowGuide } from "../components/ApprovalWorkflowGuide";
 
 function TimesheetTable() {
     const { week } = useParams();
-
-    /* ---------------- CORE VIEW STATE ---------------- */
     const [viewMode, setViewMode] = useState("table");
     // 'table' | 'print' | 'weekly-overview'
 
@@ -53,6 +51,180 @@ function TimesheetTable() {
     const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
     const [editingExpenses, setEditingExpenses] = useState(false);
 
+    const [projectSettings] = useState({
+        contractFramework: 'film', // 'film' | 'tv-band1' | 'tv-band2' | 'tv-band3' | 'equity' | 'custom'
+        projectBudget: 50000000, // £50m
+        standardWorkingWeek: 55, // Film: 55 hours / 5 days
+        standardWorkingDay: 11, // Film: 11 hours + 1 hour lunch
+        continuousWorkingDay: 10, // Film: 10 hours CWD
+        sixthDayMultiplier: 1.5, // Film: 1.5T
+        seventhDayMultiplier: 2.0, // Film: 2T
+        thresholdRate: 3000, // £3000 threshold for Film PACT/BECTU
+        timesheetSubmissionDeadlineDays: 2, // Days after week ending to submit timesheet
+        overtimeRates: {
+            cameraStandard: { enabled: true, rate: 2.0 }, // Film: 2T
+            cameraContinuous: { enabled: true, rate: 1.5 }, // Film: 1.5T
+            enhancedOT: { enabled: false, rate: 1.5 }, // Film: No Enhanced OT (TV only)
+            preCallOT: { enabled: true, rate: 1.5 },
+            postWrapOT: { enabled: true, rate: 1.5 },
+        }
+    });
+
+
+    const getWeekStatus = (weekEnding) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentDayOfWeek = today.getDay();
+        const daysUntilSunday = currentDayOfWeek === 0 ? 0 : 7 - currentDayOfWeek;
+        const currentWeekEnding = new Date(today);
+        currentWeekEnding.setDate(today.getDate() + daysUntilSunday);
+        currentWeekEnding.setHours(0, 0, 0, 0);
+        const selectedWeekEnding = new Date(weekEnding);
+        selectedWeekEnding.setHours(0, 0, 0, 0);
+        if (selectedWeekEnding.getTime() === currentWeekEnding.getTime()) return 'current';
+        if (selectedWeekEnding.getTime() < currentWeekEnding.getTime()) return 'past';
+        return 'future';
+    };
+
+    const canCrewSubmitWeek = (weekEnding) => {
+        const weekStatus = getWeekStatus(weekEnding);
+
+        // Crew can always submit current and future weeks
+        if (weekStatus === 'current' || weekStatus === 'future') return true;
+
+        // For past weeks, check if within deadline
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const weekEndingDate = new Date(weekEnding);
+        weekEndingDate.setHours(0, 0, 0, 0);
+
+        // Calculate days since week ended
+        const daysSinceWeekEnded = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Get deadline from settings (default 2 days if not set)
+        const deadlineDays = projectSettings?.timesheetSubmissionDeadlineDays || 2;
+
+        // Crew can submit if within deadline
+        return daysSinceWeekEnded <= deadlineDays;
+    };
+
+    const calculateSalary = () => {
+        // 1. Setup Standard Rates
+        const standardDaily = crewInfo.dailyRate || 0;
+        const standardHourly = crewInfo.hourlyRate || (standardDaily / 11);
+
+        // 2. Initialize Buckets for aggregation
+        // We will aggregate by "Key" (e.g. "Camera O/T") + "Rate" to group identical items
+        // Structure: Map<string, { label: string, rate: number, units: number, category: string }>
+        const itemsMap = new Map();
+
+        const addToBucket = (category, label, rate, units, paidTill, paidTillColor) => {
+            // Allow 0 units so we can pass mock metadata for standard fields
+            // But filter out "Other O/T" if 0 to avoid clutter
+            if (units <= 0 && label.includes('Other')) return;
+
+            // Create a unique key based on label and rate to separate Standard vs Upgraded entries
+            const key = `${category}_${label}_${rate.toFixed(2)}`;
+
+            const existing = itemsMap.get(key) || { label, rate, units: 0, category, paidTill, paidTillColor };
+            existing.units += units;
+            itemsMap.set(key, existing);
+        };
+
+        let regularUnits = 0;
+
+        entries.forEach(entry => {
+            // Determine Rates for this Day
+            const isUpgraded = entry.dayType === 'Work' && entry.isUpgraded && entry.upgradeRate > 0;
+            const dailyRate = isUpgraded ? entry.upgradeRate : standardDaily;
+            const hourlyRate = dailyRate / 11; // Assuming 11h day for derived hourly rate
+
+            // Helper to distinguish items earned on upgraded days
+            const labelSuffix = isUpgraded ? ` (Upgrade: ${entry.upgradeRole})` : '';
+
+            // 1. Basic Pay / Units
+            if (entry.dayType === 'Work') {
+                // 6th consecutive day: count as worked but no salary (sixthDay=1, salary=0)
+                if (entry.sixthDay > 0) {
+                    // 6th day is worked but receives no pay (industry standard)
+                    // Don't add to regularUnits or upgrade buckets
+                } else if (isUpgraded) {
+                    // Upgraded Day: Add to specific upgrade bucket
+                    addToBucket('basic', `Upgrade: ${entry.upgradeRole}`, dailyRate, 1, "£800.00 • 2 Days • WE251025");
+                } else if (entry.standardDay > 0) {
+                    // Standard Day: Count towards standard units (only if standardDay is set)
+                    regularUnits += 1;
+                }
+            }
+
+            // 2. Overtime & Penalties (Apply specific day's rate + label suffix)
+            // Camera O/T (2x)
+            addToBucket('overtime', `Camera O/T${labelSuffix}`, hourlyRate * 2, entry.cameraOT, "£468.00 • 6 Hrs • WE251025");
+
+            // Pre O/T (1.5x)
+            addToBucket('overtime', `Pre O/T${labelSuffix}`, hourlyRate * 1.5, entry.preOT, "£175.50 • 3 Hrs • WE251025");
+
+            // Post O/T (1.5x)
+            addToBucket('overtime', `Post O/T${labelSuffix}`, hourlyRate * 1.5, entry.postOT, "£351.00 • 6 Hrs • WE251025");
+
+            // BTA (1x)
+            addToBucket('enhanced', `BTA${labelSuffix}`, hourlyRate, entry.bta, "£58.50 • 1.5 Hrs • WE251025");
+
+            // Dawn (1.5x)
+            addToBucket('unsoc', `Dawn / Early${labelSuffix}`, hourlyRate * 1.5, entry.dawn, "£87.75 • 1.5 Hrs • WE251025");
+
+            // Night (1.5x)
+            addToBucket('unsoc', `Night Pen${labelSuffix}`, hourlyRate * 1.5, entry.night, "£87.75 • 1.5 Hrs • WE251025");
+
+            // Late Meal (1x)
+            addToBucket('meal', `Late Meal${labelSuffix}`, hourlyRate, entry.lateMeal, "£39.00 • 1 Hr • WE251025");
+
+            // Broken Meal (1x)
+            addToBucket('meal', `Broken Meal${labelSuffix}`, hourlyRate, entry.brokenMeal, "£39.00 • 1 Hr • WE251025");
+
+            // Travel (1x)
+            addToBucket('travel', `Travel${labelSuffix}`, hourlyRate, entry.travel, "£78.00 • 2 Hrs • WE251025");
+
+            // Other O/T (1x)
+            addToBucket('overtime', `Other O/T${labelSuffix}`, hourlyRate, entry.otherOT, "£39.00 • 1 Hr • WE251025");
+
+            // Per Diem (Flat Rate - Not affected by upgrade usually, but let's track)
+            // Per Diem is usually a fixed allowance, not rate based.
+            // We'll pass total separately or add here with fixed rate 1.
+            if (entry.perDiem > 0) {
+                addToBucket('allowance', 'Per Diem Shoot Rate', 1, entry.perDiem, "£150.00 • 5 Days • WE251025");
+            }
+        });
+
+        // Convert Map to Arrays for Sidebar
+        const getCategoryItems = (cat) =>
+            Array.from(itemsMap.values())
+                .filter(i => i.category === cat)
+                .sort((a, b) => a.label.localeCompare(b.label));
+
+        return {
+            // Base Info
+            standardDaily,
+            standardHourly,
+            regularUnits,
+            salaryPaidTill: "£1,716.20 • 4 Days • WE251025",
+
+            // Breakdowns
+            breakdowns: {
+                basic: getCategoryItems('basic'),
+                overtime: getCategoryItems('overtime'),
+                enhanced: getCategoryItems('enhanced'),
+                unsoc: getCategoryItems('unsoc'),
+                meal: getCategoryItems('meal'),
+                travel: getCategoryItems('travel'),
+                allowance: getCategoryItems('allowance'), // Per Diem mainly
+            },
+
+            // Legacy totals (for backwards compatibility if needed, though we should prefer breakdowns)
+            perDiem: entries.reduce((sum, e) => sum + e.perDiem, 0)
+        };
+    };
+
     return (
         <div className="max-w-[1920px] mx-auto p-4 md:p-6 lg:p-8">
             <div className="grid grid-cols-1 gap-8 items-start">
@@ -62,112 +234,9 @@ function TimesheetTable() {
                     <div className="max-w-full overflow-x-auto space-y-6">
 
                         {/* Approval List or Single Crew View */}
-                        {/* {approveViewMode === 'single' ? (
+                        {approveViewMode === 'single' ? (
                             <div className="space-y-4">
-                                {/* Clean Single Crew Header
-                                <CrewSingleViewHeader
-                                    isDarkMode={isDarkMode}
-                                    onBack={() => {
-                                        if (isCrewSelfView) {
-                                            setViewMode('weekly-overview');
-                                            setIsCrewSelfView(false);
-                                        } else {
-                                            setApproveViewMode('list');
-                                        }
-                                    }}
-                                    onCrewSelect={(crewName) => {
-                                        const crew = allCrewMembers.find(c => c.name === crewName);
-                                        if (crew) {
-                                            const [firstName, ...lastNameParts] = crew.name.split(' ');
-                                            const lastName = lastNameParts.join(' ');
-                                            setSelectedCrewInfo({
-                                                ...selectedCrewInfo,
-                                                firstName: firstName,
-                                                lastName: lastName,
-                                                jobTitle: crew.role,
-                                                department: crew.department
-                                            });
-                                        }
-                                    }}
-                                    onDepartmentChange={(dept) => {
-                                        const firstCrewInDept = allCrewMembers.find(c => c.department === dept);
-                                        if (firstCrewInDept) {
-                                            const [firstName, ...lastNameParts] = firstCrewInDept.name.split(' ');
-                                            const lastName = lastNameParts.join(' ');
-                                            setSelectedCrewInfo({
-                                                ...selectedCrewInfo,
-                                                firstName: firstName,
-                                                lastName: lastName,
-                                                jobTitle: firstCrewInDept.role,
-                                                department: firstCrewInDept.department
-                                            });
-                                        }
-                                    }}
-                                    currentCrewName={`${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`}
-                                    currentJobTitle={selectedCrewInfo.jobTitle}
-                                    currentPaymentType={(mockCrewListData.find(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`)?.contractType || 'Weekly')}
-                                    currentContractType={(mockCrewListData.find(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`)?.contractCategory || 'PAYE')}
-                                    department={selectedCrewInfo.department}
-                                    availableDepartments={Array.from(new Set(allCrewMembers.map(c => c.department))).sort()}
-                                    departmentCrewMembers={allCrewMembers
-                                        .filter(c => c.department === selectedCrewInfo.department)
-                                        .map(c => {
-                                            const mockCrew = mockCrewListData.find(mc => mc.name === c.name);
-                                            return {
-                                                name: c.name,
-                                                jobTitle: c.role,
-                                                paymentType: (mockCrew?.contractType || 'Weekly'),
-                                                contractType: (mockCrew?.contractCategory || 'PAYE')
-                                            };
-                                        })}
-                                    onWeekChange={(direction) => {
-                                        const currentDate = new Date(selectedWeek);
-                                        const newDate = new Date(currentDate);
-                                        newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
-                                        const newWeek = newDate.toISOString().split('T')[0];
-                                        setSelectedWeek(newWeek);
-                                    }}
-                                    weekEnding={selectedWeek}
-                                    weekStatus={(() => {
-                                        const today = new Date();
-                                        const weekDate = new Date(selectedWeek);
-                                        const diffTime = weekDate.getTime() - today.getTime();
-                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                        if (Math.abs(diffDays) <= 7) return 'current';
-                                        if (diffDays < -7) return 'past';
-                                        return 'future';
-                                    })()}
-                                    holidayInc={mockCrewListData.find(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`)?.holidayInc}
-                                    auditLog={[
-                                        {
-                                            timestamp: '2025-12-14 10:23 AM',
-                                            action: 'Timesheet Submitted',
-                                            user: `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`,
-                                            role: 'Crew'
-                                        },
-                                        {
-                                            timestamp: '2025-12-14 02:45 PM',
-                                            action: 'HOD Approved',
-                                            user: 'Michael Chen',
-                                            role: 'HOD - Camera'
-                                        }
-                                    ]}
-                                    onPaymentTypeChange={(type) => {
-                                        setCrewType(type === 'Weekly' ? 'weekly' : 'daily');
-                                    }}
-                                    onEmploymentTypeChange={(type) => {
-                                        setEmploymentType(type);
-                                    }}
-                                    onCompanyNameChange={(name) => {
-                                        setCompanyName(name);
-                                    }}
-                                    employmentType={employmentType}
-                                    companyName={companyName}
-                                    currentUserRole={currentUserRole}
-                                    onRoleChange={setCurrentUserRole}
-                                />
-
-                                {/* Editable Timesheet with Approval Controls
+                                {/* Editable Timesheet with Approval Controls */}
                                 <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden ${isDarkMode ? 'bg-[#181621]' : 'bg-white'}`}>
                                     {(() => {
                                         const isPastWeek = getWeekStatus(selectedWeek) === 'past';
@@ -193,13 +262,30 @@ function TimesheetTable() {
                                             shouldBeReadOnly = isPastWeek;
                                         }
 
-                                        return shouldBeReadOnly ? (
-                                            <TimesheetReadOnlyView
-                                                isDarkMode={isDarkMode}
-                                                weekEnding={selectedWeek}
-                                                isPaid={isPaidWeek}
-                                            >
-                                                <SalarySidebar
+                                        return (
+                                            <>
+                                                {shouldBeReadOnly && (
+                                                    <div
+                                                        className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
+                                                                ? 'bg-blue-900/20 border-blue-500/30'
+                                                                : 'bg-blue-50 border-blue-200'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <Shield className="w-4 h-4 text-blue-600" />
+                                                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                                                                Read-Only View • Week Ending{" "}
+                                                                {new Date(selectedWeek).toLocaleDateString("en-GB", {
+                                                                    day: "2-digit",
+                                                                    month: "short",
+                                                                    year: "numeric",
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* <SalarySidebar
                                                     isDarkMode={isDarkMode}
                                                     allowanceCaps={allowanceCaps}
                                                     setAllowanceCaps={setAllowanceCaps}
@@ -215,223 +301,54 @@ function TimesheetTable() {
                                                     calendarSchedule={calendarSchedule}
                                                     upgradeRoles={upgradeRoles}
                                                     currentUserRole={currentUserRole}
-                                                    readOnly={true}
-                                                    isPaid={isPaidWeek}
-                                                    contractCategory={(mockCrewListData.find(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`)?.contractCategory || 'PAYE')}
                                                     companyName={companyName}
                                                     onCrewNavigate={handleDepartmentNavigation}
-                                                    onCrewSelect={(crewName) => {
-                                                        const [firstName, ...lastNameParts] = crewName.split(' ');
-                                                        const lastName = lastNameParts.join(' ');
-                                                        const crewData = mockCrewListData.find(c => c.name === crewName);
-                                                        setSelectedCrewInfo({
-                                                            ...selectedCrewInfo,
-                                                            firstName: firstName,
-                                                            lastName: lastName,
-                                                            jobTitle: crewData?.role || selectedCrewInfo.jobTitle,
-                                                            department: crewData?.department || selectedCrewInfo.department
-                                                        });
-                                                    }}
-                                                    departmentCrewMembers={allCrewMembers
-                                                        .filter(c => c.department === selectedCrewInfo.department)
-                                                        .map(c => ({ name: c.name, role: c.role }))
-                                                    }
-                                                    canNavigatePrev={(() => {
-                                                        const sameDeptCrew = allCrewMembers.filter(c => c.department === selectedCrewInfo.department);
-                                                        const currentIndex = sameDeptCrew.findIndex(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`);
-                                                        return currentIndex > 0;
-                                                    })()}
-                                                    canNavigateNext={(() => {
-                                                        const sameDeptCrew = allCrewMembers.filter(c => c.department === selectedCrewInfo.department);
-                                                        const currentIndex = sameDeptCrew.findIndex(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`);
-                                                        return currentIndex < sameDeptCrew.length - 1;
-                                                    })()}
-                                                    onDepartmentNavigate={handleChangeDepartment}
-                                                    onDepartmentSelect={(dept) => {
-                                                        const firstCrewInDept = allCrewMembers.find(c => c.department === dept);
-                                                        if (firstCrewInDept) {
-                                                            const [firstName, ...lastNameParts] = firstCrewInDept.name.split(' ');
-                                                            const lastName = lastNameParts.join(' ');
-                                                            setSelectedCrewInfo({
-                                                                ...selectedCrewInfo,
-                                                                firstName: firstName,
-                                                                lastName: lastName,
-                                                                jobTitle: firstCrewInDept.role,
-                                                                department: firstCrewInDept.department
-                                                            });
-                                                        }
-                                                    }}
-                                                    allDepartments={Array.from(new Set(allCrewMembers.map(c => c.department))).sort()}
-                                                    canNavigatePrevDept={(() => {
-                                                        const departments = Array.from(new Set(allCrewMembers.map(c => c.department))).sort();
-                                                        const currentIndex = departments.indexOf(selectedCrewInfo.department);
-                                                        return currentIndex > 0;
-                                                    })()}
-                                                    canNavigateNextDept={(() => {
-                                                        const departments = Array.from(new Set(allCrewMembers.map(c => c.department))).sort();
-                                                        const currentIndex = departments.indexOf(selectedCrewInfo.department);
-                                                        return currentIndex < departments.length - 1;
-                                                    })()}
                                                     onWeekNavigate={handleWeekNavigation}
-                                                    onWeekSelect={(weekFormatted) => {
-                                                        // Convert formatted week back to ISO date
-                                                        const allWeeks = getAllWeeks();
-                                                        const formattedWeeks = allWeeks.map(w => formatWeekEnding(w));
-                                                        const index = formattedWeeks.indexOf(weekFormatted);
-                                                        if (index !== -1) {
-                                                            setSelectedWeek(allWeeks[index]);
-                                                        }
-                                                    }}
-                                                    availableWeeks={getAllWeeks().map(w => formatWeekEnding(w))}
-                                                    currentWeek={formatWeekEnding(selectedWeek)}
-                                                    canNavigatePrevWeek={(() => {
-                                                        const allWeeks = getAllWeeks();
-                                                        const currentIndex = allWeeks.indexOf(selectedWeek);
-                                                        return currentIndex > 0;
-                                                    })()}
-                                                    canNavigateNextWeek={(() => {
-                                                        const allWeeks = getAllWeeks();
-                                                        const currentIndex = allWeeks.indexOf(selectedWeek);
-                                                        return currentIndex < allWeeks.length - 1;
-                                                    })()}
-                                                />
-                                            </TimesheetReadOnlyView>
-                                        ) : (
-                                            <SalarySidebar
-                                                isDarkMode={isDarkMode}
-                                                allowanceCaps={allowanceCaps}
-                                                setAllowanceCaps={setAllowanceCaps}
-                                                crewInfo={selectedCrewInfo}
-                                                salary={calculateSalary()}
-                                                entries={entries}
-                                                crewType={crewType}
-                                                setCrewType={setCrewType}
-                                                customItems={customItems}
-                                                setCustomItems={setCustomItems}
-                                                onEntriesUpdate={setEntries}
-                                                projectSettings={projectSettings}
-                                                calendarSchedule={calendarSchedule}
-                                                upgradeRoles={upgradeRoles}
-                                                currentUserRole={currentUserRole}
-                                                contractCategory={(mockCrewListData.find(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`)?.contractCategory || 'PAYE')}
-                                                companyName={companyName}
-                                                onCrewNavigate={handleDepartmentNavigation}
-                                                onCrewSelect={(crewName) => {
-                                                    const [firstName, ...lastNameParts] = crewName.split(' ');
-                                                    const lastName = lastNameParts.join(' ');
-                                                    const crewData = mockCrewListData.find(c => c.name === crewName);
-                                                    setSelectedCrewInfo({
-                                                        ...selectedCrewInfo,
-                                                        firstName: firstName,
-                                                        lastName: lastName,
-                                                        jobTitle: crewData?.role || selectedCrewInfo.jobTitle,
-                                                        department: crewData?.department || selectedCrewInfo.department
-                                                    });
-                                                }}
-                                                departmentCrewMembers={allCrewMembers
-                                                    .filter(c => c.department === selectedCrewInfo.department)
-                                                    .map(c => ({ name: c.name, role: c.role }))
-                                                }
-                                                canNavigatePrev={(() => {
-                                                    const sameDeptCrew = allCrewMembers.filter(c => c.department === selectedCrewInfo.department);
-                                                    const currentIndex = sameDeptCrew.findIndex(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`);
-                                                    return currentIndex > 0;
-                                                })()}
-                                                canNavigateNext={(() => {
-                                                    const sameDeptCrew = allCrewMembers.filter(c => c.department === selectedCrewInfo.department);
-                                                    const currentIndex = sameDeptCrew.findIndex(c => c.name === `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`);
-                                                    return currentIndex < sameDeptCrew.length - 1;
-                                                })()}
-                                                onDepartmentNavigate={handleChangeDepartment}
-                                                onDepartmentSelect={(dept) => {
-                                                    const firstCrewInDept = allCrewMembers.find(c => c.department === dept);
-                                                    if (firstCrewInDept) {
-                                                        const [firstName, ...lastNameParts] = firstCrewInDept.name.split(' ');
-                                                        const lastName = lastNameParts.join(' ');
-                                                        setSelectedCrewInfo({
-                                                            ...selectedCrewInfo,
-                                                            firstName: firstName,
-                                                            lastName: lastName,
-                                                            jobTitle: firstCrewInDept.role,
-                                                            department: firstCrewInDept.department
-                                                        });
-                                                    }
-                                                }}
-                                                allDepartments={Array.from(new Set(allCrewMembers.map(c => c.department))).sort()}
-                                                canNavigatePrevDept={(() => {
-                                                    const departments = Array.from(new Set(allCrewMembers.map(c => c.department))).sort();
-                                                    const currentIndex = departments.indexOf(selectedCrewInfo.department);
-                                                    return currentIndex > 0;
-                                                })()}
-                                                canNavigateNextDept={(() => {
-                                                    const departments = Array.from(new Set(allCrewMembers.map(c => c.department))).sort();
-                                                    const currentIndex = departments.indexOf(selectedCrewInfo.department);
-                                                    return currentIndex < departments.length - 1;
-                                                })()}
-                                                onWeekNavigate={handleWeekNavigation}
-                                                onWeekSelect={(weekFormatted) => {
-                                                    // Convert formatted week back to ISO date
-                                                    const allWeeks = getAllWeeks();
-                                                    const formattedWeeks = allWeeks.map(w => formatWeekEnding(w));
-                                                    const index = formattedWeeks.indexOf(weekFormatted);
-                                                    if (index !== -1) {
-                                                        setSelectedWeek(allWeeks[index]);
-                                                    }
-                                                }}
-                                                availableWeeks={getAllWeeks().map(w => formatWeekEnding(w))}
-                                                currentWeek={formatWeekEnding(selectedWeek)}
-                                                canNavigatePrevWeek={(() => {
-                                                    const allWeeks = getAllWeeks();
-                                                    const currentIndex = allWeeks.indexOf(selectedWeek);
-                                                    return currentIndex > 0;
-                                                })()}
-                                                canNavigateNextWeek={(() => {
-                                                    const allWeeks = getAllWeeks();
-                                                    const currentIndex = allWeeks.indexOf(selectedWeek);
-                                                    return currentIndex < allWeeks.length - 1;
-                                                })()}
-                                            />
+                                                /> */}
+                                            </>
                                         );
+
                                     })()}
                                 </div>
                             </div>
                         ) : (
-                            <CrewListViewWithApproval
-                                isDarkMode={isDarkMode}
-                                crewList={mockCrewListData}
-                                weekStart={selectedWeek}
-                                currentUserRole={currentUserRole}
-                                onWeekChange={(direction) => {
-                                    // Handle week navigation
-                                    const currentDate = new Date(selectedWeek);
-                                    const newDate = new Date(currentDate);
+                            <div></div>
+                            // <CrewListViewWithApproval
+                            //     isDarkMode={isDarkMode}
+                            //     crewList={mockCrewListData}
+                            //     weekStart={selectedWeek}
+                            //     currentUserRole={currentUserRole}
+                            //     onWeekChange={(direction) => {
+                            //         // Handle week navigation
+                            //         const currentDate = new Date(selectedWeek);
+                            //         const newDate = new Date(currentDate);
 
-                                    if (direction === 'prev') {
-                                        newDate.setDate(currentDate.getDate() - 7);
-                                    } else {
-                                        newDate.setDate(currentDate.getDate() + 7);
-                                    }
+                            //         if (direction === 'prev') {
+                            //             newDate.setDate(currentDate.getDate() - 7);
+                            //         } else {
+                            //             newDate.setDate(currentDate.getDate() + 7);
+                            //         }
 
-                                    // Format as YYYY-MM-DD
-                                    const newWeek = newDate.toISOString().split('T')[0];
-                                    setSelectedWeek(newWeek);
-                                }}
-                                onCrewClick={(crew) => {
-                                    // Handle crew click - navigate to single view
-                                    const [firstName, ...lastNameParts] = crew.name.split(' ');
-                                    const lastName = lastNameParts.join(' ');
+                            //         // Format as YYYY-MM-DD
+                            //         const newWeek = newDate.toISOString().split('T')[0];
+                            //         setSelectedWeek(newWeek);
+                            //     }}
+                            //     onCrewClick={(crew) => {
+                            //         // Handle crew click - navigate to single view
+                            //         const [firstName, ...lastNameParts] = crew.name.split(' ');
+                            //         const lastName = lastNameParts.join(' ');
 
-                                    setSelectedCrewInfo({
-                                        ...selectedCrewInfo,
-                                        firstName: firstName,
-                                        lastName: lastName,
-                                        jobTitle: crew.role,
-                                        department: crew.department
-                                    });
-                                    setApproveViewMode('single');
-                                }}
-                            />
-                        )} */}
+                            //         setSelectedCrewInfo({
+                            //             ...selectedCrewInfo,
+                            //             firstName: firstName,
+                            //             lastName: lastName,
+                            //             jobTitle: crew.role,
+                            //             department: crew.department
+                            //         });
+                            //         setApproveViewMode('single');
+                            //     }}
+                            // />
+                        )}
                     </div>
                 )}
 
