@@ -1,12 +1,14 @@
-import { Outlet, useLocation, useParams } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../../../shared/components/PageHeader";
 import { StatusBadge } from "../../../shared/components/badges/StatusBadge";
-import { Calendar } from "lucide-react";
+import { Calendar, Settings } from "lucide-react";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
+import { Button } from "../../../shared/components/ui/button";
 
 const TimesheetsLayout = () => {
     const params = useParams();
     const location = useLocation();
+    const navigate = useNavigate();
     console.log("params", params)
 
     const currentTab = location.pathname
@@ -14,7 +16,7 @@ const TimesheetsLayout = () => {
     return (
         <div className='space-y-6 container mx-auto'>
             <PageHeader
-                // icon="Clock"
+                icon="CalendarClock"
                 title={
                     <span className='flex items-center gap-3'>
                         AVATAR 1
@@ -29,6 +31,12 @@ const TimesheetsLayout = () => {
                     </span>
                 }
 
+                extraActions={
+                    <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"}>
+                        <Settings className="w-4 h-4 text-primary group-hover:text-background" />
+                    </Button>
+                }
+
                 primaryAction={{
                     label: "Submit Timsheet",
                     clickAction: () => console.log("AI insight clicked"),
@@ -41,7 +49,6 @@ const TimesheetsLayout = () => {
                 options={[
                     { label: "My timesheets", route: `/projects/${params.projectName}/timesheets/${params.week}` },
                     { label: "Shooting Calender", route: `/projects/${params.projectName}/timesheets/${params.week}/calender` },
-                    { label: "Timesheet settings", route: `/projects/${params.projectName}/timesheets/${params.week}/settings` },
                 ]}
                 value={currentTab}
                 navigatable
