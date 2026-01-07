@@ -54,6 +54,12 @@ export function useProjectMenus(allProjects = []) {
         route: `/projects/${projectName}/onboarding`,
       },
       {
+        id: "offers",
+        label: "My Offers",
+        icon: Icon.UserPlus,
+        route: `/projects/${projectName}/offers`,
+      },
+      {
         id: "hod-timesheet-approval",
         label: "Timesheets",
         icon: Icon.Clock,
