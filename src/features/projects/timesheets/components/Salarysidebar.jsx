@@ -1,61 +1,24 @@
-import React, { useState, useMemo } from 'react';
-import { GreenSignatureStamp } from './GreenSignatureStamp';
-import { SalarySidebarSignatures } from './SalarySidebarSignatures';
-import { TimesheetNavigationHeader } from './TimesheetNavigationHeader';
-import { TimesheetHeaderButtons } from './TimesheetHeaderButtons';
-import { TimesheetExportModals } from './TimesheetExportModals';
 
+import React, { useState, useMemo, useEffect } from 'react';
 import {
-    FileText,
-    ChevronRight,
-    User,
-    Calendar,
-    Plus,
-    Trash2,
-    CheckCircle,
-    Clock,
-    Circle,
-    Send,
-    Eye,
-    ShieldCheck,
-    Building2,
-    Banknote,
-    CheckCircle2,
-    BadgeCheck,
-    FilePlus,
-    Download,
-    X,
-    DollarSign,
-    ChevronDown,
-    Edit2,
-    RotateCcw,
-    ThumbsUp,
-    Edit3,
-    Lock,
-    EyeOff,
-    RefreshCw,
-    Calculator,
-    History,
-    ChevronLeft,
-    MoreHorizontal,
-    Car,
-    Check,
-    ChevronsUpDown,
-    Wallet,
-    Save
+    FileText, ChevronRight, User, Calendar, Plus, Trash2, CheckCircle, Clock,
+    Circle, Send, Eye, ShieldCheck, Building2, Banknote, CheckCircle2, BadgeCheck,
+    FilePlus, Download, X, DollarSign, ChevronDown, Edit2, RotateCcw, ThumbsUp,
+    Edit3, Lock, EyeOff, RefreshCw, Calculator, History, ChevronLeft,
+    MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save
 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/shared/components/ui/dialog';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/shared/components/ui/command';
-import { calculatePACTBECTUOvertime, isDayComplete, getWeekCompletionStatus, isTelevisionContract } from '../utils/pactBectuCalculations';
-import { WeekCompletionIndicator } from './WeekCompletionIndicator';
 import { toast } from 'sonner';
+import { Popover,PopoverContent,PopoverTrigger } from '../../../../shared/components/ui/popover';
+import { TimesheetHeaderButtons } from './TimesheetHeaderButtons';
+import { WeekCompletionIndicator } from './WeekCompletionIndicator';
+import { TimesheetStatusWatermark } from './TimesheetStatusWatermark';
+import { SalarySidebarSignatures } from './SalarySidebarSignatures';
+import { calculatePACTBECTUOvertime, isDayComplete } from '../config/timesheetCalculations';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const MINUTES = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
 
-// --- Constants from CrewSubmitTimesheet ---
 const LOCATIONS = [
     'BOURNE WOOD', 'BRECON BEACONS', 'CRYCHAN FOREST', 'DARTMOOR', 'FOREST OF DEAN',
     'REDLANDS WOOD', 'SHEPPERTON', 'SKY STUDIOS ELSTREE', 'STOCKERS FARM'
@@ -72,7 +35,6 @@ const PAID_TRAVEL_OPTIONS = [
     'None', '0.25', '0.5', '0.75', '1', '1.25', '1.5', '1.75', '2', '2.5', '3'
 ];
 
-// Helper formatting functions
 const t = (val) => val || '-';
 
 const formatEntryDate = (dateStr) => {
@@ -95,33 +57,24 @@ const OVERVIEW_FIELDS = [
         l: 'Salary',
         type: 'derived',
         getValue: (e) => {
-            // Check for special days that override Salary to 0 FIRST (before flat day check)
             const s6 = Number(e.sixthDay);
             const s7 = Number(e.seventhDay);
             const ph = Number(e.publicHoliday);
             const tr = Number(e.travelDay);
             const tu = Number(e.turnaround);
 
-            // If it's a 6th/7th/public/travel/turnaround day, Salary is always 0 (even if flat day)
             if ((!isNaN(s6) && s6 > 0) ||
                 (!isNaN(s7) && s7 > 0) ||
                 (!isNaN(ph) && ph > 0) ||
                 (!isNaN(tr) && tr > 0) ||
                 (!isNaN(tu) && tu > 0)) return 0;
 
-            // Now check flat day
             if (e.isFlatDay) return 1;
 
-            // Only count as 1 salary unit if Work is selected AND (has times OR is flat day)
             if (e.dayType === 'Work') {
-                // Check if in/out times are entered
                 const hasInTime = e.inTime && e.inTime.trim() !== '';
                 const hasOutTime = e.outTime && e.outTime.trim() !== '';
-
-                // Return 1 only if times are entered
                 if (hasInTime && hasOutTime) return 1;
-
-                // Otherwise return 0 (no salary unit yet)
                 return 0;
             }
             return '';
@@ -131,42 +84,12 @@ const OVERVIEW_FIELDS = [
     { k: 'seventhDay', l: '7th Day', type: 'number' },
     { k: 'publicHoliday', l: 'Public Holiday', type: 'number' },
     { k: 'travelDay', l: 'Travel Day', type: 'number' },
-    {
-        k: 'halfDay',
-        l: 'Half Day',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Half Day' ? 1 : ''
-    },
-    {
-        k: 'training',
-        l: 'Training',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Training' ? 1 : ''
-    },
-    {
-        k: 'driverCastTravel',
-        l: 'Driver - Cast Travel',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Driver - Cast Travel' ? 1 : ''
-    },
-    {
-        k: 'holiday',
-        l: 'Holiday',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Holiday' ? 1 : ''
-    },
-    {
-        k: 'sick',
-        l: 'Sick',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Sick' ? 1 : ''
-    },
-    {
-        k: 'personalIssue',
-        l: 'Personal issue',
-        type: 'derived',
-        getValue: (e) => e.dayType === 'Personal issue' ? 1 : ''
-    },
+    { k: 'halfDay', l: 'Half Day', type: 'derived', getValue: (e) => e.dayType === 'Half Day' ? 1 : '' },
+    { k: 'training', l: 'Training', type: 'derived', getValue: (e) => e.dayType === 'Training' ? 1 : '' },
+    { k: 'driverCastTravel', l: 'Driver - Cast Travel', type: 'derived', getValue: (e) => e.dayType === 'Driver - Cast Travel' ? 1 : '' },
+    { k: 'holiday', l: 'Holiday', type: 'derived', getValue: (e) => e.dayType === 'Holiday' ? 1 : '' },
+    { k: 'sick', l: 'Sick', type: 'derived', getValue: (e) => e.dayType === 'Sick' ? 1 : '' },
+    { k: 'personalIssue', l: 'Personal issue', type: 'derived', getValue: (e) => e.dayType === 'Personal issue' ? 1 : '' },
     { k: 'turnaround', l: 'Turnaround', type: 'number' },
     { k: 'additionalHour', l: 'Add Hour', type: 'number' },
     { k: 'enhancedOT', l: 'Enhanced OT', type: 'number' },
@@ -193,407 +116,16 @@ const ALLOWANCE_FIELDS = [
     { k: 'mileage', l: 'Mileage', type: 'number' }
 ];
 
-const FINANCIAL_METADATA = {
-    // Salary & Fees
-    'Salary': { code: '10-001', tag: 'Labor - Basic' },
-    '6th Day': { code: '10-002', tag: 'Labor - OT' },
-    '7th Day': { code: '10-003', tag: 'Labor - OT' },
-    'Public Holiday': { code: '10-004', tag: 'Labor - OT' },
-    'Travel Day': { code: '10-005', tag: 'Labor - Travel' },
-    'Holiday Accrual': { code: '10-006', tag: 'Labor - Accrual' },
-    'Half Day': { code: '10-007', tag: 'Labor - Basic' },
-    'Training': { code: '10-008', tag: 'Labor - Training' },
-    'Driver - Cast Travel': { code: '10-009', tag: 'Labor - Travel' },
-    'Holiday': { code: '10-010', tag: 'Labor - Holiday' },
-    'Sick': { code: '10-011', tag: 'Labor - Sick' },
-    'Personal issue': { code: '10-012', tag: 'Labor - Personal' },
-
-    // Penalties & OT
-    'Turnaround': { code: '15-001', tag: 'Penalty' },
-    'Add Hour': { code: '15-002', tag: 'Overtime' },
-    'Enhanced O/T': { code: '15-003', tag: 'Overtime' },
-    'Camera O/T': { code: '15-004', tag: 'Overtime' },
-    'Post O/T': { code: '15-005', tag: 'Overtime' },
-    'Pre O/T': { code: '15-006', tag: 'Overtime' },
-    'BTA': { code: '15-007', tag: 'Allowance' },
-    'Late Meal': { code: '15-008', tag: 'Penalty' },
-    'Broken Meal': { code: '15-009', tag: 'Penalty' },
-    'Dawn': { code: '15-010', tag: 'Penalty' },
-    'Night': { code: '15-011', tag: 'Penalty' },
-
-    // Travel & Allowances
-    'Travel': { code: '20-001', tag: 'Travel' },
-    'Mileage': { code: '20-002', tag: 'Travel' },
-    'Fuel': { code: '20-003', tag: 'Travel' },
-
-    // Equipment & Box
-    'Box Rental': { code: '30-001', tag: 'Rental' },
-    'Equipment': { code: '30-002', tag: 'Rental' },
-    'Computer': { code: '30-003', tag: 'Rental' },
-    'Software': { code: '30-004', tag: 'Rental' },
-    'Mobile': { code: '30-005', tag: 'Communication' },
-    'Vehicle': { code: '30-006', tag: 'Rental' },
-
-    // Per Diem & Living
-    'Living': { code: '40-001', tag: 'Living' },
-    'Per Diem Shoot Rate': { code: '40-002', tag: 'Per Diem' },
-    'Per Diem Non Shoot Rate': { code: '40-003', tag: 'Per Diem' },
-    'Breakfast': { code: '40-004', tag: 'Meal' },
-    'Lunch': { code: '40-005', tag: 'Meal' },
-    'Dinner': { code: '40-006', tag: 'Meal' },
-    'Meals Allowance': { code: '40-007', tag: 'Meal' }
-};
-
-const FinancialSummaryPage = ({
-    onBack,
-    data,
-    currencySymbol = '£',
-    currentUserRole = 'Crew',
-    readOnly = false,
-    allowanceCaps = {}
-}) => {
-    // Calculate Grand Totals (Holiday Accrual and Meals Allowance are now excluded from source data)
-    const totalCurrent = data.reduce((sum, item) => sum + item.total, 0);
-    const totalPTD = data.reduce((sum, item) => sum + (item.ptd || 0), 0);
-    const totalCombined = totalCurrent + totalPTD;
-
-    // Map of allowance labels to their cap keys
-    const allowanceCapMap = {
-        'Computer': 'computer',
-        'Software': 'software',
-        'Box Rental': 'box',
-        'Equipment': 'equipment',
-        'Vehicle': 'vehicle',
-        'Mobile': 'mobile',
-        'Living': 'living'
-    };
-
-    // State for editable budget codes and tags (only Finance and Payroll can edit)
-    const [financialMetadata, setFinancialMetadata] = useState(FINANCIAL_METADATA);
-    const [editingItem, setEditingItem] = useState(null);
-    const [editCode, setEditCode] = useState('');
-    const [editTag, setEditTag] = useState('');
-
-    // Holiday Accrual state
-    const [holidayAccrual, setHolidayAccrual] = useState({
-        thisInvoice: 301.30,
-        priorBalance: 1240.50,
-        totalPot: 1541.80,
-        payout: 0.00,
-        remaining: 1541.80
-    });
-
-    const [isEditingPayout, setIsEditingPayout] = useState(false);
-    const [editPayoutValue, setEditPayoutValue] = useState('0.00');
-
-    const canEdit = !readOnly && (currentUserRole === 'Finance' || currentUserRole === 'Payroll');
-
-    const handleEditClick = (label) => {
-        if (!canEdit) {
-            toast.error('Only Finance and Payroll roles can edit budget codes and tags');
-            return;
-        }
-        const meta = financialMetadata[label] || { code: '---', tag: 'General' };
-        setEditingItem(label);
-        setEditCode(meta.code);
-        setEditTag(meta.tag);
-    };
-
-    const handleSaveEdit = (label) => {
-        if (!canEdit) {
-            toast.error('Only Finance and Payroll roles can edit budget codes and tags');
-            return;
-        }
-        setFinancialMetadata(prev => ({
-            ...prev,
-            [label]: { code: editCode, tag: editTag }
-        }));
-        setEditingItem(null);
-        toast.success(`Updated ${label} budget code and tag`);
-    };
-
-    const handleCancelEdit = () => {
-        setEditingItem(null);
-        setEditCode('');
-        setEditTag('');
-    };
-
-    const handleEditPayout = () => {
-        if (!canEdit) {
-            toast.error('Only Finance and Payroll roles can edit holiday accrual payout');
-            return;
-        }
-        setEditPayoutValue(holidayAccrual.payout.toFixed(2));
-        setIsEditingPayout(true);
-    };
-
-    const handleSavePayout = () => {
-        if (!canEdit) {
-            toast.error('Only Finance and Payroll roles can edit holiday accrual payout');
-            return;
-        }
-        const newPayout = parseFloat(editPayoutValue) || 0;
-        const newRemaining = holidayAccrual.totalPot - newPayout;
-        setHolidayAccrual(prev => ({
-            ...prev,
-            payout: newPayout,
-            remaining: newRemaining
-        }));
-        setIsEditingPayout(false);
-        toast.success('Updated holiday accrual payout');
-    };
-
-    const handleCancelPayout = () => {
-        setIsEditingPayout(false);
-        setEditPayoutValue('0.00');
-    };
-
-    return (
-        <div className="h-full w-full flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
-            {/* Header */}
-            <div className="flex-none px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm z-10 flex items-center gap-4">
-                <button
-                    onClick={onBack}
-                    className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all flex items-center gap-2 group"
-                >
-                    <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    <span className="text-xs font-bold">Back</span>
-                </button>
-                <div>
-                    <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-gray-100">
-                        <Wallet className="w-5 h-5 text-purple-600" />
-                        Financial Summary (Accounts Use Only)
-                    </h2>
-                    <p className="text-xs text-gray-500">
-                        Breakdown of all earnings, budget codes, and paid-to-date totals.
-                        <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${canEdit ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                            Role: {currentUserRole} {canEdit ? '(Can Edit)' : '(View Only)'}
-                        </span>
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-6xl mx-auto space-y-6">
-                    {/* Main Financial Table */}
-                    <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg shadow-sm overflow-hidden">
-                        <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-gray-50/50 dark:bg-gray-800/50">
-                                <tr className="border-b-2 border-purple-100 dark:border-purple-900/30 text-purple-900 dark:text-purple-300">
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider w-[25%]">Item</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider w-[15%]">Budget Code</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider w-[10%]">Tag</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider text-right w-[15%]">Balance to Pay</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider text-right w-[15%]">Current Week</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider text-right w-[15%]">Paid To Date</th>
-                                    <th className="py-1.5 px-4 font-black uppercase tracking-wider text-right w-[15%]">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {data.map((row, idx) => {
-                                    const meta = financialMetadata[row.label] || { code: '---', tag: 'General' };
-                                    const ptd = row.ptd || 0;
-                                    const grandTotal = row.total + ptd;
-                                    const isEditing = editingItem === row.label;
-
-                                    return (
-                                        <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                                            <td className="py-1 px-4 font-bold text-gray-700 dark:text-gray-300 group-hover:text-purple-700">{row.label}</td>
-                                            <td className="py-1 px-4">
-                                                {isEditing ? (
-                                                    <input
-                                                        type="text"
-                                                        value={editCode}
-                                                        onChange={(e) => setEditCode(e.target.value)}
-                                                        className="w-full px-2 py-0.5 text-[10px] font-mono border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                                        placeholder="Budget Code"
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center gap-1 group/edit">
-                                                        <span className="font-mono text-gray-500 text-[10px]">{meta.code}</span>
-                                                        {canEdit && (
-                                                            <button
-                                                                onClick={() => handleEditClick(row.label)}
-                                                                className="p-0.5 hover:bg-purple-100 rounded transition-colors"
-                                                                title="Edit budget code and tag"
-                                                            >
-                                                                <Edit2 className="w-3 h-3 text-purple-600" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="py-1 px-4">
-                                                {isEditing ? (
-                                                    <div className="flex items-center gap-1">
-                                                        <input
-                                                            type="text"
-                                                            value={editTag}
-                                                            onChange={(e) => setEditTag(e.target.value)}
-                                                            className="flex-1 px-2 py-0.5 text-[9px] border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                                            placeholder="Tag"
-                                                        />
-                                                        <button
-                                                            onClick={() => handleSaveEdit(row.label)}
-                                                            className="p-0.5 bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
-                                                        >
-                                                            <Check className="w-3 h-3" />
-                                                        </button>
-                                                        <button
-                                                            onClick={handleCancelEdit}
-                                                            className="p-0.5 bg-gray-400 hover:bg-gray-500 text-white rounded transition-colors"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-1">
-                                                        <span className="inline-flex items-center px-1.5 py-0 rounded text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                                            {meta.tag}
-                                                        </span>
-                                                        {canEdit && (
-                                                            <button
-                                                                onClick={() => handleEditClick(row.label)}
-                                                                className="p-0.5 hover:bg-purple-100 rounded transition-colors"
-                                                                title="Edit budget code and tag"
-                                                            >
-                                                                <Edit2 className="w-3 h-3 text-purple-600" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="py-1 px-4 text-right">
-                                                {(() => {
-                                                    const capKey = allowanceCapMap[row.label];
-                                                    if (capKey && allowanceCaps[capKey]) {
-                                                        const cap = allowanceCaps[capKey].cap || 0;
-                                                        const paidTillDate = allowanceCaps[capKey].paidTillDate || 0;
-                                                        const balance = cap - paidTillDate;
-                                                        return (
-                                                            <span className="font-mono text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-                                                                {currencySymbol}{balance.toFixed(2)}
-                                                            </span>
-                                                        );
-                                                    }
-                                                    return <span className="text-gray-300">-</span>;
-                                                })()}
-                                            </td>
-                                            <td className={`py-1 px-4 text-right font-mono ${row.total > 0 ? 'text-gray-900 dark:text-gray-100 font-bold' : 'text-gray-300'}`}>
-                                                <div className="flex flex-col items-end">
-                                                    <span>{row.total > 0 ? `${currencySymbol}${row.total.toFixed(2)}` : '-'}</span>
-                                                    {row.hTotal > 0 && (
-                                                        <span className="text-[9px] text-gray-500 font-normal leading-none">
-                                                            {currencySymbol}{row.hTotal.toFixed(2)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className={`py-1 px-4 text-right font-mono ${ptd > 0 ? 'text-gray-900 dark:text-gray-100 font-bold' : 'text-gray-300'}`}>
-                                                {ptd > 0 ? `${currencySymbol}${ptd.toFixed(2)}` : '-'}
-                                            </td>
-                                            <td className="py-1 px-4 text-right font-mono font-bold text-purple-700 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-900/10">
-                                                {currencySymbol}{grandTotal.toFixed(2)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                            <tfoot className="bg-gray-50 dark:bg-gray-800 font-bold border-t-2 border-gray-200 dark:border-gray-700 text-sm">
-                                <tr>
-                                    <td className="py-2 px-4 text-gray-900 dark:text-white" colSpan={3}>Grand Total</td>
-                                    <td className="py-2 px-4 text-right text-gray-900 dark:text-white">{currencySymbol}{totalCurrent.toFixed(2)}</td>
-                                    <td className="py-2 px-4 text-right text-gray-900 dark:text-white">{currencySymbol}{totalPTD.toFixed(2)}</td>
-                                    <td className="py-2 px-4 text-right text-purple-700 dark:text-purple-300">{currencySymbol}{totalCombined.toFixed(2)}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    {/* Holiday Accrual Section */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-lg p-4">
-                        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-green-800 dark:text-green-300 mb-3">
-                            <Wallet className="w-4 h-4" />
-                            Holiday Accrual
-                        </h3>
-                        <div className="grid grid-cols-5 gap-3">
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-100 dark:border-green-800">
-                                <div className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">This Invoice</div>
-                                <div className="text-lg font-black text-green-700 dark:text-green-400">{currencySymbol}{holidayAccrual.thisInvoice.toFixed(2)}</div>
-                            </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-100 dark:border-green-800">
-                                <div className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Prior Balance</div>
-                                <div className="text-lg font-black text-gray-700 dark:text-gray-300">{currencySymbol}{holidayAccrual.priorBalance.toFixed(2)}</div>
-                            </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-100 dark:border-green-800">
-                                <div className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1">Total Pot</div>
-                                <div className="text-lg font-black text-purple-700 dark:text-purple-400">{currencySymbol}{holidayAccrual.totalPot.toFixed(2)}</div>
-                            </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-green-100 dark:border-green-800 relative group">
-                                <div className="text-[9px] uppercase font-bold text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-between">
-                                    Payout
-                                    {!isEditingPayout && canEdit && (
-                                        <button
-                                            onClick={handleEditPayout}
-                                            className="p-0.5 hover:bg-purple-100 rounded transition-colors"
-                                            title="Edit payout amount"
-                                        >
-                                            <Edit2 className="w-3 h-3 text-purple-600" />
-                                        </button>
-                                    )}
-                                </div>
-                                {isEditingPayout ? (
-                                    <div className="flex items-center gap-1">
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editPayoutValue}
-                                            onChange={(e) => setEditPayoutValue(e.target.value)}
-                                            className="w-full px-2 py-1 text-sm font-mono border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="0.00"
-                                        />
-                                        <button
-                                            onClick={handleSavePayout}
-                                            className="p-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
-                                        >
-                                            <Check className="w-3 h-3" />
-                                        </button>
-                                        <button
-                                            onClick={handleCancelPayout}
-                                            className="p-1 bg-gray-400 hover:bg-gray-500 text-white rounded transition-colors"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="text-lg font-black text-red-600 dark:text-red-400">{currencySymbol}{holidayAccrual.payout.toFixed(2)}</div>
-                                )}
-                            </div>
-                            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg p-3 border border-green-400">
-                                <div className="text-[9px] uppercase font-bold text-white/80 mb-1">Remaining</div>
-                                <div className="text-lg font-black text-white">{currencySymbol}{holidayAccrual.remaining.toFixed(2)}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentUserRole = 'Crew', calendarSchedule }) => {
     const isWork = ['Work', 'Travel', 'Half Day', 'Travel & Turnaround', 'Driver - Cast Travel', 'Training'].includes(entry.dayType);
-    const [openLocation, setOpenLocation] = React.useState(false);
-    // Crew can only edit specific fields
+    const [openLocation, setOpenLocation] = useState(false);
     const isCrewRestricted = currentUserRole === 'Crew';
-
-    // Get calendar data for this date
     const calendarData = calendarSchedule?.[entry.date];
 
     return (
-        <div className="w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] border-b border-purple-100 bg-purple-50/10 items-stretch">
-            {/* 1. Date */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center items-start pl-3">
+        <div className="w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] border-b border-purple-100 dark:border-gray-700 bg-purple-50/10 dark:bg-purple-900/10 items-stretch">
+            {/* Date */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center items-start pl-3">
                 <span className="font-bold text-gray-800 dark:text-gray-200 text-[9px]">{formatEntryDate(entry.date)}</span>
                 {calendarData && calendarData.dayType === 'Shoot' && (
                     <div className="flex flex-col mt-1.5 space-y-0.5 leading-none select-none">
@@ -606,15 +138,14 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 )}
             </div>
 
-            {/* 2. Type / Unit / Workplace */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                {/* Day Type - Prominent */}
+            {/* Type / Unit / Workplace */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
                 <select
                     value={entry.dayType}
                     onChange={(e) => update('dayType', e.target.value)}
                     className={`w-full text-[9px] font-bold text-center rounded px-1 py-1 outline-none focus:border-purple-400 uppercase tracking-wide border transition-colors ${entry.dayType === 'Work'
-                            ? 'bg-purple-50 border-purple-200 text-purple-800'
-                            : 'bg-gray-50 border-gray-200 text-gray-500'
+                        ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 text-purple-800 dark:text-purple-300'
+                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'
                         }`}
                 >
                     <option value="">Select...</option>
@@ -634,12 +165,11 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
 
                 {isWork && (
                     <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                        {/* Unit & Workplace Row */}
                         <div className="flex gap-1">
                             <select
                                 value={entry.unit}
                                 onChange={(e) => update('unit', e.target.value)}
-                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300"
+                                className="flex-1 min-w-0 text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300 outline-none focus:border-purple-300 dark:focus:border-purple-500"
                             >
                                 <option value="Main">Main Unit</option>
                                 <option value="2nd">2nd Unit</option>
@@ -648,66 +178,30 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             <select
                                 value={entry.workplace?.[0] === 'On Set' || entry.workplace?.[0] === 'Off Set' ? entry.workplace[0] : 'On Set'}
                                 onChange={(e) => update('workplace', [e.target.value])}
-                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300 uppercase"
+                                className="flex-1 min-w-0 text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300 outline-none focus:border-purple-300 dark:focus:border-purple-500 uppercase"
                             >
                                 <option value="On Set">ON SET</option>
                                 <option value="Off Set">OFF SET</option>
                             </select>
                         </div>
 
-                        {/* Location Input with Popover */}
                         <div className="flex items-center gap-1 relative">
                             <input
                                 type="text"
                                 value={entry.workplaceLocation || ''}
                                 onChange={(e) => update('workplaceLocation', e.target.value)}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-700 placeholder-gray-400 outline-none focus:border-purple-300"
+                                className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-2 py-0.5 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-purple-300 dark:focus:border-purple-500"
                                 placeholder="Location..."
                             />
-                            <Popover open={openLocation} onOpenChange={setOpenLocation}>
-                                <PopoverTrigger asChild>
-                                    <button className="h-5 w-5 flex items-center justify-center bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 text-gray-500">
-                                        <ChevronsUpDown className="h-3 w-3" />
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0 w-[200px]" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Search location..." className="h-8 text-[10px]" />
-                                        <CommandEmpty>No location found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {LOCATIONS.map((loc) => (
-                                                <CommandItem
-                                                    key={loc}
-                                                    value={loc}
-                                                    onSelect={(currentValue) => {
-                                                        update('workplaceLocation', loc);
-                                                        setOpenLocation(false);
-                                                    }}
-                                                    className="text-[10px]"
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            "mr-2 h-3 w-3",
-                                                            entry.workplaceLocation === loc ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                    />
-                                                    {loc}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* 3. In / Out */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
+            {/* In / Out */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
                 {isWork ? (
                     <>
-                        {/* IN TIME */}
                         <div className="flex gap-1">
                             <select
                                 disabled={entry.isFlatDay}
@@ -716,7 +210,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     const m = (entry.inTime || '').split(':')[1] || '00';
                                     update('inTime', `${e.target.value}:${m}`);
                                 }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="" disabled>HH</option>
                                 {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -728,24 +222,22 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     const h = (entry.inTime || '').split(':')[0] || '08';
                                     update('inTime', `${h}:${e.target.value}`);
                                 }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="" disabled>MM</option>
                                 {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
 
-                        {/* MEAL */}
                         <select
                             value={entry.mealStatus || 'Per calendar day'}
                             onChange={(e) => update('mealStatus', e.target.value)}
-                            className="w-full text-[9px] border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-purple-300 bg-white text-gray-700"
+                            className="w-full text-[9px] border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 outline-none focus:border-purple-300 dark:focus:border-purple-500 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                             title="Break Meal"
                         >
                             {MEAL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
 
-                        {/* OUT TIME */}
                         <div className="flex gap-1 items-center">
                             <div className="flex-1 flex gap-1 min-w-0">
                                 <select
@@ -755,7 +247,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                         const m = (entry.outTime || '').split(':')[1] || '00';
                                         update('outTime', `${e.target.value}:${m}`);
                                     }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="" disabled>HH</option>
                                     {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -767,7 +259,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                         const h = (entry.outTime || '').split(':')[0] || '18';
                                         update('outTime', `${h}:${e.target.value}`);
                                     }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="" disabled>MM</option>
                                     {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -776,8 +268,8 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             <button
                                 onClick={() => update('nextDay', !entry.nextDay)}
                                 className={`flex-none h-6 w-5 rounded border text-[8px] font-bold transition-all flex items-center justify-center ${entry.nextDay
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                        : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-purple-600 dark:bg-purple-500 text-white border-purple-600 dark:border-purple-500 shadow-sm'
+                                    : 'bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                                 title="Toggle Next Day"
                             >
@@ -790,23 +282,23 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                 type="checkbox"
                                 checked={entry.isFlatDay || false}
                                 onChange={(e) => update('isFlatDay', e.target.checked)}
-                                className="w-3 h-3 text-purple-600 rounded border-gray-300 cursor-pointer"
+                                className="w-3 h-3 text-purple-600 dark:text-purple-500 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
                                 id={`flat-day-${index}`}
                             />
-                            <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 font-medium cursor-pointer">Flat Day</label>
+                            <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 dark:text-gray-400 font-medium cursor-pointer">Flat Day</label>
                         </div>
                     </>
-                ) : <div className="text-center text-gray-300">-</div>}
+                ) : <div className="text-center text-gray-300 dark:text-gray-600">-</div>}
             </div>
 
-            {/* 4. Upgrade */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
+            {/* Upgrade */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
                 <div className="flex items-center gap-1">
                     <input
                         type="checkbox"
                         checked={entry.isUpgraded || false}
                         onChange={(e) => update('isUpgraded', e.target.checked)}
-                        className="w-3 h-3 text-purple-600 rounded border-gray-300"
+                        className="w-3 h-3 text-purple-600 dark:text-purple-500 rounded border-gray-300 dark:border-gray-600"
                         title="Upgrade?"
                     />
                     <div className={`flex-1 flex flex-col gap-0.5 ${!entry.isUpgraded ? 'opacity-50' : ''}`}>
@@ -821,7 +313,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     update('upgradeRate', role.rate);
                                 }
                             }}
-                            className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-purple-700 font-bold"
+                            className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-purple-700 dark:text-purple-300 font-bold"
                         >
                             <option value="">Role...</option>
                             {upgradeRoles.map(role => (
@@ -833,7 +325,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                 type="number"
                                 value={entry.upgradeRate || ''}
                                 onChange={(e) => update('upgradeRate', parseFloat(e.target.value))}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700"
+                                className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300"
                                 placeholder="Rate (£)"
                             />
                         )}
@@ -841,21 +333,18 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* 5. Overview (Swapped position) */}
-            <div className="p-1 border-r border-purple-100 flex items-center bg-white">
+            {/* Overview */}
+            <div className="p-1 border-r border-purple-100 dark:border-gray-700 flex items-center bg-white dark:bg-gray-900">
                 <div className="w-full flex flex-col gap-0.5">
                     <div className="grid grid-cols-4 gap-0.5">
                         {OVERVIEW_FIELDS.map((f) => {
                             const isDerived = f.type === 'derived';
-
-                            // 1. Determine Display Value
                             let rawVal = entry[f.k];
                             if ((rawVal === undefined || rawVal === '' || rawVal === 0) && autoValues && autoValues[f.k] !== undefined) {
                                 rawVal = autoValues[f.k];
                                 if (rawVal === 0) rawVal = '';
                             }
 
-                            // 2. Prepare Effective Entry for Derived Calculations (Salary)
                             const effectiveEntry = { ...entry };
                             if (autoValues) {
                                 Object.keys(autoValues).forEach(k => {
@@ -868,15 +357,15 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             const val = isDerived ? f.getValue(effectiveEntry) : rawVal;
 
                             return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight">{f.l}</span>
+                                <div key={f.k} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-1 rounded border border-gray-100 dark:border-gray-700 h-5">
+                                    <span className="text-[7px] uppercase text-black dark:text-white font-medium tracking-tight">{f.l}</span>
                                     {f.type === 'bool' ? (
                                         <input
                                             type="checkbox"
                                             checked={!!val}
                                             onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 text-black focus:ring-black ${isCrewRestricted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-black dark:text-white focus:ring-black dark:focus:ring-white ${isCrewRestricted ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     ) : f.k === 'night' ? (
                                         <input
@@ -884,7 +373,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             checked={Number(val) > 0}
                                             onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isDerived || isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${(isDerived || isCrewRestricted) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-purple-600 dark:text-purple-500 focus:ring-purple-500 dark:focus:ring-purple-400 ${(isDerived || isCrewRestricted) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                         />
                                     ) : (
                                         <input
@@ -892,7 +381,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             value={val}
                                             onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.value)}
                                             readOnly={isDerived || isCrewRestricted}
-                                            className={`w-6 text-[8px] bg-transparent text-right font-mono outline-none p-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
+                                            className={`w-6 text-[8px] bg-transparent text-right font-mono outline-none p-0 ${Number(val) > 0 ? 'text-green-600 dark:text-green-400 font-bold' : (Number(val) < 0 ? 'text-red-600 dark:text-red-400 font-bold' : 'text-black dark:text-white')
                                                 } ${isDerived ? 'opacity-70 cursor-default' : ''}`}
                                             placeholder={isDerived ? '' : '-'}
                                         />
@@ -904,8 +393,8 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* 6. Allowances (Swapped position) */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1">
+            {/* Allowances */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1">
                 <div className="w-full flex flex-col gap-0.5">
                     <div className="grid grid-cols-3 gap-0.5">
                         {[
@@ -918,21 +407,19 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                         ].map((f) => {
                             const val = entry[f.k];
                             const isBool = f.type === 'bool';
-                            // Determine if field is editable by crew
                             const isEditableByCrew = ['perDiemShoot', 'perDiemNon', 'breakfast', 'lunch', 'dinner'].includes(f.k);
-                            // Should be disabled if restricted role AND not one of the allowed fields
                             const isDisabled = isCrewRestricted && !isEditableByCrew;
 
                             return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mr-1" title={f.l}>{f.l}</span>
+                                <div key={f.k} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-1 rounded border border-gray-100 dark:border-gray-700 h-5">
+                                    <span className="text-[7px] uppercase text-black dark:text-white font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mr-1" title={f.l}>{f.l}</span>
                                     {isBool ? (
                                         <input
                                             type="checkbox"
                                             checked={!!val}
                                             onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isDisabled}
-                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-purple-600 dark:text-purple-500 focus:ring-purple-500 dark:focus:ring-purple-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                         />
                                     ) : (
                                         <input
@@ -941,7 +428,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             onChange={(e) => update(f.k, e.target.value)}
                                             disabled={isDisabled}
                                             readOnly={isDisabled}
-                                            className={`w-8 text-[8px] bg-transparent text-right font-mono outline-none p-0 shrink-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
+                                            className={`w-8 text-[8px] bg-transparent text-right font-mono outline-none p-0 shrink-0 ${Number(val) > 0 ? 'text-green-600 dark:text-green-400 font-bold' : (Number(val) < 0 ? 'text-red-600 dark:text-red-400 font-bold' : 'text-black dark:text-white')
                                                 } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
                                             placeholder="-"
                                         />
@@ -953,12 +440,12 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* 7. Notes (Moved to end) */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
+            {/* Notes */}
+            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
                 <textarea
                     value={entry.notes || ''}
                     onChange={(e) => update('notes', e.target.value)}
-                    className="w-full h-10 bg-white border border-gray-200 rounded px-1 py-0.5 text-[9px] text-gray-700 placeholder-gray-400 outline-none resize-none focus:border-purple-300 transition-colors"
+                    className="w-full h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-[9px] text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none resize-none focus:border-purple-300 dark:focus:border-purple-500 transition-colors"
                     placeholder="Notes..."
                 />
             </div>
@@ -969,16 +456,12 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
 export function SalarySidebar({
     isDarkMode,
     allowanceCaps,
-    setAllowanceCaps,
     salary,
     crewInfo,
     entries = [],
     crewType,
-    setCrewType,
     customItems,
-    setCustomItems,
     onEntriesUpdate,
-    isPennyContract,
     currentUserRole = 'Crew',
     projectSettings,
     calendarSchedule,
@@ -986,29 +469,12 @@ export function SalarySidebar({
     readOnly = false,
     isPaid = false,
     contractCategory = 'PAYE',
-    companyName = '',
-    onCrewNavigate,
-    onCrewSelect,
-    departmentCrewMembers = [],
-    canNavigatePrev = true,
-    canNavigateNext = true,
-    onDepartmentNavigate,
-    onDepartmentSelect,
-    allDepartments = [],
-    canNavigatePrevDept = true,
-    canNavigateNextDept = true,
-    onWeekNavigate,
-    onWeekSelect,
-    availableWeeks = [],
-    currentWeek = '',
-    canNavigatePrevWeek = true,
-    canNavigateNextWeek = true
-}: Props) {
+}) {
     const [payHoliday, setPayHoliday] = useState(false);
     const [isVatRegistered, setIsVatRegistered] = useState(crewInfo?.isVATRegistered || false);
-    const [holidayPayout, setHolidayPayout] = useState < string > ('');
-    const [selectedView, setSelectedView] = useState < string > ('All');
-    const [exportMode, setExportMode] = useState < 'none' | 'invoice' | 'timesheet' | 'data' | 'all' > ('none');
+    const [holidayPayout, setHolidayPayout] = useState('');
+    const [selectedView, setSelectedView] = useState('All');
+    const [exportMode, setExportMode] = useState('none');
     const [showGraphicalView, setShowGraphicalView] = useState(false);
     const [showMileageForm, setShowMileageForm] = useState(false);
     const [showFinancialSummary, setShowFinancialSummary] = useState(false);
@@ -1020,13 +486,13 @@ export function SalarySidebar({
     const [isEditingWeek, setIsEditingWeek] = useState(false);
 
     // Track timesheet status
-    const [timesheetStatus, setTimesheetStatus] = useState < 'draft' | 'submitted' | 'partly-approved' | 'approved' | 'revised' | 'rejected' | 'paid' > ('draft');
+    const [timesheetStatus, setTimesheetStatus] = useState('draft');
 
     // Local copy of entries for editing
-    const [localEntries, setLocalEntries] = useState < any[] > ([]);
+    const [localEntries, setLocalEntries] = useState([]);
 
     // Shared day filter state
-    const [selectedDays, setSelectedDays] = useState < Set < string >> (new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']));
+    const [selectedDays, setSelectedDays] = useState(new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']));
 
     // Calculate week ending from entries (assuming last entry is Sunday)
     const calculatedWeekEnding = useMemo(() => {
@@ -1042,7 +508,7 @@ export function SalarySidebar({
     }, [entries]);
 
     // Paid Till Date (PTD) tracking - Mock data
-    const [ptdDataByLabel] = useState < Record < string, number>> ({
+    const [ptdDataByLabel] = useState({
         'Salary': 0.00,
         '6th Day': 0.00,
         '7th Day': 0.00,
@@ -1087,12 +553,7 @@ export function SalarySidebar({
     ]);
 
     // Audit Logs State
-    const [auditLogs, setAuditLogs] = useState < {
-        date,
-        user,
-        action,
-        details,
-    }[] > ([
+    const [auditLogs, setAuditLogs] = useState([
         { date: '16 Nov 18:30', user: 'James Wilson', action: 'SUBMIT', details: 'Initial submission for approval' },
         { date: '16 Nov 19:15', user: 'Michael Chen', action: 'APPROVE', details: 'Departmental approval granted' },
         { date: '17 Nov 09:30', user: 'Bernie Bellew', action: 'REVIEW', details: 'Production review completed' }
@@ -1110,7 +571,7 @@ export function SalarySidebar({
     };
 
     // Set timesheet status based on isPaid prop
-    React.useEffect(() => {
+    useEffect(() => {
         if (isPaid) {
             setTimesheetStatus('paid');
         } else if (readOnly) {
@@ -1119,14 +580,14 @@ export function SalarySidebar({
     }, [isPaid, readOnly]);
 
     // Watch for changes when crew is editing - automatically set to draft
-    React.useEffect(() => {
+    useEffect(() => {
         if (isEditingWeek && currentUserRole === 'Crew' && timesheetStatus !== 'draft') {
             setTimesheetStatus('draft');
         }
     }, [isEditingWeek, localEntries, currentUserRole]);
 
     // Helper function to merge calendar schedule data into entries
-    const mergeCalendarDataIntoEntries = (entriesToMerge[]) => {
+    const mergeCalendarDataIntoEntries = (entriesToMerge) => {
         if (!calendarSchedule) return entriesToMerge;
 
         return entriesToMerge.map(entry => {
@@ -1252,9 +713,9 @@ export function SalarySidebar({
         setLocalEntries([]);
     };
 
-    const roundToQuarter = (hours: number): number => Math.ceil(hours * 4) / 4;
+    const roundToQuarter = (hours) => Math.ceil(hours * 4) / 4;
 
-    const updateLocalEntry = (dayIndex: number, field, value) => {
+    const updateLocalEntry = (dayIndex, field, value) => {
         if (!isEditingWeek) return;
 
         // Audit Log: Record change
@@ -1406,8 +867,8 @@ export function SalarySidebar({
                         value={entry.dayType}
                         onChange={(e) => update('dayType', e.target.value)}
                         className={`w-full text-[9px] font-bold text-center rounded px-1 py-1 outline-none focus:border-purple-400 uppercase tracking-wide border transition-colors ${entry.dayType === 'Work'
-                                ? 'bg-purple-50 border-purple-200 text-purple-800'
-                                : 'bg-gray-50 border-gray-200 text-gray-500'
+                            ? 'bg-purple-50 border-purple-200 text-purple-800'
+                            : 'bg-gray-50 border-gray-200 text-gray-500'
                             }`}
                     >
                         <option value="Work">Work</option>
@@ -1527,8 +988,8 @@ export function SalarySidebar({
                                 <button
                                     onClick={() => update('nextDay', !entry.nextDay)}
                                     className={`flex-none h-6 w-5 rounded border text-[8px] font-bold transition-all flex items-center justify-center ${entry.nextDay
-                                            ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                            : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                        : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
                                         }`}
                                     title="Toggle Next Day"
                                 >
@@ -1779,9 +1240,9 @@ export function SalarySidebar({
 
         const standardDaily = crewInfo.dailyRate || 0;
         const standardHourly = crewInfo.hourlyRate || (standardDaily / 11);
-        const itemsMap = new Map < string, { label, rate: number, units: number, category }> ();
+        const itemsMap = new Map();
 
-        const addToBucket = (category, label, rate: number, units: number) => {
+        const addToBucket = (category, label, rate, units) => {
             if (units <= 0) return;
             const key = `${category}_${label}_${rate.toFixed(2)}`;
             const existing = itemsMap.get(key) || { label, rate, units: 0, category };
@@ -1958,7 +1419,7 @@ export function SalarySidebar({
         const dr = s.standardDaily || 0;
         const hr = s.standardHourly || 0;
 
-        const calc = (label, rate: number, units: number, type: 'salary' | 'ot' | 'allowance') => {
+        const calc = (label, rate, units, type) => {
             const totalA = rate * units;
             const holiday = type !== 'allowance' ? totalA * 0.1207 : 0;
             return { label, rate, unit: units, totalA, holiday, totalAB: totalA + holiday, type };
@@ -1972,7 +1433,7 @@ export function SalarySidebar({
             ...(s.breakdowns.overtime || []).map((i) => calc(i.label, i.rate, i.units, 'ot')),
             ...(s.breakdowns.meal || []).map((i) => calc(i.label, i.rate, i.units, 'ot')),
             ...(s.breakdowns.allowance || []).map((i) => calc(i.label, i.rate, i.units, 'allowance')),
-            ...customItems.map(i => calc(i.label, i.rate, i.unit, i.category as any))
+            ...customItems.map(i => calc(i.label, i.rate, i.unit, i.category))
         ];
         return rows;
     }, [activeSalary, customItems]);
@@ -1988,7 +1449,7 @@ export function SalarySidebar({
 
     const summaryData = useMemo(() => {
         // Collect all potential labels from standard list, current rows, and PTD data
-        const allLabels = new Set < string > ([
+        const allLabels = new Set([
             ...summaryItemsList,
             ...allRows.map(r => r.label),
             ...Object.keys(ptdDataByLabel)
@@ -2061,47 +1522,6 @@ export function SalarySidebar({
             };
         }).filter(Boolean);
 
-        // Removed: Holiday Accrual calculation and row - no longer tracked in Financial Summary
-        /*
-        // 4. ADD HOLIDAY ACCRUAL ROW
-        // Sum of all holiday components from "Salary" through "Night Pen"
-        // Items eligible for Holiday Accrual:
-        const eligibleForHoliday = [
-            'Salary', '6th Day', '7th Day', 'Public Holiday', 'Travel Day', 'Turnaround', 'Add Hour', 'Enhanced O/T',
-            'Camera O/T', 'Post O/T', 'Pre O/T', 'BTA', 'Late Meal', 'Broken Meal', 'Travel', 'Dawn / Early',
-            'Night Pen'
-        ];
-
-        // Calculate holiday strictly from rows that match these labels (or their upgrades)
-        const totalCurrentHoliday = allRows.reduce((sum, r) => {
-            // Check if this row is an eligible type
-            // E.g. "Salary", "Salary (Upgrade)", "Turnaround (1st AD)"
-            // Logic: Base label starts with one of the eligible labels
-            const baseLabel = r.label.split(' (')[0];
-            const isEligible = eligibleForHoliday.includes(baseLabel) || eligibleForHoliday.includes(r.label);
-            
-            if (isEligible) {
-                return sum + (r.holiday || 0);
-            }
-            return sum;
-        }, 0);
-
-        const ptdHoliday = ptdDataByLabel['Holiday Accrual'] || 0;
-        
-        // Always show Holiday Accrual row
-        result.push({
-            label: 'Holiday Accrual',
-            u: 1,
-            rate: 0,
-            hRate: 0,
-            p: totalCurrentHoliday,
-            hTotal: 0,
-            total: totalCurrentHoliday, 
-            ptd: ptdHoliday, 
-            isExtra: false
-        });
-        */
-
         return result;
     }, [allRows, summaryItemsList, ptdDataByLabel]);
 
@@ -2137,7 +1557,7 @@ export function SalarySidebar({
         <div className={`relative h-full w-full flex flex-col ${theme.bg} ${theme.text} overflow-hidden font-sans text-[10px]`}>
 
             {/* TOP HEADER - Compact (with Loan Out company name support) */}
-            <div className={`flex-none px-4 py-3 border-b ${theme.border} flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
+            <div className={`flex-none px-4 py-3 border-b  flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
 
                 <div className="flex gap-10">
                     <div className="flex flex-col">
@@ -2315,9 +1735,9 @@ export function SalarySidebar({
                 <TimesheetStatusWatermark status={timesheetStatus} isDarkMode={isDarkMode} mode="watermark" />
 
                 {/* LEFT COLUMN: Timecard Grid (Approx 65%) */}
-                <div className={`flex-1 flex flex-col border-r ${theme.border} overflow-y-auto bg-white dark:bg-[#0f0e13]`}>
+                <div className={`flex-1 flex flex-col border-r  overflow-y-auto bg-white dark:bg-[#0f0e13]`}>
                     {/* Table Header */}
-                    <div className={`grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] bg-purple-50/80 dark:bg-purple-900/20 border-b ${theme.border} text-[9px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider sticky top-0 z-10 shadow-sm`}>
+                    <div className={`grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] bg-purple-50/80 dark:bg-purple-900/20 border-b  text-[9px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider sticky top-0 z-10 shadow-sm`}>
                         <div className="p-2 border-r border-purple-100 dark:border-gray-700 leading-tight">Date<br />Calendar</div>
                         <div className="p-2 border-r border-purple-100 dark:border-gray-700 leading-tight">Type / Unit<br />Location</div>
                         <div className="p-2 border-r border-purple-100 dark:border-gray-700">In / Out</div>
@@ -2364,9 +1784,9 @@ export function SalarySidebar({
                                         calendarSchedule={calendarSchedule}
                                     />
                                 ) : (
-                                    <div key={idx} className={`w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] group hover:bg-purple-50/20 dark:hover:bg-purple-900/10 transition-colors border-b ${theme.border}`}>
+                                    <div key={idx} className={`w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] group hover:bg-purple-50/20 dark:hover:bg-purple-900/10 transition-colors border-b `}>
                                         {/* Date */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-center items-start pl-3`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-center items-start pl-3`}>
                                             <span className="font-bold text-gray-800 dark:text-gray-200">{formatEntryDate(entry.date)}</span>
                                             {calendarSchedule?.[entry.date]?.dayType === 'Shoot' && (
                                                 <div className="flex flex-col mt-1.5 space-y-0.5 leading-none select-none">
@@ -2380,7 +1800,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* Type / Unit / Loc / Set */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-center gap-0.5`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-center gap-0.5`}>
                                             <div className="text-[8px] font-bold text-purple-700 dark:text-purple-300 uppercase">
                                                 {entry.dayType}
                                             </div>
@@ -2398,7 +1818,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* In / Out */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-center gap-1 font-mono text-[10px]`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-center gap-1 font-mono text-[10px]`}>
                                             {entry.dayType === 'Work' ? (
                                                 <>
                                                     {/* In Time */}
@@ -2446,7 +1866,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* Upgrade */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-center text-[9px]`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-center text-[9px]`}>
                                             {entry.isUpgraded ? (
                                                 <div className="flex flex-col gap-0.5 items-start">
                                                     <div className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold text-[8px]">
@@ -2467,7 +1887,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* Overview Grid (Moved) */}
-                                        <div className={`p-1 border-r ${theme.border} flex items-center`}>
+                                        <div className={`p-1 border-r  flex items-center`}>
                                             <div className="w-full flex flex-col gap-0.5">
                                                 <div className="grid grid-cols-4 gap-0.5">
                                                     {OVERVIEW_FIELDS.map((f) => {
@@ -2500,7 +1920,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* Allowances (Updated Grid) */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-center gap-1`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-center gap-1`}>
                                             <div className="w-full flex flex-col gap-0.5">
                                                 <div className="grid grid-cols-3 gap-0.5">
                                                     {[
@@ -2538,7 +1958,7 @@ export function SalarySidebar({
                                         </div>
 
                                         {/* Notes (Moved) */}
-                                        <div className={`p-2 border-r ${theme.border} flex flex-col justify-start text-[9px] overflow-hidden`}>
+                                        <div className={`p-2 border-r  flex flex-col justify-start text-[9px] overflow-hidden`}>
                                             {entry.notes ? (
                                                 <div className="bg-white text-gray-700 p-1.5 rounded border border-gray-200 text-[8px] leading-tight line-clamp-3" title={entry.notes}>
                                                     {entry.notes}
@@ -2557,7 +1977,7 @@ export function SalarySidebar({
 
                     {/* Signatures Footer */}
                     <SalarySidebarSignatures crewInfo={crewInfo} theme={theme} isDarkMode={isDarkMode} signatures={signatures} />
-                    <div className={`hidden px-4 py-3 border-t ${theme.border} bg-purple-50 dark:bg-gray-800/50 h-[35mm] flex-none`}>
+                    <div className={`hidden px-4 py-3 border-t  bg-purple-50 dark:bg-gray-800/50 h-[35mm] flex-none`}>
                         <div className="grid grid-cols-5 gap-2 h-full">
                             {[
                                 { label: 'Crew Member', name: `${crewInfo.firstName} ${crewInfo.lastName}`, date: '16 Nov 18:30', code: '8F2A-91', role: crewInfo.jobTitle },
@@ -2566,7 +1986,7 @@ export function SalarySidebar({
                                 { label: 'Accounts', name: 'Dan Palmer', date: '18 Dec 10:45', code: 'AC-441', role: 'Financial Controller' },
                                 { label: 'Payroll', name: '', date: '', code: '', role: '' }
                             ].map((sig) => (
-                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full ${theme.card} ${theme.border}`}>
+                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full ${theme.card} `}>
                                     {/* APPROVED Stamp - Only show when signed */}
                                     {sig.name && (
                                         <div
@@ -2663,13 +2083,13 @@ export function SalarySidebar({
                 </div>
 
                 {/* RIGHT COLUMN: Financial Summary with Holiday Column */}
-                <div className={`w-[110mm] flex-none flex flex-col border-l ${theme.border} bg-white dark:bg-[#0f0e13]`}>
-                    <div className={`p-2.5 font-black text-center text-[9px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b ${theme.border} text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
+                <div className={`w-[110mm] flex-none flex flex-col border-l  bg-white dark:bg-[#0f0e13]`}>
+                    <div className={`p-2.5 font-black text-center text-[9px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b  text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
                         Financial Summary <span className="opacity-70 ml-1">(Weekly Rate - {c(crewInfo.weeklyRate || crewInfo.dailyRate * 5)})</span>
                     </div>
 
                     {/* New Header with combined columns */}
-                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[7px] font-black uppercase py-2 px-2 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b ${theme.border} text-black`}>
+                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[7px] font-black uppercase py-2 px-2 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b  text-black`}>
                         <div>ITEM</div>
                         <div className="text-center">RATE / HOL</div>
                         <div className="text-center">UNIT</div>
@@ -2679,7 +2099,7 @@ export function SalarySidebar({
 
                     <div className="flex-1 overflow-y-auto">
                         {summaryData.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[8px] items-center border-b ${theme.border} ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
+                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[8px] items-center border-b  ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
                                 }`}>
                                 {/* Item name */}
                                 <div className={`font-medium truncate leading-tight text-black`}>
@@ -2728,7 +2148,7 @@ export function SalarySidebar({
                     </div>
 
 
-                    <div className={`p-3 ${isDarkMode ? 'bg-[#181621]' : 'bg-purple-50'} border-t ${theme.border} h-[35mm] flex-none`}>
+                    <div className={`p-3 ${isDarkMode ? 'bg-[#181621]' : 'bg-purple-50'} border-t  h-[35mm] flex-none`}>
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[9px]">
                                 <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
@@ -2741,7 +2161,7 @@ export function SalarySidebar({
                                 </div>
                             )}
                         </div>
-                        <div className={`flex justify-between items-center pt-2 border-t-2 ${theme.border}`}>
+                        <div className={`flex justify-between items-center pt-2 border-t-2 `}>
                             <span className="text-[10px] font-black uppercase tracking-widest text-black">Grand Total</span>
                             <span className="text-lg font-black text-black">{c(totals.gross)}</span>
                         </div>

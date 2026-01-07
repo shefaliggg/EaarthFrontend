@@ -1,13 +1,15 @@
 import { Shield } from "lucide-react";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { generateMockCrewData } from "../config/mockCrewData(temp)";
+import { SalarySidebar } from "../components/Salarysidebar";
 
 function TimesheetTable() {
     const { week } = useParams();
     const [viewMode, setViewMode] = useState("table");
     // 'table' | 'print' | 'weekly-overview'
 
-    const [approveViewMode, setApproveViewMode] = useState("list");
+    const [approveViewMode, setApproveViewMode] = useState("single");
     // 'list' | 'single'
 
     const [isCrewSelfView, setIsCrewSelfView] = useState(false);
@@ -51,6 +53,15 @@ function TimesheetTable() {
     const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
     const [editingExpenses, setEditingExpenses] = useState(false);
 
+    const mockData = generateMockCrewData();
+    const [allCrewMembers] = useState(mockData.map(crew => ({
+        id: crew.id,
+        name: crew.name,
+        role: crew.role,
+        department: crew.department
+    })));
+    const [mockCrewListData] = useState(generateMockCrewData());
+
     const [projectSettings] = useState({
         contractFramework: 'film', // 'film' | 'tv-band1' | 'tv-band2' | 'tv-band3' | 'equity' | 'custom'
         projectBudget: 50000000, // £50m
@@ -70,6 +81,92 @@ function TimesheetTable() {
         }
     });
 
+    const [calendarSchedule, setCalendarSchedule] = useState({
+        // Week 1 (Dec 2-8, 2025)
+        '2025-12-02': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 48, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio Day - Stage 7' },
+        '2025-12-03': { unit: 'Main', unitCall: '07:00', unitWrap: '18:15', workingHours: '10 (CWD)', cameraOT: '1.25', dayType: 'Shoot', dayNumber: 49, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Studio Day - Stage 7' },
+        '2025-12-04': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 50, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Elstree' },
+        '2025-12-05': { unit: 'Main', unitCall: '07:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 51, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Elstree - Stage 2' },
+        '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+        '2025-12-07': { dayType: 'Rest', dayNumber: '-' },
+        '2025-12-08': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 2 (Dec 9-15, 2025) - Current week
+        '2025-12-09': { unit: 'Main', unitCall: '06:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 53, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '12:30', mealEnd: '13:30', notes: 'Forest location shoot - Early call', dawn: 'Paid' },
+        '2025-12-10': { unit: 'Main', unitCall: '06:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 54, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Bourne Wood - Continuation' },
+        '2025-12-11': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 55, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Wales location - Travel allowance' },
+        '2025-12-12': { unit: 'Main', unitCall: '07:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.5', dayType: 'Shoot', dayNumber: 56, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Wales - Day 2' },
+        '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+        '2025-12-14': { dayType: 'Rest', dayNumber: '-' },
+        '2025-12-15': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 3 (Dec 16-22, 2025)
+        '2025-12-16': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 58, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Back to Studio - Stage 7' },
+        '2025-12-17': { unit: 'Main', unitCall: '08:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 59, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
+        '2025-12-18': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 60, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
+        '2025-12-19': { unit: 'Main', unitCall: '08:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '2.0', dayType: 'Shoot', dayNumber: 61, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - VFX sequence' },
+        '2025-12-20': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 62, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
+        '2025-12-21': { dayType: 'Rest', dayNumber: '-' },
+        '2025-12-22': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 4 (Dec 23-29, 2025) - Holiday Break
+        '2025-12-23': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
+        '2025-12-24': { dayType: 'Rest', dayNumber: '-', notes: 'Christmas Eve', isPublicHoliday: true },
+        '2025-12-25': { dayType: 'Rest', dayNumber: '-', notes: 'Christmas Day', isPublicHoliday: true },
+        '2025-12-26': { dayType: 'Rest', dayNumber: '-', notes: 'Boxing Day', isPublicHoliday: true },
+        '2025-12-27': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
+        '2025-12-28': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
+        '2025-12-29': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
+
+        // Week 5 (Dec 30, 2025 - Jan 5, 2026) - Holiday/Prep Week
+        '2025-12-30': { unit: 'Main', unitCall: '09:00', unitWrap: '17:00', workingHours: '8 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 63, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Prep/Rehearsal Day' },
+        '2025-12-31': { dayType: 'Rest', dayNumber: '-', notes: 'New Years Eve' },
+        '2026-01-01': { dayType: 'Rest', dayNumber: '-', notes: 'New Years Day', isPublicHoliday: true },
+        '2026-01-02': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 64, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Back to work - Stage 12' },
+        '2026-01-03': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 65, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12 - Interior' },
+        '2026-01-04': { dayType: 'Rest', dayNumber: '-' },
+        '2026-01-05': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 6 (Jan 6-12, 2026)
+        '2026-01-06': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 66, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12 - Continues' },
+        '2026-01-07': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 67, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Stage 12' },
+        '2026-01-08': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 68, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
+        '2026-01-09': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 69, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
+        '2026-01-10': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 70, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
+        '2026-01-11': { dayType: 'Rest', dayNumber: '-' },
+        '2026-01-12': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 7 (Jan 13-19, 2026)
+        '2026-01-13': { unit: 'Main', unitCall: '06:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 71, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '12:30', mealEnd: '13:30', notes: 'Location shoot - Early call', dawn: 'Paid' },
+        '2026-01-14': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 72, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Black Park - Day 2' },
+        '2026-01-15': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 73, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Black Park - Final day' },
+        '2026-01-16': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 74, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Pinewood - Stage 5' },
+        '2026-01-17': { unit: 'Main', unitCall: '08:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '2.0', dayType: 'Shoot', dayNumber: 75, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - Action sequence' },
+        '2026-01-18': { dayType: 'Rest', dayNumber: '-' },
+        '2026-01-19': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 8 (Jan 20-26, 2026)
+        '2026-01-20': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 76, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
+        '2026-01-21': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 77, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Pinewood - Stage 5' },
+        '2026-01-22': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 78, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
+        '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+        '2026-01-24': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 80, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
+        '2026-01-25': { dayType: 'Rest', dayNumber: '-' },
+        '2026-01-26': { dayType: 'Rest', dayNumber: '-' },
+
+        // Week 9 (Jan 27-31, 2026) - Final week of January
+        '2026-01-27': { unit: 'Main', unitCall: '07:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 81, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Ealing - Stage 1' },
+        '2026-01-28': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 82, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Ealing - Stage 1 Interior' },
+        '2026-01-29': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 83, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Ealing - Stage 1' },
+        '2026-01-30': { unit: 'Main', unitCall: '07:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '3.0', dayType: 'Shoot', dayNumber: 84, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - Climax sequence' },
+        '2026-01-31': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 85, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Ealing - Final day January' },
+    });
+
+    const [upgradeRoles, setUpgradeRoles] = useState([
+        { id: '1', name: 'Senior Electrician', rate: 450 },
+        { id: '2', name: 'Best Boy', rate: 480 },
+        { id: '3', name: 'Gaffer', rate: 520 }
+    ]);
 
     const getWeekStatus = (weekEnding) => {
         const today = new Date();
@@ -225,135 +322,200 @@ function TimesheetTable() {
         };
     };
 
+    // Handle department navigation (prev/next within same department)
+    const handleDepartmentNavigation = (direction) => {
+        const fullName = `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`;
+        const currentCrew = allCrewMembers.find(c => c.name === fullName);
+        if (!currentCrew) return;
+
+        // Get all crew members in the same department
+        const sameDepartmentCrew = allCrewMembers.filter(c => c.department === currentCrew.department);
+        const currentIndexInDept = sameDepartmentCrew.findIndex(c => c.name === fullName);
+
+        if (currentIndexInDept === -1) return;
+
+        let newIndex;
+        if (direction === 'prev') {
+            newIndex = currentIndexInDept > 0 ? currentIndexInDept - 1 : sameDepartmentCrew.length - 1;
+        } else {
+            newIndex = currentIndexInDept < sameDepartmentCrew.length - 1 ? currentIndexInDept + 1 : 0;
+        }
+
+        const newCrew = sameDepartmentCrew[newIndex];
+        const [firstName, ...lastNameParts] = newCrew.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        // Find the crew member in mock data to get their rates
+        const crewData = mockCrewListData.find(c => c.name === newCrew.name);
+
+        setSelectedCrewInfo({
+            ...selectedCrewInfo,
+            firstName: firstName,
+            lastName: lastName,
+            jobTitle: newCrew.role,
+            department: newCrew.department,
+            // Add rate information from mock data
+            basicRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate : crewData.rate * 5) : crewInfo.basicRate,
+            dailyRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate / 5 : crewData.rate) : crewInfo.dailyRate,
+            hourlyRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate / 5 / 11 : crewData.rate / 11) : crewInfo.hourlyRate,
+            contractType: crewData?.contractCategory || crewInfo.contractType,
+            employmentType: crewData?.contractType || crewInfo.employmentType,
+        });
+    };
+
+    const handleWeekNavigation = (direction) => {
+        const allWeeks = Object.keys(calendarSchedule)
+            .map(date => {
+                const d = new Date(date);
+                const dayOfWeek = d.getDay();
+                const diff = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+                const sunday = new Date(d);
+                sunday.setDate(d.getDate() + diff);
+                return sunday.toISOString().split('T')[0];
+            })
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .sort();
+
+        const currentIndex = allWeeks.indexOf(selectedWeek);
+        if (currentIndex === -1) return;
+
+        let newIndex;
+        if (direction === 'prev') {
+            newIndex = currentIndex > 0 ? currentIndex - 1 : allWeeks.length - 1;
+        } else {
+            newIndex = currentIndex < allWeeks.length - 1 ? currentIndex + 1 : 0;
+        }
+
+        setSelectedWeek(allWeeks[newIndex]);
+    };
+
     return (
-        <div className="max-w-[1920px] mx-auto p-4 md:p-6 lg:p-8">
-            <div className="grid grid-cols-1 gap-8 items-start">
+        <div className="grid grid-cols-1 gap-8 items-start">
 
-                {/* APPROVE VIEW (Approval Workflow) */}
-                {viewMode === 'table' && (
-                    <div className="max-w-full overflow-x-auto space-y-6">
+            {/* APPROVE VIEW (Approval Workflow) */}
+            {viewMode === 'table' && (
+                <div className="max-w-full overflow-x-auto space-y-6">
 
-                        {/* Approval List or Single Crew View */}
-                        {approveViewMode === 'single' ? (
-                            <div className="space-y-4">
-                                {/* Editable Timesheet with Approval Controls */}
-                                <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden ${isDarkMode ? 'bg-[#181621]' : 'bg-white'}`}>
-                                    {(() => {
-                                        const isPastWeek = getWeekStatus(selectedWeek) === 'past';
+                    {/* Approval List or Single Crew View */}
+                    {approveViewMode === 'single' ? (
+                        <div className="space-y-4">
+                            {/* Editable Timesheet with Approval Controls */}
+                            <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden ${isDarkMode ? 'bg-[#181621]' : 'bg-white'}`}>
+                                {(() => {
+                                    const isPastWeek = getWeekStatus(selectedWeek) === 'past';
 
-                                        // Determine if week is paid (more than 3 weeks old)
-                                        const today = new Date();
-                                        today.setHours(0, 0, 0, 0);
-                                        const weekEndingDate = new Date(selectedWeek);
-                                        weekEndingDate.setHours(0, 0, 0, 0);
-                                        const daysDifference = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
-                                        const isPaidWeek = daysDifference > 21; // More than 3 weeks old = paid
+                                    // Determine if week is paid (more than 3 weeks old)
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const weekEndingDate = new Date(selectedWeek);
+                                    weekEndingDate.setHours(0, 0, 0, 0);
+                                    const daysDifference = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const isPaidWeek = daysDifference > 21; // More than 3 weeks old = paid
 
-                                        // Determine if the timesheet should be read-only
-                                        let shouldBeReadOnly = false;
-                                        if (currentUserRole === 'Crew') {
-                                            // Crew can only edit if within submission deadline
-                                            shouldBeReadOnly = !canCrewSubmitWeek(selectedWeek);
-                                        } else if (currentUserRole === 'HOD' || currentUserRole === 'Payroll') {
-                                            // HOD and Payroll can edit past weeks
-                                            shouldBeReadOnly = false;
-                                        } else {
-                                            // Production and Finance cannot edit past weeks
-                                            shouldBeReadOnly = isPastWeek;
-                                        }
+                                    // Determine if the timesheet should be read-only
+                                    let shouldBeReadOnly = false;
+                                    if (currentUserRole === 'Crew') {
+                                        shouldBeReadOnly = !canCrewSubmitWeek(selectedWeek);
+                                    } else if (currentUserRole === 'HOD' || currentUserRole === 'Payroll') {
+                                        // HOD and Payroll can edit past weeks
+                                        shouldBeReadOnly = false;
+                                    } else {
+                                        // Production and Finance cannot edit past weeks
+                                        shouldBeReadOnly = isPastWeek;
+                                    }
 
-                                        return (
-                                            <>
-                                                {shouldBeReadOnly && (
-                                                    <div
-                                                        className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
-                                                                ? 'bg-blue-900/20 border-blue-500/30'
-                                                                : 'bg-blue-50 border-blue-200'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-2">
-                                                            <Shield className="w-4 h-4 text-blue-600" />
-                                                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                                                                Read-Only View • Week Ending{" "}
-                                                                {new Date(selectedWeek).toLocaleDateString("en-GB", {
-                                                                    day: "2-digit",
-                                                                    month: "short",
-                                                                    year: "numeric",
-                                                                })}
-                                                            </span>
-                                                        </div>
+                                    return (
+                                        <>
+                                            {shouldBeReadOnly && (
+                                                <div
+                                                    className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
+                                                        ? 'bg-blue-900/20 border-blue-500/30'
+                                                        : 'bg-blue-50 border-blue-200'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <Shield className="w-4 h-4 text-blue-600" />
+                                                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                                                            Read-Only View • Week Ending{" "}
+                                                            {new Date(selectedWeek).toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "short",
+                                                                year: "numeric",
+                                                            })}
+                                                        </span>
                                                     </div>
-                                                )}
+                                                </div>
+                                            )}
 
-                                                {/* <SalarySidebar
-                                                    isDarkMode={isDarkMode}
-                                                    allowanceCaps={allowanceCaps}
-                                                    setAllowanceCaps={setAllowanceCaps}
-                                                    crewInfo={selectedCrewInfo}
-                                                    salary={calculateSalary()}
-                                                    entries={entries}
-                                                    crewType={crewType}
-                                                    setCrewType={setCrewType}
-                                                    customItems={customItems}
-                                                    setCustomItems={setCustomItems}
-                                                    onEntriesUpdate={setEntries}
-                                                    projectSettings={projectSettings}
-                                                    calendarSchedule={calendarSchedule}
-                                                    upgradeRoles={upgradeRoles}
-                                                    currentUserRole={currentUserRole}
-                                                    companyName={companyName}
-                                                    onCrewNavigate={handleDepartmentNavigation}
-                                                    onWeekNavigate={handleWeekNavigation}
-                                                /> */}
-                                            </>
-                                        );
+                                            <SalarySidebar
+                                                isDarkMode={isDarkMode}
+                                                allowanceCaps={allowanceCaps}
+                                                setAllowanceCaps={setAllowanceCaps}
+                                                crewInfo={selectedCrewInfo}
+                                                salary={calculateSalary()}
+                                                entries={entries}
+                                                crewType={crewType}
+                                                setCrewType={setCrewType}
+                                                customItems={customItems}
+                                                setCustomItems={setCustomItems}
+                                                onEntriesUpdate={setEntries}
+                                                projectSettings={projectSettings}
+                                                calendarSchedule={calendarSchedule}
+                                                upgradeRoles={upgradeRoles}
+                                                currentUserRole={currentUserRole}
+                                                companyName={companyName}
+                                                onCrewNavigate={handleDepartmentNavigation}
+                                                onWeekNavigate={handleWeekNavigation}
+                                            />
+                                        </>
+                                    );
 
-                                    })()}
-                                </div>
+                                })()}
                             </div>
-                        ) : (
-                            <div></div>
-                            // <CrewListViewWithApproval
-                            //     isDarkMode={isDarkMode}
-                            //     crewList={mockCrewListData}
-                            //     weekStart={selectedWeek}
-                            //     currentUserRole={currentUserRole}
-                            //     onWeekChange={(direction) => {
-                            //         // Handle week navigation
-                            //         const currentDate = new Date(selectedWeek);
-                            //         const newDate = new Date(currentDate);
+                        </div>
+                    ) : (
+                        <div></div>
+                        // <CrewListViewWithApproval
+                        //     isDarkMode={isDarkMode}
+                        //     crewList={mockCrewListData}
+                        //     weekStart={selectedWeek}
+                        //     currentUserRole={currentUserRole}
+                        //     onWeekChange={(direction) => {
+                        //         // Handle week navigation
+                        //         const currentDate = new Date(selectedWeek);
+                        //         const newDate = new Date(currentDate);
 
-                            //         if (direction === 'prev') {
-                            //             newDate.setDate(currentDate.getDate() - 7);
-                            //         } else {
-                            //             newDate.setDate(currentDate.getDate() + 7);
-                            //         }
+                        //         if (direction === 'prev') {
+                        //             newDate.setDate(currentDate.getDate() - 7);
+                        //         } else {
+                        //             newDate.setDate(currentDate.getDate() + 7);
+                        //         }
 
-                            //         // Format as YYYY-MM-DD
-                            //         const newWeek = newDate.toISOString().split('T')[0];
-                            //         setSelectedWeek(newWeek);
-                            //     }}
-                            //     onCrewClick={(crew) => {
-                            //         // Handle crew click - navigate to single view
-                            //         const [firstName, ...lastNameParts] = crew.name.split(' ');
-                            //         const lastName = lastNameParts.join(' ');
+                        //         // Format as YYYY-MM-DD
+                        //         const newWeek = newDate.toISOString().split('T')[0];
+                        //         setSelectedWeek(newWeek);
+                        //     }}
+                        //     onCrewClick={(crew) => {
+                        //         // Handle crew click - navigate to single view
+                        //         const [firstName, ...lastNameParts] = crew.name.split(' ');
+                        //         const lastName = lastNameParts.join(' ');
 
-                            //         setSelectedCrewInfo({
-                            //             ...selectedCrewInfo,
-                            //             firstName: firstName,
-                            //             lastName: lastName,
-                            //             jobTitle: crew.role,
-                            //             department: crew.department
-                            //         });
-                            //         setApproveViewMode('single');
-                            //     }}
-                            // />
-                        )}
-                    </div>
-                )}
+                        //         setSelectedCrewInfo({
+                        //             ...selectedCrewInfo,
+                        //             firstName: firstName,
+                        //             lastName: lastName,
+                        //             jobTitle: crew.role,
+                        //             department: crew.department
+                        //         });
+                        //         setApproveViewMode('single');
+                        //     }}
+                        // />
+                    )}
+                </div>
+            )}
 
-                {/* PRINT VIEW (Replaces Invoice) */}
-                {/* {viewMode === 'print' && (
+            {/* PRINT VIEW (Replaces Invoice) */}
+            {/* {viewMode === 'print' && (
                     <div className="w-full overflow-x-auto bg-gray-100 p-4">
                         <TimesheetPrintView
                             entries={entries}
@@ -365,8 +527,8 @@ function TimesheetTable() {
                     </div>
                 )} */}
 
-                {/* WEEKLY OVERVIEW (Crew's All Timesheets) */}
-                {/* {viewMode === 'weekly-overview' && (
+            {/* WEEKLY OVERVIEW (Crew's All Timesheets) */}
+            {/* {viewMode === 'weekly-overview' && (
                     <CrewWeeklyTimesheetOverview
                         isDarkMode={isDarkMode}
                         crewName={`${crewInfo.firstName} ${crewInfo.lastName}`}
@@ -393,7 +555,6 @@ function TimesheetTable() {
                     />
                 )} */}
 
-            </div>
         </div>
     )
 }

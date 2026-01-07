@@ -32,7 +32,7 @@ const TimesheetsLayout = () => {
                 }
 
                 extraActions={
-                    <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"}>
+                    <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"} onClick={() => navigate("settings")}>
                         <Settings className="w-4 h-4 text-primary group-hover:text-background" />
                     </Button>
                 }
