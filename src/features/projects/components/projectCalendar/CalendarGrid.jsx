@@ -218,7 +218,12 @@ export default function CalendarGrid({
                     "hover:bg-primary/5"
                   )}
                 >
-                  <div className="absolute top-2 right-3 text-xs font-semibold">
+                  <div
+                    className="absolute top-2 left-1/2 -translate-x-1/2
+                w-6 h-6 flex items-center justify-center
+                text-xs font-semibold rounded-full
+                text-muted-foreground"
+                  >
                     {date.getDate()}
                   </div>
 
