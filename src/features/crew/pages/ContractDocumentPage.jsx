@@ -76,7 +76,7 @@ export default function ContractDocumentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">

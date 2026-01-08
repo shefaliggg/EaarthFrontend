@@ -217,7 +217,7 @@ export default function ViewOffer() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Demo Controls */}
         <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
