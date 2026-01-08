@@ -1,6 +1,6 @@
 // ProjectCard.jsx - Updated to use CSS color variables
 import { Star, Users, Calendar, CalendarCheck, Clapperboard, Video, Tv, Palette, Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 
 const projectIcons = {
@@ -15,45 +15,45 @@ const projectIcons = {
 };
 
 const statusColors = {
-  shoot: { 
-    bg: 'bg-mint-100 dark:bg-mint-900/30', 
-    text: 'text-mint-700 dark:text-mint-300', 
-    label: 'SHOOT' 
+  shoot: {
+    bg: 'bg-mint-100 dark:bg-mint-900/30',
+    text: 'text-mint-700 dark:text-mint-300',
+    label: 'SHOOT'
   },
-  prep: { 
-    bg: 'bg-sky-100 dark:bg-sky-900/30', 
-    text: 'text-sky-700 dark:text-sky-300', 
-    label: 'PREP' 
+  prep: {
+    bg: 'bg-sky-100 dark:bg-sky-900/30',
+    text: 'text-sky-700 dark:text-sky-300',
+    label: 'PREP'
   },
-  wrap: { 
-    bg: 'bg-peach-100 dark:bg-peach-900/30', 
-    text: 'text-peach-700 dark:text-peach-300', 
-    label: 'WRAP' 
+  wrap: {
+    bg: 'bg-peach-100 dark:bg-peach-900/30',
+    text: 'text-peach-700 dark:text-peach-300',
+    label: 'WRAP'
   },
-  post: { 
-    bg: 'bg-lavender-100 dark:bg-lavender-900/30', 
-    text: 'text-lavender-700 dark:text-lavender-300', 
-    label: 'POST' 
+  post: {
+    bg: 'bg-lavender-100 dark:bg-lavender-900/30',
+    text: 'text-lavender-700 dark:text-lavender-300',
+    label: 'POST'
   },
-  active: { 
-    bg: 'bg-mint-100 dark:bg-mint-900/30', 
-    text: 'text-mint-700 dark:text-mint-300', 
-    label: 'ACTIVE' 
+  active: {
+    bg: 'bg-mint-100 dark:bg-mint-900/30',
+    text: 'text-mint-700 dark:text-mint-300',
+    label: 'ACTIVE'
   },
-  completed: { 
-    bg: 'bg-muted', 
-    text: 'text-muted-foreground', 
-    label: 'COMPLETED' 
+  completed: {
+    bg: 'bg-muted',
+    text: 'text-muted-foreground',
+    label: 'COMPLETED'
   },
-  rehearsal: { 
-    bg: 'bg-muted', 
-    text: 'text-muted-foreground', 
-    label: 'REHEARSAL' 
+  rehearsal: {
+    bg: 'bg-muted',
+    text: 'text-muted-foreground',
+    label: 'REHEARSAL'
   },
-  performance: { 
-    bg: 'bg-muted', 
-    text: 'text-muted-foreground', 
-    label: 'PERFORMANCE' 
+  performance: {
+    bg: 'bg-muted',
+    text: 'text-muted-foreground',
+    label: 'PERFORMANCE'
   },
 };
 

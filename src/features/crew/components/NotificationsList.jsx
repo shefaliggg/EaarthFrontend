@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bell, Calendar, FileText, MessageSquare } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 
 export function Notifications({ isDarkMode }) {
@@ -65,12 +65,12 @@ export function Notifications({ isDarkMode }) {
               key={notification.id}
               className={cn(
                 "p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md",
-                notification.unread 
-                  ? isDarkMode 
-                    ? "bg-purple-600/10 border-purple-500/30" 
+                notification.unread
+                  ? isDarkMode
+                    ? "bg-purple-600/10 border-purple-500/30"
                     : "bg-purple-50 border-purple-200"
-                  : isDarkMode 
-                    ? "bg-gray-800/50 border-gray-700" 
+                  : isDarkMode
+                    ? "bg-gray-800/50 border-gray-700"
                     : "bg-gray-50 border-gray-200"
               )}
             >
@@ -78,11 +78,11 @@ export function Notifications({ isDarkMode }) {
                 <div className={cn(
                   "p-2 rounded-lg flex-shrink-0",
                   notification.unread
-                    ? isDarkMode 
-                      ? "bg-purple-500/20" 
+                    ? isDarkMode
+                      ? "bg-purple-500/20"
                       : "bg-purple-500/10"
-                    : isDarkMode 
-                      ? "bg-gray-700" 
+                    : isDarkMode
+                      ? "bg-gray-700"
                       : "bg-gray-200"
                 )}>
                   <Icon className={cn(
@@ -96,14 +96,14 @@ export function Notifications({ isDarkMode }) {
                   </Badge>
                 </div>
               </div>
-              
+
               <p className={cn(
                 "text-sm mb-2 font-medium",
                 isDarkMode ? "text-white" : "text-gray-900"
               )}>
                 {notification.message}
               </p>
-              
+
               <p className={cn(
                 "text-xs",
                 isDarkMode ? "text-gray-500" : "text-gray-400"

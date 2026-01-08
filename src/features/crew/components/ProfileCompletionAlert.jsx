@@ -1,15 +1,15 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 
 export function ProfileCompletionAlert({ profileCompletion, isDarkMode }) {
   if (profileCompletion >= 100) return null;
-  
+
   return (
     <div className={cn(
       "p-4 rounded-xl border flex items-center justify-between",
-      isDarkMode 
-        ? "bg-amber-900/20 border-amber-500/30" 
+      isDarkMode
+        ? "bg-amber-900/20 border-amber-500/30"
         : "bg-amber-50 border-amber-200"
     )}>
       <div className="flex items-center gap-3">
@@ -32,11 +32,11 @@ export function ProfileCompletionAlert({ profileCompletion, isDarkMode }) {
           </p>
         </div>
       </div>
-      <button 
+      <button
         className={cn(
           "px-4 py-2 rounded-lg font-bold text-sm transition-colors",
-          isDarkMode 
-            ? "bg-amber-600 hover:bg-amber-700 text-white" 
+          isDarkMode
+            ? "bg-amber-600 hover:bg-amber-700 text-white"
             : "bg-amber-600 hover:bg-amber-700 text-white"
         )}
       >

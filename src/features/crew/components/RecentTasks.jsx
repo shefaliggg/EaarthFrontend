@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Clock, AlertCircle, Calendar } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
@@ -103,10 +103,10 @@ export default function RecentTasks({ isDarkMode }) {
   const filteredTasks = tasks.filter(task => {
     // Status filter
     if (statusFilter !== 'all' && task.status !== statusFilter) return false;
-    
+
     // Priority filter
     if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
-    
+
     return true;
   });
 
@@ -204,13 +204,13 @@ export default function RecentTasks({ isDarkMode }) {
                 )}>
                   <StatusIcon className={cn("w-4 h-4", statusConfig[task.status].color)} />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Badge className="bg-primary/20 text-primary text-xs font-bold border-primary/30">
                       {task.project}
                     </Badge>
-                    <Badge 
+                    <Badge
                       className={cn(
                         "text-xs font-bold border",
                         priorityConfig[task.priority].color,
@@ -221,14 +221,14 @@ export default function RecentTasks({ isDarkMode }) {
                       {priorityConfig[task.priority].label}
                     </Badge>
                   </div>
-                  
+
                   <h3 className={cn(
                     "font-black mb-1 text-sm",
                     isDarkMode ? "text-white" : "text-gray-900"
                   )}>
                     {task.title}
                   </h3>
-                  
+
                   <p className={cn(
                     "text-xs mb-2",
                     isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -252,7 +252,7 @@ export default function RecentTasks({ isDarkMode }) {
               </div>
 
               {task.status === 'pending' && (
-                <button 
+                <button
                   className="w-full mt-3 px-3 py-1.5 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors text-xs"
                 >
                   MARK COMPLETE

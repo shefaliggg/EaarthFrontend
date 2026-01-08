@@ -9,7 +9,6 @@ const TimesheetsLayout = () => {
     const params = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    console.log("params", params)
 
     const currentTab = location.pathname
 
@@ -32,8 +31,8 @@ const TimesheetsLayout = () => {
                 }
 
                 extraActions={
-                    <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"}>
-                        <Settings className="w-4 h-4 text-primary group-hover:text-background" />
+                    <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"} onClick={() => navigate("settings")}>
+                        <Settings className="w-4 h-4 text-primary group-hover:text-background" strokeWidth={3} />
                     </Button>
                 }
 

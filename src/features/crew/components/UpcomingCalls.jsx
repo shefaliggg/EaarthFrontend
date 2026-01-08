@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Clock } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 
 export function UpcomingCalls({ isDarkMode }) {
@@ -61,8 +61,8 @@ export function UpcomingCalls({ isDarkMode }) {
             key={item.id}
             className={cn(
               "p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md",
-              isDarkMode 
-                ? "bg-gray-800/50 border-gray-700 hover:border-gray-600" 
+              isDarkMode
+                ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
                 : "bg-gray-50 border-gray-200 hover:border-gray-300"
             )}
           >
@@ -72,10 +72,10 @@ export function UpcomingCalls({ isDarkMode }) {
                   <Badge className="bg-purple-600 text-white text-xs font-bold border-purple-600 px-2 py-0.5">
                     {item.project}
                   </Badge>
-                  <Badge 
+                  <Badge
                     className={cn(
                       "text-xs font-bold border px-2 py-0.5",
-                      item.status === 'confirmed' 
+                      item.status === 'confirmed'
                         ? "bg-green-500/20 text-green-600 border-green-500/30"
                         : "bg-amber-500/20 text-amber-600 border-amber-500/30"
                     )}
@@ -83,14 +83,14 @@ export function UpcomingCalls({ isDarkMode }) {
                     {item.statusLabel}
                   </Badge>
                 </div>
-                
+
                 <h3 className={cn(
                   "font-black text-base mb-1",
                   isDarkMode ? "text-white" : "text-gray-900"
                 )}>
                   {item.title}
                 </h3>
-                
+
                 <p className={cn(
                   "text-sm mb-2",
                   isDarkMode ? "text-gray-400" : "text-gray-600"

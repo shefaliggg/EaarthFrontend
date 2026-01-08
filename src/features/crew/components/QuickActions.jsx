@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, Briefcase, Calendar, Camera } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { toast } from 'sonner';
 
 export function QuickActions({ isDarkMode }) {
@@ -18,31 +18,31 @@ export function QuickActions({ isDarkMode }) {
       </h2>
 
       <div className="space-y-2">
-        <button 
+        <button
           onClick={() => toast.info('Opening profile editor...')}
           className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
         >
           <Briefcase className="w-4 h-4" />
           EDIT PROFILE
         </button>
-        <button 
+        <button
           onClick={() => toast.info('Opening availability calendar...')}
           className={cn(
             "w-full px-4 py-3 rounded-lg font-bold transition-colors border flex items-center justify-center gap-2",
-            isDarkMode 
-              ? "border-gray-700 hover:bg-gray-800 text-white" 
+            isDarkMode
+              ? "border-gray-700 hover:bg-gray-800 text-white"
               : "border-gray-300 hover:bg-gray-50 text-gray-900"
           )}
         >
           <Calendar className="w-4 h-4" />
           UPDATE AVAILABILITY
         </button>
-        <button 
+        <button
           onClick={() => toast.info('Opening portfolio...')}
           className={cn(
             "w-full px-4 py-3 rounded-lg font-bold transition-colors border flex items-center justify-center gap-2",
-            isDarkMode 
-              ? "border-gray-700 hover:bg-gray-800 text-white" 
+            isDarkMode
+              ? "border-gray-700 hover:bg-gray-800 text-white"
               : "border-gray-300 hover:bg-gray-50 text-gray-900"
           )}
         >

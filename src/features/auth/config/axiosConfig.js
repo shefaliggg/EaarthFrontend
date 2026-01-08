@@ -5,7 +5,6 @@ import { triggerGlobalLogout } from "./globalLogoutConfig";
 
 export const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
 
-
 export const baseURL = getApiUrl();
 
 const toastCache = new Map();
