@@ -66,6 +66,7 @@ const ProjectAppsRoutes = {
         // Other app routes
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
+        { path: 'calendar', element: <ProjectCalendar /> },
 
         
     ],
