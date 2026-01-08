@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Clock, Calendar, MapPin, Video, Camera, FileText, CheckCircle } from 'lucide-react';
-import { cn } from '../../../config/utils';
-import { Badge } from '../../../shared/components/ui/badge';
-import FilterPillTabs from '../../../shared/components/FilterPillTabs';
+import { cn } from '@/shared/config/utils';
+import { Badge } from '@/shared/components/ui/badge';
+import FilterPillTabs from '@/shared/components/FilterPillTabs';
 
 export default function UpcomingSchedule({ isDarkMode }) {
   const [statusFilter, setStatusFilter] = useState('all');
