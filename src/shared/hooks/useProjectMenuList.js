@@ -1,6 +1,10 @@
 import { useLocation } from "react-router-dom";
 import * as Icon from "lucide-react";
-import { convertTitleToUrl, prettifySegment, convertToPrettyText } from "../config/utils";
+import {
+  convertTitleToUrl,
+  prettifySegment,
+  convertToPrettyText,
+} from "../config/utils";
 
 export function useProjectMenus(allProjects = []) {
   const { pathname } = useLocation();
@@ -312,144 +316,18 @@ export function useProjectMenus(allProjects = []) {
     id: "project-settings",
     triggerLabel: "Project Settings",
     triggerIcon: Icon.Settings,
-    dropdownLabel: `Project Settings -${convertToPrettyText(projectName)}`,
-    align: "start",
     items: [
       {
-        id: "general",
-        label: "General",
-        icon: Icon.FileText,
-        subItems: [
-          {
-            id: "project-settings-details",
-            label: "Project Details",
-            icon: Icon.FileText,
-            route: `/projects/${projectName}/details`,
-          },
-          {
-            id: "project-settings-dates",
-            label: "Key Dates",
-            icon: Icon.Calendar,
-            route: `/projects/${projectName}/dates`,
-          },
-          {
-            id: "project-settings-places",
-            label: "Places & Locations",
-            icon: Icon.MapPin,
-            route: `/projects/${projectName}/places`,
-          },
-          {
-            id: "project-settings-contacts",
-            label: "Key Contacts",
-            icon: Icon.Building2,
-            route: `/projects/${projectName}/contacts`,
-          },
-          {
-            id: "project-settings-custom",
-            label: "Branding & Custom",
-            icon: Icon.Palette,
-            route: `/projects/${projectName}/custom`,
-          },
-        ],
+        id: "calendar",
+        label: "Calendar Settings",
+        icon: Icon.Calendar,
+        route: `/projects/${projectName}/calendar-settings`,
       },
       {
-        id: "configuration",
-        label: "Configuration",
-        icon: Icon.Settings,
-        subItems: [
-          {
-            id: "project-settings-defaults",
-            label: "Project Defaults",
-            icon: Icon.Settings,
-            route: `/projects/${projectName}/defaults`,
-          },
-          {
-            id: "project-settings-permissions",
-            label: "Permissions",
-            icon: Icon.Shield,
-            route: `/projects/${projectName}/permissions`,
-          },
-          {
-            id: "project-settings-notifications",
-            label: "Notifications",
-            icon: Icon.Mail,
-            route: `/projects/${projectName}/notifications`,
-          },
-          {
-            id: "project-settings-signers",
-            label: "Signers & Approval",
-            icon: Icon.Edit,
-            route: `/projects/${projectName}/signers`,
-          },
-          {
-            id: "project-settings-departments",
-            label: "Departments",
-            icon: Icon.Layers,
-            route: `/projects/${projectName}/departments`,
-          },
-          {
-            id: "project-settings-timecard",
-            label: "Timecard Settings",
-            icon: Icon.Clock,
-            route: `/projects/${projectName}/timecard`,
-          },
-          {
-            id: "project-settings-vendors",
-            label: "Vendors",
-            icon: Icon.Briefcase,
-            route: `/projects/${projectName}/vendors`,
-          },
-          {
-            id: "project-settings-account-codes",
-            label: "Account Codes",
-            icon: Icon.Hash,
-            route: `/projects/${projectName}/account-codes`,
-          },
-          {
-            id: "project-settings-documents",
-            label: "Documents",
-            icon: Icon.FolderOpen,
-            route: `/projects/${projectName}/documents`,
-          },
-        ],
-      },
-      {
-        id: "rates",
-        label: "Rates",
-        icon: Icon.Users,
-        subItems: [
-          {
-            id: "project-settings-standard-crew",
-            label: "Standard Crew Rates",
-            icon: Icon.Users,
-            route: `/projects/${projectName}/standard-crew`,
-          },
-          {
-            id: "project-settings-construction",
-            label: "Construction Rates",
-            icon: Icon.HardHat,
-            route: `/projects/${projectName}/construction`,
-          },
-        ],
-      },
-      {
-        id: "legal",
-        label: "Legal",
-        icon: Icon.FileCheck,
-        subItems: [
-          {
-            id: "contract-templates",
-            label: "Contract Templates",
-            icon: Icon.FileCheck,
-            route: `/projects/${projectName}/contract-templates`,
-          },
-          {
-            id: "crew-onboarding-settings",
-            label: "Crew Onboarding Settings",
-            icon: Icon.UserCheck,
-            route: `/projects/${projectName}/crew-onboarding`,
-          },
-        ],
+        id: "timecard",
+        label: "Timesheets Settings",
+        icon: Icon.Clock,
+        route: `/projects/${projectName}/timecard`,
       },
     ],
   };
