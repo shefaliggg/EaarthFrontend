@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { cn } from '../../../config/utils';
+import { cn } from '@/shared/config/utils';
 
 export function ProfileCompletionAlert({ profileCompletion, isDarkMode }) {
   if (profileCompletion >= 100) return null;

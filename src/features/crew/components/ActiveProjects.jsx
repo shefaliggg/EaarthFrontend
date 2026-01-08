@@ -1,6 +1,6 @@
 import React from 'react';
 import { Film, Calendar, ArrowRight, Briefcase } from 'lucide-react';
-import { cn } from '../../../config/utils';
+import { cn } from '@/shared/config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import { toast } from 'sonner';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, Briefcase, Calendar, Camera } from 'lucide-react';
-import { cn } from '../../../config/utils';
+import { cn } from '@/shared/config/utils';
 import { toast } from 'sonner';
 
 export function QuickActions({ isDarkMode }) {

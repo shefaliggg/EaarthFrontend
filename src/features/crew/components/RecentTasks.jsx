@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Clock, AlertCircle, Calendar } from 'lucide-react';
-import { cn } from '../../../config/utils';
+import { cn } from '@/shared/config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bell, Calendar, FileText, MessageSquare } from 'lucide-react';
-import { cn } from '../../../config/utils';
+import { cn } from '@/shared/config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 
 export function Notifications({ isDarkMode }) {
