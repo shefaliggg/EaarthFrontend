@@ -3,6 +3,10 @@ import MyOffer from '../../crew/pages/Myoffer';
 import ViewOffer from '../../crew/pages/ViewOffers';
 import CreateOffer from '../../crew/pages/CreateOffer';
 import Contracts from '../../crew/pages/Contracts';
+import ContractDocument from '../../crew/pages/ContractDocument';
+import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
+// import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
+// import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
 
 const ProjectApps = lazy(() => import('../pages/ProjectApps/ProjectApps'));
 const ProjectAppProps = lazy(() => import('../pages/ProjectApps/ProjectAppProps'));
@@ -41,14 +45,28 @@ const ProjectAppsRoutes = {
         // { path: 'vehicles', element: <ProjectAppVehicles /> },
         // { path: 'locations', element: <ProjectAppLocations /> },
         // { path: 'approval', element: <ProjectAppApproval /> },
-        { path: 'onboarding', element: <ProjectOnboarding /> },
-        { path: 'offers', element: <MyOffer /> },
+         { path: 'offers', element: <MyOffer /> },
+        { path: 'offers/:id/view', element: <ViewOffer /> },
+        { path: 'offers/:id/edit', element: <CreateOffer /> },
+        { path: 'offers/:id/review', element: <ViewOffer /> },
+        { path: 'offers/:id/sign', element: <ContractDocument /> },
+        { path: 'offers/:id/production-check', element: <ViewOffer /> },
+        { path: 'offers/:id/accounts-check', element: <ViewOffer /> },
+        { path: 'offers/create', element: <CreateOffer /> },
+        
+        // Legacy routes (keep for backwards compatibility)
         { path: 'viewoffers', element: <ViewOffer /> },
         { path: 'createoffers', element: <CreateOffer /> },
         { path: 'contracts', element: <Contracts /> },
+        { path: 'contractdoc', element: <ContractDocument /> }, 
+        { path: 'offers/:id/sign', element: <ContractDocumentPage /> },
+        { path: 'offers/:id/contract', element: <ContractDocumentPage /> },
+        
+        // Other app routes
+        { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
 
-        { path: '*', element: <NotFound /> }
+        
     ],
 };
 
