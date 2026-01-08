@@ -5,7 +5,8 @@ import {
     Circle, Send, Eye, ShieldCheck, Building2, Banknote, CheckCircle2, BadgeCheck,
     FilePlus, Download, X, DollarSign, ChevronDown, Edit2, RotateCcw, ThumbsUp,
     Edit3, Lock, EyeOff, RefreshCw, Calculator, History, ChevronLeft,
-    MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save
+    MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save,
+    Edit
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../shared/components/ui/popover';
@@ -17,6 +18,8 @@ import { calculatePACTBECTUOvertime, isDayComplete } from '../../config/timeshee
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../../../../../shared/components/ui/command';
 import { cn } from '../../../../../shared/config/utils';
 import TimesheetDataRow from './TimesheetDataRow';
+import { Button } from '../../../../../shared/components/ui/button';
+import { StatusBadge } from '../../../../../shared/components/badges/StatusBadge';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -123,391 +126,6 @@ const ALLOWANCE_FIELDS = [
     { k: 'fuel', l: 'Fuel', type: 'derived' },
     { k: 'mileage', l: 'Mileage', type: 'derived' }
 ];
-
-const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentUserRole = 'Crew', calendarSchedule }) => {
-    const isWork = ['Work', 'Travel', 'Half Day', 'Travel & Turnaround', 'Driver - Cast Travel', 'Training'].includes(entry.dayType);
-    const [openLocation, setOpenLocation] = useState(false);
-    // Crew can only edit specific fields
-    const isCrewRestricted = currentUserRole === 'Crew';
-
-    // Get calendar data for this date
-    const calendarData = calendarSchedule?.[entry.date];
-
-    return (
-        <div className="w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] border-b border-purple-100 bg-purple-50/10 items-stretch">
-            {/* 1. Date */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center items-start pl-3">
-                <span className="font-bold text-gray-800 dark:text-gray-200 text-[9px]">{formatEntryDate(entry.date)}</span>
-                {calendarData && calendarData.dayType === 'Shoot' && (
-                    <div className="flex flex-col mt-1.5 space-y-0.5 leading-none select-none">
-                        <span className="text-[8px] font-bold uppercase text-purple-700 dark:text-purple-400">
-                            {calendarData.unit || 'Main unit'} <span className="font-medium normal-case text-purple-600 dark:text-purple-300">{calendarData.workingHours || '(10 CWD)'}</span>
-                        </span>
-                        <span className="text-[8px] font-medium text-purple-600 dark:text-purple-300">Shoot day #{calendarData.dayNumber || '-'}</span>
-                        <span className="text-[8px] font-bold font-mono text-purple-800 dark:text-purple-200">{calendarData.unitCall || '00:00'}-{calendarData.unitWrap || '00:00'}</span>
-                    </div>
-                )}
-            </div>
-
-            {/* 2. Type / Unit / Workplace */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                {/* Day Type - Prominent */}
-                <select
-                    value={entry.dayType}
-                    onChange={(e) => update('dayType', e.target.value)}
-                    className={`w-full text-[9px] font-bold text-center rounded px-1 py-1 outline-none focus:border-purple-400 uppercase tracking-wide border transition-colors ${entry.dayType === 'Work'
-                        ? 'bg-purple-50 border-purple-200 text-purple-800'
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
-                        }`}
-                >
-                    <option value="">Select...</option>
-                    <option value="Work">Work</option>
-                    <option value="Rest">Rest</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Turnaround">Turnaround</option>
-                    <option value="Holiday">Holiday</option>
-                    <option value="Public holiday off">Public holiday off</option>
-                    <option value="Personal issue">Personal issue</option>
-                    <option value="Sick">Sick</option>
-                    <option value="Training">Training</option>
-                    <option value="Half Day">Half Day</option>
-                    <option value="Travel & Turnaround">Travel & Turnaround</option>
-                    <option value="Driver - Cast Travel">Driver - Cast Travel</option>
-                </select>
-
-                {isWork && (
-                    <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                        {/* Unit & Workplace Row */}
-                        <div className="flex gap-1">
-                            <select
-                                value={entry.unit}
-                                onChange={(e) => update('unit', e.target.value)}
-                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300"
-                            >
-                                <option value="Main">Main Unit</option>
-                                <option value="2nd">2nd Unit</option>
-                            </select>
-
-                            <select
-                                value={entry.workplace?.[0] === 'On Set' || entry.workplace?.[0] === 'Off Set' ? entry.workplace[0] : 'On Set'}
-                                onChange={(e) => update('workplace', [e.target.value])}
-                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300 uppercase"
-                            >
-                                <option value="On Set">ON SET</option>
-                                <option value="Off Set">OFF SET</option>
-                            </select>
-                        </div>
-
-                        {/* Location Input with Popover */}
-                        <div className="flex items-center gap-1 relative">
-                            <input
-                                type="text"
-                                value={entry.workplaceLocation || ''}
-                                onChange={(e) => update('workplaceLocation', e.target.value)}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-700 placeholder-gray-400 outline-none focus:border-purple-300"
-                                placeholder="Location..."
-                            />
-                            <Popover open={openLocation} onOpenChange={setOpenLocation}>
-                                <PopoverTrigger asChild>
-                                    <button className="h-5 w-5 flex items-center justify-center bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 text-gray-500">
-                                        <ChevronsUpDown className="h-3 w-3" />
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0 w-[200px]" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Search location..." className="h-8 text-[10px]" />
-                                        <CommandEmpty>No location found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {LOCATIONS.map((loc) => (
-                                                <CommandItem
-                                                    key={loc}
-                                                    value={loc}
-                                                    onSelect={(currentValue) => {
-                                                        update('workplaceLocation', loc);
-                                                        setOpenLocation(false);
-                                                    }}
-                                                    className="text-[10px]"
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            "mr-2 h-3 w-3",
-                                                            entry.workplaceLocation === loc ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                    />
-                                                    {loc}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* 3. In / Out */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                {isWork ? (
-                    <>
-                        {/* IN TIME */}
-                        <div className="flex gap-1">
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.inTime || '').split(':')[0] || ''}
-                                onChange={(e) => {
-                                    const m = (entry.inTime || '').split(':')[1] || '00';
-                                    update('inTime', `${e.target.value}:${m}`);
-                                }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="" disabled>HH</option>
-                                {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.inTime || '').split(':')[1] || ''}
-                                onChange={(e) => {
-                                    const h = (entry.inTime || '').split(':')[0] || '08';
-                                    update('inTime', `${h}:${e.target.value}`);
-                                }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="" disabled>MM</option>
-                                {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-                            </select>
-                        </div>
-
-                        {/* MEAL */}
-                        <select
-                            value={entry.mealStatus || 'Per calendar day'}
-                            onChange={(e) => update('mealStatus', e.target.value)}
-                            className="w-full text-[9px] border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-purple-300 bg-white text-gray-700"
-                            title="Break Meal"
-                        >
-                            {MEAL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-
-                        {/* OUT TIME */}
-                        <div className="flex gap-1 items-center">
-                            <div className="flex-1 flex gap-1 min-w-0">
-                                <select
-                                    disabled={entry.isFlatDay}
-                                    value={(entry.outTime || '').split(':')[0] || ''}
-                                    onChange={(e) => {
-                                        const m = (entry.outTime || '').split(':')[1] || '00';
-                                        update('outTime', `${e.target.value}:${m}`);
-                                    }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <option value="" disabled>HH</option>
-                                    {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                                </select>
-                                <select
-                                    disabled={entry.isFlatDay}
-                                    value={(entry.outTime || '').split(':')[1] || ''}
-                                    onChange={(e) => {
-                                        const h = (entry.outTime || '').split(':')[0] || '18';
-                                        update('outTime', `${h}:${e.target.value}`);
-                                    }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <option value="" disabled>MM</option>
-                                    {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
-                            </div>
-                            <button
-                                onClick={() => update('nextDay', !entry.nextDay)}
-                                className={`flex-none h-6 w-5 rounded border text-[8px] font-bold transition-all flex items-center justify-center ${entry.nextDay
-                                    ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
-                                    }`}
-                                title="Toggle Next Day"
-                            >
-                                +1
-                            </button>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 px-1">
-                            <input
-                                type="checkbox"
-                                checked={entry.isFlatDay || false}
-                                onChange={(e) => update('isFlatDay', e.target.checked)}
-                                className="w-3 h-3 text-purple-600 rounded border-gray-300 cursor-pointer"
-                                id={`flat-day-${index}`}
-                            />
-                            <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 font-medium cursor-pointer">Flat Day</label>
-                        </div>
-                    </>
-                ) : <div className="text-center text-gray-300">-</div>}
-            </div>
-
-            {/* 4. Upgrade */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                <div className="flex items-center gap-1">
-                    <input
-                        type="checkbox"
-                        checked={entry.isUpgraded || false}
-                        onChange={(e) => update('isUpgraded', e.target.checked)}
-                        className="w-3 h-3 text-purple-600 rounded border-gray-300"
-                        title="Upgrade?"
-                    />
-                    <div className={`flex-1 flex flex-col gap-0.5 ${!entry.isUpgraded ? 'opacity-50' : ''}`}>
-                        <select
-                            disabled={!entry.isUpgraded}
-                            value={entry.upgradeRole || ''}
-                            onChange={(e) => {
-                                const roleName = e.target.value;
-                                update('upgradeRole', roleName);
-                                const role = upgradeRoles.find(r => r.name === roleName);
-                                if (role) {
-                                    update('upgradeRate', role.rate);
-                                }
-                            }}
-                            className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-purple-700 font-bold"
-                        >
-                            <option value="">Role...</option>
-                            {upgradeRoles.map(role => (
-                                <option key={role.id} value={role.name}>{role.name}</option>
-                            ))}
-                        </select>
-                        {entry.isUpgraded && (
-                            <input
-                                type="number"
-                                value={entry.upgradeRate || ''}
-                                onChange={(e) => update('upgradeRate', parseFloat(e.target.value))}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700"
-                                placeholder="Rate (£)"
-                            />
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* 5. Overview (Swapped position) */}
-            <div className="p-1 border-r border-purple-100 flex items-center bg-white">
-                <div className="w-full flex flex-col gap-0.5">
-                    <div className="grid grid-cols-4 gap-0.5">
-                        {OVERVIEW_FIELDS.map((f) => {
-                            const isDerived = f.type === 'derived';
-
-                            // 1. Determine Display Value
-                            let rawVal = entry[f.k];
-                            if ((rawVal === undefined || rawVal === '' || rawVal === 0) && autoValues && autoValues[f.k] !== undefined) {
-                                rawVal = autoValues[f.k];
-                                if (rawVal === 0) rawVal = '';
-                            }
-
-                            // 2. Prepare Effective Entry for Derived Calculations (Salary)
-                            const effectiveEntry = { ...entry };
-                            if (autoValues) {
-                                Object.keys(autoValues).forEach(k => {
-                                    if (effectiveEntry[k] === undefined || effectiveEntry[k] === '' || effectiveEntry[k] === null || effectiveEntry[k] === 0) {
-                                        effectiveEntry[k] = autoValues[k];
-                                    }
-                                });
-                            }
-
-                            const val = isDerived ? f.getValue(effectiveEntry) : rawVal;
-
-                            return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight">{f.l}</span>
-                                    {f.type === 'bool' ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={!!val}
-                                            onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
-                                            disabled={isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 text-black focus:ring-black ${isCrewRestricted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        />
-                                    ) : f.k === 'night' ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={Number(val) > 0}
-                                            onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.checked ? 1 : 0)}
-                                            disabled={isDerived || isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${(isDerived || isCrewRestricted) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                        />
-                                    ) : (
-                                        <input
-                                            type="number"
-                                            value={val}
-                                            onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.value)}
-                                            readOnly={isDerived || isCrewRestricted}
-                                            className={`w-6 text-[8px] bg-transparent text-right font-mono outline-none p-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
-                                                } ${isDerived ? 'opacity-70 cursor-default' : ''}`}
-                                            placeholder={isDerived ? '' : '-'}
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            {/* 6. Allowances (Swapped position) */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1">
-                <div className="w-full flex flex-col gap-0.5">
-                    <div className="grid grid-cols-3 gap-0.5">
-                        {[
-                            { k: 'perDiemShoot', l: 'Per Diem Shoot', type: 'bool' },
-                            { k: 'perDiemNon', l: 'Per Diem Non Shoot', type: 'bool' },
-                            { k: 'breakfast', l: 'Breakfast', type: 'bool' },
-                            { k: 'lunch', l: 'Lunch', type: 'bool' },
-                            { k: 'dinner', l: 'Dinner', type: 'bool' },
-                            ...ALLOWANCE_FIELDS
-                        ].map((f) => {
-                            const val = entry[f.k];
-                            const isBool = f.type === 'bool';
-                            // Determine if field is editable by crew
-                            const isEditableByCrew = ['perDiemShoot', 'perDiemNon', 'breakfast', 'lunch', 'dinner'].includes(f.k);
-                            // Should be disabled if restricted role AND not one of the allowed fields
-                            const isDisabled = isCrewRestricted && !isEditableByCrew;
-
-                            return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mr-1" title={f.l}>{f.l}</span>
-                                    {isBool ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={!!val}
-                                            onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
-                                            disabled={isDisabled}
-                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                        />
-                                    ) : (
-                                        <input
-                                            type="number"
-                                            value={val || ''}
-                                            onChange={(e) => update(f.k, e.target.value)}
-                                            disabled={isDisabled}
-                                            readOnly={isDisabled}
-                                            className={`w-8 text-[8px] bg-transparent text-right font-mono outline-none p-0 shrink-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
-                                                } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                                            placeholder="-"
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            {/* 7. Notes (Moved to end) */}
-            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                <textarea
-                    value={entry.notes || ''}
-                    onChange={(e) => update('notes', e.target.value)}
-                    className="w-full h-10 bg-white border border-gray-200 rounded px-1 py-0.5 text-[9px] text-gray-700 placeholder-gray-400 outline-none resize-none focus:border-purple-300 transition-colors"
-                    placeholder="Notes..."
-                />
-            </div>
-        </div>
-    );
-};
 
 export function TimesheetForm({
     isDarkMode,
@@ -1224,27 +842,29 @@ export function TimesheetForm({
     }
 
     return (
-        <div className={`relative h-full w-full flex flex-col ${theme.bg} ${theme.text} overflow-hidden font-sans text-[10px]`}>
+        <div
+            className={`relative flex flex-col bg-card overflow-hidden`}
+        >
 
             {/* TOP HEADER - Compact (with Loan Out company name support) */}
-            <div className={`flex-none px-4 py-3 border-b flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
+            <div className={`flex-none px-4 pb-4 pt-1 border-b flex justify-between items-start shadow-sm z-10 relative`}>
 
                 <div className="flex gap-10">
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Name</span>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Name</span>
                         <span className="text-sm font-black uppercase text-purple-950 dark:text-gray-100">{crewInfo.firstName} {crewInfo.lastName}</span>
                         <span className="text-[10px] text-purple-600 font-medium">{crewInfo.role}</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Department</span>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Department</span>
                         <span className="text-xs font-bold uppercase text-gray-700 dark:text-gray-300">{crewInfo.department}</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Week Ending</span>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Week Ending</span>
                         <span className="text-xs font-bold uppercase text-gray-700 dark:text-gray-300">Sun 16 Nov 2025</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Contract</span>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">Contract</span>
                         <span className="text-xs font-bold uppercase text-gray-700 dark:text-gray-300">
                             {crewType === 'weekly' ? 'Weekly' : 'Daily'} / {contractCategory === 'SCHD' ? 'Sched D' : contractCategory === 'Loan Out' ? 'Loan Out' : contractCategory}
                         </span>
@@ -1254,63 +874,107 @@ export function TimesheetForm({
                 <div className="flex gap-4">
                     <div className="flex items-center gap-2 pl-4 border-l border-purple-100">
                         {/* Crew-specific buttons */}
-                        {currentUserRole === 'Crew' && (
+                        {currentUserRole === "Crew" && (
                             <>
                                 {!isEditingWeek && !readOnly && !isPaid ? (
-                                    <button onClick={handleCrewEdit} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" title="Edit Timesheet">
-                                        <Edit3 className="w-4 h-4" />
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={handleCrewEdit}
+                                        title="Edit Timesheet"
+                                        className="uppercase text-[10px] tracking-wider"
+                                    >
+                                        <Edit3 className="size-3 mr-1" />
                                         Edit
-                                    </button>
+                                    </Button>
                                 ) : !readOnly && !isPaid ? (
                                     <>
-                                        <button onClick={handleCrewSave} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" title="Save as Draft">
-                                            <Save className="w-4 h-4" />
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={handleCrewSave}
+                                            title="Save as Draft"
+                                            className="uppercase text-[10px] tracking-wider"
+                                        >
+                                            <Save className="size-3 mr-1" />
                                             Save
-                                        </button>
-                                        <button onClick={handleCrewSubmit} className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" title="Submit Timesheet">
-                                            <Send className="w-4 h-4" />
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={handleCrewSubmit}
+                                            title="Submit Timesheet"
+                                            className="uppercase text-[10px] tracking-wider bg-green-600 hover:bg-green-700"
+                                        >
+                                            <Send className="size-3 mr-1" />
                                             Submit
-                                        </button>
+                                        </Button>
                                     </>
                                 ) : null}
                             </>
                         )}
 
                         {/* HOD/Finance/Payroll buttons */}
-                        {currentUserRole !== 'Crew' && (
+                        {currentUserRole !== "Crew" && (
                             <>
                                 {!isEditingWeek ? (
-                                    <button onClick={handleRevise} className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 transition-all hover:scale-105 active:scale-95" title="Edit Timesheet">
-                                        <Edit3 className="w-4 h-4" />
-                                    </button>
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={handleRevise}
+                                        title="Revise Timesheet"
+                                    >
+                                        <Edit3 className="size-3" />
+                                    </Button>
                                 ) : (
                                     <>
-                                        <button onClick={handleRevert} className="px-3 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider" title="Revert Changes">
-                                            <RotateCcw className="w-3.5 h-3.5" />
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleRevert}
+                                            title="Revert Changes"
+                                            className="uppercase text-[10px] tracking-wider"
+                                        >
+                                            <RotateCcw className="size-3 mr-1" />
                                             Revert
-                                        </button>
-                                        <button onClick={handleRecalculate} className="px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider" title="Recalculate Totals">
-                                            <Calculator className="w-3.5 h-3.5" />
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={handleRecalculate}
+                                            title="Recalculate Totals"
+                                            className="uppercase text-[10px] tracking-wider"
+                                        >
+                                            <Calculator className="size-3 mr-1" />
                                             Recalculate
-                                        </button>
-                                        <button onClick={handleApprove} className="px-3 py-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 transition-all shadow-sm hover:shadow-md flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider" title="Save Revision">
-                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={handleApprove}
+                                            title="Approve Revision"
+                                            className="uppercase text-[10px] tracking-wider bg-green-600 hover:bg-green-700"
+                                        >
+                                            <CheckCircle2 className="size-3 mr-1" />
                                             Revised
-                                        </button>
+                                        </Button>
                                     </>
                                 )}
                             </>
                         )}
-                        <button onClick={() => setShowGraphicalView(true)} className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all" title="View Charts">
+                        <Button size={"icon"} variant={"outline"} onClick={() => setShowGraphicalView(true)} title="View Charts">
                             <Calculator className="w-4 h-4" />
-                        </button>
+                        </Button>
 
                         {/* Audit Log */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <button className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all" title="Audit Log">
+                                <Button size={"icon"} variant={"outline"} title="Audit Log">
                                     <History className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-80 p-0 z-50" align="end">
                                 <div className="p-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
@@ -1321,7 +985,7 @@ export function TimesheetForm({
                                         <div className="text-center text-gray-400 py-4 text-[10px]">No changes recorded since submission</div>
                                     ) : (
                                         auditLogs.map((log, i) => (
-                                            <div key={i} className="text-[9px] border-b border-gray-50 pb-2 last:border-0">
+                                            <div key={i} className="text-[10px] border-b border-gray-50 pb-2 last:border-0">
                                                 <div className="flex justify-between text-gray-400 mb-0.5">
                                                     <span>{log.date}</span>
                                                     <span className="font-bold">{log.user}</span>
@@ -1334,31 +998,27 @@ export function TimesheetForm({
                             </PopoverContent>
                         </Popover>
 
-                        <button
+                        <Button size={"icon"} variant={"outline"}
                             onClick={() => setShowMileageForm(true)}
-                            className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all"
                             title="Mileage & Fuel Reimbursement"
                         >
                             <Car className="w-4 h-4" />
-                        </button>
+                        </Button>
 
                         {/* Financial Summary Button */}
-                        <button
+                        <Button size={"icon"} variant={"outline"}
                             onClick={() => setShowFinancialSummary(true)}
-                            className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all"
                             title="Financial Summary"
                         >
                             <Wallet className="w-4 h-4" />
-                        </button>
+                        </Button>
 
                         {/* Week Completion Indicator - Compact version for header */}
-                        {isEditingWeek && localEntries.length > 0 && (
-                            <WeekCompletionIndicator
-                                weekEntries={localEntries}
-                                isDarkMode={isDarkMode}
-                                compact={true}
-                            />
-                        )}
+
+                        <WeekCompletionIndicator
+                            weekEntries={localEntries}
+                            compact={true}
+                        />
 
                         <TimesheetHeaderButtons
                             currentUserRole={currentUserRole}
@@ -1368,32 +1028,29 @@ export function TimesheetForm({
                             onFinanceAction={() => {/* TODO: Add functionality */ }}
                         />
 
-                        {/* Status Badge - Moved to Far Right */}
+                        {/* Status Badge - Far Right */}
                         {(() => {
-                            // All 5 boxes must have a name to be "Fully Approved"
-                            // Note: If Payroll signature is optional/empty in initial state, user logic implies it must be filled for Green.
-                            const isFullyApproved = signatures.length === 5 && signatures.every(s => s.name && s.date);
+                            const isFullyApproved =
+                                signatures.length === 5 && signatures.every(s => s.name && s.date)
 
-                            let badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                            let dotStyle = 'bg-emerald-500';
-                            let label = 'Submitted';
+                            let status = "submitted"
 
                             if (isEditingWeek) {
-                                badgeStyle = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                                dotStyle = 'bg-yellow-500';
-                                label = 'Editing';
+                                status = "editing"
                             } else if (isFullyApproved) {
-                                badgeStyle = 'bg-green-100 text-green-700 border-green-300';
-                                dotStyle = 'bg-green-600';
-                                label = 'Approved';
+                                status = "approved"
                             }
 
                             return (
-                                <div className={`h-8 px-3 rounded-lg flex items-center gap-2 border shadow-sm transition-all ${badgeStyle}`}>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${dotStyle} ${isEditingWeek ? 'animate-pulse' : ''}`} />
-                                    <span className="text-[10px] font-black uppercase tracking-wider">{label}</span>
-                                </div>
-                            );
+                                <StatusBadge
+                                    status={status}
+                                    size="sm"
+                                    className={cn(
+                                        "uppercase tracking-wider shadow-sm",
+                                        isEditingWeek && "animate-pulse"
+                                    )}
+                                />
+                            )
                         })()}
                     </div>
                 </div>
@@ -1405,20 +1062,24 @@ export function TimesheetForm({
                 <TimesheetStatusWatermark status={timesheetStatus} isDarkMode={isDarkMode} mode="watermark" />
 
                 {/* LEFT COLUMN: Timecard Grid */}
-                <div className={`flex-1 flex flex-col border-r bg-white dark:bg-[#0f0e13] overflow-hidden`}>
+                <div className="flex-1 flex flex-col border-r overflow-hidden">
                     <div className="overflow-x-auto">
                         {/* WIDTH LOCK */}
-                        <div className="min-w-[1400px] max-w-[1800px]">
+                        <div className="min-w-[1400px] w-[1400px] max-w-[1400px]">
 
-                            {/* ================= HEADER ================= */}
-                            <div className={`grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] bg-purple-50/80 dark:bg-purple-900/20 border-b text-[9px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider sticky top-0 z-10`}>
-                                <div className="p-2 border-r">Date Calendar</div>
-                                <div className="p-2 border-r">Type / Unit Location</div>
-                                <div className="p-2 border-r">In / Out</div>
-                                <div className="p-2 border-r">Upgrade</div>
-                                <div className="p-2 border-r text-center">Overview</div>
-                                <div className="p-2 border-r text-center">Allowances</div>
-                                <div className="p-2">Notes</div>
+                            <div className="grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] 
+                              bg-purple-50/80 dark:bg-purple-900/20 
+                                border-b text-[10px] font-black uppercase tracking-wider 
+                                sticky top-0 z-10 py-0.5"
+                            >
+
+                                <div className="p-2 border-r min-w-0">Date Calendar</div>
+                                <div className="p-2 border-r min-w-0">Type / Unit Location</div>
+                                <div className="p-2 border-r min-w-0">In / Out</div>
+                                <div className="p-2 border-r min-w-0">Upgrade</div>
+                                <div className="p-2 border-r text-center min-w-0">Overview</div>
+                                <div className="p-2 border-r text-center min-w-0">Allowances</div>
+                                <div className="p-2 min-w-0">Notes</div>
                             </div>
 
                             <div>
@@ -1469,114 +1130,11 @@ export function TimesheetForm({
                         isDarkMode={isDarkMode}
                         signatures={signatures}
                     />
-                    <div className={`hidden px-4 py-3 border-t bg-purple-50 dark:bg-gray-800/50 h-[35mm] flex-none`}>
-                        <div className="grid grid-cols-5 gap-2 h-full">
-                            {[
-                                { label: 'Crew Member', name: `${crewInfo.firstName} ${crewInfo.lastName}`, date: '16 Nov 18:30', code: '8F2A-91', role: crewInfo.jobTitle },
-                                { label: 'HOD / Dept', name: 'Michael Chen', date: '16 Nov 19:15', code: '7B3X-04', role: 'Location Manager' },
-                                { label: 'Production', name: 'Bernie Bellew', date: '18 Dec 04:31', code: 'PD-782', role: 'Line Producer' },
-                                { label: 'Accounts', name: 'Dan Palmer', date: '18 Dec 10:45', code: 'AC-441', role: 'Financial Controller' },
-                                { label: 'Payroll', name: '', date: '', code: '', role: '' }
-                            ].map((sig) => (
-                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full ${theme.card}`}>
-                                    {/* APPROVED Stamp - Only show when signed */}
-                                    {sig.name && (
-                                        <div
-                                            className="absolute top-1/2 left-1/2 z-10 pointer-events-none flex items-center gap-1 px-2 py-1 rounded"
-                                            style={{
-                                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                                border: '2px solid rgba(34, 197, 94, 0.1)',
-                                                transform: 'translate(-50%, -50%) rotate(-12deg)',
-                                            }}
-                                        >
-                                            <BadgeCheck
-                                                className="flex-none"
-                                                style={{
-                                                    width: '24px',
-                                                    height: '24px',
-                                                    color: '#22c55e',
-                                                    opacity: 0.1
-                                                }}
-                                            />
-                                            <span
-                                                className="text-[8px] font-black uppercase tracking-wide leading-none"
-                                                style={{
-                                                    color: '#22c55e',
-                                                    opacity: 0.1
-                                                }}
-                                            >
-                                                APPROVED
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-[6px] font-black uppercase tracking-wider truncate text-purple-400" title={sig.label}>{sig.label}</span>
-                                    </div>
-
-                                    <div className="flex-1 flex flex-col justify-center gap-0.5 min-h-0">
-                                        {/* Role/Title - shown when approved */}
-                                        {sig.name && sig.role && (
-                                            <div
-                                                className="text-[7.5px] font-bold text-center leading-tight px-1"
-                                                style={{
-                                                    color: isDarkMode ? '#9ca3af' : '#4b5563'
-                                                }}
-                                            >
-                                                {sig.role}
-                                            </div>
-                                        )}
-
-                                        {/* Signature */}
-                                        {sig.name ? (
-                                            <div
-                                                className="font-handwriting opacity-90 rotate-[-2deg] text-center"
-                                                style={{
-                                                    fontSize: '14px',
-                                                    color: isDarkMode ? '#d8b4fe' : '#581c87',
-                                                    lineHeight: '1.2'
-                                                }}
-                                            >
-                                                {sig.name}
-                                            </div>
-                                        ) : (
-                                            <div className="w-12 h-6 border-b border-dashed mx-auto border-gray-200 dark:border-gray-600"></div>
-                                        )}
-
-                                        {/* Timestamp - formatted as "on: DD Month YYYY HH:MM GMT" */}
-                                        {sig.name && sig.date && (
-                                            <div
-                                                className="text-[6.5px] text-center leading-tight"
-                                                style={{
-                                                    color: '#9ca3af'
-                                                }}
-                                            >
-                                                on: {sig.date} GMT
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {sig.name && (
-                                        <div className="flex justify-between items-end pt-0.5 mt-1 border-t border-purple-50 dark:border-gray-700">
-                                            <div className="flex flex-col leading-none">
-                                                <span className="text-[5px] uppercase font-bold text-gray-400">Date</span>
-                                                <span className="text-[6px] font-mono text-purple-800 dark:text-purple-300">{sig.date}</span>
-                                            </div>
-                                            <div className="flex flex-col items-end leading-none">
-                                                <span className="text-[5px] uppercase font-bold text-gray-400">Ref</span>
-                                                <span className="text-[6px] font-mono text-purple-800 dark:text-purple-300">{sig.code}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </div>
 
                 {/* RIGHT COLUMN: Financial Summary with Holiday Column */}
-                <div className={`w-[110mm] flex-none flex flex-col border-l bg-white dark:bg-[#0f0e13]`}>
-                    <div className={`p-2.5 font-black text-center text-[9px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
+                <div className={`w-[360px] flex-none flex flex-col border-l bg-white dark:bg-[#0f0e13]`}>
+                    <div className={`p-2.5 font-black text-center text-[10px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
                         Financial Summary <span className="opacity-70 ml-1">(Weekly Rate - {c(crewInfo.weeklyRate || crewInfo.dailyRate * 5)})</span>
                     </div>
 
@@ -1591,7 +1149,7 @@ export function TimesheetForm({
 
                     <div className="flex-1 overflow-y-auto">
                         {summaryData.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[8px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
+                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[10px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
                                 }`}>
                                 {/* Item name */}
                                 <div className={`font-medium truncate leading-tight text-black`}>
@@ -1599,7 +1157,7 @@ export function TimesheetForm({
                                 </div>
 
                                 {/* Rate / Holiday stacked */}
-                                <div className="text-center font-mono text-[8px]">
+                                <div className="text-center font-mono text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
                                             <span className="text-black">{n(row.rate)}</span>
@@ -1611,10 +1169,10 @@ export function TimesheetForm({
                                 </div>
 
                                 {/* Unit */}
-                                <div className="text-center font-mono text-[8px] text-black font-medium">{n(row.u)}</div>
+                                <div className="text-center font-mono text-[10px] text-black font-medium">{n(row.u)}</div>
 
                                 {/* Total A / Total B stacked */}
-                                <div className="text-center font-mono text-[8px]">
+                                <div className="text-center font-mono text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
                                             <span className="text-black">
@@ -1640,14 +1198,14 @@ export function TimesheetForm({
                     </div>
 
 
-                    <div className={`p-3 ${isDarkMode ? 'bg-[#181621]' : 'bg-purple-50'} border-t h-[35mm] flex-none`}>
+                    <div className={`p-3 bg-[#181621]bg-purple-50 border-t flex-none`}>
                         <div className="space-y-1 mb-2">
-                            <div className="flex justify-between items-center text-[9px]">
+                            <div className="flex justify-between items-center text-[10px]">
                                 <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
                                 <span className="font-mono font-bold text-black">{c(totals.net)}</span>
                             </div>
                             {vatAmount > 0 && (
-                                <div className="flex justify-between items-center text-[9px]">
+                                <div className="flex justify-between items-center text-[10px]">
                                     <span className="font-bold uppercase tracking-wider text-black">VAT (20%)</span>
                                     <span className="font-mono text-black">{c(totals.vat)}</span>
                                 </div>

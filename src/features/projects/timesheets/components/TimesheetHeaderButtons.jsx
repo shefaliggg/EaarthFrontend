@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download, FileText, DollarSign } from 'lucide-react';
+import { Button } from '../../../../shared/components/ui/button';
 
 export function TimesheetHeaderButtons({
   currentUserRole,
@@ -13,29 +14,26 @@ export function TimesheetHeaderButtons({
   return (
     <>
       {currentUserRole === 'Finance' && (
-        <button 
-          onClick={onFinanceAction} 
-          className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all" 
+        <Button size={"icon"} variant={"outline"}
+          onClick={onFinanceAction}
           title="Accounts Only"
         >
           <DollarSign className="w-4 h-4" />
-        </button>
+        </Button>
       )}
-      <button 
-        onClick={onExportTimesheet} 
-        className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all" 
+      <Button size={"icon"} variant={"outline"}
+        onClick={onExportTimesheet}
         title="Download Timesheet"
       >
         <Download className="w-4 h-4" />
-      </button>
+      </Button>
       {canDownloadInvoice && (
-        <button 
-          onClick={onExportInvoice} 
-          className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 transition-all" 
+        <Button size={"icon"} variant={"outline"}
+          onClick={onExportInvoice}
           title="Download Invoice"
         >
           <FileText className="w-4 h-4" />
-        </button>
+        </Button>
       )}
     </>
   );

@@ -33,7 +33,7 @@ export function TimesheetMiniField({
             )}
         >
             {/* LABEL */}
-            <span className="text-[7px] font-medium text-muted-foreground truncate">
+            <span className="text-[9px] font-medium text-muted-foreground truncate">
                 {label}
             </span>
 
@@ -59,7 +59,7 @@ export function TimesheetMiniField({
                                 onChange(fieldKey, Number(e.target.value) || 0)
                             }
                             className={cn(
-                                "h-4 w-7 px-0.5 text-[8px] font-mono text-right",
+                                "h-4 w-7 px-0.5 text-xs font-mono text-right",
                                 "bg-transparent border-none shadow-none",
                                 "focus-visible:ring-0 focus-visible:outline-none"
                             )}
@@ -86,7 +86,7 @@ export function TimesheetMiniField({
                     </div>
                 )
             ) : (
-                <span className="text-[8px] text-primary">
+                <span className="text-xs text-primary">
                     {numValue ? numValue : <Minus className="size-3 opacity-50" />}
                 </span>
             )}
