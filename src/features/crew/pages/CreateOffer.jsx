@@ -240,7 +240,6 @@ const createDefaultRole = (index) => ({
   allowances: getDefaultAllowances(),
 });
 
-
 // Utility function for conditional classes
 const cn = (...classes) => {
   return classes.filter(Boolean).join(' ');
@@ -523,7 +522,7 @@ export default function CreateOffer() {
   return (
     <div className="">
       {/* Header */}
-      <div className="sticky  px-4 py-3">
+      <div className="sticky px-4 py-3">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${projectName}/onboarding`)}>
@@ -551,140 +550,129 @@ export default function CreateOffer() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p space-y-4">
+      <div className="max-w-7xl mx-auto p-4 space-y-4">
         {/* Recipient Section */}
-        <Card className="border-0 shadow-sm overflow-hidden">
-  <SectionHeader
-    title="Recipient"
-    icon={User}
-    section="recipient"
-    isOpen={expandedSections.recipient}
-  />
-
-  {expandedSections.recipient && (
-    <CardContent className="p-4 space-y-6">
-
-      {/* === Row 1: Full Name | Email | Mobile === */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <FormField label="Full Name" required>
-          <Input
-            value={formData.fullName}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                fullName: e.target.value.toUpperCase(),
-              })
-            }
-            placeholder="ENTER FULL NAME"
-            className="uppercase"
+        <Card className="border-0 shadow-sm py-0 overflow-hidden">
+          <SectionHeader
+            title="Recipient"
+            icon={User}
+            section="recipient"
+            isOpen={expandedSections.recipient}
           />
-        </FormField>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
-            Email <span className="text-destructive">*</span>
-            <span className="font-normal text-muted-foreground ml-1 text-[10px] normal-case">
-              (Preferred email for engine account)
-            </span>
-          </Label>
-          <Input
-            type="email"
-            value={formData.emailAddress}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                emailAddress: e.target.value.toLowerCase(),
-              })
-            }
-            placeholder="email@example.com"
-          />
-        </div>
+          {expandedSections.recipient && (
+            <CardContent className="p-4 space-y-4">
+              {/* Row 1: Full Name | Email | Mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormField label="Full Name" required>
+                  <Input
+                    value={formData.fullName}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        fullName: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="ENTER FULL NAME"
+                    className="uppercase"
+                  />
+                </FormField>
 
-        <FormField label="Mobile Number">
-          <Input
-            type="tel"
-            value={formData.mobileNumber}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                mobileNumber: e.target.value,
-              })
-            }
-            placeholder="+44 7XXX XXXXXX"
-          />
-        </FormField>
+                <FormField label="Email" required tooltip="Preferred email for engine account">
+                  <Input
+                    type="email"
+                    value={formData.emailAddress}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        emailAddress: e.target.value.toLowerCase(),
+                      })
+                    }
+                    placeholder="email@example.com"
+                  />
+                </FormField>
 
-      </div>
+                <FormField label="Mobile Number">
+                  <Input
+                    type="tel"
+                    value={formData.mobileNumber}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        mobileNumber: e.target.value,
+                      })
+                    }
+                    placeholder="+44 7XXX XXXXXX"
+                  />
+                </FormField>
+              </div>
 
-      {/* === Via Agent Checkbox === */}
-      <div className="flex items-center gap-3 pt-2">
-        <Checkbox
-          id="isViaAgent"
-          checked={formData.isViaAgent}
-          onCheckedChange={(checked) =>
-            setFormData({ ...formData, isViaAgent: checked })
-          }
-        />
-        <Label
-          htmlFor="isViaAgent"
-          className="text-sm font-medium cursor-pointer"
-        >
-          Recipient is represented via an agent?
-        </Label>
-      </div>
+              {/* Via Agent Checkbox */}
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="isViaAgent"
+                  checked={formData.isViaAgent}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isViaAgent: checked })
+                  }
+                />
+                <Label
+                  htmlFor="isViaAgent"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Recipient is represented via an agent?
+                </Label>
+              </div>
 
-      {/* === Agent Details === */}
-      {formData.isViaAgent && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50">
-          <FormField label="Agent Name">
-            <Input
-              value={formData.agentName}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  agentName: e.target.value.toUpperCase(),
-                })
-              }
-              placeholder="AGENT'S FULL NAME"
-              className="uppercase"
-            />
-          </FormField>
+              {/* Agent Details - 2 columns */}
+              {formData.isViaAgent && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50">
+                  <FormField label="Agent Name">
+                    <Input
+                      value={formData.agentName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          agentName: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="AGENT'S FULL NAME"
+                      className="uppercase"
+                    />
+                  </FormField>
 
-          <FormField label="Agent Email Address">
-            <Input
-              type="email"
-              value={formData.agentEmailAddress}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  agentEmailAddress: e.target.value.toLowerCase(),
-                })
-              }
-              placeholder="agent@example.com"
-            />
-          </FormField>
-        </div>
-      )}
+                  <FormField label="Agent Email Address">
+                    <Input
+                      type="email"
+                      value={formData.agentEmailAddress}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          agentEmailAddress: e.target.value.toLowerCase(),
+                        })
+                      }
+                      placeholder="agent@example.com"
+                    />
+                  </FormField>
+                </div>
+              )}
 
-      {/* === Alternative Contract Type === */}
-      <FormField label="Alternative Contract Type">
-        <SelectField
-          value={formData.alternativeContractType}
-          onChange={(v) =>
-            setFormData({ ...formData, alternativeContractType: v })
-          }
-          options={CONTRACT_OPTIONS}
-        />
-      </FormField>
-
-    </CardContent>
-  )}
-</Card>
-
+              {/* Alternative Contract Type - Full width */}
+              <FormField label="Alternative Contract Type">
+                <SelectField
+                  value={formData.alternativeContractType}
+                  onChange={(v) =>
+                    setFormData({ ...formData, alternativeContractType: v })
+                  }
+                  options={CONTRACT_OPTIONS}
+                />
+              </FormField>
+            </CardContent>
+          )}
+        </Card>
 
         {/* Tax Status Section */}
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 py-0 shadow-sm overflow-hidden">
           <SectionHeader title="Tax Status" icon={Briefcase} section="taxStatus" isOpen={expandedSections.taxStatus} />
           {expandedSections.taxStatus && (
             <CardContent className="p-4 space-y-4">
@@ -705,6 +693,7 @@ export default function CreateOffer() {
                   ))}
                 </div>
               </FormField>
+              
               {formData.allowAsSelfEmployedOrLoanOut === "YES" && (
                 <FormField label="Status Determination Reason">
                   <SelectField 
@@ -714,6 +703,7 @@ export default function CreateOffer() {
                   />
                 </FormField>
               )}
+              
               {formData.statusDeterminationReason === "OTHER" && (
                 <FormField label="Please Specify Other Reason">
                   <Input 
@@ -729,101 +719,79 @@ export default function CreateOffer() {
         </Card>
 
         {/* Roles Section */}
-        <Card className="border-0 shadow-sm overflow-hidden">
-  <SectionHeader
-    title="Roles & Rates"
-    icon={DollarSign}
-    section="roles"
-    isOpen={expandedSections.roles}
-  />
+        <Card className="border-0 py-0 shadow-sm overflow-hidden">
+          <SectionHeader
+            title="Roles & Rates"
+            icon={DollarSign}
+            section="roles"
+            isOpen={expandedSections.roles}
+          />
 
-  {expandedSections.roles && (
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">
-          Configure one or more roles for this offer
-        </p>
+          {expandedSections.roles && (
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure one or more roles for this offer
+              </p>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={addRole}
-          className="gap-2"
-          data-testid="button-add-role"
-        >
-          <Plus className="w-4 h-4" />
-          Add Role
-        </Button>
-      </div>
+              <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab}>
+                <div className="flex items-center gap-2 mb-4">
+                  <TabsList className="h-auto p-0 bg-transparent gap-1">
+                    {roles.map((role) => (
+                      <TabsTrigger
+                        key={role.id}
+                        value={role.id}
+                        className="gap-2 data-[state=active]:bg-muted"
+                        data-testid={`tab-role-${role.id}`}
+                      >
+                        {role.isPrimaryRole && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] bg-primary/10 text-primary px-2 py-0"
+                          >
+                            PRIMARY
+                          </Badge>
+                        )}
+                        <span className="text-sm">{role.roleName}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
 
-      <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab}>
-        <TabsList className="w-ful justify-start overflow-x-auto flex-wrap">
-          {roles.map((role) => (
-            <TabsTrigger
-              key={role.id}
-              value={role.id}
-              className="gap-2"
-              data-testid={`tab-role-${role.id}`}
-            >
-              {role.isPrimaryRole && (
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] bg-primary/10 text-primary"
-                >
-                  PRIMARY
-                </Badge>
-              )}
-              {role.roleName}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addRole}
+                    className="gap-1.5 ml-auto"
+                    data-testid="button-add-role"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Role
+                  </Button>
+                </div>
 
-        {roles.map((role) => (
-          <TabsContent
-            key={role.id}
-            value={role.id}
-            className="space-y-4"
-          >
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-              <label
-                htmlFor={`primary-${role.id}`}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <Checkbox
-                  id={`primary-${role.id}`}
-                  checked={role.isPrimaryRole}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setRoles(
-                        roles.map((r) => ({
-                          ...r,
-                          isPrimaryRole: r.id === role.id,
-                        }))
-                      );
-                    }
-                  }}
-                />
-                <span className="text-sm font-medium">
-                  Set as Primary Role
-                </span>
-              </label>
+                {roles.map((role) => (
+                  <TabsContent
+                    key={role.id}
+                    value={role.id}
+                    className="space-y-4"
+                  >
+                    {/* Remove Role Button - only show for non-primary roles when multiple roles exist */}
+                    {roles.length > 1 && !role.isPrimaryRole && (
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive gap-2"
+                          onClick={() => removeRole(role.id)}
+                          data-testid={`button-remove-role-${role.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remove This Role
+                        </Button>
+                      </div>
+                    )}
 
-              {roles.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive gap-2"
-                  onClick={() => removeRole(role.id)}
-                  data-testid={`button-remove-role-${role.id}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Remove This Role
-                </Button>
-              )}
-            </div>
-          
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Unit & Department - 3 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField label="Unit" required>
                         <Input 
                           value={role.unit} 
@@ -832,6 +800,7 @@ export default function CreateOffer() {
                           className="uppercase" 
                         />
                       </FormField>
+                      
                       <FormField label="Department" required>
                         <SelectField 
                           value={role.department} 
@@ -839,130 +808,127 @@ export default function CreateOffer() {
                           options={[{ value: "", label: "SELECT DEPARTMENT..." }, ...DEPARTMENTS.map(d => ({ value: d, label: d }))]} 
                         />
                       </FormField>
-                      <div className="md:col-span-2">
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-  {/* Sub-Department */}
-  <FormField label="Sub-Department">
-    <Input
-      value={role.subDepartment}
-      onChange={(e) =>
-        updateRole(role.id, { subDepartment: e.target.value.toUpperCase() })
-      }
-      placeholder="OPTIONAL"
-      className="uppercase"
-    />
-  </FormField>
+                      <FormField label="Sub-Department">
+                        <Input
+                          value={role.subDepartment}
+                          onChange={(e) =>
+                            updateRole(role.id, { subDepartment: e.target.value.toUpperCase() })
+                          }
+                          placeholder="OPTIONAL"
+                          className="uppercase"
+                        />
+                      </FormField>
+                    </div>
 
-  {/* Job Title */}
-  <FormField label="Job Title" required>
-    <Input
-      value={role.jobTitle}
-      onChange={(e) =>
-        updateRole(role.id, { jobTitle: e.target.value.toUpperCase() })
-      }
-      placeholder="TYPE TO SEARCH..."
-      className="uppercase"
-    />
-  </FormField>
+                    {/* Job Title - Full width */}
+                    <FormField label="Job Title" required>
+                      <Input
+                        value={role.jobTitle}
+                        onChange={(e) =>
+                          updateRole(role.id, { jobTitle: e.target.value.toUpperCase() })
+                        }
+                        placeholder="TYPE TO SEARCH..."
+                        className="uppercase"
+                      />
+                    </FormField>
 
-</div>
-             
-                        <div className="flex items-center gap-4 pt-4">
-                          <Checkbox 
-                            id={`searchAllDepts-${role.id}`} 
-                            checked={role.searchAllDepartments} 
-                            onCheckedChange={(checked) => updateRole(role.id, { searchAllDepartments: checked })} 
+                    {/* Search Options */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-4">
+                        <Checkbox 
+                          id={`searchAllDepts-${role.id}`} 
+                          checked={role.searchAllDepartments} 
+                          onCheckedChange={(checked) => updateRole(role.id, { searchAllDepartments: checked })} 
+                        />
+                        <Label htmlFor={`searchAllDepts-${role.id}`} className="text-xs cursor-pointer font-medium uppercase">
+                          Search job titles from all departments?
+                        </Label>
+                      </div>
+                      
+                      <p className="text-[10px] text-muted-foreground uppercase">
+                        Engagement type (e.g. PAYE) is shown as guidance only, can be amended later (depending on your settings), and won't appear in the chosen job title
+                      </p>
+                      
+                      <div className="flex items-center gap-2">
+                        <Checkbox 
+                          id={`createOwnTitle-${role.id}`} 
+                          checked={role.createOwnJobTitle} 
+                          onCheckedChange={(checked) => updateRole(role.id, { createOwnJobTitle: checked })} 
+                        />
+                        <Label htmlFor={`createOwnTitle-${role.id}`} className="text-xs cursor-pointer font-medium uppercase">
+                          Create your own job title (only available to this project)
+                        </Label>
+                      </div>
+                      
+                      <p className="text-[10px] text-muted-foreground uppercase">
+                        For job titles which require non-standard crew templates, <span className="text-primary cursor-pointer">contact EAARTH Studios</span>
+                      </p>
+                    </div>
+
+                    {/* Job Title Suffix + Regular Site - 2 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <FormField label="Job Title Suffix">
+                          <Input 
+                            value={role.jobTitleSuffix}
+                            onChange={(e) =>
+                              updateRole(role.id, { jobTitleSuffix: e.target.value.toUpperCase() })
+                            }
+                            placeholder="E.G., 'TO CAST #1'"
+                            className="uppercase"
                           />
-                          <Label htmlFor={`searchAllDepts-${role.id}`} className="text-xs cursor-pointer font-medium uppercase">
-                            Search job titles from all departments?
-                          </Label>
-                        </div>
+                        </FormField>
                         <p className="text-[10px] text-muted-foreground uppercase">
-                          Engagement type (e.g. PAYE) is shown as guidance only, can be amended later (depending on your settings), and won't appear in the chosen job title
-                        </p>
-                        <div className="flex items-center gap-2 pt-1">
-                          <Checkbox 
-                            id={`createOwnTitle-${role.id}`} 
-                            checked={role.createOwnJobTitle} 
-                            onCheckedChange={(checked) => updateRole(role.id, { createOwnJobTitle: checked })} 
-                          />
-                          <Label htmlFor={`createOwnTitle-${role.id}`} className="text-xs cursor-pointer font-medium uppercase">
-                            Create your own job title (only available to this project)
-                          </Label>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground uppercase">
-                          For job titles which require non-standard crew templates, <span className="text-primary cursor-pointer">contact EAARTH Studios</span>
+                          E.g., if job title = driver, add the suffix: "to cast #1" or "to producer's name"
                         </p>
                       </div>
-{/* Job Title Suffix + Regular Site of Work */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-  {/* Job Title Suffix */}
-  <div className="space-y-1.5">
-    <FormField label="Job Title Suffix">
-      <Input 
-        value={role.jobTitleSuffix}
-        onChange={(e) =>
-          updateRole(role.id, { jobTitleSuffix: e.target.value.toUpperCase() })
-        }
-        placeholder="E.G., 'TO CAST #1' OR 'TO PRODUCER'S NAME'"
-        className="uppercase"
-      />
-    </FormField>
+                      <FormField label="Regular Site of Work (On Shoot Days)" required>
+                        <Input 
+                          value={role.regularSiteOfWork}
+                          onChange={(e) =>
+                            updateRole(role.id, { regularSiteOfWork: e.target.value.toUpperCase() })
+                          }
+                          placeholder="E.G., VARIOUS LOCATIONS"
+                          className="uppercase"
+                        />
+                      </FormField>
+                    </div>
 
-    <p className="text-[10px] text-muted-foreground uppercase">
-      E.g., if job title = driver, add the suffix: "to cast #1" or "to producer's name"
-    </p>
-  </div>
+                    {/* Working in UK - Full width */}
+                    <FormField label="Working in the UK?" required>
+                      <div className="flex gap-6 pt-2">
+                        {["YES", "NEVER"].map((opt) => (
+                          <label
+                            key={opt}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name={`workingInUK-${role.id}`}
+                              value={opt}
+                              checked={role.workingInUnitedKingdom === opt}
+                              onChange={(e) =>
+                                updateRole(role.id, {
+                                  workingInUnitedKingdom: e.target.value,
+                                })
+                              }
+                              className="w-4 h-4 text-primary"
+                            />
+                            <span className="text-sm font-medium">{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </FormField>
 
-  {/* Regular Site of Work */}
-  <FormField label="Regular Site of Work (On Shoot Days)" required>
-    <Input 
-      value={role.regularSiteOfWork}
-      onChange={(e) =>
-        updateRole(role.id, { regularSiteOfWork: e.target.value.toUpperCase() })
-      }
-      placeholder="E.G., VARIOUS LOCATIONS"
-      className="uppercase"
-    />
-  </FormField>
-
-</div>
-
-{/* Working in the UK? – Full Width Below */}
-<div className="mt-4">
-  <FormField label="Working in the UK?" required>
-    <div className="flex gap-6 pt-2">
-      {["YES", "NEVER"].map((opt) => (
-        <label
-          key={opt}
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <input
-            type="radio"
-            name={`workingInUK-${role.id}`}
-            value={opt}
-            checked={role.workingInUnitedKingdom === opt}
-            onChange={(e) =>
-              updateRole(role.id, {
-                workingInUnitedKingdom: e.target.value,
-              })
-            }
-            className="w-4 h-4 text-primary"
-          />
-          <span className="text-sm font-medium">{opt}</span>
-        </label>
-      ))}
-    </div>
-  </FormField>
-</div>
-
+                    {/* Engagement & Phase - 2 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Engagement Type" required>
                         <SelectField 
                           value={role.engagementType} 
                           onChange={(v) => updateRole(role.id, { engagementType: v })} 
-                          options={[{ value: "", label: "SELECT..." }, ...ENGAGEMENT_TYPES.slice(1)]} 
+                          options={ENGAGEMENT_TYPES} 
                         />
                       </FormField>
                       
@@ -970,9 +936,13 @@ export default function CreateOffer() {
                         <SelectField 
                           value={role.productionPhase} 
                           onChange={(v) => updateRole(role.id, { productionPhase: v })} 
-                          options={[{ value: "", label: "SELECT..." }, ...PRODUCTION_PHASES.slice(1)]} 
+                          options={PRODUCTION_PHASES} 
                         />
                       </FormField>
+                    </div>
+
+                    {/* Dates & Rate - 3 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField label="Start Date" required>
                         <Input 
                           type="date" 
@@ -980,6 +950,7 @@ export default function CreateOffer() {
                           onChange={(e) => updateRole(role.id, { startDate: e.target.value })} 
                         />
                       </FormField>
+                      
                       <FormField label="End Date">
                         <Input 
                           type="date" 
@@ -987,6 +958,7 @@ export default function CreateOffer() {
                           onChange={(e) => updateRole(role.id, { endDate: e.target.value })} 
                         />
                       </FormField>
+
                       <FormField label="Daily or Weekly" required>
                         <SelectField 
                           value={role.rateType} 
@@ -994,6 +966,10 @@ export default function CreateOffer() {
                           options={[{ value: "DAILY", label: "DAILY" }, { value: "WEEKLY", label: "WEEKLY" }]} 
                         />
                       </FormField>
+                    </div>
+
+                    {/* Working Week, Currency, Fee - 3 columns */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField label="Working Week">
                         <SelectField 
                           value={role.workingWeek} 
@@ -1007,6 +983,7 @@ export default function CreateOffer() {
                           ]} 
                         />
                       </FormField>
+
                       <FormField label="Currency" required>
                         <SelectField 
                           value={role.currency} 
@@ -1014,6 +991,7 @@ export default function CreateOffer() {
                           options={CURRENCIES} 
                         />
                       </FormField>
+
                       <FormField label="Fee Per Day Including Holiday" required>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold text-muted-foreground w-4">
@@ -1029,51 +1007,55 @@ export default function CreateOffer() {
                           />
                         </div>
                       </FormField>
-                      <div className="md:col-span-2">
-                        <FormField label="Overtime">
-                          <div className="flex gap-6 pt-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name={`overtime-${role.id}`} 
-                                value="CALCULATED" 
-                                checked={role.overtimeType === "CALCULATED"} 
-                                onChange={() => updateRole(role.id, { overtimeType: "CALCULATED" })} 
-                                className="w-4 h-4 text-primary" 
-                              />
-                              <span className="text-sm font-medium">CALCULATED PER AGREEMENT</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name={`overtime-${role.id}`} 
-                                value="CUSTOM" 
-                                checked={role.overtimeType === "CUSTOM"} 
-                                onChange={() => updateRole(role.id, { overtimeType: "CUSTOM" })} 
-                                className="w-4 h-4 text-primary" 
-                              />
-                              <span className="text-sm font-medium">CUSTOM OVERTIME RATES</span>
-                            </label>
-                          </div>
-                        </FormField>
-                      </div>
-                      <FormField label="Budget Code" className="md:col-span-2">
-                        <Input 
-                          value={role.budgetCode} 
-                          onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })} 
-                          placeholder="" 
-                          className="uppercase" 
-                        />
-                      </FormField>
                     </div>
 
-                    {/* Rate & Compensation */}
+                    {/* Overtime - Full width */}
+                    <FormField label="Overtime">
+                      <div className="flex gap-6 pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name={`overtime-${role.id}`} 
+                            value="CALCULATED" 
+                            checked={role.overtimeType === "CALCULATED"} 
+                            onChange={() => updateRole(role.id, { overtimeType: "CALCULATED" })} 
+                            className="w-4 h-4 text-primary" 
+                          />
+                          <span className="text-sm font-medium">CALCULATED PER AGREEMENT</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name={`overtime-${role.id}`} 
+                            value="CUSTOM" 
+                            checked={role.overtimeType === "CUSTOM"} 
+                            onChange={() => updateRole(role.id, { overtimeType: "CUSTOM" })} 
+                            className="w-4 h-4 text-primary" 
+                          />
+                          <span className="text-sm font-medium">CUSTOM OVERTIME RATES</span>
+                        </label>
+                      </div>
+                    </FormField>
+
+                    {/* Budget Code - Full width */}
+                    <FormField label="Budget Code">
+                      <Input 
+                        value={role.budgetCode} 
+                        onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })} 
+                        placeholder="E.G. 847-13-001" 
+                        className="uppercase" 
+                      />
+                    </FormField>
+
+                    {/* Rate & Compensation Section */}
                     <div className="border rounded-lg p-4 bg-primary/5">
                       <div className="flex items-center gap-2 mb-4">
                         <DollarSign className="w-5 h-5 text-primary" />
                         <h4 className="text-sm font-bold text-primary uppercase">Rate & Compensation</h4>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                      {/* Rate Type Buttons - 3 columns layout */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                         <FormField label="Rate Type">
                           <div className="flex gap-2">
                             {["DAILY", "WEEKLY"].map(type => (
@@ -1090,6 +1072,7 @@ export default function CreateOffer() {
                             ))}
                           </div>
                         </FormField>
+
                         <FormField label="Currency">
                           <SelectField 
                             value={role.currency} 
@@ -1097,6 +1080,7 @@ export default function CreateOffer() {
                             options={CURRENCIES} 
                           />
                         </FormField>
+
                         <CurrencyInput 
                           label={`${role.rateType === "DAILY" ? "Daily" : "Weekly"} Rate Amount`} 
                           value={role.rateAmount} 
@@ -1104,6 +1088,10 @@ export default function CreateOffer() {
                           currency={role.currency} 
                           required 
                         />
+                      </div>
+
+                      {/* Shift Hours, Overtime, Budget - 3 columns */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <FormField label="Shift Hours">
                           <Input 
                             type="number" 
@@ -1112,6 +1100,7 @@ export default function CreateOffer() {
                             placeholder="10" 
                           />
                         </FormField>
+
                         <FormField label="Overtime Type">
                           <SelectField 
                             value={role.overtimeType} 
@@ -1119,6 +1108,7 @@ export default function CreateOffer() {
                             options={OVERTIME_TYPES} 
                           />
                         </FormField>
+
                         <FormField label="Budget Code">
                           <Input 
                             value={role.budgetCode} 
@@ -1127,7 +1117,11 @@ export default function CreateOffer() {
                             className="uppercase" 
                           />
                         </FormField>
-                        <FormField label="Rate Description / Notes" className="lg:col-span-2">
+                      </div>
+
+                      {/* Rate Description - Full width */}
+                      <div className="mt-4">
+                        <FormField label="Rate Description / Notes">
                           <Input 
                             value={role.rateDescription} 
                             onChange={(e) => updateRole(role.id, { rateDescription: e.target.value })} 
@@ -1136,6 +1130,7 @@ export default function CreateOffer() {
                         </FormField>
                       </div>
 
+                      {/* Holiday Pay Checkbox */}
                       <div className="flex items-center gap-3 mt-4 p-3 rounded-lg bg-muted/50">
                         <Checkbox 
                           id={`holidayPay-${role.id}`} 
@@ -1147,8 +1142,9 @@ export default function CreateOffer() {
                         </Label>
                       </div>
 
+                      {/* Custom Overtime Rates - 3 columns when visible */}
                       {role.overtimeType === "CUSTOM" && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-4 p-4 rounded-lg bg-muted/30">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 p-4 rounded-lg bg-muted/30">
                           <CurrencyInput 
                             label="Non-Shoot Overtime Rate" 
                             value={role.customOvertimeRates.nonShootOvertimeRate} 
@@ -1617,53 +1613,50 @@ export default function CreateOffer() {
         </Card>
 
         {/* Additional Notes Section */}
-        <Card className="border-0 shadow-sm overflow-hidden">
-  <SectionHeader
-    title="Additional Notes"
-    icon={Bell}
-    section="notes"
-    isOpen={expandedSections.notes}
-  />
-
-  {expandedSections.notes && (
-    <CardContent className="p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        {/* Other Deal Provisions */}
-        <FormField label="Other Deal Provisions">
-          <textarea
-            value={formData.otherDealProvisions}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                otherDealProvisions: e.target.value,
-              })
-            }
-            placeholder="Enter any additional provisions..."
-            className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
+        <Card className="border-0 py-0 shadow-sm overflow-hidden">
+          <SectionHeader
+            title="Additional Notes"
+            icon={Bell}
+            section="notes"
+            isOpen={expandedSections.notes}
           />
-        </FormField>
 
-        {/* Additional Notes */}
-        <FormField label="Additional Notes">
-          <textarea
-            value={formData.additionalNotes}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                additionalNotes: e.target.value,
-              })
-            }
-            placeholder="Enter any notes for internal reference..."
-            className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
-          />
-        </FormField>
+          {expandedSections.notes && (
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Other Deal Provisions */}
+                <FormField label="Other Deal Provisions">
+                  <textarea
+                    value={formData.otherDealProvisions}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        otherDealProvisions: e.target.value,
+                      })
+                    }
+                    placeholder="Enter any additional provisions..."
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
+                  />
+                </FormField>
 
-      </div>
-    </CardContent>
-  )}
-</Card>
-
+                {/* Additional Notes */}
+                <FormField label="Additional Notes">
+                  <textarea
+                    value={formData.additionalNotes}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        additionalNotes: e.target.value,
+                      })
+                    }
+                    placeholder="Enter any notes for internal reference..."
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background resize-none"
+                  />
+                </FormField>
+              </div>
+            </CardContent>
+          )}
+        </Card>
       </div>
 
       {/* Preview Dialog */}
