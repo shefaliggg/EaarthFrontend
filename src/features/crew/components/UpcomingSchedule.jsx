@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Calendar, MapPin, Video, Camera, FileText, CheckCircle } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
@@ -91,10 +91,10 @@ export default function UpcomingSchedule({ isDarkMode }) {
   const filteredSchedule = scheduleItems.filter(item => {
     // Status filter
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
-    
+
     // Project filter
     if (projectFilter !== 'all' && item.project !== projectFilter) return false;
-    
+
     return true;
   });
 
@@ -163,16 +163,16 @@ export default function UpcomingSchedule({ isDarkMode }) {
                 )}>
                   <Icon className="w-4 h-4 text-primary" />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-xs font-bold uppercase tracking-wider text-primary">
                       {item.project}
                     </p>
-                    <Badge 
+                    <Badge
                       className={cn(
                         "text-xs font-bold",
-                        item.status === 'confirmed' 
+                        item.status === 'confirmed'
                           ? "bg-green-500/20 text-green-600 border-green-500/30"
                           : "bg-amber-500/20 text-amber-600 border-amber-500/30"
                       )}
@@ -180,7 +180,7 @@ export default function UpcomingSchedule({ isDarkMode }) {
                       {item.status.toUpperCase()}
                     </Badge>
                   </div>
-                  
+
                   <h3 className={cn(
                     "font-black text-sm mb-2",
                     isDarkMode ? "text-white" : "text-gray-900"
@@ -200,7 +200,7 @@ export default function UpcomingSchedule({ isDarkMode }) {
                         {item.callTime} - {item.wrapTime}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-start gap-2">
                       <MapPin className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <span className={cn("font-bold", isDarkMode ? "text-white" : "text-gray-900")}>

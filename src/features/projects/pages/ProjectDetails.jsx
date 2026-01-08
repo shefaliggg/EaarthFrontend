@@ -27,7 +27,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Progress } from '@/shared/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/config/utils';
 import { MetricsCard } from '../../../shared/components/MetricsCard';
 
 // Mock project detail data - matches ProjectDashboardPage data
@@ -127,7 +127,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
   const budgetPercentage = (project.stats.spent / project.stats.budget) * 100;
 
   return (
-   <div className='space-y-6 container mx-auto'>
+    <div className='space-y-6 container mx-auto'>
       <PageHeader
         icon="Film"
         title={project.name}
@@ -144,7 +144,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
           iconColor={budgetPercentage > 90 ? "text-red-600" : "text-green-600"}
           subtextColor="text-muted-foreground"
         />
-        
+
         <MetricsCard
           title="Schedule"
           value={`${project.stats.daysShot}/${project.stats.totalDays}`}
@@ -153,7 +153,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
           iconColor="text-blue-600"
           subtextColor="text-muted-foreground"
         />
-        
+
         <MetricsCard
           title="Crew Size"
           value={project.stats.crewSize}
@@ -163,7 +163,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
           subtextColor="text-green-600"
           subtextIcon="TrendingUp"
         />
-        
+
         <MetricsCard
           title="Completion"
           value={`${project.stats.completion}%`}
@@ -303,7 +303,7 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
                       <div className={cn(
                         'w-2 h-2 rounded-full mt-2',
                         alert.type === 'warning' ? 'bg-yellow-500' :
-                        alert.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                          alert.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
                       )} />
                       <div className="flex-1">
                         <div className="text-sm">{alert.message}</div>
@@ -333,8 +333,8 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
                     <div className={cn(
                       'text-xs mt-1 flex items-center gap-1',
                       item.status === 'under' ? 'text-green-600' :
-                      item.status === 'on' ? 'text-blue-600' :
-                      item.status === 'pending' ? 'text-gray-600' : 'text-green-600'
+                        item.status === 'on' ? 'text-blue-600' :
+                          item.status === 'pending' ? 'text-gray-600' : 'text-green-600'
                     )}>
                       {item.status === 'under' && (
                         <>
@@ -423,8 +423,8 @@ export default function ProjectDetails({ onNavigate, projectId = 'avatar1' }) {
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center',
                       milestone.status === 'completed' ? 'bg-green-100 dark:bg-green-900/20' :
-                      milestone.status === 'current' ? 'bg-blue-100 dark:bg-blue-900/20' :
-                      'bg-gray-100 dark:bg-gray-800'
+                        milestone.status === 'current' ? 'bg-blue-100 dark:bg-blue-900/20' :
+                          'bg-gray-100 dark:bg-gray-800'
                     )}>
                       {milestone.status === 'completed' ? (
                         <CheckCircle2 className="w-4 h-4 text-green-600" />

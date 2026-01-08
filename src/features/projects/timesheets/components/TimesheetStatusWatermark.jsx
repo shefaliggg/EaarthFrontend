@@ -70,15 +70,14 @@ export function TimesheetStatusWatermark({ status, isDarkMode = false, mode = 'w
       <div className="absolute top-1/2 left-4 transform -translate-y-1/2 z-50 pointer-events-none">
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 backdrop-blur-sm ${config.bgColor} ${config.borderColor} opacity-90 shadow-lg`}>
           <Icon className={`w-4 h-4 ${config.badgeColor}`} />
-          <span className={`font-black text-[11px] uppercase tracking-widest ${config.badgeColor}`}>
+          <h4 className={`font-black text-[11px] uppercase tracking-widest ${config.badgeColor}`}>
             {config.label}
-          </span>
+          </h4>
         </div>
       </div>
     );
   }
 
-  // Watermark mode - large diagonal text across page
   return (
     <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center overflow-hidden">
       <div 

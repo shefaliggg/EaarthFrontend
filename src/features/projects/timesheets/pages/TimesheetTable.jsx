@@ -2,7 +2,7 @@ import { Shield } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { generateMockCrewData } from "../config/mockCrewData(temp)";
-import { SalarySidebar } from "../components/Salarysidebar";
+import { TimesheetForm } from "../components/TimesheetTable/TimesheetForm";
 
 function TimesheetTable() {
     const { week } = useParams();
@@ -409,17 +409,17 @@ function TimesheetTable() {
     };
 
     const getTimesheetStorageKey = (crewId, weekEnding) => {
-    return `timesheet_${crewId}_${weekEnding}`;
-  };
+        return `timesheet_${crewId}_${weekEnding}`;
+    };
 
-  const saveTimesheetToStorage = (crewId, weekEnding, data) => {
-    try {
-      const key = getTimesheetStorageKey(crewId, weekEnding);
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to save timesheet to localStorage:', error);
-    }
-  };
+    const saveTimesheetToStorage = (crewId, weekEnding, data) => {
+        try {
+            const key = getTimesheetStorageKey(crewId, weekEnding);
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (error) {
+            console.error('Failed to save timesheet to localStorage:', error);
+        }
+    };
 
     const loadTimesheetFromStorage = (crewId, weekEnding) => {
         try {
@@ -715,173 +715,82 @@ function TimesheetTable() {
     }, [selectedWeek, calendarSchedule, daysOfWeek, selectedCrewInfo, currentUserRole]);
 
     return (
-        <div className="grid grid-cols-1 gap-8 items-start">
+        <div className="space-y-4">
+            {/* Editable Timesheet with Approval Controls */}
+            <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden ${isDarkMode ? 'bg-[#181621]' : 'bg-white'}`}>
+                {(() => {
+                    const isPastWeek = getWeekStatus(selectedWeek) === 'past';
 
-            {/* APPROVE VIEW (Approval Workflow) */}
-            {viewMode === 'table' && (
-                <div className="max-w-full overflow-x-auto space-y-6">
+                    // Determine if week is paid (more than 3 weeks old)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const weekEndingDate = new Date(selectedWeek);
+                    weekEndingDate.setHours(0, 0, 0, 0);
+                    const daysDifference = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
+                    const isPaidWeek = daysDifference > 21; // More than 3 weeks old = paid
 
-                    {/* Approval List or Single Crew View */}
-                    {approveViewMode === 'single' ? (
-                        <div className="space-y-4">
-                            {/* Editable Timesheet with Approval Controls */}
-                            <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden ${isDarkMode ? 'bg-[#181621]' : 'bg-white'}`}>
-                                {(() => {
-                                    const isPastWeek = getWeekStatus(selectedWeek) === 'past';
+                    // Determine if the timesheet should be read-only
+                    let shouldBeReadOnly = false;
+                    if (currentUserRole === 'Crew') {
+                        shouldBeReadOnly = !canCrewSubmitWeek(selectedWeek);
+                    } else if (currentUserRole === 'HOD' || currentUserRole === 'Payroll') {
+                        // HOD and Payroll can edit past weeks
+                        shouldBeReadOnly = false;
+                    } else {
+                        // Production and Finance cannot edit past weeks
+                        shouldBeReadOnly = isPastWeek;
+                    }
 
-                                    // Determine if week is paid (more than 3 weeks old)
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-                                    const weekEndingDate = new Date(selectedWeek);
-                                    weekEndingDate.setHours(0, 0, 0, 0);
-                                    const daysDifference = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
-                                    const isPaidWeek = daysDifference > 21; // More than 3 weeks old = paid
+                    console.log('entries prop', entries);
+                    // console.log('entriesToRender', entriesToRender);
 
-                                    // Determine if the timesheet should be read-only
-                                    let shouldBeReadOnly = false;
-                                    if (currentUserRole === 'Crew') {
-                                        shouldBeReadOnly = !canCrewSubmitWeek(selectedWeek);
-                                    } else if (currentUserRole === 'HOD' || currentUserRole === 'Payroll') {
-                                        // HOD and Payroll can edit past weeks
-                                        shouldBeReadOnly = false;
-                                    } else {
-                                        // Production and Finance cannot edit past weeks
-                                        shouldBeReadOnly = isPastWeek;
-                                    }
+                    return (
+                        <>
+                            {shouldBeReadOnly && (
+                                <div
+                                    className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
+                                        ? 'bg-blue-900/20 border-blue-500/30'
+                                        : 'bg-blue-50 border-blue-200'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="w-4 h-4 text-blue-600" />
+                                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                                            Read-Only View • Week Ending{" "}
+                                            {new Date(selectedWeek).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
 
-                                    console.log('entries prop', entries);
-                                    // console.log('entriesToRender', entriesToRender);
+                            <TimesheetForm
+                                allowanceCaps={allowanceCaps}
+                                setAllowanceCaps={setAllowanceCaps}
+                                crewInfo={selectedCrewInfo}
+                                salary={calculateSalary()}
+                                entries={entries}
+                                crewType={crewType}
+                                setCrewType={setCrewType}
+                                customItems={customItems}
+                                setCustomItems={setCustomItems}
+                                onEntriesUpdate={setEntries}
+                                projectSettings={projectSettings}
+                                calendarSchedule={calendarSchedule}
+                                upgradeRoles={upgradeRoles}
+                                currentUserRole={currentUserRole}
+                                companyName={companyName}
+                                onCrewNavigate={handleDepartmentNavigation}
+                                onWeekNavigate={handleWeekNavigation}
+                            />
+                        </>
+                    );
 
-                                    return (
-                                        <>
-                                            {shouldBeReadOnly && (
-                                                <div
-                                                    className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
-                                                        ? 'bg-blue-900/20 border-blue-500/30'
-                                                        : 'bg-blue-50 border-blue-200'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <Shield className="w-4 h-4 text-blue-600" />
-                                                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                                                            Read-Only View • Week Ending{" "}
-                                                            {new Date(selectedWeek).toLocaleDateString("en-GB", {
-                                                                day: "2-digit",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                            })}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <SalarySidebar
-                                                allowanceCaps={allowanceCaps}
-                                                setAllowanceCaps={setAllowanceCaps}
-                                                crewInfo={selectedCrewInfo}
-                                                salary={calculateSalary()}
-                                                entries={entries}
-                                                crewType={crewType}
-                                                setCrewType={setCrewType}
-                                                customItems={customItems}
-                                                setCustomItems={setCustomItems}
-                                                onEntriesUpdate={setEntries}
-                                                projectSettings={projectSettings}
-                                                calendarSchedule={calendarSchedule}
-                                                upgradeRoles={upgradeRoles}
-                                                currentUserRole={currentUserRole}
-                                                companyName={companyName}
-                                                onCrewNavigate={handleDepartmentNavigation}
-                                                onWeekNavigate={handleWeekNavigation}
-                                            />
-                                        </>
-                                    );
-
-                                })()}
-                            </div>
-                        </div>
-                    ) : (
-                        <div></div>
-                        // <CrewListViewWithApproval
-                        //     isDarkMode={isDarkMode}
-                        //     crewList={mockCrewListData}
-                        //     weekStart={selectedWeek}
-                        //     currentUserRole={currentUserRole}
-                        //     onWeekChange={(direction) => {
-                        //         // Handle week navigation
-                        //         const currentDate = new Date(selectedWeek);
-                        //         const newDate = new Date(currentDate);
-
-                        //         if (direction === 'prev') {
-                        //             newDate.setDate(currentDate.getDate() - 7);
-                        //         } else {
-                        //             newDate.setDate(currentDate.getDate() + 7);
-                        //         }
-
-                        //         // Format as YYYY-MM-DD
-                        //         const newWeek = newDate.toISOString().split('T')[0];
-                        //         setSelectedWeek(newWeek);
-                        //     }}
-                        //     onCrewClick={(crew) => {
-                        //         // Handle crew click - navigate to single view
-                        //         const [firstName, ...lastNameParts] = crew.name.split(' ');
-                        //         const lastName = lastNameParts.join(' ');
-
-                        //         setSelectedCrewInfo({
-                        //             ...selectedCrewInfo,
-                        //             firstName: firstName,
-                        //             lastName: lastName,
-                        //             jobTitle: crew.role,
-                        //             department: crew.department
-                        //         });
-                        //         setApproveViewMode('single');
-                        //     }}
-                        // />
-                    )}
-                </div>
-            )}
-
-            {/* PRINT VIEW (Replaces Invoice) */}
-            {/* {viewMode === 'print' && (
-                    <div className="w-full overflow-x-auto bg-gray-100 p-4">
-                        <TimesheetPrintView
-                            entries={entries}
-                            crewInfo={crewInfo}
-                            salary={calculateSalary()}
-                            weekEnding={selectedWeek}
-                            status={timesheetStatus}
-                        />
-                    </div>
-                )} */}
-
-            {/* WEEKLY OVERVIEW (Crew's All Timesheets) */}
-            {/* {viewMode === 'weekly-overview' && (
-                    <CrewWeeklyTimesheetOverview
-                        isDarkMode={isDarkMode}
-                        crewName={`${crewInfo.firstName} ${crewInfo.lastName}`}
-                        crewRole={crewInfo.position}
-                        crewDepartment={crewInfo.department}
-                        weeks={generateMockWeekData()}
-                        onWeekClick={(weekEnding) => {
-                            setSelectedWeek(weekEnding);
-                            setViewMode('table');
-                            setApproveViewMode('single');
-                            setIsCrewSelfView(true); // Mark as crew viewing their own timesheet
-                        }}
-                        onViewExpenses={(weekEnding) => {
-                            setViewingExpensesForWeek(weekEnding);
-                        }}
-                        onEditExpenses={(weekEnding) => {
-                            setSelectedWeek(weekEnding);
-                            setEditingExpenses(true);
-                        }}
-                        onDownloadPDF={(weekEnding) => {
-                            alert(`Downloading PDF for week ending ${weekEnding}`);
-                        }}
-                        onBack={() => setViewMode('table')}
-                    />
-                )} */}
-
+                })()}
+            </div>
         </div>
     )
 }

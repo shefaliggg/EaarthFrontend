@@ -8,12 +8,15 @@ import {
     MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../../shared/components/ui/popover';
-import { TimesheetHeaderButtons } from './TimesheetHeaderButtons';
-import { WeekCompletionIndicator } from './WeekCompletionIndicator';
-import { TimesheetStatusWatermark } from './TimesheetStatusWatermark';
-import { SalarySidebarSignatures } from './SalarySidebarSignatures';
-import { calculatePACTBECTUOvertime, isDayComplete } from '../config/timesheetCalculations';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../../../shared/components/ui/popover';
+import { TimesheetHeaderButtons } from '../TimesheetHeaderButtons';
+import { WeekCompletionIndicator } from '../WeekCompletionIndicator';
+import { TimesheetStatusWatermark } from '../TimesheetStatusWatermark';
+import { SalarySidebarSignatures } from '../SalarySidebarSignatures';
+import { calculatePACTBECTUOvertime, isDayComplete } from '../../config/timesheetCalculations';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../../../../../shared/components/ui/command';
+import { cn } from '../../../../../shared/config/utils';
+import TimesheetDataRow from './TimesheetDataRow';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -84,12 +87,12 @@ const OVERVIEW_FIELDS = [
     { k: 'seventhDay', l: '7th Day', type: 'number' },
     { k: 'publicHoliday', l: 'Public Holiday', type: 'number' },
     { k: 'travelDay', l: 'Travel Day', type: 'number' },
-    { k: 'halfDay', l: 'Half Day', type: 'derived', getValue: (e) => e.dayType === 'Half Day' ? 1 : '' },
-    { k: 'training', l: 'Training', type: 'derived', getValue: (e) => e.dayType === 'Training' ? 1 : '' },
-    { k: 'driverCastTravel', l: 'Driver - Cast Travel', type: 'derived', getValue: (e) => e.dayType === 'Driver - Cast Travel' ? 1 : '' },
-    { k: 'holiday', l: 'Holiday', type: 'derived', getValue: (e) => e.dayType === 'Holiday' ? 1 : '' },
-    { k: 'sick', l: 'Sick', type: 'derived', getValue: (e) => e.dayType === 'Sick' ? 1 : '' },
-    { k: 'personalIssue', l: 'Personal issue', type: 'derived', getValue: (e) => e.dayType === 'Personal issue' ? 1 : '' },
+    // { k: 'halfDay', l: 'Half Day', type: 'derived', getValue: (e) => e.dayType === 'Half Day' ? 1 : '' },
+    // { k: 'training', l: 'Training', type: 'derived', getValue: (e) => e.dayType === 'Training' ? 1 : '' },
+    // { k: 'driverCastTravel', l: 'Driver - Cast Travel', type: 'derived', getValue: (e) => e.dayType === 'Driver - Cast Travel' ? 1 : '' },
+    // { k: 'holiday', l: 'Holiday', type: 'derived', getValue: (e) => e.dayType === 'Holiday' ? 1 : '' },
+    // { k: 'sick', l: 'Sick', type: 'derived', getValue: (e) => e.dayType === 'Sick' ? 1 : '' },
+    // { k: 'personalIssue', l: 'Personal issue', type: 'derived', getValue: (e) => e.dayType === 'Personal issue' ? 1 : '' },
     { k: 'turnaround', l: 'Turnaround', type: 'number' },
     { k: 'additionalHour', l: 'Add Hour', type: 'number' },
     { k: 'enhancedOT', l: 'Enhanced OT', type: 'number' },
@@ -105,27 +108,35 @@ const OVERVIEW_FIELDS = [
 ];
 
 const ALLOWANCE_FIELDS = [
-    { k: 'computer', l: 'Computer', type: 'number' },
-    { k: 'software', l: 'Software', type: 'number' },
-    { k: 'box', l: 'Box Rental', type: 'number' },
-    { k: 'equipment', l: 'Equipment', type: 'number' },
-    { k: 'vehicle', l: 'Vehicle', type: 'number' },
-    { k: 'mobile', l: 'Mobile', type: 'number' },
-    { k: 'living', l: 'Living', type: 'number' },
-    { k: 'fuel', l: 'Fuel', type: 'number' },
-    { k: 'mileage', l: 'Mileage', type: 'number' }
+    { k: 'perDiemShoot', l: 'Per Diem Shoot', type: 'bool' },
+    { k: 'perDiemNon', l: 'Per Diem Non Shoot', type: 'bool' },
+    { k: 'breakfast', l: 'Breakfast', type: 'bool' },
+    { k: 'lunch', l: 'Lunch', type: 'bool' },
+    { k: 'dinner', l: 'Dinner', type: 'bool' },
+    { k: 'computer', l: 'Computer', type: 'derived' },
+    { k: 'software', l: 'Software', type: 'derived' },
+    { k: 'box', l: 'Box Rental', type: 'derived' },
+    { k: 'equipment', l: 'Equipment', type: 'derived' },
+    { k: 'vehicle', l: 'Vehicle', type: 'derived' },
+    { k: 'mobile', l: 'Mobile', type: 'derived' },
+    { k: 'living', l: 'Living', type: 'derived' },
+    { k: 'fuel', l: 'Fuel', type: 'derived' },
+    { k: 'mileage', l: 'Mileage', type: 'derived' }
 ];
 
 const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentUserRole = 'Crew', calendarSchedule }) => {
     const isWork = ['Work', 'Travel', 'Half Day', 'Travel & Turnaround', 'Driver - Cast Travel', 'Training'].includes(entry.dayType);
     const [openLocation, setOpenLocation] = useState(false);
+    // Crew can only edit specific fields
     const isCrewRestricted = currentUserRole === 'Crew';
+
+    // Get calendar data for this date
     const calendarData = calendarSchedule?.[entry.date];
 
     return (
-        <div className="w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] border-b border-purple-100 dark:border-gray-700 bg-purple-50/10 dark:bg-purple-900/10 items-stretch">
-            {/* Date */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center items-start pl-3">
+        <div className="w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] border-b border-purple-100 bg-purple-50/10 items-stretch">
+            {/* 1. Date */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center items-start pl-3">
                 <span className="font-bold text-gray-800 dark:text-gray-200 text-[9px]">{formatEntryDate(entry.date)}</span>
                 {calendarData && calendarData.dayType === 'Shoot' && (
                     <div className="flex flex-col mt-1.5 space-y-0.5 leading-none select-none">
@@ -138,14 +149,15 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 )}
             </div>
 
-            {/* Type / Unit / Workplace */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
+            {/* 2. Type / Unit / Workplace */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
+                {/* Day Type - Prominent */}
                 <select
                     value={entry.dayType}
                     onChange={(e) => update('dayType', e.target.value)}
                     className={`w-full text-[9px] font-bold text-center rounded px-1 py-1 outline-none focus:border-purple-400 uppercase tracking-wide border transition-colors ${entry.dayType === 'Work'
-                        ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 text-purple-800 dark:text-purple-300'
-                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+                        ? 'bg-purple-50 border-purple-200 text-purple-800'
+                        : 'bg-gray-50 border-gray-200 text-gray-500'
                         }`}
                 >
                     <option value="">Select...</option>
@@ -165,11 +177,12 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
 
                 {isWork && (
                     <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                        {/* Unit & Workplace Row */}
                         <div className="flex gap-1">
                             <select
                                 value={entry.unit}
                                 onChange={(e) => update('unit', e.target.value)}
-                                className="flex-1 min-w-0 text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300 outline-none focus:border-purple-300 dark:focus:border-purple-500"
+                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300"
                             >
                                 <option value="Main">Main Unit</option>
                                 <option value="2nd">2nd Unit</option>
@@ -178,30 +191,66 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             <select
                                 value={entry.workplace?.[0] === 'On Set' || entry.workplace?.[0] === 'Off Set' ? entry.workplace[0] : 'On Set'}
                                 onChange={(e) => update('workplace', [e.target.value])}
-                                className="flex-1 min-w-0 text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300 outline-none focus:border-purple-300 dark:focus:border-purple-500 uppercase"
+                                className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300 uppercase"
                             >
                                 <option value="On Set">ON SET</option>
                                 <option value="Off Set">OFF SET</option>
                             </select>
                         </div>
 
+                        {/* Location Input with Popover */}
                         <div className="flex items-center gap-1 relative">
                             <input
                                 type="text"
                                 value={entry.workplaceLocation || ''}
                                 onChange={(e) => update('workplaceLocation', e.target.value)}
-                                className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-2 py-0.5 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-purple-300 dark:focus:border-purple-500"
+                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-700 placeholder-gray-400 outline-none focus:border-purple-300"
                                 placeholder="Location..."
                             />
+                            <Popover open={openLocation} onOpenChange={setOpenLocation}>
+                                <PopoverTrigger asChild>
+                                    <button className="h-5 w-5 flex items-center justify-center bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 text-gray-500">
+                                        <ChevronsUpDown className="h-3 w-3" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[200px]" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Search location..." className="h-8 text-[10px]" />
+                                        <CommandEmpty>No location found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {LOCATIONS.map((loc) => (
+                                                <CommandItem
+                                                    key={loc}
+                                                    value={loc}
+                                                    onSelect={(currentValue) => {
+                                                        update('workplaceLocation', loc);
+                                                        setOpenLocation(false);
+                                                    }}
+                                                    className="text-[10px]"
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-3 w-3",
+                                                            entry.workplaceLocation === loc ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {loc}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* In / Out */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
+            {/* 3. In / Out */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
                 {isWork ? (
                     <>
+                        {/* IN TIME */}
                         <div className="flex gap-1">
                             <select
                                 disabled={entry.isFlatDay}
@@ -210,7 +259,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     const m = (entry.inTime || '').split(':')[1] || '00';
                                     update('inTime', `${e.target.value}:${m}`);
                                 }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="" disabled>HH</option>
                                 {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -222,22 +271,24 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     const h = (entry.inTime || '').split(':')[0] || '08';
                                     update('inTime', `${h}:${e.target.value}`);
                                 }}
-                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="" disabled>MM</option>
                                 {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
 
+                        {/* MEAL */}
                         <select
                             value={entry.mealStatus || 'Per calendar day'}
                             onChange={(e) => update('mealStatus', e.target.value)}
-                            className="w-full text-[9px] border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 outline-none focus:border-purple-300 dark:focus:border-purple-500 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                            className="w-full text-[9px] border border-gray-200 rounded px-1 py-0.5 outline-none focus:border-purple-300 bg-white text-gray-700"
                             title="Break Meal"
                         >
                             {MEAL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
 
+                        {/* OUT TIME */}
                         <div className="flex gap-1 items-center">
                             <div className="flex-1 flex gap-1 min-w-0">
                                 <select
@@ -247,7 +298,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                         const m = (entry.outTime || '').split(':')[1] || '00';
                                         update('outTime', `${e.target.value}:${m}`);
                                     }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="" disabled>HH</option>
                                     {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -259,7 +310,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                         const h = (entry.outTime || '').split(':')[0] || '18';
                                         update('outTime', `${h}:${e.target.value}`);
                                     }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-700 rounded text-center outline-none focus:border-purple-300 dark:focus:border-purple-500 py-1 font-mono font-bold text-purple-900 dark:text-purple-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="" disabled>MM</option>
                                     {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -268,8 +319,8 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             <button
                                 onClick={() => update('nextDay', !entry.nextDay)}
                                 className={`flex-none h-6 w-5 rounded border text-[8px] font-bold transition-all flex items-center justify-center ${entry.nextDay
-                                    ? 'bg-purple-600 dark:bg-purple-500 text-white border-purple-600 dark:border-purple-500 shadow-sm'
-                                    : 'bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
                                     }`}
                                 title="Toggle Next Day"
                             >
@@ -282,23 +333,23 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                 type="checkbox"
                                 checked={entry.isFlatDay || false}
                                 onChange={(e) => update('isFlatDay', e.target.checked)}
-                                className="w-3 h-3 text-purple-600 dark:text-purple-500 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
+                                className="w-3 h-3 text-purple-600 rounded border-gray-300 cursor-pointer"
                                 id={`flat-day-${index}`}
                             />
-                            <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 dark:text-gray-400 font-medium cursor-pointer">Flat Day</label>
+                            <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 font-medium cursor-pointer">Flat Day</label>
                         </div>
                     </>
-                ) : <div className="text-center text-gray-300 dark:text-gray-600">-</div>}
+                ) : <div className="text-center text-gray-300">-</div>}
             </div>
 
-            {/* Upgrade */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
+            {/* 4. Upgrade */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
                 <div className="flex items-center gap-1">
                     <input
                         type="checkbox"
                         checked={entry.isUpgraded || false}
                         onChange={(e) => update('isUpgraded', e.target.checked)}
-                        className="w-3 h-3 text-purple-600 dark:text-purple-500 rounded border-gray-300 dark:border-gray-600"
+                        className="w-3 h-3 text-purple-600 rounded border-gray-300"
                         title="Upgrade?"
                     />
                     <div className={`flex-1 flex flex-col gap-0.5 ${!entry.isUpgraded ? 'opacity-50' : ''}`}>
@@ -313,7 +364,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                     update('upgradeRate', role.rate);
                                 }
                             }}
-                            className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-purple-700 dark:text-purple-300 font-bold"
+                            className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-purple-700 font-bold"
                         >
                             <option value="">Role...</option>
                             {upgradeRoles.map(role => (
@@ -325,7 +376,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                 type="number"
                                 value={entry.upgradeRate || ''}
                                 onChange={(e) => update('upgradeRate', parseFloat(e.target.value))}
-                                className="w-full text-[9px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-gray-700 dark:text-gray-300"
+                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700"
                                 placeholder="Rate (£)"
                             />
                         )}
@@ -333,18 +384,21 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* Overview */}
-            <div className="p-1 border-r border-purple-100 dark:border-gray-700 flex items-center bg-white dark:bg-gray-900">
+            {/* 5. Overview (Swapped position) */}
+            <div className="p-1 border-r border-purple-100 flex items-center bg-white">
                 <div className="w-full flex flex-col gap-0.5">
                     <div className="grid grid-cols-4 gap-0.5">
                         {OVERVIEW_FIELDS.map((f) => {
                             const isDerived = f.type === 'derived';
+
+                            // 1. Determine Display Value
                             let rawVal = entry[f.k];
                             if ((rawVal === undefined || rawVal === '' || rawVal === 0) && autoValues && autoValues[f.k] !== undefined) {
                                 rawVal = autoValues[f.k];
                                 if (rawVal === 0) rawVal = '';
                             }
 
+                            // 2. Prepare Effective Entry for Derived Calculations (Salary)
                             const effectiveEntry = { ...entry };
                             if (autoValues) {
                                 Object.keys(autoValues).forEach(k => {
@@ -357,15 +411,15 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                             const val = isDerived ? f.getValue(effectiveEntry) : rawVal;
 
                             return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-1 rounded border border-gray-100 dark:border-gray-700 h-5">
-                                    <span className="text-[7px] uppercase text-black dark:text-white font-medium tracking-tight">{f.l}</span>
+                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
+                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight">{f.l}</span>
                                     {f.type === 'bool' ? (
                                         <input
                                             type="checkbox"
                                             checked={!!val}
                                             onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-black dark:text-white focus:ring-black dark:focus:ring-white ${isCrewRestricted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`w-3 h-3 rounded border-gray-300 text-black focus:ring-black ${isCrewRestricted ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         />
                                     ) : f.k === 'night' ? (
                                         <input
@@ -373,7 +427,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             checked={Number(val) > 0}
                                             onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isDerived || isCrewRestricted}
-                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-purple-600 dark:text-purple-500 focus:ring-purple-500 dark:focus:ring-purple-400 ${(isDerived || isCrewRestricted) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${(isDerived || isCrewRestricted) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                         />
                                     ) : (
                                         <input
@@ -381,7 +435,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             value={val}
                                             onChange={(e) => !isDerived && !isCrewRestricted && update(f.k, e.target.value)}
                                             readOnly={isDerived || isCrewRestricted}
-                                            className={`w-6 text-[8px] bg-transparent text-right font-mono outline-none p-0 ${Number(val) > 0 ? 'text-green-600 dark:text-green-400 font-bold' : (Number(val) < 0 ? 'text-red-600 dark:text-red-400 font-bold' : 'text-black dark:text-white')
+                                            className={`w-6 text-[8px] bg-transparent text-right font-mono outline-none p-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
                                                 } ${isDerived ? 'opacity-70 cursor-default' : ''}`}
                                             placeholder={isDerived ? '' : '-'}
                                         />
@@ -393,8 +447,8 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* Allowances */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1">
+            {/* 6. Allowances (Swapped position) */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1">
                 <div className="w-full flex flex-col gap-0.5">
                     <div className="grid grid-cols-3 gap-0.5">
                         {[
@@ -407,19 +461,21 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                         ].map((f) => {
                             const val = entry[f.k];
                             const isBool = f.type === 'bool';
+                            // Determine if field is editable by crew
                             const isEditableByCrew = ['perDiemShoot', 'perDiemNon', 'breakfast', 'lunch', 'dinner'].includes(f.k);
+                            // Should be disabled if restricted role AND not one of the allowed fields
                             const isDisabled = isCrewRestricted && !isEditableByCrew;
 
                             return (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-1 rounded border border-gray-100 dark:border-gray-700 h-5">
-                                    <span className="text-[7px] uppercase text-black dark:text-white font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mr-1" title={f.l}>{f.l}</span>
+                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
+                                    <span className="text-[7px] uppercase text-black font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mr-1" title={f.l}>{f.l}</span>
                                     {isBool ? (
                                         <input
                                             type="checkbox"
                                             checked={!!val}
                                             onChange={(e) => update(f.k, e.target.checked ? 1 : 0)}
                                             disabled={isDisabled}
-                                            className={`w-3 h-3 rounded border-gray-300 dark:border-gray-600 text-purple-600 dark:text-purple-500 focus:ring-purple-500 dark:focus:ring-purple-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            className={`w-3 h-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                         />
                                     ) : (
                                         <input
@@ -428,7 +484,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                                             onChange={(e) => update(f.k, e.target.value)}
                                             disabled={isDisabled}
                                             readOnly={isDisabled}
-                                            className={`w-8 text-[8px] bg-transparent text-right font-mono outline-none p-0 shrink-0 ${Number(val) > 0 ? 'text-green-600 dark:text-green-400 font-bold' : (Number(val) < 0 ? 'text-red-600 dark:text-red-400 font-bold' : 'text-black dark:text-white')
+                                            className={`w-8 text-[8px] bg-transparent text-right font-mono outline-none p-0 shrink-0 ${Number(val) > 0 ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
                                                 } ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
                                             placeholder="-"
                                         />
@@ -440,12 +496,12 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
                 </div>
             </div>
 
-            {/* Notes */}
-            <div className="p-2 border-r border-purple-100 dark:border-gray-700 flex flex-col justify-center gap-1.5">
+            {/* 7. Notes (Moved to end) */}
+            <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
                 <textarea
                     value={entry.notes || ''}
                     onChange={(e) => update('notes', e.target.value)}
-                    className="w-full h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 text-[9px] text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none resize-none focus:border-purple-300 dark:focus:border-purple-500 transition-colors"
+                    className="w-full h-10 bg-white border border-gray-200 rounded px-1 py-0.5 text-[9px] text-gray-700 placeholder-gray-400 outline-none resize-none focus:border-purple-300 transition-colors"
                     placeholder="Notes..."
                 />
             </div>
@@ -453,7 +509,7 @@ const EditRow = ({ entry, index, update, upgradeRoles, autoValues = {}, currentU
     );
 };
 
-export function SalarySidebar({
+export function TimesheetForm({
     isDarkMode,
     allowanceCaps,
     salary,
@@ -848,390 +904,6 @@ export function SalarySidebar({
         }
     };
 
-    const _EditRow_unused = ({ entry, index, update }) => {
-        const isWork = entry.dayType === 'Work';
-        // Crew can only edit specific fields
-        const isCrewRestricted = currentUserRole === 'Crew';
-
-        return (
-            <div className="flex-1 grid grid-cols-[0.85fr_0.9fr_1.3fr_1.5fr_2.5fr_1.3fr] min-h-[60px] border-b border-purple-100 bg-purple-50/10 items-stretch">
-                {/* 1. Date */}
-                <div className="p-2 border-r border-purple-100 flex flex-col justify-center items-start pl-3">
-                    <span className="font-bold text-gray-800 text-[9px]">{formatEntryDate(entry.date)}</span>
-                </div>
-
-                {/* 2. Type / Unit / Workplace */}
-                <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                    {/* Day Type - Prominent */}
-                    <select
-                        value={entry.dayType}
-                        onChange={(e) => update('dayType', e.target.value)}
-                        className={`w-full text-[9px] font-bold text-center rounded px-1 py-1 outline-none focus:border-purple-400 uppercase tracking-wide border transition-colors ${entry.dayType === 'Work'
-                            ? 'bg-purple-50 border-purple-200 text-purple-800'
-                            : 'bg-gray-50 border-gray-200 text-gray-500'
-                            }`}
-                    >
-                        <option value="Work">Work</option>
-                        <option value="Rest">Rest</option>
-                        <option value="Holiday">Hol</option>
-                        <option value="Travel">Trvl</option>
-                    </select>
-
-                    {entry.dayType === 'Work' && (
-                        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                            {/* Unit & Workplace Row */}
-                            <div className="flex gap-1">
-                                <select
-                                    value={entry.unit}
-                                    onChange={(e) => update('unit', e.target.value)}
-                                    className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300"
-                                >
-                                    <option value="Main">Main Unit</option>
-                                    <option value="2nd">2nd Unit</option>
-                                </select>
-
-                                <select
-                                    value={entry.workplace?.[0] || 'On Set'}
-                                    onChange={(e) => update('workplace', [e.target.value])}
-                                    className="flex-1 min-w-0 text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300 uppercase"
-                                >
-                                    <option value="On Set">ON SET</option>
-                                    <option value="Off Set">OFF SET</option>
-                                    <option value="Base">BASE</option>
-                                </select>
-                            </div>
-
-                            {/* Location Input */}
-                            <div className="relative">
-                                <input
-                                    list={`locations-${index}`}
-                                    type="text"
-                                    value={entry.workplaceLocation || ''}
-                                    onChange={(e) => update('workplaceLocation', e.target.value)}
-                                    className="w-full text-[9px] bg-white border border-gray-200 rounded px-2 py-0.5 text-gray-700 placeholder-gray-400 outline-none focus:border-purple-300"
-                                    placeholder="Location..."
-                                />
-                                <datalist id={`locations-${index}`}>
-                                    {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
-                                </datalist>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* 3. In / Out */}
-                <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                    {isWork ? (
-                        <>
-                            {/* IN TIME */}
-                            <div className="flex gap-1">
-                                <select
-                                    value={(entry.inTime || '').split(':')[0] || ''}
-                                    onChange={(e) => {
-                                        const m = (entry.inTime || '').split(':')[1] || '00';
-                                        update('inTime', `${e.target.value}:${m}`);
-                                    }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer"
-                                >
-                                    <option value="" disabled>HH</option>
-                                    {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                                </select>
-                                <select
-                                    value={(entry.inTime || '').split(':')[1] || ''}
-                                    onChange={(e) => {
-                                        const h = (entry.inTime || '').split(':')[0] || '08';
-                                        update('inTime', `${h}:${e.target.value}`);
-                                    }}
-                                    className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer"
-                                >
-                                    <option value="" disabled>MM</option>
-                                    {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
-                            </div>
-
-                            {/* MEAL */}
-                            <select
-                                value={entry.mealStatus || 'Per calendar day'}
-                                onChange={(e) => update('mealStatus', e.target.value)}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700 outline-none focus:border-purple-300"
-                                title="Break Meal"
-                            >
-                                {MEAL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                            </select>
-
-                            {/* OUT TIME */}
-                            <div className="flex gap-1 items-center">
-                                <div className="flex-1 flex gap-1 min-w-0">
-                                    <select
-                                        value={(entry.outTime || '').split(':')[0] || ''}
-                                        onChange={(e) => {
-                                            const m = (entry.outTime || '').split(':')[1] || '00';
-                                            update('outTime', `${e.target.value}:${m}`);
-                                        }}
-                                        className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer"
-                                    >
-                                        <option value="" disabled>HH</option>
-                                        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                                    </select>
-                                    <select
-                                        value={(entry.outTime || '').split(':')[1] || ''}
-                                        onChange={(e) => {
-                                            const h = (entry.outTime || '').split(':')[0] || '18';
-                                            update('outTime', `${h}:${e.target.value}`);
-                                        }}
-                                        className="flex-1 min-w-0 text-[9px] bg-purple-50/50 border border-purple-100 rounded text-center outline-none focus:border-purple-300 py-1 font-mono font-bold text-purple-900 cursor-pointer"
-                                    >
-                                        <option value="" disabled>MM</option>
-                                        {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-                                    </select>
-                                </div>
-                                <button
-                                    onClick={() => update('nextDay', !entry.nextDay)}
-                                    className={`flex-none h-6 w-5 rounded border text-[8px] font-bold transition-all flex items-center justify-center ${entry.nextDay
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                        : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
-                                        }`}
-                                    title="Toggle Next Day"
-                                >
-                                    +1
-                                </button>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 px-1">
-                                <input
-                                    type="checkbox"
-                                    checked={entry.isFlatDay || false}
-                                    onChange={(e) => update('isFlatDay', e.target.checked)}
-                                    className="w-3 h-3 text-purple-600 rounded border-gray-300 cursor-pointer"
-                                    id={`flat-day-${index}`}
-                                />
-                                <label htmlFor={`flat-day-${index}`} className="text-[8px] text-gray-500 font-medium cursor-pointer">Flat Day</label>
-                            </div>
-                        </>
-                    ) : <div className="text-center text-gray-300">-</div>}
-                </div>
-
-                {/* 4. Upgrade / Notes */}
-                <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1.5">
-                    <div className="flex items-center gap-1">
-                        <input
-                            type="checkbox"
-                            checked={entry.isUpgraded || false}
-                            onChange={(e) => update('isUpgraded', e.target.checked)}
-                            className="w-3 h-3 text-purple-600 rounded border-gray-300"
-                            title="Upgrade?"
-                        />
-                        <div className={`flex-1 flex flex-col gap-0.5 ${!entry.isUpgraded ? 'opacity-50' : ''}`}>
-                            <select
-                                disabled={!entry.isUpgraded}
-                                value={entry.upgradeRole || ''}
-                                onChange={(e) => {
-                                    const roleName = e.target.value;
-                                    update('upgradeRole', roleName);
-                                    const role = upgradeRoles.find(r => r.name === roleName);
-                                    if (role) {
-                                        update('upgradeRate', role.rate);
-                                    }
-                                }}
-                                className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-purple-700 font-bold"
-                            >
-                                <option value="">Role...</option>
-                                {upgradeRoles.map(role => (
-                                    <option key={role.id} value={role.name}>{role.name}</option>
-                                ))}
-                            </select>
-                            {entry.isUpgraded && (
-                                <input
-                                    type="number"
-                                    value={entry.upgradeRate || ''}
-                                    onChange={(e) => update('upgradeRate', parseFloat(e.target.value))}
-                                    className="w-full text-[9px] bg-white border border-gray-200 rounded px-1 py-0.5 text-gray-700"
-                                    placeholder="Rate (£)"
-                                />
-                            )}
-                        </div>
-                    </div>
-                    <textarea
-                        value={entry.notes || ''}
-                        onChange={(e) => update('notes', e.target.value)}
-                        className="w-full h-10 bg-yellow-50 border border-yellow-200 rounded px-1 py-0.5 text-[9px] text-yellow-900 placeholder-yellow-800/30 outline-none resize-none"
-                        placeholder="Notes..."
-                    />
-                </div>
-
-                {/* 5. Overtime & Penalties - Expanded */}
-                <div className="p-1 border-r border-purple-100 flex items-center bg-white">
-                    {isWork ? (
-                        <div className="w-full grid grid-cols-3 gap-0.5">
-                            {/* Row 1 */}
-                            {[
-                                { k: 'cameraOT', l: 'Cam' },
-                                { k: 'preOT', l: 'Pre' },
-                                { k: 'postOT', l: 'Pst' }
-                            ].map((f) => (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-gray-400">{f.l}</span>
-                                    <input
-                                        type="number"
-                                        value={entry[f.k] || ''}
-                                        onChange={(e) => update(f.k, e.target.value)}
-                                        className="w-5 text-[8px] bg-transparent text-right font-mono text-gray-700 outline-none p-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-                            ))}
-
-                            {/* Row 2 */}
-                            {[
-                                { k: 'bta', l: 'BTA' },
-                                { k: 'dawn', l: 'Dwn' },
-                                { k: 'night', l: 'Ngt' }
-                            ].map((f) => (
-                                <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                    <span className="text-[7px] uppercase text-gray-400">{f.l}</span>
-                                    <input
-                                        type="number"
-                                        value={entry[f.k] || ''}
-                                        onChange={(e) => update(f.k, e.target.value)}
-                                        className="w-5 text-[8px] bg-transparent text-right font-mono text-gray-700 outline-none p-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-                            ))}
-
-                            {/* Row 3 - NEW */}
-                            {[
-                                { k: 'turnaround', l: 'Trn' },
-                                { k: 'additionalHour', l: 'Add' },
-                                { k: 'enhancedOT', l: 'Enh' }
-                            ].map((f) => (
-                                <div key={f.k} className="flex items-center justify-between bg-red-50 px-1 rounded border border-red-100 h-5">
-                                    <span className="text-[7px] uppercase text-red-400">{f.l}</span>
-                                    <input
-                                        type="number"
-                                        value={entry[f.k] || ''}
-                                        onChange={(e) => update(f.k, e.target.value)}
-                                        className="w-5 text-[8px] bg-transparent text-right font-mono text-red-700 outline-none p-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-                            ))}
-
-                            {/* Row 4 - Meal Pens */}
-                            {[
-                                { k: 'lateMeal', l: 'Lat' },
-                                { k: 'brokenMeal', l: 'Brk' },
-                                { k: 'otherOT', l: 'Oth' }
-                            ].map((f) => (
-                                <div key={f.k} className="flex items-center justify-between bg-orange-50 px-1 rounded border border-orange-100 h-5">
-                                    <span className="text-[7px] uppercase text-orange-400">{f.l}</span>
-                                    <input
-                                        type="number"
-                                        value={entry[f.k] || ''}
-                                        onChange={(e) => update(f.k, e.target.value)}
-                                        className="w-5 text-[8px] bg-transparent text-right font-mono text-orange-700 outline-none p-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-                            ))}
-
-                            {/* Travel / Mileage */}
-                            <div className="col-span-3 flex items-center gap-1 pt-1 border-t border-dashed border-gray-200 mt-0.5">
-                                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded px-1 flex-1">
-                                    <span className="text-[7px] text-gray-400 uppercase">Tv Hr</span>
-                                    <input
-                                        type="number"
-                                        value={entry.travel || ''}
-                                        onChange={(e) => update('travel', e.target.value)}
-                                        className="w-full text-[9px] bg-transparent text-right outline-none min-w-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded px-1 flex-1">
-                                    <span className="text-[7px] text-gray-400 uppercase">Paid</span>
-                                    <select
-                                        value={entry.paidTravel || 'None'}
-                                        onChange={(e) => update('paidTravel', e.target.value)}
-                                        className="w-full text-[9px] bg-transparent text-right outline-none min-w-0 appearance-none"
-                                    >
-                                        {PAID_TRAVEL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                </div>
-
-                                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded px-1 flex-1">
-                                    <span className="text-[7px] text-gray-400 uppercase">Mil</span>
-                                    <input
-                                        type="number"
-                                        value={entry.mileage || ''}
-                                        onChange={(e) => update('mileage', e.target.value)}
-                                        className="w-full text-[9px] bg-transparent text-right outline-none min-w-0"
-                                        placeholder="-"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    ) : <div className="w-full text-center text-gray-300">-</div>}
-                </div>
-
-                {/* 6. Allowances - Expanded */}
-                <div className="p-2 border-r border-purple-100 flex flex-col justify-center gap-1">
-                    {/* Standard Allowances */}
-                    <div className="flex gap-0.5">
-                        <button onClick={() => update('perDiemShoot', entry.perDiemShoot > 0 ? 0 : 1)} className={`flex-1 text-[7px] font-bold rounded border py-0.5 ${entry.perDiemShoot > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-300'}`}>PD-S</button>
-                        <button onClick={() => update('perDiemNon', entry.perDiemNon > 0 ? 0 : 1)} className={`flex-1 text-[7px] font-bold rounded border py-0.5 ${entry.perDiemNon > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-300'}`}>PD-N</button>
-                    </div>
-                    <div className="flex gap-0.5">
-                        {['B', 'L', 'D'].map((m) => {
-                            const field = m === 'B' ? 'breakfast' : m === 'L' ? 'lunch' : 'dinner';
-                            return (
-                                <button
-                                    key={m}
-                                    onClick={() => update(field, !entry[field])}
-                                    className={`flex-1 text-[7px] font-bold rounded border py-0.5 ${entry[field] ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white border-gray-200 text-gray-300'
-                                        }`}
-                                >
-                                    {m}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Extra Allowances Grid */}
-                    <div className="grid grid-cols-3 gap-0.5 mt-1 pt-1 border-t border-dashed border-gray-200">
-                        {[
-                            { k: 'fuel', l: 'Fuel' },
-                            { k: 'box', l: 'Box' },
-                            { k: 'equipment', l: 'Eqp' },
-                            { k: 'vehicle', l: 'Veh' },
-                            { k: 'mobile', l: 'Mob' },
-                            { k: 'living', l: 'Liv' },
-                            { k: 'computer', l: 'Cmp' },
-                            { k: 'software', l: 'Sft' },
-                            { k: 'mealsAllowance', l: 'Meal' }
-                        ].map(a => (
-                            <div key={a.k} className="flex items-center justify-between border border-gray-100 rounded px-0.5 bg-gray-50/50">
-                                <span className="text-[6px] uppercase text-gray-400 leading-none">{a.l}</span>
-                                <input
-                                    type="number"
-                                    value={entry[a.k] || ''}
-                                    onChange={(e) => update(a.k, e.target.value)}
-                                    className="w-4 text-[7px] bg-transparent text-right outline-none p-0 leading-none"
-                                    placeholder="-"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 7. Approval (Check) */}
-                <div className="p-2 flex items-center justify-center">
-
-                </div>
-            </div>
-        );
-    };
-
     // --- Financial Calculations ---
 
     const activeSalary = useMemo(() => {
@@ -1536,8 +1208,6 @@ export function SalarySidebar({
         gross: grossTotal
     };
 
-    // --- Render Components ---
-
     const entriesToRender = isEditingWeek ? localEntries : entries;
 
     if (showFinancialSummary) {
@@ -1554,10 +1224,10 @@ export function SalarySidebar({
     }
 
     return (
-        <div className={`relative h-full w-full flex flex-col bg-background overflow-hidden font-sans text-[10px]`}>
+        <div className={`relative h-full w-full flex flex-col ${theme.bg} ${theme.text} overflow-hidden font-sans text-[10px]`}>
 
             {/* TOP HEADER - Compact (with Loan Out company name support) */}
-            <div className={`flex-none px-4 py-3 border-b  flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
+            <div className={`flex-none px-4 py-3 border-b flex justify-between items-start bg-white dark:bg-gray-900 shadow-sm z-10 relative`}>
 
                 <div className="flex gap-10">
                     <div className="flex flex-col">
@@ -1730,254 +1400,76 @@ export function SalarySidebar({
             </div>
 
             {/* MAIN CONTENT - Single Page Layout */}
-            <div className="flex-1 flex overflow-auto relative">
+            <div className="flex-1 flex overflow-hidden relative">
                 {/* Status Watermark - Large diagonal across entire page */}
                 <TimesheetStatusWatermark status={timesheetStatus} isDarkMode={isDarkMode} mode="watermark" />
 
-                {/* LEFT COLUMN: Timecard Grid (Approx 65%) */}
-                <div className={`flex-1 flex flex-col border-r  overflow-y-auto bg-white dark:bg-[#0f0e13]`}>
-                    {/* Table Header */}
-                    <div className={`grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] bg-purple-50/80 dark:bg-purple-900/20 border-b  text-[9px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider sticky top-0 z-10 shadow-sm`}>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700 leading-tight">Date<br />Calendar</div>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700 leading-tight">Type / Unit<br />Location</div>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700">In / Out</div>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700">Upgrade</div>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700 text-center">Overview</div>
-                        <div className="p-2 border-r border-purple-100 dark:border-gray-700 text-center">Allowances</div>
-                        <div className="p-2">Notes</div>
+                {/* LEFT COLUMN: Timecard Grid */}
+                <div className={`flex-1 flex flex-col border-r bg-white dark:bg-[#0f0e13] overflow-hidden`}>
+                    <div className="overflow-x-auto">
+                        {/* WIDTH LOCK */}
+                        <div className="min-w-[1400px] max-w-[1800px]">
+
+                            {/* ================= HEADER ================= */}
+                            <div className={`grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] bg-purple-50/80 dark:bg-purple-900/20 border-b text-[9px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider sticky top-0 z-10`}>
+                                <div className="p-2 border-r">Date Calendar</div>
+                                <div className="p-2 border-r">Type / Unit Location</div>
+                                <div className="p-2 border-r">In / Out</div>
+                                <div className="p-2 border-r">Upgrade</div>
+                                <div className="p-2 border-r text-center">Overview</div>
+                                <div className="p-2 border-r text-center">Allowances</div>
+                                <div className="p-2">Notes</div>
+                            </div>
+
+                            <div>
+                                {entriesToRender.map((entry, idx) => {
+                                    const autoValues = {};
+                                    let workDaysCount = 0;
+
+                                    const isComplete = isDayComplete(entry);
+                                    if (entry.dayType === 'Work' && isComplete) {
+                                        workDaysCount++;
+                                        if (workDaysCount === 6) autoValues.sixthDay = 1;
+                                        if (workDaysCount === 7) autoValues.seventhDay = 1;
+                                    }
+                                    if (entry.dayType === 'Travel') autoValues.travelDay = 1;
+                                    if (entry.dayType === 'Turnaround') autoValues.turnaround = 1;
+
+                                    return (
+                                        <TimesheetDataRow
+                                            key={idx}
+                                            entry={entry}
+                                            index={idx}
+                                            isEditing={isEditingWeek}
+                                            update={(f, v) => updateLocalEntry(idx, f, v)}
+                                            upgradeRoles={upgradeRoles}
+                                            autoValues={autoValues}
+                                            currentUserRole={currentUserRole}
+                                            calendarSchedule={calendarSchedule}
+                                            theme={theme}
+                                            t={t}
+                                            HOURS={HOURS}
+                                            MINUTES={MINUTES}
+                                            MEAL_OPTIONS={MEAL_OPTIONS}
+                                            OVERVIEW_FIELDS={OVERVIEW_FIELDS}
+                                            ALLOWANCE_FIELDS={ALLOWANCE_FIELDS}
+                                            LOCATIONS={LOCATIONS}
+                                            formatEntryDate={formatEntryDate}
+                                        />
+                                    );
+                                })}
+                            </div>
+
+                        </div>
                     </div>
 
-                    {/* Rows */}
-                    <div className="flex-1 flex flex-col divide-y divide-gray-50 dark:divide-gray-800 min-h-0">
-                        {(() => {
-                            let workDaysCount = 0;
-                            return entriesToRender.map((entry, idx) => {
-                                const autoValues = {};
-
-                                // Only count days that are complete (have in/out times OR flat day)
-                                // Day Type 'Work' alone is not enough
-                                const isComplete = isDayComplete(entry);
-
-                                if (entry.dayType === 'Work' && isComplete) {
-                                    workDaysCount++;
-                                    if (workDaysCount === 6) autoValues.sixthDay = 1;
-                                    if (workDaysCount === 7) autoValues.seventhDay = 1;
-                                }
-
-                                if (entry.dayType === 'Travel') {
-                                    autoValues.travelDay = 1;
-                                }
-
-                                if (entry.dayType === 'Turnaround') {
-                                    autoValues.turnaround = 1;
-                                }
-
-                                return isEditingWeek ? (
-                                    <EditRow
-                                        key={idx}
-                                        entry={entry}
-                                        index={idx}
-                                        update={(f, v) => updateLocalEntry(idx, f, v)}
-                                        upgradeRoles={upgradeRoles}
-                                        autoValues={autoValues}
-                                        currentUserRole={currentUserRole}
-                                        calendarSchedule={calendarSchedule}
-                                    />
-                                ) : (
-                                    <div key={idx} className={`w-full grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] min-h-[60px] group hover:bg-purple-50/20 dark:hover:bg-purple-900/10 transition-colors border-b `}>
-                                        {/* Date */}
-                                        <div className={`p-2 border-r  flex flex-col justify-center items-start pl-3`}>
-                                            <span className="font-bold text-gray-800 dark:text-gray-200">{formatEntryDate(entry.date)}</span>
-                                            {calendarSchedule?.[entry.date]?.dayType === 'Shoot' && (
-                                                <div className="flex flex-col mt-1.5 space-y-0.5 leading-none select-none">
-                                                    <span className="text-[8px] font-bold uppercase text-purple-700 dark:text-purple-400">
-                                                        {calendarSchedule?.[entry.date]?.unit || 'Main unit'} <span className="font-medium normal-case text-purple-600 dark:text-purple-300">{calendarSchedule?.[entry.date]?.workingHours || '(10 CWD)'}</span>
-                                                    </span>
-                                                    <span className="text-[8px] font-medium text-purple-600 dark:text-purple-300">Shoot day #{calendarSchedule?.[entry.date]?.dayNumber || '-'}</span>
-                                                    <span className="text-[8px] font-bold font-mono text-purple-800 dark:text-purple-200">{calendarSchedule?.[entry.date]?.unitCall || '00:00'}-{calendarSchedule?.[entry.date]?.unitWrap || '00:00'}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Type / Unit / Loc / Set */}
-                                        <div className={`p-2 border-r  flex flex-col justify-center gap-0.5`}>
-                                            <div className="text-[8px] font-bold text-purple-700 dark:text-purple-300 uppercase">
-                                                {entry.dayType}
-                                            </div>
-
-                                            {entry.dayType === 'Work' && (
-                                                <>
-                                                    <div className="text-[8px] font-bold text-purple-900 dark:text-purple-300 uppercase">
-                                                        {t(entry.unit) === 'Main' ? 'Main Unit' : entry.unit === '2nd' ? '2nd Unit' : t(entry.unit)} • {entry.workplace?.[0] === 'On Set' ? 'ON SET' : entry.workplace?.[0] === 'Off Set' ? 'OFF SET' : 'ON SET'}
-                                                    </div>
-                                                    <div className="text-[9px] font-medium text-gray-700 dark:text-gray-300 truncate leading-none" title={entry.workplaceLocation}>
-                                                        {t(entry.workplaceLocation)}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {/* In / Out */}
-                                        <div className={`p-2 border-r  flex flex-col justify-center gap-1 font-mono text-[10px]`}>
-                                            {entry.dayType === 'Work' ? (
-                                                <>
-                                                    {/* In Time */}
-                                                    <div className="flex gap-1 w-full justify-center">
-                                                        <div className="bg-purple-50/50 w-full rounded py-1 text-center font-bold text-gray-700 dark:text-gray-300 border border-transparent shadow-sm">
-                                                            {(entry.inTime || '').split(':')[0] || '--'}
-                                                        </div>
-                                                        <div className="bg-purple-50/50 w-full rounded py-1 text-center font-bold text-gray-700 dark:text-gray-300 border border-transparent shadow-sm">
-                                                            {(entry.inTime || '').split(':')[1] || '--'}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Meal */}
-                                                    {entry.mealStatus && (
-                                                        <div className="w-full text-center truncate py-0.5" title={entry.mealStatus}>
-                                                            <span className="text-[8px] text-purple-700/80 font-medium">{entry.mealStatus}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Out Time */}
-                                                    <div className="flex gap-1 w-full items-center justify-center">
-                                                        <div className="flex-1 flex gap-1 min-w-0">
-                                                            <div className="flex-1 bg-purple-50/50 rounded py-1 text-center font-bold text-gray-700 dark:text-gray-300 border border-transparent shadow-sm">
-                                                                {(entry.outTime || '').split(':')[0] || '--'}
-                                                            </div>
-                                                            <div className="flex-1 bg-purple-50/50 rounded py-1 text-center font-bold text-gray-700 dark:text-gray-300 border border-transparent shadow-sm">
-                                                                {(entry.outTime || '').split(':')[1] || '--'}
-                                                            </div>
-                                                        </div>
-                                                        {entry.nextDay && (
-                                                            <span className="flex-none h-6 w-6 flex items-center justify-center text-[8px] font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded shadow-sm">
-                                                                +1
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {entry.isFlatDay && (
-                                                        <div className="flex items-center justify-center gap-1 mt-0.5">
-                                                            <CheckCircle2 className="w-2.5 h-2.5 text-purple-600" />
-                                                            <span className="text-[7px] text-gray-400 font-medium uppercase tracking-wide">Flat</span>
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : <span className="text-center text-gray-300">-</span>}
-                                        </div>
-
-                                        {/* Upgrade */}
-                                        <div className={`p-2 border-r  flex flex-col justify-center text-[9px]`}>
-                                            {entry.isUpgraded ? (
-                                                <div className="flex flex-col gap-0.5 items-start">
-                                                    <div className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold text-[8px]">
-                                                        UPGR
-                                                    </div>
-                                                    <div className="font-bold text-gray-700 leading-tight">
-                                                        {entry.upgradeRole}
-                                                    </div>
-                                                    {entry.upgradeRate > 0 && (
-                                                        <div className="text-gray-500 font-mono text-[8px]">
-                                                            £{entry.upgradeRate}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-300 text-center">-</span>
-                                            )}
-                                        </div>
-
-                                        {/* Overview Grid (Moved) */}
-                                        <div className={`p-1 border-r  flex items-center`}>
-                                            <div className="w-full flex flex-col gap-0.5">
-                                                <div className="grid grid-cols-4 gap-0.5">
-                                                    {OVERVIEW_FIELDS.map((f) => {
-                                                        const isDerived = f.type === 'derived';
-
-                                                        // Calculate effective entry with autoValues for correct display in read-only mode
-                                                        const effectiveEntry = { ...entry };
-                                                        if (autoValues) {
-                                                            Object.keys(autoValues).forEach(k => {
-                                                                if (effectiveEntry[k] === undefined || effectiveEntry[k] === '' || effectiveEntry[k] === null || effectiveEntry[k] === 0) {
-                                                                    effectiveEntry[k] = autoValues[k];
-                                                                }
-                                                            });
-                                                        }
-
-                                                        const val = isDerived ? f.getValue(effectiveEntry) : (effectiveEntry[f.k] || '');
-                                                        // For boolean types in read-only, show 1 if true
-                                                        const displayVal = f.type === 'bool' ? (val ? '1' : '-') : (val || '-');
-
-                                                        return (
-                                                            <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                                                <span className="text-[7px] uppercase text-black font-medium tracking-tight">{f.l}</span>
-                                                                <span className={`w-6 text-[8px] bg-transparent text-right font-mono p-0 ${(Number(val) > 0 || (f.type === 'bool' && val)) ? 'text-green-600 font-bold' : (Number(val) < 0 ? 'text-red-600 font-bold' : 'text-black')
-                                                                    }`}>{displayVal}</span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Allowances (Updated Grid) */}
-                                        <div className={`p-2 border-r  flex flex-col justify-center gap-1`}>
-                                            <div className="w-full flex flex-col gap-0.5">
-                                                <div className="grid grid-cols-3 gap-0.5">
-                                                    {[
-                                                        { k: 'perDiemShoot', l: 'PD Shoot', type: 'number' },
-                                                        { k: 'perDiemNon', l: 'PD Non', type: 'number' },
-                                                        { k: 'breakfast', l: 'Breakfast', type: 'bool' },
-                                                        { k: 'lunch', l: 'Lunch', type: 'bool' },
-                                                        { k: 'dinner', l: 'Dinner', type: 'bool' },
-                                                        ...ALLOWANCE_FIELDS
-                                                    ].map((f) => {
-                                                        let val = entry[f.k];
-                                                        const isBool = f.type === 'bool';
-
-                                                        // Normalize value
-                                                        if (val === undefined || val === '' || val === null) val = 0;
-                                                        if (isBool && val === true) val = 1;
-                                                        if (isBool && val === false) val = 0;
-
-                                                        const numVal = parseFloat(val);
-                                                        const isActive = numVal > 0;
-
-                                                        // Display value: '1' for active booleans, or the number, or '-'
-                                                        const displayVal = isActive ? (isBool ? '1' : (val || '-')) : '-';
-
-                                                        return (
-                                                            <div key={f.k} className="flex items-center justify-between bg-gray-50 px-1 rounded border border-gray-100 h-5">
-                                                                <span className="text-[7px] uppercase text-black font-medium tracking-tight whitespace-nowrap overflow-hidden text-ellipsis" title={f.l}>{f.l}</span>
-                                                                <span className={`min-w-[12px] text-[8px] bg-transparent text-right font-mono p-0 shrink-0 ${isActive ? 'text-green-600 font-bold' : 'text-black'
-                                                                    }`}>{displayVal}</span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Notes (Moved) */}
-                                        <div className={`p-2 border-r  flex flex-col justify-start text-[9px] overflow-hidden`}>
-                                            {entry.notes ? (
-                                                <div className="bg-white text-gray-700 p-1.5 rounded border border-gray-200 text-[8px] leading-tight line-clamp-3" title={entry.notes}>
-                                                    {entry.notes}
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-300 italic text-[8px]">-</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        })()}
-                    </div>
-
-                    {/* Weekly Claims Section - Moved to Header */}
-
-                    {/* Signatures Footer */}
-                    <SalarySidebarSignatures crewInfo={crewInfo} theme={theme} isDarkMode={isDarkMode} signatures={signatures} />
-                    <div className={`hidden px-4 py-3 border-t  bg-purple-50 dark:bg-gray-800/50 h-[35mm] flex-none`}>
+                    <SalarySidebarSignatures
+                        crewInfo={crewInfo}
+                        theme={theme}
+                        isDarkMode={isDarkMode}
+                        signatures={signatures}
+                    />
+                    <div className={`hidden px-4 py-3 border-t bg-purple-50 dark:bg-gray-800/50 h-[35mm] flex-none`}>
                         <div className="grid grid-cols-5 gap-2 h-full">
                             {[
                                 { label: 'Crew Member', name: `${crewInfo.firstName} ${crewInfo.lastName}`, date: '16 Nov 18:30', code: '8F2A-91', role: crewInfo.jobTitle },
@@ -1986,7 +1478,7 @@ export function SalarySidebar({
                                 { label: 'Accounts', name: 'Dan Palmer', date: '18 Dec 10:45', code: 'AC-441', role: 'Financial Controller' },
                                 { label: 'Payroll', name: '', date: '', code: '', role: '' }
                             ].map((sig) => (
-                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full bg-card `}>
+                                <div key={sig.label} className={`border rounded p-1.5 flex flex-col shadow-sm relative overflow-hidden h-full ${theme.card}`}>
                                     {/* APPROVED Stamp - Only show when signed */}
                                     {sig.name && (
                                         <div
@@ -2083,13 +1575,13 @@ export function SalarySidebar({
                 </div>
 
                 {/* RIGHT COLUMN: Financial Summary with Holiday Column */}
-                <div className={`w-[110mm] flex-none flex flex-col border-l  bg-white dark:bg-[#0f0e13]`}>
-                    <div className={`p-2.5 font-black text-center text-[9px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b  text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
+                <div className={`w-[110mm] flex-none flex flex-col border-l bg-white dark:bg-[#0f0e13]`}>
+                    <div className={`p-2.5 font-black text-center text-[9px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
                         Financial Summary <span className="opacity-70 ml-1">(Weekly Rate - {c(crewInfo.weeklyRate || crewInfo.dailyRate * 5)})</span>
                     </div>
 
                     {/* New Header with combined columns */}
-                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[7px] font-black uppercase py-2 px-2 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b  text-black`}>
+                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[7px] font-black uppercase py-2 px-2 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b text-black`}>
                         <div>ITEM</div>
                         <div className="text-center">RATE / HOL</div>
                         <div className="text-center">UNIT</div>
@@ -2099,7 +1591,7 @@ export function SalarySidebar({
 
                     <div className="flex-1 overflow-y-auto">
                         {summaryData.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[8px] items-center border-b  ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
+                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[8px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
                                 }`}>
                                 {/* Item name */}
                                 <div className={`font-medium truncate leading-tight text-black`}>
@@ -2148,7 +1640,7 @@ export function SalarySidebar({
                     </div>
 
 
-                    <div className={`p-3 ${isDarkMode ? 'bg-[#181621]' : 'bg-purple-50'} border-t  h-[35mm] flex-none`}>
+                    <div className={`p-3 ${isDarkMode ? 'bg-[#181621]' : 'bg-purple-50'} border-t h-[35mm] flex-none`}>
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[9px]">
                                 <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
@@ -2161,7 +1653,7 @@ export function SalarySidebar({
                                 </div>
                             )}
                         </div>
-                        <div className={`flex justify-between items-center pt-2 border-t-2 `}>
+                        <div className={`flex justify-between items-center pt-2 border-t-2`}>
                             <span className="text-[10px] font-black uppercase tracking-widest text-black">Grand Total</span>
                             <span className="text-lg font-black text-black">{c(totals.gross)}</span>
                         </div>
@@ -2170,139 +1662,139 @@ export function SalarySidebar({
             </div>
 
             {/* MODALS */}
-            {/* {exportMode === 'timesheet' && (
-             <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                     <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                         <X className="w-5 h-5 text-gray-600" />
-                     </button>
-                     <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
-                         <TimesheetPDFExport 
-                             isDarkMode={false}
-                             crewInfo={crewInfo}
-                             salary={activeSalary}
-                             weekEnding="16-11-2025"
-                             entries={entriesToRender}
-                             summaryData={summaryData}
-                             totals={{ net: netTotal, vat: vatAmount, gross: grossTotal }}
-                         />
-                     </div>
-                 </div>
-             </div>
-        )}
+            {exportMode === 'timesheet' && (
+                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                        <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                            <X className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
+                            <TimesheetPDFExport
+                                isDarkMode={false}
+                                crewInfo={crewInfo}
+                                salary={activeSalary}
+                                weekEnding="16-11-2025"
+                                entries={entriesToRender}
+                                summaryData={summaryData}
+                                totals={{ net: netTotal, vat: vatAmount, gross: grossTotal }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
-        {exportMode === 'data' && (
-             <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                     <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                         <X className="w-5 h-5 text-gray-600" />
-                     </button>
-                     <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
-                         <TimesheetDataPDFExport 
-                             crewInfo={{
-                                 name: `${crewInfo.firstName} ${crewInfo.lastName}`,
-                                 position: crewInfo.role,
-                                 ...crewInfo
-                             }}
-                             weekEnding="16-11-2025"
-                             entries={entriesToRender.map((e, i) => {
-                                 // Calculate date: Week Ending is Sun 16 Nov 2025.
-                                 const baseDate = new Date(2025, 10, 16); // Month is 0-indexed (10=Nov)
-                                 const dayOffset = 6 - i;
-                                 const date = new Date(baseDate);
-                                 date.setDate(baseDate.getDate() - dayOffset);
-                                 
-                                 const dateStr = date.toISOString().split('T')[0];
-                                 
-                                 // Construct ISO DateTime strings
-                                 let inDateTime = "";
-                                 let outDateTime = "";
-                                 
-                                 if (e.inTime) {
-                                     inDateTime = `${dateStr}T${e.inTime}:00`;
-                                 }
-                                 
-                                 if (e.outTime) {
-                                     const outDate = new Date(date);
-                                     if (e.inTime && e.outTime < e.inTime) {
-                                         outDate.setDate(outDate.getDate() + 1);
-                                     }
-                                     const outDateStr = outDate.toISOString().split('T')[0];
-                                     outDateTime = `${outDateStr}T${e.outTime}:00`;
-                                 }
+            {exportMode === 'data' && (
+                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                        <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                            <X className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
+                            <TimesheetDataPDFExport
+                                crewInfo={{
+                                    name: `${crewInfo.firstName} ${crewInfo.lastName}`,
+                                    position: crewInfo.role,
+                                    ...crewInfo
+                                }}
+                                weekEnding="16-11-2025"
+                                entries={entriesToRender.map((e, i) => {
+                                    // Calculate date: Week Ending is Sun 16 Nov 2025.
+                                    const baseDate = new Date(2025, 10, 16); // Month is 0-indexed (10=Nov)
+                                    const dayOffset = 6 - i;
+                                    const date = new Date(baseDate);
+                                    date.setDate(baseDate.getDate() - dayOffset);
 
-                                 return {
-                                     date: dateStr,
-                                     day: DAYS[i],
-                                     dayNum: date.getDate(),
-                                     month: date.toLocaleString('default', { month: 'short' }),
-                                     year: date.getFullYear(),
-                                     label: `${DAYS[i]} ${date.getDate()}`,
-                                     status: 'submitted',
-                                     dayType: e.dayType,
-                                     unit: e.unit,
-                                     workplace: e.workplace || [],
-                                     workplaceLocation: e.workplaceLocation,
-                                     upgrade: e.upgradeRole,
-                                     inTime: e.inTime,
-                                     inDateTime: inDateTime,
-                                     outTime: e.outTime,
-                                     outDateTime: outDateTime,
-                                     nextDay: false,
-                                     isFlatDay: e.isFlatDay,
-                                     perDiem: e.perDiemShoot > 0 ? 'Shoot' : e.perDiemNon > 0 ? 'Non-Shoot' : ''
-                                 };
-                             })}
-                         />
-                     </div>
-                 </div>
-             </div>
-        )}
+                                    const dateStr = date.toISOString().split('T')[0];
 
-        {showGraphicalView && (
-             <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                     <button onClick={() => setShowGraphicalView(false)} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                         <X className="w-5 h-5 text-gray-600" />
-                     </button>
-                     <div className="flex-1 overflow-auto bg-gray-50 p-6">
-                         <WeeklyGraphicalView 
-                            entries={entriesToRender} 
-                            weeklyRate={crewInfo.weeklyRate || crewInfo.dailyRate * 5}
-                            department={crewInfo.department}
-                         />
-                     </div>
-                 </div>
-             </div>
-        )}
+                                    // Construct ISO DateTime strings
+                                    let inDateTime = "";
+                                    let outDateTime = "";
 
-        <MileageReimbursementForm 
-            isOpen={showMileageForm}
-            onClose={() => setShowMileageForm(false)}
-            crewInfo={crewInfo}
-            weekEnding={calculatedWeekEnding}
-            readOnly={readOnly || timesheetStatus === 'submitted' || timesheetStatus === 'approved' || timesheetStatus === 'paid'}
-        />
+                                    if (e.inTime) {
+                                        inDateTime = `${dateStr}T${e.inTime}:00`;
+                                    }
 
-        <TimesheetExportModals
-            exportMode={exportMode}
-            setExportMode={setExportMode}
-            crewInfo={crewInfo}
-            activeSalary={activeSalary}
-            entriesToRender={entriesToRender}
-            summaryData={summaryData}
-            netTotal={netTotal}
-            vatAmount={vatAmount}
-            grossTotal={grossTotal}
-            isVatRegistered={isVatRegistered}
-            contractCategory={contractCategory}
-            companyName={companyName}
-            crewType={crewType}
-            allowanceCaps={allowanceCaps}
-            customItems={customItems}
-            holidayPayout={holidayPayout}
-            signatures={signatures}
-        /> */}
+                                    if (e.outTime) {
+                                        const outDate = new Date(date);
+                                        if (e.inTime && e.outTime < e.inTime) {
+                                            outDate.setDate(outDate.getDate() + 1);
+                                        }
+                                        const outDateStr = outDate.toISOString().split('T')[0];
+                                        outDateTime = `${outDateStr}T${e.outTime}:00`;
+                                    }
+
+                                    return {
+                                        date: dateStr,
+                                        day: DAYS[i],
+                                        dayNum: date.getDate(),
+                                        month: date.toLocaleString('default', { month: 'short' }),
+                                        year: date.getFullYear(),
+                                        label: `${DAYS[i]} ${date.getDate()}`,
+                                        status: 'submitted',
+                                        dayType: e.dayType,
+                                        unit: e.unit,
+                                        workplace: e.workplace || [],
+                                        workplaceLocation: e.workplaceLocation,
+                                        upgrade: e.upgradeRole,
+                                        inTime: e.inTime,
+                                        inDateTime: inDateTime,
+                                        outTime: e.outTime,
+                                        outDateTime: outDateTime,
+                                        nextDay: false,
+                                        isFlatDay: e.isFlatDay,
+                                        perDiem: e.perDiemShoot > 0 ? 'Shoot' : e.perDiemNon > 0 ? 'Non-Shoot' : ''
+                                    };
+                                })}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showGraphicalView && (
+                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                        <button onClick={() => setShowGraphicalView(false)} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                            <X className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <div className="flex-1 overflow-auto bg-gray-50 p-6">
+                            <WeeklyGraphicalView
+                                entries={entriesToRender}
+                                weeklyRate={crewInfo.weeklyRate || crewInfo.dailyRate * 5}
+                                department={crewInfo.department}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* <MileageReimbursementForm
+                isOpen={showMileageForm}
+                onClose={() => setShowMileageForm(false)}
+                crewInfo={crewInfo}
+                weekEnding={calculatedWeekEnding}
+                readOnly={readOnly || timesheetStatus === 'submitted' || timesheetStatus === 'approved' || timesheetStatus === 'paid'}
+            />
+
+            <TimesheetExportModals
+                exportMode={exportMode}
+                setExportMode={setExportMode}
+                crewInfo={crewInfo}
+                activeSalary={activeSalary}
+                entriesToRender={entriesToRender}
+                summaryData={summaryData}
+                netTotal={netTotal}
+                vatAmount={vatAmount}
+                grossTotal={grossTotal}
+                isVatRegistered={isVatRegistered}
+                contractCategory={contractCategory}
+                companyName={companyName}
+                crewType={crewType}
+                allowanceCaps={allowanceCaps}
+                customItems={customItems}
+                holidayPayout={holidayPayout}
+                signatures={signatures}
+            /> */}
         </div>
     );
 }

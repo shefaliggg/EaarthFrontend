@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Circle } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 
 export function RecentTasks({ isDarkMode }) {
@@ -63,12 +63,12 @@ export function RecentTasks({ isDarkMode }) {
             key={task.id}
             className={cn(
               "p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md",
-              task.completed 
-                ? isDarkMode 
-                  ? "bg-gray-800/30 border-gray-700 opacity-60" 
+              task.completed
+                ? isDarkMode
+                  ? "bg-gray-800/30 border-gray-700 opacity-60"
                   : "bg-gray-50 border-gray-200 opacity-60"
-                : isDarkMode 
-                  ? "bg-gray-800/50 border-gray-700" 
+                : isDarkMode
+                  ? "bg-gray-800/50 border-gray-700"
                   : "bg-gray-50 border-gray-200"
             )}
           >
@@ -81,13 +81,13 @@ export function RecentTasks({ isDarkMode }) {
                   isDarkMode ? "text-gray-600" : "text-gray-400"
                 )} />
               )}
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <p className={cn(
                     "font-bold text-sm",
-                    task.completed 
-                      ? "line-through" 
+                    task.completed
+                      ? "line-through"
                       : "",
                     isDarkMode ? "text-white" : "text-gray-900"
                   )}>
@@ -99,7 +99,7 @@ export function RecentTasks({ isDarkMode }) {
                     </Badge>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-3 text-xs">
                   <span className="text-purple-600 font-bold uppercase tracking-wider">
                     {task.project}

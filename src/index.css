@@ -317,6 +317,17 @@ a svg {
     font-weight: 400;
   }
 
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    /* Firefox */
+  }
+
   /* Subtle hover states */
   button:not(:disabled):hover,
   a:hover {
@@ -435,7 +446,7 @@ a svg {
     animation: fadeInUp 0.3s ease-out;
   }
 
-    .scrollbar-none::-webkit-scrollbar {
+  .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Bell, Clock, Briefcase, Eye, CheckCircle2, 
-  Calendar, DollarSign, AlertCircle, Film, Users 
+import {
+  Bell, Clock, Briefcase, Eye, CheckCircle2,
+  Calendar, DollarSign, AlertCircle, Film, Users
 } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import FilterPillTabs from '../../../shared/components/FilterPillTabs';
 
@@ -167,10 +167,10 @@ export default function Notifications({ isDarkMode }) {
     // Status filter
     if (statusFilter === 'unread' && !notification.unread) return false;
     if (statusFilter === 'read' && notification.unread) return false;
-    
+
     // Type filter
     if (typeFilter !== 'all' && notification.type !== typeFilter) return false;
-    
+
     return true;
   });
 
@@ -236,12 +236,12 @@ export default function Notifications({ isDarkMode }) {
               key={notification.id}
               className={cn(
                 "p-3 rounded-lg border transition-all hover:shadow-md cursor-pointer",
-                notification.unread 
-                  ? isDarkMode 
-                    ? "bg-primary/5 border-primary/30" 
+                notification.unread
+                  ? isDarkMode
+                    ? "bg-primary/5 border-primary/30"
                     : "bg-primary/5 border-primary/20"
-                  : isDarkMode 
-                    ? "bg-gray-800/50 border-gray-700" 
+                  : isDarkMode
+                    ? "bg-gray-800/50 border-gray-700"
                     : "bg-gray-50 border-gray-200"
               )}
             >
@@ -252,7 +252,7 @@ export default function Notifications({ isDarkMode }) {
                 )}>
                   <Icon className={cn("w-4 h-4", notification.color)} />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex-1">
@@ -267,19 +267,19 @@ export default function Notifications({ isDarkMode }) {
                           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         )}
                       </div>
-                      
+
                       {notification.project && (
                         <Badge className="bg-primary/20 text-primary text-xs font-bold border-primary/30 mt-1">
                           {notification.project}
                         </Badge>
                       )}
                     </div>
-                    
+
                     <p className="text-xs text-muted-foreground whitespace-nowrap">
                       {notification.time}
                     </p>
                   </div>
-                  
+
                   <p className={cn(
                     "text-xs",
                     isDarkMode ? "text-gray-300" : "text-gray-700"

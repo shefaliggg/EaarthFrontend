@@ -1,6 +1,6 @@
 import React from 'react';
 import { Film, Calendar, ArrowRight, Briefcase } from 'lucide-react';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../config/utils';
 import { Badge } from '../../../shared/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -68,7 +68,7 @@ export function ActiveProjects({ isDarkMode }) {
           <Film className="w-5 h-5 text-blue-600" />
           Active Projects
         </h2>
-        <button 
+        <button
           onClick={() => toast.info('Opening all projects...')}
           className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
         >
@@ -83,8 +83,8 @@ export function ActiveProjects({ isDarkMode }) {
             key={project.id}
             className={cn(
               "p-4 rounded-lg border transition-all hover:shadow-md cursor-pointer",
-              isDarkMode 
-                ? "bg-gray-800/50 border-gray-700 hover:border-gray-600" 
+              isDarkMode
+                ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
                 : "bg-gray-50 border-gray-200 hover:border-gray-300"
             )}
             onClick={() => toast.info(`Opening ${project.name}...`)}
@@ -104,7 +104,7 @@ export function ActiveProjects({ isDarkMode }) {
                   {project.role} • {project.department}
                 </p>
               </div>
-              <Badge 
+              <Badge
                 className={cn(
                   "text-xs font-bold",
                   project.statusColor === 'green' && "bg-green-500/20 text-green-600 border-green-500/30",
@@ -171,12 +171,12 @@ export function ActiveProjects({ isDarkMode }) {
               key={opp.id}
               className={cn(
                 "p-3 rounded-lg border cursor-pointer transition-all",
-                opp.unread 
-                  ? isDarkMode 
-                    ? "bg-blue-600/10 border-blue-500/30" 
+                opp.unread
+                  ? isDarkMode
+                    ? "bg-blue-600/10 border-blue-500/30"
                     : "bg-blue-50 border-blue-200"
-                  : isDarkMode 
-                    ? "bg-gray-800/50 border-gray-700" 
+                  : isDarkMode
+                    ? "bg-gray-800/50 border-gray-700"
                     : "bg-gray-50 border-gray-200"
               )}
               onClick={() => toast.info(`Opening ${opp.project}...`)}
