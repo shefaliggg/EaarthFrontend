@@ -3,7 +3,7 @@ import SignatureCanvas from "react-signature-canvas";
 import { Button } from "../../../shared/components/ui/button";
 import { Trash2, Check } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../shared/config/utils";
 
 const formatCurrency = (amount) => {
   if (!amount && amount !== 0) return "N/A";
