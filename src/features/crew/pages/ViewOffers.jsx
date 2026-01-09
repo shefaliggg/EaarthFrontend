@@ -3,17 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../shared/components/ui/button";
 import { Badge } from "../../../shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../shared/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../../shared/components/ui/collapsible";
 import { Separator } from "../../../shared/components/ui/separator";
 import { 
   ArrowLeft, User, Briefcase, DollarSign, Building2, 
   Package, FileText, CheckCircle, Edit2, Send, 
-  ClipboardCheck, Calculator, PenTool, Download,
-  ChevronDown, ChevronUp
+  PenTool, Download, Mail, Phone, MapPin, Calendar
 } from "lucide-react";
-import { MOCK_OFFERS_LIST, getMockOfferById } from '../mocks/mockOffers'; // Updated import
+import { MOCK_OFFERS_LIST, getMockOfferById } from '../mocks/mockOffers';
 
-// Create a lookup object for easier access in the demo controls
 const MOCK_OFFERS = MOCK_OFFERS_LIST.reduce((acc, offer) => {
   acc[offer.id] = offer;
   return acc;
@@ -33,7 +30,7 @@ const STATUS_CONFIG = {
   COMPLETED: { label: "Signed", color: "bg-emerald-100 text-emerald-700" },
 };
 
-const formatCurrency = (amount, currency = "GBP") => {
+const formatCurrency = (amount) => {
   if (!amount) return "—";
   return `£${parseFloat(amount).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
@@ -61,38 +58,33 @@ const formatDateTime = (dateStr) => {
   }
 };
 
-function CollapsibleSection({ title, icon: Icon, children, defaultOpen = true }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function InfoItem({ icon: Icon, label, value, highlight = false }) {
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <Card className="mb-4">
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {Icon && <Icon className="w-5 h-5 text-primary" />}
-                <CardTitle className="text-base font-semibold">{title}</CardTitle>
-              </div>
-              {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <CardContent className="pt-0">{children}</CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+    <div className="flex flex-col">
+      <p className="text-[11px] text-muted-foreground mb-0.5">{label}</p>
+      <div className="flex items-center gap-1.5">
+        {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+        <p className={`text-sm font-medium leading-tight ${highlight ? "text-primary font-semibold" : ""}`}>
+          {value || "—"}
+        </p>
+      </div>
+    </div>
   );
 }
 
-function DataRow({ label, value, highlight = false }) {
+function CompactCard({ title, icon: Icon, children, className = "" }) {
   return (
-    <div className="grid grid-cols-3 py-2 border-b border-muted/50 last:border-0">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={`text-sm col-span-2 ${highlight ? "text-primary font-semibold" : "font-medium"}`}>
-        {value || "—"}
-      </span>
-    </div>
+    <Card className={`h-fit ${className}`}>
+      <CardHeader className="pb-1  px-6">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-primary" />}
+          <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 pb-2 px-6">
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -108,7 +100,7 @@ export default function ViewOffer() {
   if (!offer) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <p className="text-center text-muted-foreground">Offer not found</p>
         </div>
       </div>
@@ -118,20 +110,14 @@ export default function ViewOffer() {
   const statusConfig = STATUS_CONFIG[offer.status] || { label: offer.status, color: "bg-muted" };
   const primaryRole = offer.roles?.[0] || {};
 
-  // Determine which sections to show based on status
   const isPending = ["DRAFT", "SENT_TO_CREW", "NEEDS_REVISION"].includes(offer.status);
   const isInProgress = [
-    "CREW_ACCEPTED", 
-    "PRODUCTION_CHECK", 
-    "ACCOUNTS_CHECK", 
-    "PENDING_CREW_SIGNATURE", 
-    "PENDING_UPM_SIGNATURE", 
-    "PENDING_FC_SIGNATURE", 
-    "PENDING_STUDIO_SIGNATURE"
+    "CREW_ACCEPTED", "PRODUCTION_CHECK", "ACCOUNTS_CHECK", 
+    "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE", 
+    "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE"
   ].includes(offer.status);
   const isCompleted = offer.status === "COMPLETED";
 
-  // Navigation handlers using React Router
   const handleNavigateToSign = () => {
     navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/sign`);
   };
@@ -150,40 +136,28 @@ export default function ViewOffer() {
     }
     if (viewAsRole === "CREW" && offer.status === "PENDING_CREW_SIGNATURE") {
       return (
-        <Button 
-          className="bg-blue-600 hover:bg-blue-700"
-          onClick={handleNavigateToSign}
-        >
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNavigateToSign}>
           <PenTool className="w-4 h-4 mr-2" /> Sign Contract
         </Button>
       );
     }
     if (viewAsRole === "UPM" && offer.status === "PENDING_UPM_SIGNATURE") {
       return (
-        <Button 
-          className="bg-indigo-600 hover:bg-indigo-700"
-          onClick={handleNavigateToSign}
-        >
+        <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleNavigateToSign}>
           <PenTool className="w-4 h-4 mr-2" /> Sign as UPM
         </Button>
       );
     }
     if (viewAsRole === "FC" && offer.status === "PENDING_FC_SIGNATURE") {
       return (
-        <Button 
-          className="bg-pink-600 hover:bg-pink-700"
-          onClick={handleNavigateToSign}
-        >
+        <Button className="bg-pink-600 hover:bg-pink-700" onClick={handleNavigateToSign}>
           <PenTool className="w-4 h-4 mr-2" /> Sign as FC
         </Button>
       );
     }
     if (viewAsRole === "STUDIO" && offer.status === "PENDING_STUDIO_SIGNATURE") {
       return (
-        <Button 
-          className="bg-violet-600 hover:bg-violet-700"
-          onClick={handleNavigateToSign}
-        >
+        <Button className="bg-violet-600 hover:bg-violet-700" onClick={handleNavigateToSign}>
           <PenTool className="w-4 h-4 mr-2" /> Sign as Studio
         </Button>
       );
@@ -191,10 +165,7 @@ export default function ViewOffer() {
     if (viewAsRole === "PRODUCTION_ADMIN" && (offer.status === "DRAFT" || offer.status === "NEEDS_REVISION")) {
       return (
         <div className="flex gap-2">
-          <Button 
-            variant="outline"
-            onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`)}
-          >
+          <Button variant="outline" onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`)}>
             <Edit2 className="w-4 h-4 mr-2" /> Edit
           </Button>
           <Button>
@@ -205,10 +176,7 @@ export default function ViewOffer() {
     }
     if (offer.status === "COMPLETED") {
       return (
-        <Button 
-          variant="outline"
-          onClick={handleNavigateToViewContract}
-        >
+        <Button variant="outline" onClick={handleNavigateToViewContract}>
           <Download className="w-4 h-4 mr-2" /> View Signed Contract
         </Button>
       );
@@ -217,10 +185,10 @@ export default function ViewOffer() {
   };
 
   return (
-    <div className="">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="px-2">
+      <div className="max-w-7xl mx-auto space-y-2">
         {/* Demo Controls */}
-        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
+        <Card className="p-0">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[200px]">
@@ -259,10 +227,7 @@ export default function ViewOffer() {
           </CardContent>
         </Card>
 
-        {/* Rest of your ViewOffer component remains the same... */}
-        {/* Breadcrumb, Header, Status Section, etc. */}
-        
-        {/* Breadcrumb */}
+        {/* Breadcrumb & Header */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Button 
             variant="ghost" 
@@ -275,238 +240,277 @@ export default function ViewOffer() {
           <span>Offer for {offer.fullName}</span>
         </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="flex items-start justify-between flex-wrap gap-4 pb-2">
           <div>
-            <Badge className={`mb-2 ${statusConfig.color}`}>{statusConfig.label}</Badge>
-            {offer.updatedAt && (
-              <p className="text-xs text-muted-foreground">
-                Last updated {formatDateTime(offer.updatedAt)}
-              </p>
-            )}
+            
             <h1 className="text-2xl font-bold mt-2">Offer for {offer.fullName}</h1>
           </div>
           {getActionButton()}
         </div>
 
-        {/* All your existing sections... */}
-        {/* I'll include the key sections for completeness */}
-        
-        {/* Status Section */}
-        <CollapsibleSection title="Status" icon={CheckCircle}>
-          <DataRow label="Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
-          {offer.sentToCrewAt && <DataRow label="Sent to crew" value={formatDate(offer.sentToCrewAt)} />}
-          {offer.crewAcceptedAt && <DataRow label="Crew accepted" value={formatDate(offer.crewAcceptedAt)} />}
-          {offer.productionCheckCompletedAt && <DataRow label="Production check completed" value={formatDate(offer.productionCheckCompletedAt)} />}
-          {offer.accountsCheckCompletedAt && <DataRow label="Accounts check completed" value={formatDate(offer.accountsCheckCompletedAt)} />}
-          {offer.crewSignedAt && <DataRow label="Crew signed" value={formatDate(offer.crewSignedAt)} />}
-          {offer.upmSignedAt && <DataRow label="UPM signed" value={formatDate(offer.upmSignedAt)} />}
-          {offer.fcSignedAt && <DataRow label="FC signed" value={formatDate(offer.fcSignedAt)} />}
-          {offer.studioSignedAt && <DataRow label="Studio signed" value={formatDate(offer.studioSignedAt)} />}
-        </CollapsibleSection>
-
-        {/* Recipient Section */}
-        <CollapsibleSection title="Recipient" icon={User}>
-          <DataRow label="Full name" value={offer.fullName} />
-          <DataRow label="Email" value={offer.email} />
-          <DataRow label="Phone number" value={offer.mobileNumber} />
-        </CollapsibleSection>
-
-        {/* PENDING: Basic offer details */}
+        {/* PENDING STATE - Simplified view */}
         {isPending && (
           <>
-            <CollapsibleSection title="Offer details" icon={Briefcase}>
-              <DataRow label="Job title" value={primaryRole.jobTitle} />
-              <DataRow label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-              <DataRow label="Start date" value={formatDate(primaryRole.startDate)} />
-              <DataRow label="End date" value={formatDate(primaryRole.endDate)} />
-              <DataRow label="Rate" value={`${formatCurrency(primaryRole.contractRate)}/week`} highlight />
-            </CollapsibleSection>
+            {/* Full width status card */}
+            <CompactCard title="Status" icon={CheckCircle}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                <InfoItem label="Current Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
+                {offer.sentToCrewAt && <InfoItem icon={Calendar} label="Sent to crew" value={formatDate(offer.sentToCrewAt)} />}
+                {offer.updatedAt && <InfoItem icon={Calendar} label="Last updated" value={formatDate(offer.updatedAt)} />}
+              </div>
+            </CompactCard>
 
-            <CollapsibleSection title="Project info" icon={Building2}>
-              <DataRow label="Production" value={offer.productionName} />
-              {offer.productionType && <DataRow label="Type" value={offer.productionType} />}
-              {offer.estimatedShootDates && <DataRow label="Estimated shoot dates" value={offer.estimatedShootDates} />}
-            </CollapsibleSection>
+            {/* Two column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+              {/* Recipient */}
+              <CompactCard title="Recipient" icon={User}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                  <InfoItem icon={Mail} label="Email" value={offer.email} />
+                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
+                </div>
+              </CompactCard>
+
+              {/* Offer Details */}
+              <CompactCard title="Offer details" icon={Briefcase}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                  <InfoItem icon={Calendar} label="Start date" value={formatDate(primaryRole.startDate)} />
+                  <InfoItem icon={Calendar} label="End date" value={formatDate(primaryRole.endDate)} />
+                  <div className="md:col-span-2">
+                    <Separator className="mb-2" />
+                    <InfoItem icon={DollarSign} label="Weekly Rate" value={`${formatCurrency(primaryRole.contractRate)}/week`} highlight />
+                  </div>
+                </div>
+              </CompactCard>
+            </div>
+
+            {/* Full width project info */}
+            <CompactCard title="Project info" icon={Building2}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+                <InfoItem icon={Building2} label="Production" value={offer.productionName} />
+                {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                {offer.estimatedShootDates && <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />}
+              </div>
+            </CompactCard>
           </>
         )}
 
-        {/* IN PROGRESS: Detailed information */}
+        {/* IN PROGRESS STATE */}
         {isInProgress && (
           <>
-            <CollapsibleSection title="Offer details" icon={Briefcase}>
-              <DataRow label="Unit" value={primaryRole.unit} />
-              <DataRow label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-              <DataRow label="Job title" value={primaryRole.jobTitle} />
-              <DataRow label="Workplace" value={primaryRole.regularSiteOfWork} />
-              <DataRow label="Start & End date" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
-            </CollapsibleSection>
-
-            <CollapsibleSection title="Contract" icon={FileText}>
-              <DataRow label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
-              <DataRow label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
-              <DataRow label="Working week" value={primaryRole.workingWeek} />
-              <DataRow label="Standard working hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
-            </CollapsibleSection>
-
-            <CollapsibleSection title="Fees" icon={DollarSign}>
-              <DataRow label="Currency" value="GBP £" />
-              <Separator className="my-3" />
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 text-xs text-muted-foreground font-medium"></th>
-                      <th className="text-center py-2 text-xs text-muted-foreground font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="py-2 text-muted-foreground">Weekly rate</td>
-                      <td className="py-2 text-center font-semibold">{formatCurrency(primaryRole.contractRate)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+            {/* Full width status timeline */}
+            <CompactCard title="Status" icon={CheckCircle}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+                <InfoItem label="Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
+                {offer.sentToCrewAt && <InfoItem icon={Calendar} label="Sent to crew" value={formatDate(offer.sentToCrewAt)} />}
+                {offer.crewAcceptedAt && <InfoItem icon={CheckCircle} label="Crew accepted" value={formatDate(offer.crewAcceptedAt)} />}
+                {offer.productionCheckCompletedAt && <InfoItem icon={CheckCircle} label="Production check" value={formatDate(offer.productionCheckCompletedAt)} />}
+                {offer.accountsCheckCompletedAt && <InfoItem icon={CheckCircle} label="Accounts check" value={formatDate(offer.accountsCheckCompletedAt)} />}
               </div>
-              {primaryRole.customOvertimeRates && (
-                <>
-                  <Separator className="my-3" />
-                  <div className="space-y-0">
-                    <h4 className="font-semibold text-sm mb-2">Overtime Rates</h4>
-                    <DataRow label="6th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.sixthDayHourlyRate)} />
-                    <DataRow label="7th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.seventhDayHourlyRate)} />
+            </CompactCard>
+
+            {/* Two column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+              {/* Recipient */}
+              <CompactCard title="Recipient" icon={User}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                  <InfoItem icon={Mail} label="Email" value={offer.email} />
+                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
+                </div>
+              </CompactCard>
+
+              {/* Offer Details */}
+              <CompactCard title="Offer details" icon={Briefcase}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Unit" value={primaryRole.unit} />
+                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                  <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
+                  <div className="md:col-span-2">
+                    <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
                   </div>
-                </>
+                </div>
+              </CompactCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+              {/* Contract Details */}
+              <CompactCard title="Contract" icon={FileText}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
+                  <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
+                  <InfoItem label="Working week" value={primaryRole.workingWeek} />
+                  <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
+                </div>
+              </CompactCard>
+
+              {/* Fees */}
+              <CompactCard title="Fees" icon={DollarSign}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Currency" value="GBP £" />
+                  <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
+                  {primaryRole.customOvertimeRates && (
+                    <>
+                      <div className="md:col-span-2">
+                        <Separator className="my-1.5" />
+                        <p className="text-xs font-semibold mb-2">Overtime Rates</p>
+                      </div>
+                      <InfoItem label="6th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.sixthDayHourlyRate)} />
+                      <InfoItem label="7th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.seventhDayHourlyRate)} />
+                    </>
+                  )}
+                </div>
+              </CompactCard>
+            </div>
+
+            {/* Allowances & Project Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+              {primaryRole.allowances && (
+                <CompactCard title="Allowances" icon={Package}>
+                  {primaryRole.allowances.boxRental && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="">
+                        <p className="text-xs font-semibold mb-2">📦 Box Rental</p>
+                      </div>
+                      <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.boxRentalFeePerWeek)} />
+                    </div>
+                  )}
+                </CompactCard>
               )}
-            </CollapsibleSection>
 
-            {primaryRole.allowances && (
-              <CollapsibleSection title="Allowances" icon={Package}>
-                {primaryRole.allowances.boxRental && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-sm mb-2">📦 Box Rental</h4>
-                    <DataRow label="Fee per week" value={formatCurrency(primaryRole.allowances.boxRentalFeePerWeek)} />
-                  </div>
-                )}
-              </CollapsibleSection>
-            )}
-
-            <CollapsibleSection title="Project info" icon={Building2}>
-              <DataRow label="Project codename" value={offer.productionName} />
-              {offer.productionType && <DataRow label="Type" value={offer.productionType} />}
-              {offer.estimatedShootDates && <DataRow label="Estimated shoot dates" value={offer.estimatedShootDates} />}
-              {offer.shootDuration && <DataRow label="Shoot duration" value={`${offer.shootDuration} days`} />}
-              {offer.studioCompany && <DataRow label="Studio/Production company" value={offer.studioCompany} />}
-            </CollapsibleSection>
+              <CompactCard title="Project info" icon={Building2}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
+                  {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                  {offer.estimatedShootDates && <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />}
+                  {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
+                  {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
+                </div>
+              </CompactCard>
+            </div>
           </>
         )}
 
-        {/* COMPLETED: Everything including signatures */}
+        {/* COMPLETED STATE */}
         {isCompleted && (
           <>
-            <CollapsibleSection title="Offer details" icon={Briefcase}>
-              <DataRow label="Unit" value={primaryRole.unit} />
-              <DataRow label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-              <DataRow label="Job title" value={primaryRole.jobTitle} />
-              <DataRow label="Workplace" value={primaryRole.regularSiteOfWork} />
-              <DataRow label="Start & End date" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
-            </CollapsibleSection>
-
-            <CollapsibleSection title="Contract" icon={FileText}>
-              <DataRow label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
-              <DataRow label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
-              <DataRow label="Working week" value={primaryRole.workingWeek} />
-              <DataRow label="Standard working hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
-            </CollapsibleSection>
-
-            <CollapsibleSection title="Fees" icon={DollarSign}>
-              <DataRow label="Currency" value="GBP £" />
-              <Separator className="my-3" />
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 text-xs text-muted-foreground font-medium"></th>
-                      <th className="text-center py-2 text-xs text-muted-foreground font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="py-2 text-muted-foreground">Weekly rate</td>
-                      <td className="py-2 text-center font-semibold">{formatCurrency(primaryRole.contractRate)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CollapsibleSection>
-
-            {primaryRole.allowances && (
-              <CollapsibleSection title="Allowances" icon={Package}>
-                {primaryRole.allowances.computerAllowance && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-sm mb-2">💻 Computer Allowance</h4>
-                    <DataRow label="Fee per week" value={formatCurrency(primaryRole.allowances.computerAllowanceFeePerWeek)} />
+            {/* Full width signatures */}
+            <CompactCard title="Signatures" icon={CheckCircle}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+                {offer.crewSignedAt && (
+                  <div className="flex flex-col">
+                    <p className="text-[11px] text-muted-foreground mb-0.5">Crew Member</p>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-medium leading-tight">Signed {formatDate(offer.crewSignedAt)}</p>
+                    </div>
                   </div>
                 )}
-              </CollapsibleSection>
-            )}
+                {offer.upmSignedAt && (
+                  <div className="flex flex-col">
+                    <p className="text-[11px] text-muted-foreground mb-0.5">UPM</p>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-medium leading-tight">Signed {formatDate(offer.upmSignedAt)}</p>
+                    </div>
+                  </div>
+                )}
+                {offer.fcSignedAt && (
+                  <div className="flex flex-col">
+                    <p className="text-[11px] text-muted-foreground mb-0.5">Financial Controller</p>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-medium leading-tight">Signed {formatDate(offer.fcSignedAt)}</p>
+                    </div>
+                  </div>
+                )}
+                {offer.studioSignedAt && (
+                  <div className="flex flex-col">
+                    <p className="text-[11px] text-muted-foreground mb-0.5">Studio Executive</p>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-medium leading-tight">Signed {formatDate(offer.studioSignedAt)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CompactCard>
 
-            <CollapsibleSection title="Signatures" icon={CheckCircle}>
-              {offer.crewSignedAt && (
-                <DataRow 
-                  label="Crew Member" 
-                  value={
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                      <span>Signed on {formatDate(offer.crewSignedAt)}</span>
-                    </div>
-                  } 
-                />
-              )}
-              {offer.upmSignedAt && (
-                <DataRow 
-                  label="UPM" 
-                  value={
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                      <span>Signed on {formatDate(offer.upmSignedAt)}</span>
-                    </div>
-                  } 
-                />
-              )}
-              {offer.fcSignedAt && (
-                <DataRow 
-                  label="Financial Controller" 
-                  value={
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                      <span>Signed on {formatDate(offer.fcSignedAt)}</span>
-                    </div>
-                  } 
-                />
-              )}
-              {offer.studioSignedAt && (
-                <DataRow 
-                  label="Studio Executive" 
-                  value={
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-3 h-3 text-green-600" />
-                      <span>Signed on {formatDate(offer.studioSignedAt)}</span>
-                    </div>
-                  } 
-                />
-              )}
-            </CollapsibleSection>
+            {/* Two column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
+              {/* Recipient */}
+              <CompactCard title="Recipient" icon={User}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                  <InfoItem icon={Mail} label="Email" value={offer.email} />
+                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
+                </div>
+              </CompactCard>
 
-            <CollapsibleSection title="Project info" icon={Building2}>
-              <DataRow label="Project codename" value={offer.productionName} />
-              {offer.productionType && <DataRow label="Type" value={offer.productionType} />}
-              {offer.estimatedShootDates && <DataRow label="Estimated shoot dates" value={offer.estimatedShootDates} />}
-              {offer.shootDuration && <DataRow label="Shoot duration" value={`${offer.shootDuration} days`} />}
-              {offer.studioCompany && <DataRow label="Studio/Production company" value={offer.studioCompany} />}
-              {offer.companyName && <DataRow label="Company name" value={offer.companyName} />}
-              {offer.productionAddress && <DataRow label="Production base address" value={offer.productionAddress} />}
-            </CollapsibleSection>
+              {/* Offer Details */}
+              <CompactCard title="Offer details" icon={Briefcase}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Unit" value={primaryRole.unit} />
+                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                  <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
+                  <div className="md:col-span-2">
+                    <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
+                  </div>
+                </div>
+              </CompactCard>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start ">
+              {/* Contract Details */}
+              <CompactCard title="Contract" icon={FileText}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
+                  <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
+                  <InfoItem label="Working week" value={primaryRole.workingWeek} />
+                  <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
+                </div>
+              </CompactCard>
+
+              {/* Fees */}
+              <CompactCard title="Fees" icon={DollarSign}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoItem label="Currency" value="GBP £" />
+                  <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
+                </div>
+              </CompactCard>
+            </div>
+
+            {/* Allowances & Project Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2  items-start">
+              {primaryRole.allowances && (
+                <CompactCard title="Allowances" icon={Package}>
+                  {primaryRole.allowances.computerAllowance && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="">
+                        <p className="text-xs font-semibold ">💻 Computer Allowance</p>
+                      </div>
+                      <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.computerAllowanceFeePerWeek)} />
+                    </div>
+                  )}
+                </CompactCard>
+              )}
+
+              <CompactCard title="Project info" icon={Building2} className="">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
+                  <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
+                  {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                  {offer.estimatedShootDates && <div className="md:col-span-2"><InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} /></div>}
+                  {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
+                  {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
+                  {offer.companyName && <InfoItem label="Company name" value={offer.companyName} />}
+                  {offer.productionAddress && <div className=""><InfoItem icon={MapPin} label="Production base" value={offer.productionAddress} /></div>}
+                </div>
+              </CompactCard>
+            </div>
           </>
         )}
       </div>
