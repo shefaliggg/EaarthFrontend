@@ -18,9 +18,9 @@ export function StatusBadge({
         lg: "px-4 py-2 text-sm rounded-xl",
     };
 
-    console.log("icon from timesheet", icon)
+    // console.log("icon from timesheet", icon)
     const FinalIcon = icon ?? Icon
-    console.log("final icon", FinalIcon)
+    // console.log("final icon", FinalIcon)
 
     return (
         <Badge

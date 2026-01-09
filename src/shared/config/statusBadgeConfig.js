@@ -44,7 +44,7 @@ const STATUS_META = {
 };
 
 export function getStatusBadge(status, label) {
-  console.log("status", status)
+  // console.log("status", status)
   const group = STATUS_META[status];
 
   if (!group) {

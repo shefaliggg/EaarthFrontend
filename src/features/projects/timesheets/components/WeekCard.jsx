@@ -38,11 +38,16 @@ export function WeekCard({
             : week.status;
 
     const isGrid = view === "grid";
+    console.log("card mode", mode)
 
     const handleCardClick = (e) => {
         e.stopPropagation();
-        if (mode === "expenses" && onEditExpenses) {
-            onEditExpenses(week.weekEnding);
+        if (mode === "expenses") {
+            if (displayStatus !== 'not-started') {
+            navigate("FLCM-#284382");
+            } else {
+            navigate(`new?week=${week.weekEnding}`);
+            }
         } else {
             navigate(week.weekEnding);
         }

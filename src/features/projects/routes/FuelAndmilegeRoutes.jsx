@@ -9,7 +9,8 @@ const FulesAndMilegeRoutes = {
     path: "fuel-mileage",
     children: [
         { index: true, element: <CrewTimesheetsOverview /> },
-        { path: ':claimId', element: <FuelAndMileageForm />,},
+        { path: ':claimId', element: <FuelAndMileageForm />, },
+        { path: 'new', element: <FuelAndMileageForm />, },
 
         { path: '*', element: <NotFound /> }
     ],

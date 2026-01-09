@@ -22,7 +22,7 @@ import { useLocation, useMatch, useParams } from 'react-router-dom';
 function CrewTimesheetsOverview() {
   const params = useParams();
   const location = useLocation();
-  const isFuelRoute = useMatch("/projects/:projectName/timesheets/fuel");
+  const isFuelRoute = useMatch(`/projects/${params.projectName}/fuel-mileage`);
   const activeTab = isFuelRoute ? "expenses" : "timesheets";
   const currentTab = location.pathname
 
