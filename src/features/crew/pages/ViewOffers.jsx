@@ -47,17 +47,6 @@ const formatDate = (dateStr) => {
   }
 };
 
-const formatDateTime = (dateStr) => {
-  if (!dateStr) return "—";
-  try {
-    const date = new Date(dateStr);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} at ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  } catch {
-    return dateStr;
-  }
-};
-
 function InfoItem({ icon: Icon, label, value, highlight = false }) {
   return (
     <div className="flex flex-col">
@@ -75,7 +64,7 @@ function InfoItem({ icon: Icon, label, value, highlight = false }) {
 function CompactCard({ title, icon: Icon, children, className = "" }) {
   return (
     <Card className={`h-fit ${className}`}>
-      <CardHeader className="pb-1  px-6">
+      <CardHeader className="pb-1 px-6">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="w-4 h-4 text-primary" />}
           <CardTitle className="text-sm font-semibold">{title}</CardTitle>
@@ -127,18 +116,46 @@ export default function ViewOffer() {
   };
 
   const getActionButton = () => {
+    // CREW - Review offer (SENT_TO_CREW status)
     if (viewAsRole === "CREW" && offer.status === "SENT_TO_CREW") {
       return (
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`)}>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log('Edit button clicked, navigating to:', `/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`);
+              navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`);
+            }}
+          >
             <Edit2 className="w-4 h-4 mr-2" /> Edit Offer
           </Button>
-          <Button onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`)}>
+          <Button 
+            onClick={() => {
+              console.log('Review button clicked, navigating to:', `/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`);
+              navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`);
+            }}
+          >
             <FileText className="w-4 h-4 mr-2" /> Review Offer
           </Button>
         </div>
       );
     }
+
+    // CREW - Review revised offer (NEEDS_REVISION status)
+    if (viewAsRole === "CREW" && offer.status === "NEEDS_REVISION") {
+      return (
+        <Button 
+          onClick={() => {
+            console.log('Review Revised button clicked, navigating to:', `/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`);
+            navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`);
+          }}
+        >
+          <FileText className="w-4 h-4 mr-2" /> Review Revised Offer
+        </Button>
+      );
+    }
+
+    // CREW - Sign contract
     if (viewAsRole === "CREW" && offer.status === "PENDING_CREW_SIGNATURE") {
       return (
         <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNavigateToSign}>
@@ -146,6 +163,8 @@ export default function ViewOffer() {
         </Button>
       );
     }
+
+    // UPM - Sign as UPM
     if (viewAsRole === "UPM" && offer.status === "PENDING_UPM_SIGNATURE") {
       return (
         <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleNavigateToSign}>
@@ -153,6 +172,8 @@ export default function ViewOffer() {
         </Button>
       );
     }
+
+    // FC - Sign as FC
     if (viewAsRole === "FC" && offer.status === "PENDING_FC_SIGNATURE") {
       return (
         <Button className="bg-pink-600 hover:bg-pink-700" onClick={handleNavigateToSign}>
@@ -160,6 +181,8 @@ export default function ViewOffer() {
         </Button>
       );
     }
+
+    // STUDIO - Sign as Studio
     if (viewAsRole === "STUDIO" && offer.status === "PENDING_STUDIO_SIGNATURE") {
       return (
         <Button className="bg-violet-600 hover:bg-violet-700" onClick={handleNavigateToSign}>
@@ -167,30 +190,43 @@ export default function ViewOffer() {
         </Button>
       );
     }
-    if (
-  viewAsRole === "PRODUCTION_ADMIN" &&
-  (offer.status === "DRAFT" || offer.status === "NEEDS_REVISION")
-) {
-  return (
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        onClick={() =>
-          navigate(
-            `/projects/${projectName || "demo-project"}/offers/${selectedOfferId}/edit`
-          )
-        }
-      >
-        <Edit2 className="w-4 h-4 mr-2" /> Edit Offer
-      </Button>
 
-      <Button>
-        <Send className="w-4 h-4 mr-2" /> Send to Crew
-      </Button>
-    </div>
-  );
-}
+    // PRODUCTION_ADMIN - Edit and send offer
+    if (viewAsRole === "PRODUCTION_ADMIN" && (offer.status === "DRAFT" || offer.status === "NEEDS_REVISION")) {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/projects/${projectName || "demo-project"}/offers/${selectedOfferId}/edit`)}
+          >
+            <Edit2 className="w-4 h-4 mr-2" /> Edit Offer
+          </Button>
+          <Button>
+            <Send className="w-4 h-4 mr-2" /> Send to Crew
+          </Button>
+        </div>
+      );
+    }
 
+    // PRODUCTION_ADMIN - Production check
+    if (viewAsRole === "PRODUCTION_ADMIN" && offer.status === "PRODUCTION_CHECK") {
+      return (
+        <Button onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/production-check`)}>
+          <CheckCircle className="w-4 h-4 mr-2" /> Production Check
+        </Button>
+      );
+    }
+
+    // PRODUCTION_ADMIN or ACCOUNTS - Accounts check
+    if ((viewAsRole === "PRODUCTION_ADMIN" || viewAsRole === "ACCOUNTS") && offer.status === "ACCOUNTS_CHECK") {
+      return (
+        <Button onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/accounts-check`)}>
+          <CheckCircle className="w-4 h-4 mr-2" /> Accounts Check
+        </Button>
+      );
+    }
+
+    // Anyone - View completed contract
     if (offer.status === "COMPLETED") {
       return (
         <Button variant="outline" onClick={handleNavigateToViewContract}>
@@ -198,6 +234,7 @@ export default function ViewOffer() {
         </Button>
       );
     }
+
     return null;
   };
 
@@ -235,6 +272,7 @@ export default function ViewOffer() {
                 >
                   <option value="CREW">CREW</option>
                   <option value="PRODUCTION_ADMIN">PRODUCTION ADMIN</option>
+                  <option value="ACCOUNTS">ACCOUNTS</option>
                   <option value="UPM">UPM</option>
                   <option value="FC">FC</option>
                   <option value="STUDIO">STUDIO</option>
@@ -259,7 +297,6 @@ export default function ViewOffer() {
 
         <div className="flex items-start justify-between flex-wrap gap-4 pb-2">
           <div>
-            
             <h1 className="text-2xl font-bold mt-2">Offer for {offer.fullName}</h1>
           </div>
           {getActionButton()}
@@ -268,7 +305,6 @@ export default function ViewOffer() {
         {/* PENDING STATE - Simplified view */}
         {isPending && (
           <>
-            {/* Full width status card */}
             <CompactCard title="Status" icon={CheckCircle}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
                 <InfoItem label="Current Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
@@ -277,9 +313,7 @@ export default function ViewOffer() {
               </div>
             </CompactCard>
 
-            {/* Two column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {/* Recipient */}
               <CompactCard title="Recipient" icon={User}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem icon={User} label="Full name" value={offer.fullName} />
@@ -288,7 +322,6 @@ export default function ViewOffer() {
                 </div>
               </CompactCard>
 
-              {/* Offer Details */}
               <CompactCard title="Offer details" icon={Briefcase}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
@@ -303,7 +336,6 @@ export default function ViewOffer() {
               </CompactCard>
             </div>
 
-            {/* Full width project info */}
             <CompactCard title="Project info" icon={Building2}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
                 <InfoItem icon={Building2} label="Production" value={offer.productionName} />
@@ -317,7 +349,6 @@ export default function ViewOffer() {
         {/* IN PROGRESS STATE */}
         {isInProgress && (
           <>
-            {/* Full width status timeline */}
             <CompactCard title="Status" icon={CheckCircle}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
                 <InfoItem label="Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
@@ -328,9 +359,7 @@ export default function ViewOffer() {
               </div>
             </CompactCard>
 
-            {/* Two column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {/* Recipient */}
               <CompactCard title="Recipient" icon={User}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem icon={User} label="Full name" value={offer.fullName} />
@@ -339,7 +368,6 @@ export default function ViewOffer() {
                 </div>
               </CompactCard>
 
-              {/* Offer Details */}
               <CompactCard title="Offer details" icon={Briefcase}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Unit" value={primaryRole.unit} />
@@ -354,7 +382,6 @@ export default function ViewOffer() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {/* Contract Details */}
               <CompactCard title="Contract" icon={FileText}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
@@ -364,7 +391,6 @@ export default function ViewOffer() {
                 </div>
               </CompactCard>
 
-              {/* Fees */}
               <CompactCard title="Fees" icon={DollarSign}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Currency" value="GBP £" />
@@ -383,13 +409,12 @@ export default function ViewOffer() {
               </CompactCard>
             </div>
 
-            {/* Allowances & Project Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
               {primaryRole.allowances && (
                 <CompactCard title="Allowances" icon={Package}>
                   {primaryRole.allowances.boxRental && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div className="">
+                      <div>
                         <p className="text-xs font-semibold mb-2">📦 Box Rental</p>
                       </div>
                       <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.boxRentalFeePerWeek)} />
@@ -414,7 +439,6 @@ export default function ViewOffer() {
         {/* COMPLETED STATE */}
         {isCompleted && (
           <>
-            {/* Full width signatures */}
             <CompactCard title="Signatures" icon={CheckCircle}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
                 {offer.crewSignedAt && (
@@ -456,9 +480,7 @@ export default function ViewOffer() {
               </div>
             </CompactCard>
 
-            {/* Two column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {/* Recipient */}
               <CompactCard title="Recipient" icon={User}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem icon={User} label="Full name" value={offer.fullName} />
@@ -467,7 +489,6 @@ export default function ViewOffer() {
                 </div>
               </CompactCard>
 
-              {/* Offer Details */}
               <CompactCard title="Offer details" icon={Briefcase}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Unit" value={primaryRole.unit} />
@@ -481,8 +502,7 @@ export default function ViewOffer() {
               </CompactCard>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start ">
-              {/* Contract Details */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
               <CompactCard title="Contract" icon={FileText}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
@@ -492,7 +512,6 @@ export default function ViewOffer() {
                 </div>
               </CompactCard>
 
-              {/* Fees */}
               <CompactCard title="Fees" icon={DollarSign}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem label="Currency" value="GBP £" />
@@ -501,14 +520,13 @@ export default function ViewOffer() {
               </CompactCard>
             </div>
 
-            {/* Allowances & Project Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2  items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
               {primaryRole.allowances && (
                 <CompactCard title="Allowances" icon={Package}>
                   {primaryRole.allowances.computerAllowance && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div className="">
-                        <p className="text-xs font-semibold ">💻 Computer Allowance</p>
+                      <div>
+                        <p className="text-xs font-semibold">💻 Computer Allowance</p>
                       </div>
                       <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.computerAllowanceFeePerWeek)} />
                     </div>
@@ -516,15 +534,15 @@ export default function ViewOffer() {
                 </CompactCard>
               )}
 
-              <CompactCard title="Project info" icon={Building2} className="">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
+              <CompactCard title="Project info" icon={Building2}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
                   {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
                   {offer.estimatedShootDates && <div className="md:col-span-2"><InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} /></div>}
                   {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
                   {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
                   {offer.companyName && <InfoItem label="Company name" value={offer.companyName} />}
-                  {offer.productionAddress && <div className=""><InfoItem icon={MapPin} label="Production base" value={offer.productionAddress} /></div>}
+                  {offer.productionAddress && <div><InfoItem icon={MapPin} label="Production base" value={offer.productionAddress} /></div>}
                 </div>
               </CompactCard>
             </div>

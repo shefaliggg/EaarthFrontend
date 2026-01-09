@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../shared/components/ui/card";
+import { Button } from "../../../shared/components/ui/button";
+import { Badge } from "../../../shared/components/ui/badge";
+import { Textarea } from "../../../shared/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "../../../shared/components/ui/dialog";
+import { ScrollArea } from "../../../shared/components/ui/scroll-area";
+import { Separator } from "../../../shared/components/ui/separator";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -53,100 +53,121 @@ export function WorkflowProgress({ offer, onUpdate }) {
     fetchHistory();
   }, [offer.id]);
 
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`/api/offers/${offer.id}/comments`);
-      const data = await response.json();
-      setComments(data);
-    } catch (error) {
-      console.error("Failed to load comments");
-    }
+  const fetchComments = () => {
+    // Mock comments data
+    setComments([
+      {
+        id: 1,
+        comment: "Please confirm the start date works for you.",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        userRole: "Production"
+      },
+      {
+        id: 2,
+        comment: "The overtime rates look good to me.",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        userRole: "Crew"
+      }
+    ]);
   };
 
-  const fetchHistory = async () => {
-    try {
-      const response = await fetch(`/api/offers/${offer.id}/workflow-history`);
-      const data = await response.json();
-      setHistory(data);
-    } catch (error) {
-      console.error("Failed to load history");
-    }
-  };
-
-  const sendToCrew = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/send-to-crew`, {
-        method: "POST"
+  const fetchHistory = () => {
+    // Mock workflow history data
+    const mockHistory = [];
+    
+    if (offer.createdAt) {
+      mockHistory.push({
+        id: 1,
+        action: "OFFER_CREATED",
+        toStatus: "DRAFT",
+        notes: "Offer created",
+        createdAt: offer.createdAt
       });
-      toast.success("Offer sent to crew");
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to send offer");
     }
+    
+    if (offer.sentToCrewAt) {
+      mockHistory.push({
+        id: 2,
+        action: "SENT_TO_CREW",
+        toStatus: "SENT_TO_CREW",
+        notes: "Offer sent to crew member for review",
+        createdAt: offer.sentToCrewAt
+      });
+    }
+    
+    if (offer.crewAcceptedAt) {
+      mockHistory.push({
+        id: 3,
+        action: "CREW_ACCEPTED",
+        toStatus: "CREW_ACCEPTED",
+        notes: "Crew member accepted the offer",
+        createdAt: offer.crewAcceptedAt
+      });
+    }
+    
+    if (offer.productionCheckCompletedAt) {
+      mockHistory.push({
+        id: 4,
+        action: "PRODUCTION_CHECK_COMPLETED",
+        toStatus: "ACCOUNTS_CHECK",
+        notes: "Production check completed successfully",
+        createdAt: offer.productionCheckCompletedAt
+      });
+    }
+    
+    if (offer.accountsCheckCompletedAt) {
+      mockHistory.push({
+        id: 5,
+        action: "ACCOUNTS_CHECK_COMPLETED",
+        toStatus: "PENDING_CREW_SIGNATURE",
+        notes: "Accounts check completed successfully",
+        createdAt: offer.accountsCheckCompletedAt
+      });
+    }
+    
+    if (offer.completedAt) {
+      mockHistory.push({
+        id: 6,
+        action: "CONTRACT_COMPLETED",
+        toStatus: "COMPLETED",
+        notes: "All signatures collected, contract fully executed",
+        createdAt: offer.completedAt
+      });
+    }
+    
+    setHistory(mockHistory);
   };
 
-  const requestRevision = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/request-revision`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: revisionComment })
-      });
-      toast.success("Revision requested");
-      setRevisionComment("");
-      setIsRevisionDialogOpen(false);
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to request revision");
-    }
+  const sendToCrew = () => {
+    toast.success("Offer sent to crew");
+    if (onUpdate) onUpdate();
   };
 
-  const acceptOffer = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/accept`, {
-        method: "POST"
-      });
-      toast.success("Offer accepted");
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to accept offer");
-    }
+  const requestRevision = () => {
+    toast.success("Revision requested");
+    setRevisionComment("");
+    setIsRevisionDialogOpen(false);
+    if (onUpdate) onUpdate();
   };
 
-  const startProductionCheck = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/start-production-check`, {
-        method: "POST"
-      });
-      toast.success("Production check started");
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to start production check");
-    }
+  const acceptOffer = () => {
+    toast.success("Offer accepted");
+    if (onUpdate) onUpdate();
   };
 
-  const completeProductionCheck = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/complete-production-check`, {
-        method: "POST"
-      });
-      toast.success("Production check completed");
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to complete production check");
-    }
+  const startProductionCheck = () => {
+    toast.success("Production check started");
+    if (onUpdate) onUpdate();
   };
 
-  const completeAccountsCheck = async () => {
-    try {
-      await fetch(`/api/offers/${offer.id}/complete-accounts-check`, {
-        method: "POST"
-      });
-      toast.success("Accounts check completed");
-      if (onUpdate) onUpdate();
-    } catch (error) {
-      toast.error("Failed to complete accounts check");
-    }
+  const completeProductionCheck = () => {
+    toast.success("Production check completed");
+    if (onUpdate) onUpdate();
+  };
+
+  const completeAccountsCheck = () => {
+    toast.success("Accounts check completed");
+    if (onUpdate) onUpdate();
   };
 
   const getCurrentStageIndex = () => {

@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../shared/components/ui/card";
+import { Button } from "../../../shared/components/ui/button";
+import { Badge } from "../../../shared/components/ui/badge";
+import { Textarea } from "../../../shared/components/ui/textarea";
+import { Separator } from "../../../shared/components/ui/separator";
 import { CheckCircle, MessageSquare, ArrowLeft, Send, AlertCircle, Clock, User, Briefcase, DollarSign, Calendar, Building } from "lucide-react";
 import { toast } from "sonner";
-import { WorkflowProgress } from "./WorkflowProgress";
+import { WorkflowProgress } from "../components/WorkflowProgress";
+import { getMockOfferById } from '../mocks/mockOffers';
 
-export default function CrewReview({ offerId, onBack }) {
+export default function CrewReview() {
+  const { id, projectName } = useParams();
+  const navigate = useNavigate();
   const [comment, setComment] = useState("");
   const [offer, setOffer] = useState(null);
   const [comments, setComments] = useState([]);
@@ -17,13 +21,13 @@ export default function CrewReview({ offerId, onBack }) {
   useEffect(() => {
     fetchOfferData();
     fetchComments();
-  }, [offerId]);
+  }, [id]);
 
-  const fetchOfferData = async () => {
+  const fetchOfferData = () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/offers/${offerId}`);
-      const data = await response.json();
+      // Using mock data instead of API call
+      const data = getMockOfferById(id);
       setOffer(data);
     } catch (error) {
       toast.error("Failed to load offer details");
@@ -32,60 +36,57 @@ export default function CrewReview({ offerId, onBack }) {
     }
   };
 
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`/api/offers/${offerId}/comments`);
-      const data = await response.json();
-      setComments(data);
-    } catch (error) {
-      console.error("Failed to load comments");
-    }
+  const fetchComments = () => {
+    // Mock comments data
+    setComments([
+      {
+        id: 1,
+        comment: "Please confirm the start date works for you.",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        userRole: "Production"
+      },
+      {
+        id: 2,
+        comment: "The overtime rates look good to me.",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        userRole: "Crew"
+      }
+    ]);
   };
 
-  const addComment = async () => {
-    try {
-      await fetch(`/api/offers/${offerId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment })
-      });
-      setComment("");
-      toast.success("Comment added");
-      fetchComments();
-    } catch (error) {
-      toast.error("Failed to add comment");
-    }
+  const addComment = () => {
+    if (!comment.trim()) return;
+    
+    // Add comment to local state (mock)
+    const newComment = {
+      id: comments.length + 1,
+      comment: comment,
+      createdAt: new Date().toISOString(),
+      userRole: "Crew"
+    };
+    setComments([...comments, newComment]);
+    setComment("");
+    toast.success("Comment added");
   };
 
-  const acceptOffer = async () => {
-    try {
-      await fetch(`/api/offers/${offerId}/transition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toStatus: "CREW_ACCEPTED" })
-      });
-      toast.success("Offer accepted");
-      if (onBack) onBack();
-    } catch (error) {
-      toast.error("Failed to accept offer");
-    }
+  const acceptOffer = () => {
+    // Mock accept offer
+    toast.success("Offer accepted");
+    setTimeout(() => {
+      navigate(`/projects/${projectName || 'demo-project'}/offers`);
+    }, 1000);
   };
 
-  const requestChanges = async () => {
-    try {
-      await fetch(`/api/offers/${offerId}/transition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          toStatus: "NEEDS_REVISION", 
-          notes: comment || "Changes requested" 
-        })
-      });
-      toast.success("Changes requested");
-      if (onBack) onBack();
-    } catch (error) {
-      toast.error("Failed to request changes");
-    }
+  const requestChanges = () => {
+    // Mock request changes
+    toast.success("Changes requested");
+    setTimeout(() => {
+      navigate(`/projects/${projectName || 'demo-project'}/offers`);
+    }, 1000);
+  };
+
+  const handleBack = () => {
+    navigate(`/projects/${projectName || 'demo-project'}/offers`);
   };
 
   if (isLoading) {
@@ -104,7 +105,7 @@ export default function CrewReview({ offerId, onBack }) {
     );
   }
 
-  const isReviewable = offer.status === "SENT_TO_CREW";
+  const isReviewable = offer.status === "SENT_TO_CREW" || offer.status === "NEEDS_REVISION";
   const roles = offer.roles || [];
   const firstRole = roles[0] || {};
 
@@ -113,13 +114,15 @@ export default function CrewReview({ offerId, onBack }) {
     return `£${value.toLocaleString()}`;
   };
 
+  console.log('CrewReview loaded:', { id, projectName, offer, firstRole });
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4 flex-wrap">
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={onBack}
+          onClick={handleBack}
           data-testid="button-back"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -182,11 +185,11 @@ export default function CrewReview({ offerId, onBack }) {
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Employment Type</span>
-              <span data-testid="text-employment-type">{offer.confirmedEmploymentType || "TBD"}</span>
+              <span data-testid="text-employment-type">{offer.confirmedEmploymentType || firstRole.confirmedEmploymentType || "TBD"}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Pay Cadence</span>
-              <span data-testid="text-pay-cadence">{firstRole.payCadence || "N/A"}</span>
+              <span data-testid="text-pay-cadence">{firstRole.rateType || firstRole.payCadence || "N/A"}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Department</span>
@@ -207,7 +210,7 @@ export default function CrewReview({ offerId, onBack }) {
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Rate</span>
-              <span data-testid="text-rate">{formatCurrency(firstRole.rate)}</span>
+              <span data-testid="text-rate">{formatCurrency(firstRole.contractRate || firstRole.rateAmount)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Overtime</span>
@@ -216,7 +219,7 @@ export default function CrewReview({ offerId, onBack }) {
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Holiday Pay</span>
               <span data-testid="text-holiday-pay">
-                {firstRole.holidayPayPercentage ? `${firstRole.holidayPayPercentage}%` : "N/A"}
+                {offer.holidayPayPercentage ? `${offer.holidayPayPercentage}%` : "N/A"}
               </span>
             </div>
           </CardContent>
@@ -230,15 +233,15 @@ export default function CrewReview({ offerId, onBack }) {
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Box Rental</span>
-              <span data-testid="text-box-rental">{formatCurrency(firstRole.boxRentalAllowance)}</span>
+              <span data-testid="text-box-rental">{formatCurrency(firstRole.allowances?.boxRentalFeePerWeek)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Car Allowance</span>
-              <span data-testid="text-car-allowance">{formatCurrency(firstRole.carAllowance)}</span>
+              <span data-testid="text-car-allowance">{formatCurrency(firstRole.allowances?.carAllowanceFeePerWeek)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Phone Allowance</span>
-              <span data-testid="text-phone-allowance">{formatCurrency(firstRole.phoneAllowance)}</span>
+              <span data-testid="text-phone-allowance">{formatCurrency(firstRole.allowances?.mobilePhoneAllowanceFeePerWeek)}</span>
             </div>
           </CardContent>
         </Card>
@@ -263,7 +266,7 @@ export default function CrewReview({ offerId, onBack }) {
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Working in UK</span>
-              <span data-testid="text-working-uk">{firstRole.workingInUk || "N/A"}</span>
+              <span data-testid="text-working-uk">{firstRole.workingInUnitedKingdom || "N/A"}</span>
             </div>
           </CardContent>
         </Card>
