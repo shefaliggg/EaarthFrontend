@@ -717,7 +717,7 @@ function TimesheetTable() {
     return (
         <div className="space-y-4">
             {/* Editable Timesheet with Approval Controls */}
-            <div className={`rounded-xl border-2 border-purple-500 p-4 shadow-2xl overflow-hidden bg-background`}>
+            <div className={`rounded-xl border-2 border-purple-500 shadow-2xl overflow-hidden bg-background`}>
                 {(() => {
                     const isPastWeek = getWeekStatus(selectedWeek) === 'past';
 

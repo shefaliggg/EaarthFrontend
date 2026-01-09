@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { Check, ChevronsUpDown, CheckCircle2, Minus } from 'lucide-react';
+import { Check, ChevronsUpDown, CheckCircle2, Minus, Plus } from 'lucide-react';
 import { cn } from '@/shared/config/utils';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-} from '@/shared/components/ui/popover';
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem
-} from '@/shared/components/ui/command';
+import { Checkbox } from "@/shared/components/ui/checkbox"
 import { TimesheetMiniField } from './TimesheetMiniField';
 import { Textarea } from '../../../../../shared/components/ui/textarea';
+import { Input } from '../../../../../shared/components/ui/input';
+import { SelectMenu } from '../../../../../shared/components/menus/SelectMenu';
+import { Button } from '../../../../../shared/components/ui/button';
+import { TableLocationSelect } from './TableLocationSelect';
+import { DAY_TYPE_ITEMS, tableSelect, UNIT_ITEMS, WORKPLACE_ITEMS } from '../../config/TimesheetTableValues';
+import { StatusBadge } from "@/shared/components/badges/StatusBadge"
 
 const TimesheetDataRow = ({
     entry,
@@ -48,10 +43,25 @@ const TimesheetDataRow = ({
     const calendarData = calendarSchedule?.[entry.date];
     const [openLocation, setOpenLocation] = useState(false);
 
+    const HOUR_ITEMS = HOURS.map((h) => ({
+        label: h,
+        value: h,
+    }));
+
+    const MINUTE_ITEMS = MINUTES.map((m) => ({
+        label: m,
+        value: m,
+    }));
+
+    const MEAL_ITEMS = MEAL_OPTIONS.map((m) => ({
+        label: m,
+        value: m,
+    }));
+
     return (
         <div
             className={cn(
-                'grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] border-b min-w-[1400px]',
+                'grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px] border-b min-w-[1000px] px-3',
                 isEditing
                     ? 'bg-purple-50/10 border-purple-100'
                     : 'hover:bg-purple-50/20 dark:hover:bg-purple-900/10'
@@ -85,89 +95,48 @@ const TimesheetDataRow = ({
             <div className="p-2 border-r flex flex-col justify-center gap-1 min-w-0">
                 {isEditing ? (
                     <>
-                        <select
-                            value={entry.dayType}
-                            onChange={(e) => update('dayType', e.target.value)}
+                        {/* DAY TYPE */}
+                        <SelectMenu
+                            selected={entry.dayType}
+                            onSelect={(v) => update("dayType", v)}
+                            items={DAY_TYPE_ITEMS}
+                            label="Select…"
                             className={cn(
-                                'text-[10px] font-bold uppercase border rounded px-1 py-1',
-                                entry.dayType === 'Work'
-                                    ? 'bg-purple-50 border-purple-200'
-                                    : 'bg-gray-50'
+                                tableSelect
                             )}
-                        >
-                            <option value="">Select...</option>
-                            {[
-                                'Work', 'Rest', 'Travel', 'Turnaround', 'Holiday',
-                                'Public holiday off', 'Personal issue', 'Sick',
-                                'Training', 'Half Day', 'Travel & Turnaround',
-                                'Driver - Cast Travel'
-                            ].map(d => (
-                                <option key={d} value={d}>{d}</option>
-                            ))}
-                        </select>
+                        />
 
                         {isWork && (
                             <>
+                                {/* UNIT + WORKPLACE */}
                                 <div className="flex gap-1 min-w-0">
-                                    <select
-                                        value={entry.unit}
-                                        onChange={(e) => update('unit', e.target.value)}
-                                        className="flex-1 text-[10px] border rounded px-1"
-                                    >
-                                        <option value="Main">Main Unit</option>
-                                        <option value="2nd">2nd Unit</option>
-                                    </select>
-
-                                    <select
-                                        value={entry.workplace?.[0] || 'On Set'}
-                                        onChange={(e) => update('workplace', [e.target.value])}
-                                        className="flex-1 text-[10px] border rounded px-1 uppercase"
-                                    >
-                                        <option value="On Set">ON SET</option>
-                                        <option value="Off Set">OFF SET</option>
-                                    </select>
-                                </div>
-
-                                <div className="flex gap-1 min-w-0">
-                                    <input
-                                        value={entry.workplaceLocation || ''}
-                                        onChange={(e) => update('workplaceLocation', e.target.value)}
-                                        className="flex-1 text-[10px] border rounded px-2"
-                                        placeholder="Location..."
+                                    {/* Unit */}
+                                    <SelectMenu
+                                        selected={entry.unit}
+                                        onSelect={(v) => update("unit", v)}
+                                        items={UNIT_ITEMS}
+                                        className={cn(
+                                            tableSelect
+                                        )}
                                     />
-                                    <Popover open={openLocation} onOpenChange={setOpenLocation}>
-                                        <PopoverTrigger asChild>
-                                            <button className="h-5 w-5 border rounded">
-                                                <ChevronsUpDown className="h-3 w-3" />
-                                            </button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="p-0 w-[200px]">
-                                            <Command>
-                                                <CommandInput placeholder="Search..." />
-                                                <CommandEmpty>No result</CommandEmpty>
-                                                <CommandGroup>
-                                                    {LOCATIONS.map(loc => (
-                                                        <CommandItem
-                                                            key={loc}
-                                                            onSelect={() => {
-                                                                update('workplaceLocation', loc);
-                                                                setOpenLocation(false);
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    'mr-2 h-3 w-3',
-                                                                    entry.workplaceLocation === loc ? 'opacity-100' : 'opacity-0'
-                                                                )}
-                                                            />
-                                                            {loc}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
+
+                                    {/* Workplace */}
+                                    <SelectMenu
+                                        selected={entry.workplace?.[0] || "On Set"}
+                                        onSelect={(v) => update("workplace", [v])}
+                                        items={WORKPLACE_ITEMS}
+                                        className={cn(
+                                            tableSelect
+                                        )}
+                                    />
                                 </div>
+
+
+                                <TableLocationSelect
+                                    value={entry.workplaceLocation}
+                                    onChange={(v) => update("workplaceLocation", v)}
+                                    items={LOCATIONS}
+                                />
                             </>
                         )}
                     </>
@@ -176,7 +145,8 @@ const TimesheetDataRow = ({
                         <div className="text-[9px] font-bold uppercase text-purple-700">
                             {entry.dayType}
                         </div>
-                        {entry.dayType === 'Work' && (
+
+                        {entry.dayType === "Work" && (
                             <>
                                 <div className="text-[9px] font-bold uppercase">
                                     {t(entry.unit)} • {entry.workplace?.[0]}
@@ -191,113 +161,135 @@ const TimesheetDataRow = ({
             </div>
 
             {/* 3️⃣ IN / OUT */}
-            <div className="p-2 border-r flex flex-col justify-center  gap-1 text-[10px] font-mono min-w-0">
+            <div className="p-2 border-r flex flex-col justify-center gap-1 min-w-0 font-mono">
                 {isEditing && isWork ? (
                     <>
                         {/* IN */}
-                        <div className="flex gap-1 min-w-0">
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.inTime || '').split(':')[0] || ''}
-                                onChange={(e) =>
-                                    update('inTime', `${e.target.value}:${(entry.inTime || '00:00').split(':')[1]}`)
+                        <div className="flex items-center justify-center gap-1 min-w-0">
+                            <SelectMenu
+                                selected={(entry.inTime || "").split(":")[0] || ""}
+                                onSelect={(v) =>
+                                    update(
+                                        "inTime",
+                                        `${v}:${(entry.inTime || "00:00").split(":")[1]}`
+                                    )
                                 }
-                                className="w-full min-w-0 border rounded text-center"
-                            >
-                                <option value="">HH</option>
-                                {HOURS.map(h => <option key={h}>{h}</option>)}
-                            </select>
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.inTime || '').split(':')[1] || ''}
-                                onChange={(e) =>
-                                    update('inTime', `${(entry.inTime || '00:00').split(':')[0]}:${e.target.value}`)
+                                items={HOUR_ITEMS}
+                                label="HH"
+                                className={cn(tableSelect)}
+                            />
+
+                            <span className="text-[8px] text-muted-foreground">:</span>
+
+                            <SelectMenu
+                                selected={(entry.inTime || "").split(":")[1] || ""}
+                                onSelect={(v) =>
+                                    update(
+                                        "inTime",
+                                        `${(entry.inTime || "00:00").split(":")[0]}:${v}`
+                                    )
                                 }
-                                className="w-full min-w-0 border rounded text-center"
-                            >
-                                <option value="">MM</option>
-                                {MINUTES.map(m => <option key={m}>{m}</option>)}
-                            </select>
+                                items={MINUTE_ITEMS}
+                                label="MM"
+                                className={cn(tableSelect)}
+                            />
                         </div>
 
-                        <select
-                            value={entry.mealStatus || ''}
-                            onChange={(e) => update('mealStatus', e.target.value)}
-                            className="text-[10px] border rounded"
-                        >
-                            {MEAL_OPTIONS.map(m => <option key={m}>{m}</option>)}
-                        </select>
+                        {/* MEAL */}
+                        <SelectMenu
+                            selected={entry.mealStatus || ""}
+                            onSelect={(v) => update("mealStatus", v)}
+                            items={MEAL_ITEMS}
+                            label="Meal"
+                            className={cn(tableSelect)}
+                        />
 
                         {/* OUT */}
-                        <div className="flex gap-1 min-w-0 items-center">
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.outTime || '').split(':')[0] || ''}
-                                onChange={(e) =>
-                                    update('outTime', `${e.target.value}:${(entry.outTime || '00:00').split(':')[1]}`)
+                        <div className="flex items-center justify-center gap-1 min-w-0">
+                            <SelectMenu
+                                selected={(entry.outTime || "").split(":")[0] || ""}
+                                onSelect={(v) =>
+                                    update(
+                                        "outTime",
+                                        `${v}:${(entry.outTime || "00:00").split(":")[1]}`
+                                    )
                                 }
-                                className="w-full min-w-0 border rounded text-center"
-                            >
-                                <option value="">HH</option>
-                                {HOURS.map(h => <option key={h}>{h}</option>)}
-                            </select>
-                            <select
-                                disabled={entry.isFlatDay}
-                                value={(entry.outTime || '').split(':')[1] || ''}
-                                onChange={(e) =>
-                                    update('outTime', `${(entry.outTime || '00:00').split(':')[0]}:${e.target.value}`)
-                                }
-                                className="w-full min-w-0 border rounded text-center"
-                            >
-                                <option value="">MM</option>
-                                {MINUTES.map(m => <option key={m}>{m}</option>)}
-                            </select>
-
-                            <button
-                                onClick={() => update('nextDay', !entry.nextDay)}
-                                className={cn(
-                                    'h-6 w-5 text-[9px] border rounded',
-                                    entry.nextDay ? 'bg-purple-600 text-white' : 'text-gray-400'
-                                )}
-                            >
-                                +1
-                            </button>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                            <input
-                                type="checkbox"
-                                checked={entry.isFlatDay || false}
-                                onChange={(e) => update('isFlatDay', e.target.checked)}
+                                items={HOUR_ITEMS}
+                                label="HH"
+                                className={cn(tableSelect)}
                             />
-                            <span className="text-[9px]">Flat Day</span>
+
+                            <span className="text-[8px] text-muted-foreground">:</span>
+
+                            <SelectMenu
+                                selected={(entry.outTime || "").split(":")[1] || ""}
+                                onSelect={(v) =>
+                                    update(
+                                        "outTime",
+                                        `${(entry.outTime || "00:00").split(":")[0]}:${v}`
+                                    )
+                                }
+                                items={MINUTE_ITEMS}
+                                label="MM"
+                                className={cn(tableSelect)}
+                            />
+                        </div>
+                        <button
+                            onClick={() => update("nextDay", !entry.nextDay)}
+                            className={cn(
+                                tableSelect,
+                                "font-bold",
+                                entry.nextDay
+                                    ? "bg-purple-600 text-white"
+                                    : "text-muted-foreground"
+                            )}
+                        >
+                            +1 DAY
+                        </button>
+
+                        {/* FLAT DAY */}
+                        <div className="flex items-center justify-center gap-1 pt-0.5">
+                            <Checkbox
+                                checked={!!entry.isFlatDay}
+                                onCheckedChange={(checked) =>
+                                    update("isFlatDay", !!checked)
+                                }
+                                className="scale-[0.75]"
+                            />
+                            <span className="text-[8px] uppercase tracking-wide text-muted-foreground">
+                                Flat Day
+                            </span>
                         </div>
                     </>
                 ) : isWork ? (
+                    /* READ MODE — unchanged */
                     <>
                         <div className="flex justify-center gap-1">
                             <div className="bg-purple-50 px-2 rounded">
-                                {(entry.inTime || '--').split(':')[0]}
+                                {(entry.inTime || "--").split(":")[0]}
                             </div>
                             <div className="bg-purple-50 px-2 rounded">
-                                {(entry.inTime || '--').split(':')[1]}
+                                {(entry.inTime || "--").split(":")[1]}
                             </div>
                         </div>
+
                         {entry.mealStatus && (
                             <div className="text-center text-[9px]">{entry.mealStatus}</div>
                         )}
+
                         <div className="flex justify-center gap-1">
                             <div className="bg-purple-50 px-2 rounded">
-                                {(entry.outTime || '--').split(':')[0]}
+                                {(entry.outTime || "--").split(":")[0]}
                             </div>
                             <div className="bg-purple-50 px-2 rounded">
-                                {(entry.outTime || '--').split(':')[1]}
+                                {(entry.outTime || "--").split(":")[1]}
                             </div>
                         </div>
+
                         {entry.isFlatDay && (
                             <div className="flex justify-center items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3 text-purple-600" />
-                                <span className="text-[7px]">Flat</span>
+                                <span className="text-[7px]">Flat Day</span>
                             </div>
                         )}
                     </>
@@ -309,46 +301,86 @@ const TimesheetDataRow = ({
             </div>
 
             {/* 4️⃣ UPGRADE */}
-            <div className="p-2 border-r flex flex-col justify-center min-w-0">
+            <div className="p-2 border-r flex flex-col justify-center gap-1 min-w-0">
                 {isEditing ? (
                     <>
-                        <input
-                            type="checkbox"
-                            checked={entry.isUpgraded || false}
-                            onChange={(e) => update('isUpgraded', e.target.checked)}
-                        />
+                        {/* Upgrade Toggle */}
+                        <div className="flex items-center gap-1">
+                            <Checkbox
+                                checked={!!entry.isUpgraded}
+                                onCheckedChange={(checked) => update("isUpgraded", !!checked)}
+                                className="scale-[0.75]"
+                            />
+                            <span className="text-[8px] uppercase tracking-wide text-muted-foreground">
+                                Upgrade
+                            </span>
+                        </div>
+
                         {entry.isUpgraded && (
                             <>
-                                <select
-                                    value={entry.upgradeRole || ''}
-                                    onChange={(e) => {
-                                        update('upgradeRole', e.target.value);
-                                        const r = upgradeRoles.find(x => x.name === e.target.value);
-                                        if (r) update('upgradeRate', r.rate);
+                                {/* Role Selector */}
+                                <SelectMenu
+                                    label="Role"
+                                    items={upgradeRoles.map((r) => ({ label: r.name, value: r.name }))}
+                                    selected={entry.upgradeRole}
+                                    onSelect={(v) => {
+                                        update("upgradeRole", v);
+                                        const r = upgradeRoles.find((x) => x.name === v);
+                                        if (r) update("upgradeRate", r.rate);
                                     }}
-                                    className="w-full text-[10px] border rounded"
-                                >
-                                    {upgradeRoles.map(r => (
-                                        <option key={r.id} value={r.name}>{r.name}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="number"
-                                    value={entry.upgradeRate || ''}
-                                    onChange={(e) => update('upgradeRate', e.target.value)}
-                                    className="w-full text-[10px] border rounded"
+                                    className={cn(tableSelect, "px-2!")}
                                 />
+
+                                {/* Rate Input + Steppers */}
+                                <div className="flex items-center gap-1 group">
+                                    <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={entry.upgradeRate || ""}
+                                        onChange={(e) => update("upgradeRate", e.target.value)}
+                                        className={cn(
+                                            tableSelect,
+                                            "flex-1 text-right px-3! h-7! text-sm! rounded-sm"
+                                        )}
+                                    />
+
+                                    <div className="flex flex-col space-y-[1px]">
+                                        <Button
+                                            size="icon"
+                                            variant={"outline"}
+                                            type="button"
+                                            onClick={() =>
+                                                update("upgradeRate", Number(entry.upgradeRate || 0) + 1)
+                                            }
+                                            className="h-4 w-7 flex items-center justify-center rounded-sm"
+                                        >
+                                            <Plus className="h-2 w-2" />
+                                        </Button>
+                                        <Button
+                                            size="icon"
+                                            variant={"outline"}
+                                            type="button"
+                                            onClick={() =>
+                                                update("upgradeRate", Math.max(0, Number(entry.upgradeRate || 0) - 1))
+                                            }
+                                            className="h-4 w-7 flex items-center justify-center rounded-sm"
+                                        >
+                                            <Minus className="h-2 w-2" />
+                                        </Button>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </>
-
                 ) : entry.isUpgraded ? (
-                    <div className="text-[10px]">
-                        <div className="font-bold">{entry.upgradeRole}</div>
+                    // READ MODE
+                    <div className="text-[9px] font-semibold text-purple-700 space-y-1">
+                        <StatusBadge status={"information"} label={"Upgraded"} size={"sm"}/>
+                        <div className="truncate">{entry.upgradeRole}</div>
                         <div>£{entry.upgradeRate}</div>
                     </div>
                 ) : (
-                    <span className="flex justify-center">
+                    <span className="flex justify-center text-muted-foreground">
                         <Minus />
                     </span>
                 )}
@@ -356,7 +388,7 @@ const TimesheetDataRow = ({
 
             {/* 5️⃣ OVERVIEW */}
             <div className="p-1 border-r min-w-0">
-                <div className="grid grid-cols-4 gap-1">
+                <div className="grid grid-cols-3 gap-1">
                     {OVERVIEW_FIELDS.map(f => {
                         const val = entry[f.k] ?? autoValues[f.k] ?? '';
                         return (

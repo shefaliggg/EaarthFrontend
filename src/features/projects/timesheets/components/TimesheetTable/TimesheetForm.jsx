@@ -729,8 +729,7 @@ export function TimesheetForm({
     }, [activeSalary, customItems]);
 
     const summaryItemsList = [
-        'Salary', '6th Day', '7th Day', 'Public Holiday', 'Travel Day', 'Half Day', 'Training', 'Driver - Cast Travel',
-        'Holiday', 'Sick', 'Personal issue',
+        'Salary', '6th Day', '7th Day', 'Public Holiday', 'Travel Day',
         'Turnaround', 'Add Hour', 'Enhanced O/T', 'Camera O/T', 'Post O/T', 'Pre O/T', 'BTA',
         'Late Meal', 'Broken Meal', 'Travel', 'Dawn / Early', 'Night Pen',
         'Computer', 'Software', 'Box Rental', 'Equipment', 'Vehicle', 'Mobile', 'Living',
@@ -847,7 +846,7 @@ export function TimesheetForm({
         >
 
             {/* TOP HEADER - Compact (with Loan Out company name support) */}
-            <div className={`flex-none px-4 pb-4 pt-1 border-b flex justify-between items-start shadow-sm z-10 relative`}>
+            <div className={`flex-none p-5 py-4 border-b flex justify-between items-start shadow-sm z-10 relative`}>
 
                 <div className="flex gap-10">
                     <div className="flex flex-col">
@@ -1057,7 +1056,7 @@ export function TimesheetForm({
             </div>
 
             {/* MAIN CONTENT - Single Page Layout */}
-            <div className="flex-1 flex overflow-hidden relative">
+            <div className="flex-1 grid grid-cols-[1fr_auto] overflow-hidden relative">
                 {/* Status Watermark - Large diagonal across entire page */}
                 <TimesheetStatusWatermark status={timesheetStatus} isDarkMode={isDarkMode} mode="watermark" />
 
@@ -1065,12 +1064,12 @@ export function TimesheetForm({
                 <div className="flex-1 flex flex-col border-r overflow-hidden">
                     <div className="overflow-x-auto">
                         {/* WIDTH LOCK */}
-                        <div className="min-w-[1400px] w-[1400px] max-w-[1400px]">
+                        <div className="min-w-[1000px]">
 
-                            <div className="grid grid-cols-[0.7fr_0.9fr_0.7fr_0.6fr_2.2fr_2.0fr_0.6fr] 
+                            <div className="grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px] 
                               bg-purple-50/80 dark:bg-purple-900/20 
                                 border-b text-[10px] font-black uppercase tracking-wider 
-                                sticky top-0 z-10 py-0.5"
+                                sticky top-0 z-10 py-0.5 px-3"
                             >
 
                                 <div className="p-2 border-r min-w-0">Date Calendar</div>
@@ -1134,12 +1133,12 @@ export function TimesheetForm({
 
                 {/* RIGHT COLUMN: Financial Summary with Holiday Column */}
                 <div className={`w-[360px] flex-none flex flex-col border-l bg-white dark:bg-[#0f0e13]`}>
-                    <div className={`p-2.5 font-black text-center text-[10px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
+                    <div className={`p-2.5 px-4 font-black text-center text-[10px] uppercase tracking-wider bg-purple-50/80 dark:bg-purple-900/20 border-b text-purple-800 dark:text-purple-300 flex items-center justify-center sticky top-0 z-10 shadow-sm`}>
                         Financial Summary <span className="opacity-70 ml-1">(Weekly Rate - {c(crewInfo.weeklyRate || crewInfo.dailyRate * 5)})</span>
                     </div>
 
                     {/* New Header with combined columns */}
-                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[7px] font-black uppercase py-2 px-2 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b text-black`}>
+                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[8px] font-black uppercase py-2 px-4 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b text-black`}>
                         <div>ITEM</div>
                         <div className="text-center">RATE / HOL</div>
                         <div className="text-center">UNIT</div>
@@ -1149,7 +1148,7 @@ export function TimesheetForm({
 
                     <div className="flex-1 overflow-y-auto">
                         {summaryData.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-2 text-[10px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
+                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-4 text-[10px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
                                 }`}>
                                 {/* Item name */}
                                 <div className={`font-medium truncate leading-tight text-black`}>
@@ -1198,7 +1197,7 @@ export function TimesheetForm({
                     </div>
 
 
-                    <div className={`p-3 bg-[#181621]bg-purple-50 border-t flex-none`}>
+                    <div className={`p-3 pb-8 bg-[#181621]bg-purple-50 border-t flex-none`}>
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[10px]">
                                 <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
