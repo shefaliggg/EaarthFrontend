@@ -21,7 +21,7 @@ import FilterPillTabs from "@/shared/components/FilterPillTabs";
 
 export default function CalendarToolbar({
   currentDate,
-  events,
+  events = 0,
   search,
   setSearch,
   period,
@@ -47,11 +47,10 @@ export default function CalendarToolbar({
 
           <div>
             <h3 className="font-bold text-lg">
-              {currentDate.toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {currentDate.getDate()}{" "}
+              {currentDate.toLocaleDateString("en-US", { month: "short" })}{" "}
+              {currentDate.toLocaleDateString("en-US", { weekday: "long" })}{" "}
+              {currentDate.getFullYear()}
             </h3>
 
             <p className="text-xs text-muted-foreground">
@@ -68,11 +67,7 @@ export default function CalendarToolbar({
           <ChevronRight className="w-4 h-4" />
         </Button>
 
-        <Button
-          variant="default"
-          size="sm"
-          className="font-semibold"
-        >
+        <Button variant="default" size="sm" className="font-semibold">
           Today
         </Button>
         <SearchBar
