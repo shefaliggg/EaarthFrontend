@@ -86,7 +86,7 @@ export function TimesheetMiniField({
                     </div>
                 )
             ) : (
-                <span className="text-xs text-primary">
+                <span className="text-[10px] text-primary">
                     {numValue ? numValue : <Minus className="size-3 opacity-50" />}
                 </span>
             )}

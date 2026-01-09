@@ -46,9 +46,9 @@ export function useProjectMenus(allProjects = []) {
 
   const ProjectApplicationMenu = {
     id: "project-applications",
-    triggerLabel: "Project Applications",
+    triggerLabel: "Applications",
     triggerIcon: Icon.LayoutGrid,
-    dropdownLabel: `Project Applications - ${convertToPrettyText(projectName)}`,
+    dropdownLabel: `Applications - ${convertToPrettyText(projectName)}`,
     align: "start",
     items: [
       {

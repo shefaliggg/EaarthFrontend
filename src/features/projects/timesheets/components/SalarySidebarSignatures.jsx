@@ -4,7 +4,7 @@ import { SignatureStamp } from './SignatureStamp';
 
 export function SalarySidebarSignatures({ signatures }) {
     return (
-        <div className={` pt-4 pr-4 flex-none`}>
+        <div className={` p-3 flex-none`}>
             <div className="grid grid-cols-5 gap-2 h-full">
                 {signatures.map((sig, index) => {
                     // Parse date: "16 Nov 2025 18:30" -> date: "16 Nov 2025", time: "18:30"

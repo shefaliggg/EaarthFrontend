@@ -23,7 +23,7 @@ export function SelectMenu({
 
   return (
     <Select value={selected} onValueChange={onSelect}>
-      <SelectTrigger textCase={textCase} className={cn("w-[220px]", className)}>
+      <SelectTrigger textCase={textCase} className={cn("w-full min-w-0", className)}>
         <SelectValue
           placeholder={label}/>
       </SelectTrigger>
