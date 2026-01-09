@@ -129,9 +129,14 @@ export default function ViewOffer() {
   const getActionButton = () => {
     if (viewAsRole === "CREW" && offer.status === "SENT_TO_CREW") {
       return (
-        <Button onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`)}>
-          <FileText className="w-4 h-4 mr-2" /> Review Offer
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`)}>
+            <Edit2 className="w-4 h-4 mr-2" /> Edit Offer
+          </Button>
+          <Button onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/review`)}>
+            <FileText className="w-4 h-4 mr-2" /> Review Offer
+          </Button>
+        </div>
       );
     }
     if (viewAsRole === "CREW" && offer.status === "PENDING_CREW_SIGNATURE") {
@@ -162,18 +167,30 @@ export default function ViewOffer() {
         </Button>
       );
     }
-    if (viewAsRole === "PRODUCTION_ADMIN" && (offer.status === "DRAFT" || offer.status === "NEEDS_REVISION")) {
-      return (
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers/${selectedOfferId}/edit`)}>
-            <Edit2 className="w-4 h-4 mr-2" /> Edit
-          </Button>
-          <Button>
-            <Send className="w-4 h-4 mr-2" /> Send to Crew
-          </Button>
-        </div>
-      );
-    }
+    if (
+  viewAsRole === "PRODUCTION_ADMIN" &&
+  (offer.status === "DRAFT" || offer.status === "NEEDS_REVISION")
+) {
+  return (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        onClick={() =>
+          navigate(
+            `/projects/${projectName || "demo-project"}/offers/${selectedOfferId}/edit`
+          )
+        }
+      >
+        <Edit2 className="w-4 h-4 mr-2" /> Edit Offer
+      </Button>
+
+      <Button>
+        <Send className="w-4 h-4 mr-2" /> Send to Crew
+      </Button>
+    </div>
+  );
+}
+
     if (offer.status === "COMPLETED") {
       return (
         <Button variant="outline" onClick={handleNavigateToViewContract}>

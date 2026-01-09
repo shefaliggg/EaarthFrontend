@@ -5,6 +5,8 @@ import CreateOffer from '../../crew/pages/CreateOffer';
 import Contracts from '../../crew/pages/Contracts';
 import ContractDocument from '../../crew/pages/ContractDocument';
 import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
+import EditOffer from '../../crew/pages/EditOfferForm';
+
 // import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
 // import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
 
@@ -48,7 +50,7 @@ const ProjectAppsRoutes = {
         // { path: 'approval', element: <ProjectAppApproval /> },
          { path: 'offers', element: <MyOffer /> },
         { path: 'offers/:id/view', element: <ViewOffer /> },
-        { path: 'offers/:id/edit', element: <CreateOffer /> },
+        { path: 'offers/create', element: <CreateOffer /> },
         { path: 'offers/:id/review', element: <ViewOffer /> },
         { path: 'offers/:id/sign', element: <ContractDocument /> },
         { path: 'offers/:id/production-check', element: <ViewOffer /> },
@@ -62,6 +64,9 @@ const ProjectAppsRoutes = {
         { path: 'contractdoc', element: <ContractDocument /> }, 
         { path: 'offers/:id/sign', element: <ContractDocumentPage /> },
         { path: 'offers/:id/contract', element: <ContractDocumentPage /> },
+        { path: 'edit', element: <EditOffer /> },
+        { path: 'offers/:id/edit', element: <EditOffer /> },
+
         
         // Other app routes
         { path: 'onboarding', element: <ProjectOnboarding /> },
