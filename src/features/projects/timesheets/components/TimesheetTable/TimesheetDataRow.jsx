@@ -63,8 +63,8 @@ const TimesheetDataRow = ({
             className={cn(
                 'grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px] border-b min-w-[1000px] px-3',
                 isEditing
-                    ? 'bg-purple-50/10 border-purple-100'
-                    : 'hover:bg-purple-50/20 dark:hover:bg-purple-900/10'
+                    ? 'bg-lavender-100/10 border-purple-100'
+                    : 'hover:bg-lavender-100/20 dark:hover:bg-purple-900/10'
             )}
         >
 
@@ -84,7 +84,7 @@ const TimesheetDataRow = ({
                             </span>
                         </div>
                         <div>Shoot day #{calendarData.dayNumber || 'N/A'}</div>
-                        <div className="font-mono font-bold">
+                        <div className=" font-bold">
                             {calendarData.unitCall || '00:00'}-{calendarData.unitWrap || '00:00'}
                         </div>
                     </div>
@@ -142,7 +142,7 @@ const TimesheetDataRow = ({
                     </>
                 ) : (
                     <>
-                        <div className="text-[9px] font-bold uppercase text-purple-700">
+                        <div className="text-[10px] font-bold uppercase text-purple-700">
                             {entry.dayType}
                         </div>
 
@@ -161,7 +161,7 @@ const TimesheetDataRow = ({
             </div>
 
             {/* 3️⃣ IN / OUT */}
-            <div className="p-2 border-r flex flex-col justify-center gap-1 min-w-0 font-mono">
+            <div className="p-2 border-r flex flex-col justify-center gap-1 min-w-0 ">
                 {isEditing && isWork ? (
                     <>
                         {/* IN */}
@@ -264,11 +264,12 @@ const TimesheetDataRow = ({
                 ) : isWork ? (
                     /* READ MODE — unchanged */
                     <>
-                        <div className="flex justify-center gap-1">
-                            <div className="bg-purple-50 px-2 rounded">
+                        <div className="flex items-center justify-center gap-1">
+                            <div className="bg-lavender-100 px-3 rounded-md">
                                 {(entry.inTime || "--").split(":")[0]}
                             </div>
-                            <div className="bg-purple-50 px-2 rounded">
+                            <span className="text-xs text-muted-foreground">:</span>
+                            <div className="bg-lavender-100 px-3 rounded-md">
                                 {(entry.inTime || "--").split(":")[1]}
                             </div>
                         </div>
@@ -277,11 +278,12 @@ const TimesheetDataRow = ({
                             <div className="text-center text-[9px]">{entry.mealStatus}</div>
                         )}
 
-                        <div className="flex justify-center gap-1">
-                            <div className="bg-purple-50 px-2 rounded">
+                        <div className="flex items-center justify-center gap-1">
+                            <div className="bg-lavender-100 px-3 rounded-md">
                                 {(entry.outTime || "--").split(":")[0]}
                             </div>
-                            <div className="bg-purple-50 px-2 rounded">
+                            <span className="text-xs text-muted-foreground">:</span>
+                            <div className="bg-lavender-100 px-3 rounded-md">
                                 {(entry.outTime || "--").split(":")[1]}
                             </div>
                         </div>
@@ -294,7 +296,7 @@ const TimesheetDataRow = ({
                         )}
                     </>
                 ) : (
-                    <span className="flex justify-center">
+                    <span className="flex justify-center text-muted-foreground/70">
                         <Minus />
                     </span>
                 )}
@@ -374,13 +376,13 @@ const TimesheetDataRow = ({
                     </>
                 ) : entry.isUpgraded ? (
                     // READ MODE
-                    <div className="text-[9px] font-semibold text-purple-700 space-y-1">
-                        <StatusBadge status={"information"} label={"Upgraded"} size={"sm"}/>
-                        <div className="truncate">{entry.upgradeRole}</div>
+                    <div className="text-[9px] font-semibold space-y-1">
+                        <StatusBadge label={"Upgraded"} icon={"ArrowUpCircle"} size={"sm"} className={"bg-primary/20 h-5"}/>
+                        <div className="truncate text-xs text-purple-700 mb-0">{entry.upgradeRole}</div>
                         <div>£{entry.upgradeRate}</div>
                     </div>
                 ) : (
-                    <span className="flex justify-center text-muted-foreground">
+                    <span className="flex justify-center text-muted-foreground/70">
                         <Minus />
                     </span>
                 )}
@@ -433,7 +435,7 @@ const TimesheetDataRow = ({
                     <Textarea
                         value={entry.notes || ''}
                         onChange={(e) => update('notes', e.target.value)}
-                        className="w-full min-w-0 h-10 text-[10px] rounded"
+                        className="w-full min-w-0 min-h-15 text-[10px] rounded"
                         placeholder="Add notes here..."
                     />
                 ) : entry.notes ? (

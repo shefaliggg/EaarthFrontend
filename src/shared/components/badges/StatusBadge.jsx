@@ -12,7 +12,6 @@ export function StatusBadge({
     className,
 }) {
     const { color, Icon, label: text } = getStatusBadge(status, label);
-    console.log("icons from badge func", Icon)
     const sizes = {
         sm: "px-2 py-1 text-[10px] rounded-lg",
         md: "px-3 py-1.5 text-xs rounded-xl",
