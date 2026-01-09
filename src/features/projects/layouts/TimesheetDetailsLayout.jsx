@@ -5,7 +5,7 @@ import { Calendar, Settings } from "lucide-react";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
 import { Button } from "../../../shared/components/ui/button";
 
-const TimesheetsLayout = () => {
+const TimesheetsDetailsLayout = () => {
     const params = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -58,7 +58,7 @@ const TimesheetsLayout = () => {
     )
 };
 
-export default TimesheetsLayout;
+export default TimesheetsDetailsLayout;
 
 
 

@@ -431,7 +431,7 @@ function CrewTimesheetsOverview() {
       <FilterPillTabs
         options={[
           { label: "Timesheets", icon: "Clock", route: `/projects/${params.projectName}/timesheets` },
-          { label: "Fuel and Mileage", icon: "Fuel", route: `/projects/${params.projectName}/timesheets/fuel` },
+          { label: "Fuel and Mileage", icon: "Fuel", route: `/projects/${params.projectName}/fuel-mileage` },
         ]}
         value={currentTab}
         navigatable

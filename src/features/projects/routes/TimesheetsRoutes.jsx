@@ -1,6 +1,5 @@
 import { lazy } from 'react';
 import TimesheetDetailsLayout from '../layouts/TimesheetDetailsLayout';
-import TimesheetsLayout from '../layouts/TimesheetDetailsLayout';
 
 const CrewTimesheetsOverview = lazy(() => import('../timesheets/pages/CrewTimesheetsOverview'));
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
@@ -13,7 +12,7 @@ const TimesheetsRoutes = {
     path: "timesheets",
     children: [
         { index: true, element: <CrewTimesheetsOverview /> },
-        { path: 'fuel', element: <CrewTimesheetsOverview /> },
+        { path: 'expenses', element: <CrewTimesheetsOverview /> },
         {
             path: ':week',
             element: <TimesheetDetailsLayout />,
