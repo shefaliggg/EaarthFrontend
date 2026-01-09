@@ -16,11 +16,17 @@ import {
   AccordionTrigger,
 } from "@/shared/components/ui/accordion";
 import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
+import { useLocation, useMatch, useParams } from 'react-router-dom';
 
 
-function CrewTimesheetsDashboard() {
+function CrewTimesheetsOverview() {
+  const params = useParams();
+  const location = useLocation();
+  const isFuelRoute = useMatch("/projects/:projectName/timesheets/fuel");
+  const activeTab = isFuelRoute ? "expenses" : "timesheets";
+  const currentTab = location.pathname
+
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
-  const [activeTab, setActiveTab] = useState('timesheets');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
@@ -366,23 +372,23 @@ function CrewTimesheetsDashboard() {
     return weekEnding;
   };
 
-const isCurrentWeek = (weekEnding) => {
-  const currentWeekEnding = getCurrentWeekEnding();
+  const isCurrentWeek = (weekEnding) => {
+    const currentWeekEnding = getCurrentWeekEnding();
 
-  const weekEnd = new Date(weekEnding);
-  weekEnd.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekEnding);
+    weekEnd.setHours(0, 0, 0, 0);
 
-  return weekEnd.getTime() === currentWeekEnding.getTime();
-};
+    return weekEnd.getTime() === currentWeekEnding.getTime();
+  };
 
-const isFutureWeek = (weekEnding) => {
-  const currentWeekEnding = getCurrentWeekEnding();
+  const isFutureWeek = (weekEnding) => {
+    const currentWeekEnding = getCurrentWeekEnding();
 
-  const weekEnd = new Date(weekEnding);
-  weekEnd.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekEnding);
+    weekEnd.setHours(0, 0, 0, 0);
 
-  return weekEnd > currentWeekEnding;
-};
+    return weekEnd > currentWeekEnding;
+  };
 
   // Get mini calendar for week
   const getWeekDays = (weekStart, weekEnding) => {
@@ -424,11 +430,11 @@ const isFutureWeek = (weekEnding) => {
       </div>
       <FilterPillTabs
         options={[
-          { value: "timesheets", label: "Timesheets", icon: "Clock" },
-          { value: "expenses", label: "Fuel and Mileage", icon: "Fuel" },
+          { label: "Timesheets", icon: "Clock", route: `/projects/${params.projectName}/timesheets` },
+          { label: "Fuel and Mileage", icon: "Fuel", route: `/projects/${params.projectName}/timesheets/fuel` },
         ]}
-        value={activeTab}
-        onChange={(value) => setActiveTab(value)}
+        value={currentTab}
+        navigatable
       />
       <PrimaryStats stats={primaryStats} gridColumns={4} />
 
@@ -593,7 +599,7 @@ const isFutureWeek = (weekEnding) => {
                                 ),
                               }}
                               view={viewMode}
-                              mode={activeTab}
+                              mode={activeTab === "expenses" ? "expenses" : "timesheets"}
                               isFuture
                               weekDays={getWeekDays(
                                 week.weekStart,
@@ -681,4 +687,4 @@ const isFutureWeek = (weekEnding) => {
   )
 }
 
-export default CrewTimesheetsDashboard
+export default CrewTimesheetsOverview

@@ -715,9 +715,9 @@ function TimesheetTable() {
     }, [selectedWeek, calendarSchedule, daysOfWeek, selectedCrewInfo, currentUserRole]);
 
     return (
-        <div className="space-y-4">
+        <div className="">
             {/* Editable Timesheet with Approval Controls */}
-            <div className={`rounded-xl border-2 border-purple-500 shadow-2xl overflow-hidden bg-background`}>
+            <div className={`rounded-xl border-2 border-purple-500 shadow-2xl overflow-hidden bg-card`}>
                 {(() => {
                     const isPastWeek = getWeekStatus(selectedWeek) === 'past';
 
@@ -748,7 +748,7 @@ function TimesheetTable() {
                         <>
                             {shouldBeReadOnly && (
                                 <div
-                                    className={`mb-3 px-4 py-2 rounded-lg border ${isDarkMode
+                                    className={`px-4 py-2 m-3 mb-0 rounded-lg border ${isDarkMode
                                         ? 'bg-blue-900/20 border-blue-500/30'
                                         : 'bg-blue-50 border-blue-200'
                                         }`}
@@ -782,9 +782,7 @@ function TimesheetTable() {
                                 calendarSchedule={calendarSchedule}
                                 upgradeRoles={upgradeRoles}
                                 currentUserRole={currentUserRole}
-                                companyName={companyName}
-                                onCrewNavigate={handleDepartmentNavigation}
-                                onWeekNavigate={handleWeekNavigation}
+                                readOnly={shouldBeReadOnly}
                             />
                         </>
                     );

@@ -128,7 +128,6 @@ const ALLOWANCE_FIELDS = [
 ];
 
 export function TimesheetForm({
-    isDarkMode,
     allowanceCaps,
     salary,
     crewInfo,
@@ -232,17 +231,6 @@ export function TimesheetForm({
         { date: '16 Nov 19:15', user: 'Michael Chen', action: 'APPROVE', details: 'Departmental approval granted' },
         { date: '17 Nov 09:30', user: 'Bernie Bellew', action: 'REVIEW', details: 'Production review completed' }
     ]);
-
-    const theme = {
-        bg: isDarkMode ? 'bg-[#0f0e13]' : 'bg-white',
-        card: isDarkMode ? 'bg-[#181621]' : 'bg-purple-50/30',
-        border: isDarkMode ? 'border-gray-700' : 'border-purple-200',
-        text: isDarkMode ? 'text-gray-200' : 'text-purple-950',
-        textMuted: isDarkMode ? 'text-gray-400' : 'text-purple-700',
-        accent: isDarkMode ? 'bg-purple-900/20 text-purple-400' : 'bg-purple-100 text-purple-800',
-        headerBg: isDarkMode ? 'bg-[#1e1b29]' : 'bg-purple-50',
-        input: isDarkMode ? 'bg-[#13111a] border-gray-700 text-white' : 'bg-white border-purple-200 text-purple-900',
-    };
 
     // Set timesheet status based on isPaid prop
     useEffect(() => {
@@ -1058,7 +1046,7 @@ export function TimesheetForm({
             {/* MAIN CONTENT - Single Page Layout */}
             <div className="flex-1 grid grid-cols-[1fr_auto] overflow-hidden relative">
                 {/* Status Watermark - Large diagonal across entire page */}
-                <TimesheetStatusWatermark status={timesheetStatus} isDarkMode={isDarkMode} mode="watermark" />
+                <TimesheetStatusWatermark status={timesheetStatus} mode="watermark" />
 
                 {/* LEFT COLUMN: Timecard Grid */}
                 <div className="flex-1 flex flex-col border-r overflow-hidden">
@@ -1106,7 +1094,6 @@ export function TimesheetForm({
                                             autoValues={autoValues}
                                             currentUserRole={currentUserRole}
                                             calendarSchedule={calendarSchedule}
-                                            theme={theme}
                                             t={t}
                                             HOURS={HOURS}
                                             MINUTES={MINUTES}
@@ -1125,8 +1112,6 @@ export function TimesheetForm({
 
                     <SalarySidebarSignatures
                         crewInfo={crewInfo}
-                        theme={theme}
-                        isDarkMode={isDarkMode}
                         signatures={signatures}
                     />
                 </div>
@@ -1138,7 +1123,7 @@ export function TimesheetForm({
                     </div>
 
                     {/* New Header with combined columns */}
-                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[8px] font-black uppercase py-2 px-4 ${isDarkMode ? 'bg-[#181621]' : 'bg-gray-50'} border-b text-black`}>
+                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[8px] font-black uppercase py-2 px-4 bg-muted border-b text-black`}>
                         <div>ITEM</div>
                         <div className="text-center">RATE / HOL</div>
                         <div className="text-center">UNIT</div>
@@ -1148,7 +1133,7 @@ export function TimesheetForm({
 
                     <div className="flex-1 overflow-y-auto">
                         {summaryData.map((row, i) => (
-                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-4 text-[10px] items-center border-b ${row.total > 0 ? (isDarkMode ? 'bg-purple-900/10' : 'bg-purple-50/30') : 'transparent'
+                            <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-4 text-[10px] items-center border-b ${row.total > 0 ? 'bg-purple-50/30 dark:bg-purple-900/10' : 'transparent'
                                 }`}>
                                 {/* Item name */}
                                 <div className={`font-medium truncate leading-tight text-black`}>
@@ -1227,7 +1212,6 @@ export function TimesheetForm({
                         </button>
                         <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
                             <TimesheetPDFExport
-                                isDarkMode={false}
                                 crewInfo={crewInfo}
                                 salary={activeSalary}
                                 weekEnding="16-11-2025"
