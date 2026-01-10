@@ -3,6 +3,7 @@ import TimesheetDetailsLayout from '../layouts/TimesheetDetailsLayout';
 
 const CrewTimesheetsAndExpensesOverview = lazy(() => import('../timesheets/pages/CrewTimesheetsAndExpensesOverview'));
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
+const FinancialSummary = lazy(() => import('../timesheets/pages/FinancialSummary'));
 const TimesheetCalender = lazy(() => import('../timesheets/pages/TimesheetCalender'));
 const TimesheetSettings = lazy(() => import('../timesheets/pages/TimesheetSettings'));
 
@@ -17,6 +18,7 @@ const TimesheetsRoutes = {
             element: <TimesheetDetailsLayout />,
             children: [
                 { index: true, element: <TimesheetTable /> },
+                { path: 'financial-summary', element: <FinancialSummary /> },
                 { path: 'calender', element: <TimesheetCalender /> },
                 { path: 'settings', element: <TimesheetSettings /> },
             ]

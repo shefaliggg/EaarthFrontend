@@ -1,7 +1,6 @@
 import { Shield } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { generateMockCrewData } from "../config/mockCrewData(temp)";
 import { TimesheetForm } from "../components/TimesheetTable/TimesheetForm";
 
 function TimesheetTable() {
@@ -71,15 +70,6 @@ function TimesheetTable() {
         return days;
     };
     const daysOfWeek = useMemo(() => getDaysForWeek(selectedWeek), [selectedWeek]);
-
-    const mockData = generateMockCrewData();
-    const [allCrewMembers] = useState(mockData.map(crew => ({
-        id: crew.id,
-        name: crew.name,
-        role: crew.role,
-        department: crew.department
-    })));
-    const [mockCrewListData] = useState(generateMockCrewData());
 
     const [projectSettings] = useState({
         contractFramework: 'film', // 'film' | 'tv-band1' | 'tv-band2' | 'tv-band3' | 'equity' | 'custom'
@@ -341,84 +331,8 @@ function TimesheetTable() {
         };
     };
 
-    // Handle department navigation (prev/next within same department)
-    const handleDepartmentNavigation = (direction) => {
-        const fullName = `${selectedCrewInfo.firstName} ${selectedCrewInfo.lastName}`;
-        const currentCrew = allCrewMembers.find(c => c.name === fullName);
-        if (!currentCrew) return;
-
-        // Get all crew members in the same department
-        const sameDepartmentCrew = allCrewMembers.filter(c => c.department === currentCrew.department);
-        const currentIndexInDept = sameDepartmentCrew.findIndex(c => c.name === fullName);
-
-        if (currentIndexInDept === -1) return;
-
-        let newIndex;
-        if (direction === 'prev') {
-            newIndex = currentIndexInDept > 0 ? currentIndexInDept - 1 : sameDepartmentCrew.length - 1;
-        } else {
-            newIndex = currentIndexInDept < sameDepartmentCrew.length - 1 ? currentIndexInDept + 1 : 0;
-        }
-
-        const newCrew = sameDepartmentCrew[newIndex];
-        const [firstName, ...lastNameParts] = newCrew.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-
-        // Find the crew member in mock data to get their rates
-        const crewData = mockCrewListData.find(c => c.name === newCrew.name);
-
-        setSelectedCrewInfo({
-            ...selectedCrewInfo,
-            firstName: firstName,
-            lastName: lastName,
-            jobTitle: newCrew.role,
-            department: newCrew.department,
-            // Add rate information from mock data
-            basicRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate : crewData.rate * 5) : crewInfo.basicRate,
-            dailyRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate / 5 : crewData.rate) : crewInfo.dailyRate,
-            hourlyRate: crewData?.rate ? (crewData.contractType === 'Weekly' ? crewData.rate / 5 / 11 : crewData.rate / 11) : crewInfo.hourlyRate,
-            contractType: crewData?.contractCategory || crewInfo.contractType,
-            employmentType: crewData?.contractType || crewInfo.employmentType,
-        });
-    };
-
-    const handleWeekNavigation = (direction) => {
-        const allWeeks = Object.keys(calendarSchedule)
-            .map(date => {
-                const d = new Date(date);
-                const dayOfWeek = d.getDay();
-                const diff = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-                const sunday = new Date(d);
-                sunday.setDate(d.getDate() + diff);
-                return sunday.toISOString().split('T')[0];
-            })
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .sort();
-
-        const currentIndex = allWeeks.indexOf(selectedWeek);
-        if (currentIndex === -1) return;
-
-        let newIndex;
-        if (direction === 'prev') {
-            newIndex = currentIndex > 0 ? currentIndex - 1 : allWeeks.length - 1;
-        } else {
-            newIndex = currentIndex < allWeeks.length - 1 ? currentIndex + 1 : 0;
-        }
-
-        setSelectedWeek(allWeeks[newIndex]);
-    };
-
     const getTimesheetStorageKey = (crewId, weekEnding) => {
         return `timesheet_${crewId}_${weekEnding}`;
-    };
-
-    const saveTimesheetToStorage = (crewId, weekEnding, data) => {
-        try {
-            const key = getTimesheetStorageKey(crewId, weekEnding);
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (error) {
-            console.error('Failed to save timesheet to localStorage:', error);
-        }
     };
 
     const loadTimesheetFromStorage = (crewId, weekEnding) => {
@@ -716,7 +630,7 @@ function TimesheetTable() {
 
     return (
         <div className="">
-            <div className={`rounded-xl border-2 border-purple-500 shadow-2xl overflow-hidden bg-card`}>
+            <div className={`rounded-xl border-2 border-purple-500 dark:border-purple-950 shadow-2xl overflow-hidden bg-card`}>
                 {(() => {
                     const isPastWeek = getWeekStatus(selectedWeek) === 'past';
 
@@ -725,8 +639,6 @@ function TimesheetTable() {
                     today.setHours(0, 0, 0, 0);
                     const weekEndingDate = new Date(selectedWeek);
                     weekEndingDate.setHours(0, 0, 0, 0);
-                    const daysDifference = Math.floor((today.getTime() - weekEndingDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const isPaidWeek = daysDifference > 21; // More than 3 weeks old = paid
 
                     // Determine if the timesheet should be read-only
                     let shouldBeReadOnly = false;
@@ -739,9 +651,6 @@ function TimesheetTable() {
                         // Production and Finance cannot edit past weeks
                         shouldBeReadOnly = isPastWeek;
                     }
-
-                    console.log('entries prop', entries);
-                    // console.log('entriesToRender', entriesToRender);
 
                     return (
                         <>

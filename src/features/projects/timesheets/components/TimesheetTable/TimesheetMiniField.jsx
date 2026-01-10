@@ -28,8 +28,8 @@ export function TimesheetMiniField({
             className={cn(
                 "group flex items-center justify-between h-5 rounded px-1 transition-colors",
                 isEditable
-                    ? "bg-purple-50 ring-1 ring-purple-200 dark:bg-purple-900/20 dark:ring-purple-700"
-                    : "bg-lavender-100/40"
+                    ? "bg-purple-200 ring-1 ring-purple-200 dark:bg-purple-900/20 dark:ring-purple-700"
+                    : "bg-lavender-100/30 dark:bg-muted"
             )}
         >
             {/* LABEL */}

@@ -62,9 +62,7 @@ const TimesheetDataRow = ({
         <div
             className={cn(
                 'grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px] border-b min-w-[1000px] px-3',
-                isEditing
-                    ? 'bg-lavender-100/10 border-purple-100'
-                    : 'hover:bg-lavender-100/20 dark:hover:bg-purple-900/10'
+                "hover:bg-lavender-100/20 dark:hover:bg-purple-900/10"
             )}
         >
 
@@ -265,11 +263,11 @@ const TimesheetDataRow = ({
                     /* READ MODE — unchanged */
                     <>
                         <div className="flex items-center justify-center gap-1">
-                            <div className="bg-lavender-100 px-3 rounded-md">
+                            <div className="bg-lavender-100 dark:bg-primary/10 px-3 rounded-md">
                                 {(entry.inTime || "--").split(":")[0]}
                             </div>
                             <span className="text-xs text-muted-foreground">:</span>
-                            <div className="bg-lavender-100 px-3 rounded-md">
+                            <div className="bg-lavender-100 dark:bg-primary/10 px-3 rounded-md">
                                 {(entry.inTime || "--").split(":")[1]}
                             </div>
                         </div>
@@ -279,11 +277,11 @@ const TimesheetDataRow = ({
                         )}
 
                         <div className="flex items-center justify-center gap-1">
-                            <div className="bg-lavender-100 px-3 rounded-md">
+                            <div className="bg-lavender-100 dark:bg-primary/10 px-3 rounded-md">
                                 {(entry.outTime || "--").split(":")[0]}
                             </div>
                             <span className="text-xs text-muted-foreground">:</span>
-                            <div className="bg-lavender-100 px-3 rounded-md">
+                            <div className="bg-lavender-100 dark:bg-primary/10 px-3 rounded-md">
                                 {(entry.outTime || "--").split(":")[1]}
                             </div>
                         </div>

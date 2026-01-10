@@ -20,7 +20,7 @@ export function SalarySidebarSignatures({ signatures }) {
                             </div>
 
                             {sig.name ? (
-                                <div className="h-full border rounded flex items-center justify-center bg-white">
+                                <div className="h-full border rounded flex items-center justify-center bg-card dark:border-muted-foreground/30">
                                     <SignatureStamp
                                         approver={sig.name}
                                         date={dateStr}
@@ -31,7 +31,7 @@ export function SalarySidebarSignatures({ signatures }) {
                                 </div>
                             ) : (
                                 <div className={`h-full border rounded flex items-center justify-center bg-card border-dashed opacity-60 hover:opacity-100 transition-opacity`}>
-                                    <div className="w-8 h-4 border-b border-dashed border-gray-300 dark:border-gray-600"></div>
+                                    <div className="w-8 h-4 border-b border-dashed border"></div>
                                 </div>
                             )}
                         </div>

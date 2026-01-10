@@ -21,6 +21,7 @@ import TimesheetDataRow from './TimesheetDataRow';
 import { Button } from '../../../../../shared/components/ui/button';
 import { StatusBadge } from '../../../../../shared/components/badges/StatusBadge';
 import { WeeklyGraphicalView } from './WeeklyGraphicalView';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -128,6 +129,8 @@ const ALLOWANCE_FIELDS = [
     { k: 'mileage', l: 'Mileage', type: 'derived' }
 ];
 
+export let TEMP_SUMMARY_DATA = null;
+
 export function TimesheetForm({
     allowanceCaps,
     salary,
@@ -144,6 +147,9 @@ export function TimesheetForm({
     isPaid = false,
     contractCategory = 'PAYE',
 }) {
+    const navigate = useNavigate();
+    const params = useParams();
+
     const [payHoliday, setPayHoliday] = useState(false);
     const [isVatRegistered, setIsVatRegistered] = useState(crewInfo?.isVATRegistered || false);
     const [holidayPayout, setHolidayPayout] = useState('');
@@ -497,20 +503,6 @@ export function TimesheetForm({
     const n = (val) => typeof val === 'number' && val !== 0 ? val.toFixed(2) : '-';
     const _t_unused = (val) => val || '-';
 
-    const _formatEntryDate_unused = (dateStr) => {
-        if (!dateStr) return '-';
-        try {
-            const date = new Date(dateStr);
-            const dayName = date.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase();
-            const day = date.getDate();
-            const month = date.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
-            const year = date.getFullYear();
-            return `${dayName}, ${day} ${month} ${year}`;
-        } catch (e) {
-            return dateStr;
-        }
-    };
-
     // --- Financial Calculations ---
 
     const activeSalary = useMemo(() => {
@@ -803,6 +795,12 @@ export function TimesheetForm({
         return result;
     }, [allRows, summaryItemsList, ptdDataByLabel]);
 
+    //temporary data sharing with financial summary page since there is no real data
+    useEffect(() => {
+        TEMP_SUMMARY_DATA = summaryData;
+    }, [summaryData]);
+
+
     const netTotal = allRows.reduce((sum, r) => sum + r.totalAB, 0);
     // VAT only applies to SCHD and Loan Out contracts (not PAYE), and only if VAT registered
     const vatAmount = (contractCategory === 'SCHD' || contractCategory === 'Loan Out') && isVatRegistered ? netTotal * 0.20 : 0;
@@ -965,7 +963,7 @@ export function TimesheetForm({
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-80 p-0 z-50" align="end">
-                                <div className="p-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+                                <div className="p-3 border-b bg-muted rounded-t-lg">
                                     <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Audit Log</h4>
                                 </div>
                                 <div className="max-h-60 overflow-y-auto p-2 space-y-2">
@@ -973,8 +971,8 @@ export function TimesheetForm({
                                         <div className="text-center text-gray-400 py-4 text-[10px]">No changes recorded since submission</div>
                                     ) : (
                                         auditLogs.map((log, i) => (
-                                            <div key={i} className="text-[10px] border-b border-gray-50 pb-2 last:border-0">
-                                                <div className="flex justify-between text-gray-400 mb-0.5">
+                                            <div key={i} className="text-[10px] border-b pb-2 last:border-0">
+                                                <div className="flex justify-between text-muted-foreground mb-0.5">
                                                     <span>{log.date}</span>
                                                     <span className="font-bold">{log.user}</span>
                                                 </div>
@@ -987,7 +985,7 @@ export function TimesheetForm({
                         </Popover>
 
                         <Button size={"icon"} variant={"outline"}
-                            onClick={() => setShowMileageForm(true)}
+                            onClick={() => navigate(`/projects/${params.projectName}/fuel-mileage/2026-05-05?claim=#124322`)}
                             title="Mileage & Fuel Reimbursement"
                         >
                             <Car className="w-4 h-4" />
@@ -995,7 +993,7 @@ export function TimesheetForm({
 
                         {/* Financial Summary Button */}
                         <Button size={"icon"} variant={"outline"}
-                            onClick={() => setShowFinancialSummary(true)}
+                            onClick={() => navigate("financial-summary")}
                             title="Financial Summary"
                         >
                             <Wallet className="w-4 h-4" />
@@ -1011,8 +1009,8 @@ export function TimesheetForm({
                         <TimesheetHeaderButtons
                             currentUserRole={currentUserRole}
                             contractCategory={contractCategory}
-                            onExportTimesheet={() => setExportMode('timesheet')}
-                            onExportInvoice={() => setExportMode('invoice')}
+                            onExportTimesheet={() => toast.info("Printing Pdf intiated.", { description: "currently not exporting pdf temporarily due to mock data" })}
+                            onExportInvoice={() => toast.info("Printing Pdf intiated.", { description: "currently not exporting pdf temporarily due to mock data" })}
                             onFinanceAction={() => {/* TODO: Add functionality */ }}
                         />
 
@@ -1124,7 +1122,7 @@ export function TimesheetForm({
                     </div>
 
                     {/* New Header with combined columns */}
-                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[8px] font-black uppercase py-2 px-4 bg-muted border-b text-black`}>
+                    <div className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] text-[8px] font-black uppercase py-2 px-4 bg-muted border-b`}>
                         <div>ITEM</div>
                         <div className="text-center">RATE / HOL</div>
                         <div className="text-center">UNIT</div>
@@ -1137,7 +1135,7 @@ export function TimesheetForm({
                             <div key={i} className={`grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1fr] ${row.hTotal > 0 ? 'py-2' : 'py-1'} px-4 text-[10px] items-center border-b ${row.total > 0 ? 'bg-purple-50/30 dark:bg-purple-900/10' : 'transparent'
                                 }`}>
                                 {/* Item name */}
-                                <div className={`font-medium truncate leading-tight text-black`}>
+                                <div className={`font-medium truncate leading-tight`}>
                                     {row.label}
                                 </div>
 
@@ -1145,37 +1143,37 @@ export function TimesheetForm({
                                 <div className="text-center font-mono text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
-                                            <span className="text-black">{n(row.rate)}</span>
-                                            <span className="text-black" style={{ fontSize: '7px' }}>{c(row.hRate)}</span>
+                                            <span >{n(row.rate)}</span>
+                                            <span style={{ fontSize: '7px' }}>{c(row.hRate)}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-black">{n(row.rate)}</span>
+                                        <span >{n(row.rate)}</span>
                                     )}
                                 </div>
 
                                 {/* Unit */}
-                                <div className="text-center font-mono text-[10px] text-black font-medium">{n(row.u)}</div>
+                                <div className="text-center font-mono text-[10px] font-medium">{n(row.u)}</div>
 
                                 {/* Total A / Total B stacked */}
                                 <div className="text-center font-mono text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
-                                            <span className="text-black">
+                                            <span >
                                                 {c(row.p)}
                                             </span>
-                                            <span className="text-black" style={{ fontSize: '7px' }}>
+                                            <span style={{ fontSize: '7px' }}>
                                                 {c(row.hTotal)}
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className="text-black">
+                                        <span >
                                             {c(row.p)}
                                         </span>
                                     )}
                                 </div>
 
                                 {/* Final Total */}
-                                <div className={`text-right font-mono text-black ${row.total > 0 ? 'font-bold' : ''}`}>
+                                <div className={`text-right font-mono ${row.total > 0 ? 'font-bold' : ''}`}>
                                     {row.total > 0 ? c(row.total) : '-'}
                                 </div>
                             </div>
@@ -1186,120 +1184,117 @@ export function TimesheetForm({
                     <div className={`p-3 min-h-34 bg-[#181621]bg-purple-50 border-t flex-none`}>
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[10px]">
-                                <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
-                                <span className="font-mono font-bold text-black">{c(totals.net)}</span>
+                                <span className="font-bold uppercase tracking-wider">Subtotal</span>
+                                <span className="font-mono font-bold">{c(totals.net)}</span>
                             </div>
                             {vatAmount > 0 && (
                                 <div className="flex justify-between items-center text-[10px]">
-                                    <span className="font-bold uppercase tracking-wider text-black">VAT (20%)</span>
-                                    <span className="font-mono text-black">{c(totals.vat)}</span>
+                                    <span className="font-bold uppercase tracking-wider">VAT (20%)</span>
+                                    <span className="font-mono">{c(totals.vat)}</span>
                                 </div>
                             )}
                         </div>
                         <div className={`flex justify-between items-center pt-2 border-t-2`}>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-black">Grand Total</span>
-                            <span className="text-lg font-black text-black">{c(totals.gross)}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Grand Total</span>
+                            <span className="text-lg font-black">{c(totals.gross)}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* MODALS */}
-            {exportMode === 'timesheet' && (
-                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                        <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                            <X className="w-5 h-5 text-gray-600" />
-                        </button>
-                        <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
-                            <TimesheetPDFExport
-                                crewInfo={crewInfo}
-                                salary={activeSalary}
-                                weekEnding="16-11-2025"
-                                entries={entriesToRender}
-                                summaryData={summaryData}
-                                totals={{ net: netTotal, vat: vatAmount, gross: grossTotal }}
-                            />
+            {
+                exportMode === 'timesheet' && (
+                    <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                            <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
+                                <TimesheetPDFExport
+                                    crewInfo={crewInfo}
+                                    salary={activeSalary}
+                                    weekEnding="16-11-2025"
+                                    entries={entriesToRender}
+                                    summaryData={summaryData}
+                                    totals={{ net: netTotal, vat: vatAmount, gross: grossTotal }}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {exportMode === 'data' && (
-                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                        <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                            <X className="w-5 h-5 text-gray-600" />
-                        </button>
-                        <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
-                            <TimesheetDataPDFExport
-                                crewInfo={{
-                                    name: `${crewInfo.firstName} ${crewInfo.lastName}`,
-                                    position: crewInfo.role,
-                                    ...crewInfo
-                                }}
-                                weekEnding="16-11-2025"
-                                entries={entriesToRender.map((e, i) => {
-                                    // Calculate date: Week Ending is Sun 16 Nov 2025.
-                                    const baseDate = new Date(2025, 10, 16); // Month is 0-indexed (10=Nov)
-                                    const dayOffset = 6 - i;
-                                    const date = new Date(baseDate);
-                                    date.setDate(baseDate.getDate() - dayOffset);
+            {
+                exportMode === 'data' && (
+                    <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                            <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center">
+                                <TimesheetDataPDFExport
+                                    crewInfo={{
+                                        name: `${crewInfo.firstName} ${crewInfo.lastName}`,
+                                        position: crewInfo.role,
+                                        ...crewInfo
+                                    }}
+                                    weekEnding="16-11-2025"
+                                    entries={entriesToRender.map((e, i) => {
+                                        // Calculate date: Week Ending is Sun 16 Nov 2025.
+                                        const baseDate = new Date(2025, 10, 16); // Month is 0-indexed (10=Nov)
+                                        const dayOffset = 6 - i;
+                                        const date = new Date(baseDate);
+                                        date.setDate(baseDate.getDate() - dayOffset);
 
-                                    const dateStr = date.toISOString().split('T')[0];
+                                        const dateStr = date.toISOString().split('T')[0];
 
-                                    // Construct ISO DateTime strings
-                                    let inDateTime = "";
-                                    let outDateTime = "";
+                                        // Construct ISO DateTime strings
+                                        let inDateTime = "";
+                                        let outDateTime = "";
 
-                                    if (e.inTime) {
-                                        inDateTime = `${dateStr}T${e.inTime}:00`;
-                                    }
-
-                                    if (e.outTime) {
-                                        const outDate = new Date(date);
-                                        if (e.inTime && e.outTime < e.inTime) {
-                                            outDate.setDate(outDate.getDate() + 1);
+                                        if (e.inTime) {
+                                            inDateTime = `${dateStr}T${e.inTime}:00`;
                                         }
-                                        const outDateStr = outDate.toISOString().split('T')[0];
-                                        outDateTime = `${outDateStr}T${e.outTime}:00`;
-                                    }
 
-                                    return {
-                                        date: dateStr,
-                                        day: DAYS[i],
-                                        dayNum: date.getDate(),
-                                        month: date.toLocaleString('default', { month: 'short' }),
-                                        year: date.getFullYear(),
-                                        label: `${DAYS[i]} ${date.getDate()}`,
-                                        status: 'submitted',
-                                        dayType: e.dayType,
-                                        unit: e.unit,
-                                        workplace: e.workplace || [],
-                                        workplaceLocation: e.workplaceLocation,
-                                        upgrade: e.upgradeRole,
-                                        inTime: e.inTime,
-                                        inDateTime: inDateTime,
-                                        outTime: e.outTime,
-                                        outDateTime: outDateTime,
-                                        nextDay: false,
-                                        isFlatDay: e.isFlatDay,
-                                        perDiem: e.perDiemShoot > 0 ? 'Shoot' : e.perDiemNon > 0 ? 'Non-Shoot' : ''
-                                    };
-                                })}
-                            />
+                                        if (e.outTime) {
+                                            const outDate = new Date(date);
+                                            if (e.inTime && e.outTime < e.inTime) {
+                                                outDate.setDate(outDate.getDate() + 1);
+                                            }
+                                            const outDateStr = outDate.toISOString().split('T')[0];
+                                            outDateTime = `${outDateStr}T${e.outTime}:00`;
+                                        }
+
+                                        return {
+                                            date: dateStr,
+                                            day: DAYS[i],
+                                            dayNum: date.getDate(),
+                                            month: date.toLocaleString('default', { month: 'short' }),
+                                            year: date.getFullYear(),
+                                            label: `${DAYS[i]} ${date.getDate()}`,
+                                            status: 'submitted',
+                                            dayType: e.dayType,
+                                            unit: e.unit,
+                                            workplace: e.workplace || [],
+                                            workplaceLocation: e.workplaceLocation,
+                                            upgrade: e.upgradeRole,
+                                            inTime: e.inTime,
+                                            inDateTime: inDateTime,
+                                            outTime: e.outTime,
+                                            outDateTime: outDateTime,
+                                            nextDay: false,
+                                            isFlatDay: e.isFlatDay,
+                                            perDiem: e.perDiemShoot > 0 ? 'Shoot' : e.perDiemNon > 0 ? 'Non-Shoot' : ''
+                                        };
+                                    })}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-            {/* 
-            {showGraphicalView && (
-                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
-                        <button onClick={() => setShowGraphicalView(false)} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-                            <X className="w-5 h-5 text-gray-600" />
-                        </button>
-                        <div className="flex-1 overflow-auto bg-gray-50 p-6"> */}
+                )
+            }
+
             <WeeklyGraphicalView
                 entries={entriesToRender}
                 weeklyRate={crewInfo.weeklyRate || crewInfo.dailyRate * 5}
@@ -1307,20 +1302,8 @@ export function TimesheetForm({
                 open={showGraphicalView}
                 onOpenChange={setShowGraphicalView}
             />
-            {/* </div>
-                    </div>
-                </div>
-            )} */}
 
-            {/* <MileageReimbursementForm
-                isOpen={showMileageForm}
-                onClose={() => setShowMileageForm(false)}
-                crewInfo={crewInfo}
-                weekEnding={calculatedWeekEnding}
-                readOnly={readOnly || timesheetStatus === 'submitted' || timesheetStatus === 'approved' || timesheetStatus === 'paid'}
-            />
-
-            <TimesheetExportModals
+            {/* <TimesheetExportModals
                 exportMode={exportMode}
                 setExportMode={setExportMode}
                 crewInfo={crewInfo}
@@ -1339,6 +1322,6 @@ export function TimesheetForm({
                 holidayPayout={holidayPayout}
                 signatures={signatures}
             /> */}
-        </div>
+        </div >
     );
 }

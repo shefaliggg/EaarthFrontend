@@ -9,34 +9,42 @@ const TimesheetsDetailsLayout = () => {
     const params = useParams();
     const location = useLocation();
     const navigate = useNavigate();
+    const canEdit = true;
 
     const currentTab = location.pathname
+    const isFinancialSummaryPage = currentTab === `/projects/${params.projectName}/timesheets/${params.week}/financial-summary`
 
     return (
         <div className='space-y-6 container mx-auto'>
             <PageHeader
-                icon="CalendarClock"
-                title={
-                    <span className='flex items-center gap-3'>
+                icon={isFinancialSummaryPage ? "Wallet" : "CalendarClock"}
+                title={isFinancialSummaryPage
+                    ? <span className='flex items-center gap-3'>
+                        Financial Summary
+                        <StatusBadge status={"information"} label={"Accounts Use Only"} size="sm" />
+                        {/* <StatusBadge status={"information"} label={`${canEdit ? '(Can Edit)' : '(View Only)'}`} size="sm" /> */}
+                    </span>
+                    : <span className='flex items-center gap-3'>
                         AVATAR 1
                         <StatusBadge status={"draft"} size="sm" />
                     </span>
                 }
                 // initials={"LK"}
-                subtitle={
-                    <span className='flex items-center gap-3'>
+                subtitle={isFinancialSummaryPage
+                    ? "Breakdown of all earnings, budget codes, and paid-to-date totals."
+                    : <span className='flex items-center gap-3'>
                         <Calendar className="w-3 h-3" />
                         Week Ending 2025-NOV-16
                     </span>
                 }
 
-                extraActions={
+                extraActions={!isFinancialSummaryPage &&
                     <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"} onClick={() => navigate("settings")}>
                         <Settings className="w-4 h-4 text-primary group-hover:text-background" strokeWidth={3} />
                     </Button>
                 }
 
-                primaryAction={{
+                primaryAction={!isFinancialSummaryPage && {
                     label: "Submit Timsheet",
                     clickAction: () => console.log("AI insight clicked"),
                     icon: "Check",
@@ -44,14 +52,16 @@ const TimesheetsDetailsLayout = () => {
                     size: "lg"
                 }}
             />
-            <FilterPillTabs
-                options={[
-                    { label: "My timesheets", route: `/projects/${params.projectName}/timesheets/${params.week}` },
-                    { label: "Shooting Calender", route: `/projects/${params.projectName}/timesheets/${params.week}/calender` },
-                ]}
-                value={currentTab}
-                navigatable
-            />
+            {!isFinancialSummaryPage &&
+                <FilterPillTabs
+                    options={[
+                        { label: "My timesheets", route: `/projects/${params.projectName}/timesheets/${params.week}` },
+                        { label: "Shooting Calender", route: `/projects/${params.projectName}/timesheets/${params.week}/calender` },
+                    ]}
+                    value={currentTab}
+                    navigatable
+                />
+            }
 
             <Outlet />
         </div>
