@@ -13,6 +13,7 @@ export function StatusBadge({
 }) {
     const { color, Icon, label: text } = getStatusBadge(status, label);
     const sizes = {
+        xs: "px-1 py-0.5 text-[9px] rounded-md",
         sm: "px-2 py-1 text-[10px] rounded-lg",
         md: "px-3 py-1.5 text-xs rounded-xl",
         lg: "px-4 py-2 text-sm rounded-xl",

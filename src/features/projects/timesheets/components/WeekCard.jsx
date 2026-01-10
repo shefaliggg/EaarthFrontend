@@ -17,7 +17,8 @@ import { cn } from "@/shared/config/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "../../../../shared/components/ui/card";
 import { Progress } from "../../../../shared/components/ui/progress";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export function WeekCard({
     fullWidth = false,
@@ -27,26 +28,23 @@ export function WeekCard({
     isCurrent,
     isFuture,
     weekDays = [],
-    onDownloadPDF,
-    onViewExpenses,
-    onEditExpenses,
 }) {
     const navigate = useNavigate();
+    const params = useParams();
     const displayStatus =
         mode === "expenses"
             ? week.expenseStatus || "not-started"
             : week.status;
 
     const isGrid = view === "grid";
-    console.log("card mode", mode)
 
     const handleCardClick = (e) => {
         e.stopPropagation();
         if (mode === "expenses") {
             if (displayStatus !== 'not-started') {
-            navigate("FLCM-#284382");
+                navigate("FLCM-#284382");
             } else {
-            navigate(`new?week=${week.weekEnding}`);
+                navigate(`new?week=${week.weekEnding}`);
             }
         } else {
             navigate(week.weekEnding);
@@ -55,16 +53,12 @@ export function WeekCard({
 
     const handleExpenseClick = (e) => {
         e.stopPropagation();
-        if (onViewExpenses) {
-            onViewExpenses(week.weekEnding);
-        }
+        navigate(`/projects/${params.projectName}/fuel-mileage/${week.weekEnding}?claim=#124322`);
     };
 
     const handleDownloadClick = (e) => {
         e.stopPropagation();
-        if (onDownloadPDF) {
-            onDownloadPDF(week.weekEnding);
-        }
+        toast.info("Printing Pdf intiated.", { description: "currently not exporting pdf temporarily due to mock data" })
     };
 
     const isToday = (day) => {
@@ -87,7 +81,7 @@ export function WeekCard({
                     isCurrent
                         ? "border-purple-300 shadow-lg shadow-purple-500/10"
                         : "border",
-                    "hover:bg-lavender-100/30 dark:hover:bg-lavender-900/20 hover:shadow-lg"
+                    "hover:bg-lavender-100/20 hover:-translate-y-1 dark:hover:bg-lavender-900/20 hover:shadow-xl"
                 )}
             >
 
@@ -104,27 +98,31 @@ export function WeekCard({
                         {mode === 'timesheets' && (
                             <div className="flex items-center gap-1.5">
                                 {(week.status === 'approved' || week.status === 'submitted') && week.expenseType && (
-                                    <button
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
                                         onClick={handleExpenseClick}
-                                        className="p-2.5 rounded-xl border transition-all hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-600/20 dark:hover:border-purple-500 hover:scale-110"
+                                        className="size-10"
                                         title="View Expenses"
                                     >
                                         {week.expenseType === 'fuel' ? (
-                                            <Fuel className="w-4 h-4 text-purple-600" />
+                                            <Fuel className="w-4 h-4" />
                                         ) : (
-                                            <Car className="w-4 h-4 text-purple-600" />
+                                            <Car className="w-4 h-4" />
                                         )}
-                                    </button>
+                                    </Button>
                                 )}
 
                                 {(week.status === 'approved' || week.status === 'submitted') && (
-                                    <button
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
                                         onClick={handleDownloadClick}
-                                        className="p-2.5 rounded-xl border transition-all hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-600/20 dark:hover:border-purple-500 hover:scale-110"
+                                        className="size-10"
                                         title="Download PDF"
                                     >
-                                        <Download className="w-4 h-4 text-purple-600" />
-                                    </button>
+                                        <Download className="w-4 h-4" />
+                                    </Button>
                                 )}
                             </div>
                         )}

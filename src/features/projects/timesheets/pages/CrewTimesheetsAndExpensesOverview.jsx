@@ -7,7 +7,6 @@ import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
 import SearchBar from '../../../../shared/components/SearchBar';
 import ViewToggleButton from '../../../../shared/components/buttons/ViewToggleButton';
 import { Button } from '../../../../shared/components/ui/button';
-import { motion, AnimatePresence } from "framer-motion"
 import { WeekCard } from '../components/WeekCard';
 import {
   Accordion,
@@ -505,7 +504,6 @@ function CrewTimesheetsOverview() {
                   setSearchQuery('');
                   setStatusFilter('all');
                 }}
-              // className="ml-2 text-xs font-bold text-gray-500 hover:text-purple-600 transition-colors"
               >
                 Clear all
               </Button>

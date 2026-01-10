@@ -20,6 +20,7 @@ import { cn } from '../../../../../shared/config/utils';
 import TimesheetDataRow from './TimesheetDataRow';
 import { Button } from '../../../../../shared/components/ui/button';
 import { StatusBadge } from '../../../../../shared/components/badges/StatusBadge';
+import { WeeklyGraphicalView } from './WeeklyGraphicalView';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -1182,7 +1183,7 @@ export function TimesheetForm({
                     </div>
 
 
-                    <div className={`p-3 pb-8 bg-[#181621]bg-purple-50 border-t flex-none`}>
+                    <div className={`p-3 min-h-34 bg-[#181621]bg-purple-50 border-t flex-none`}>
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[10px]">
                                 <span className="font-bold uppercase tracking-wider text-black">Subtotal</span>
@@ -1291,23 +1292,25 @@ export function TimesheetForm({
                     </div>
                 </div>
             )}
-
+            {/* 
             {showGraphicalView && (
                 <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
                         <button onClick={() => setShowGraphicalView(false)} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
                             <X className="w-5 h-5 text-gray-600" />
                         </button>
-                        <div className="flex-1 overflow-auto bg-gray-50 p-6">
-                            <WeeklyGraphicalView
-                                entries={entriesToRender}
-                                weeklyRate={crewInfo.weeklyRate || crewInfo.dailyRate * 5}
-                                department={crewInfo.department}
-                            />
-                        </div>
+                        <div className="flex-1 overflow-auto bg-gray-50 p-6"> */}
+            <WeeklyGraphicalView
+                entries={entriesToRender}
+                weeklyRate={crewInfo.weeklyRate || crewInfo.dailyRate * 5}
+                department={crewInfo.department}
+                open={showGraphicalView}
+                onOpenChange={setShowGraphicalView}
+            />
+            {/* </div>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* <MileageReimbursementForm
                 isOpen={showMileageForm}
