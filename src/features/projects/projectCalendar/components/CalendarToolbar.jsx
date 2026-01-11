@@ -1,5 +1,6 @@
 import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
+import { format } from "date-fns";
 import {
   Select,
   SelectTrigger,
@@ -7,6 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/shared/components/ui/select";
+import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
 import {
   Calendar,
@@ -21,6 +23,7 @@ import FilterPillTabs from "@/shared/components/FilterPillTabs";
 
 export default function CalendarToolbar({
   currentDate,
+  setCurrentDate,
   events = 0,
   search,
   setSearch,
@@ -29,14 +32,37 @@ export default function CalendarToolbar({
   view,
   setView,
 }) {
+  const dayEvents = events.filter((e) => {
+    if (!e.startDate) return false;
+
+    const selected = format(currentDate, "yyyy-MM-dd");
+    return e.startDate === selected;
+  });
+
+  const handlePrev = () => {
+    if (view === "day") setCurrentDate(addDays(currentDate, -1));
+    else if (view === "week") setCurrentDate(addWeeks(currentDate, -1));
+    else if (view === "month") setCurrentDate(addMonths(currentDate, -1));
+    else if (view === "year") setCurrentDate(addYears(currentDate, -1));
+     else if (view === "gantt") setCurrentDate(addWeeks(currentDate, -1));
+  };
+
+  const handleNext = () => {
+    if (view === "day") setCurrentDate(addDays(currentDate, 1));
+    else if (view === "week") setCurrentDate(addWeeks(currentDate, 1));
+    else if (view === "month") setCurrentDate(addMonths(currentDate, 1));
+    else if (view === "year") setCurrentDate(addYears(currentDate, 1));
+    else if (view === "gantt") setCurrentDate(addWeeks(currentDate, 1));
+  };
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
+
   return (
     <Card className="p-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-background hover:bg-primary/10 hover:text-primary transition"
-        >
+        <Button variant="outline" size="icon" onClick={handlePrev}>
           <ChevronLeft className="w-4 h-4" />
         </Button>
 
@@ -54,22 +80,19 @@ export default function CalendarToolbar({
             </h3>
 
             <p className="text-xs text-muted-foreground">
-              {events.length} events scheduled
+              {dayEvents.length} events scheduled
             </p>
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-background hover:bg-primary/10 hover:text-primary transition"
-        >
+        <Button variant="outline" size="icon" onClick={handleNext}>
           <ChevronRight className="w-4 h-4" />
         </Button>
 
-        <Button variant="default" size="sm" className="font-semibold">
+        <Button variant="default" size="sm" onClick={handleToday}>
           Today
         </Button>
+
         <SearchBar
           placeholder="Search events..."
           value={search}

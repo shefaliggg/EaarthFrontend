@@ -10,17 +10,22 @@ export const createEventFormConfig = {
       fields: [
         { name: "title", label: "Event Title" },
         { name: "location", label: "Location" },
-        { name: "eventType", label: "Event Type", isSelect: true, items: [
-          { label: "Prep", value: "prep" },
-          { label: "Scout", value: "scout" },
-          { label: "Tech", value: "tech" },
-          { label: "Stunt", value: "stunt" },
-          { label: "Cast", value: "cast" },
-          { label: "Shoot", value: "shoot" },
-          { label: "Travel", value: "travel" },
-          { label: "Meeting", value: "meeting" },
-          { label: "Other", value: "other" },
-        ]},
+        {
+          name: "eventType",
+          label: "Event Type",
+          isSelect: true,
+          items: [
+            { label: "Prep", value: "prep" },
+            { label: "Scout", value: "scout" },
+            { label: "Tech", value: "tech" },
+            { label: "Stunt", value: "stunt" },
+            { label: "Cast", value: "cast" },
+            { label: "Shoot", value: "shoot" },
+            { label: "Travel", value: "travel" },
+            { label: "Meeting", value: "meeting" },
+            { label: "Other", value: "other" },
+          ],
+        },
       ],
     },
 
@@ -30,8 +35,7 @@ export const createEventFormConfig = {
       label: "Date",
       fields: [
         { name: "startDate", label: "Start Date", type: "date" },
-        { name: "endDate", label: "End Date (Optional)", type: "date" },
-        { name: "isMultiDay", label: "Multi-day Event", type: "checkbox" },
+        { name: "endDate", label: "End Date", type: "date" },
       ],
     },
 
@@ -42,7 +46,7 @@ export const createEventFormConfig = {
       fields: [
         { name: "startTime", label: "Start Time", type: "time" },
         { name: "endTime", label: "End Time", type: "time" },
-        { name: "isAllDay", label: "All Day Event", type: "checkbox" },
+        { name: "isAllDay", label: "All-Day Event", type: "checkbox" },
       ],
     },
 

@@ -1,44 +1,149 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 import FilterPillTabs from "@/shared/components/FilterPillTabs";
 import CreateEventStepsRenderer from "./CreateEventStepsRenderer";
 import { createEventFormConfig } from "../config/createEventFormConfig";
 import { createEventSchema } from "../config/createEventSchema";
 
-export default function CreateEventModal({ open, onClose, selectedDate }) {
+export default function CreateEventModal({
+  open,
+  onClose,
+  selectedDate,
+  onSave,
+}) {
   const form = useForm({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
       title: "",
-      startDate: selectedDate?.toISOString().split("T")[0],
+      startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
       endDate: "",
+      startTime: "",
+      endTime: "",
       isMultiDay: false,
+      isAllDay: false,
       eventType: "other",
       location: "",
       color: "#000000",
       notes: "",
     },
-    mode: "onChange",
+
+    mode: "onTouched",
   });
 
-  const [step, setStep] = useState(createEventFormConfig.steps[0].value);
-
-  const activeStep = createEventFormConfig.steps.find(
-    (s) => s.value === step
+  const [currentStepValue, setCurrentStepValue] = useState(
+    createEventFormConfig.steps[0].value
   );
 
-  const handleSubmit = (data) => {
-    console.log("Create Event:", data);
-    onClose();
+  const currentStep = createEventFormConfig.steps.find(
+    (step) => step.value === currentStepValue
+  );
+
+  const currentStepIndex = createEventFormConfig.steps.findIndex(
+    (step) => step.value === currentStepValue
+  );
+
+  const currentFields =
+    createEventFormConfig.steps[currentStepIndex]?.fields?.map(
+      (field) => field.name
+    ) || [];
+
+  const canProceed = currentFields.every((fieldName) => {
+    const value = form.watch(fieldName);
+
+    if (fieldName === "isAllDay") return true;
+
+    if (
+      form.watch("isAllDay") &&
+      ["startTime", "endTime"].includes(fieldName)
+    ) {
+      return true;
+    }
+
+    return Boolean(value);
+  });
+
+  const goToNextStep = async () => {
+    const fields =
+      createEventFormConfig.steps[currentStepIndex]?.fields?.map(
+        (field) => field.name
+      ) || [];
+
+    const isValid = await form.trigger(fields);
+
+    if (isValid && currentStepIndex < createEventFormConfig.steps.length - 1) {
+      const nextFields =
+        createEventFormConfig.steps[currentStepIndex + 1]?.fields?.map(
+          (field) => field.name
+        ) || [];
+
+      nextFields.forEach((name) => form.clearErrors(name));
+
+      setCurrentStepValue(
+        createEventFormConfig.steps[currentStepIndex + 1].value
+      );
+    }
   };
 
+  const goToPreviousStep = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepValue(
+        createEventFormConfig.steps[currentStepIndex - 1].value
+      );
+    }
+  };
+
+const handleFormSubmit = (data) => {
+  const finalEndTime = data.endTime || data.startTime;
+
+  onSave({
+    id: Date.now(),
+    ...data,
+    endTime: finalEndTime,
+  });
+
+  onClose();
+};
+
+
+useEffect(() => {
+  if (open) {
+    form.reset({
+      title: "",
+      startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+      endDate: "",
+      startTime: "",
+      endTime: "",
+      isMultiDay: false,
+      isAllDay: false,
+      eventType: "other",
+      location: "",
+      color: "#000000",
+      notes: "",
+    });
+
+    setCurrentStepValue(createEventFormConfig.steps[0].value);
+  }
+}, [open, selectedDate]);
+
+ 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-8">
         <DialogHeader>
           <DialogTitle>{createEventFormConfig.title}</DialogTitle>
@@ -49,32 +154,50 @@ export default function CreateEventModal({ open, onClose, selectedDate }) {
 
         <FilterPillTabs
           options={createEventFormConfig.steps}
-          value={step}
-          onChange={setStep}
+          value={currentStepValue}
+          onChange={setCurrentStepValue}
+          readOnly
         />
 
         <div className="flex-1 overflow-y-auto pr-1">
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
             className="space-y-6"
           >
-            <CreateEventStepsRenderer
-              step={activeStep}
-              form={form}
-            />
+            <CreateEventStepsRenderer step={currentStep} form={form} />
 
-            <div className="pt-4 flex justify-end gap-3 bg-background sticky bottom-0">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
+            <div className="pt-4 flex justify-between bg-background sticky bottom-0">
+              <div>
+                {currentStepIndex > 0 && (
+                  <Button variant="outline" onClick={goToPreviousStep}>
+                    Previous
+                  </Button>
+                )}
+              </div>
 
-              <Button type="submit">
-                Save Event
-              </Button>
+              <div className="flex gap-3">
+                {currentStepIndex < createEventFormConfig.steps.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={goToNextStep}
+                    disabled={!canProceed}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={form.handleSubmit(handleFormSubmit)}
+                    type="submit"
+                  >
+                    Save Event
+                  </Button>
+                )}
+              </div>
             </div>
           </form>
         </div>
-
       </DialogContent>
     </Dialog>
   );
