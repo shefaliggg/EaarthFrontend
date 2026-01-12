@@ -143,7 +143,7 @@ export default function CrewReview() {
         </Badge>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />

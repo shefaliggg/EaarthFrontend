@@ -12,7 +12,7 @@ import {
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
 import { MetricsCard } from "../../../shared/components/MetricsCard";
 
-// Sample contract data
+// Sample contract data - showing only one crew member's contracts
 const sampleContracts = [
   {
     id: 1,
@@ -31,20 +31,9 @@ const sampleContracts = [
     productionName: "Night at the Opera",
     completedAt: null,
     data: {
-      fullName: "Sarah Johnson",
-      department: "Sound Department",
-      roles: [{ roleTitle: "Sound Mixer" }]
-    }
-  },
-  {
-    id: 3,
-    status: "PENDING_UPM_SIGNATURE",
-    productionName: "Desert Storm",
-    completedAt: null,
-    data: {
-      fullName: "Mike Davis",
-      department: "Grip Department",
-      roles: [{ roleTitle: "Key Grip" }]
+      fullName: "John Smith",
+      department: "Camera Department",
+      roles: [{ roleTitle: "Camera Operator" }]
     }
   },
   {
@@ -53,20 +42,20 @@ const sampleContracts = [
     productionName: "Ocean Waves",
     completedAt: "2024-11-20T14:30:00Z",
     data: {
-      fullName: "Emily Chen",
-      department: "Art Department",
-      roles: [{ roleTitle: "Production Designer" }]
+      fullName: "John Smith",
+      department: "Camera Department",
+      roles: [{ roleTitle: "First Assistant Camera" }]
     }
   },
   {
-    id: 5,
-    status: "PENDING_FC_SIGNATURE",
-    productionName: "Mountain High",
+    id: 6,
+    status: "PENDING_UPM_SIGNATURE",
+    productionName: "City Lights",
     completedAt: null,
     data: {
-      fullName: "Robert Martinez",
-      department: "Electric Department",
-      roles: [{ roleTitle: "Gaffer" }]
+      fullName: "John Smith",
+      department: "Camera Department",
+      roles: [{ roleTitle: "Director of Photography" }]
     }
   }
 ];
@@ -74,7 +63,7 @@ const sampleContracts = [
 const getStatusConfig = (status) => {
   const configs = {
     "COMPLETED": { label: "Completed", variant: "default", color: "bg-emerald-100 text-emerald-800" },
-    "PENDING_CREW_SIGNATURE": { label: "Awaiting Crew Signature", variant: "outline", color: "bg-amber-100 text-amber-800" },
+    "PENDING_CREW_SIGNATURE": { label: "Awaiting My Signature", variant: "outline", color: "bg-amber-100 text-amber-800" },
     "PENDING_UPM_SIGNATURE": { label: "Awaiting UPM Signature", variant: "outline", color: "bg-blue-100 text-blue-800" },
     "PENDING_FC_SIGNATURE": { label: "Awaiting FC Signature", variant: "outline", color: "bg-purple-100 text-purple-800" },
     "PENDING_STUDIO_SIGNATURE": { label: "Awaiting Studio Signature", variant: "outline", color: "bg-violet-100 text-violet-800" },
@@ -87,27 +76,6 @@ const formatDate = (dateString) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
-
-// SmartIcon component for rendering icons
-function SmartIcon({ icon, className }) {
-  if (!icon) return null;
-  
-  // If it's already a React element
-  if (typeof icon === 'object' && icon.type) {
-    return icon;
-  }
-  
-  // If it's a string, try to find the icon from lucide-react
-  if (typeof icon === 'string') {
-    const iconName = icon.charAt(0).toUpperCase() + icon.slice(1);
-    const LucideIcon = require('lucide-react')[iconName];
-    if (LucideIcon) {
-      return <LucideIcon className={className} />;
-    }
-  }
-  
-  return null;
-}
 
 function ContractCard({ contract }) {
   const navigate = useNavigate();
@@ -132,7 +100,7 @@ function ContractCard({ contract }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="font-semibold text-base truncate" data-testid={`text-contract-name-${contract.id}`}>
-                {data.fullName || data.crewName || "Unnamed Contract"}
+                {contract.productionName || "Unnamed Production"}
               </h3>
               <Badge className={statusConfig.color} data-testid={`badge-status-${contract.id}`}>
                 {statusConfig.label}
@@ -145,7 +113,7 @@ function ContractCard({ contract }) {
               </div>
               <div className="flex items-center gap-2">
                 <Building className="w-3 h-3" />
-                <span>{contract.productionName || "—"}</span>
+                <span>{data.department || "—"}</span>
               </div>
               {contract.completedAt && (
                 <div className="flex items-center gap-2">
@@ -174,9 +142,14 @@ function ContractCard({ contract }) {
 export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedRole] = useState("CREW");
 
-  const allOffers = sampleContracts;
+  // Current logged-in crew member (in real app, get from auth context)
+  const currentUserName = "John Smith";
+
+  // Filter contracts for current crew member only
+  const userContracts = sampleContracts.filter(contract => 
+    contract.data.fullName === currentUserName
+  );
 
   const signingStatuses = [
     "PENDING_CREW_SIGNATURE", 
@@ -185,7 +158,7 @@ export default function Contracts() {
     "PENDING_STUDIO_SIGNATURE"
   ];
 
-  const signedContracts = allOffers.filter(o => 
+  const signedContracts = userContracts.filter(o => 
     o.status === "COMPLETED" || signingStatuses.includes(o.status)
   );
 
@@ -198,10 +171,9 @@ export default function Contracts() {
       const data = c.data || {};
       const searchLower = searchQuery.toLowerCase();
       return (
-        data.fullName?.toLowerCase().includes(searchLower) ||
-        data.crewName?.toLowerCase().includes(searchLower) ||
         c.productionName?.toLowerCase().includes(searchLower) ||
-        data.department?.toLowerCase().includes(searchLower)
+        data.department?.toLowerCase().includes(searchLower) ||
+        data.roles?.[0]?.roleTitle?.toLowerCase().includes(searchLower)
       );
     });
   };
@@ -211,8 +183,6 @@ export default function Contracts() {
     : activeTab === "pending"
     ? filterContracts(pendingSignatures)
     : filterContracts(signedContracts);
-
-  const roleLabel = selectedRole === "CREW" ? "Crew Member" : "Production";
 
   const tabOptions = [
     { label: `All (${signedContracts.length})`, value: "all", icon: "FileText" },
@@ -226,10 +196,10 @@ export default function Contracts() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight" data-testid="text-contracts-title">
-              {selectedRole === "CREW" ? "My Signed Contracts" : "Contracts"}
+              My Contracts
             </h1>
             <p className="text-gray-600 mt-0.5">
-              Viewing as: {roleLabel}
+              View and manage your signed contracts
             </p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -286,7 +256,7 @@ export default function Contracts() {
                   <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="font-semibold mb-1">No contracts found</h3>
                   <p className="text-sm text-gray-600">
-                    {searchQuery ? "Try adjusting your search" : "Contracts will appear here once signed"}
+                    {searchQuery ? "Try adjusting your search" : "You don't have any contracts yet"}
                   </p>
                 </CardContent>
               </Card>
