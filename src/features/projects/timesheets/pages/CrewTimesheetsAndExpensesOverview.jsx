@@ -21,9 +21,12 @@ import { useLocation, useMatch, useParams } from 'react-router-dom';
 function CrewTimesheetsOverview() {
   const params = useParams();
   const location = useLocation();
-  const isFuelRoute = useMatch(`/projects/${params.projectName}/fuel-mileage`);
-  const activeTab = isFuelRoute ? "expenses" : "timesheets";
+  const isFuelAndMileageRoute = useMatch(`/projects/${params.projectName}/fuel-mileage`);
+  const isPettyCashRoute = useMatch(`/projects/${params.projectName}/petty-cash`);
+  const activeTab = isFuelAndMileageRoute ? "expenses" : isPettyCashRoute ? "petty-cash" : "timesheets";
   const currentTab = location.pathname
+
+  console.log("active tab", activeTab)
 
   const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +39,7 @@ function CrewTimesheetsOverview() {
     const weeks = [];
     const currentDate = new Date();
 
+    // Generate 20 weeks of data (8 past, current, 11 future)
     for (let i = -8; i <= 11; i++) {
       const weekEnd = new Date(currentDate);
       const dayOfWeek = currentDate.getDay();
@@ -45,8 +49,8 @@ function CrewTimesheetsOverview() {
       const weekStart = new Date(weekEnd);
       weekStart.setDate(weekEnd.getDate() - 6);
 
-      let status = 'submitted';
-      let expenseStatus = 'submitted' | 'approved' | 'draft' | 'not-started';
+      let status = 'not-started';
+      let expenseStatus = 'not-started';
 
       if (i < -2) {
         status = 'approved';
@@ -66,6 +70,16 @@ function CrewTimesheetsOverview() {
       const hasMileageExpense = expenseStatus !== 'not-started' && expenseType === 'mileage';
       const hasFuelExpense = expenseStatus !== 'not-started' && expenseType === 'fuel';
 
+      // Add Petty Cash Data
+      let pettyCashStatus = 'not-started';
+      if (i < -2) {
+        pettyCashStatus = Math.random() > 0.4 ? 'approved' : 'not-started';
+      } else if (i === -2 || i === -1) {
+        pettyCashStatus = Math.random() > 0.6 ? 'submitted' : 'draft';
+      } else if (i === 0) {
+        pettyCashStatus = 'not-started';
+      }
+
       weeks.push({
         weekEnding: weekEnd.toISOString().split('T')[0],
         weekStart: weekStart.toISOString().split('T')[0],
@@ -81,7 +95,9 @@ function CrewTimesheetsOverview() {
           ? `£${(Math.random() * 100 + 50).toFixed(2)}`
           : hasFuelExpense
             ? `£${(Math.random() * 150 + 80).toFixed(2)}`
-            : undefined
+            : undefined,
+        pettyCashStatus,
+        pettyCashAmount: pettyCashStatus !== 'not-started' ? `£${(Math.random() * 200 + 20).toFixed(2)}` : undefined
       });
     }
 
@@ -126,6 +142,14 @@ function CrewTimesheetsOverview() {
   const thisMonthExpenses = thisMonthWeeks
     .filter(w => w.expenseStatus === 'approved')
     .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0);
+
+  const totalPettyCash = weeks
+    .filter(w => w.pettyCashStatus === 'approved')
+    .reduce((sum, w) => sum + parseAmount(w.pettyCashAmount), 0);
+
+  const thisMonthPettyCash = thisMonthWeeks
+    .filter(w => w.pettyCashStatus === 'approved')
+    .reduce((sum, w) => sum + parseAmount(w.pettyCashAmount), 0);
 
   // Helper function for formatting week ranges
   const formatWeekRange = (weekStart, weekEnding) => {
@@ -175,18 +199,18 @@ function CrewTimesheetsOverview() {
     {
       key: "hours",
       value: totalHours.toFixed(1),
-      valueText: "Hours",
+      valueText: "Total Hours",
       icon: "Timer",
       color: "blue",
     },
     {
       key: "earnings",
-      value: `£${totalEarnings.toLocaleString("en-GB", {
+      value: `${totalEarnings.toLocaleString("en-GB", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
-      valueText: "",
-      icon: "CircleDollarSign",
+      valueText: "Total Earnings",
+      icon: "PoundSterling",
       color: "emerald",
     },
   ], [totalHours, totalEarnings]);
@@ -197,18 +221,35 @@ function CrewTimesheetsOverview() {
         {
           key: "submitted",
           value: weeks.filter(w => w.status !== "not-started").length,
-          valueText: "Submitted",
+          valueText: "Timesheets Submitted",
           icon: "Clock",
           color: "purple",
         },
         {
           key: "approved",
           value: weeks.filter(w => w.status === "approved").length,
-          valueText: "Approved",
+          valueText: "Timesheets Approved",
           icon: "Award",
           color: "purple",
         },
       ];
+    } else if (activeTab === "petty-cash") {
+      return [
+        {
+          key: "claimed",
+          value: totalPettyCash.toFixed(2),
+          valueText: "Petty Cash Claimed",
+          icon: "Banknote",
+          color: "purple",
+        },
+        {
+          key: "approved-petty-cash",
+          value: weeks.filter(w => w.expenseStatus === "approved").length,
+          valueText: "Approved Petty Cash Claims",
+          icon: "Award",
+          color: "purple",
+        },
+      ]
     }
 
     // expenses
@@ -216,14 +257,14 @@ function CrewTimesheetsOverview() {
       {
         key: "claimed",
         value: totalExpenses.toFixed(2),
-        valueText: "Claimed",
+        valueText: "L Fuel Claimed",
         icon: "Fuel",
         color: "purple",
       },
       {
         key: "approved-expenses",
         value: weeks.filter(w => w.expenseStatus === "approved").length,
-        valueText: "Approved",
+        valueText: "Approved Fuel Claims",
         icon: "Award",
         color: "purple",
       },
@@ -341,6 +382,72 @@ function CrewTimesheetsOverview() {
       },
     ];
 
+  const getPettyCashStats = ({
+    claims,            // all petty cash claims
+    thisMonthClaims,   // claims in current month
+    parseAmount,
+  }) => {
+
+    const thisMonthTotal = thisMonthClaims.reduce(
+      (sum, c) => sum + parseAmount(c.amount),
+      0
+    );
+
+    const approvedClaims = claims.filter(c => c.status === "approved");
+    const pendingClaims = claims.filter(c => c.status === "submitted");
+
+    const approvedTotal = approvedClaims.reduce(
+      (sum, c) => sum + parseAmount(c.amount),
+      0
+    );
+
+    const pendingTotal = pendingClaims.reduce(
+      (sum, c) => sum + parseAmount(c.amount),
+      0
+    );
+
+    return [
+      {
+        label: "This Month",
+        value: `£${thisMonthTotal.toFixed(2)}`,
+        icon: "Wallet",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        subLabel: `${thisMonthClaims.length} claims submitted`,
+      },
+
+      {
+        label: "Approved",
+        value: approvedClaims.length,
+        icon: "CheckCircle2",
+        iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
+        subLabel: `£${approvedTotal.toFixed(2)} reimbursed`,
+      },
+
+      {
+        label: "Pending",
+        value: pendingClaims.length,
+        icon: "Clock",
+        iconBg: "bg-amber-100 dark:bg-amber-900/30",
+        iconColor: "text-amber-600 dark:text-amber-400",
+        subLabel: `£${pendingTotal.toFixed(2)} awaiting approval`,
+      },
+
+      {
+        label: "Average Claim",
+        value: `£${claims.length
+          ? (claims.reduce((s, c) => s + parseAmount(c.amount), 0) / claims.length).toFixed(2)
+          : "0.00"
+          }`,
+        icon: "BarChart3",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30",
+        iconColor: "text-blue-600 dark:text-blue-400",
+        subLabel: "Typical purchase size",
+      },
+    ];
+  };
+
   const primaryStats =
     activeTab === "timesheets"
       ? getTimesheetStats({
@@ -350,12 +457,18 @@ function CrewTimesheetsOverview() {
         thisMonthHours,
         totalEarnings,
       })
-      : getExpenseStats({
-        weeks,
-        thisMonthWeeks,
-        thisMonthExpenses,
-        parseAmount,
-      });
+      : activeTab === "timesheets"
+        ? getPettyCashStats({
+          claims: totalPettyCash,
+          thisMonthClaims: thisMonthPettyCash,
+          parseAmount,
+        })
+        : getExpenseStats({
+          weeks,
+          thisMonthWeeks,
+          thisMonthExpenses,
+          parseAmount,
+        });
 
   const getCurrentWeekEnding = () => {
     const today = new Date();
@@ -416,6 +529,15 @@ function CrewTimesheetsOverview() {
         initials={"LK"}
         subtitle={`Luke green - Electrical`}
       />
+      <FilterPillTabs
+        options={[
+          { label: "Timesheets", icon: "Clock", route: `/projects/${params.projectName}/timesheets` },
+          { label: "Fuel and Mileage", icon: "Fuel", route: `/projects/${params.projectName}/fuel-mileage` },
+          { label: "Petty Cash", icon: "Banknote", route: `/projects/${params.projectName}/petty-cash` },
+        ]}
+        value={currentTab}
+        navigatable
+      />
       <div className="flex items-center gap-3 mt-2">
         {quickStats.map(stat => (
           <MiniInfoPills
@@ -427,14 +549,6 @@ function CrewTimesheetsOverview() {
           />
         ))}
       </div>
-      <FilterPillTabs
-        options={[
-          { label: "Timesheets", icon: "Clock", route: `/projects/${params.projectName}/timesheets` },
-          { label: "Fuel and Mileage", icon: "Fuel", route: `/projects/${params.projectName}/fuel-mileage` },
-        ]}
-        value={currentTab}
-        navigatable
-      />
       <PrimaryStats stats={primaryStats} gridColumns={4} />
 
       <div>
@@ -575,9 +689,11 @@ function CrewTimesheetsOverview() {
                           <StatusBadge status={'information'} label={`Total ${futureWeeks.length}`} size="sm" />
                           <StatusBadge status={'pending'} label={`${futureWeeks.filter(week => {
                             const displayStatus =
-                              viewMode === "expenses"
+                              activeTab === "expenses"
                                 ? week.expenseStatus || "not-started"
-                                : week.status
+                                : activeTab === "petty-cash"
+                                  ? week.pettyCashStatus || 'not-started'
+                                  : week.status
 
                             return displayStatus === "draft"
                           }).length} Draft`} size="sm" />
@@ -597,7 +713,7 @@ function CrewTimesheetsOverview() {
                                 ),
                               }}
                               view={viewMode}
-                              mode={activeTab === "expenses" ? "expenses" : "timesheets"}
+                              mode={activeTab}
                               isFuture
                               weekDays={getWeekDays(
                                 week.weekStart,

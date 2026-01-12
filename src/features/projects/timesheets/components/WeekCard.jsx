@@ -11,6 +11,7 @@ import {
     X,
     FileText,
     Calendar,
+    Banknote,
 } from "lucide-react";
 import { StatusBadge } from "@/shared/components/badges/StatusBadge";
 import { cn } from "@/shared/config/utils";
@@ -19,6 +20,7 @@ import { Card } from "../../../../shared/components/ui/card";
 import { Progress } from "../../../../shared/components/ui/progress";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { SmartIcon } from "../../../../shared/components/SmartIcon";
 
 export function WeekCard({
     fullWidth = false,
@@ -34,7 +36,10 @@ export function WeekCard({
     const displayStatus =
         mode === "expenses"
             ? week.expenseStatus || "not-started"
-            : week.status;
+            : mode === "petty-cash"
+                ? week.pettyCashStatus || 'not-started'
+                : week.status
+
 
     const isGrid = view === "grid";
 
@@ -46,6 +51,12 @@ export function WeekCard({
             } else {
                 navigate(`new?week=${week.weekEnding}`);
             }
+        } else if (mode === "petty-cash") {
+            if (displayStatus !== 'not-started') {
+                navigate("PTCM-#284382");
+            } else {
+                navigate(`new?week=${week.weekEnding}`);
+            }
         } else {
             navigate(week.weekEnding);
         }
@@ -54,6 +65,11 @@ export function WeekCard({
     const handleExpenseClick = (e) => {
         e.stopPropagation();
         navigate(`/projects/${params.projectName}/fuel-mileage/${week.weekEnding}?claim=#124322`);
+    };
+
+    const handlePettyCashClick = (e) => {
+        e.stopPropagation();
+        navigate(`/projects/${params.projectName}/petty-cash/${week.weekEnding}?claim=#124322`);
     };
 
     const handleDownloadClick = (e) => {
@@ -103,13 +119,25 @@ export function WeekCard({
                                         variant="outline"
                                         onClick={handleExpenseClick}
                                         className="size-10"
-                                        title="View Expenses"
+                                        title="View Fuel and Mileage Claims"
                                     >
                                         {week.expenseType === 'fuel' ? (
                                             <Fuel className="w-4 h-4" />
                                         ) : (
                                             <Car className="w-4 h-4" />
                                         )}
+                                    </Button>
+                                )}
+
+                                {(week.status === 'approved' || week.status === 'submitted') && (week.pettyCashStatus === 'submitted' || week.pettyCashStatus === 'approved') && (
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={handlePettyCashClick}
+                                        className="size-10"
+                                        title="View Petty Cash Claims"
+                                    >
+                                        <Banknote className="w-4 h-4" />
                                     </Button>
                                 )}
 
@@ -129,24 +157,12 @@ export function WeekCard({
 
                         {/* Expense Type Badge */}
                         {mode === 'expenses' && week.expenseType && displayStatus !== 'not-started' && (
-                            <div className={cn(
-                                "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 shadow-lg",
-                                week.expenseType === 'fuel'
-                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                                    : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                            )}>
-                                {week.expenseType === 'fuel' ? (
-                                    <>
-                                        <Fuel className="w-3.5 h-3.5" />
-                                        Fuel
-                                    </>
-                                ) : (
-                                    <>
-                                        <Car className="w-3.5 h-3.5" />
-                                        Mileage
-                                    </>
-                                )}
-                            </div>
+                            <StatusBadge className={week.expenseType === 'fuel' ? "bg-gradient-to-r from-orange-500 to-red-500 text-background" : "bg-gradient-to-r from-blue-500 to-cyan-500 text-background"} icon={week.expenseType === 'fuel' ? Fuel : Car} label={week.expenseType === 'fuel' ? "Fuel" : "Mileage"} size="sm" />
+                        )}
+
+                        {/* Petty Cash Badge */}
+                        {mode === 'petty-cash' && displayStatus !== 'not-started' && (
+                            <StatusBadge className={"bg-gradient-to-r from-emerald-500 to-teal-500 text-background"} icon={Banknote} label="Petty Cash" size="sm" />
                         )}
                     </div>
                     <div className="flex items-center gap-2 mb-6">
@@ -219,6 +235,17 @@ export function WeekCard({
                                         />
                                     )}
                                 </>
+                            ) : mode === 'petty-cash' ? (
+                                <>
+                                    {week.pettyCashAmount && (
+                                        <Detail
+                                            icon={Banknote}
+                                            label="Total"
+                                            value={week.pettyCashAmount}
+                                            highlight
+                                        />
+                                    )}
+                                </>
                             ) : (
                                 <>
                                     {week.expenseAmount && (
@@ -266,13 +293,25 @@ export function WeekCard({
                                 ) : (
                                     <>
                                         <Eye className="w-3.5 h-3.5" />
-                                        View or Edit
+                                        View or Edit Claim
+                                    </>
+                                )
+                            ) : mode === 'petty-cash' ? (
+                                displayStatus === 'not-started' ? (
+                                    <>
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Add Petty Cash
+                                    </>
+                                ) : (
+                                    <>
+                                        <Eye className="w-3.5 h-3.5" />
+                                        View or Edit Claim
                                     </>
                                 )
                             ) : (
                                 <>
                                     {week.status === 'not-started' ? <Plus className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                    {week.status === 'not-started' ? 'Create' : 'View'} Timesheet
+                                    {week.status === 'not-started' ? 'Create' : 'View or Edit'} Timesheet
                                 </>
                             )}
                             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -309,12 +348,18 @@ export function WeekCard({
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">
                                 {isCurrent && (
-                                    <StatusBadge label={"Current"} icon={"Zap"} size={"md"} className={"bg-purple-100 text-purple-700 dark:bg-purple-900/40"} />
+                                    <StatusBadge label={"Current"} icon={"Zap"} size="sm" className={"bg-purple-100 text-purple-700 dark:bg-purple-900/40"} />
                                 )}
                                 {isFuture && (
-                                    <StatusBadge status={'information'} label={"Future"} size={"md"} />
+                                    <StatusBadge status={'information'} label={"Future"} size="sm" />
                                 )}
-                                <StatusBadge status={displayStatus} size={"md"} />
+                                <StatusBadge status={displayStatus} size="sm" />
+                                {mode === "expenses" && (
+                                    <StatusBadge className={week.expenseType === 'fuel' ? "bg-gradient-to-r from-orange-500 to-red-500 text-background" : "bg-gradient-to-r from-blue-500 to-cyan-500 text-background"} icon={week.expenseType === 'fuel' ? Fuel : Car} label={week.expenseType === 'fuel' ? "Fuel" : "Mileage"} size="sm" />
+                                )}
+                                {mode === 'petty-cash' && (
+                                    <StatusBadge className={"bg-gradient-to-r from-emerald-500 to-teal-500 text-background"} icon={Banknote} label="Petty Cash" size="sm" />
+                                )}
                             </div>
                             {mode === "timesheets" && displayStatus !== "not-started" && (
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -367,7 +412,7 @@ export function WeekCard({
 
                 {/* RIGHT: Actions */}
                 <div className="flex items-center gap-8">
-                    <div className="space-y-1">
+                    <div className="flex flex-col items-end">
                         {mode === "expenses" && displayStatus !== "not-started" && (
                             <div className="flex items-center gap-4 text-xs">
                                 <span className="flex items-center gap-1 font-semibold">
@@ -386,11 +431,19 @@ export function WeekCard({
                                 )}
 
                                 {week.expenseType === "mileage" && (
-                                    <span className="font-mono text-muted-foreground">
+                                    <span className="text-muted-foreground">
                                         £0.45 / mile
                                     </span>
                                 )}
                             </div>
+                        )}
+                        {mode === "petty-cash" && (
+                            week.pettyCashAmount && (
+                                <div className="flex items-center gap-2">
+                                    <Banknote className="w-4 h-4 text-gray-400" />
+                                    <span className={`font-black text-emerald-600 dark:text-emerald-400`}>{week.pettyCashAmount}</span>
+                                </div>
+                            )
                         )}
                         <div className="flex items-center gap-3">
                             {mode === "timesheets" && week.totalHours !== undefined && (
@@ -401,8 +454,8 @@ export function WeekCard({
                             )}
 
                             {week.totalAmount && (
-                                <span className="flex items-center gap-1.5 text-sm font-black text-purple-600">
-                                    {/* <DollarSign className="w-4 h-4" /> */}
+                                <span className="flex items-center  gap-1.5 text-sm font-black text-purple-600">
+                                    <span>Total</span>
                                     {week.totalAmount}
                                 </span>
                             )}
@@ -459,7 +512,7 @@ function Detail({ icon: Icon, label, value, highlight, isDate = false, isMonospa
                 "text-xs font-semibold text-muted-foreground",
                 Icon && "flex items-center gap-2"
             )}>
-                {Icon && <Icon className="w-3.5 h-3.5" />}
+                {Icon && <SmartIcon icon={Icon} className="w-3.5 h-3.5" />}
                 {label}:
             </span>
             <span className={cn(
