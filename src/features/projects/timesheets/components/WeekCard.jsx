@@ -64,12 +64,12 @@ export function WeekCard({
 
     const handleExpenseClick = (e) => {
         e.stopPropagation();
-        navigate(`/projects/${params.projectName}/fuel-mileage/${week.weekEnding}?claim=#124322`);
+        navigate(`/projects/${params.projectName}/fuel-mileage/${week.weekEnding}?claim=FLCM-#284382`);
     };
 
     const handlePettyCashClick = (e) => {
         e.stopPropagation();
-        navigate(`/projects/${params.projectName}/petty-cash/${week.weekEnding}?claim=#124322`);
+        navigate(`/projects/${params.projectName}/petty-cash/${week.weekEnding}?claim=PTCM-#284382`);
     };
 
     const handleDownloadClick = (e) => {

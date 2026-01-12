@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { AIReceiptScanner } from '../components/AIReceiptScanner'
 import { Progress } from '../../../../shared/components/ui/progress'
 import { PDFFormTemplate } from '../components/MileagePreviewDialog'
+import { InfoPanel } from '../../../../shared/components/panels/InfoPanel'
 
 function FuelAndMileageForm() {
     const [data, setData] = useState({
@@ -275,37 +276,27 @@ function FuelAndMileageForm() {
                 <div>
                     {/* Instructions Banner */}
                     <div className="mb-6">
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-500/30 rounded-xl p-5">
-                            <div className="flex items-start gap-4">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
-                                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-sm text-blue-900 dark:text-blue-300 mb-2">Claim Instructions</h4>
-                                    <div className="text-xs text-blue-800 dark:text-blue-200 space-y-2">
-                                        {claimType === 'mileage' ? (
-                                            <>
-                                                <p>• <strong>Mileage Rate:</strong> £0.45 per mile for business use of personal vehicle (HMRC approved rate)</p>
-                                                <p>• <strong>Commute Deduction:</strong> Enter your normal commute distance - this will be automatically deducted from business mileage</p>
-                                                <p>• <strong>Trip Recording:</strong> Add all business trips with start/end locations, purpose, and distance. Use Google Maps for accurate mileage</p>
-                                                <p>• <strong>Submission:</strong> Claims must be submitted within 30 days of week ending. Attach route evidence if requested</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p>• <strong>Eligibility:</strong> Only for crew receiving monthly car allowance. Contact payroll if unsure</p>
-                                                <p>• <strong>Business Usage %:</strong> Estimate percentage of fuel used for business vs personal travel this week</p>
-                                                <p>• <strong>VAT Receipts:</strong> Separate VAT-registered (show Net amount) from non-VAT receipts (show Gross amount)</p>
-                                                <p>• <strong>Receipt Retention:</strong> Keep original fuel receipts for 6 months minimum for HMRC audit purposes</p>
-                                                <p>• <strong>Commute Costs:</strong> Regular commuting fuel costs are not reimbursable and will be deducted based on business %</p>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <InfoPanel title="Claim Instructions" icon={Info}>
+                            {claimType === "mileage" ? (
+                                <>
+                                    <p>• <strong>Mileage Rate:</strong> £0.45 per mile for business use</p>
+                                    <p>• <strong>Commute Deduction:</strong> Normal commute will be deducted</p>
+                                    <p>• <strong>Trip Recording:</strong> Add all trips with purpose and distance</p>
+                                    <p>• <strong>Submission:</strong> Within 30 days of week ending</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>• <strong>Eligibility:</strong> Only for crew with car allowance</p>
+                                    <p>• <strong>Business %:</strong> Estimate business vs personal fuel</p>
+                                    <p>• <strong>VAT Receipts:</strong> VAT and non-VAT separated</p>
+                                    <p>• <strong>Receipt Retention:</strong> Keep originals for 6 months</p>
+                                    <p>• <strong>Commute Costs:</strong> Not reimbursable</p>
+                                </>
+                            )}
+                        </InfoPanel>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1600px] mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
 
                         {/* LEFT COLUMN: Inputs & Settings */}
                         <div className="lg:col-span-4 space-y-6">

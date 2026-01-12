@@ -1,28 +1,29 @@
-import React, { useRef, useState } from 'react'
-import { PageHeader } from '@/shared/components/PageHeader'
-import { StatusBadge } from '@/shared/components/badges/StatusBadge'
-import { ArrowRight, Calendar, Download, Fuel, Info, MapPin, Plus, Trash2, X } from 'lucide-react'
-import { Button } from '@/shared/components/ui/button'
-import { toast } from 'sonner'
-import { useNavigate, useParams } from 'react-router-dom'
-// import { AIReceiptScanner } from '../components/AIReceiptScanner'
-import { Progress } from '@/shared/components/ui/progress'
-// import { PDFFormTemplate } from '../components/MileagePreviewDialog'
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    X,
+    Plus,
+    Trash2,
+    Download,
+    Save,
+    Info,
+    Banknote,
+    Eye,
+    Calendar,
+    CreditCard,
+    FileText
+} from 'lucide-react';
+// import jsPDF from 'jspdf';
+// import html2canvas from 'html2canvas';
+import { InfoPanel } from '../../../../shared/components/panels/InfoPanel';
+import { toast } from 'sonner';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AIReceiptScanner } from '../../fuel-and-mileage/components/AIReceiptScanner';
+import { PageHeader } from '../../../../shared/components/PageHeader';
+import { PettyCashPDFTemplate } from '../components/PettyCashPDFTemplate';
 
 function PettyCashForm() {
-    const [data, setData] = useState({
-        homePostcode: '',
-        studioPostcode: 'WD61FX',
-        commuteMiles: 0,
-        tripsInWeek: 5,
-        weekendMiles: 0,
-        fuelReceiptsNet: 0,
-        fuelReceiptsGross: 0,
-        vatRegistered: false // Changed to always start as false by default
-    });
-
-    const navigate = useNavigate();
-    const params = useParams();
+    const currentUserRole = 'Crew'
+    const isAccountsRole = currentUserRole === 'Finance' || currentUserRole === 'Payroll';
 
     const [crewInfo, setCrewInfo] = useState({
         firstName: 'LUKE',
@@ -40,34 +41,58 @@ function PettyCashForm() {
         startDate: '2025-10-20', // Contract Start Date
         endDate: '2025-12-21'   // Contract End Date
     });
-    const [claimType, setClaimType] = useState((data.fuelReceiptsNet > 0 || data.fuelReceiptsGross > 0) ? 'fuel' : 'mileage');
-    const [serialNumber, setSerialNumber] = useState('0000001');
-    const [showPreview, setShowPreview] = useState(false);
-    const readOnly = false; //temporary data
-    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const weekEnding = "2025-NOV-16" //temporary selected week
 
+    const [data, setData] = useState({
+        department: crewInfo.department || '',
+        title: crewInfo.jobTitle || crewInfo.role || '',
+        entries: [],
+        currency: 'GBP'
+    });
+
+    const readOnly = false; //temporary data
+    const weekEnding = "2025-NOV-16" //temporary selected week
+    const initialData = undefined
+    const [showPreview, setShowPreview] = useState(false);
     const printRef = useRef(null);
 
+    const navigate = useNavigate();
+    const params = useParams();
+
+    // Generate ID
     const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
-    // Initialize days with empty trips
-    const [dailyTrips, setDailyTrips] = useState(
-        DAYS.map((_, index) => ({
-            dayIndex: index,
-            trips: [{ id: generateId(), from: '', to: '', reason: '', miles: 0 }]
-        }))
-    );
+    // Initialize with some empty rows if no data
+    useEffect(() => {
+        if (initialData) {
+            setData({ ...initialData });
+        } else if (data.entries.length === 0) {
+            // Start with 5 empty rows
+            const emptyRows = Array(5).fill(null).map(() => ({
+                id: generateId(),
+                date: '',
+                payee: '',
+                description: '',
+                category: '',
+                net: 0,
+                vat: 0,
+                total: 0,
+                code: '',
+                set: '',
+                categoryCode: '',
+                ff2: '',
+                ff3: ''
+            }));
+            setData(prev => ({ ...prev, entries: emptyRows }));
+        }
+    }, [initialData]);
 
+    // Calculate Dates based on Week Ending
     const getDates = () => {
-        // Parse weekEnding "16-11-2025" or similar
-        // If format is DD-MM-YYYY
         const parts = weekEnding.split('-');
         let endDate = new Date();
         if (parts.length === 3) {
             endDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
         }
-
         const dates = [];
         for (let i = 6; i >= 0; i--) {
             const d = new Date(endDate);
@@ -79,99 +104,76 @@ function PettyCashForm() {
 
     const dates = getDates();
 
-    const getDailyTotal = (dayIndex) => {
-        return dailyTrips[dayIndex].trips.reduce((sum, trip) => sum + (trip.miles || 0), 0);
-    };
-
-    const totalBusinessMiles = dailyTrips.reduce((sum, day) => sum + getDailyTotal(day.dayIndex), 0);
-
-    const calcCommutingTotal = data.commuteMiles * data.tripsInWeek;
-
-    const grandTotalMiles = totalBusinessMiles + calcCommutingTotal + data.weekendMiles;
-
-    // -- Cost Calcs --
-
-    // Crew WITHOUT Car Allowance
-    const businessMileageCost = totalBusinessMiles * 0.45;
-
-    // Crew WITH Car Allowance
-    const businessPercentage = grandTotalMiles > 0 ? (totalBusinessMiles / grandTotalMiles) * 100 : 0;
-
-    // Reimbursement for Fuel (With Allowance)
-    const fuelReimbursementNet = data.fuelReceiptsNet * (businessPercentage / 100);
-    const fuelReimbursementGross = data.fuelReceiptsGross * (businessPercentage / 100);
-    const fuelReimbursement = data.vatRegistered ? fuelReimbursementNet : fuelReimbursementGross;
-
+    // --- Calculations ---
+    const totalNet = data.entries?.reduce((sum, entry) => sum + (entry.net || 0), 0);
+    const totalVAT = data.entries?.reduce((sum, entry) => sum + (entry.vat || 0), 0);
+    const grandTotal = data.entries?.reduce((sum, entry) => sum + (entry.total || 0), 0);
 
     // --- Actions ---
-
-    const addTrip = (dayIndex) => {
+    const addRow = () => {
         if (readOnly) return;
-        setDailyTrips(prev => {
-            const newTrips = [...prev];
-            // Create a deep copy of the day we are modifying to ensure React detects the change
-            const currentDay = newTrips[dayIndex];
-            newTrips[dayIndex] = {
-                ...currentDay,
-                trips: [
-                    ...currentDay.trips,
-                    { id: generateId(), from: '', to: '', reason: '', miles: 0 }
-                ]
-            };
-            return newTrips;
-        });
+        setData(prev => ({
+            ...prev,
+            entries: [
+                ...prev.entries,
+                {
+                    id: generateId(),
+                    date: '',
+                    payee: '',
+                    description: '',
+                    category: '',
+                    net: 0,
+                    vat: 0,
+                    total: 0,
+                    code: '',
+                    set: '',
+                    categoryCode: '',
+                    ff2: '',
+                    ff3: ''
+                }
+            ]
+        }));
     };
 
-    const removeTrip = (dayIndex, tripId) => {
+    const removeRow = (id) => {
         if (readOnly) return;
-        setDailyTrips(prev => {
-            const newTrips = [...prev];
-            const currentDay = newTrips[dayIndex];
-
-            let updatedTrips = currentDay.trips.filter(t => t.id !== tripId);
-
-            // If we removed the last one, add a new empty one
-            if (updatedTrips.length === 0) {
-                updatedTrips = [{ id: generateId(), from: '', to: '', reason: '', miles: 0 }];
-            }
-
-            newTrips[dayIndex] = {
-                ...currentDay,
-                trips: updatedTrips
-            };
-            return newTrips;
-        });
+        setData(prev => ({
+            ...prev,
+            entries: prev.entries.filter(e => e.id !== id)
+        }));
     };
 
-    const updateTrip = (dayIndex, tripId, field, value) => {
+    const updateEntry = (id, field, value) => {
         if (readOnly) return;
-        setDailyTrips(prev => {
-            const newTrips = [...prev];
-            const currentDay = newTrips[dayIndex];
+        setData(prev => ({
+            ...prev,
+            entries: prev.entries.map(entry => {
+                if (entry.id === id) {
+                    const updatedEntry = { ...entry, [field]: value };
 
-            newTrips[dayIndex] = {
-                ...currentDay,
-                trips: currentDay.trips.map(t => {
-                    if (t.id === tripId) {
-                        return { ...t, [field]: value };
+                    // Auto-calculate total if net or vat changes
+                    if (field === 'net' || field === 'vat') {
+                        const net = field === 'net' ? (parseFloat(value) || 0) : (entry.net || 0);
+                        const vat = field === 'vat' ? (parseFloat(value) || 0) : (entry.vat || 0);
+                        updatedEntry.total = parseFloat((net + vat)?.toFixed(2));
                     }
-                    return t;
-                })
-            };
 
-            return newTrips;
-        });
+                    // Auto-calculate net/vat if total changes (assuming 20% VAT as default logic if total is entered directly?? 
+                    // Actually better to let user enter Net/VAT manually or handle via specific logic. 
+                    // For now, let's keep it simple: manual entry or AI fill.)
+
+                    return updatedEntry;
+                }
+                return entry;
+            })
+        }));
     };
 
     const handleExportPDF = async () => {
         if (!printRef.current) return;
         toast.info("Printing Pdf intiated.", { description: "currently not exporting pdf temporarily due to mock data" })
-
         // try {
-        //     // Show saving toast
         //     const loadingToast = toast.loading('Generating PDF...');
-
-        //     // Force a small delay to ensure rendering of the hidden element
         //     await new Promise(resolve => setTimeout(resolve, 500));
 
         //     const canvas = await html2canvas(printRef.current, {
@@ -179,35 +181,41 @@ function PettyCashForm() {
         //         useCORS: true,
         //         backgroundColor: '#ffffff',
         //         logging: false,
-        //         windowWidth: 794,
-        //         windowHeight: 1122,
+        //         windowWidth: 1000, // Wider for landscape-ish feel or A4 landscape? The image is landscape.
+        //         windowHeight: 700,
         //         onclone: (clonedDoc) => {
-        //             // Ensure styles are applied in the clone
-        //             const element = clonedDoc.getElementById('mileage-form-export');
+        //             const element = clonedDoc.getElementById('petty-cash-export');
         //             if (element) {
         //                 element.style.display = 'block';
         //                 element.style.position = 'relative';
         //                 element.style.left = '0';
         //             }
+
+        //             // Remove all styles to prevent html2canvas from parsing Tailwind's oklch colors
+        //             const styles = clonedDoc.getElementsByTagName('style');
+        //             const links = clonedDoc.getElementsByTagName('link');
+        //             Array.from(styles).forEach(style => style.remove());
+        //             Array.from(links).forEach(link => {
+        //                 if (link.rel === 'stylesheet') link.remove();
+        //             });
         //         }
         //     });
 
         //     const imgData = canvas.toDataURL('image/png');
         //     const pdf = new jsPDF({
-        //         orientation: 'portrait',
+        //         orientation: 'landscape',
         //         unit: 'mm',
         //         format: 'a4'
         //     });
 
-        //     // A4 portrait dimensions
-        //     const pdfWidth = 210;
-        //     const pdfHeight = 297;
+        //     const pdfWidth = 297;
+        //     const pdfHeight = 210;
 
         //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        //     pdf.save(`Mileage_Form_${crewInfo.firstName}_${crewInfo.lastName}_${weekEnding}.pdf`);
+        //     pdf.save(`Petty_Cash_${crewInfo.firstName}_${crewInfo.lastName}_${weekEnding}.pdf`);
 
         //     toast.dismiss(loadingToast);
-        //     toast.success('Mileage form exported successfully!');
+        //     toast.success('Petty cash form exported successfully!');
         // } catch (e) {
         //     console.error(e);
         //     toast.error('Failed to export PDF');
@@ -215,438 +223,341 @@ function PettyCashForm() {
     };
 
     const handleSave = () => {
-        // //  if (!onSave) return;
-        // const total = data.vatRegistered ? fuelReimbursementNet : (fuelReimbursementGross > 0 ? fuelReimbursementGross : businessMileageCost);
-        // const type = (data.fuelReceiptsNet > 0 || data.fuelReceiptsGross > 0) ? 'fuel' : 'mileage';
+        // if (!onSave) return;
+        // onSave(data, grandTotal);
+        // onClose();
 
-        // // Include trips in the saved data
-        // const dataToSave = {
-        //     ...data,
-        //     trips: dailyTrips
-        // };
-
-        toast.info(`Save ${claimType} triggered.`, { description: "the data is currently not being saved temporarily due to mock data" })
+        toast.info(`Save petty cash triggered.`, { description: "the data is currently not being saved temporarily due to mock data" })
         navigate(`/projects/${params.projectName}/fuel-mileage`)
-        //  onSave(dataToSave, total, type);
     };
 
     return (
-        <>
-            <div className='space-y-6 container mx-auto'>
-                <PageHeader
-                    icon="Car"
-                    title={"Mileage & Fuel Reimbursement"}
-                    subtitle={
-                        <span className='flex items-center gap-3'>
-                            <span>LUKE GREEN</span>
-                            <div className='flex items-center gap-2'>
-                                <Calendar className="w-3 h-3" />
-                                Week Ending 2025-NOV-16
-                            </div>
-                        </span>
-                    }
+        <div className='space-y-6 container mx-auto'>
+            <PageHeader
+                icon="Banknote"
+                title={"Petty Cash Voucher"}
+                subtitle={
+                    <span className='flex items-center gap-3'>
+                        <span>LUKE GREEN</span>
+                        <div className='flex items-center gap-2'>
+                            <Calendar className="w-3 h-3" />
+                            Week Ending 2025-NOV-16
+                        </div>
+                    </span>
+                }
 
-                    secondaryActions={[
-                        {
-                            label: "View PDF Preview",
-                            clickAction: () => setShowPreview(true),
-                            icon: "Eye",
-                            variant: "secondary",
-                            size: "lg"
-                        },
-                        {
-                            label: "Export PDF",
-                            clickAction: () => handleExportPDF(),
-                            icon: "Download",
-                            variant: "outline",
-                            size: "lg"
-                        }
-                    ]}
-
-                    primaryAction={{
-                        label: "Save Claim",
-                        clickAction: () => handleSave(),
-                        icon: "Save",
-                        variant: "default",
+                secondaryActions={[
+                    {
+                        label: "View PDF Preview",
+                        clickAction: () => setShowPreview(true),
+                        icon: "Eye",
+                        variant: "secondary",
                         size: "lg"
-                    }}
-                />
+                    },
+                    {
+                        label: "Export PDF",
+                        clickAction: () => handleExportPDF(),
+                        icon: "Download",
+                        variant: "outline",
+                        size: "lg"
+                    }
+                ]}
 
-                <div>
-                    {/* Instructions Banner */}
-                    <div className="mb-6">
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-500/30 rounded-xl p-5">
-                            <div className="flex items-start gap-4">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
-                                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-sm text-blue-900 dark:text-blue-300 mb-2">Claim Instructions</h4>
-                                    <div className="text-xs text-blue-800 dark:text-blue-200 space-y-2">
-                                        {claimType === 'mileage' ? (
-                                            <>
-                                                <p>• <strong>Mileage Rate:</strong> £0.45 per mile for business use of personal vehicle (HMRC approved rate)</p>
-                                                <p>• <strong>Commute Deduction:</strong> Enter your normal commute distance - this will be automatically deducted from business mileage</p>
-                                                <p>• <strong>Trip Recording:</strong> Add all business trips with start/end locations, purpose, and distance. Use Google Maps for accurate mileage</p>
-                                                <p>• <strong>Submission:</strong> Claims must be submitted within 30 days of week ending. Attach route evidence if requested</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p>• <strong>Eligibility:</strong> Only for crew receiving monthly car allowance. Contact payroll if unsure</p>
-                                                <p>• <strong>Business Usage %:</strong> Estimate percentage of fuel used for business vs personal travel this week</p>
-                                                <p>• <strong>VAT Receipts:</strong> Separate VAT-registered (show Net amount) from non-VAT receipts (show Gross amount)</p>
-                                                <p>• <strong>Receipt Retention:</strong> Keep original fuel receipts for 6 months minimum for HMRC audit purposes</p>
-                                                <p>• <strong>Commute Costs:</strong> Regular commuting fuel costs are not reimbursable and will be deducted based on business %</p>
-                                            </>
-                                        )}
+                primaryAction={{
+                    label: "Save Claim",
+                    clickAction: () => handleSave(),
+                    icon: "Save",
+                    variant: "default",
+                    size: "lg"
+                }}
+            />
+
+            <div>
+                {/* Instructions Banner */}
+                <div className="mb-6">
+                    <InfoPanel
+                        title="Instructions"
+                        icon={Info}
+                        variant="success"
+                    >
+                        <p>1) Ensure you have an <strong>original</strong> receipt for each item claimed. Credit card receipts alone are not acceptable.</p>
+                        <p>2) Fuel receipts must have Car reg, Make, Model, Colour and your name written on them (use Mileage Form for fuel).</p>
+                        <p>3) Only one type of currency per form please.</p>
+                        <p>4) Attach receipts to the back of the printed form or scan them alongside.</p>
+                    </InfoPanel>
+                </div>
+
+                <div className="flex flex-col gap-6 w-full">
+
+                    {/* TOP SECTION: AI Scanner & Totals */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        {/* AI Scanner */}
+                        <div>
+                            {!readOnly && (
+                                <AIReceiptScanner
+                                    weekStartDate={dates[0] || new Date()}
+                                    weekEndDate={dates[6] || new Date()}
+                                    onReceiptsScanned={(receipts) => {
+                                        // Auto-fill rows based on scanned receipts
+                                        const newEntries = receipts
+                                            .filter(r => r.scanStatus === 'success' || r.scanStatus === 'date-warning')
+                                            .map(r => ({
+                                                id: generateId(),
+                                                date: r.date ? r.date.toLocaleDateString('en-GB') : '',
+                                                payee: r.merchant || 'Unknown Merchant',
+                                                description: r.items.length > 0 ? r.items.join(', ') : (r.category || 'Expense'),
+                                                category: r.category || 'General',
+                                                net: r.amount ? (r.isVATReceipt ? (r.amount - (r.vatAmount || 0)) : r.amount) : 0,
+                                                vat: r.vatAmount || 0,
+                                                total: r.amount || 0
+                                            }));
+
+                                        setData(prev => ({
+                                            ...prev,
+                                            entries: [...prev.entries.filter(e => e.total > 0), ...newEntries] // Keep existing non-empty rows
+                                        }));
+                                        toast.success(`${newEntries.length} receipts added to form!`);
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        {/* Totals Card */}
+                        <div>
+                            <div className="bg-white dark:bg-[#181621] rounded-2xl p-6 border border-gray-100 dark:border-[#2f2b3e] shadow-sm h-full">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-2">
+                                    <CreditCard className="w-4 h-4" /> Claim Summary
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-[#2f2b3e]">
+                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Net Amount</span>
+                                        <span className=" font-bold text-gray-900 dark:text-white">£{totalNet?.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-[#2f2b3e]">
+                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">VAT Total</span>
+                                        <span className=" font-bold text-gray-900 dark:text-white">£{totalVAT?.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-end pt-2">
+                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 pb-1">Total Payable</span>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">£{grandTotal?.toFixed(2)}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1600px] mx-auto">
-
-                        {/* LEFT COLUMN: Inputs & Settings */}
-                        <div className="lg:col-span-4 space-y-6">
-
-                            {/* Commute Settings Card */}
-                            <div className="bg-card rounded-2xl p-6 border shadow-sm">
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-primary" /> Commute Details
-                                    </h3>
-                                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                                        Regular commuting costs are not reimbursable and will be automatically deducted from your claim.
-                                    </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Home Postcode</label>
-                                            <input
-                                                type="text"
-                                                value={data.homePostcode}
-                                                onChange={e => setData(d => ({ ...d, homePostcode: e.target.value }))}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium uppercase focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                placeholder="POSTCODE"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Studio Postcode</label>
-                                            <input
-                                                type="text"
-                                                value={data.studioPostcode}
-                                                onChange={e => setData(d => ({ ...d, studioPostcode: e.target.value }))}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium uppercase focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">One-way Commute (Miles)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                value={data.commuteMiles || ''}
-                                                onChange={e => setData(d => ({ ...d, commuteMiles: parseFloat(e.target.value) || 0 }))}
-                                                onWheel={e => e.currentTarget.blur()}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                placeholder="0"
-                                                disabled={readOnly}
-                                            />
-                                            <span className="absolute right-3 top-2 text-xs text-gray-400 font-bold">mi</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Weekly Trips</label>
-                                            <input
-                                                type="number"
-                                                value={data.tripsInWeek || ''}
-                                                onChange={e => setData(d => ({ ...d, tripsInWeek: parseFloat(e.target.value) || 0 }))}
-                                                onWheel={e => e.currentTarget.blur()}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Weekend Miles</label>
-                                            <input
-                                                type="number"
-                                                value={data.weekendMiles || ''}
-                                                onChange={e => setData(d => ({ ...d, weekendMiles: parseFloat(e.target.value) || 0 }))}
-                                                onWheel={e => e.currentTarget.blur()}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t flex justify-between items-center">
-                                        <span className="text-xs font-bold text-gray-500">Total Commute</span>
-                                        <span className="text-lg font-mono font-bold text-gray-900 dark:text-white">{(calcCommutingTotal + data.weekendMiles).toFixed(1)} mi</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Fuel / Allowance Card */}
-                            <div className="bg-card rounded-2xl p-6 border shadow-sm">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-                                    <Fuel className="w-4 h-4" /> Fuel & Allowance
+                    {/* BOTTOM SECTION: Form Grid */}
+                    <div className="w-full flex flex-col bg-white dark:bg-[#181621] rounded-2xl border border-gray-200 dark:border-[#2f2b3e] shadow-sm">
+                        <div className="p-6 border-b border-gray-200 dark:border-[#2f2b3e] flex justify-between items-center">
+                            <div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-emerald-600" /> Expense Items
                                 </h3>
-
-                                <div className="space-y-4">
-                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-start gap-3">
-                                        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                                        <div className="text-xs text-blue-700 dark:text-blue-300">
-                                            <strong>Car Allowance?</strong> Fill this section. <br />
-                                            <strong>Mileage only?</strong> Skip this section.
-                                        </div>
-                                    </div>
-
-                                    {/* VAT Status Toggle */}
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#2a2735] rounded-lg border border-gray-200 dark:border-gray-700">
-                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">VAT Registered?</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => !readOnly && setData(d => ({ ...d, vatRegistered: !d.vatRegistered }))}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${data.vatRegistered ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
-                                                } ${readOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                            disabled={readOnly}
-                                        >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.vatRegistered ? 'translate-x-6' : 'translate-x-1'
-                                                    }`}
-                                            />
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 flex justify-between">
-                                            <span>VAT Registered Fuel Receipts</span>
-                                            <span className="text-purple-600 font-bold">Net Amount</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2 text-gray-400">£</span>
-                                            <input
-                                                type="number"
-                                                value={data.fuelReceiptsNet || ''}
-                                                onChange={e => setData(d => ({ ...d, fuelReceiptsNet: parseFloat(e.target.value) || 0 }))}
-                                                onWheel={e => e.currentTarget.blur()}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg pl-7 pr-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                placeholder="0.00"
-                                                readOnly={readOnly}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 flex justify-between">
-                                            <span>Non-VAT Fuel Receipts</span>
-                                            <span className="text-purple-600 font-bold">Gross Amount</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2 text-gray-400">£</span>
-                                            <input
-                                                type="number"
-                                                value={data.fuelReceiptsGross || ''}
-                                                onChange={e => setData(d => ({ ...d, fuelReceiptsGross: parseFloat(e.target.value) || 0 }))}
-                                                onWheel={e => e.currentTarget.blur()}
-                                                className="w-full bg-gray-50 dark:bg-[#2a2735] border border-gray-200 dark:border-gray-700 rounded-lg pl-7 pr-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white"
-                                                placeholder="0.00"
-                                                readOnly={readOnly}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-gray-100 dark:border-[#2f2b3e]">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs text-gray-500">Business Usage %</span>
-                                        </div>
-                                        <Progress value={businessPercentage.toFixed(1)} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* AI Receipt Scanner Card */}
-                            {!readOnly && (
-                                // <AIReceiptScanner
-                                //     weekStartDate={dates[0] || new Date()}
-                                //     weekEndDate={dates[6] || new Date()}
-                                //     onReceiptsScanned={(receipts) => {
-                                //         // Auto-fill the fuel receipt fields
-                                //         const vatTotal = receipts
-                                //             .filter(r => r.isVATReceipt && (r.scanStatus === 'success' || r.scanStatus === 'date-warning'))
-                                //             .reduce((sum, r) => sum + (r.amount || 0), 0);
-
-                                //         const nonVatTotal = receipts
-                                //             .filter(r => !r.isVATReceipt && (r.scanStatus === 'success' || r.scanStatus === 'date-warning'))
-                                //             .reduce((sum, r) => sum + (r.amount || 0), 0);
-
-                                //         setData(d => ({
-                                //             ...d,
-                                //             fuelReceiptsNet: vatTotal,
-                                //             fuelReceiptsGross: nonVatTotal
-                                //         }));
-
-                                //         toast.success('Receipt amounts auto-filled!');
-                                //     }}
-                                // />
-                            )}
-
-                            {/* Total Claim Card (Sticky) */}
-                            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 shadow-xl text-white sticky top-6">
-                                <h3 className="text-sm font-bold uppercase tracking-wider opacity-80 mb-6">Estimated Claim</h3>
-
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center pb-4 border-b border-white/20">
-                                        <span className="text-sm font-medium opacity-90">Business Mileage</span>
-                                        <span className="font-mono font-bold">{totalBusinessMiles.toFixed(1)} mi</span>
-                                    </div>
-
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-sm font-bold opacity-90 pb-1">Total Payable</span>
-                                        <div className="text-right">
-                                            <div className="text-3xl font-black tracking-tight">
-                                                £{(data.vatRegistered ? fuelReimbursementNet : (fuelReimbursementGross > 0 ? fuelReimbursementGross : businessMileageCost)).toFixed(2)}
-                                            </div>
-                                            <div className="text-[10px] font-bold opacity-70 uppercase tracking-widest mt-1">
-                                                {(data.fuelReceiptsNet > 0 || data.fuelReceiptsGross > 0) ? 'Fuel Allowance Claim' : 'Standard Mileage Claim'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {/* RIGHT COLUMN: Trip Log */}
-                        <div className="lg:col-span-8 flex flex-col h-full overflow-hidden bg-card rounded-2xl border border-gray-200 dark:border-[#2f2b3e] shadow-sm">
-                            <div className="p-6 border-b border-gray-200 dark:border-[#2f2b3e]">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                        <Calendar className="w-5 h-5 text-purple-600" /> Weekly Trip Log
-                                    </h3>
-                                    <div className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full">
-                                        Total: {totalBusinessMiles.toFixed(1)} mi
-                                    </div>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                                    Record all business trips for the week. Use Google Maps to calculate accurate mileage. Click the <Plus className="w-3 h-3 inline" /> icon to add multiple trips per day.
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                    List each expense item separately.
                                 </p>
                             </div>
+                            {!readOnly && (
+                                <button
+                                    onClick={addRow}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" /> Add Row
+                                </button>
+                            )}
+                        </div>
 
-                            <div className="flex-1 overflow-y-auto p-0">
-                                {DAYS.map((dayName, idx) => {
-                                    const dayData = dailyTrips[idx];
-                                    const dayTotal = getDailyTotal(idx);
-                                    const dateStr = dates[idx]?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                        <div className="flex-1 overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 dark:bg-[#2a2735] text-[10px] uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-[#2f2b3e]">
+                                        <th className="px-4 py-3 font-bold w-12 text-center">RCPT</th>
+                                        <th className="px-4 py-3 font-bold w-32">Date</th>
+                                        <th className="px-4 py-3 font-bold w-48">To Whom Paid</th>
+                                        <th className="px-4 py-3 font-bold min-w-[200px]">Purpose/Description</th>
+                                        <th className="px-4 py-3 font-bold w-32">Expense Type</th>
 
-                                    return (
-                                        <div key={dayName} className="border-b last:border-0">
-                                            {/* Day Header */}
-                                            <div className="bg-gray-50/50 dark:bg-[#2a2735]/30 px-6 py-3 flex justify-between items-center">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-xs font-bold uppercase text-muted-foreground w-20">{dayName}</span>
-                                                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{dateStr}</span>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-xs font-bold text-gray-400">Daily Total: {dayTotal > 0 ? dayTotal.toFixed(1) : '-'} mi</span>
-                                                    {!readOnly && (
-                                                        <button
-                                                            onClick={() => addTrip(idx)}
-                                                            className="p-1 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-md text-purple-600 transition-all"
-                                                            title="Add Trip"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                        {/* Accounts Columns - Always visible as requested */}
+                                        <>
+                                            <th className="px-2 py-3 font-bold w-20 bg-gray-100 dark:bg-[#221e2e] border-l border-r border-gray-200 dark:border-[#2f2b3e]">Code</th>
+                                            <th className="px-2 py-3 font-bold w-16 bg-gray-100 dark:bg-[#221e2e] border-r border-gray-200 dark:border-[#2f2b3e]">Tag</th>
+                                            <th className="px-2 py-3 font-bold w-16 bg-gray-100 dark:bg-[#221e2e] border-r border-gray-200 dark:border-[#2f2b3e]">Cat</th>
+                                            <th className="px-2 py-3 font-bold w-16 bg-gray-100 dark:bg-[#221e2e] border-r border-gray-200 dark:border-[#2f2b3e]">FF2</th>
+                                            <th className="px-2 py-3 font-bold w-16 bg-gray-100 dark:bg-[#221e2e] border-r border-gray-200 dark:border-[#2f2b3e]">FF3 (VAT)</th>
+                                        </>
 
-                                            {/* Trips List */}
-                                            <div className="px-2">
-                                                {/* Trip Table Header */}
-                                                <div className="grid grid-cols-12 gap-3 px-4 py-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                                    <div className="col-span-3">From Location</div>
-                                                    <div className="col-span-1"></div>
-                                                    <div className="col-span-3">To Location</div>
-                                                    <div className="col-span-3">Reason For Trip</div>
-                                                    <div className="col-span-1 text-center">Miles</div>
-                                                    <div className="col-span-1"></div>
+                                        <th className="px-4 py-3 font-bold w-24 text-right">Net</th>
+                                        <th className="px-4 py-3 font-bold w-20 text-right">VAT</th>
+                                        <th className="px-4 py-3 font-bold w-24 text-right">Total</th>
+                                        <th className="px-4 py-3 font-bold w-12"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-[#2f2b3e]">
+                                    {data.entries?.map((entry, idx) => (
+                                        <tr key={entry.id} className="hover:bg-gray-50 dark:hover:bg-[#2a2735]/50 transition-colors group">
+                                            <td className="px-4 py-3 text-center text-xs  text-gray-400">{idx + 1}</td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="text"
+                                                    placeholder="DD/MM/YYYY"
+                                                    value={entry.date}
+                                                    onChange={e => updateEntry(entry.id, 'date', e.target.value)}
+                                                    className="w-full bg-transparent border-none p-0 text-sm font-medium focus:ring-0 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600"
+                                                    disabled={readOnly}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="text"
+                                                    value={entry.payee}
+                                                    onChange={e => updateEntry(entry.id, 'payee', e.target.value)}
+                                                    className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 text-gray-900 dark:text-white"
+                                                    disabled={readOnly}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="text"
+                                                    value={entry.description}
+                                                    onChange={e => updateEntry(entry.id, 'description', e.target.value)}
+                                                    className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 text-gray-900 dark:text-white"
+                                                    disabled={readOnly}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <select
+                                                    value={entry.category}
+                                                    onChange={e => updateEntry(entry.id, 'category', e.target.value)}
+                                                    className="w-full bg-transparent border-none p-0 text-xs focus:ring-0 text-gray-700 dark:text-gray-300"
+                                                    disabled={readOnly}
+                                                >
+                                                    <option value="">Select...</option>
+                                                    <option value="Props">Props</option>
+                                                    <option value="Wardrobe">Wardrobe</option>
+                                                    <option value="Catering">Catering</option>
+                                                    <option value="Travel">Travel</option>
+                                                    <option value="Office">Office</option>
+                                                    <option value="Other">Other</option>
+                                                    <option value="Parking & Congestion">Parking & Congestion</option>
+                                                </select>
+                                            </td>
+
+                                            {/* Accounts Fields - Always visible */}
+                                            <>
+                                                <td className="px-2 py-3 bg-gray-50/50 dark:bg-[#221e2e]/50 border-l border-r border-gray-100 dark:border-[#2f2b3e]">
+                                                    <input
+                                                        type="text"
+                                                        value={entry.code || ''}
+                                                        onChange={e => updateEntry(entry.id, 'code', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-xs  text-gray-600 dark:text-gray-400 focus:ring-0"
+                                                        placeholder="---"
+                                                        disabled={readOnly}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-3 bg-gray-50/50 dark:bg-[#221e2e]/50 border-r border-gray-100 dark:border-[#2f2b3e]">
+                                                    <input
+                                                        type="text"
+                                                        value={entry.set || ''}
+                                                        onChange={e => updateEntry(entry.id, 'set', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-xs  text-gray-600 dark:text-gray-400 focus:ring-0"
+                                                        placeholder="-"
+                                                        disabled={readOnly}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-3 bg-gray-50/50 dark:bg-[#221e2e]/50 border-r border-gray-100 dark:border-[#2f2b3e]">
+                                                    <input
+                                                        type="text"
+                                                        value={entry.categoryCode || ''}
+                                                        onChange={e => updateEntry(entry.id, 'categoryCode', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-xs  text-gray-600 dark:text-gray-400 focus:ring-0"
+                                                        placeholder="-"
+                                                        disabled={readOnly}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-3 bg-gray-50/50 dark:bg-[#221e2e]/50 border-r border-gray-100 dark:border-[#2f2b3e]">
+                                                    <input
+                                                        type="text"
+                                                        value={entry.ff2 || ''}
+                                                        onChange={e => updateEntry(entry.id, 'ff2', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-xs  text-gray-600 dark:text-gray-400 focus:ring-0"
+                                                        placeholder="-"
+                                                        disabled={readOnly}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-3 bg-gray-50/50 dark:bg-[#221e2e]/50 border-r border-gray-100 dark:border-[#2f2b3e]">
+                                                    <input
+                                                        type="text"
+                                                        value={entry.ff3 || ''}
+                                                        onChange={e => updateEntry(entry.id, 'ff3', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-xs  text-gray-600 dark:text-gray-400 focus:ring-0"
+                                                        placeholder="-"
+                                                        disabled={readOnly}
+                                                    />
+                                                </td>
+                                            </>
+
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={entry.net || ''}
+                                                    onChange={e => updateEntry(entry.id, 'net', parseFloat(e.target.value) || 0)}
+                                                    onWheel={e => e.currentTarget.blur()}
+                                                    className="w-full bg-transparent border-none p-0 text-right text-sm  focus:ring-0 text-gray-900 dark:text-white"
+                                                    placeholder="0.00"
+                                                    disabled={readOnly}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="number"
+                                                    value={entry.vat || ''}
+                                                    onChange={e => updateEntry(entry.id, 'vat', parseFloat(e.target.value) || 0)}
+                                                    onWheel={e => e.currentTarget.blur()}
+                                                    className="w-full bg-transparent border-none p-0 text-right text-sm  focus:ring-0 text-gray-500 dark:text-gray-400"
+                                                    placeholder="0.00"
+                                                    disabled={readOnly}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="text-right text-sm  font-bold text-gray-900 dark:text-white">
+                                                    {entry.total?.toFixed(2)}
                                                 </div>
-                                                {dayData.trips.map((trip, tripIdx) => (
-                                                    <div key={trip.id} className="grid grid-cols-12 gap-3 py-3 px-4 items-center hover:bg-gray-50 dark:hover:bg-[#2a2735]/50 rounded-lg transition-colors group border-b border-dashed last:border-0 my-1">
-                                                        <div className="col-span-3">
-                                                            <input
-                                                                placeholder="From..."
-                                                                value={trip.from}
-                                                                onChange={e => updateTrip(idx, trip.id, 'from', e.target.value)}
-                                                                className="w-full bg-transparent border-none p-0 text-sm font-medium placeholder-gray-300 dark:placeholder-gray-600 focus:ring-0 text-gray-700 dark:text-gray-300"
-                                                                disabled={readOnly}
-                                                            />
-                                                        </div>
-                                                        <ArrowRight className='size-4 text-muted-foreground' />
-                                                        <div className="col-span-3">
-                                                            <input
-                                                                placeholder="To..."
-                                                                value={trip.to}
-                                                                onChange={e => updateTrip(idx, trip.id, 'to', e.target.value)}
-                                                                className="w-full bg-transparent border-none p-0 text-sm font-medium placeholder-gray-300 dark:placeholder-gray-600 focus:ring-0 text-gray-700 dark:text-gray-300"
-                                                                disabled={readOnly}
-                                                            />
-                                                        </div>
-                                                        <div className="col-span-3">
-                                                            <input
-                                                                placeholder="Reason..."
-                                                                value={trip.reason}
-                                                                onChange={e => updateTrip(idx, trip.id, 'reason', e.target.value)}
-                                                                className="w-full bg-transparent border-none p-0 text-xs text-gray-500 placeholder-gray-300 dark:placeholder-gray-600 focus:ring-0"
-                                                                disabled={readOnly}
-                                                            />
-                                                        </div>
-                                                        <div className="col-span-1">
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="number"
-                                                                    value={trip.miles === 0 ? '' : trip.miles}
-                                                                    onChange={e => updateTrip(idx, trip.id, 'miles', parseFloat(e.target.value) || 0)}
-                                                                    onWheel={e => e.currentTarget.blur()}
-                                                                    className="w-full bg-background rounded-md px-2 py-1 text-right text-sm font-mono font-bold focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                                                                    placeholder="0"
-                                                                    disabled={readOnly}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            {!readOnly && (
-                                                                <button
-                                                                    onClick={() => removeTrip(idx, trip.id)}
-                                                                    className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
-                                                                >
-                                                                    <Trash2 className="size-4" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {!readOnly && (
+                                                    <button
+                                                        onClick={() => removeRow(entry.id)}
+                                                        className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="bg-gray-50 dark:bg-[#2a2735] font-bold text-sm text-gray-900 dark:text-white border-t border-gray-200 dark:border-[#2f2b3e]">
+                                    <tr>
+                                        <td colSpan={10} className="px-4 py-3 text-right text-xs uppercase text-gray-500">Totals</td>
+                                        <td className="px-4 py-3 text-right ">£{totalNet?.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-right ">£{totalVAT?.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-right  text-emerald-600">£{grandTotal?.toFixed(2)}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* PDF Preview Modal */}
             {showPreview && (
-                <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <div className="fixed inset-0 z-[200] h-svh bg-black/40 backdrop-blur-sm flex items-center justify-center">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col">
                         {/* Preview Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -668,34 +579,43 @@ function PettyCashForm() {
                             </div>
                         </div>
 
-                        {/* Preview Content */}
                         <div className="flex-1 overflow-y-auto p-8 rounded-3xl mb-2">
                             <div className="flex justify-center">
                                 <div className="shadow-2xl" style={{ transform: 'scale(0.9)', transformOrigin: 'top center' }}>
-                                    {/* <PDFFormTemplate
+                                    <PettyCashPDFTemplate
                                         crewInfo={crewInfo}
                                         weekEnding={weekEnding}
                                         data={data}
-                                        dailyTrips={dailyTrips}
-                                        dates={dates}
-                                        totalBusinessMiles={totalBusinessMiles}
-                                        calcCommutingTotal={calcCommutingTotal}
-                                        grandTotalMiles={grandTotalMiles}
-                                        businessPercentage={businessPercentage}
-                                        fuelReimbursementNet={fuelReimbursementNet}
-                                        fuelReimbursementGross={fuelReimbursementGross}
-                                        businessMileageCost={businessMileageCost}
-                                        serialNumber={serialNumber}
-                                        getDailyTotal={getDailyTotal}
-                                    /> */}
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-        </>
-    )
+
+            {/* HIDDEN PRINT TEMPLATE */}
+            <div style={{
+                position: 'fixed',
+                left: '-99999px',
+                top: '-99999px',
+                visibility: 'hidden',
+                pointerEvents: 'none',
+                zIndex: -9999
+            }}>
+                <div
+                    id="petty-cash-export"
+                    ref={printRef}
+                >
+                    <PettyCashPDFTemplate
+                        crewInfo={crewInfo}
+                        weekEnding={weekEnding}
+                        data={data}
+                    />
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default PettyCashForm
