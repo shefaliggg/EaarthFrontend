@@ -1140,7 +1140,7 @@ export function TimesheetForm({
                                 </div>
 
                                 {/* Rate / Holiday stacked */}
-                                <div className="text-center font-mono text-[10px]">
+                                <div className="text-center  text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
                                             <span >{n(row.rate)}</span>
@@ -1152,10 +1152,10 @@ export function TimesheetForm({
                                 </div>
 
                                 {/* Unit */}
-                                <div className="text-center font-mono text-[10px] font-medium">{n(row.u)}</div>
+                                <div className="text-center  text-[10px] font-medium">{n(row.u)}</div>
 
                                 {/* Total A / Total B stacked */}
-                                <div className="text-center font-mono text-[10px]">
+                                <div className="text-center  text-[10px]">
                                     {row.hTotal > 0 ? (
                                         <div className="flex flex-col leading-tight">
                                             <span >
@@ -1173,7 +1173,7 @@ export function TimesheetForm({
                                 </div>
 
                                 {/* Final Total */}
-                                <div className={`text-right font-mono ${row.total > 0 ? 'font-bold' : ''}`}>
+                                <div className={`text-right  ${row.total > 0 ? 'font-bold' : ''}`}>
                                     {row.total > 0 ? c(row.total) : '-'}
                                 </div>
                             </div>
@@ -1185,12 +1185,12 @@ export function TimesheetForm({
                         <div className="space-y-1 mb-2">
                             <div className="flex justify-between items-center text-[10px]">
                                 <span className="font-bold uppercase tracking-wider">Subtotal</span>
-                                <span className="font-mono font-bold">{c(totals.net)}</span>
+                                <span className=" font-bold">{c(totals.net)}</span>
                             </div>
                             {vatAmount > 0 && (
                                 <div className="flex justify-between items-center text-[10px]">
                                     <span className="font-bold uppercase tracking-wider">VAT (20%)</span>
-                                    <span className="font-mono">{c(totals.vat)}</span>
+                                    <span className="">{c(totals.vat)}</span>
                                 </div>
                             )}
                         </div>
