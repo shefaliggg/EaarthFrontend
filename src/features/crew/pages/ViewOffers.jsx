@@ -239,7 +239,7 @@ export default function ViewOffer() {
   };
 
   return (
-    <div className="px-2">
+    <div className="">
       <div className="max-w-7xl mx-auto space-y-2">
         {/* Demo Controls */}
         <Card className="p-0">
@@ -284,11 +284,7 @@ export default function ViewOffer() {
 
         {/* Breadcrumb & Header */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate(`/projects/${projectName || 'demo-project'}/offers`)}
-          >
+          <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 mr-1" /> Offers
           </Button>
           <span>/</span>
@@ -302,47 +298,55 @@ export default function ViewOffer() {
           {getActionButton()}
         </div>
 
-        {/* PENDING STATE - Simplified view */}
+        {/* PENDING STATE */}
         {isPending && (
           <>
             <CompactCard title="Status" icon={CheckCircle}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <InfoItem label="Current Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
                 {offer.sentToCrewAt && <InfoItem icon={Calendar} label="Sent to crew" value={formatDate(offer.sentToCrewAt)} />}
                 {offer.updatedAt && <InfoItem icon={Calendar} label="Last updated" value={formatDate(offer.updatedAt)} />}
               </div>
             </CompactCard>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              <CompactCard title="Recipient" icon={User}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
-                  <InfoItem icon={Mail} label="Email" value={offer.email} />
-                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
-                </div>
-              </CompactCard>
-
-              <CompactCard title="Offer details" icon={Briefcase}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
-                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-                  <InfoItem icon={Calendar} label="Start date" value={formatDate(primaryRole.startDate)} />
-                  <InfoItem icon={Calendar} label="End date" value={formatDate(primaryRole.endDate)} />
-                  <div className="md:col-span-2">
-                    <Separator className="mb-2" />
-                    <InfoItem icon={DollarSign} label="Weekly Rate" value={`${formatCurrency(primaryRole.contractRate)}/week`} highlight />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <CompactCard title="Recipient" icon={User}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                    <InfoItem icon={Mail} label="Email" value={offer.email} />
+                    <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
                   </div>
-                </div>
-              </CompactCard>
-            </div>
+                </CompactCard>
 
-            <CompactCard title="Project info" icon={Building2}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-                <InfoItem icon={Building2} label="Production" value={offer.productionName} />
-                {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
-                {offer.estimatedShootDates && <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />}
+                <CompactCard title="Project info" icon={Building2}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={Building2} label="Production" value={offer.productionName} />
+                    {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                    {offer.estimatedShootDates && (
+                      <div className="md:col-span-2">
+                        <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />
+                      </div>
+                    )}
+                  </div>
+                </CompactCard>
               </div>
-            </CompactCard>
+
+              <div className="space-y-2">
+                <CompactCard title="Offer details" icon={Briefcase}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                    <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                    <InfoItem icon={Calendar} label="Start date" value={formatDate(primaryRole.startDate)} />
+                    <InfoItem icon={Calendar} label="End date" value={formatDate(primaryRole.endDate)} />
+                    <div className="md:col-span-2">
+                      <Separator className="mb-2" />
+                      <InfoItem icon={DollarSign} label="Weekly Rate" value={`${formatCurrency(primaryRole.contractRate)}/week`} highlight />
+                    </div>
+                  </div>
+                </CompactCard>
+              </div>
+            </div>
           </>
         )}
 
@@ -350,7 +354,7 @@ export default function ViewOffer() {
         {isInProgress && (
           <>
             <CompactCard title="Status" icon={CheckCircle}>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <InfoItem label="Status" value={<Badge className={statusConfig.color}>{statusConfig.label}</Badge>} />
                 {offer.sentToCrewAt && <InfoItem icon={Calendar} label="Sent to crew" value={formatDate(offer.sentToCrewAt)} />}
                 {offer.crewAcceptedAt && <InfoItem icon={CheckCircle} label="Crew accepted" value={formatDate(offer.crewAcceptedAt)} />}
@@ -359,79 +363,83 @@ export default function ViewOffer() {
               </div>
             </CompactCard>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              <CompactCard title="Recipient" icon={User}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
-                  <InfoItem icon={Mail} label="Email" value={offer.email} />
-                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
-                </div>
-              </CompactCard>
-
-              <CompactCard title="Offer details" icon={Briefcase}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Unit" value={primaryRole.unit} />
-                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
-                  <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
-                  <div className="md:col-span-2">
-                    <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <CompactCard title="Recipient" icon={User}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                    <InfoItem icon={Mail} label="Email" value={offer.email} />
+                    <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
                   </div>
-                </div>
-              </CompactCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              <CompactCard title="Contract" icon={FileText}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
-                  <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
-                  <InfoItem label="Working week" value={primaryRole.workingWeek} />
-                  <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
-                </div>
-              </CompactCard>
-
-              <CompactCard title="Fees" icon={DollarSign}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Currency" value="GBP £" />
-                  <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
-                  {primaryRole.customOvertimeRates && (
-                    <>
-                      <div className="md:col-span-2">
-                        <Separator className="my-1.5" />
-                        <p className="text-xs font-semibold mb-2">Overtime Rates</p>
-                      </div>
-                      <InfoItem label="6th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.sixthDayHourlyRate)} />
-                      <InfoItem label="7th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.seventhDayHourlyRate)} />
-                    </>
-                  )}
-                </div>
-              </CompactCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {primaryRole.allowances && (
-                <CompactCard title="Allowances" icon={Package}>
-                  {primaryRole.allowances.boxRental && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs font-semibold mb-2">📦 Box Rental</p>
-                      </div>
-                      <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.boxRentalFeePerWeek)} />
-                    </div>
-                  )}
                 </CompactCard>
-              )}
 
-              <CompactCard title="Project info" icon={Building2}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
-                  {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
-                  {offer.estimatedShootDates && <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />}
-                  {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
-                  {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
-                </div>
-              </CompactCard>
+                <CompactCard title="Contract" icon={FileText}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
+                    <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
+                    <InfoItem label="Working week" value={primaryRole.workingWeek} />
+                    <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
+                  </div>
+                </CompactCard>
+
+                <CompactCard title="Project info" icon={Building2}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
+                    {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                    {offer.estimatedShootDates && (
+                      <div className="md:col-span-2">
+                        <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />
+                      </div>
+                    )}
+                    {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
+                    {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
+                  </div>
+                </CompactCard>
+              </div>
+
+              <div className="space-y-2">
+                <CompactCard title="Offer details" icon={Briefcase}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Unit" value={primaryRole.unit} />
+                    <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                    <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                    <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
+                    <div className="md:col-span-2">
+                      <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
+                    </div>
+                  </div>
+                </CompactCard>
+
+                <CompactCard title="Fees" icon={DollarSign}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Currency" value="GBP £" />
+                    <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
+                    {primaryRole.customOvertimeRates && (
+                      <>
+                        <div className="md:col-span-2">
+                          <Separator className="my-1.5" />
+                          <p className="text-xs font-semibold mb-2">Overtime Rates</p>
+                        </div>
+                        <InfoItem label="6th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.sixthDayHourlyRate)} />
+                        <InfoItem label="7th day hourly" value={formatCurrency(primaryRole.customOvertimeRates.seventhDayHourlyRate)} />
+                      </>
+                    )}
+                  </div>
+                </CompactCard>
+
+                {primaryRole.allowances && (
+                  <CompactCard title="Allowances" icon={Package}>
+                    {primaryRole.allowances.boxRental && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs font-semibold mb-1">📦 Box Rental</p>
+                        </div>
+                        <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.boxRentalFeePerWeek)} />
+                      </div>
+                    )}
+                  </CompactCard>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -440,7 +448,7 @@ export default function ViewOffer() {
         {isCompleted && (
           <>
             <CompactCard title="Signatures" icon={CheckCircle}>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-start">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {offer.crewSignedAt && (
                   <div className="flex flex-col">
                     <p className="text-[11px] text-muted-foreground mb-0.5">Crew Member</p>
@@ -480,71 +488,83 @@ export default function ViewOffer() {
               </div>
             </CompactCard>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              <CompactCard title="Recipient" icon={User}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={User} label="Full name" value={offer.fullName} />
-                  <InfoItem icon={Mail} label="Email" value={offer.email} />
-                  <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
-                </div>
-              </CompactCard>
-
-              <CompactCard title="Offer details" icon={Briefcase}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Unit" value={primaryRole.unit} />
-                  <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
-                  <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
-                  <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
-                  <div className="md:col-span-2">
-                    <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <CompactCard title="Recipient" icon={User}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={User} label="Full name" value={offer.fullName} />
+                    <InfoItem icon={Mail} label="Email" value={offer.email} />
+                    <InfoItem icon={Phone} label="Phone number" value={offer.mobileNumber} />
                   </div>
-                </div>
-              </CompactCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              <CompactCard title="Contract" icon={FileText}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
-                  <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
-                  <InfoItem label="Working week" value={primaryRole.workingWeek} />
-                  <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
-                </div>
-              </CompactCard>
-
-              <CompactCard title="Fees" icon={DollarSign}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem label="Currency" value="GBP £" />
-                  <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
-                </div>
-              </CompactCard>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start">
-              {primaryRole.allowances && (
-                <CompactCard title="Allowances" icon={Package}>
-                  {primaryRole.allowances.computerAllowance && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs font-semibold">💻 Computer Allowance</p>
-                      </div>
-                      <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.computerAllowanceFeePerWeek)} />
-                    </div>
-                  )}
                 </CompactCard>
-              )}
 
-              <CompactCard title="Project info" icon={Building2}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
-                  {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
-                  {offer.estimatedShootDates && <div className="md:col-span-2"><InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} /></div>}
-                  {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
-                  {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
-                  {offer.companyName && <InfoItem label="Company name" value={offer.companyName} />}
-                  {offer.productionAddress && <div><InfoItem icon={MapPin} label="Production base" value={offer.productionAddress} /></div>}
-                </div>
-              </CompactCard>
+                <CompactCard title="Contract" icon={FileText}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Engagement" value={offer.confirmedEmploymentType?.replace(/_/g, " ")} highlight />
+                    <InfoItem label="Daily or weekly" value={primaryRole.dailyOrWeeklyEngagement} />
+                    <InfoItem label="Working week" value={primaryRole.workingWeek} />
+                    <InfoItem label="Standard hours" value={primaryRole.shiftHours ? `${primaryRole.shiftHours} hours` : "—"} />
+                  </div>
+                </CompactCard>
+
+                <CompactCard title="Project info" icon={Building2}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem icon={Building2} label="Project codename" value={offer.productionName} />
+                    {offer.productionType && <InfoItem label="Type" value={offer.productionType} />}
+                    {offer.estimatedShootDates && (
+                      <div className="md:col-span-2">
+                        <InfoItem icon={Calendar} label="Estimated shoot dates" value={offer.estimatedShootDates} />
+                      </div>
+                    )}
+                    {offer.shootDuration && <InfoItem label="Shoot duration" value={`${offer.shootDuration} days`} />}
+                    {offer.studioCompany && <InfoItem label="Studio/Production" value={offer.studioCompany} />}
+                    {offer.companyName && (
+                      <div className="md:col-span-2">
+                        <InfoItem label="Company name" value={offer.companyName} />
+                      </div>
+                    )}
+                    {offer.productionAddress && (
+                      <div className="md:col-span-2">
+                        <InfoItem icon={MapPin} label="Production base" value={offer.productionAddress} />
+                      </div>
+                    )}
+                  </div>
+                </CompactCard>
+              </div>
+
+              <div className="space-y-2">
+                <CompactCard title="Offer details" icon={Briefcase}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Unit" value={primaryRole.unit} />
+                    <InfoItem label="Department" value={`${primaryRole.department}${primaryRole.subDepartment ? ` - ${primaryRole.subDepartment}` : ''}`} />
+                    <InfoItem icon={Briefcase} label="Job title" value={primaryRole.jobTitle} />
+                    <InfoItem icon={MapPin} label="Workplace" value={primaryRole.regularSiteOfWork} />
+                    <div className="md:col-span-2">
+                      <InfoItem icon={Calendar} label="Period" value={`${formatDate(primaryRole.startDate)} - ${formatDate(primaryRole.endDate)}`} />
+                    </div>
+                  </div>
+                </CompactCard>
+
+                <CompactCard title="Fees" icon={DollarSign}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <InfoItem label="Currency" value="GBP £" />
+                    <InfoItem icon={DollarSign} label="Weekly rate" value={formatCurrency(primaryRole.contractRate)} highlight />
+                  </div>
+                </CompactCard>
+
+                {primaryRole.allowances && (
+                  <CompactCard title="Allowances" icon={Package}>
+                    {primaryRole.allowances.computerAllowance && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs font-semibold">💻 Computer Allowance</p>
+                        </div>
+                        <InfoItem label="Fee per week" value={formatCurrency(primaryRole.allowances.computerAllowanceFeePerWeek)} />
+                      </div>
+                    )}
+                  </CompactCard>
+                )}
+              </div>
             </div>
           </>
         )}

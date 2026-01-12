@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "../../../shared/components/ui/card";
 import { Button } from "../../../shared/components/ui/button";
 import { Badge } from "../../../shared/components/ui/badge";
 import { Input } from "../../../shared/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../shared/components/ui/tabs";
+import { Tabs, TabsContent } from "../../../shared/components/ui/tabs";
 import { 
   FileText, Search, Eye, Download, 
   CheckCircle, Calendar, User, Building
 } from "lucide-react";
+import FilterPillTabs from "../../../shared/components/FilterPillTabs";
+import { MetricsCard } from "../../../shared/components/MetricsCard";
 
 // Sample contract data
 const sampleContracts = [
@@ -85,11 +88,42 @@ const formatDate = (dateString) => {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 };
 
+// SmartIcon component for rendering icons
+function SmartIcon({ icon, className }) {
+  if (!icon) return null;
+  
+  // If it's already a React element
+  if (typeof icon === 'object' && icon.type) {
+    return icon;
+  }
+  
+  // If it's a string, try to find the icon from lucide-react
+  if (typeof icon === 'string') {
+    const iconName = icon.charAt(0).toUpperCase() + icon.slice(1);
+    const LucideIcon = require('lucide-react')[iconName];
+    if (LucideIcon) {
+      return <LucideIcon className={className} />;
+    }
+  }
+  
+  return null;
+}
+
 function ContractCard({ contract }) {
+  const navigate = useNavigate();
+  const { projectName } = useParams();
   const statusConfig = getStatusConfig(contract.status);
   const data = contract.data || {};
   const roles = data.roles || [];
   const primaryRole = roles[0] || {};
+
+  const handleViewContract = () => {
+    navigate(`/projects/${projectName || 'demo-project'}/offers/${contract.id}/view`);
+  };
+
+  const handleDownloadContract = () => {
+    navigate(`/projects/${projectName || 'demo-project'}/offers/${contract.id}/contract`);
+  };
 
   return (
     <Card className="hover:shadow-lg transition-shadow" data-testid={`card-contract-${contract.id}`}>
@@ -122,11 +156,11 @@ function ContractCard({ contract }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" data-testid={`button-view-contract-${contract.id}`}>
+            <Button variant="outline" size="sm" data-testid={`button-view-contract-${contract.id}`} onClick={handleViewContract}>
               <Eye className="w-4 h-4 mr-1" /> View
             </Button>
             {contract.status === "COMPLETED" && (
-              <Button variant="ghost" size="icon" data-testid={`button-download-contract-${contract.id}`}>
+              <Button variant="ghost" size="sm" data-testid={`button-download-contract-${contract.id}`} onClick={handleDownloadContract}>
                 <Download className="w-4 h-4" />
               </Button>
             )}
@@ -180,9 +214,15 @@ export default function Contracts() {
 
   const roleLabel = selectedRole === "CREW" ? "Crew Member" : "Production";
 
+  const tabOptions = [
+    { label: `All (${signedContracts.length})`, value: "all", icon: "FileText" },
+    { label: `Completed (${completedContracts.length})`, value: "completed", icon: "CheckCircle" },
+    { label: `Pending (${pendingSignatures.length})`, value: "pending", icon: "Calendar" }
+  ];
+
   return (
     <div className="">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight" data-testid="text-contracts-title">
@@ -207,55 +247,39 @@ export default function Contracts() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card data-testid="card-stat-total">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{signedContracts.length}</p>
-                <p className="text-sm text-gray-600">Total Contracts</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="card-stat-completed">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{completedContracts.length}</p>
-                <p className="text-sm text-gray-600">Completed</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="card-stat-pending">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingSignatures.length}</p>
-                <p className="text-sm text-gray-600">Pending Signatures</p>
-              </div>
-            </CardContent>
-          </Card>
+          <MetricsCard
+            title="Total Contracts"
+            value={signedContracts.length}
+            icon="FileText"
+            iconBg="bg-blue-100"
+            iconColor="text-blue-600"
+          />
+          <MetricsCard
+            title="Completed"
+            value={completedContracts.length}
+            icon="CheckCircle"
+            iconBg="bg-emerald-100"
+            iconColor="text-emerald-600"
+          />
+          <MetricsCard
+            title="Pending Signatures"
+            value={pendingSignatures.length}
+            icon="Calendar"
+            iconBg="bg-amber-100"
+            iconColor="text-amber-600"
+          />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="all" data-testid="tab-all-contracts">
-              All ({signedContracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed" data-testid="tab-completed-contracts">
-              Completed ({completedContracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending" data-testid="tab-pending-contracts">
-              Pending ({pendingSignatures.length})
-            </TabsTrigger>
-          </TabsList>
+        <FilterPillTabs
+          options={tabOptions}
+          value={activeTab}
+          onChange={setActiveTab}
+          transparentBg={true}
+          fullWidth={false}
+        />
 
-          <TabsContent value={activeTab} className="mt-4 space-y-3">
+        <Tabs value={activeTab}>
+          <TabsContent value={activeTab} className="mt-4">
             {displayContracts.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
@@ -267,9 +291,11 @@ export default function Contracts() {
                 </CardContent>
               </Card>
             ) : (
-              displayContracts.map((contract) => (
-                <ContractCard key={contract.id} contract={contract} />
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {displayContracts.map((contract) => (
+                  <ContractCard key={contract.id} contract={contract} />
+                ))}
+              </div>
             )}
           </TabsContent>
         </Tabs>
