@@ -29,6 +29,7 @@ const ProjectAppLocations = lazy(() => import('../pages/ProjectApps/ProjectAppLo
 const ProjectAppApproval = lazy(() => import('../pages/ProjectApps/ProjectAppApproval'));
 const ProjectOnboarding = lazy(() => import('../pages/ProjectApps/ProjectOnboarding'));
 const ProjectCalendar = lazy(() => import('../projectCalendar/pages/ProjectCalendar'));
+const ProjectChat = lazy(() => import('../project-chat/pages/ProjectChat'));
 const ProjectAppCloud = lazy(() => import('../pages/ProjectApps/ProjectAppCloud'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
@@ -77,8 +78,8 @@ const ProjectAppsRoutes = {
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
         { path: 'calendar', element: <ProjectCalendar /> },
+        { path: 'chat', element: <ProjectChat /> },
 
-        
     ],
 };
 

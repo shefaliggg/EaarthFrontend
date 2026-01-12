@@ -82,6 +82,12 @@ export function useProjectMenus(allProjects = []) {
         route: `/projects/${projectName}/calendar`,
       },
       {
+        id: "project-chat",
+        label: "Project Chat",
+        icon: Icon.MessageSquare,
+        route: `/projects/${projectName}/chat`,
+      },
+      {
         id: "project-call-sheets",
         label: "Call Sheets",
         icon: Icon.ClipboardList,
