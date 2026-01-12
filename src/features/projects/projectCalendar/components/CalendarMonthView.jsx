@@ -87,7 +87,7 @@ export default function CalendarMonthView({
                 className="
                   flex items-center justify-center
                   text-[11px] font-bold
-                  bg-muted/30 dark:bg-[#1a1025]
+                  bg-muted/30 
                   border-r border-b border-border dark:border-[#2a1b3d]
                   text-purple-800 dark:text-purple-300
                 "
