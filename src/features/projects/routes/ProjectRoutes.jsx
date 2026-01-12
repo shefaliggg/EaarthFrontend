@@ -10,7 +10,8 @@ import StudioAnalytics from '../components/StudioAnalytics';
 import ProjectDetails from '../pages/ProjectDetails';
 import EditProject from '../components/EditProject';
 import TimesheetsRoutes from './TimesheetsRoutes';
-import FulesAndMilegeRoutes from './FuelAndmilegeRoutes';
+import FuelAndMileageRoutes from './FuelAndMileageRoutes';
+import pettyCashRoutes from './PettyCashRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -30,7 +31,9 @@ const ProjectRoutes = {
                 { index: true, element: <ProjectDetails /> },
 
                 TimesheetsRoutes,
-                FulesAndMilegeRoutes,
+                FuelAndMileageRoutes,
+                pettyCashRoutes,
+                
                 ProjectAppsRoutes,
                 ProjectDepartmentsRoutes,
 

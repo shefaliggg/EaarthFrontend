@@ -12,8 +12,10 @@ import {
     Fuel,
     Sparkles,
     AlertTriangle,
+    Scan,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StatusBadge } from "../../../../shared/components/badges/StatusBadge";
 
 export function AIReceiptScanner({
     weekStartDate,
@@ -120,7 +122,7 @@ export function AIReceiptScanner({
             setIsScanning(false);
             onReceiptsScanned(uploaded);
         },
-        [weekStartDate, weekEndDate, onReceiptsScanned]
+        [onReceiptsScanned, isWithinWeek, simulateAIScan]
     );
 
     const removeReceipt = (id) => {
@@ -158,28 +160,33 @@ export function AIReceiptScanner({
                             AI Receipt Scanner
                         </h3>
                         <p className="text-white/80 text-sm">
-                            Upload fuel receipts for automatic extraction
+                            Powered by Gemini Vision
                         </p>
                     </div>
                 </div>
             </div>
 
             {/* Week banner */}
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 text-sm">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 text-sm  flex justify-between items-center">
                 <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-medium">
                     <Calendar className="w-4 h-4" />
-                    {formatDate(weekStartDate)} – {formatDate(weekEndDate)}
+                    Claim Week: {formatDate(weekStartDate)} - {formatDate(weekEndDate)}
                 </div>
+                <StatusBadge status={"information"} label={"AUTO-MATCHING ON"} size="sm" />
             </div>
 
             {/* Upload */}
-            <div className="p-4">
+            <div className="p-5">
                 <label
-                    className={`flex flex-col items-center justify-center p-8 py-12 border-2 border-dashed rounded-xl cursor-pointer transition
-            ${isScanning
-                            ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-300 dark:border-gray-700 hover:border-purple-500"
-                        }`}
+                    className={`
+                        relative flex flex-col gap-4 items-center justify-center w-full p-8 py-10 
+                        border-2 border-dashed rounded-xl cursor-pointer
+                        transition-all duration-300 group
+                        ${isScanning
+                            ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                            : 'border-gray-300 dark:border-gray-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10'
+                        }
+          `}
                 >
                     <input
                         type="file"
@@ -191,16 +198,29 @@ export function AIReceiptScanner({
                     />
 
                     {isScanning ? (
-                        <Loader className="w-8 h-8 animate-spin text-purple-600" />
+                        <div className="relative">
+                            <div className="absolute bg-muted inset-0 bg-purple-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Loader className="w-8 h-8 text-purple-600 transition-colors animate-spin" />
+                            </div>
+                        </div>
                     ) : (
-                        <Upload className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <Scan className="w-8 h-8 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                        </div>
                     )}
 
-                    <p className="mt-3 font-semibold text-gray-900 dark:text-white">
-                        {isScanning
-                            ? "Scanning receipts..."
-                            : "Click to upload or drag files"}
-                    </p>
+                    <div className="text-center">
+                        <p className={`font-bold text-lg`}>
+                            {isScanning ? 'Analyzing Receipt...' : 'Drop receipts here'}
+                        </p>
+                        <p className={`text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto`}>
+                            {isScanning
+                                ? 'Extracting merchant, date, and line items'
+                                : 'Supports JPG, PNG, PDF. AI will auto-categorize expenses.'
+                            }
+                        </p>
+                    </div>
                 </label>
 
                 {/* Receipts */}
@@ -231,7 +251,7 @@ export function AIReceiptScanner({
                                         <div className="flex-1">
                                             <div className="flex justify-between">
                                                 <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">
-                                                    {r.fileName.slice(0,35) + "..."}
+                                                    {r.fileName.slice(0, 35) + "..."}
                                                 </h4>
                                                 <button
                                                     onClick={() => removeReceipt(r.id)}

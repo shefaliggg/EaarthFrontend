@@ -5,7 +5,7 @@ const FuelAndMileageForm = lazy(() => import('../fuel-and-mileage/pages/FuelAndM
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
-const FulesAndMilegeRoutes = {
+const FuelAndMileageRoutes = {
     path: "fuel-mileage",
     children: [
         { index: true, element: <CrewTimesheetsAndExpensesOverview /> },
@@ -16,9 +16,7 @@ const FulesAndMilegeRoutes = {
     ],
 };
 
-export default FulesAndMilegeRoutes;
-
-
+export default FuelAndMileageRoutes;
 
 
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Clock, Coffee, Utensils, Zap, Briefcase, Moon, Sun, Truck, AlertCircle, CheckCircle2, BedDouble, Laptop, Box, Camera, Fuel, Smartphone, ChevronRight, Info, Calendar, DollarSign, MapPin, Users } from 'lucide-react';
 import {
     Tooltip,
@@ -165,7 +165,7 @@ export function WeeklyGraphicalView({
         return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
     };
 
-    const weekBlocks = React.useMemo(() => {
+    const weekBlocks = useMemo(() => {
         const dayMap = new Map();
         entries.forEach((_, i) => dayMap.set(i, []));
 
@@ -287,7 +287,7 @@ export function WeeklyGraphicalView({
                 )}
             >
                 <div className="flex-1 overflow-auto space-y-2">
-                    <DialogHeader className='p-3 pb-2 px-5 gap-1'>
+                    <DialogHeader className='p-4 pb-2 px-6 gap-1'>
                         <DialogTitle className="text-lg font-bold flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
                             Weekly Schedule Overview
@@ -368,7 +368,7 @@ export function WeeklyGraphicalView({
                                             "sticky top-0 bg-background/70 backdrop-blur-sm z-110"
                                         )}>
 
-                                            <div className="pl-3 pr-2 pt-2">
+                                            <div className="pl-3 pr-2 py-2.5">
                                                 <div className="flex items-start justify-between">
                                                     <div>
                                                         <div className="flex items-baseline gap-1">
@@ -380,10 +380,10 @@ export function WeeklyGraphicalView({
 
                                                         {entry.dayType === 'Work' && entry.inTime && entry.outTime ? (
                                                             <div className="flex items-center gap-2">
-                                                                <div className="text-[9px] flex items-center font-mono font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
+                                                                <Badge variant={"secondary"} className={"text-[8px]"}>
                                                                     {entry.inTime} <ChevronRight className="w-2 h-2 inline mx-0.5" /> {entry.outTime}
                                                                     {entry.nextDay && <span className="text-[8px] ml-0.5">*</span>}
-                                                                </div>
+                                                                </Badge>
                                                                 <Badge variant={"outline"} className={" text-[8px] bg-background"}>
                                                                     {totalHours}h
                                                                 </Badge>

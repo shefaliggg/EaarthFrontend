@@ -46,7 +46,7 @@ export function TimesheetMiniField({
                         onCheckedChange={(checked) =>
                             onChange(fieldKey, checked ? 1 : 0)
                         }
-                        className="scale-[0.7]"
+                        className="scale-[0.7] border-primary"
                     />
                 ) : (
                     <div className="flex items-center gap-[1px]">
