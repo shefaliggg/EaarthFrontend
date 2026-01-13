@@ -28,7 +28,7 @@ import { Progress } from '@/shared/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import { cn } from '@/shared/config/utils';
-import { MetricsCard } from '../../../shared/components/MetricsCard';
+import { MetricsCard } from '../../../shared/components/cards/MetricsCard';
 
 // Mock project detail data - matches ProjectDashboardPage data
 const PROJECT_DETAIL = {

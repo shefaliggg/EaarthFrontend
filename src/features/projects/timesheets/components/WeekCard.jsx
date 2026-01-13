@@ -95,13 +95,13 @@ export function WeekCard({
                 className={cn(
                     "relative rounded-2xl border-2 transition-all group overflow-hidden p-0",
                     isCurrent
-                        ? "border-purple-300 shadow-lg shadow-purple-500/10"
+                        ? "border-purple-500 shadow-lg shadow-purple-500/40"
                         : "border",
                     "hover:bg-lavender-100/20 hover:-translate-y-1 dark:hover:bg-lavender-900/20 hover:shadow-xl"
                 )}
             >
 
-                <div className="p-5 relative flex flex-col gap-2 h-full">
+                <div className="p-5 relative flex flex-col h-full">
                     {/* Week Range & Actions */}
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -329,7 +329,7 @@ export function WeekCard({
             className={cn(
                 "relative rounded-xl border transition-all group cursor-pointer overflow-hidden p-2",
                 isCurrent
-                    ? "border-purple-300 shadow-lg shadow-purple-500/10"
+                    ? "border-purple-500 shadow-lg border-2 shadow-purple-500/40"
                     : "border",
                 "hover:bg-lavender-200 dark:hover:bg-lavender-900/20"
             )}

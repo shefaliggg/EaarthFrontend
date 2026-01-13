@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { cn } from "@/shared/config/utils";
-import { SmartIcon } from "./SmartIcon";
+import { SmartIcon } from "../SmartIcon";
 
 export function MetricsCard({
   title,
@@ -51,7 +51,7 @@ export function MetricsCard({
               </div>
             )}
             {indicatorText && (
-              
+
               <div
                 className={cn(
                   "flex items-center justify-center shrink-0",

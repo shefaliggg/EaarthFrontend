@@ -10,7 +10,7 @@ import {
   CheckCircle, Calendar, User, Building
 } from "lucide-react";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
-import { MetricsCard } from "../../../shared/components/MetricsCard";
+import { MetricsCard } from "../../../shared/components/cards/MetricsCard";
 
 // Sample contract data - showing only one crew member's contracts
 const sampleContracts = [

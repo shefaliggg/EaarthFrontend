@@ -195,86 +195,108 @@ function CrewTimesheetsOverview() {
 
   const sortedYears = Object.keys(weeksByYear).map(Number).sort((a, b) => b - a);
 
-  const commonStats = useMemo(() => [
+  // const commonStats = useMemo(() => [
+  //   {
+  //     key: "hours",
+  //     value: totalHours.toFixed(1),
+  //     valueText: "Total Hours",
+  //     icon: "Timer",
+  //     color: "blue",
+  //   },
+  //   {
+  //     key: "earnings",
+  //     value: `${totalEarnings.toLocaleString("en-GB", {
+  //       minimumFractionDigits: 2,
+  //       maximumFractionDigits: 2,
+  //     })}`,
+  //     valueText: "Total Earnings",
+  //     icon: "PoundSterling",
+  //     color: "emerald",
+  //   },
+  // ], [totalHours, totalEarnings]);
+
+  // const tabSpecificStats = useMemo(() => {
+  //   if (activeTab === "timesheets") {
+  //     return [
+  //       {
+  //         key: "submitted",
+  //         value: weeks.filter(w => w.status !== "not-started").length,
+  //         valueText: "Timesheets Submitted",
+  //         icon: "Clock",
+  //         color: "purple",
+  //       },
+  //       {
+  //         key: "approved",
+  //         value: weeks.filter(w => w.status === "approved").length,
+  //         valueText: "Timesheets Approved",
+  //         icon: "Award",
+  //         color: "purple",
+  //       },
+  //     ];
+  //   } else if (activeTab === "petty-cash") {
+  //     return [
+  //       {
+  //         key: "claimed",
+  //         value: totalPettyCash.toFixed(2),
+  //         valueText: "Petty Cash Claimed",
+  //         icon: "Banknote",
+  //         color: "purple",
+  //       },
+  //       {
+  //         key: "approved-petty-cash",
+  //         value: weeks.filter(w => w.expenseStatus === "approved").length,
+  //         valueText: "Approved Petty Cash Claims",
+  //         icon: "Award",
+  //         color: "purple",
+  //       },
+  //     ]
+  //   }
+
+  //   // expenses
+  //   return [
+  //     {
+  //       key: "claimed",
+  //       value: totalExpenses.toFixed(2),
+  //       valueText: "L Fuel Claimed",
+  //       icon: "Fuel",
+  //       color: "purple",
+  //     },
+  //     {
+  //       key: "approved-expenses",
+  //       value: weeks.filter(w => w.expenseStatus === "approved").length,
+  //       valueText: "Approved Fuel Claims",
+  //       icon: "Award",
+  //       color: "purple",
+  //     },
+  //   ];
+  // }, [activeTab, weeks, totalExpenses]);
+
+  // const quickStats = useMemo(
+  //   () => [...tabSpecificStats, ...commonStats],
+  //   [tabSpecificStats, commonStats]
+  // );
+
+  const commonPrimaryStats = [
     {
-      key: "hours",
+      label: "Total Hours",
       value: totalHours.toFixed(1),
-      valueText: "Total Hours",
       icon: "Timer",
-      color: "blue",
+      iconBg: "bg-blue-100 dark:bg-blue-900/30",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      // subLabel: "All time",
     },
     {
-      key: "earnings",
-      value: `${totalEarnings.toLocaleString("en-GB", {
+      label: "Total Earnings",
+      value: `£${totalEarnings.toLocaleString("en-GB", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
-      valueText: "Total Earnings",
       icon: "PoundSterling",
-      color: "emerald",
+      iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      // subLabel: "All time",
     },
-  ], [totalHours, totalEarnings]);
-
-  const tabSpecificStats = useMemo(() => {
-    if (activeTab === "timesheets") {
-      return [
-        {
-          key: "submitted",
-          value: weeks.filter(w => w.status !== "not-started").length,
-          valueText: "Timesheets Submitted",
-          icon: "Clock",
-          color: "purple",
-        },
-        {
-          key: "approved",
-          value: weeks.filter(w => w.status === "approved").length,
-          valueText: "Timesheets Approved",
-          icon: "Award",
-          color: "purple",
-        },
-      ];
-    } else if (activeTab === "petty-cash") {
-      return [
-        {
-          key: "claimed",
-          value: totalPettyCash.toFixed(2),
-          valueText: "Petty Cash Claimed",
-          icon: "Banknote",
-          color: "purple",
-        },
-        {
-          key: "approved-petty-cash",
-          value: weeks.filter(w => w.expenseStatus === "approved").length,
-          valueText: "Approved Petty Cash Claims",
-          icon: "Award",
-          color: "purple",
-        },
-      ]
-    }
-
-    // expenses
-    return [
-      {
-        key: "claimed",
-        value: totalExpenses.toFixed(2),
-        valueText: "L Fuel Claimed",
-        icon: "Fuel",
-        color: "purple",
-      },
-      {
-        key: "approved-expenses",
-        value: weeks.filter(w => w.expenseStatus === "approved").length,
-        valueText: "Approved Fuel Claims",
-        icon: "Award",
-        color: "purple",
-      },
-    ];
-  }, [activeTab, weeks, totalExpenses]);
-
-  const quickStats = useMemo(
-    () => [...tabSpecificStats, ...commonStats],
-    [tabSpecificStats, commonStats]
-  );
+  ];
 
   // these stats should come from backend in fututre 
   const getTimesheetStats = ({
@@ -285,7 +307,7 @@ function CrewTimesheetsOverview() {
     totalEarnings,
   }) => [
       {
-        label: "This Month",
+        label: "This Month Earnings",
         value: `£${thisMonthEarnings.toLocaleString("en-GB", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -293,7 +315,7 @@ function CrewTimesheetsOverview() {
         icon: "DollarSign",
         iconBg: "bg-purple-100 dark:bg-purple-900/30",
         iconColor: "text-purple-600 dark:text-purple-400",
-        subLabel: `${thisMonthWeeks.filter(w => w.status === "approved").length} weeks approved`,
+        // subLabel: `${thisMonthWeeks.filter(w => w.status === "approved").length} weeks approved`,
       },
 
       {
@@ -302,7 +324,25 @@ function CrewTimesheetsOverview() {
         icon: "Timer",
         iconBg: "bg-blue-100 dark:bg-blue-900/30",
         iconColor: "text-blue-600 dark:text-blue-400",
-        subLabel: `${(thisMonthHours / 40).toFixed(1)} weeks equivalent`,
+        // subLabel: `${(thisMonthHours / 40).toFixed(1)} weeks equivalent`,
+      },
+
+      {
+        label: "Timesheets Submitted",
+        value: weeks.filter(w => w.status !== "not-started").length,
+        icon: "Clock",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
+
+      {
+        label: "Timesheets Approved",
+        value: weeks.filter(w => w.status === "approved").length,
+        icon: "Award",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
       },
 
       {
@@ -311,10 +351,10 @@ function CrewTimesheetsOverview() {
         icon: "Clock",
         iconBg: "bg-amber-100 dark:bg-amber-900/30",
         iconColor: "text-amber-600 dark:text-amber-400",
-        subLabel: `${weeks
-          .filter(w => w.status === "submitted")
-          .reduce((sum, w) => sum + (w.totalHours || 0), 0)
-          .toFixed(1)} hours pending`,
+        // subLabel: `${weeks
+        //   .filter(w => w.status === "submitted")
+        //   .reduce((sum, w) => sum + (w.totalHours || 0), 0)
+        //   .toFixed(1)} hours pending`,
       },
 
       {
@@ -326,8 +366,10 @@ function CrewTimesheetsOverview() {
         icon: "Award",
         iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
         iconColor: "text-emerald-600 dark:text-emerald-400",
-        subLabel: `${weeks.filter(w => w.status === "approved").length} weeks approved`,
+        // subLabel: `${weeks.filter(w => w.status === "approved").length} weeks approved`,
       },
+
+      ...commonPrimaryStats,
     ];
 
   const getExpenseStats = ({
@@ -342,7 +384,7 @@ function CrewTimesheetsOverview() {
         icon: "Fuel",
         iconBg: "bg-orange-100 dark:bg-orange-900/30",
         iconColor: "text-orange-600 dark:text-orange-400",
-        subLabel: `${thisMonthWeeks.filter(w => w.expenseStatus === "approved").length} claims approved`,
+        // subLabel: `${thisMonthWeeks.filter(w => w.expenseStatus === "approved").length} claims approved`,
       },
 
       {
@@ -351,10 +393,10 @@ function CrewTimesheetsOverview() {
         icon: "Fuel",
         iconBg: "bg-red-100 dark:bg-red-900/30",
         iconColor: "text-red-600 dark:text-red-400",
-        subLabel: `£${weeks
-          .filter(w => w.expenseType === "fuel")
-          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
-          .toFixed(2)} total`,
+        // subLabel: `£${weeks
+        //   .filter(w => w.expenseType === "fuel")
+        //   .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+        //   .toFixed(2)} total`,
       },
 
       {
@@ -363,10 +405,10 @@ function CrewTimesheetsOverview() {
         icon: "Car",
         iconBg: "bg-blue-100 dark:bg-blue-900/30",
         iconColor: "text-blue-600 dark:text-blue-400",
-        subLabel: `£${weeks
-          .filter(w => w.expenseType === "mileage")
-          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
-          .toFixed(2)} total`,
+        // subLabel: `£${weeks
+        //   .filter(w => w.expenseType === "mileage")
+        //   .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+        //   .toFixed(2)} total`,
       },
 
       {
@@ -375,11 +417,29 @@ function CrewTimesheetsOverview() {
         icon: "Clock",
         iconBg: "bg-amber-100 dark:bg-amber-900/30",
         iconColor: "text-amber-600 dark:text-amber-400",
-        subLabel: `£${weeks
-          .filter(w => w.expenseStatus === "submitted")
-          .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
-          .toFixed(2)} pending`,
+        // subLabel: `£${weeks
+        //   .filter(w => w.expenseStatus === "submitted")
+        //   .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
+        //   .toFixed(2)} pending`,
       },
+      {
+        label: "Fuel Claimed",
+        value: totalExpenses.toFixed(2),
+        icon: "Fuel",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
+      {
+        label: "Approved Fuel Claims",
+        value: weeks.filter(w => w.expenseStatus === "approved").length,
+        icon: "Award",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
+
+      ...commonPrimaryStats,
     ];
 
   const getPettyCashStats = ({
@@ -413,7 +473,7 @@ function CrewTimesheetsOverview() {
         icon: "Wallet",
         iconBg: "bg-purple-100 dark:bg-purple-900/30",
         iconColor: "text-purple-600 dark:text-purple-400",
-        subLabel: `${thisMonthClaims.length} claims submitted`,
+        // subLabel: `${thisMonthClaims.length} claims submitted`,
       },
 
       {
@@ -422,7 +482,7 @@ function CrewTimesheetsOverview() {
         icon: "CheckCircle2",
         iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
         iconColor: "text-emerald-600 dark:text-emerald-400",
-        subLabel: `£${approvedTotal.toFixed(2)} reimbursed`,
+        // subLabel: `£${approvedTotal.toFixed(2)} reimbursed`,
       },
 
       {
@@ -431,7 +491,7 @@ function CrewTimesheetsOverview() {
         icon: "Clock",
         iconBg: "bg-amber-100 dark:bg-amber-900/30",
         iconColor: "text-amber-600 dark:text-amber-400",
-        subLabel: `£${pendingTotal.toFixed(2)} awaiting approval`,
+        // subLabel: `£${pendingTotal.toFixed(2)} awaiting approval`,
       },
 
       {
@@ -443,8 +503,26 @@ function CrewTimesheetsOverview() {
         icon: "BarChart3",
         iconBg: "bg-blue-100 dark:bg-blue-900/30",
         iconColor: "text-blue-600 dark:text-blue-400",
-        subLabel: "Typical purchase size",
+        // subLabel: "Typical purchase size",
       },
+      {
+        label: "Petty Cash Claimed",
+        value: totalPettyCash.toFixed(2),
+        icon: "Wallet",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
+      {
+        label: "Approved Claims",
+        value: claims.filter(c => c.status === "approved").length,
+        icon: "Award",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
+
+      ...commonPrimaryStats,
     ];
   };
 
@@ -538,7 +616,7 @@ function CrewTimesheetsOverview() {
         value={currentTab}
         navigatable
       />
-      <div className="flex items-center gap-3 mt-2">
+      {/* <div className="flex items-center gap-3 mt-2">
         {quickStats.map(stat => (
           <MiniInfoPills
             key={stat.key}
@@ -548,7 +626,7 @@ function CrewTimesheetsOverview() {
             color={stat.color}
           />
         ))}
-      </div>
+      </div> */}
       <PrimaryStats stats={primaryStats} gridColumns={4} />
 
       <div>
@@ -632,17 +710,38 @@ function CrewTimesheetsOverview() {
         className="space-y-3"
       >
         {sortedYears.map((year) => {
-          const yearWeeks = weeksByYear[year].sort(
+          const yearWeeks = weeksByYear[year]
+
+          const futureWeeks = yearWeeks.filter(w => isFutureWeek(w.weekEnding)).sort(
+            (a, b) =>
+              new Date(a.weekEnding).getTime() -
+              new Date(b.weekEnding).getTime()
+          );
+
+          const currentWeek = yearWeeks.find(w => isCurrentWeek(w.weekEnding))
+          const pastWeeks = yearWeeks.filter(
+            w => !isFutureWeek(w.weekEnding) && !isCurrentWeek(w.weekEnding)
+          ).sort(
             (a, b) =>
               new Date(b.weekEnding).getTime() -
               new Date(a.weekEnding).getTime()
           );
 
-          const futureWeeks = yearWeeks.filter(w => isFutureWeek(w.weekEnding))
-          const currentWeek = yearWeeks.find(w => isCurrentWeek(w.weekEnding))
-          const pastWeeks = yearWeeks.filter(
-            w => !isFutureWeek(w.weekEnding) && !isCurrentWeek(w.weekEnding)
-          )
+          const spotlightPast = pastWeeks[0] || null;       // most recent past
+          const spotlightFuture = futureWeeks.slice(0, 2); // next 2 weeks
+
+          const spotlightWeeks = [
+            spotlightPast,
+            currentWeek,
+            ...spotlightFuture,
+          ].filter(Boolean);
+
+          // remove spotlight from accordions
+          const remainingPastWeeks = spotlightPast
+            ? pastWeeks.slice(1)
+            : pastWeeks;
+
+          const remainingFutureWeeks = futureWeeks.slice(2);
 
           let defaultInnerSection = undefined;
           if (currentWeek) {
@@ -680,14 +779,43 @@ function CrewTimesheetsOverview() {
 
               {/* Year Content */}
               <AccordionContent className="p-6 space-y-4">
-                {futureWeeks.length > 0 && (
-                  <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+                {/* spotlight weeks */}
+                {spotlightWeeks.length > 0 && (
+                  <div className={`grid grid-cols-1 gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 " : ""}`}>
+                    {spotlightWeeks.map((week, idx) => {
+                      const isCurrent = isCurrentWeek(week.weekEnding);
+                      const isFuture = isFutureWeek(week.weekEnding);
+
+                      return (
+                        <WeekCard
+                          key={idx}
+                          week={{
+                            ...week,
+                            range: formatWeekRange(week.weekStart, week.weekEnding),
+                          }}
+                          view={viewMode}
+                          mode={activeTab}
+                          isCurrent={isCurrent}
+                          isFuture={isFuture}
+                          weekDays={getWeekDays(week.weekStart, week.weekEnding)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* future weeks */}
+                <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+                  {remainingFutureWeeks.length > 0 && (
+
                     <AccordionItem value="future">
-                      <AccordionTrigger className="hover:no-underline text-sm uppercase p-3 px-5 shadow border rounded-3xl text-muted-foreground text-bold group">
+                      <AccordionTrigger
+                        className="hover:no-underline hover:text-primary cursor-pointer"
+                      >
                         <span className='flex gap-2 items-center'>
                           Future Weeks
-                          <StatusBadge status={'information'} label={`Total ${futureWeeks.length}`} size="sm" />
-                          <StatusBadge status={'pending'} label={`${futureWeeks.filter(week => {
+                          <StatusBadge status={'information'} label={`Total ${remainingFutureWeeks.length}`} size="sm" />
+                          <StatusBadge status={'pending'} label={`${remainingFutureWeeks.filter(week => {
                             const displayStatus =
                               activeTab === "expenses"
                                 ? week.expenseStatus || "not-started"
@@ -702,7 +830,7 @@ function CrewTimesheetsOverview() {
 
                       <AccordionContent className="py-4 space-y-2">
                         <div className={`grid grid-cols-1 gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 " : ""}`}>
-                          {futureWeeks.map((week, idx) => (
+                          {remainingFutureWeeks.map((week, idx) => (
                             <WeekCard
                               key={idx}
                               week={{
@@ -724,52 +852,23 @@ function CrewTimesheetsOverview() {
                         </div>
                       </AccordionContent>
                     </AccordionItem>
-                  </Accordion>
-                )}
+                  )}
 
-                {/* Current week */}
-                {currentWeek && (
-                  <div>
-                    <h3 className="mb-3 text-sm font-bold text-purple-600 uppercase">
-                      Current Week
-                    </h3>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <WeekCard
-                        fullWidth={true}
-                        week={{
-                          ...currentWeek,
-                          range: formatWeekRange(
-                            currentWeek.weekStart,
-                            currentWeek.weekEnding
-                          ),
-                        }}
-                        view={viewMode}
-                        mode={activeTab}
-                        isCurrent
-                        weekDays={getWeekDays(
-                          currentWeek.weekStart,
-                          currentWeek.weekEnding
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Past weeks */}
-                {pastWeeks.length > 0 && (
-                  <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+                  {/* Past weeks */}
+                  {remainingPastWeeks.length > 0 && (
                     <AccordionItem value="past">
-                      <AccordionTrigger className="hover:no-underline text-sm uppercase p-3 px-5 shadow border rounded-3xl text-muted-foreground text-bold group">
+                      <AccordionTrigger
+                        className="hover:no-underline hover:text-primary cursor-pointer"
+                      >
                         <span className='flex gap-2 items-center'>
                           Past Weeks
-                          <StatusBadge status={'information'} label={`Total ${pastWeeks.length}`} size="sm" />
+                          <StatusBadge status={'information'} label={`Total ${remainingPastWeeks.length}`} size="sm" />
                         </span>
                       </AccordionTrigger>
 
                       <AccordionContent className="py-4 space-y-2">
                         <div className={`grid grid-cols-1 gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 " : ""}`}>
-                          {pastWeeks.map((week, idx) => (
+                          {remainingPastWeeks.map((week, idx) => (
                             <WeekCard
                               key={idx}
                               week={{
@@ -790,8 +889,13 @@ function CrewTimesheetsOverview() {
                         </div>
                       </AccordionContent>
                     </AccordionItem>
-                  </Accordion>
-                )}
+                  )}
+                </Accordion>
+
+
+                {/* <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
+
+                </Accordion> */}
               </AccordionContent>
             </AccordionItem>
           );
