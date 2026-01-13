@@ -1,5 +1,5 @@
 import { studioPrimaryMetrics } from "../../features/studio/constants/studioMetricsData";
-import { MetricsCard } from "./MetricsCard";
+import { MetricsCard } from "./cards/MetricsCard";
 
 export default function Metrics() {
   return (
