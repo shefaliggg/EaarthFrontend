@@ -13,19 +13,20 @@ import { Check } from "lucide-react";
 
 export function SelectMenu({
   label = "Select",
-  textCase = "upper",
+  textCase = "normal",
   items = [],
   selected,
   onSelect,
-  className,
+  className = "w-[220px]",
 }) {
   const selectedItem = items.find((item) => item.value === selected);
 
   return (
     <Select value={selected} onValueChange={onSelect}>
       <SelectTrigger textCase={textCase} className={cn("w-full min-w-0", className)}>
-        <SelectValue
-          placeholder={label}/>
+        <SelectValue>
+          {selectedItem ? selectedItem.label : label}
+        </SelectValue>
       </SelectTrigger>
 
       <SelectContent textCase={textCase}>
@@ -45,7 +46,7 @@ export function SelectMenu({
               className="flex items-center justify-between"
             >
               <span className="flex items-center gap-2">
-               { Icon ? (
+                {Icon ? (
                   <Icon className="w-3 h-3" />
                 ) : (
                   <span className="w-0" />

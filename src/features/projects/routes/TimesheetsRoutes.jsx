@@ -4,7 +4,7 @@ import TimesheetDetailsLayout from '../layouts/TimesheetDetailsLayout';
 const CrewTimesheetsAndExpensesOverview = lazy(() => import('../timesheets/pages/CrewTimesheetsAndExpensesOverview'));
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
 const FinancialSummary = lazy(() => import('../timesheets/pages/FinancialSummary'));
-const TimesheetCalender = lazy(() => import('../timesheets/pages/TimesheetCalender'));
+const ShootingCalender = lazy(() => import('../timesheets/pages/ShootingCalender'));
 const TimesheetSettings = lazy(() => import('../timesheets/pages/TimesheetSettings'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
@@ -19,7 +19,7 @@ const TimesheetsRoutes = {
             children: [
                 { index: true, element: <TimesheetTable /> },
                 { path: 'financial-summary', element: <FinancialSummary /> },
-                { path: 'calender', element: <TimesheetCalender /> },
+                { path: 'calender', element: <ShootingCalender /> },
                 { path: 'settings', element: <TimesheetSettings /> },
             ]
         },

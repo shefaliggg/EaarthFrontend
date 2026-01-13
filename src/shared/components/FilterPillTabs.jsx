@@ -42,7 +42,7 @@ function FilterPillTabs({
                             value={tabValue}
                             className={`px-3.5 py-1.5 bg-background/60 ${fullWidth ? "py-2" : ""}`}
                         >
-                            {option.icon && <SmartIcon icon={option.icon} className="w-4 h-4 mr-1.5" />}
+                            {option.icon && <SmartIcon icon={option.icon} className="w-4 h-4" />}
                             {option.label}
                         </TabsTrigger>
                     );

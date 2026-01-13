@@ -13,6 +13,7 @@ const TimesheetsDetailsLayout = () => {
 
     const currentTab = location.pathname
     const isFinancialSummaryPage = currentTab === `/projects/${params.projectName}/timesheets/${params.week}/financial-summary`
+    const isShootingcalendarPage = currentTab === `/projects/${params.projectName}/timesheets/${params.week}/calender`
 
     return (
         <div className='space-y-6 container mx-auto'>
@@ -38,16 +39,26 @@ const TimesheetsDetailsLayout = () => {
                     </span>
                 }
 
-                extraActions={!isFinancialSummaryPage &&
+                extraActions={!isFinancialSummaryPage && !isShootingcalendarPage &&
                     <Button variant={"outline"} size={"lg"} className={"gap-0 w-11 group"} onClick={() => navigate("settings")}>
                         <Settings className="w-4 h-4 text-primary group-hover:text-background" strokeWidth={3} />
                     </Button>
                 }
 
-                primaryAction={!isFinancialSummaryPage && {
+                secondaryActions={[
+
+                ]}
+
+                primaryAction={!isFinancialSummaryPage && !isShootingcalendarPage ? {
                     label: "Submit Timsheet",
                     clickAction: () => console.log("AI insight clicked"),
                     icon: "Check",
+                    variant: "default",
+                    size: "lg"
+                } : !isFinancialSummaryPage && isShootingcalendarPage && {
+                    label: "Export Calendar",
+                    clickAction: () => console.log("Export calendar clicked"),
+                    icon: "Download",
                     variant: "default",
                     size: "lg"
                 }}
