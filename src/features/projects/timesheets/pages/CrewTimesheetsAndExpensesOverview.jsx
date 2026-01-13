@@ -616,17 +616,7 @@ function CrewTimesheetsOverview() {
         value={currentTab}
         navigatable
       />
-      {/* <div className="flex items-center gap-3 mt-2">
-        {quickStats.map(stat => (
-          <MiniInfoPills
-            key={stat.key}
-            value={stat.value}
-            valueText={stat.valueText}
-            icon={stat.icon}
-            color={stat.color}
-          />
-        ))}
-      </div> */}
+
       <PrimaryStats stats={primaryStats} gridColumns={4} />
 
       <div>

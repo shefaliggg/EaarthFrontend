@@ -9,7 +9,7 @@ export function MetricsCard({
   value,
   valueColor = "text-foreground",
   icon,
-  iconBg,
+  iconBg = "bg-primary/10",
   iconColor = "text-primary",
   indicatorText,
   inidicatorBg = "text-primary",
