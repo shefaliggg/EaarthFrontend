@@ -33,7 +33,7 @@ function ShootingCalender() {
     '2025-12-03': { unit: 'Main', unitCall: '07:00', unitWrap: '18:15', workingHours: '10 (CWD)', cameraOT: '1.25', dayType: 'Shoot', dayNumber: 49, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Studio Day - Stage 7' },
     '2025-12-04': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 50, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Elstree' },
     '2025-12-05': { unit: 'Main', unitCall: '07:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 51, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Elstree - Stage 2' },
-    '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+    '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid'},
     '2025-12-07': { dayType: 'Rest', dayNumber: '-' },
     '2025-12-08': { dayType: 'Rest', dayNumber: '-' },
 
@@ -42,7 +42,7 @@ function ShootingCalender() {
     '2025-12-10': { unit: 'Main', unitCall: '06:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 54, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Bourne Wood - Continuation' },
     '2025-12-11': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 55, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Wales location - Travel allowance' },
     '2025-12-12': { unit: 'Main', unitCall: '07:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.5', dayType: 'Shoot', dayNumber: 56, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Wales - Day 2' },
-    '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+    '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid'},
     '2025-12-14': { dayType: 'Rest', dayNumber: '-' },
     '2025-12-15': { dayType: 'Rest', dayNumber: '-' },
 
@@ -95,7 +95,7 @@ function ShootingCalender() {
     '2026-01-20': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 76, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
     '2026-01-21': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 77, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Pinewood - Stage 5' },
     '2026-01-22': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 78, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
-    '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid', nightPenaltyPaid: 'Paid' },
+    '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid'},
     '2026-01-24': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 80, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
     '2026-01-25': { dayType: 'Rest', dayNumber: '-' },
     '2026-01-26': { dayType: 'Rest', dayNumber: '-' },
@@ -231,7 +231,6 @@ function ShootingCalender() {
         lateMealPaid: dayData.lateMealPaid || 'Unpaid',
         cameraOT: dayData.cameraOT || '0.0',
         nightPenalty: dayData.nightPenalty || 'Unpaid',
-        nightPenaltyPaid: dayData.nightPenaltyPaid || 'Unpaid',
       });
     }
     return days;
@@ -1044,6 +1043,21 @@ function ShootingCalender() {
                     placeholder="0.0"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Night Penalty</Label>
+                <SelectMenu
+                  label="select Night Penalty"
+                  items={[
+                    { label: "Paid", value: "Paid" },
+                    { label: "Un paid", value: "UnPaid" },
+                  ]}
+                  selected={formData.nightPenalty}
+                  onSelect={(v) => updateField("nightPenalty", v)}
+                  className="w-full bg-background rounded-3xl shadow-sm"
+                />
+
               </div>
 
               {/* Notes */}

@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "@/shared/config/utils";
 import { SmartIcon } from "../SmartIcon";
+import { convertToPrettyText } from "../../config/utils";
 
 export function SecondaryMetricsCard({
     title,
@@ -15,19 +16,19 @@ export function SecondaryMetricsCard({
     progressValue,
 }) {
     return (
-        <Card className="p-5 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100 dark:border-gray-800">
-            <CardContent className="p-0 space-y-3">
+        <Card className="p-4 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100 dark:border-gray-800">
+            <CardContent className="p-0 h-full flex flex-col justify-between gap-3">
                 
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                    <SmartIcon icon={Icon} className={cn("w-5 h-5", iconColor)} />
-                    <div className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {title}
+                <div className="flex items-center gap-1">
+                    <SmartIcon icon={Icon} className={cn(iconColor)} size="sm" />
+                    <div className="text-xs font-medium text-muted-foreground tracking-wide">
+                        {convertToPrettyText(title)}
                     </div>
                 </div>
 
                 {/* Value */}
-                <div className={cn("text-2xl font-bold leading-tight", valueColor)}>
+                <div className={cn("text-xl font-bold leading-tight", valueColor)}>
                     {value}
                 </div>
 

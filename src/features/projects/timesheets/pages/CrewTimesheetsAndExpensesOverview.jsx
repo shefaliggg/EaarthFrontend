@@ -279,7 +279,7 @@ function CrewTimesheetsOverview() {
   const commonPrimaryStats = [
     {
       label: "Total Hours",
-      value: totalHours.toFixed(1),
+      value: `${totalHours.toFixed(1)} h`,
       icon: "Timer",
       iconBg: "bg-blue-100 dark:bg-blue-900/30",
       iconColor: "text-blue-600 dark:text-blue-400",
@@ -307,7 +307,7 @@ function CrewTimesheetsOverview() {
     totalEarnings,
   }) => [
       {
-        label: "This Month Earnings",
+        label: "This Month",
         value: `£${thisMonthEarnings.toLocaleString("en-GB", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -319,8 +319,8 @@ function CrewTimesheetsOverview() {
       },
 
       {
-        label: "This Month Hours",
-        value: thisMonthHours.toFixed(1),
+        label: "This Month",
+        value: `${thisMonthHours.toFixed(1)} h`,
         icon: "Timer",
         iconBg: "bg-blue-100 dark:bg-blue-900/30",
         iconColor: "text-blue-600 dark:text-blue-400",
@@ -328,7 +328,7 @@ function CrewTimesheetsOverview() {
       },
 
       {
-        label: "Timesheets Submitted",
+        label: "Submitted",
         value: weeks.filter(w => w.status !== "not-started").length,
         icon: "Clock",
         iconBg: "bg-purple-100 dark:bg-purple-900/30",
@@ -337,7 +337,7 @@ function CrewTimesheetsOverview() {
       },
 
       {
-        label: "Timesheets Approved",
+        label: "Approved",
         value: weeks.filter(w => w.status === "approved").length,
         icon: "Award",
         iconBg: "bg-purple-100 dark:bg-purple-900/30",
@@ -422,23 +422,23 @@ function CrewTimesheetsOverview() {
         //   .reduce((sum, w) => sum + parseAmount(w.expenseAmount), 0)
         //   .toFixed(2)} pending`,
       },
+
       {
-        label: "Fuel Claimed",
-        value: totalExpenses.toFixed(2),
-        icon: "Fuel",
-        iconBg: "bg-purple-100 dark:bg-purple-900/30",
-        iconColor: "text-purple-600 dark:text-purple-400",
-        // subLabel: "All time",
-      },
-      {
-        label: "Approved Fuel Claims",
+        label: "Approved Claims",
         value: weeks.filter(w => w.expenseStatus === "approved").length,
         icon: "Award",
         iconBg: "bg-purple-100 dark:bg-purple-900/30",
         iconColor: "text-purple-600 dark:text-purple-400",
         // subLabel: "All time",
       },
-
+      {
+        label: "Total Claimed",
+        value: totalExpenses.toFixed(2),
+        icon: "Fuel",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30",
+        iconColor: "text-purple-600 dark:text-purple-400",
+        // subLabel: "All time",
+      },
       ...commonPrimaryStats,
     ];
 
@@ -617,7 +617,7 @@ function CrewTimesheetsOverview() {
         navigatable
       />
 
-      <PrimaryStats stats={primaryStats} gridColumns={4} />
+      <PrimaryStats stats={primaryStats} gridColumns={8} gridGap={2} useSecondaryCard={true} />
 
       <div>
         <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
