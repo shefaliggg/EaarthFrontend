@@ -7,8 +7,9 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { cn } from "../config/utils";
 
-export default function UrlBasedBreadcrumbs() {
+export default function UrlBasedBreadcrumbs({className}) {
     const { pathname } = useLocation();
 
     function prettifySegment(seg) {
@@ -46,7 +47,7 @@ export default function UrlBasedBreadcrumbs() {
     });
 
     return (
-        <nav aria-label="Breadcrumb">
+        <nav aria-label="Breadcrumb" className={cn(className)}>
             <Breadcrumb>
                 <BreadcrumbList>
                     {filtered.map((c, index) => (

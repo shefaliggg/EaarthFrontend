@@ -1,8 +1,9 @@
 import { Grid3x3, LayoutGrid, List } from "lucide-react";
 import { convertToPrettyText } from "../../config/utils";
 import { Button } from "../ui/button";
+import { SmartIcon } from "../SmartIcon";
 
-function ViewToggleButton({ view, onViewChange, showLabel = false, listLabel = "list", GridLabel = "grid" }) {
+function ViewToggleButton({ view, onViewChange, showLabel = false, gridIcon = "LayoutGrid", listIcon = "List", listLabel = "list", GridLabel = "grid" }) {
     return (
         <div className={`flex gap-2 bg-background p-1 rounded-md`}>
             <Button
@@ -13,7 +14,7 @@ function ViewToggleButton({ view, onViewChange, showLabel = false, listLabel = "
                     : 'bg-background text-gray-600 hover:text-background dark:bg-gray-800 dark:text-gray-400 dark:hover:text-background'
                     }`}
             >
-                <LayoutGrid className="w-6 h-6" />
+                <SmartIcon icon={gridIcon} size="xl" />
                 {showLabel && convertToPrettyText(GridLabel)}
             </Button>
             <Button
@@ -24,7 +25,7 @@ function ViewToggleButton({ view, onViewChange, showLabel = false, listLabel = "
                     : 'bg-background text-gray-600 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-background'
                     }`}
             >
-                <List className="w-6 h-6" />
+                <SmartIcon icon={listIcon} size="xl" />
                 {showLabel && convertToPrettyText(listLabel)}
             </Button>
         </div>

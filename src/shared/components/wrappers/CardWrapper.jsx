@@ -1,9 +1,12 @@
 import React from "react";
 import { Sparkles } from "lucide-react";
+import { SmartIcon } from "../SmartIcon";
+import { cn } from "../../config/utils";
 
 export default function CardWrapper({
     title = "AI-Powered Predictive Insights",
     icon: Icon = Sparkles,
+    iconColor = "text-primary",
     description = "",
     children,
     actions,
@@ -16,7 +19,7 @@ export default function CardWrapper({
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-semibold mb-2 flex items-center gap-2">
-                            <Icon className="w-5 h-5 text-purple-500" />
+                            <SmartIcon icon={Icon} size="lg" className={cn(iconColor)} />
                             {title}
                         </h3>
 

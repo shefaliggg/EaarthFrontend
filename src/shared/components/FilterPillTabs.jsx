@@ -29,7 +29,7 @@ function FilterPillTabs({
     return (
         <Tabs value={value} onValueChange={handleChange} className="w-full">
             <TabsList
-                className={`h-auto ${transparentBg ? "p-0 bg-trnasparent" : "p-1 bg-background rounded-3xl"} ${fullWidth
+                className={`h-auto ${transparentBg ? "p-0 bg-trnasparent" : "p-1 bg-background rounded-3xl border shadow-sm border-muted"} ${fullWidth
                     ? "grid grid-flow-col auto-cols-fr gap-2 w-full"
                     : "flex flex-wrap gap-2"
                     }`}

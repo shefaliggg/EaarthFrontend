@@ -2,6 +2,7 @@ import * as Icons from "lucide-react";
 import UrlBasedBreadcrumbs from "./UrlBasedBreadcrumb";
 import { cn } from "@/shared/config/utils";
 import { Button } from "@/shared/components/ui/button";
+import { convertToPrettyText } from "../config/utils";
 
 
 export function PageHeader({
@@ -21,7 +22,7 @@ export function PageHeader({
     // 1️⃣ Image
     if (image) {
       return (
-        <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg shrink-0">
+        <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg shrink-0">
           <img
             src={image}
             alt={title}
@@ -36,7 +37,7 @@ export function PageHeader({
       return (
         <div
           className={cn(
-            "w-16 h-16 rounded-full flex items-center justify-center",
+            "w-14 h-14 rounded-full flex items-center justify-center",
             "bg-primary text-background font-bold text-lg shadow-lg shrink-0"
           )}
         >
@@ -50,7 +51,7 @@ export function PageHeader({
       return (
         <div
           className={cn(
-            "w-16 h-16 rounded-full flex items-center justify-center shadow-lg shrink-0",
+            "w-14 h-14 rounded-full flex items-center justify-center shadow-lg shrink-0",
             "bg-primary text-primary-foreground"
           )}
         >
@@ -62,19 +63,28 @@ export function PageHeader({
     return null;
   };
 
+  const renderTitle = (title) => {
+    if (typeof title === "string") {
+      return convertToPrettyText(title);
+    }
+
+    return title; // JSX / ReactNode / anything else
+  };
+
+
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 ">
+        <div className="flex items-start gap-6">
           {renderIdentity()}
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl uppercase font-extrabold leading-none text-foreground">
-              {title}
+            <h1 className="text-3xl font-extrabold! mt-0.5 leading-none text-foreground">
+              {renderTitle(title)}
             </h1>
 
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-muted-foreground mb-2">{subtitle}</p>
             )}
 
             <UrlBasedBreadcrumbs />

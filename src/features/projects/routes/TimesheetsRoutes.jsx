@@ -1,11 +1,11 @@
 import { lazy } from 'react';
-import TimesheetDetailsLayout from '../layouts/TimesheetDetailsLayout';
+import TimesheetDetailsLayout from '../timesheets/layouts/TimesheetDetailsLayout';
+import TimesheetSettingsRoutes from './TimesheetSettingsRoutes';
 
 const CrewTimesheetsAndExpensesOverview = lazy(() => import('../timesheets/pages/CrewTimesheetsAndExpensesOverview'));
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
 const FinancialSummary = lazy(() => import('../timesheets/pages/FinancialSummary'));
 const ShootingCalender = lazy(() => import('../timesheets/pages/ShootingCalender'));
-const TimesheetSettings = lazy(() => import('../timesheets/pages/TimesheetSettings'));
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -20,7 +20,7 @@ const TimesheetsRoutes = {
                 { index: true, element: <TimesheetTable /> },
                 { path: 'financial-summary', element: <FinancialSummary /> },
                 { path: 'calender', element: <ShootingCalender /> },
-                { path: 'settings', element: <TimesheetSettings /> },
+                TimesheetSettingsRoutes,
             ]
         },
 

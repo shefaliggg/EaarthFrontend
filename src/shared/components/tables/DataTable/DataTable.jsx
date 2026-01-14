@@ -17,8 +17,8 @@ import {
 } from "@/shared/components/ui/table";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { exportToCSV } from "@/shared/config/export";
-import { SelectMenu } from "../SelectMenu";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SelectMenu } from "../../menus/SelectMenu";
 
 export default function DataTable({
   data = [],
@@ -137,7 +137,7 @@ export default function DataTable({
                   className={cn(
                     col.align === "center" && "text-center",
                     col.align === "right" && "text-right",
-                    "h-15 first:pl-4"
+                    "h-15 last:pr-4 first:pl-4"
                   )}
                   style={{ width: col.width }}
                 >
@@ -197,7 +197,8 @@ export default function DataTable({
                       key={col.key}
                       className={cn(
                         col.align === "center" && "text-center",
-                        col.align === "right" && "text-right"
+                        col.align === "right" && "text-right",
+                        "last:px-2 first:pl-4"
                       )}
                     >
                       {col.render ? col.render(row) : (row)[col.key]}
