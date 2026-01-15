@@ -44,7 +44,7 @@ const TimesheetsDetailsLayout = () => {
                     icon: "CalendarClock",
                     title: (
                         <span className="flex items-center gap-3">
-                            AVATAR 1
+                            Avatar 1 Timesheet
                             <StatusBadge status="draft" size="sm" />
                         </span>
                     ),
