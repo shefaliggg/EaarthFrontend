@@ -29,6 +29,8 @@ const ProjectAppLocations = lazy(() => import('../pages/ProjectApps/ProjectAppLo
 const ProjectAppApproval = lazy(() => import('../pages/ProjectApps/ProjectAppApproval'));
 const ProjectOnboarding = lazy(() => import('../pages/ProjectApps/ProjectOnboarding'));
 const ProjectCalendar = lazy(() => import('../projectCalendar/pages/ProjectCalendar'));
+const ProjectCalendarLayout = lazy(() => import('../projectCalendar/layouts/ProjectCalendarLayout'));
+const ShootingCalendar = lazy(() => import('../projectCalendar/pages/ShootingCalendar'));
 const ProjectChat = lazy(() => import('../project-chat/pages/ProjectChat'));
 const ProjectAppCloud = lazy(() => import('../pages/ProjectApps/ProjectAppCloud'));
 
@@ -77,7 +79,14 @@ const ProjectAppsRoutes = {
         // Other app routes
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
-        { path: 'calendar', element: <ProjectCalendar /> },
+       {
+         path: "calendar",
+         element: <ProjectCalendarLayout />,
+         children: [
+          { index: true, element: <ProjectCalendar /> },
+          { path: "shooting", element: <ShootingCalendar /> },
+      ],
+    },
         { path: 'chat', element: <ProjectChat /> },
 
     ],

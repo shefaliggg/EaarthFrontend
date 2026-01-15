@@ -5,6 +5,7 @@ import CalendarGrid from "../components/CalendarGrid";
 import CreateEventModal from "../components/CreateEventModal";
 import UpcomingEvents from "../components/UpcommingEvents";
 
+
 function ProjectCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -13,27 +14,6 @@ function ProjectCalendar() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon="Calendar"
-        title="Calendar"
-        primaryAction={{
-          label: "Create Event",
-          icon: "Plus",
-          size: "lg",
-          clickAction: () => setIsCreateEventModalOpen(true),
-        }}
-        secondaryActions={[
-          {
-            label: "Shooting Calendar",
-            icon: "Video",
-            variant: "outline",
-            size: "lg",
-            clickAction: () => {
-              console.log("Open Shooting Calendar");
-            },
-          },
-        ]}
-      />
 
       <CalendarToolbar
         currentDate={currentDate}
