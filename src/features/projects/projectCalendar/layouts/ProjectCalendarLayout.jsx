@@ -1,7 +1,6 @@
 import { Outlet, useLocation, useParams } from "react-router-dom";
 import { PageHeader } from "@/shared/components/PageHeader";
 import FilterPillTabs from "@/shared/components/FilterPillTabs";
-import UrlBasedBreadcrumbs from "../../../../shared/components/UrlBasedBreadcrumb";
 
 function ProjectCalendarLayout() {
   const location = useLocation();
@@ -24,8 +23,6 @@ function ProjectCalendarLayout() {
             : null
         }
       />
-
-      <UrlBasedBreadcrumbs />
 
       <FilterPillTabs
         options={[
