@@ -1,176 +1,221 @@
-// src/features/project/components/ProjectCard.jsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import * as Icons from 'lucide-react';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import { ApprovalStatusBadge, OperationalStatusBadge } from './ProjectStatusBadge';
-import ActionsMenu from '@/shared/components/ActionsMenu';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  Award,
+  Calendar,
+  CalendarCheck,
+  CheckCircle,
+  Clock,
+  Pause,
+  Play,
+  Star,
+  Users,
+  Clapperboard,
+  Tv,
+  Video,
+  Globe,
+  Film,
+} from "lucide-react";
 
-export function ProjectCard({
-  project,
-  onOpen,
-  onDelete,
-  onSubmitForApproval,
-  isSubmitting = false,
-  isDeleting = false,
-}) {
-  const navigate = useNavigate();
-  
-  const {
-    _id,
-    projectName,
-    projectCode,
-    projectType,
-    approvalStatus,
-    status,
-    studioId,
-    country,
-    rejectionReason,
-    createdAt,
-  } = project;
+import { Badge } from "../../../shared/components/ui/badge";
+import { useNavigateWithName } from "../../../shared/hooks/useNavigateWithName";
 
-  // Check what actions are available based on approval status
-  const canEdit = approvalStatus === 'draft' || approvalStatus === 'rejected' || approvalStatus === 'approved';
-  const canDelete = approvalStatus === 'draft' || approvalStatus === 'rejected';
-  const canSubmit = approvalStatus === 'draft' || approvalStatus === 'rejected';
-  const canView = approvalStatus === 'approved';
+function ProjectCard({ project, index }) {
+  const navigateWithName = useNavigateWithName();
 
-  const handleEdit = () => {
-    navigate(`/projects/${_id}/edit`);
+  // Get icon based on project type
+  const getProjectIcon = (type) => {
+    switch (type.toUpperCase()) {
+      case "FEATURE FILM":
+        return Clapperboard;
+      case "TELEVISION SERIES":
+        return Tv;
+      case "COMMERCIAL":
+        return Video;
+      case "DOCUMENTARY":
+        return Globe;
+      default:
+        return Film;
+    }
   };
 
+  const getPeriodIcon = (period) => {
+    switch (period) {
+      case "prep":
+        return Clock;
+      case "shoot":
+        return Play;
+      case "wrap":
+        return CheckCircle;
+      default:
+        return Pause;
+    }
+  };
+
+  const getPeriodColor = (period) => {
+    switch (period) {
+      case "prep":
+        return "bg-sky-100 text-blue-800 border-sky-300 dark:bg-sky-700/70 dark:text-sky-100 dark:border-sky-700";
+      case "shoot":
+        return "bg-mint-100 text-green-800 border-mint-300 dark:bg-mint-700/70 dark:text-mint-100 dark:border-mint-700";
+      case "wrap":
+        return "bg-peach-100 text-orange-800 border-peach-300 dark:bg-peach-700/70 dark:text-peach-100 dark:border-peach-700";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
+    }
+  };
+
+  // Format date from DD/MM/YYYY to MM/DD/YY
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    
+    // If already in DD/MM/YYYY format
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const shortYear = year.slice(-2);
+      return `${month}/${day}/${shortYear}`;
+    }
+    
+    // Fallback to Date parsing
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        year: '2-digit' 
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const ProjectIcon = getProjectIcon(project.type);
+  const PeriodIcon = getPeriodIcon(project.period);
+
   return (
-    <Card className="transition-all duration-200 hover:shadow-lg">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h3 className="text-xl font-bold">{projectName}</h3>
-                <ApprovalStatusBadge status={approvalStatus} />
-                {approvalStatus === 'approved' && (
-                  <OperationalStatusBadge status={status} />
-                )}
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1.5">
-                  <Icons.Hash className="w-4 h-4" />
-                  {projectCode}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Icons.Film className="w-4 h-4" />
-                  {projectType}
-                </span>
-                {studioId && (
-                  <span className="flex items-center gap-1.5">
-                    <Icons.Building className="w-4 h-4" />
-                    {studioId.studioName}
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5">
-                  <Icons.MapPin className="w-4 h-4" />
-                  {country}
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {/* Primary Actions based on status */}
-              {approvalStatus === 'pending' && (
-                <Button size="sm" variant="secondary" disabled>
-                  <Icons.Clock className="w-4 h-4 mr-1" />
-                  Waiting for Approval
-                </Button>
-              )}
-
-              {canSubmit && (
-                <Button
-                  size="sm"
-                  onClick={() => onSubmitForApproval(_id)}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Icons.Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                  ) : (
-                    <Icons.Send className="w-4 h-4 mr-1" />
-                  )}
-                  Submit for Approval
-                </Button>
-              )}
-
-              {canView && (
-                <Button
-                  size="sm"
-                  variant="default"
-                  onClick={() => onOpen(_id)}
-                >
-                  <Icons.Eye className="w-4 h-4 mr-1" />
-                  View Details
-                </Button>
-              )}
-
-              {/* Actions Menu */}
-              <ActionsMenu
-                actions={[
-                  canView && {
-                    label: "View Details",
-                    icon: "Eye",
-                    onClick: () => onOpen(_id),
-                  },
-                  canEdit && {
-                    label: "Edit Project",
-                    icon: "Edit",
-                    onClick: handleEdit,
-                    separatorBefore: canView,
-                  },
-                  canSubmit && {
-                    label: "Submit for Approval",
-                    icon: "Send",
-                    onClick: () => onSubmitForApproval(_id),
-                    separatorBefore: !canView && canEdit,
-                  },
-                  canDelete && {
-                    label: "Delete Project",
-                    icon: "Trash2",
-                    onClick: () => onDelete(_id),
-                    destructive: true,
-                    separatorBefore: true,
-                  },
-                ].filter(Boolean)}
-              />
-            </div>
-          </div>
-
-          {/* Rejection Reason Alert - UPDATED WITH DARK MODE */}
-          {approvalStatus === 'rejected' && rejectionReason && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-950/30 dark:border-red-900/50">
-              <div className="flex items-start gap-2">
-                <Icons.AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900 dark:text-red-300 mb-1">Rejection Reason:</p>
-                  <p className="text-sm text-red-700 dark:text-red-400">{rejectionReason}</p>
-                </div>
-              </div>
+    <motion.div
+      key={project.id}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.1, duration: 0.15 }}
+      whileHover={{ scale: 1.01, y: -2 }}
+      whileTap={{ scale: 0.99 }}
+      onClick={() =>
+        navigateWithName({
+          title: project.title,
+          uniqueCode: project.projectCode,
+          basePath: "projects",
+          storageKey: "currentProjectUniqueKey",
+        })
+      }
+      className="cursor-pointer rounded-xl bg-background hover:bg-[#faf5ff] dark:hover:bg-slate-950 border overflow-hidden transition-all"
+    >
+      {/* Content */}
+      <div className="p-4 space-y-3">
+        {/* Top Row: Rating (Left) and Status Badge (Right) */}
+        <div className="flex items-center justify-between">
+          {/* Rating - Left */}
+          {project.rating && (
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+              <span className="text-xs font-medium text-gray-800 dark:text-white">
+                {project.rating}
+              </span>
             </div>
           )}
 
-          {/* Project Info - UPDATED WITH DARK MODE */}
-          <div className="flex items-center justify-between text-sm pt-3 border-t border-border">
-            <span className="text-muted-foreground">
-              Created: {new Date(createdAt).toLocaleDateString()}
+          {/* Status Badge - Right */}
+          <Badge
+            className={`px-2 py-0.5 rounded-lg border flex items-center gap-1 ${getPeriodColor(
+              project.period
+            )}`}
+          >
+            <PeriodIcon className="w-3 h-3" />
+            <span className="text-[10px] font-medium uppercase">
+              {project.period}
             </span>
-            {approvalStatus === 'draft' && (
-              <span className="text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
-                <Icons.AlertCircle className="w-4 h-4" />
-                Submit for approval to activate
-              </span>
-            )}
+          </Badge>
+        </div>
+
+        {/* Icon and Project Title in One Row */}
+        <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-700">
+          {/* Project Icon */}
+          <div className="w-10 h-10 rounded-lg bg-[#9333ea]/10 dark:bg-[#9333ea]/20 flex items-center justify-center shrink-0">
+            <ProjectIcon className="w-5 h-5 text-[#9333ea]" />
+          </div>
+
+          {/* Project Title and Type */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+              {project.title}
+            </h3>
+            <p className="text-[10px] font-medium text-gray-700 dark:text-gray-400 uppercase truncate">
+              {project.type}
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Role */}
+        <div className="px-3 py-1.5 rounded-lg border bg-card">
+          <p className="text-[9px] font-medium text-gray-700 dark:text-gray-400 uppercase">
+            Your Role
+          </p>
+          <p className="text-xs font-semibold text-[#9333ea] dark:text-lavender-400 truncate">
+            {project.role}
+          </p>
+        </div>
+
+        {/* Progress */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-medium text-gray-700 dark:text-gray-400 uppercase">
+              PROGRESS
+            </span>
+            <span className="text-[10px] font-bold text-gray-900 dark:text-white">
+              {project.progress}%
+            </span>
+          </div>
+
+          <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${project.progress}%` }}
+              transition={{ delay: index * 0.1 + 0.3, duration: 0.8 }}
+              className="h-full rounded-full bg-[#9333ea]"
+            />
+          </div>
+        </div>
+
+        {/* Stats - Updated with Start Date, End Date, and Team Size */}
+        <div className="grid grid-cols-3 gap-2">
+          <Stat icon={Users} value={project.teamSize} />
+          <Stat icon={Calendar} value={formatDate(project.startDate)} />
+          <Stat icon={CalendarCheck} value={formatDate(project.endDate)} />
+        </div>
+
+        {/* Studios */}
+        <div className="flex flex-wrap gap-1.5">
+          {project.studios?.map((studio, i) => (
+            <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5">
+              {studio}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 }
+
+/* Reusable Stat */
+function Stat({ icon: Icon, value }) {
+  return (
+    <div className="px-2 py-1.5 rounded-lg bg-card text-center">
+      <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-[#9333ea] dark:text-gray-400" />
+      <p className="text-[10px] font-bold text-gray-900 dark:text-white truncate">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+export default ProjectCard;
