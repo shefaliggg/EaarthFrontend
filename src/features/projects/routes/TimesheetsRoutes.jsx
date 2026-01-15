@@ -1,7 +1,7 @@
 import { lazy } from 'react';
 import TimesheetDetailsLayout from '../timesheets/layouts/TimesheetDetailsLayout';
 import TimesheetSettingsRoutes from './TimesheetSettingsRoutes';
-import TimesheetLayout from '../timesheets/layouts/TimesheetLayout';
+import TimesheetLayout from '../timesheets/layouts/TimsheetLayout';
 
 const TimesheetTable = lazy(() => import('../timesheets/pages/TimesheetTable'));
 const FinancialSummary = lazy(() => import('../timesheets/pages/FinancialSummary'));

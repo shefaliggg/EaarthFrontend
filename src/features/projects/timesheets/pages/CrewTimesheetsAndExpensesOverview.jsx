@@ -539,7 +539,7 @@ function CrewTimesheetsOverview() {
       <PrimaryStats stats={primaryStats} gridColumns={8} gridGap={2} useSecondaryCard={true} />
 
       <div>
-        <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
+        <div className='grid grid-cols-[1fr_auto_auto] items-center gap-3'>
           <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
           <FilterPillTabs
             options={[
@@ -800,11 +800,6 @@ function CrewTimesheetsOverview() {
                     </AccordionItem>
                   )}
                 </Accordion>
-
-
-                {/* <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
-
-                </Accordion> */}
               </AccordionContent>
             </AccordionItem>
           );

@@ -10,15 +10,15 @@ export function SecondaryMetricsCard({
     valueColor = "text-foreground",
     icon: Icon,
     iconColor = "text-primary",
-    subText,
-    subTextColor,
+    subtext,
+    subtextColor,
     showProgress = false,
     progressValue,
 }) {
     return (
         <Card className="p-4 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100 dark:border-gray-800">
             <CardContent className="p-0 h-full flex flex-col justify-between gap-3">
-                
+
                 {/* Header */}
                 <div className="flex items-center gap-1">
                     <SmartIcon icon={Icon} className={cn(iconColor)} size="sm" />
@@ -30,14 +30,15 @@ export function SecondaryMetricsCard({
                 {/* Value */}
                 <div className={cn("text-xl font-bold leading-tight", valueColor)}>
                     {value}
+                    {subtext && (
+                        <span className={cn("text-xs ml-2 text-muted-foreground font-medium", subtextColor)}>
+                            ({subtext})
+                        </span>
+                    )}
                 </div>
 
-                {/* Subtext */}
-                {subText && (
-                    <div className={cn("text-sm text-muted-foreground font-medium", subTextColor)}>
-                        {subText}
-                    </div>
-                )}
+                {/* subtext */}
+
 
                 {/* Progress */}
                 {showProgress && (

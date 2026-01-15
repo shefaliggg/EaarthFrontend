@@ -9,9 +9,9 @@ import { ManageTeam } from '../components/ManageTeam';
 import StudioAnalytics from '../components/StudioAnalytics';
 import ProjectDetails from '../pages/ProjectDetails';
 import EditProject from '../components/EditProject';
-import TimesheetsRoutes from './TimesheetsRoutes';
 import FuelAndMileageRoutes from './FuelAndMileageRoutes';
 import pettyCashRoutes from './PettyCashRoutes';
+import TimesheetsRoutes from './TimesheetsRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
