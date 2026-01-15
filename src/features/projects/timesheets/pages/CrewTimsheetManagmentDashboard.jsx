@@ -598,11 +598,11 @@ function CrewTimsheetManagmentDashboard() {
                                 className="bg-card rounded-2xl border shadow-xl overflow-hidden"
                             >
                                 {/* HEADER */}
-                                <AccordionTrigger className="px-8 py-6 hover:no-underline bg-card hover:bg-primary/10 transition-all">
+                                <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b group">
                                     <div className="flex w-full items-center justify-between">
                                         {/* LEFT */}
                                         <div className="flex items-center gap-6 text-left">
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
+                                            <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-600 to-purple-900 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                                 <Briefcase className="w-6 h-6 text-white" />
                                             </div>
 
@@ -627,42 +627,7 @@ function CrewTimsheetManagmentDashboard() {
                                             </div>
                                         </div>
 
-                                        {/* RIGHT */}
-                                        <div className="flex items-center gap-4">
-                                            {/* Progress Ring */}
-                                            <div className="relative w-16 h-16">
-                                                <svg className="-rotate-90 w-16 h-16">
-                                                    <circle
-                                                        cx="32"
-                                                        cy="32"
-                                                        r="28"
-                                                        strokeWidth="4"
-                                                        fill="none"
-                                                        className="text-gray-200 dark:text-gray-700"
-                                                        stroke="currentColor"
-                                                    />
-                                                    <circle
-                                                        cx="32"
-                                                        cy="32"
-                                                        r="28"
-                                                        strokeWidth="4"
-                                                        fill="none"
-                                                        strokeDasharray={2 * Math.PI * 28}
-                                                        strokeDashoffset={
-                                                            2 * Math.PI * 28 * (1 - completion / 100)
-                                                        }
-                                                        className="text-emerald-500 transition-all duration-500"
-                                                        stroke="currentColor"
-                                                    />
-                                                </svg>
-
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                                                        {completion.toFixed(0)}%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <CircularProgress value={completion.toFixed(0)} size={56} />
                                     </div>
                                 </AccordionTrigger>
 
