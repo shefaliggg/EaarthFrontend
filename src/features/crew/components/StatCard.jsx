@@ -1,3 +1,4 @@
+// StageCard.jsx
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Plus } from "lucide-react";
 import { cn } from "@/shared/config/utils";
@@ -8,14 +9,14 @@ export function StageCard({ stage, count, isSelected, isAction, onClick }) {
   return (
     <Card 
       className={cn(
-        "border cursor-pointer transition-all hover:shadow-md py-4 px-0",
+        "border cursor-pointer transition-all hover:shadow-md py-2 px-0",
         isAction && "border-primary border-dashed bg-gradient-to-br from-primary/5 to-primary/10",
         isSelected && !isAction && "ring-2 ring-primary"
       )}
       onClick={onClick}
       data-testid={`card-stage-${stage.label.toLowerCase().replace(/\s+/g, '-')}`}
     >
-      <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-2 min-h-[90px]">
+      <CardContent className="py-4 px-3 flex flex-col items-center justify-center text-center gap-2 min-h-[90px]">
         {/* Icon at top */}
         <IconComponent className={cn("w-5 h-5 shrink-0", stage.color)} />
         
@@ -25,13 +26,15 @@ export function StageCard({ stage, count, isSelected, isAction, onClick }) {
         </p>
         
         {/* Count or New */}
-        {count !== null ? (
+        {count !== null && count !== undefined ? (
           <p className="text-xl font-bold leading-none">{count}</p>
-        ) : (
+        ) : isAction ? (
           <div className="flex items-center gap-1">
             <Plus className="w-3 h-3 text-primary" />
             <span className="text-xs font-semibold text-primary">New</span>
           </div>
+        ) : (
+          <p className="text-xl font-bold leading-none">0</p>
         )}
       </CardContent>
     </Card>
