@@ -25,7 +25,7 @@ export const DAY_TYPE_ITEMS = [
 ];
 
 export const tableSelect =
-  "h-6! px-0! pr-0.5! text-[9px] font-mono uppercase text-center " +
+  "h-6! pl-1.5! gap-0! pr-0.5! text-[9px] text-center " +
   "border border-muted-foreground/30 rounded-md " +
   "bg-background/60 dark:bg-input/30 " +
   "hover:bg-accent/40 " +

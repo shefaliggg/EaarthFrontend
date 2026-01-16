@@ -24,8 +24,6 @@ export default function PrimaryStats({ stats, gridColumns, gridGap = 4, useSecon
     5: "gap-5",
   };
 
-      console.log("stat data", stats[1].subLabel)
-
   return (
     <div className={`grid ${gridClass} ${gaps[gridGap] ?? "gap-4"}`}>
       {stats.map((stat, index) => (

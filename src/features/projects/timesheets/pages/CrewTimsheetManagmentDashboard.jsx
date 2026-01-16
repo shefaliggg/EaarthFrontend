@@ -7,7 +7,7 @@ import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
 import SearchBar from '../../../../shared/components/SearchBar';
 import { SelectMenu } from '../../../../shared/components/menus/SelectMenu';
 import { Button } from '../../../../shared/components/ui/button';
-import { Ban, Briefcase, CheckCircle2, CheckSquare, Square, ChevronDown, Eye, Flag, Users, X } from 'lucide-react';
+import { Ban, Briefcase, CheckCircle2, CheckSquare, Square, ChevronDown, Eye, Flag, Users, X, FlagOff } from 'lucide-react';
 import { cn } from '../../../../shared/config/utils';
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +18,12 @@ import {
 } from "@/shared/components/ui/accordion";
 import { toast } from 'sonner';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
+import { Card, CardContent } from '../../../../shared/components/ui/card';
+import { Checkbox } from '../../../../shared/components/ui/checkbox';
+import { Avatar, AvatarFallback } from '../../../../shared/components/ui/avatar';
+import { Badge } from '../../../../shared/components/ui/badge';
+import { InfoTooltip } from '../../../../shared/components/InfoTooltip';
 
 function CrewTimsheetManagmentDashboard() {
     const params = useParams();
@@ -369,6 +375,26 @@ function CrewTimsheetManagmentDashboard() {
         { key: 'sun', label: 'Sun' }
     ];
 
+    function getTimesheetStatus(approval, submitted, isOff) {
+        if (isOff) return 'off';
+        if (!submitted) return 'not-submitted';
+        if (approval.paid) return 'paid';
+
+        // Check if payroll made corrections and waiting for finance re-approval
+        if (approval.payrollCorrected && !approval.financeReapproved) return 'pending-finance-reapproval';
+
+        // Check if all approvals are complete (including re-approval if needed)
+        if (approval.hodApproved && approval.productionApproved && approval.financeApproved && approval.payrollReviewed) {
+            if (approval.payrollCorrected) {
+                // If corrected, need finance re-approval
+                return approval.financeReapproved ? 'approved' : 'pending-finance-reapproval';
+            }
+            return 'approved';
+        }
+
+        return 'pending-approval';
+    }
+
     return (
         <div className='space-y-6 container mx-auto'>
             <PageHeader
@@ -376,10 +402,9 @@ function CrewTimsheetManagmentDashboard() {
                 title={"Timesheet Approval Center"}
                 subtitle={`Review and approve crew timesheets for the week`}
                 extraActions={
-                    <div className={`flex items-center gap-6`}>
+                    <div className={`flex items-center gap-3`}>
                         <div className="flex items-center gap-4">
-                            <CircularProgress value={stats.total > 0 ? ((stats.submitted / stats.total) * 100).toFixed(0) : 0} />
-                            <div className=''>
+                            <div className='text-right'>
                                 <div className={`font-bold uppercase tracking-wider text-muted-foreground mb-1`}>
                                     Overall Progress
                                 </div>
@@ -387,6 +412,8 @@ function CrewTimsheetManagmentDashboard() {
                                     {stats.submitted} of {stats.total} submitted
                                 </div>
                             </div>
+                            <CircularProgress size={56} value={stats.total > 0 ? ((stats.submitted / stats.total) * 100).toFixed(0) : 0} />
+
                         </div>
 
                         <WeekNavigator
@@ -394,7 +421,7 @@ function CrewTimsheetManagmentDashboard() {
                             onPreviousWeek={goToPreviousWeek}
                             onNextWeek={goToNextWeek}
                             onGoToCurrentWeek={goToToday}
-                            className={"bg-background py-3 rounded-2xl border shadow"}
+                        // className={"bg-background py-3 rounded-2xl border shadow"}
                         />
                     </div>
                 }
@@ -402,7 +429,7 @@ function CrewTimsheetManagmentDashboard() {
 
             <PrimaryStats stats={primaryStats} gridColumns={7} gridGap={4} useSecondaryCard={true} />
             <div>
-                <div className='grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr] gap-3 items-center'>
+                <div className='grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr] gap-2 items-center'>
                     <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-[400px]  mr-5"} />
                     <SelectMenu
                         label="All Departments"
@@ -471,7 +498,7 @@ function CrewTimsheetManagmentDashboard() {
                         Flagged
                     </Button>
                 </div>
-                <div className='flex flex-row items-center justify-between py-2 pt-0 border-b'>
+                <div className='flex flex-row items-center justify-between py-2 pt-1 border-b'>
                     {filteredCrew.length !== crewList.length && (
                         <div className="text-center">
                             <span className={`text-sm text-muted-foreground`}>
@@ -480,21 +507,58 @@ function CrewTimsheetManagmentDashboard() {
                         </div>
                     )}
 
-                    {(searchQuery || statusFilter !== 'all') && (
+                    {(searchQuery || departmentFilter !== "all" || contractFilter !== "all" || contractCategoryFilter !== "all" || statusFilter !== 'all' || showOnlyFlagged) && (
                         <div className="flex items-center gap-2 pt-4">
                             <span className="text-xs font-bold text-gray-500">Active filters:</span>
                             {searchQuery && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
                                     <span className="text-xs font-bold text-purple-700 dark:text-purple-400">Search: "{searchQuery}"</span>
                                     <button onClick={() => setSearchQuery('')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
                                         <X className="w-3 h-3" />
                                     </button>
                                 </div>
                             )}
+
+                            {departmentFilter !== 'all' && (
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
+                                    <span className="text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">Department: {departmentFilter}</span>
+                                    <button onClick={() => setDepartmentFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {contractFilter !== 'all' && (
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
+                                    <span className="text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">Contract: {contractFilter}</span>
+                                    <button onClick={() => setContractFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {contractCategoryFilter !== 'all' && (
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
+                                    <span className="text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">Contract Category: {contractCategoryFilter}</span>
+                                    <button onClick={() => setContractCategoryFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+
                             {statusFilter !== 'all' && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-lg">
                                     <span className="text-xs font-bold text-purple-700 dark:text-purple-400 capitalize">Status: {statusFilter}</span>
                                     <button onClick={() => setStatusFilter('all')} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {showOnlyFlagged && (
+                                <div className="flex items-center gap-2 pl-3 py-1 pr-1.5 bg-red-200 dark:bg-red-900/30 rounded-lg">
+                                    <span className="text-xs font-bold text-red-700 dark:text-red-400 capitalize">Flagged Crew</span>
+                                    <button onClick={() => setShowOnlyFlagged(false)} className="hover:bg-purple-200 dark:hover:bg-purple-800/50 rounded p-0.5">
                                         <X className="w-3 h-3" />
                                     </button>
                                 </div>
@@ -518,7 +582,7 @@ function CrewTimsheetManagmentDashboard() {
                     )}
                 </div>
                 {selectedCrewIds.size > 0 && (
-                    <div className='flex items-center justify-between py-2 border-b'>
+                    <div className='flex items-center justify-between pt-4 pb-0'>
                         <div className="flex items-center gap-3">
                             <div className="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                                 <span className="text-sm font-bold text-purple-700 dark:text-purple-400">
@@ -530,7 +594,6 @@ function CrewTimsheetManagmentDashboard() {
                         <div className="flex items-center gap-3">
                             <Button
                                 onClick={handleBulkApprove}
-                            // className="px-6 py-3 rounded-xl font-bold transition-all bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 border-2 border-emerald-500 shadow-lg hover:scale-105"
                             >
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 className="w-5 h-5" />
@@ -540,7 +603,6 @@ function CrewTimsheetManagmentDashboard() {
                             <Button
                                 variant={"destructive"}
                                 onClick={handleBulkReject}
-                            // className="px-6 py-3 rounded-xl font-bold transition-all bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 border-2 border-red-500 shadow-lg hover:scale-105"
                             >
                                 <div className="flex items-center gap-2">
                                     <Ban className="w-5 h-5" />
@@ -550,7 +612,6 @@ function CrewTimsheetManagmentDashboard() {
                             <Button
                                 variant={"outline"}
                                 onClick={() => setSelectedCrewIds(new Set())}
-                            // className={`px-6 py-3 rounded-xl font-bold transition-all  border-2  hover:bg-gray-100 dark:hover:bg-[#211d2e]`}
                             >
                                 <div className="flex items-center gap-2">
                                     <X className="w-5 h-5" />
@@ -565,7 +626,7 @@ function CrewTimsheetManagmentDashboard() {
             <Accordion
                 type="multiple"
                 className="space-y-3"
-                defaultValue={crewByDepartment.map(([dept]) => dept)}
+                defaultValue={[]}
             >
                 {crewByDepartment.map(([department, deptCrew], deptIdx) => {
                     const deptStats = {
@@ -598,7 +659,7 @@ function CrewTimsheetManagmentDashboard() {
                                 className="bg-card rounded-2xl border shadow-xl overflow-hidden"
                             >
                                 {/* HEADER */}
-                                <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b group">
+                                <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b border-muted group">
                                     <div className="flex w-full items-center justify-between">
                                         {/* LEFT */}
                                         <div className="flex items-center gap-6 text-left">
@@ -643,10 +704,8 @@ function CrewTimsheetManagmentDashboard() {
                                             {deptCrew.map((crew, idx) => {
                                                 const isSelected = selectedCrewIds.has(crew.id);
                                                 const isFlagged = flaggedIds.has(crew.id);
-                                                const isExpanded = expandedCrewId === crew.id;
                                                 const totalHours = calculateTotalHours(crew.weekData);
-                                                // const status = getTimesheetStatus(crew.approval, crew.submitted, crew.isOff);
-                                                const status = "submitted";
+                                                const status = getTimesheetStatus(crew.approval, crew.submitted, crew.isOff);
 
                                                 return (
                                                     <motion.div
@@ -654,203 +713,190 @@ function CrewTimsheetManagmentDashboard() {
                                                         initial={{ opacity: 0, x: -20 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: idx * 0.02 }}
-                                                        className={`relative rounded-2xl border-2 transition-all ${isSelected
-                                                            ? 'border-purple-500 shadow-lg shadow-purple-500/20'
-                                                            : isFlagged
-                                                                ? 'border-red-500 shadow-lg shadow-red-500/20'
-                                                                : ""
-                                                            } bg-card hover:shadow-xl group`}
                                                     >
-                                                        {/* Main Row */}
-                                                        <div className="p-6 flex items-center gap-6">
-                                                            {/* Checkbox */}
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    toggleCrewSelection(crew.id);
-                                                                }}
-                                                                className={`p-2 rounded-xl transition-all bg-background
-                                                                        }`}
-                                                            >
-                                                                {isSelected ? (
-                                                                    <CheckSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                                                                ) : (
-                                                                    <Square className={`w-6 h-6 text-muted-foreground`} />
-                                                                )}
-                                                            </button>
+                                                        <Card
+                                                            className={cn(
+                                                                "rounded-2xl transition-all hover:shadow-xl",
+                                                                isSelected && "border-purple-500 shadow-lg shadow-purple-500/20",
+                                                                isFlagged && "border-destructive bg-destructive/10 shadow-red-500/20"
+                                                            )}
+                                                        >
+                                                            <CardContent className="p-6 pl-5 py-2 flex items-center gap-4">
 
-                                                            {/* Avatar & Info */}
-                                                            <div className="flex items-center gap-4 flex-1 min-w-[250px]">
-                                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
-                                                                    <span className="text-lg font-black text-white">
-                                                                        {crew.name.split(' ').map(n => n[0]).join('')}
-                                                                    </span>
-                                                                </div>
-                                                                <div>
-                                                                    <div className={`font-black  text-lg mb-1`}>{crew.name}</div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className={`text-sm text-muted-foreground`}>{crew.role}</span>
-                                                                        <span className={`text-xs text-muted-foreground`}>•</span>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${crew.contractType === 'Daily'
-                                                                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                                                                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                                                                                }`}>
+                                                                {/* Checkbox */}
+                                                                <Checkbox
+                                                                    checked={isSelected}
+                                                                    onCheckedChange={() => toggleCrewSelection(crew.id)}
+                                                                    className={"size-6 rounded-sm"}
+                                                                />
+
+                                                                {/* Avatar & Info */}
+                                                                <div className="flex items-center gap-4 flex-1 min-w-[250px]">
+                                                                    <Avatar className="h-12 w-12 bg-primary/40">
+                                                                        <AvatarFallback className="bg-primary/40">
+                                                                            {crew.name.split(" ").map(n => n[0]).join("")}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+
+                                                                    <div>
+                                                                        <div className="text-lg font-black">{crew.name}</div>
+                                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                                                            <span className='shrink-0'>{crew.role}</span>
+                                                                            <span>•</span>
+
+                                                                            <Badge variant="secondary" className="uppercase text-[10px]">
                                                                                 {crew.contractType}
-                                                                            </span>
-                                                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${crew.contractCategory === 'PAYE'
-                                                                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                                                                                : crew.contractCategory === 'SCHD'
-                                                                                    ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
-                                                                                    : crew.contractCategory === 'LOAN OUT'
-                                                                                        ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400'
-                                                                                        : 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
-                                                                                }`}>
+                                                                            </Badge>
+
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className={cn(
+                                                                                    "uppercase text-[10px] font-bold",
+                                                                                    crew.contractCategory === "PAYE" && "bg-emerald-400 text-background",
+                                                                                    crew.contractCategory === "SCHD" && "bg-orange-400 text-background",
+                                                                                    crew.contractCategory === "LOAN OUT" && "bg-cyan-400 text-background"
+                                                                                )}
+                                                                            >
                                                                                 {crew.contractCategory}
-                                                                            </span>
+                                                                            </Badge>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Week Days Mini View */}
-                                                            <div className="flex items-center gap-1">
-                                                                {days.map(day => {
-                                                                    const dayData = crew.weekData[day.key];
-                                                                    const hours = parseFloat(dayData.hours || '0');
-                                                                    const hasData = hours > 0;
-                                                                    const isWeekend = ['sat', 'sun'].includes(day.key);
-                                                                    const isOvertime = hours > 12; // Consider over 12 hours as overtime
+                                                                {/* Week Days */}
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {days.map(day => {
+                                                                        const dayData = crew.weekData[day.key];
+                                                                        const hours = parseFloat(dayData.hours || "0");
+                                                                        const hasData = hours > 0;
+                                                                        const isWeekend = ["sat", "sun"].includes(day.key);
+                                                                        const isOvertime = hours > 12;
 
-                                                                    return (
-                                                                        <div
-                                                                            key={day.key}
-                                                                            className="flex flex-col items-center"
-                                                                            title={`${day.label}: ${hours}h${isOvertime ? ' (OT)' : ''}${isWeekend ? ' (Weekend)' : ''}`}
-                                                                        >
-                                                                            <div className="text-[9px] font-bold text-gray-400 mb-1">
-                                                                                {day.label[0]}
-                                                                            </div>
-                                                                            <div
-                                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all ${hasData
-                                                                                    ? isWeekend || isOvertime
-                                                                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 ring-2 ring-red-500'
-                                                                                        : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                                                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
-                                                                                    }`}
-                                                                            >
-                                                                                {hasData ? hours.toFixed(1) : '-'}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-
-                                                            {/* Total Hours */}
-                                                            <div className="text-center min-w-[80px]">
-                                                                <div className="text-xs font-bold text-gray-500 mb-1">TOTAL</div>
-                                                                <div className={`text-2xl font-black `}>
-                                                                    {totalHours.toFixed(1)}h
-                                                                </div>
-                                                                {/* OT/Extra Hours Indicator */}
-                                                                {(() => {
-                                                                    const otHours = (crew.sixthDay || 0) + (crew.seventhDay || 0) +
-                                                                        (crew.cameraOT || 0) + (crew.preOT || 0) + (crew.postOT || 0);
-                                                                    if (otHours > 0) {
                                                                         return (
-                                                                            <div className="text-[10px] font-bold text-red-600 dark:text-red-400 mt-0.5">
-                                                                                +{otHours.toFixed(1)}h OT
-                                                                            </div>
+                                                                            <InfoTooltip
+                                                                                content={
+                                                                                    <>
+                                                                                        {day.label}: {hours}h
+                                                                                        {isOvertime && " (OT)"}
+                                                                                        {isWeekend && " (Weekend)"}
+                                                                                    </>
+                                                                                }
+                                                                            >
+                                                                                <div className="flex flex-col items-center cursor-default">
+                                                                                    <span className="text-[9px] font-bold text-muted-foreground mb-1">
+                                                                                        {day.label[0]}
+                                                                                    </span>
+
+                                                                                    <div
+                                                                                        className={cn(
+                                                                                            "w-8 h-8 rounded-md flex items-center justify-center text-[10px] font-bold",
+                                                                                            hasData
+                                                                                                ? isWeekend || isOvertime
+                                                                                                    ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 ring-1 ring-red-500 dark:ring-red-700"
+                                                                                                    : "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-100"
+                                                                                                : "bg-muted text-muted-foreground"
+                                                                                        )}
+                                                                                    >
+                                                                                        {hasData ? hours.toFixed(1) : "-"}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </InfoTooltip>
                                                                         );
-                                                                    }
-                                                                    return null;
-                                                                })()}
-                                                            </div>
-
-                                                            {/* Cost */}
-                                                            <div className="text-center min-w-[100px]">
-                                                                <div className="text-xs font-bold text-gray-500 mb-1">COST</div>
-                                                                <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                                                                    £{(crew.totalCost || 0).toLocaleString()}
+                                                                    })}
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Status Badge */}
-                                                            <div className="min-w-[120px]">
-                                                                <div
-                                                                    className={`px-4 py-2 rounded-xl font-bold text-sm text-center ${status === 'Approved'
-                                                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-2 border-purple-500'
-                                                                        : status === 'Submitted'
-                                                                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-500'
-                                                                            : status === 'Pending'
-                                                                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-2 border-amber-500'
-                                                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-2 border-gray-300 dark:border-gray-600'
-                                                                        }`}
-                                                                >
-                                                                    {status}
+                                                                {/* Total Hours */}
+                                                                <div className="text-center">
+                                                                    <div className="text-xs font-bold text-muted-foreground mb-1">TOTAL</div>
+                                                                    <div className="text-lg font-black">{totalHours.toFixed(1)}h</div>
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Actions */}
-                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toggleFlag(crew.id);
-                                                                    }}
-                                                                    className={`p-2.5 rounded-xl border-2 transition-all hover:scale-110 ${isFlagged
-                                                                        ? 'border-red-500 bg-red-100 dark:bg-red-900/30'
-                                                                        : ` hover:border-red-500`
-                                                                        }`}
-                                                                    title={isFlagged ? 'Remove Flag' : 'Flag for Review'}
-                                                                >
-                                                                    <Flag className={`w-4 h-4 ${isFlagged ? 'text-red-600 dark:text-red-400' : ""}`} />
-                                                                </button>
+                                                                {/* Cost */}
+                                                                <div className="text-center">
+                                                                    <div className="text-xs font-bold text-muted-foreground mb-1">COST</div>
+                                                                    <div className="text-lg font-black text-emerald-600">
+                                                                        £{(crew.totalCost || 0).toLocaleString()}
+                                                                    </div>
+                                                                </div>
 
-                                                                {crew.submitted && (
-                                                                    <>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                toast.success(`Approved timesheet for ${crew.name}`);
-                                                                            }}
-                                                                            className="p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-all hover:scale-110"
-                                                                            title="Approve"
+                                                                <div className='flex items-center justify-end gap-4 min-w-85'>
+                                                                    {/* Status */}
+                                                                    <StatusBadge status={status} size='sm' />
+
+                                                                    <div className="flex items-center gap-2">
+                                                                        <InfoTooltip
+                                                                            content={isFlagged ? 'Remove Flag' : 'Flag for Review'}
                                                                         >
-                                                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                                                        </button>
-
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRejectSingle(crew.id);
-                                                                            }}
-                                                                            className="p-2.5 rounded-xl border-2 border-red-500 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 transition-all hover:scale-110"
-                                                                            title="Reject"
+                                                                            <Button
+                                                                                variant={"outline"}
+                                                                                size={"icon"}
+                                                                                className={cn("size-10", isFlagged ? "hover:bg-green-100 dark:hover:bg-green-950" : "hover:bg-red-100 dark:hover:bg-red-950")}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    toggleFlag(crew.id);
+                                                                                }}
+                                                                            >
+                                                                                {isFlagged
+                                                                                    ? <FlagOff className={`w-4 h-4 text-green-600 dark:text-green-400`} />
+                                                                                    : <Flag className={`w-4 h-4 text-red-600 dark:text-red-400`} />
+                                                                                }
+                                                                            </Button>
+                                                                        </InfoTooltip>
+                                                                        {crew.submitted && (
+                                                                            <>
+                                                                                <InfoTooltip
+                                                                                    content={"Aprove Timesheet"}
+                                                                                >
+                                                                                    <Button
+                                                                                        variant={"outline"}
+                                                                                        size={"icon"}
+                                                                                        className={cn("size-10 hover:bg-green-100 dark:hover:bg-green-950")}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            toast.success(`Approved timesheet for ${crew.name}`);
+                                                                                        }}
+                                                                                    >
+                                                                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                                                                    </Button>
+                                                                                </InfoTooltip>
+                                                                                <InfoTooltip
+                                                                                    content={"Reject Timesheet"}
+                                                                                    align='bottom'
+                                                                                >
+                                                                                    <Button
+                                                                                        variant={"outline"}
+                                                                                        size={"icon"}
+                                                                                        className={cn("size-10 hover:bg-red-100 dark:hover:bg-red-950")}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            handleRejectSingle(crew.id);
+                                                                                        }}
+                                                                                    >
+                                                                                        <Ban className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                                                    </Button>
+                                                                                </InfoTooltip>
+                                                                            </>
+                                                                        )}
+                                                                        <InfoTooltip
+                                                                            content={'View Timesheet Details'}
                                                                         >
-                                                                            <Ban className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                                                        </button>
-                                                                    </>
-                                                                )}
-
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        navigate(
-                                                                            `/projects/${params.projectName}/timesheets/2026-01-18?userId=USR-12423`
-                                                                        );
-                                                                    }}
-                                                                    className={`p-2.5 rounded-xl border-2  hover:border-purple-500 transition-all hover:scale-110`}
-                                                                    title="View Details"
-                                                                >
-                                                                    <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Flag Indicator */}
-                                                        {isFlagged && (
-                                                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-orange-600" />
-                                                        )}
+                                                                            <Button
+                                                                                variant={"outline"}
+                                                                                size={"icon"}
+                                                                                className={cn("size-10")}
+                                                                                onClick={(e) => {
+                                                                                    navigate(
+                                                                                        `/projects/${params.projectName}/timesheets/2026-01-18?userId=USR-12423`
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                <Eye className="w-4 h-4" />
+                                                                            </Button>
+                                                                        </InfoTooltip>
+                                                                    </div>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
                                                     </motion.div>
                                                 );
                                             })}
@@ -861,8 +907,8 @@ function CrewTimsheetManagmentDashboard() {
                         </AccordionItem>
                     );
                 })}
-            </Accordion>
-        </div>
+            </Accordion >
+        </div >
     )
 }
 
