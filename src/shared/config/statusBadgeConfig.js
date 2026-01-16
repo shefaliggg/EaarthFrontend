@@ -30,16 +30,18 @@ const STATUS_META = {
 
   draft: "warning",
   pending: "warning",
+  "pending-approval": "warning",
 
   "not-started": "neutral",
   disabled: "neutral",
 
   rejected: "danger",
   suspended: "danger",
+  "not-submitted": "danger",
 };
 
 export function getStatusBadge(status, label) {
-  // console.log("status", status)
+  console.log("status", status)
   const group = STATUS_META[status];
 
   if (!group) {

@@ -195,87 +195,6 @@ function CrewTimesheetsOverview() {
 
   const sortedYears = Object.keys(weeksByYear).map(Number).sort((a, b) => b - a);
 
-  // const commonStats = useMemo(() => [
-  //   {
-  //     key: "hours",
-  //     value: totalHours.toFixed(1),
-  //     valueText: "Total Hours",
-  //     icon: "Timer",
-  //     color: "blue",
-  //   },
-  //   {
-  //     key: "earnings",
-  //     value: `${totalEarnings.toLocaleString("en-GB", {
-  //       minimumFractionDigits: 2,
-  //       maximumFractionDigits: 2,
-  //     })}`,
-  //     valueText: "Total Earnings",
-  //     icon: "PoundSterling",
-  //     color: "emerald",
-  //   },
-  // ], [totalHours, totalEarnings]);
-
-  // const tabSpecificStats = useMemo(() => {
-  //   if (activeTab === "timesheets") {
-  //     return [
-  //       {
-  //         key: "submitted",
-  //         value: weeks.filter(w => w.status !== "not-started").length,
-  //         valueText: "Timesheets Submitted",
-  //         icon: "Clock",
-  //         color: "purple",
-  //       },
-  //       {
-  //         key: "approved",
-  //         value: weeks.filter(w => w.status === "approved").length,
-  //         valueText: "Timesheets Approved",
-  //         icon: "Award",
-  //         color: "purple",
-  //       },
-  //     ];
-  //   } else if (activeTab === "petty-cash") {
-  //     return [
-  //       {
-  //         key: "claimed",
-  //         value: totalPettyCash.toFixed(2),
-  //         valueText: "Petty Cash Claimed",
-  //         icon: "Banknote",
-  //         color: "purple",
-  //       },
-  //       {
-  //         key: "approved-petty-cash",
-  //         value: weeks.filter(w => w.expenseStatus === "approved").length,
-  //         valueText: "Approved Petty Cash Claims",
-  //         icon: "Award",
-  //         color: "purple",
-  //       },
-  //     ]
-  //   }
-
-  //   // expenses
-  //   return [
-  //     {
-  //       key: "claimed",
-  //       value: totalExpenses.toFixed(2),
-  //       valueText: "L Fuel Claimed",
-  //       icon: "Fuel",
-  //       color: "purple",
-  //     },
-  //     {
-  //       key: "approved-expenses",
-  //       value: weeks.filter(w => w.expenseStatus === "approved").length,
-  //       valueText: "Approved Fuel Claims",
-  //       icon: "Award",
-  //       color: "purple",
-  //     },
-  //   ];
-  // }, [activeTab, weeks, totalExpenses]);
-
-  // const quickStats = useMemo(
-  //   () => [...tabSpecificStats, ...commonStats],
-  //   [tabSpecificStats, commonStats]
-  // );
-
   const commonPrimaryStats = [
     {
       label: "Total Hours",
@@ -620,7 +539,7 @@ function CrewTimesheetsOverview() {
       <PrimaryStats stats={primaryStats} gridColumns={8} gridGap={2} useSecondaryCard={true} />
 
       <div>
-        <div className='grid grid-cols-[1fr_auto_auto] gap-3'>
+        <div className='grid grid-cols-[1fr_auto_auto] items-center gap-3'>
           <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
           <FilterPillTabs
             options={[
@@ -881,11 +800,6 @@ function CrewTimesheetsOverview() {
                     </AccordionItem>
                   )}
                 </Accordion>
-
-
-                {/* <Accordion type="single" collapsible defaultValue={defaultInnerSection}>
-
-                </Accordion> */}
               </AccordionContent>
             </AccordionItem>
           );

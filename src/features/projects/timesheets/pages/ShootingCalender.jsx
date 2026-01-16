@@ -13,6 +13,7 @@ import { Label } from "../../../../shared/components/ui/label";
 import { Input } from "../../../../shared/components/ui/input";
 import { Checkbox } from "../../../../shared/components/ui/checkbox";
 import { Textarea } from "../../../../shared/components/ui/textarea";
+import { WeekNavigator } from "../../../../shared/components/buttons/WeekNavigator";
 
 const WORKPLACES_LIST = [
   'Bourne Wood', 'Brecon Beacons', 'Crychan Forest', 'Dartmoor', 'Forest of Dean',
@@ -33,7 +34,7 @@ function ShootingCalender() {
     '2025-12-03': { unit: 'Main', unitCall: '07:00', unitWrap: '18:15', workingHours: '10 (CWD)', cameraOT: '1.25', dayType: 'Shoot', dayNumber: 49, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Studio Day - Stage 7' },
     '2025-12-04': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 50, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Elstree' },
     '2025-12-05': { unit: 'Main', unitCall: '07:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 51, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Elstree - Stage 2' },
-    '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid'},
+    '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid' },
     '2025-12-07': { dayType: 'Rest', dayNumber: '-' },
     '2025-12-08': { dayType: 'Rest', dayNumber: '-' },
 
@@ -42,7 +43,7 @@ function ShootingCalender() {
     '2025-12-10': { unit: 'Main', unitCall: '06:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 54, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Bourne Wood - Continuation' },
     '2025-12-11': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 55, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Wales location - Travel allowance' },
     '2025-12-12': { unit: 'Main', unitCall: '07:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.5', dayType: 'Shoot', dayNumber: 56, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Wales - Day 2' },
-    '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid'},
+    '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid' },
     '2025-12-14': { dayType: 'Rest', dayNumber: '-' },
     '2025-12-15': { dayType: 'Rest', dayNumber: '-' },
 
@@ -95,7 +96,7 @@ function ShootingCalender() {
     '2026-01-20': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 76, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
     '2026-01-21': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 77, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Pinewood - Stage 5' },
     '2026-01-22': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 78, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
-    '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid'},
+    '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid' },
     '2026-01-24': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 80, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
     '2026-01-25': { dayType: 'Rest', dayNumber: '-' },
     '2026-01-26': { dayType: 'Rest', dayNumber: '-' },
@@ -160,35 +161,6 @@ function ShootingCalender() {
     setCurrentDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()))
   }
 
-  const getWeekRange = (date) => {
-    const d = new Date(date)
-    const day = d.getDay() === 0 ? 7 : d.getDay() // Sunday → 7
-    const monday = new Date(d)
-    monday.setDate(d.getDate() - (day - 1))
-
-    const sunday = new Date(monday)
-    sunday.setDate(monday.getDate() + 6)
-
-    return { monday, sunday }
-  }
-
-  const formatWeekRange = (start, end) => {
-    const sameMonth = start.getMonth() === end.getMonth()
-
-    if (sameMonth) {
-      return `${start.getDate()} – ${end.getDate()} ${start.toLocaleDateString("en-US", { month: "short" })} ${start.getFullYear()}`
-    }
-
-    return `${start.getDate()} ${start.toLocaleDateString("en-US", { month: "short" })} – ${end.getDate()} ${end.toLocaleDateString("en-US", { month: "short" })} ${end.getFullYear()}`
-  }
-
-  const { monday, sunday } = getWeekRange(currentDate)
-
-  const today = new Date()
-
-  const { monday: currentWeekStart, sunday: currentWeekEnd } = getWeekRange(today)
-
-  const isCurrentWeek = currentDate >= currentWeekStart && currentDate <= currentWeekEnd
 
   const getDaysForView = () => {
     const startOfWeek = new Date(currentDate);
@@ -377,31 +349,13 @@ function ShootingCalender() {
             label="Select Unit"
           />
 
-          <div className="flex items-center gap-3">
-            {!isCurrentWeek && (
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                <Calendar className="w-4 h-4" />
-                Go To Current Week
-              </Button>
-            )}
+          <WeekNavigator
+            currentDate={currentDate}
+            onPreviousWeek={goToPreviousWeek}
+            onNextWeek={goToNextWeek}
+            onGoToCurrentWeek={goToToday}
+          />
 
-            <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <div>
-                <h3 className="font-bold text-lg">
-                  {formatWeekRange(monday, sunday)}
-                </h3>
-
-              </div>
-            </div>
-
-            <Button variant="outline" size="icon" onClick={goToNextWeek}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
         <PrimaryStats stats={summaryStats} gridColumns={5} />
 
