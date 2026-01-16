@@ -37,6 +37,8 @@ export default function PrimaryStats({ stats, gridColumns, gridGap = 4, useSecon
             valueColor={stat.color}
             icon={stat.icon}
             iconColor={stat.iconColor}
+            onClick={stat.onClick}
+            isSelected={stat.isSelected}
           />
           : <MetricsCard
             key={index}
@@ -48,6 +50,8 @@ export default function PrimaryStats({ stats, gridColumns, gridGap = 4, useSecon
             icon={stat.icon}
             iconBg={stat.iconBg}
             iconColor={stat.iconColor}
+            onClick={stat.onClick}
+            isSelected={stat.isSelected}
           />
       ))}
     </div>

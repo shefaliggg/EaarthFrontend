@@ -13,10 +13,19 @@ export function MetricsCard({
   iconColor = "text-primary",
   indicatorText,
   inidicatorBg = "text-primary",
-  indicatorIcon
+  indicatorIcon,
+  onClick,
+  isSelected
 }) {
   return (
-    <Card className="p-6">
+    <Card 
+      className={cn(
+        "p-6 transition-all",
+        onClick && "cursor-pointer hover:shadow-md hover:border-primary/50",
+        isSelected && "ring-2 ring-primary border-primary"
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-0 space-y-6">
         <div className="flex items-start justify-between h-full">
 
@@ -51,7 +60,6 @@ export function MetricsCard({
               </div>
             )}
             {indicatorText && (
-
               <div
                 className={cn(
                   "flex items-center justify-center shrink-0",
