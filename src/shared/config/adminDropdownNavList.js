@@ -63,43 +63,43 @@ export function adminDropdownList(userRole = "studio-admin") {
     ],
   };
 
-  const crewMenu = {
-    id: "crew-menu",
-    triggerLabel: "Crew",
-    triggerIcon: Icon.Users,
-    dropdownLabel: "Crew Menu",
-    align: "end",
-    items: [
-      {
-        id: "crew-schedule",
-        label: "My Schedule",
-        icon: Icon.Calendar,
-        route: "/crew/schedule",
-      },
-      {
-        id: "crew-tasks",
-        label: "My Tasks",
-        icon: Icon.CheckSquare,
-        route: "/crew/tasks",
-      },
-      {
-        id: "crew-notifications",
-        label: "Notifications",
-        icon: Icon.Bell,
-        route: "/crew/notifications",
-      },
-      {
-        id: "crew-settings",
-        label: "Settings",
-        icon: Icon.Settings,
-        route: "/crew/settings",
-      },
-      ...commonListBottomItems
-    ],
-  };
+  // const crewMenu = {
+  //   id: "crew-menu",
+  //   triggerLabel: "Crew",
+  //   triggerIcon: Icon.Users,
+  //   dropdownLabel: "Crew Menu",
+  //   align: "end",
+  //   items: [
+  //     {
+  //       id: "crew-schedule",
+  //       label: "My Schedule",
+  //       icon: Icon.Calendar,
+  //       route: "/crew/schedule",
+  //     },
+  //     {
+  //       id: "crew-tasks",
+  //       label: "My Tasks",
+  //       icon: Icon.CheckSquare,
+  //       route: "/crew/tasks",
+  //     },
+  //     {
+  //       id: "crew-notifications",
+  //       label: "Notifications",
+  //       icon: Icon.Bell,
+  //       route: "/crew/notifications",
+  //     },
+  //     {
+  //       id: "crew-settings",
+  //       label: "Settings",
+  //       icon: Icon.Settings,
+  //       route: "/crew/settings",
+  //     },
+  //     ...commonListBottomItems
+  //   ],
+  // };
 
   if (userRole === "studio-admin") return studioAdminMenu;
-  if (userRole === "crew") return crewMenu;
+  // if (userRole === "crew") return crewMenu;
   
   return null;
 }

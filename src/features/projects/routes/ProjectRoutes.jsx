@@ -13,6 +13,7 @@ import FuelAndMileageRoutes from './FuelAndMileageRoutes';
 import pettyCashRoutes from './PettyCashRoutes';
 import TimesheetsRoutes from './TimesheetsRoutes';
 import ProjectCalendarRoutes from './ProjectCalendarRoutes';
+import MyOffer from '../../crew/pages/Myoffer';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -22,6 +23,7 @@ const ProjectRoutes = {
         { index: true, element: <ProjectList /> },
         { path: 'create', element: <CreateProject /> },
         { path: 'reports', element: <ViewReports /> },
+        { path: 'Myoffers', element: <MyOffer /> },
         { path: 'team', element: <ManageTeam /> },
         { path: 'analytics', element: <StudioAnalytics /> },
         { path: ':id/edit', element: <EditProject /> },
