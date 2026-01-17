@@ -327,7 +327,7 @@ export function useProjectMenus(allProjects = []) {
         id: "calendar",
         label: "Calendar Settings",
         icon: Icon.Calendar,
-        route: `/projects/${projectName}/calendar-settings`,
+        route: `/projects/${projectName}/calendar/settings`,
       },
       {
         id: "timecard",

@@ -12,6 +12,7 @@ import EditProject from '../components/EditProject';
 import FuelAndMileageRoutes from './FuelAndMileageRoutes';
 import pettyCashRoutes from './PettyCashRoutes';
 import TimesheetsRoutes from './TimesheetsRoutes';
+import ProjectCalendarRoutes from './ProjectCalendarRoutes';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -36,6 +37,7 @@ const ProjectRoutes = {
                 
                 ProjectAppsRoutes,
                 ProjectDepartmentsRoutes,
+                ProjectCalendarRoutes,
 
                 { path: '*', element: <NotFound /> }
 
