@@ -77,13 +77,13 @@ export function useProjectMenus(allProjects = []) {
       },
       {
         id: "project-calendar",
-        label: "Project Calendar",
+        label: "Calendar",
         icon: Icon.Calendar,
         route: `/projects/${projectName}/calendar`,
       },
       {
         id: "project-chat",
-        label: "Project Chat",
+        label: "Chat",
         icon: Icon.MessageSquare,
         route: `/projects/${projectName}/chat`,
       },
