@@ -68,11 +68,11 @@ const FINANCIAL_METADATA = {
 const FinancialSummary = () => {
     const data = TEMP_SUMMARY_DATA
     const currencySymbol = '£'
-    const currentUserRole = 'Crew'
+    const currentUserRole = 'crew'
     const readOnly = false
     const allowanceCaps = {}
-    const totalCurrent = data.reduce((sum, item) => sum + item.total, 0);
-    const totalPTD = data.reduce((sum, item) => sum + (item.ptd || 0), 0);
+    const totalCurrent = data?.reduce((sum, item) => sum + item.total, 0);
+    const totalPTD = data?.reduce((sum, item) => sum + (item.ptd || 0), 0);
     const totalCombined = totalCurrent + totalPTD;
 
     // Map of allowance labels to their cap keys
@@ -104,7 +104,7 @@ const FinancialSummary = () => {
     const [isEditingPayout, setIsEditingPayout] = useState(false);
     const [editPayoutValue, setEditPayoutValue] = useState('0.00');
 
-    const canEdit = !readOnly && (currentUserRole === 'Finance' || currentUserRole === 'Payroll');
+    const canEdit = !readOnly && (currentUserRole === 'finance' || currentUserRole === 'payroll');
 
     const handleEditClick = (label) => {
         if (!canEdit) {

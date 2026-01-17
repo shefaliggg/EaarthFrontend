@@ -24,6 +24,7 @@ import { Checkbox } from '../../../../shared/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '../../../../shared/components/ui/avatar';
 import { Badge } from '../../../../shared/components/ui/badge';
 import { InfoTooltip } from '../../../../shared/components/InfoTooltip';
+import { AutoHeight } from '../../../../shared/components/wrappers/AutoHeight';
 
 function CrewTimsheetManagmentDashboard() {
     const params = useParams();
@@ -428,7 +429,8 @@ function CrewTimsheetManagmentDashboard() {
             />
 
             <PrimaryStats stats={primaryStats} gridColumns={7} gridGap={4} useSecondaryCard={true} />
-            <div>
+            
+            <AutoHeight>
                 <div className='grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr] gap-2 items-center'>
                     <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-[400px]  mr-5"} />
                     <SelectMenu
@@ -621,7 +623,7 @@ function CrewTimsheetManagmentDashboard() {
                         </div>
                     </div>
                 )}
-            </div>
+            </AutoHeight>
 
             <Accordion
                 type="multiple"

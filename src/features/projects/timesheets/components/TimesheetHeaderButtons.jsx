@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download, FileText, DollarSign } from 'lucide-react';
 import { Button } from '../../../../shared/components/ui/button';
+import { InfoTooltip } from '../../../../shared/components/InfoTooltip';
 
 export function TimesheetHeaderButtons({
   currentUserRole,
@@ -13,27 +14,36 @@ export function TimesheetHeaderButtons({
 
   return (
     <>
-      {currentUserRole === 'Finance' && (
-        <Button size={"icon"} variant={"outline"}
-          onClick={onFinanceAction}
-          title="Accounts Only"
+      {currentUserRole === 'finance' && (
+        <InfoTooltip
+          content={"Accounts Only"}
         >
-          <DollarSign className="w-4 h-4" />
-        </Button>
+          <Button size={"icon"} variant={"outline"}
+            onClick={onFinanceAction}
+          >
+            <DollarSign className="w-4 h-4" />
+          </Button>
+        </InfoTooltip>
       )}
-      <Button size={"icon"} variant={"outline"}
-        onClick={onExportTimesheet}
-        title="Download Timesheet"
+      <InfoTooltip
+        content={"Download Timesheet"}
       >
-        <Download className="w-4 h-4" />
-      </Button>
-      {canDownloadInvoice && (
         <Button size={"icon"} variant={"outline"}
-          onClick={onExportInvoice}
-          title="Download Invoice"
+          onClick={onExportTimesheet}
         >
-          <FileText className="w-4 h-4" />
+          <Download className="w-4 h-4" />
         </Button>
+      </InfoTooltip>
+      {canDownloadInvoice && (
+        <InfoTooltip
+          content={"Download Invoice"}
+        >
+          <Button size={"icon"} variant={"outline"}
+            onClick={onExportInvoice}
+          >
+            <FileText className="w-4 h-4" />
+          </Button>
+        </InfoTooltip>
       )}
     </>
   );
