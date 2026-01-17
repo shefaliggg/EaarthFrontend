@@ -933,21 +933,25 @@ export function TimesheetForm({
                         {/* Audit Log */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <InfoTooltip
-                                    content={"View Audit logs"}
-                                >
-                                    <Button size={"icon"} variant={"outline"}>
+                                <Button size="icon" variant="outline">
+                                    <InfoTooltip content="View Audit logs">
                                         <History className="w-4 h-4" />
-                                    </Button>
-                                </InfoTooltip>
+                                    </InfoTooltip>
+                                </Button>
                             </PopoverTrigger>
+
                             <PopoverContent className="w-80 p-0 z-50" align="end">
                                 <div className="p-3 border-b bg-muted rounded-t-lg">
-                                    <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Audit Log</h4>
+                                    <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider">
+                                        Audit Log
+                                    </h4>
                                 </div>
+
                                 <div className="max-h-60 overflow-y-auto p-2 space-y-2">
                                     {auditLogs.length === 0 ? (
-                                        <div className="text-center text-gray-400 py-4 text-[10px]">No changes recorded since submission</div>
+                                        <div className="text-center text-gray-400 py-4 text-[10px]">
+                                            No changes recorded since submission
+                                        </div>
                                     ) : (
                                         auditLogs.map((log, i) => (
                                             <div key={i} className="text-[10px] border-b pb-2 last:border-0">
