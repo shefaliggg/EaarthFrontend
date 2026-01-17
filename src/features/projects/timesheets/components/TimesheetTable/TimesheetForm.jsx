@@ -6,7 +6,10 @@ import {
     FilePlus, Download, X, DollarSign, ChevronDown, Edit2, RotateCcw, ThumbsUp,
     Edit3, Lock, EyeOff, RefreshCw, Calculator, History, ChevronLeft,
     MoreHorizontal, Car, Check, ChevronsUpDown, Wallet, Save,
-    Edit
+    Edit,
+    GitGraph,
+    ChartBarStacked,
+    ChartColumnStacked
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../shared/components/ui/popover';
@@ -22,6 +25,7 @@ import { Button } from '../../../../../shared/components/ui/button';
 import { StatusBadge } from '../../../../../shared/components/badges/StatusBadge';
 import { WeeklyGraphicalView } from './WeeklyGraphicalView';
 import { useNavigate, useParams } from 'react-router-dom';
+import { InfoTooltip } from '../../../../../shared/components/InfoTooltip';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -139,7 +143,7 @@ export function TimesheetForm({
     crewType,
     customItems,
     onEntriesUpdate,
-    currentUserRole = 'Crew',
+    currentUserRole = 'crew',
     projectSettings,
     calendarSchedule,
     upgradeRoles = [],
@@ -150,29 +154,12 @@ export function TimesheetForm({
     const navigate = useNavigate();
     const params = useParams();
 
-    const [payHoliday, setPayHoliday] = useState(false);
     const [isVatRegistered, setIsVatRegistered] = useState(crewInfo?.isVATRegistered || false);
-    const [holidayPayout, setHolidayPayout] = useState('');
-    const [selectedView, setSelectedView] = useState('All');
     const [exportMode, setExportMode] = useState('none');
     const [showGraphicalView, setShowGraphicalView] = useState(false);
-    const [showMileageForm, setShowMileageForm] = useState(false);
-    const [showFinancialSummary, setShowFinancialSummary] = useState(false);
-    const [showCrewDropdown, setShowCrewDropdown] = useState(false);
-    const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
-    const [showWeekDropdown, setShowWeekDropdown] = useState(false);
-
-    // Track edit mode
     const [isEditingWeek, setIsEditingWeek] = useState(false);
-
-    // Track timesheet status
     const [timesheetStatus, setTimesheetStatus] = useState('draft');
-
-    // Local copy of entries for editing
     const [localEntries, setLocalEntries] = useState([]);
-
-    // Shared day filter state
-    const [selectedDays, setSelectedDays] = useState(new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']));
 
     // Calculate week ending from entries (assuming last entry is Sunday)
     const calculatedWeekEnding = useMemo(() => {
@@ -250,7 +237,7 @@ export function TimesheetForm({
 
     // Watch for changes when crew is editing - automatically set to draft
     useEffect(() => {
-        if (isEditingWeek && currentUserRole === 'Crew' && timesheetStatus !== 'draft') {
+        if (isEditingWeek && currentUserRole === 'crew' && timesheetStatus !== 'draft') {
             setTimesheetStatus('draft');
         }
     }, [isEditingWeek, localEntries, currentUserRole]);
@@ -368,7 +355,7 @@ export function TimesheetForm({
             // Add Audit Log Entry
             const newLog = {
                 date: new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-                user: currentUserRole || 'Accounts',
+                user: currentUserRole || 'accounts',
                 action: 'REVISION',
                 details: 'Timesheet revised and totals recalculated.'
             };
@@ -395,7 +382,7 @@ export function TimesheetForm({
             if (oldValue != value) {
                 const changeLog = {
                     date: new Date().toLocaleString(),
-                    user: currentUserRole || 'Admin',
+                    user: currentUserRole || 'admin',
                     action: 'Edit',
                     details: `${formatEntryDate(currentEntry.date)}: ${field} changed from '${oldValue}' to '${value}'`
                 };
@@ -814,19 +801,6 @@ export function TimesheetForm({
 
     const entriesToRender = isEditingWeek ? localEntries : entries;
 
-    if (showFinancialSummary) {
-        return (
-            <FinancialSummaryPage
-                onBack={() => setShowFinancialSummary(false)}
-                data={summaryData}
-                currencySymbol="£"
-                currentUserRole={currentUserRole}
-                readOnly={readOnly}
-                allowanceCaps={allowanceCaps}
-            />
-        );
-    }
-
     return (
         <div
             className={`relative flex flex-col bg-card overflow-hidden`}
@@ -860,17 +834,16 @@ export function TimesheetForm({
                 <div className="flex gap-4">
                     <div className="flex items-center gap-2 pl-4 border-l border-purple-100">
                         {/* Crew-specific buttons */}
-                        {currentUserRole === "Crew" && (
+                        {currentUserRole === "crew" && (
                             <>
                                 {!isEditingWeek && !readOnly && !isPaid ? (
                                     <Button
                                         size="sm"
                                         variant="secondary"
                                         onClick={handleCrewEdit}
-                                        title="Edit Timesheet"
                                         className="uppercase text-[10px] tracking-wider"
                                     >
-                                        <Edit3 className="size-3 mr-1" />
+                                        <Edit3 className="size-4" />
                                         Edit
                                     </Button>
                                 ) : !readOnly && !isPaid ? (
@@ -879,10 +852,9 @@ export function TimesheetForm({
                                             size="sm"
                                             variant="secondary"
                                             onClick={handleCrewSave}
-                                            title="Save as Draft"
                                             className="uppercase text-[10px] tracking-wider"
                                         >
-                                            <Save className="size-3 mr-1" />
+                                            <Save className="size-4" />
                                             Save
                                         </Button>
 
@@ -890,10 +862,9 @@ export function TimesheetForm({
                                             size="sm"
                                             variant="default"
                                             onClick={handleCrewSubmit}
-                                            title="Submit Timesheet"
                                             className="uppercase text-[10px] tracking-wider bg-green-600 hover:bg-green-700"
                                         >
-                                            <Send className="size-3 mr-1" />
+                                            <Send className="size-4" />
                                             Submit
                                         </Button>
                                     </>
@@ -902,27 +873,29 @@ export function TimesheetForm({
                         )}
 
                         {/* HOD/Finance/Payroll buttons */}
-                        {currentUserRole !== "Crew" && (
+                        {currentUserRole !== "crew" && (
                             <>
                                 {!isEditingWeek ? (
-                                    <Button
-                                        size="icon"
-                                        variant="outline"
-                                        onClick={handleRevise}
-                                        title="Revise Timesheet"
+                                    <InfoTooltip
+                                        content={"Revise Timesheet"}
                                     >
-                                        <Edit3 className="size-3" />
-                                    </Button>
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            onClick={handleRevise}
+                                        >
+                                            <Edit3 className="size-3" />
+                                        </Button>
+                                    </InfoTooltip>
                                 ) : (
                                     <>
                                         <Button
                                             size="sm"
                                             variant="outline"
                                             onClick={handleRevert}
-                                            title="Revert Changes"
                                             className="uppercase text-[10px] tracking-wider"
                                         >
-                                            <RotateCcw className="size-3 mr-1" />
+                                            <RotateCcw className="size-4" />
                                             Revert
                                         </Button>
 
@@ -930,10 +903,9 @@ export function TimesheetForm({
                                             size="sm"
                                             variant="secondary"
                                             onClick={handleRecalculate}
-                                            title="Recalculate Totals"
                                             className="uppercase text-[10px] tracking-wider"
                                         >
-                                            <Calculator className="size-3 mr-1" />
+                                            <Calculator className="size-4" />
                                             Recalculate
                                         </Button>
 
@@ -941,26 +913,33 @@ export function TimesheetForm({
                                             size="sm"
                                             variant="default"
                                             onClick={handleApprove}
-                                            title="Approve Revision"
                                             className="uppercase text-[10px] tracking-wider bg-green-600 hover:bg-green-700"
                                         >
-                                            <CheckCircle2 className="size-3 mr-1" />
-                                            Revised
+                                            <CheckCircle2 className="size-4" />
+                                            Save
                                         </Button>
                                     </>
                                 )}
                             </>
                         )}
-                        <Button size={"icon"} variant={"outline"} onClick={() => setShowGraphicalView(true)} title="View Charts">
-                            <Calculator className="w-4 h-4" />
-                        </Button>
+                        <InfoTooltip
+                            content={"Graphical View of chart"}
+                        >
+                            <Button size={"icon"} variant={"outline"} onClick={() => setShowGraphicalView(true)}>
+                                <ChartColumnStacked className="w-4 h-4" />
+                            </Button>
+                        </InfoTooltip>
 
                         {/* Audit Log */}
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button size={"icon"} variant={"outline"} title="Audit Log">
-                                    <History className="w-4 h-4" />
-                                </Button>
+                                <InfoTooltip
+                                    content={"View Audit logs"}
+                                >
+                                    <Button size={"icon"} variant={"outline"}>
+                                        <History className="w-4 h-4" />
+                                    </Button>
+                                </InfoTooltip>
                             </PopoverTrigger>
                             <PopoverContent className="w-80 p-0 z-50" align="end">
                                 <div className="p-3 border-b bg-muted rounded-t-lg">
@@ -984,21 +963,26 @@ export function TimesheetForm({
                             </PopoverContent>
                         </Popover>
 
-                        <Button size={"icon"} variant={"outline"}
-                            onClick={() => navigate(`/projects/${params.projectName}/fuel-mileage/2026-05-05?claim=#124322`)}
-                            title="Mileage & Fuel Reimbursement"
+                        <InfoTooltip
+                            content={"Mileage & Fuel Reimbursement"}
                         >
-                            <Car className="w-4 h-4" />
-                        </Button>
+                            <Button size={"icon"} variant={"outline"}
+                                onClick={() => navigate(`/projects/${params.projectName}/fuel-mileage/2026-05-05?claim=#124322`)}
+                            >
+                                <Car className="w-4 h-4" />
+                            </Button>
+                        </InfoTooltip>
 
                         {/* Financial Summary Button */}
-                        <Button size={"icon"} variant={"outline"}
-                            onClick={() => navigate("financial-summary")}
-                            title="Financial Summary"
+                        <InfoTooltip
+                            content={"Financial Summary"}
                         >
-                            <Wallet className="w-4 h-4" />
-                        </Button>
-
+                            <Button size={"icon"} variant={"outline"}
+                                onClick={() => navigate("financial-summary")}
+                            >
+                                <Wallet className="w-4 h-4" />
+                            </Button>
+                        </InfoTooltip>
                         {/* Week Completion Indicator - Compact version for header */}
 
                         <WeekCompletionIndicator
@@ -1051,12 +1035,12 @@ export function TimesheetForm({
                 <div className="flex-1 flex flex-col border-r overflow-hidden">
                     <div className="overflow-x-auto">
                         {/* WIDTH LOCK */}
-                        <div className="min-w-[1000px]">
+                        <div className="min-w-[1100px]">
 
-                            <div className="grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px] 
-                              bg-purple-50/80 dark:bg-purple-900/20 
-                                border-b text-[10px] font-black uppercase tracking-wider 
-                                sticky top-0 z-10 py-0.5 px-3"
+                            <div className={cn("grid grid-cols-[110px_140px_130px_120px_1fr_1fr_120px]" +
+                                " bg-purple-50/80 dark:bg-purple-900/20" +
+                                " border-b text-[10px] font-black uppercase tracking-wider " +
+                                "sticky top-0 z-10 py-0.5 px-3")}
                             >
 
                                 <div className="p-2 border-r min-w-0">Date Calendar</div>

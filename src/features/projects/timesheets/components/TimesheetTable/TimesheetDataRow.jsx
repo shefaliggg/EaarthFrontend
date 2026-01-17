@@ -13,14 +13,12 @@ import { StatusBadge } from "@/shared/components/badges/StatusBadge"
 
 const TimesheetDataRow = ({
     entry,
-    index,
     isEditing,
     update,
     upgradeRoles,
     autoValues = {},
-    currentUserRole = 'Crew',
+    currentUserRole = 'crew',
     calendarSchedule,
-    theme,
     t,
     HOURS,
     MINUTES,
@@ -39,7 +37,7 @@ const TimesheetDataRow = ({
         'Training'
     ].includes(entry.dayType);
 
-    const isCrewRestricted = currentUserRole === 'Crew';
+    const isCrewRestricted = currentUserRole === 'crew';
     const calendarData = calendarSchedule?.[entry.date];
     const [openLocation, setOpenLocation] = useState(false);
 
@@ -320,7 +318,7 @@ const TimesheetDataRow = ({
                             <>
                                 {/* Role Selector */}
                                 <SelectMenu
-                                    label="Role"
+                                    label="Select Role"
                                     items={upgradeRoles.map((r) => ({ label: r.name, value: r.name }))}
                                     selected={entry.upgradeRole}
                                     onSelect={(v) => {

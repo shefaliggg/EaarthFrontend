@@ -5,21 +5,10 @@ import { TimesheetForm } from "../components/TimesheetTable/TimesheetForm";
 
 function TimesheetTable() {
     const { week } = useParams();
-    const [viewMode, setViewMode] = useState("table");
-    // 'table' | 'print' | 'weekly-overview'
-
-    const [approveViewMode, setApproveViewMode] = useState("single");
-    // 'list' | 'single'
-
-    const [isCrewSelfView, setIsCrewSelfView] = useState(true);
-
-    /* ---------------- WEEK / ROUTING ---------------- */
     const [selectedWeek, setSelectedWeek] = useState(
         week || new Date().toISOString().split("T")[0]
     );
-
-    /* ---------------- USER / ROLE ---------------- */
-    const [currentUserRole, setCurrentUserRole] = useState("Crew");
+    const [currentUserRole, setCurrentUserRole] = useState("hod");
     // Crew | HOD | Payroll | Finance | Production
 
     /* ---------------- CREW INFO ---------------- */
@@ -353,7 +342,7 @@ function TimesheetTable() {
         const isCurrentWeek = weekStatus === 'current';
 
         // First, try to load saved data from localStorage
-        const currentCrew = currentUserRole === 'Crew' ? crewInfo : selectedCrewInfo;
+        const currentCrew = currentUserRole === 'crew' ? crewInfo : selectedCrewInfo;
         const crewId = currentCrew?.id || `${currentCrew?.firstName || ''}_${currentCrew?.lastName || ''}` || 'default';
         const savedData = loadTimesheetFromStorage(crewId, selectedWeek);
 
@@ -642,9 +631,9 @@ function TimesheetTable() {
 
                     // Determine if the timesheet should be read-only
                     let shouldBeReadOnly = false;
-                    if (currentUserRole === 'Crew') {
+                    if (currentUserRole === 'crew') {
                         shouldBeReadOnly = !canCrewSubmitWeek(selectedWeek);
-                    } else if (currentUserRole === 'HOD' || currentUserRole === 'Payroll') {
+                    } else if (currentUserRole === 'hod' || currentUserRole === 'payroll') {
                         // HOD and Payroll can edit past weeks
                         shouldBeReadOnly = false;
                     } else {

@@ -3,6 +3,8 @@ import { Input } from "@/shared/components/ui/input"
 import { cn } from "@/shared/config/utils"
 import { Minus, Plus } from "lucide-react"
 import { Button } from "../../../../../shared/components/ui/button"
+import { useIsTruncated } from "../../../../../shared/hooks/useIsTruncated"
+import { InfoTooltip } from "../../../../../shared/components/InfoTooltip"
 
 export function TimesheetMiniField({
     label,
@@ -23,6 +25,8 @@ export function TimesheetMiniField({
     const decrement = () =>
         onChange(fieldKey, Math.max(min, numValue - step))
 
+    const { ref, isTruncated } = useIsTruncated();
+
     return (
         <div
             className={cn(
@@ -33,9 +37,25 @@ export function TimesheetMiniField({
             )}
         >
             {/* LABEL */}
-            <span className="text-[9px] font-medium text-muted-foreground truncate">
-                {label}
-            </span>
+            {isTruncated ? (
+                <InfoTooltip content={label}>
+                    <span
+                        ref={ref}
+                        className="text-[9px] font-medium text-muted-foreground truncate max-w-[48px]"
+                    >
+                        {label}
+                    </span>
+                </InfoTooltip>
+            ) : (
+                <span
+                    ref={ref}
+                    className="text-[9px] font-medium text-muted-foreground truncate max-w-[48px]"
+                >
+                    {label}
+                </span>
+            )
+            }
+
 
             {/* VALUE / INPUT */}
             {isEditing && isEditable ? (
@@ -59,7 +79,7 @@ export function TimesheetMiniField({
                                 onChange(fieldKey, Number(e.target.value) || 0)
                             }
                             className={cn(
-                                "h-4 w-7 px-0.5 text-xs font-mono text-right",
+                                "h-4 w-7 px-0.5 text-[10px] text-right",
                                 "bg-transparent border-none shadow-none",
                                 "focus-visible:ring-0 focus-visible:outline-none"
                             )}

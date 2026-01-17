@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/accordion";
 import { StatusBadge } from '../../../../shared/components/badges/StatusBadge';
 import { useLocation, useMatch, useParams } from 'react-router-dom';
+import { AutoHeight } from '../../../../shared/components/wrappers/AutoHeight';
 
 
 function CrewTimesheetsOverview() {
@@ -538,7 +539,7 @@ function CrewTimesheetsOverview() {
 
       <PrimaryStats stats={primaryStats} gridColumns={8} gridGap={2} useSecondaryCard={true} />
 
-      <div>
+      <AutoHeight>
         <div className='grid grid-cols-[1fr_auto_auto] items-center gap-3'>
           <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
           <FilterPillTabs
@@ -611,7 +612,7 @@ function CrewTimesheetsOverview() {
             </div>
           )}
         </div>
-      </div>
+      </AutoHeight>
 
       <Accordion
         type="single"
@@ -665,7 +666,7 @@ function CrewTimesheetsOverview() {
             <AccordionItem
               key={year}
               value={String(year)}
-              className="bg-card rounded-2xl border shadow-xl overflow-hidden"
+              className="bg-background rounded-2xl border shadow-xl overflow-hidden"
             >
               {/* Year Header */}
               <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b group">

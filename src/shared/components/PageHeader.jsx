@@ -74,7 +74,7 @@ export function PageHeader({
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 ">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 ">
         <div className="flex items-start gap-6">
           {renderIdentity()}
 
@@ -94,7 +94,7 @@ export function PageHeader({
         </div>
 
         {/* ✅ Actions */}
-        <div className="flex items-center gap-2 self-start md:self-center">
+        <div className="flex items-center gap-2 self-start mt-2">
 
           {extraActions}
 
