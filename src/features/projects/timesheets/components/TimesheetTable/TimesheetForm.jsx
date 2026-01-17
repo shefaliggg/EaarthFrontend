@@ -932,13 +932,14 @@ export function TimesheetForm({
 
                         {/* Audit Log */}
                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline">
-                                    <InfoTooltip content="View Audit logs">
+                            <InfoTooltip content="View Audit logs">
+                                <PopoverTrigger asChild>
+                                    <Button size="icon" variant="outline">
                                         <History className="w-4 h-4" />
-                                    </InfoTooltip>
-                                </Button>
-                            </PopoverTrigger>
+                                    </Button>
+                                </PopoverTrigger>
+                            </InfoTooltip>
+
 
                             <PopoverContent className="w-80 p-0 z-50" align="end">
                                 <div className="p-3 border-b bg-muted rounded-t-lg">
