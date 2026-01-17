@@ -154,29 +154,12 @@ export function TimesheetForm({
     const navigate = useNavigate();
     const params = useParams();
 
-    const [payHoliday, setPayHoliday] = useState(false);
     const [isVatRegistered, setIsVatRegistered] = useState(crewInfo?.isVATRegistered || false);
-    const [holidayPayout, setHolidayPayout] = useState('');
-    const [selectedView, setSelectedView] = useState('All');
     const [exportMode, setExportMode] = useState('none');
     const [showGraphicalView, setShowGraphicalView] = useState(false);
-    const [showMileageForm, setShowMileageForm] = useState(false);
-    const [showFinancialSummary, setShowFinancialSummary] = useState(false);
-    const [showCrewDropdown, setShowCrewDropdown] = useState(false);
-    const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
-    const [showWeekDropdown, setShowWeekDropdown] = useState(false);
-
-    // Track edit mode
     const [isEditingWeek, setIsEditingWeek] = useState(false);
-
-    // Track timesheet status
     const [timesheetStatus, setTimesheetStatus] = useState('draft');
-
-    // Local copy of entries for editing
     const [localEntries, setLocalEntries] = useState([]);
-
-    // Shared day filter state
-    const [selectedDays, setSelectedDays] = useState(new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']));
 
     // Calculate week ending from entries (assuming last entry is Sunday)
     const calculatedWeekEnding = useMemo(() => {

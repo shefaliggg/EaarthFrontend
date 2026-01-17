@@ -16,7 +16,6 @@ const TimesheetsDetailsLayout = () => {
     const section = (() => {
         if (pathname.includes("/settings")) return "settings";
         if (pathname.includes("/financial-summary")) return "financial";
-        if (pathname.includes("/calender")) return "calendar";
         return "timesheet";
     })();
 
@@ -61,15 +60,6 @@ const TimesheetsDetailsLayout = () => {
     const primaryAction = useMemo(() => {
         if (section === "financial") return null;
 
-        if (section === "calendar") {
-            return {
-                label: "Export Calendar",
-                clickAction: () => console.log("Export calendar clicked"),
-                icon: "Download",
-                size: "lg",
-            };
-        }
-
         return {
             label: "Submit Timesheet",
             clickAction: () => console.log("Submit clicked"),
@@ -101,23 +91,6 @@ const TimesheetsDetailsLayout = () => {
                         )
                     }
 
-                />
-            )}
-            
-            {(section === "timesheet" || section === "calendar") && (
-                <FilterPillTabs
-                    options={[
-                        {
-                            label: "My Timesheets",
-                            route: `/projects/${params.projectName}/timesheets/${params.week}`,
-                        },
-                        {
-                            label: "Shooting Calendar",
-                            route: `/projects/${params.projectName}/timesheets/${params.week}/calender`,
-                        },
-                    ]}
-                    value={pathname}
-                    navigatable
                 />
             )}
 
