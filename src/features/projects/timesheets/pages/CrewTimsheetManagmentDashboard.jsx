@@ -658,7 +658,7 @@ function CrewTimsheetManagmentDashboard() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: deptIdx * 0.05 }}
-                                className="bg-card rounded-2xl border shadow-xl overflow-hidden"
+                                className="bg-background rounded-2xl border shadow-xl overflow-hidden"
                             >
                                 {/* HEADER */}
                                 <AccordionTrigger className="px-8 py-6 hover:no-underline bg-background border-b border-muted group">
@@ -719,7 +719,7 @@ function CrewTimsheetManagmentDashboard() {
                                                         <Card
                                                             className={cn(
                                                                 "rounded-2xl transition-all hover:shadow-xl",
-                                                                isSelected && "border-purple-500 shadow-lg shadow-purple-500/20",
+                                                                isSelected && "border-purple-500 shadow-md shadow-purple-500/20",
                                                                 isFlagged && "border-destructive bg-destructive/10 shadow-red-500/20"
                                                             )}
                                                         >
@@ -729,7 +729,7 @@ function CrewTimsheetManagmentDashboard() {
                                                                 <Checkbox
                                                                     checked={isSelected}
                                                                     onCheckedChange={() => toggleCrewSelection(crew.id)}
-                                                                    className={"size-6 rounded-sm"}
+                                                                    className={"size-6 rounded-sm border-primary/20"}
                                                                 />
 
                                                                 {/* Avatar & Info */}
