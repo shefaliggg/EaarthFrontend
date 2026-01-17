@@ -1,190 +1,235 @@
 import { useEffect, useState } from 'react';
-import { Bell, MessageSquare } from 'lucide-react';
+import {
+  Bell,
+  MessageSquare,
+  User,
+  FileText,
+  LogOut,
+  Settings,
+  HelpCircle,
+  ChevronDown,
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import DarkmodeButton from '../DarkmodeButton';
-import { NotificationsPanel } from '../NotificationPanel';
-import { ChatPanel } from '../ChatPanel';
-import { Button } from '../ui/button';
-import eaarthLogo from '@/assets/eaarth.webp';
-import NavigationDropdown from './NavigationDropdown';
-import DisplayModeTrigger from './DisplayModeTrigger';
-import { adminDropdownList } from '../../config/adminDropdownNavList';
-import { useProjectMenus } from '../../hooks/useProjectMenuList';
-// import { useCrewMenus } from '../../hooks/useCrewMenus';
 import { useSelector } from 'react-redux';
 
+import DarkmodeButton from '../DarkmodeButton';
+import DisplayModeTrigger from './DisplayModeTrigger';
+import { NotificationsPanel } from '../NotificationPanel';
+import { ChatPanel } from '../ChatPanel';
+
+import { Button } from '../ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+
+import eaarthLogo from '@/assets/eaarth.webp';
+import NavigationDropdown from './NavigationDropdown';
+import { adminDropdownList } from '../../config/adminDropdownNavList';
+import { useProjectMenus } from '../../hooks/useProjectMenuList';
+
 export default function Header() {
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [showMessages, setShowMessages] = useState(false);
-    const [displayMode, setDisplayMode] = useState('text-icon');
-    const [notificationCount] = useState(5);
-    const [messageCount] = useState(3);
-    const navigate = useNavigate();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [displayMode, setDisplayMode] = useState('text-icon');
 
-    const { currentUser } = useSelector(state => state.user);
-    // const userType = currentUser?.userType ?? "";
-    const userType = "crew" //temporary for development
+  const [notificationCount] = useState(5);
+  const [messageCount] = useState(3);
 
-    const STUDIO_PROJECTS = [
-        {
-            id: 'avatar1',
-            name: 'AVATAR 1',
-            status: 'active',
-            color: 'blue',
-            lightColor: 'text-blue-600',
-            darkColor: 'text-blue-400',
-            bgLight: 'bg-blue-50',
-            bgDark: 'bg-blue-950',
-        },
-        {
-            id: 'avatar3',
-            name: 'AVATAR 3',
-            status: 'active',
-            color: 'cyan',
-            lightColor: 'text-cyan-600',
-            darkColor: 'text-cyan-400',
-            bgLight: 'bg-cyan-50',
-            bgDark: 'bg-cyan-950',
-        },
-        {
-            id: 'avatar4',
-            name: 'AVATAR 4',
-            status: 'active',
-            color: 'emerald',
-            lightColor: 'text-emerald-600',
-            darkColor: 'text-emerald-400',
-            bgLight: 'bg-emerald-50',
-            bgDark: 'bg-emerald-950',
-        },
-        {
-            id: 'scifi-thriller',
-            name: 'Untitled Sci-Fi Thriller',
-            status: 'active',
-            color: 'purple',
-            lightColor: 'text-purple-600',
-            darkColor: 'text-purple-400',
-            bgLight: 'bg-purple-50',
-            bgDark: 'bg-purple-950',
-        },
-    ];
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    // Mock crew assigned projects (in production, fetch from backend based on crew member)
-    const CREW_ASSIGNED_PROJECTS = [
-        {
-            id: 'avatar1',
-            name: 'AVATAR 1',
-            status: 'active',
-            color: 'blue',
-            lightColor: 'text-blue-600',
-            darkColor: 'text-blue-400',
-            bgLight: 'bg-blue-50',
-            bgDark: 'bg-blue-950',
-        },
-        {
-            id: 'avatar3',
-            name: 'AVATAR 3',
-            status: 'active',
-            color: 'cyan',
-            lightColor: 'text-cyan-600',
-            darkColor: 'text-cyan-400',
-            bgLight: 'bg-cyan-50',
-            bgDark: 'bg-cyan-950',
-        },
-    ];
+  const { currentUser } = useSelector((state) => state.user);
+  const userType = 'crew';
 
-    const studioAdminprojectDropdownList = useProjectMenus(STUDIO_PROJECTS); // all projects from backend should be passed here
-    const CrewprojectDropdownList =  useProjectMenus(CREW_ASSIGNED_PROJECTS); // Get crew-specific menus with assigned projects
+  /* ---------- NAME, ROLE & INITIALS ---------- */
+  const fullName = currentUser?.name?.trim() || 'Mohad Shanid';
+  const role = currentUser?.role || 'Camera Operator';
 
-    useEffect(() => {
-        if (showMessages || showNotifications) {
-            document.body.classList.add("overflow-hidden");
-        } else {
-            document.body.classList.remove("overflow-hidden");
-        }
-    }, [showMessages, showNotifications]);
+  const nameParts = fullName.split(' ').filter(Boolean);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
-    // Build navigation menu based on user role
-    const navigationMenuList = userType === 'crew'
-        ? [...CrewprojectDropdownList, adminDropdownList(userType)] // Show crew menus + crew dropdown for crew users
-        : [...studioAdminprojectDropdownList, adminDropdownList(userType)]; // Show projects + studio admin for studio users
+  // Display: Last, First
+  const displayName =
+    lastName && firstName ? `${lastName}, ${firstName}` : fullName;
 
-    return (
-        <>
-            <div className="h-16 border-b backdrop-blur-sm sticky top-0 z-40 bg-background">
-                <div className="max-w-full mx-auto px-6 h-full flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <img
-                            src={eaarthLogo}
-                            alt="EAARTH logo"
-                            className="h-10 w-auto cursor-pointer"
-                            onClick={() => navigate('home')}
-                        />
-                        {/* <div className="h-6 w-px bg-border" /> */}
-                    </div>
+  // Initials: Last letter + First letter
+  const initials = `${lastName.charAt(0)}${firstName.charAt(0)}`.toUpperCase();
 
-                    <nav className="flex items-center gap-2">
-                        {navigationMenuList.map((menu) => (
-                            menu && (
-                                <NavigationDropdown
-                                    key={menu.id}
-                                    menu={menu}
-                                    displayMode={displayMode}
-                                />
-                            )
-                        ))}
-                    </nav>
+  const avatar = currentUser?.avatar;
 
-                    {/* Right: Icons */}
-                    <div className="flex items-center gap-3">
-                        {/* Notifications */}
-                        <Button
-                            size="sm"
-                            variant={"ghost"}
-                            onClick={() => setShowNotifications(true)}
-                            className="relative transition-all gap-0"
-                        >
-                            <Bell className="w-5 h-5" />
-                            {notificationCount > 0 && (
-                                <span className="absolute -top-1 -right-1 px-1.5 py-0.5  bg-[#9333ea] text-white text-xs font-medium rounded-3xl flex items-center justify-center">
-                                    {notificationCount}
-                                </span>
-                            )}
-                        </Button>
+  /* ---------- PROJECT MENUS ---------- */
+  const PROJECTS = [
+    { id: 'avatar1', name: 'AVATAR 1' },
+    { id: 'avatar3', name: 'AVATAR 3' },
+  ];
 
-                        <Button
-                            size="sm"
-                            variant={"ghost"}
-                            onClick={() => setShowMessages(true)}
-                            className="relative transition-all gap-0"
-                        >
-                            <MessageSquare className="w-5 h-5" />
-                            {messageCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#9333ea] text-white text-xs font-medium rounded-full flex items-center justify-center">
-                                    {messageCount}
-                                </span>
-                            )}
-                        </Button>
+  const projectMenus = useProjectMenus(PROJECTS);
 
-                        <DarkmodeButton />
+  const navigationMenuList =
+    userType === 'crew'
+      ? [...projectMenus, adminDropdownList(userType)]
+      : projectMenus;
 
-                        <DisplayModeTrigger displayMode={displayMode} setDisplayMode={setDisplayMode} />
-                    </div>
-                </div>
-            </div>
-
-            {showNotifications && (
-                <NotificationsPanel
-                    isOpen={showNotifications}
-                    onClose={() => setShowNotifications(false)}
-                />
-            )}
-
-            {showMessages && (
-                <ChatPanel
-                    isOpen={showMessages}
-                    onClose={() => setShowMessages(false)}
-                />
-            )}
-        </>
+  useEffect(() => {
+    document.body.classList.toggle(
+      'overflow-hidden',
+      showMessages || showNotifications
     );
+  }, [showMessages, showNotifications]);
+
+  return (
+    <>
+      <div className="h-16 border-b sticky top-0 z-40 bg-background">
+        <div className="px-6 h-full flex items-center justify-between">
+
+          {/* LEFT */}
+          <img
+            src={eaarthLogo}
+            alt="EAARTH"
+            className="h-10 cursor-pointer"
+            onClick={() => navigate('/home')}
+          />
+
+          {/* CENTER NAV */}
+          <nav className="flex items-center gap-2">
+            {navigationMenuList.map(
+              (menu) =>
+                menu && (
+                  <NavigationDropdown
+                    key={menu.id}
+                    menu={menu}
+                    displayMode={displayMode}
+                  />
+                )
+            )}
+          </nav>
+
+          {/* RIGHT */}
+          <div className="flex items-center gap-2">
+
+            {/* NOTIFICATIONS */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowNotifications(true)}
+              className="relative"
+            >
+              <Bell className="w-5 h-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full px-1.5">
+                  {notificationCount}
+                </span>
+              )}
+            </Button>
+
+            {/* TOGGLES */}
+            <DarkmodeButton />
+            <DisplayModeTrigger
+              displayMode={displayMode}
+              setDisplayMode={setDisplayMode}
+            />
+
+            {/* PROFILE (LAST) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 px-2 py-1.5"
+                >
+                  {/* Avatar / Initials */}
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt={displayName}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+                      {initials}
+                    </div>
+                  )}
+
+                  {/* NAME + ROLE */}
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-xs font-semibold truncate max-w-[110px]">
+                      {displayName}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[110px]">
+                      {role}
+                    </span>
+                  </div>
+
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-56">
+
+                <DropdownMenuItem onClick={() => setShowMessages(true)}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Messages
+                  {messageCount > 0 && (
+                    <span className="ml-auto text-xs bg-purple-600 text-white rounded-full px-2">
+                      {messageCount}
+                    </span>
+                  )}
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => navigate('/projects/Myoffers')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  My Offers
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="w-4 h-4 mr-2" />
+                  My Profile
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => navigate('/support')}>
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  Help & Support
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => navigate('/login')}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      {showNotifications && (
+        <NotificationsPanel
+          isOpen={showNotifications}
+          onClose={() => setShowNotifications(false)}
+        />
+      )}
+
+      {showMessages && (
+        <ChatPanel
+          isOpen={showMessages}
+          onClose={() => setShowMessages(false)}
+        />
+      )}
+    </>
+  );
 }

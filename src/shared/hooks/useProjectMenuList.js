@@ -57,18 +57,13 @@ export function useProjectMenus(allProjects = []) {
         icon: Icon.UserPlus,
         route: `/projects/${projectName}/onboarding`,
       },
-      {
-        id: "offers",
-        label: "My Offers",
-        icon: Icon.UserPlus,
-        route: `/projects/${projectName}/offers`,
-      },
-      {
-        id: "contracts",
-        label: "Contracts",
-        icon: Icon.UserPlus,
-        route: `/projects/${projectName}/contracts`,
-      },
+      
+      // {
+      //   id: "contracts",
+      //   label: "Contracts",
+      //   icon: Icon.UserPlus,
+      //   route: `/projects/${projectName}/contracts`,
+      // },
       {
         id: "hod-timesheet-approval",
         label: "Timesheets",
@@ -254,69 +249,69 @@ export function useProjectMenus(allProjects = []) {
     ],
   };
 
-  const AIMenu = {
-    id: "ai-analytics",
-    triggerLabel: "AI & Analytics",
-    triggerIcon: Icon.Bot,
-    dropdownLabel: `AI & Analytics - ${convertToPrettyText(projectName)}`,
-    align: "start",
-    items: [
-      {
-        id: "ai-template-studio",
-        label: "AI Template Studio",
-        icon: Icon.FileText,
-        route: `/projects/${projectName}/ai-template-studio`,
-      },
-      {
-        id: "ai-compliance",
-        label: "AI Compliance",
-        icon: Icon.Shield,
-        route: `/projects/${projectName}/ai-compliance`,
-      },
-      {
-        id: "predictive-analytics",
-        label: "Predictive Analytics",
-        icon: Icon.Eye,
-        route: `/projects/${projectName}/predictive-analytics`,
-      },
-      {
-        id: "audit-trail",
-        label: "Audit Trail",
-        icon: Icon.Clock,
-        route: `/projects/${projectName}/audit-trail`,
-      },
-      {
-        id: "document-management",
-        label: "Document Management",
-        icon: Icon.FolderOpen,
-        route: `/projects/${projectName}/document-management`,
-      },
-      {
-        id: "workflow-automation",
-        label: "Workflow Automation",
-        icon: Icon.Workflow,
-        route: `/projects/${projectName}/workflow-automation`,
-      },
-      {
-        id: "budget-management",
-        label: "Budget Management",
-        icon: Icon.DollarSign,
-        route: `/projects/${projectName}/budget-management`,
-      },
-      {
-        id: "ai-assistant-chat",
-        label: "AI Assistant Chat",
-        icon: Icon.BotMessageSquare,
-        route: `/projects/${projectName}/ai-assistant-chat`,
-      },
-      {
-        id: "ai-search-filtering",
-        label: "AI Search & Filtering",
-        icon: Icon.Search,
-        route: `/projects/${projectName}/ai-search-filtering`,
-      },
-    ],
-  };
+  // const AIMenu = {
+  //   id: "ai-analytics",
+  //   triggerLabel: "AI & Analytics",
+  //   triggerIcon: Icon.Bot,
+  //   dropdownLabel: `AI & Analytics - ${convertToPrettyText(projectName)}`,
+  //   align: "start",
+  //   items: [
+  //     {
+  //       id: "ai-template-studio",
+  //       label: "AI Template Studio",
+  //       icon: Icon.FileText,
+  //       route: `/projects/${projectName}/ai-template-studio`,
+  //     },
+  //     {
+  //       id: "ai-compliance",
+  //       label: "AI Compliance",
+  //       icon: Icon.Shield,
+  //       route: `/projects/${projectName}/ai-compliance`,
+  //     },
+  //     {
+  //       id: "predictive-analytics",
+  //       label: "Predictive Analytics",
+  //       icon: Icon.Eye,
+  //       route: `/projects/${projectName}/predictive-analytics`,
+  //     },
+  //     {
+  //       id: "audit-trail",
+  //       label: "Audit Trail",
+  //       icon: Icon.Clock,
+  //       route: `/projects/${projectName}/audit-trail`,
+  //     },
+  //     {
+  //       id: "document-management",
+  //       label: "Document Management",
+  //       icon: Icon.FolderOpen,
+  //       route: `/projects/${projectName}/document-management`,
+  //     },
+  //     {
+  //       id: "workflow-automation",
+  //       label: "Workflow Automation",
+  //       icon: Icon.Workflow,
+  //       route: `/projects/${projectName}/workflow-automation`,
+  //     },
+  //     {
+  //       id: "budget-management",
+  //       label: "Budget Management",
+  //       icon: Icon.DollarSign,
+  //       route: `/projects/${projectName}/budget-management`,
+  //     },
+  //     {
+  //       id: "ai-assistant-chat",
+  //       label: "AI Assistant Chat",
+  //       icon: Icon.BotMessageSquare,
+  //       route: `/projects/${projectName}/ai-assistant-chat`,
+  //     },
+  //     {
+  //       id: "ai-search-filtering",
+  //       label: "AI Search & Filtering",
+  //       icon: Icon.Search,
+  //       route: `/projects/${projectName}/ai-search-filtering`,
+  //     },
+  //   ],
+  // };
 
   const projectSettings = {
     id: "project-settings",
@@ -339,7 +334,7 @@ export function useProjectMenus(allProjects = []) {
   };
 
   const projectDropdownList = isProjectSubRoute
-    ? [allProjectsDropdown, ProjectApplicationMenu, AIMenu, projectSettings]
+    ? [allProjectsDropdown, ProjectApplicationMenu, projectSettings]
     : [allProjectsDropdown];
 
   return projectDropdownList;
