@@ -113,7 +113,7 @@ const OVERVIEW_FIELDS = [
     { k: 'brokenMeal', l: 'Broken Meal', type: 'number' },
     { k: 'travel', l: 'Travel Hours', type: 'number' },
     { k: 'dawn', l: 'Dawn', type: 'number' },
-    { k: 'night', l: 'Night', type: 'number' }
+    { k: 'night', l: 'Night', type: 'bool' }
 ];
 
 const ALLOWANCE_FIELDS = [
