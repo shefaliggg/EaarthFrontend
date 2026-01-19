@@ -1195,7 +1195,7 @@ export function TimesheetForm({
             {
                 exportMode === 'timesheet' && (
                     <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                        <div className="bg-white rounded-xl shadow-2xl w-full container max-h-full overflow-hidden flex flex-col relative">
                             <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
                                 <X className="w-5 h-5 text-gray-600" />
                             </button>
@@ -1217,7 +1217,7 @@ export function TimesheetForm({
             {
                 exportMode === 'data' && (
                     <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8 backdrop-blur-sm">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-full overflow-hidden flex flex-col relative">
+                        <div className="bg-white rounded-xl shadow-2xl w-full container max-h-full overflow-hidden flex flex-col relative">
                             <button onClick={() => setExportMode('none')} className="absolute top-4 right-4 z-50 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
                                 <X className="w-5 h-5 text-gray-600" />
                             </button>

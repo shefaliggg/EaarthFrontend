@@ -49,12 +49,12 @@ export default function SupportDashboard() {
       setLoading(true);
       setError(null);
       const response = await getSupportTickets();
-      
+
       if (response.success) {
         const transformedTickets = response.data.map(transformTicket);
-        
+
         setTickets(transformedTickets);
-        
+
         // Auto-select first ticket if none selected and fetch its full details
         if (!selectedTicket && transformedTickets.length > 0) {
           // Fetch full ticket details including messages
@@ -85,15 +85,15 @@ export default function SupportDashboard() {
   // Reload only the selected ticket's messages (not the full ticket list)
   const reloadTicketMessages = async () => {
     if (!selectedTicket?._id) return;
-    
+
     try {
       const response = await getSupportTicketById(selectedTicket._id);
       if (response.success) {
         const updatedTicket = transformTicket(response.data);
         setSelectedTicket(updatedTicket);
-        
+
         // Also update in tickets list
-        setTickets(prev => prev.map(t => 
+        setTickets(prev => prev.map(t =>
           t._id === updatedTicket._id ? updatedTicket : t
         ));
       }
@@ -128,30 +128,30 @@ export default function SupportDashboard() {
       alert('Error: Ticket ID is missing. Please refresh the page.');
       return;
     }
-    
+
     setSendingReply(true);
     try {
       const formData = new FormData();
-      
+
       // Add text content
       if (message.trim()) {
         formData.append('content', message);
       }
-      
+
       // Add attachments (photos/videos)
       if (attachments.length > 0) {
         attachments.forEach((attachment) => {
           formData.append('attachments', attachment.file);
         });
       }
-      
+
       // Add voice note
       if (voiceNote?.blob) {
         formData.append('voiceNote', voiceNote.blob, 'voice-message.webm');
       }
-      
+
       await addTicketMessage(selectedTicket._id, formData);
-      
+
       // Only reload the current ticket's messages, not all tickets
       await reloadTicketMessages();
     } catch (err) {
@@ -200,7 +200,7 @@ export default function SupportDashboard() {
             <div className="flex items-center justify-center h-full p-4">
               <div className="text-center">
                 <p className="text-sm text-destructive mb-2">Error loading tickets</p>
-                <button 
+                <button
                   onClick={loadTickets}
                   className="text-xs text-primary hover:underline"
                 >
@@ -212,7 +212,7 @@ export default function SupportDashboard() {
             <div className="flex items-center justify-center h-full p-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">No tickets yet</p>
-                <button 
+                <button
                   onClick={handleCreateTicket}
                   className="text-xs text-primary hover:underline"
                 >

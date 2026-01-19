@@ -5,8 +5,8 @@ import { Button } from "../../../shared/components/ui/button";
 import { Badge } from "../../../shared/components/ui/badge";
 import { Input } from "../../../shared/components/ui/input";
 import { Tabs, TabsContent } from "../../../shared/components/ui/tabs";
-import { 
-  FileText, Search, Eye, Download, 
+import {
+  FileText, Search, Eye, Download,
   CheckCircle, Calendar, User, Building
 } from "lucide-react";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
@@ -147,18 +147,18 @@ export default function Contracts() {
   const currentUserName = "John Smith";
 
   // Filter contracts for current crew member only
-  const userContracts = sampleContracts.filter(contract => 
+  const userContracts = sampleContracts.filter(contract =>
     contract.data.fullName === currentUserName
   );
 
   const signingStatuses = [
-    "PENDING_CREW_SIGNATURE", 
-    "PENDING_UPM_SIGNATURE", 
-    "PENDING_FC_SIGNATURE", 
+    "PENDING_CREW_SIGNATURE",
+    "PENDING_UPM_SIGNATURE",
+    "PENDING_FC_SIGNATURE",
     "PENDING_STUDIO_SIGNATURE"
   ];
 
-  const signedContracts = userContracts.filter(o => 
+  const signedContracts = userContracts.filter(o =>
     o.status === "COMPLETED" || signingStatuses.includes(o.status)
   );
 
@@ -178,11 +178,11 @@ export default function Contracts() {
     });
   };
 
-  const displayContracts = activeTab === "completed" 
+  const displayContracts = activeTab === "completed"
     ? filterContracts(completedContracts)
     : activeTab === "pending"
-    ? filterContracts(pendingSignatures)
-    : filterContracts(signedContracts);
+      ? filterContracts(pendingSignatures)
+      : filterContracts(signedContracts);
 
   const tabOptions = [
     { label: `All (${signedContracts.length})`, value: "all", icon: "FileText" },
@@ -192,7 +192,7 @@ export default function Contracts() {
 
   return (
     <div className="">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="container mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight" data-testid="text-contracts-title">

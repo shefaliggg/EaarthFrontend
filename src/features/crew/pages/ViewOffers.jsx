@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../../../shared/components/ui/button";
 import { Card, CardContent } from "../../../shared/components/ui/card";
 import { Badge } from "../../../shared/components/ui/badge";
-import { 
+import {
   ArrowLeft, Edit2, Send, PenTool, Download, FileText, X, Save
 } from "lucide-react";
 
@@ -105,11 +105,11 @@ export default function ViewOffer() {
   const [editedOffer, setEditedOffer] = useState(null);
 
   const offer = editedOffer || MOCK_OFFERS_LIST.find(o => o.id === selectedOfferId);
-  
+
   if (!offer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30 p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="container mx-auto">
           <p className="text-center text-muted-foreground">Offer not found</p>
         </div>
       </div>
@@ -209,7 +209,7 @@ export default function ViewOffer() {
 
   return (
     <div className="">
-      <div className="max-w-7xl mx-auto p-6 space-y-4">
+      <div className="container mx-auto p-6 space-y-4">
         {/* Demo Controls */}
         <Card className="border shadow-sm">
           <CardContent className="p-3">

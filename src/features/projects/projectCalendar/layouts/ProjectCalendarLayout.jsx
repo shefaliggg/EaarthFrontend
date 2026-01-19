@@ -56,13 +56,13 @@ const ProjectCalendarLayout = () => {
         secondaryActions={
           section === "calendar"
             ? [
-                {
-                  label: "Shooting Calendar",
-                  icon: "Calendar",
-                  clickAction: () =>
-                    navigate(`/projects/${projectName}/calendar/shooting`),
-                },
-              ]
+              {
+                label: "Shooting Calendar",
+                icon: "Calendar",
+                clickAction: () =>
+                  navigate(`/projects/${projectName}/calendar/shooting`),
+              },
+            ]
             : null
         }
         extraActions={

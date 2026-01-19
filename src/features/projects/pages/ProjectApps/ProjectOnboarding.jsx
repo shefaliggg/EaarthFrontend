@@ -4,10 +4,10 @@ import { Card, CardContent } from "../../../../shared/components/ui/card";
 import { Button } from "../../../../shared/components/ui/button";
 import { Badge } from "../../../../shared/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Plus, 
-  FileText, 
-  CheckCircle, 
+import {
+  Plus,
+  FileText,
+  CheckCircle,
   Send,
   UserCheck,
   DollarSign,
@@ -23,60 +23,60 @@ import {
 
 import { PageHeader } from '../../../../shared/components/PageHeader';
 import SearchBar from '../../../../shared/components/SearchBar';
-import PrimaryStats  from '../../../../shared/components/wrappers/PrimaryStats';
+import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
 import { WorkflowStages } from '../../../projects/components/WorkflowStages';
 import { OffersTable } from '../../../projects/components/OffersTable.jsx';
 import CreateOfferDialog from '../../../crew/components/CreateOfferDialog.jsx';
 
 const WORKFLOW_STATS = [
-  { 
-    label: "All Contracts", 
-    value: 802, 
-    icon: FileText, 
-    color: "text-slate-600", 
+  {
+    label: "All Contracts",
+    value: 802,
+    icon: FileText,
+    color: "text-slate-600",
     trend: "+12%",
     trendIcon: "TrendingUp",
     trendColor: "text-green-500",
     filterKey: "ALL"
   },
-  { 
-    label: "Pending", 
-    value: 156, 
-    icon: Clock, 
-    color: "text-amber-600", 
-    bgColor: "bg-amber-50 dark:bg-amber-900/20", 
+  {
+    label: "Pending",
+    value: 156,
+    icon: Clock,
+    color: "text-amber-600",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
     trend: "+5%",
     trendIcon: "TrendingUp",
     trendColor: "text-amber-500",
     filterKey: "PENDING"
   },
-  { 
-    label: "Accepted", 
-    value: 624, 
-    icon: CheckCircle, 
-    color: "text-green-600", 
-    bgColor: "bg-green-50 dark:bg-green-900/20", 
+  {
+    label: "Accepted",
+    value: 624,
+    icon: CheckCircle,
+    color: "text-green-600",
+    bgColor: "bg-green-50 dark:bg-green-900/20",
     trend: "+8%",
     trendIcon: "TrendingUp",
     trendColor: "text-green-500",
     filterKey: "ACCEPTED"
   },
-  { 
-    label: "Rejected", 
-    value: 22, 
-    icon: XCircle, 
-    color: "text-red-600", 
-    bgColor: "bg-red-50 dark:bg-red-900/20", 
+  {
+    label: "Rejected",
+    value: 22,
+    icon: XCircle,
+    color: "text-red-600",
+    bgColor: "bg-red-50 dark:bg-red-900/20",
     trend: "-3%",
     trendIcon: "TrendingUp",
     trendColor: "text-red-500",
     filterKey: "REJECTED"
   },
-  { 
-    label: "Ended", 
-    value: 178, 
-    icon: FileX, 
-    color: "text-slate-500", 
+  {
+    label: "Ended",
+    value: 178,
+    icon: FileX,
+    color: "text-slate-500",
     bgColor: "bg-slate-50 dark:bg-slate-900/20",
     trend: "-2%",
     trendIcon: "TrendingUp",
@@ -124,26 +124,26 @@ function getStatusLabel(status) {
 
 function matchesFilterKey(status, filterKey) {
   const statusLabel = getStatusLabel(status);
-  
+
   if (filterKey === "ALL") return true;
-  
+
   if (filterKey === "PENDING") {
-    return ["DRAFTS", "OFFER SENT", "REQUIRES ATTENTION", "PRODUCTION CHECK", "ACCOUNTS CHECK", 
-            "CREW SIGN", "UPM SIGN", "FC SIGN", "STUDIO SIGN"].includes(statusLabel);
+    return ["DRAFTS", "OFFER SENT", "REQUIRES ATTENTION", "PRODUCTION CHECK", "ACCOUNTS CHECK",
+      "CREW SIGN", "UPM SIGN", "FC SIGN", "STUDIO SIGN"].includes(statusLabel);
   }
-  
+
   if (filterKey === "ACCEPTED") {
     return ["CREW ACCEPTED", "CONTRACTED"].includes(statusLabel);
   }
-  
+
   if (filterKey === "REJECTED") {
     return statusLabel === "REJECTED";
   }
-  
+
   if (filterKey === "ENDED") {
     return statusLabel === "ENDED";
   }
-  
+
   return false;
 }
 
@@ -176,7 +176,7 @@ export default function ProjectOnboarding() {
       { id: 14, fullName: "Jessica Martin", status: "NEEDS_REVISION", roles: [{ jobTitle: "Casting Director", department: "Casting", rateType: "Weekly" }], contractType: "PAYE", productionName: "Project Xi" },
       { id: 15, fullName: "Daniel Thompson", status: "COMPLETED", roles: [{ jobTitle: "Cinematographer", department: "Camera", rateType: "Weekly" }], contractType: "LOAN_OUT", productionName: "Project Omicron" },
     ];
-    
+
     setOffers(mockOffers);
   }, []);
 
@@ -191,25 +191,25 @@ export default function ProjectOnboarding() {
 
   const filteredOffers = useMemo(() => {
     let result = offers;
-    
+
     if (searchQuery) {
       result = result.filter(offer =>
         offer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (offer.roles && Array.isArray(offer.roles) && offer.roles.some((r) => 
+        (offer.roles && Array.isArray(offer.roles) && offer.roles.some((r) =>
           (r?.jobTitle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
           (r?.department || "").toLowerCase().includes(searchQuery.toLowerCase())
         )) ||
         (offer.productionName?.toLowerCase() || "").includes(searchQuery.toLowerCase())
       );
     }
-    
+
     if (selectedStage !== null) {
       result = result.filter(offer => getStatusLabel(offer.status) === selectedStage);
     }
     else if (selectedStatFilter !== null && selectedStatFilter !== "ALL") {
       result = result.filter(offer => matchesFilterKey(offer.status, selectedStatFilter));
     }
-    
+
     return result;
   }, [searchQuery, selectedStage, selectedStatFilter, offers]);
 
@@ -234,7 +234,7 @@ export default function ProjectOnboarding() {
   }));
 
   return (
-    <div className="">
+    <div className="container mx-auto">
       <div className="space-y-6">
         <PageHeader
           title={ROLE_PAGE_TITLES[selectedRole] || "CREW ONBOARDING"}
@@ -249,7 +249,7 @@ export default function ProjectOnboarding() {
 
         <PrimaryStats stats={clickableStats} gridColumns={5} />
 
-        <WorkflowStages 
+        <WorkflowStages
           stages={WORKFLOW_STAGES}
           statusCounts={statusCounts}
           selectedStage={selectedStage}
@@ -293,11 +293,11 @@ export default function ProjectOnboarding() {
           <div className="p-4 border-b bg-muted/30">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">
-                {selectedStage 
+                {selectedStage
                   ? `${WORKFLOW_STAGES.find(s => s.statusKey === selectedStage)?.label || selectedStage} (${filteredOffers.length})`
                   : selectedStatFilter && selectedStatFilter !== "ALL"
-                  ? `${WORKFLOW_STATS.find(s => s.filterKey === selectedStatFilter)?.label || selectedStatFilter} (${filteredOffers.length})`
-                  : `All Offers (${filteredOffers.length})`
+                    ? `${WORKFLOW_STATS.find(s => s.filterKey === selectedStatFilter)?.label || selectedStatFilter} (${filteredOffers.length})`
+                    : `All Offers (${filteredOffers.length})`
                 }
               </h3>
               <Badge variant="secondary" className="bg-primary/10 text-primary">
@@ -306,8 +306,8 @@ export default function ProjectOnboarding() {
               </Badge>
             </div>
           </div>
-          
-          <OffersTable 
+
+          <OffersTable
             offers={filteredOffers}
             isLoading={isLoading}
             onNavigate={navigate}

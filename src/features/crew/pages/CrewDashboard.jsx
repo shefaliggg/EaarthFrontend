@@ -5,7 +5,7 @@ export default function CrewDashboard() {
   return (
     <div className="">
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="container mx-auto space-y-6">
         {/* Welcome Header */}
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
@@ -66,7 +66,7 @@ export default function CrewDashboard() {
             </div>
             <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded">BETA</span>
           </div>
-          
+
           <p className="text-sm text-gray-700 mb-4">
             Good morning, Emma. You have a <span className="font-semibold">5:45 Call</span> at Pinewood (Stage 7). Heavy rain is expected during Scene 42B (Ext. Forest), so the unit might move to Cover Set (Stage 4) after lunch.
           </p>
@@ -140,7 +140,7 @@ export default function CrewDashboard() {
                     <p className="text-xs text-gray-500 mb-1">SHOOT DAY</p>
                     <p className="text-2xl font-bold text-gray-900">42 <span className="text-sm text-gray-500">/ 110</span></p>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '50%'}}></div>
+                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: '50%' }}></div>
                     </div>
                     <p className="text-xs text-right text-gray-500 mt-1">50% Complete</p>
                   </div>
@@ -189,7 +189,7 @@ export default function CrewDashboard() {
                     <p className="text-xs text-gray-500 mb-1">SHOOT DAY</p>
                     <p className="text-2xl font-bold text-gray-900">15 <span className="text-sm text-gray-500">/ 60</span></p>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '25%'}}></div>
+                      <div className="bg-purple-600 h-2 rounded-full" style={{ width: '25%' }}></div>
                     </div>
                     <p className="text-xs text-right text-gray-500 mt-1">25% Complete</p>
                   </div>
