@@ -209,10 +209,10 @@ export default function ViewOffer() {
 
   return (
     <div className="">
-      <div className="max-w-7xl mx-auto p-6 space-y-4">
+      <div className="max-w-7xl mx-auto px-2 space-y-4">
         {/* Demo Controls */}
         <Card className="border shadow-sm">
-          <CardContent className="p-3">
+          <CardContent className="">
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground block mb-1">
@@ -225,7 +225,7 @@ export default function ViewOffer() {
                     setIsEditMode(false);
                     setEditedOffer(null);
                   }}
-                  className="w-full border rounded-md px-2 py-1.5 text-sm bg-white"
+                  className="w-full border rounded-md px-2 py-1.5 text-sm "
                   disabled={isEditMode}
                 >
                   {MOCK_OFFERS_LIST.map(o => (
@@ -242,7 +242,7 @@ export default function ViewOffer() {
                 <select
                   value={viewAsRole}
                   onChange={(e) => setViewAsRole(e.target.value)}
-                  className="w-full border rounded-md px-2 py-1.5 text-sm bg-white"
+                  className="w-full border rounded-md px-2 py-1.5 text-sm "
                   disabled={isEditMode}
                 >
                   <option value="CREW">CREW</option>

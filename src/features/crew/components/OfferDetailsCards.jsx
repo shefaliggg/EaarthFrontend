@@ -128,9 +128,9 @@ export default function OfferDetailsCards({ offer, primaryRole, isEditing = fals
     }
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Left Column */}
+ return (
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-4 max-w-[1400px] mx-auto">
+      {/* Left Column - Smaller Cards */}
       <div className="space-y-4">
         {/* Recipient Card */}
         <CollapsibleSection title="Recipient" icon={User}>
@@ -285,7 +285,7 @@ export default function OfferDetailsCards({ offer, primaryRole, isEditing = fals
         </CollapsibleSection>
       </div>
 
-      {/* Right Column */}
+      {/* Right Column - Larger Cards */}
       <div className="space-y-4">
         {/* Offer Details Card */}
         <CollapsibleSection title="Offer Details" icon={Briefcase}>
