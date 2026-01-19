@@ -304,56 +304,7 @@ export default function ViewOffer() {
           onUpdate={handleRoleUpdate}
         />
 
-        {/* Notes Section */}
-        {(offer.otherDealProvisions || offer.additionalNotes || isEditMode) && (
-          <Card className="border shadow-sm">
-            <div className="px-4 py-2 border-b bg-muted/20">
-              <h3 className="text-xs font-bold uppercase tracking-wide">Additional Notes</h3>
-            </div>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {(offer.otherDealProvisions || isEditMode) && (
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground block mb-2">
-                      Deal Provisions
-                    </label>
-                    {isEditMode ? (
-                      <textarea
-                        value={offer.otherDealProvisions || ""}
-                        onChange={(e) => handleOfferUpdate({ otherDealProvisions: e.target.value })}
-                        className="w-full rounded-md border px-3 py-2 text-sm min-h-[80px] resize-none"
-                        placeholder="Enter deal provisions..."
-                      />
-                    ) : (
-                      <p className="text-sm px-3 py-2 bg-muted/30 rounded border min-h-[80px]">
-                        {offer.otherDealProvisions}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {(offer.additionalNotes || isEditMode) && (
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground block mb-2">
-                      Additional Notes
-                    </label>
-                    {isEditMode ? (
-                      <textarea
-                        value={offer.additionalNotes || ""}
-                        onChange={(e) => handleOfferUpdate({ additionalNotes: e.target.value })}
-                        className="w-full rounded-md border px-3 py-2 text-sm min-h-[80px] resize-none"
-                        placeholder="Enter additional notes..."
-                      />
-                    ) : (
-                      <p className="text-sm px-3 py-2 bg-muted/30 rounded border min-h-[80px]">
-                        {offer.additionalNotes}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
       </div>
     </div>
   );
