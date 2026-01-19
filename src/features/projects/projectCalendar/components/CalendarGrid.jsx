@@ -1,7 +1,9 @@
 import CalendarDayView from "./CalendarDayView";
 import CalendarGanttView from "./CalendarGanttView";
 import CalendarMonthView from "./CalendarMonthView";
+import CalendarTimelineView from "./CalendarTimeLineView";
 import CalendarWeekView from "./CalendarWeekView";
+import CalendarYearView from "./CalendarYearView";
 
 export default function CalendarGrid({
   view,
@@ -43,6 +45,26 @@ export default function CalendarGrid({
   if (view === "gantt") {
     return (
       <CalendarGanttView
+        currentDate={currentDate}
+        events={events}
+        onEventClick={onDayClick}
+      />
+    );
+  }
+
+  if (view === "timeline") {
+    return (
+      <CalendarTimelineView
+        currentDate={currentDate}
+        events={events}
+        onEventClick={onDayClick}
+      />
+    );
+  }
+
+  if (view === "year") {
+    return (
+      <CalendarYearView
         currentDate={currentDate}
         events={events}
         onEventClick={onDayClick}

@@ -1,217 +1,309 @@
-import React from "react";
-import { cn } from "../../../../shared/config/utils";
-import { startOfWeek, addDays, format } from "date-fns";
+import { startOfWeek, addDays, format, parseISO } from "date-fns";
+import { Clock, MapPin } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
-export default function CalendarWeekView({ currentDate, events, onDayClick }) {
-  const getWeekDates = (currentDate) => {
-    const start = startOfWeek(currentDate);
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+import { getProductionWeekLabel } from "./productionPhases";
+
+// CONFIG
+const HOUR_HEIGHT = 48;
+const DAY_MINUTES = 1440;
+const MIN_EVENT_HEIGHT = 16;
+
+// TIME UTILS
+function timeToMinutes(time) {
+  if (!time) return null;
+
+  const [clock, period] = time.split(" ");
+  let [h, m] = clock.split(":").map(Number);
+
+  if (period === "PM" && h !== 12) h += 12;
+  if (period === "AM" && h === 12) h = 0;
+
+  return h * 60 + m;
+}
+
+const dateKey = (date) => format(date, "yyyy-MM-dd");
+
+// EVENT NORMALIZATION
+function normalizeEvents(events) {
+  const output = [];
+
+  for (const e of events) {
+    const start = timeToMinutes(e.startTime);
+    const end = timeToMinutes(e.endTime);
+
+    const startDate = parseISO(e.startDate);
+    const endDate = e.endDate ? parseISO(e.endDate) : startDate;
+
+    let current = startDate;
+
+    while (current <= endDate) {
+      const isFirst = format(current, "yyyy-MM-dd") === e.startDate;
+      const isLast = format(current, "yyyy-MM-dd") === e.endDate;
+
+      let _start = 0;
+      let _end = DAY_MINUTES;
+
+      if (!e.isAllDay) {
+        if (isFirst) _start = start ?? 0;
+        if (isLast) _end = end ?? DAY_MINUTES;
+      }
+
+      output.push({
+        ...e,
+        startDate: format(current, "yyyy-MM-dd"),
+        _start,
+        _end,
+      });
+
+      current = addDays(current, 1);
+    }
+  }
+
+  return output;
+}
+
+// WEEK HELPERS
+function getWeek(date) {
+  return Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
+}
+
+function getEventsForDay(events, date) {
+  const key = dateKey(date);
+  return events.filter((e) => e.startDate === key && !e.isAllDay);
+}
+
+function getAllDayEvents(events, date) {
+  const key = dateKey(date);
+  return events.filter((e) => e.startDate === key && e.isAllDay);
+}
+
+// OVERLAP LAYOUT
+function layoutEvents(events) {
+  const columns = [];
+
+  for (const event of events) {
+    let placed = false;
+
+    for (const col of columns) {
+      const last = col[col.length - 1];
+
+      if (event._start >= last._end) {
+        col.push(event);
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) columns.push([event]);
+  }
+
+  return columns;
+}
+
+// UI HELPERS
+const formatHour = (h) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
+
+function getEventStyle(event, colIndex, colCount) {
+  const rawHeight = ((event._end - event._start) / 60) * HOUR_HEIGHT;
+
+  return {
+    top: (event._start / 60) * HOUR_HEIGHT,
+    height: Math.max(rawHeight, MIN_EVENT_HEIGHT),
+    width: `${100 / colCount}%`,
+    left: `${(100 / colCount) * colIndex}%`,
   };
+}
 
-  const weekDates = getWeekDates(currentDate);
-
+function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
+  const week = getWeek(currentDate);
   const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  const convertHour = (h) => {
-    const hour12 = h % 12 || 12;
-    const ampm = h < 12 ? "AM" : "PM";
-    return `${hour12} ${ampm}`;
-  };
-
-  const isToday = (date) => date.toDateString() === new Date().toDateString();
-
-  const formatDate = (date) => format(date, "yyyy-MM-dd");
-
-  const parseTimeToMinutes = (timeStr) => {
-    if (!timeStr) return null;
-
-    const [time, modifier] = timeStr.split(" ");
-    let [h, m] = time.split(":").map(Number);
-
-    if (modifier === "PM" && h !== 12) h += 12;
-    if (modifier === "AM" && h === 12) h = 0;
-
-    return h * 60 + m;
-  };
-
-  const getEventsForTime = (dateStr, hour) => {
-    const slotStart = hour * 60;
-    const slotEnd = slotStart + 60;
-
-    return events.filter((e) => {
-      if (!e.startDate || !e.startTime || !e.endTime) return false;
-      if (e.startDate !== dateStr) return false;
-
-      const start = parseTimeToMinutes(e.startTime);
-      const end = parseTimeToMinutes(e.endTime);
-
-      return start < slotEnd && end > slotStart;
-    });
-  };
-
+  const normalized = normalizeEvents(events);
   return (
-    <div
-      className="
-        rounded-xl overflow-hidden border
-        bg-white dark:bg-[#0f0e13]
-        border-border dark:border-[#2a1b3d]
-        shadow-sm
-      "
-    >
-      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
-        <div className="h-12 flex items-center justify-end pr-3 text-[11px] font-semibold text-muted-foreground">
-          TIME
+    <>
+      <div className="rounded-xl overflow-hidden border border-border dark:border-[#2a1b3d] bg-background">
+
+
+        {/* --------------------------------------- */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)] ">
+          {/* Time column (kept empty) */}
+          <div className="bg-white dark:bg-[#0f0e13]"></div>
+
+          {/* Shoot Week bar covers ALL 7 day columns */}
+          <div
+            className="col-start-2 col-span-7 text-center py-2 text-xs font-bold uppercase
+                  bg-purple-50/80 dark:bg-purple-900/20
+                  text-purple-800 dark:text-purple-300  border-border border-b dark:border-[#2a1b3d]"
+          >
+            {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
+          </div>
+        </div>
+        {/* ---------------------------------- */}
+
+        {/* HEADER */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)] text-[11px] font-black uppercase border-b border-border dark:border-[#2a1b3d] bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
+          <div className="bg-white dark:bg-[#0f0e13] pr-4 text-muted-foreground flex  justify-end">
+            Time
+          </div>
+          {week.map((d) => (
+            <div
+              key={d}
+              className="pt-1 flex flex-col items-center justify-center"
+            >
+              <p className="text-[11px] font-black uppercase text-purple-800 dark:text-purple-300">
+                {format(d, "EEE")}
+              </p>
+              <p className="text-[15px] font-bold text-purple-800 dark:text-purple-300">
+                {d.getDate()}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {weekDates.map((d, i) => (
-          <div
-            key={i}
-            className="
-              h-12 flex flex-col items-center justify-center
-              bg-purple-50/80 dark:bg-purple-900/20
-              border-b border-border dark:border-[#2a1b3d]
-            "
-          >
-            <p className="text-xs font-bold text-purple-800 dark:text-purple-300">
-              {d.toLocaleDateString("en-US", { weekday: "short" })}
-            </p>
-            <p
-              className={cn(
-                "text-lg font-bold",
-                "text-purple-800 dark:text-purple-300",
-                isToday(d) && "text-purple-600 dark:text-purple-400"
-              )}
-            >
-              {d.getDate()}
-            </p>
+        {/* All Day Body */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+          <div className="text-right bg-muted/30 border-r border-b  border-border dark:border-[#2a1b3d] pt-1 pr-2 text-xs text-muted-foreground min-h-12">
+            All Day
           </div>
-        ))}
 
-        {hours.map((h) => (
-          <React.Fragment key={h}>
+          {/* ALL DAY */}
+          {week.map((date) => (
             <div
-              className="
-                h-12 flex items-start justify-end pr-3
-                text-[11px] text-muted-foreground
-                bg-muted/30
-                border-t border-r border-border dark:border-[#2a1b3d]
-              "
+              key={date}
+              className="flex cursor-pointer gap-1 p-1 flex-col items-center border-r border-b border-border dark:border-[#2a1b3d]  text-purple-800 dark:text-purple-300 overflow-hidden"
+              onClick={() => {
+                setCurrentDate(date);
+                onDayClick();
+              }}
             >
-              {convertHour(h)}
+              {getAllDayEvents(normalized, date).map((e) => (
+                <Tooltip key={e.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      key={e.id}
+                      className="bg-primary w-full text-[11px] pl-2 py-0.5 rounded-lg overflow-hidden text-white"
+                    >
+                      {e.title}
+                    </div>
+                  </TooltipTrigger>
+
+                  <TooltipContent className="bg-card text-card-foreground">
+                    <div className="flex flex-col gap-1.5">
+                      {/* Event Title */}
+                      <p className="font-semibold text-sm">{e.title}</p>
+
+                      {/* Time */}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>
+                          {e.startTime} - {e.endTime}
+                        </span>
+                      </div>
+
+                      {/* Location */}
+                      {e.location && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{e.location}</span>
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
             </div>
+          ))}
+        </div>
 
-            {weekDates.map((d, i) => {
-              const slotEvents = getEventsForTime(formatDate(d), h);
+        {/* TIME GRID */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+          {/* Time labels */}
+          <div>
+            {hours.map((h) => (
+              <div
+                key={h}
+                className="text-right bg-muted/30 border-border border-b border-r dark:border-[#2a1b3d] pr-2 text-xs text-muted-foreground min-h-12"
+              >
+                {formatHour(h)}
+              </div>
+            ))}
+          </div>
 
-              return (
-                <div
-                  key={i}
-                  onClick={onDayClick}
-                  className="
-                    h-12 border-t border-r overflow-visible border-border dark:border-[#2a1b3d]
-                    relative cursor-pointer
-                    hover:bg-purple-50/40 dark:hover:bg-purple-900/20
-                    transition
-                  "
-                >
-                  {slotEvents.map((evt, idx) => {
-                    const start = parseTimeToMinutes(evt.startTime);
-                    const end = parseTimeToMinutes(evt.endTime);
+          {/* Day columns */}
+          {week.map((date) => {
+            const dayEvents = getEventsForDay(normalized, date);
+            const columns = layoutEvents(dayEvents);
 
-                    const width = 100 / slotEvents.length;
-                    const top = (start % 60) * (48 / 60); 
+            return (
+              <div
+                key={date}
+                onClick={() => {
+                  setCurrentDate(date);
+                  onDayClick();
+                }}
+                className="border-r border-b border-border dark:border-[#2a1b3d] overflow-visible relative"
+              >
+                {/* Hour background grid */}
+                {hours.map((h) => (
+                  <div
+                    key={h}
+                    className="h-12 border-b dark:border-[#2a1b3d]"
+                  />
+                ))}
 
-                    const rawHeight = ((end - start) / 60) * 48;
-                    const height = Math.max(rawHeight, 24);
+                {/* Events layer (single render) */}
 
-                    const fontSize =
-                      height >= 60
-                        ? "text-[12px]"
-                        : height >= 40
-                        ? "text-[11px]"
-                        : height >= 28
-                        ? "text-[10px]"
-                        : "text-[9px]";
-
-                    const showTime = height >= 28;
-
-                    return (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            key={evt.id}
-                            style={{
-                              width: `${width}%`,
-                              left: `${idx * width}%`,
-                              top: `${top}px`,
-                              height: `${height}px`,
-                              backgroundColor: evt.color || "#9333ea",
-                            }}
-className={`
-  absolute rounded-xl
-  px-1 py-0.5
-  shadow-md
-  leading-tight
-  cursor-pointer z-10
-  overflow-hidden
-  flex flex-col items-center justify-center
-  text-center
-  text-white dark:text-white
-  ${fontSize}
-`}
-
-                          >
-                            <span className="font-semibold block truncate">
-                              {evt.title}
-                            </span>
-
-                            {showTime && (
-                              <span className="opacity-90 block truncate text-[11px]">
-                                {evt.startTime} — {evt.endTime}
-                              </span>
-                            )}
-                          </div>
-                        </TooltipTrigger>
-
-                        <TooltipContent
-                          className="
-    text-center 
-    bg-popover 
-    text-popover-foreground 
-    border border-border 
-    shadow-md
-  "
+                {columns.map((col, colIndex) =>
+                  col.map((e) => (
+                    <Tooltip key={e.id}>
+                      <TooltipTrigger asChild>
+                        <div
+                          key={e.id}
+                          onClick={() => {
+                            setCurrentDate(date);
+                            onDayClick();
+                          }}
+                          style={getEventStyle(e, colIndex, columns.length)}
+                          className="cursor-pointer absolute bg-primary w-full text-[12px]  pl-2 pb-2 rounded-lg overflow-hidden text-white"
                         >
-                          <div className="space-y-1">
-                            <p className="font-semibold">{evt.title}</p>
-                            <p className="text-xs">
-                              {evt.startTime} – {evt.endTime}
-                            </p>
+                          {e.title}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-card text-card-foreground">
+                        <div className="flex flex-col gap-1.5">
+                          {/* Event Title */}
+                          <p className="font-semibold text-sm">{e.title}</p>
 
-                            {evt.location && (
-                              <p className="text-xs opacity-80">
-                                {evt.location}
-                              </p>
-                            )}
-
-                            {evt.notes && (
-                              <p className="text-xs opacity-70">{evt.notes}</p>
-                            )}
+                          {/* Time */}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>
+                              {e.startTime} - {e.endTime}
+                            </span>
                           </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
+
+                          {/* Location */}
+                          {e.location && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{e.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )),
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+
+export default CalendarWeekView;

@@ -1,5 +1,6 @@
 import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
+import { InfoTooltip } from "../../../../shared/components/InfoTooltip";
 import { format } from "date-fns";
 import {
   Select,
@@ -44,7 +45,7 @@ export default function CalendarToolbar({
     else if (view === "week") setCurrentDate(addWeeks(currentDate, -1));
     else if (view === "month") setCurrentDate(addMonths(currentDate, -1));
     else if (view === "year") setCurrentDate(addYears(currentDate, -1));
-     else if (view === "gantt") setCurrentDate(addWeeks(currentDate, -1));
+    else if (view === "gantt") setCurrentDate(addWeeks(currentDate, -1));
   };
 
   const handleNext = () => {
@@ -73,10 +74,9 @@ export default function CalendarToolbar({
 
           <div>
             <h3 className="font-bold text-lg">
-              {currentDate.getDate()}{" "}
-              {currentDate.toLocaleDateString("en-US", { month: "short" })}{" "}
-              {currentDate.toLocaleDateString("en-US", { weekday: "long" })}{" "}
-              {currentDate.getFullYear()}
+              {view === "month"
+                ? format(currentDate, "MMMM yyyy")
+                : format(currentDate, "dd EEE MMM yyyy")}
             </h3>
 
             <p className="text-xs text-muted-foreground">
@@ -124,25 +124,21 @@ export default function CalendarToolbar({
             onChange={setView}
           />
         </div>
-        <Button
-          variant="default"
-          size="sm"
-          className="font-semibold"
-          onClick={() => window.print()}
-        >
-          <Printer />
-          Print
-        </Button>
+        <InfoTooltip content="Print Calendar">
+          <Button variant="default" size="icon" onClick={() => window.print()}>
+            <Printer className="w-4 h-4" />
+          </Button>
+        </InfoTooltip>
 
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => console.log("Export clicked")}
-          className="font-semibold"
-        >
-          <Download />
-          Export to csv
-        </Button>
+        <InfoTooltip content="Download Calendar">
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() => console.log("Download calendar")}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        </InfoTooltip>
       </div>
     </Card>
   );
