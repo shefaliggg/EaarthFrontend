@@ -25,7 +25,7 @@ import FilterPillTabs from "@/shared/components/FilterPillTabs";
 export default function CalendarToolbar({
   currentDate,
   setCurrentDate,
-  events ,
+  events,
   search,
   setSearch,
   period,
@@ -74,9 +74,11 @@ export default function CalendarToolbar({
 
           <div>
             <h3 className="font-bold text-lg">
-              {view === "month"
-                ? format(currentDate, "MMMM yyyy")
-                : format(currentDate, "dd EEE MMM yyyy")}
+              {view === "month" && format(currentDate, "MMMM yyyy")}
+              {view === "year" && format(currentDate, "yyyy")}
+              {view !== "month" &&
+                view !== "year" &&
+                format(currentDate, "dd EEE MMM yyyy")}
             </h3>
 
             <p className="text-xs text-muted-foreground">
