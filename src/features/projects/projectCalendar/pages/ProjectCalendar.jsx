@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "../../../../shared/components/PageHeader";
 import CalendarToolbar from "../components/CalendarToolbar";
 import CalendarGrid from "../components/CalendarGrid";
@@ -7,6 +7,8 @@ import UpcomingEvents from "../components/UpcommingEvents";
 
 function ProjectCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState("all");
   const [events, setEvents] = useState([
     {
       id: 1,
@@ -18,6 +20,8 @@ function ProjectCalendar() {
       isAllDay: false,
       location: "Wales",
       color: "#7C3AED",
+      eventType: "prep",
+      progress: 40,
     },
     {
       id: 2,
@@ -29,6 +33,8 @@ function ProjectCalendar() {
       isAllDay: false,
       location: "Forest Area",
       color: "#F59E0B",
+      eventType: "prep",
+      progress: 50,
     },
     {
       id: 3,
@@ -40,6 +46,8 @@ function ProjectCalendar() {
       isAllDay: false,
       location: "Studio",
       color: "#22C55E",
+      eventType: "prep",
+      progress: 60,
     },
     {
       id: 4,
@@ -49,6 +57,8 @@ function ProjectCalendar() {
       isAllDay: true,
       location: "Main Hall",
       color: "#EF4444",
+      eventType: "prep",
+      progress: 30,
     },
     {
       id: 5,
@@ -58,6 +68,8 @@ function ProjectCalendar() {
       isAllDay: true,
       location: "Airport",
       color: "#3B82F6",
+      eventType: "prep",
+      progress: 20,
     },
 
     {
@@ -69,6 +81,8 @@ function ProjectCalendar() {
       endTime: "3:00 PM",
       isAllDay: false,
       location: "Art Dept",
+      eventType: "prep",
+      progress: 45,
     },
     {
       id: 7,
@@ -79,6 +93,8 @@ function ProjectCalendar() {
       endTime: "5:00 PM",
       isAllDay: false,
       location: "Post Studio",
+      eventType: "prep",
+      progress: 35,
     },
     {
       id: 8,
@@ -89,6 +105,8 @@ function ProjectCalendar() {
       endTime: "7:00 PM",
       isAllDay: false,
       location: "Conference Room",
+      eventType: "prep",
+      progress: 25,
     },
     {
       id: 9,
@@ -99,6 +117,8 @@ function ProjectCalendar() {
       endTime: "9:00 PM",
       isAllDay: false,
       location: "Gym",
+      eventType: "prep",
+      progress: 30,
     },
 
     {
@@ -110,6 +130,8 @@ function ProjectCalendar() {
       endTime: "11:00 AM",
       isAllDay: false,
       location: "Mountains",
+      eventType: "prep",
+      progress: 55,
     },
     {
       id: 11,
@@ -120,6 +142,8 @@ function ProjectCalendar() {
       endTime: "2:00 PM",
       isAllDay: false,
       location: "Studio B",
+      eventType: "shoot",
+      progress: 20,
     },
     {
       id: 12,
@@ -130,6 +154,8 @@ function ProjectCalendar() {
       endTime: "5:00 PM",
       isAllDay: false,
       location: "Stage 1",
+      eventType: "shoot",
+      progress: 25,
     },
 
     {
@@ -141,6 +167,8 @@ function ProjectCalendar() {
       endTime: "12:00 PM",
       isAllDay: false,
       location: "Main Hall",
+      eventType: "prep",
+      progress: 40,
     },
     {
       id: 14,
@@ -151,6 +179,8 @@ function ProjectCalendar() {
       endTime: "3:00 PM",
       isAllDay: false,
       location: "Studio A",
+      eventType: "shoot",
+      progress: 35,
     },
     {
       id: 15,
@@ -161,8 +191,51 @@ function ProjectCalendar() {
       endTime: "6:00 PM",
       isAllDay: false,
       location: "Wardrobe",
+      eventType: "prep",
+      progress: 45,
     },
   ]);
+  const conflicts = useMemo(() => {
+  const result = [];
+
+  for (let i = 0; i < events.length; i++) {
+    for (let j = i + 1; j < events.length; j++) {
+      const e1 = events[i];
+      const e2 = events[j];
+
+      if (e1.startDate !== e2.startDate) continue;
+
+      const t1Start = new Date(`${e1.startDate} ${e1.startTime}`);
+      const t1End   = new Date(`${e1.endDate} ${e1.endTime}`);
+
+      const t2Start = new Date(`${e2.startDate} ${e2.startTime}`);
+      const t2End   = new Date(`${e2.endDate} ${e2.endTime}`);
+
+      if (t1Start < t2End && t2Start < t1End) {
+        result.push({
+          event1: e1,
+          event2: e2,
+          attendees: ["Director", "Camera", "Producer"], // demo
+        });
+      }
+    }
+  }
+
+  return result;
+}, [events]);
+
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const matchesSearch = event.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesPeriod = period === "all" || event.eventType === period;
+
+      return matchesSearch && matchesPeriod;
+    });
+  }, [events, search, period]);
 
   const [view, setView] = useState("month");
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
@@ -172,9 +245,13 @@ function ProjectCalendar() {
       <CalendarToolbar
         currentDate={currentDate}
         view={view}
+        search={search}
+        setSearch={setSearch}
         setView={setView}
+        period={period}
+        setPeriod={setPeriod}
         setCurrentDate={setCurrentDate}
-        events={events}
+        events={filteredEvents}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
@@ -184,7 +261,9 @@ function ProjectCalendar() {
             currentDate={currentDate}
             setCurrentDate={setCurrentDate}
             onDayClick={() => setIsCreateEventModalOpen(true)}
-            events={events}
+            events={filteredEvents}
+            conflicts={conflicts}
+            onEditEvent={(event) => console.log("Edit", event)}
           />
         </div>
         <div>

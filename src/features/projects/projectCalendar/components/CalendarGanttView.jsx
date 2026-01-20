@@ -16,57 +16,38 @@ function daysBetween(start, end) {
   return Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)));
 }
 
-export default function CalendarGanttView({ currentDate }) {
+export default function CalendarGanttView({ currentDate, events }) {
   const days = getWeekDays(currentDate);
-  const events = [
-    {
-      id: 8,
-      title: "PREP PHASE",
-      startDate: "2026-01-10",
-      endDate: "2026-01-18",
-      eventType: "prep",
-      location: "Studio / Office",
-    },
-    {
-      id: 9,
-      title: "SHOOT PHASE",
-      startDate: "2026-01-19",
-      endDate: "2026-01-25",
-      eventType: "shoot",
-      location: "Wales & Forest Locations",
-    },
-    {
-      id: 10,
-      title: "WRAP PHASE",
-      startDate: "2026-01-26",
-      endDate: "2026-01-30",
-      eventType: "wrap",
-      location: "Post-Production Studio",
-    },
-  ];
+
   const phases = [
-    { name: "Prep", key: "prep", color: "bg-purple-500" },
-    { name: "Shoot", key: "shoot", color: "bg-pink-500" },
-    { name: "Wrap", key: "wrap", color: "bg-emerald-500" },
+    { name: "Prep", key: "prep", color: "bg-purple-500 dark:bg-purple-400" },
+    { name: "Shoot", key: "shoot", color: "bg-pink-500 dark:bg-pink-400" },
+    { name: "Wrap", key: "wrap", color: "bg-emerald-500 dark:bg-emerald-400" },
   ];
-
-  // Convert your events into Gantt bars
-  const ganttRows = phases.map((phase) => {
-    const phaseEvents = events.filter(
-      (e) => e.eventType === phase.key && e.startDate && e.endDate,
-    );
-
-    return {
-      ...phase,
-      events: phaseEvents,
-    };
-  });
+  const ganttRows = phases.map((phase) => ({
+    ...phase,
+    events: events
+      .filter((e) => e.eventType === phase.key)
+      .map((e) => ({
+        ...e,
+        progress: e.progress ?? 0, // default
+      })),
+  }));
 
   return (
     <div className="rounded-xl overflow-hidden border border-border bg-background">
       {/* HEADER */}
-      <div className="grid grid-cols-[160px_repeat(14,1fr)] text-[11px] font-black uppercase border-b bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
-        <div className="pl-4 py-3 border-r">Phase</div>
+      <div
+        className="grid grid-cols-[200px_120px_120px_140px_repeat(14,1fr)] text-[11px] font-black uppercase border-b bg-purple-50/80 dark:bg-purple-900/20
+text-purple-800 dark:text-purple-300
+border-border dark:border-[#2a1b3d]
+"
+      >
+        <div className="pl-4 py-3 border-r">Task</div>
+        <div className="py-3 text-center border-r">Start</div>
+        <div className="py-3 text-center border-r">End</div>
+        <div className="py-3 text-center border-r">Progress</div>
+
         {days.map((d) => (
           <div key={d} className="py-3 text-center border-r">
             {format(d, "dd MMM")}
@@ -74,60 +55,88 @@ export default function CalendarGanttView({ currentDate }) {
         ))}
       </div>
 
-      {/* ROWS */}
+      {/* BODY */}
       {ganttRows.map((row) => (
-        <div
-          key={row.name}
-          className="grid grid-cols-[160px_repeat(14,1fr)] border-b min-h-[56px]"
-        >
-          {/* LEFT LABEL */}
-          <div className="flex items-center pl-4 font-bold text-sm text-purple-700 dark:text-purple-300 border-r">
-            {row.name}
+        <div key={row.name} className="border-b">
+          {/* PHASE ROW */}
+          <div className="grid grid-cols-[200px_120px_120px_140px_repeat(14,1fr)] bg-muted/30 dark:bg-muted/20">
+            <div className="pl-4 py-2 font-bold text-purple-700 border-r">
+              {row.name}
+            </div>
+            <div className="col-span-17" />
           </div>
 
-          {/* TIMELINE */}
-          <div className="relative col-span-14">
-            {row.events.map((event) => {
-              const startIndex = days.findIndex(
-                (d) => format(d, "yyyy-MM-dd") === event.startDate,
-              );
+          {/* EVENT ROWS */}
+          {row.events.map((event) => {
+            if (!event.startDate || !event.endDate) return null;
 
-              if (startIndex === -1) return null;
+            const startIndex = days.findIndex(
+              (d) => format(d, "yyyy-MM-dd") === event.startDate,
+            );
 
-              const width = daysBetween(event.startDate, event.endDate);
+            if (startIndex === -1) return null;
 
-              return (
-                <Tooltip key={event.id}>
-                  <TooltipTrigger asChild>
+            const width = daysBetween(event.startDate, event.endDate);
+
+            return (
+              <div
+                key={event.id}
+                className="grid grid-cols-[200px_120px_120px_140px_repeat(14,1fr)] min-h-[48px]"
+              >
+                {/* TASK NAME */}
+                <div className="pl-8 text-sm flex items-center border-r">
+                  {event.title}
+                </div>
+
+                {/* START */}
+                <div className="text-xs flex items-center justify-center border-r">
+                  {format(new Date(event.startDate), "dd/MM/yy")}
+                </div>
+
+                {/* END */}
+                <div className="text-xs flex items-center justify-center border-r">
+                  {format(new Date(event.endDate), "dd/MM/yy")}
+                </div>
+
+                {/* PROGRESS */}
+                <div className="flex items-center px-2 border-r">
+                  <div className="w-full h-2 bg-muted rounded">
                     <div
-                      className={cn(
-                        "absolute top-2 h-10 rounded-lg text-white text-xs font-bold px-3 flex items-center shadow-md",
-                        row.color,
-                      )}
-                      style={{
-                        left: `${(startIndex / 14) * 100}%`,
-                        width: `${(width / 14) * 100}%`,
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  </TooltipTrigger>
+                      className="h-2 bg-emerald-500 dark:bg-emerald-400 rounded"
+                      style={{ width: `${event.progress}%` }}
+                    />
+                  </div>
+                  <span className="ml-2 text-xs">{event.progress}%</span>
+                </div>
 
-                  <TooltipContent>
-                    <div className="text-sm">
+                {/* TIMELINE BAR */}
+                <div className="relative col-span-14">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "absolute top-2 h-8 rounded-lg shadow-md",
+                          row.color,
+                        )}
+                        style={{
+                          left: `${(startIndex / 14) * 100}%`,
+                          width: `${(width / 14) * 100}%`,
+                        }}
+                      />
+                    </TooltipTrigger>
+
+                    <TooltipContent>
                       <p className="font-semibold">{event.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {event.startDate} → {event.endDate}
                       </p>
-                      {event.location && (
-                        <p className="text-xs">📍 {event.location}</p>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
+                      <p className="text-xs">Progress: {event.progress}%</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>

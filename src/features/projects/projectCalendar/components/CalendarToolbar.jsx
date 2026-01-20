@@ -25,7 +25,7 @@ import FilterPillTabs from "@/shared/components/FilterPillTabs";
 export default function CalendarToolbar({
   currentDate,
   setCurrentDate,
-  events = 0,
+  events ,
   search,
   setSearch,
   period,
@@ -80,7 +80,7 @@ export default function CalendarToolbar({
             </h3>
 
             <p className="text-xs text-muted-foreground">
-              {dayEvents.length} events scheduled
+              {events.length} events scheduled
             </p>
           </div>
         </div>

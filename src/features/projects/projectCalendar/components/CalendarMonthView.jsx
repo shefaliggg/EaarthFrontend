@@ -10,7 +10,6 @@ import {
 } from "@/shared/components/ui/popover";
 import { getProductionWeekLabel } from "./productionPhases";
 
-
 import { startOfMonth, startOfWeek, addDays, format } from "date-fns";
 import { cn } from "../../../../shared/config/utils";
 import { Clock, MapPin } from "lucide-react";
@@ -49,9 +48,6 @@ function CalendarMonthView({
   };
 
   // Example production phases (you can later make this dynamic)
- 
-
-
 
   return (
     <>
@@ -167,6 +163,10 @@ function CalendarMonthView({
                           </PopoverTrigger>
 
                           <PopoverContent>
+                            <div className=" text-[15px] font-black text-center text-purple-800 dark:text-purple-300 mb-2">
+                              {format(new Date(dateString), "dd")}
+                            </div>
+
                             {dayEvents.map((event) => (
                               <Tooltip key={event.id}>
                                 <TooltipTrigger asChild>

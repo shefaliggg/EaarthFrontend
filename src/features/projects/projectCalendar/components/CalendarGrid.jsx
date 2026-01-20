@@ -1,3 +1,4 @@
+import CalendarConflictsView from "./CalendarConflictsView";
 import CalendarDayView from "./CalendarDayView";
 import CalendarGanttView from "./CalendarGanttView";
 import CalendarMonthView from "./CalendarMonthView";
@@ -11,6 +12,8 @@ export default function CalendarGrid({
   setCurrentDate,
   onDayClick,
   events,
+  conflicts,
+  onEditEvent,
 }) {
   if (view === "month") {
     return (
@@ -69,6 +72,12 @@ export default function CalendarGrid({
         events={events}
         onEventClick={onDayClick}
       />
+    );
+  }
+
+  if (view === "conflicts") {
+    return (
+      <CalendarConflictsView conflicts={conflicts} onEditEvent={onEditEvent} />
     );
   }
 

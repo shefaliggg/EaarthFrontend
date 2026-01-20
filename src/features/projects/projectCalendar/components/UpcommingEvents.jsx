@@ -24,7 +24,7 @@ export default function UpcomingEvents({
         </p>
       )}
 
-      {events.slice(0, 5).map((event) => (
+      {events.slice(0, 6).map((event) => (
         <div
           key={event.id}
           onClick={() => {
