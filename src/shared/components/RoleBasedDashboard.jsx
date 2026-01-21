@@ -9,8 +9,7 @@ const NoAffiliationDashboard = lazy(() => import("../../features/auth/pages/NoAf
 
 const RoleBasedDashboard = () => {
   const { user } = useAuth();
-  // const userType = user?.userType ?? "";
-  const userType = "crew" //temporary for development
+  const userType = user?.userType ?? "";
 
   const renderDashboard = () => {
     switch (userType) {
