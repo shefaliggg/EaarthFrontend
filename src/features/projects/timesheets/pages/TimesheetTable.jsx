@@ -8,7 +8,7 @@ function TimesheetTable() {
     const [selectedWeek, setSelectedWeek] = useState(
         week || new Date().toISOString().split("T")[0]
     );
-    const [currentUserRole, setCurrentUserRole] = useState("hod");
+    const [currentUserRole, setCurrentUserRole] = useState("crew");
     // Crew | HOD | Payroll | Finance | Production
 
     const [selectedCrewInfo, setSelectedCrewInfo] = useState({
