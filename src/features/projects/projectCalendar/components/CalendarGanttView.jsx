@@ -16,6 +16,26 @@ function daysBetween(start, end) {
   return Math.max(1, Math.ceil((e - s) / (1000 * 60 * 60 * 24)));
 }
 
+function calculateProgress(startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const today = new Date();
+
+  start.setHours(0,0,0,0);
+  end.setHours(23,59,59,999);
+  today.setHours(12,0,0,0);
+
+  if (today <= start) return 0;
+  if (today >= end) return 100;
+
+  const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+  const elapsedDays = Math.ceil((today - start) / (1000 * 60 * 60 * 24));
+
+  return Math.round((elapsedDays / totalDays) * 100);
+}
+
+
+
 export default function CalendarGanttView({ currentDate, events }) {
   const days = getWeekDays(currentDate);
 
@@ -28,10 +48,11 @@ export default function CalendarGanttView({ currentDate, events }) {
     ...phase,
     events: events
       .filter((e) => e.eventType === phase.key)
-      .map((e) => ({
-        ...e,
-        progress: e.progress ?? 0, // default
-      })),
+.map((e) => ({
+  ...e,
+  progress: calculateProgress(e.startDate, e.endDate),
+}))
+
   }));
 
   return (
@@ -43,7 +64,7 @@ text-purple-800 dark:text-purple-300
 border-border dark:border-[#2a1b3d]
 "
       >
-        <div className="pl-4 py-3 border-r">Task</div>
+        <div className="pl-4 py-3 border-r">Event</div>
         <div className="py-3 text-center border-r">Start</div>
         <div className="py-3 text-center border-r">End</div>
         <div className="py-3 text-center border-r">Progress</div>
