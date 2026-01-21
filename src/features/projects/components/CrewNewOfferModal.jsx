@@ -122,7 +122,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-6xl my-8 rounded-3xl border shadow-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <div className="w-full container my-8 rounded-3xl border shadow-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center rounded-t-3xl justify-between p-6 border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -241,7 +241,7 @@ export default function NewOfferModal({ isOpen, onClose, onSave }) {
             <h4 className="text-lg font-bold mb-4 pb-2 border-b text-[#9333ea] dark:text-[#c084fc] border-gray-200 dark:border-gray-700">
               ROLE CONFIGURATION
             </h4>
-            
+
             <RoleConfigurationTab
               roles={jobTitles}
               onRolesChange={setJobTitles}

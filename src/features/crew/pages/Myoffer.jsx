@@ -30,7 +30,7 @@ export default function MyOffer() {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Get offers (mock or real)
   let offers;
   if (USE_MOCK_DATA) {
@@ -72,12 +72,12 @@ export default function MyOffer() {
   // Filter offers by status
   const pendingOffers = offers.filter(o => ["SENT_TO_CREW", "NEEDS_REVISION"].includes(o.status));
   const inProgressOffers = offers.filter(o => [
-    "CREW_ACCEPTED", 
-    "PRODUCTION_CHECK", 
-    "ACCOUNTS_CHECK", 
-    "PENDING_CREW_SIGNATURE", 
-    "PENDING_UPM_SIGNATURE", 
-    "PENDING_FC_SIGNATURE", 
+    "CREW_ACCEPTED",
+    "PRODUCTION_CHECK",
+    "ACCOUNTS_CHECK",
+    "PENDING_CREW_SIGNATURE",
+    "PENDING_UPM_SIGNATURE",
+    "PENDING_FC_SIGNATURE",
     "PENDING_STUDIO_SIGNATURE"
   ].includes(o.status));
   const completedOffers = offers.filter(o => o.status === "COMPLETED");
@@ -126,8 +126,8 @@ export default function MyOffer() {
         </h2>
         <div className="space-y-3">
           {offers.map(offer => (
-            <OfferCard 
-              key={offer.id} 
+            <OfferCard
+              key={offer.id}
               offer={offer}
               onView={handleViewOffer}
               onRequestChange={handleRequestChange}
@@ -142,7 +142,7 @@ export default function MyOffer() {
 
   return (
     <div className="">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="container mx-auto space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold tracking-tight" data-testid="text-my-offers-title">
@@ -150,7 +150,7 @@ export default function MyOffer() {
             </h1>
             <p className="text-muted-foreground mt-0.5">View and manage your crew offers</p>
           </div>
-          <OffersSummary 
+          <OffersSummary
             pendingCount={pendingOffers.length}
             inProgressCount={inProgressOffers.length}
             signedCount={completedOffers.length}
@@ -200,7 +200,7 @@ export default function MyOffer() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>What needs to change?</Label>
-              <Textarea 
+              <Textarea
                 value={changeReason}
                 onChange={(e) => setChangeReason(e.target.value)}
                 placeholder="Describe the changes you would like..."
@@ -210,7 +210,7 @@ export default function MyOffer() {
             </div>
             <div className="space-y-2">
               <Label>Specific fields (optional)</Label>
-              <Textarea 
+              <Textarea
                 value={changeFields}
                 onChange={(e) => setChangeFields(e.target.value)}
                 placeholder="E.g., rate, start date, allowances (comma-separated)"
@@ -222,7 +222,7 @@ export default function MyOffer() {
             <Button variant="outline" onClick={() => setShowChangeDialog(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={submitChangeRequest}
               disabled={!changeReason.trim() || isSubmitting}
             >

@@ -8,10 +8,9 @@ function TimesheetTable() {
     const [selectedWeek, setSelectedWeek] = useState(
         week || new Date().toISOString().split("T")[0]
     );
-    const [currentUserRole, setCurrentUserRole] = useState("hod");
+    const [currentUserRole, setCurrentUserRole] = useState("crew");
     // Crew | HOD | Payroll | Finance | Production
 
-    /* ---------------- CREW INFO ---------------- */
     const [selectedCrewInfo, setSelectedCrewInfo] = useState({
         firstName: "Luke",
         lastName: "Greenan",
@@ -21,25 +20,15 @@ function TimesheetTable() {
 
     const crewInfo = selectedCrewInfo;
 
-    /* ---------------- TIMESHEET DATA ---------------- */
     const [entries, setEntries] = useState([]);
     const [customItems, setCustomItems] = useState([]);
 
-    /* ---------------- PAY / CONTRACT ---------------- */
     const [crewType, setCrewType] = useState("weekly");
     const [employmentType, setEmploymentType] = useState("PAYE");
-    const [companyName, setCompanyName] = useState("");
 
     const [allowanceCaps, setAllowanceCaps] = useState({});
 
-    /* ---------------- UI / FLAGS ---------------- */
-    const [showWorkflowGuide, setShowWorkflowGuide] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(false);
-
-    const [timesheetStatus, setTimesheetStatus] = useState("draft");
-
-    const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
-    const [editingExpenses, setEditingExpenses] = useState(false);
 
     const getDaysForWeek = (weekEndingDate) => {
         const end = new Date(weekEndingDate);

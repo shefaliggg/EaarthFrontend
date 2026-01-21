@@ -27,14 +27,9 @@ function CrewTimesheetsOverview() {
   const activeTab = isFuelAndMileageRoute ? "expenses" : isPettyCashRoute ? "petty-cash" : "timesheets";
   const currentTab = location.pathname
 
-  console.log("active tab", activeTab)
-
-  const [expandedYears, setExpandedYears] = useState([new Date().getFullYear()]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
-
-  const [viewingExpensesForWeek, setViewingExpensesForWeek] = useState(null);
 
   const generateMockWeekData = () => {
     const weeks = [];

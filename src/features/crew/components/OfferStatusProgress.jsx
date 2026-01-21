@@ -32,12 +32,12 @@ const formatDate = (dateStr) => {
   }
 };
 
-export default function OfferStatusProgress({ 
+export default function OfferStatusProgress({
   status = "CREW_ACCEPTED",
-  sentToCrewAt, 
-  updatedAt, 
-  crewAcceptedAt, 
-  productionCheckCompletedAt, 
+  sentToCrewAt,
+  updatedAt,
+  crewAcceptedAt,
+  productionCheckCompletedAt,
   accountsCheckCompletedAt,
   crewSignedAt,
   upmSignedAt,
@@ -48,91 +48,91 @@ export default function OfferStatusProgress({
   const currentStep = currentStatus.step;
 
   const steps = [
-    { 
+    {
       id: 0,
       key: 'DRAFT',
-      label: "Draft", 
+      label: "Draft",
       sublabel: "Production Admin",
       date: "10 Jan 2026 09:00",
-      completed: currentStep >= 0 
+      completed: currentStep >= 0
     },
-    { 
+    {
       id: 1,
       key: 'SENT_TO_CREW',
-      label: "Sent to Crew", 
+      label: "Sent to Crew",
       sublabel: "Production Office",
       date: sentToCrewAt ? formatDate(sentToCrewAt) : "10 Jan 2025 06:30",
-      completed: currentStep >= 1 
+      completed: currentStep >= 1
     },
-    { 
+    {
       id: 2,
       key: 'CREW_ACCEPTED',
-      label: "Crew Accepted", 
+      label: "Crew Accepted",
       sublabel: "Crew Member",
       date: crewAcceptedAt ? formatDate(crewAcceptedAt) : "",
-      completed: currentStep >= 2 
+      completed: currentStep >= 2
     },
-    { 
+    {
       id: 3,
       key: 'PRODUCTION_CHECK',
-      label: "Production Review", 
+      label: "Production Review",
       sublabel: "Production Dept",
       date: productionCheckCompletedAt ? formatDate(productionCheckCompletedAt) : "",
-      completed: currentStep >= 3 
+      completed: currentStep >= 3
     },
-    { 
+    {
       id: 4,
       key: 'ACCOUNTS_CHECK',
-      label: "Accounts Review", 
+      label: "Accounts Review",
       sublabel: "Accounts Team",
       date: accountsCheckCompletedAt ? formatDate(accountsCheckCompletedAt) : "",
-      completed: currentStep >= 4 
+      completed: currentStep >= 4
     },
-    { 
+    {
       id: 5,
       key: 'PENDING_CREW_SIGNATURE',
-      label: "Crew Sign", 
+      label: "Crew Sign",
       sublabel: "Crew Member",
       date: crewSignedAt ? formatDate(crewSignedAt) : "",
-      completed: currentStep >= 5 
+      completed: currentStep >= 5
     },
-    { 
+    {
       id: 6,
       key: 'PENDING_UPM_SIGNATURE',
-      label: "UPM Sign", 
+      label: "UPM Sign",
       sublabel: "Unit Production Manager",
       date: upmSignedAt ? formatDate(upmSignedAt) : "",
-      completed: currentStep >= 6 
+      completed: currentStep >= 6
     },
-    { 
+    {
       id: 7,
       key: 'PENDING_FC_SIGNATURE',
-      label: "FC Sign", 
+      label: "FC Sign",
       sublabel: "Financial Controller",
       date: fcSignedAt ? formatDate(fcSignedAt) : "",
-      completed: currentStep >= 7 
+      completed: currentStep >= 7
     },
-    { 
+    {
       id: 8,
       key: 'PENDING_STUDIO_SIGNATURE',
-      label: "Studio Sign", 
+      label: "Studio Sign",
       sublabel: "Studio Executive",
       date: studioSignedAt ? formatDate(studioSignedAt) : "",
-      completed: currentStep >= 8 
+      completed: currentStep >= 8
     },
-    { 
+    {
       id: 9,
       key: 'COMPLETED',
-      label: "Completed", 
+      label: "Completed",
       sublabel: "All Signed",
       date: studioSignedAt ? formatDate(studioSignedAt) : "",
-      completed: currentStep >= 9 
+      completed: currentStep >= 9
     },
   ];
 
   return (
     <div className="  transition-colors duration-400">
-      <div className="max-w-7xl mx-auto">
+      <div className="container mx-auto">
         <div className=" bg-background rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 transition-colors duration-400">
           {/* Header Row */}
           <div className="flex items-center justify-between mb-6">
@@ -154,14 +154,14 @@ export default function OfferStatusProgress({
           <div className="relative">
             {/* Background Line */}
             <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700 transition-colors duration-400" style={{ zIndex: 0 }} />
-            
+
             {/* Progress Line */}
-            <div 
-              className="absolute top-4 left-0 h-0.5 bg-gradient-to-r from-emerald-500 via-emerald-500 to-purple-500 dark:from-emerald-400 dark:via-emerald-400 dark:to-purple-400 transition-all duration-500" 
-              style={{ 
+            <div
+              className="absolute top-4 left-0 h-0.5 bg-gradient-to-r from-emerald-500 via-emerald-500 to-purple-500 dark:from-emerald-400 dark:via-emerald-400 dark:to-purple-400 transition-all duration-500"
+              style={{
                 width: `${(currentStep / (steps.length - 1)) * 100}%`,
-                zIndex: 1 
-              }} 
+                zIndex: 1
+              }}
             />
 
             {/* Steps */}
@@ -175,14 +175,13 @@ export default function OfferStatusProgress({
                   <div key={step.id} className="flex flex-col items-center" style={{ flex: 1 }}>
                     {/* Circle */}
                     <div className="relative mb-2">
-                      <div 
-                        className={`w-8 h-8 rounded-full border-3 flex items-center justify-center transition-all duration-300 ${
-                          isCompleted 
-                            ? 'bg-emerald-500 dark:bg-emerald-400 border-white dark:border-gray-800 shadow-md' 
+                      <div
+                        className={`w-8 h-8 rounded-full border-3 flex items-center justify-center transition-all duration-300 ${isCompleted
+                            ? 'bg-emerald-500 dark:bg-emerald-400 border-white dark:border-gray-800 shadow-md'
                             : isCurrent
-                            ? 'bg-purple-500 dark:bg-purple-400 border-white dark:border-gray-800 shadow-md'
-                            : 'bg-gray-300 dark:bg-gray-600 border-white dark:border-gray-800'
-                        }`}
+                              ? 'bg-purple-500 dark:bg-purple-400 border-white dark:border-gray-800 shadow-md'
+                              : 'bg-gray-300 dark:bg-gray-600 border-white dark:border-gray-800'
+                          }`}
                       >
                         {isCompleted ? (
                           <CheckCircle className="w-4 h-4 text-white dark:text-gray-900" fill="white" strokeWidth={1.5} />
@@ -196,9 +195,8 @@ export default function OfferStatusProgress({
 
                     {/* Label */}
                     <div className="text-center min-h-[48px] max-w-[90px]">
-                      <p className={`text-[11px] font-semibold mb-0.5 leading-tight transition-colors duration-300 ${
-                        isCompleted || isCurrent ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
-                      }`}>
+                      <p className={`text-[11px] font-semibold mb-0.5 leading-tight transition-colors duration-300 ${isCompleted || isCurrent ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
+                        }`}>
                         {step.label}
                       </p>
                       {step.sublabel && (
@@ -217,8 +215,8 @@ export default function OfferStatusProgress({
               })}
             </div>
           </div>
-          
-         
+
+
         </div>
       </div>
     </div>

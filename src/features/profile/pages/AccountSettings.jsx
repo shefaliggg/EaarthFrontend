@@ -22,7 +22,7 @@ export default function AccountSettings({ isDarkMode }) {
     manageDocuments: false,
     manageProjects: false,
   });
-  
+
   const [settings, setSettings] = useState({
     email: 'shefali.gajbhiye@eaarthstudios.com',
     phone: '+91 98765 43210',
@@ -96,7 +96,7 @@ export default function AccountSettings({ isDarkMode }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="max-w-7xl mx-auto"
+        className="container mx-auto"
       >
         {/* Tabs and Edit Button */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
@@ -109,11 +109,10 @@ export default function AccountSettings({ isDarkMode }) {
                   <motion.button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
-                      activeTab === tab.id
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${activeTab === tab.id
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-card hover:text-foreground'
-                    }`}
+                      }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -152,34 +151,34 @@ export default function AccountSettings({ isDarkMode }) {
         {/* Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'account' && (
-            <AccountInfoTab 
-              settings={settings} 
-              setSettings={setSettings} 
-              isEditing={isEditing} 
+            <AccountInfoTab
+              settings={settings}
+              setSettings={setSettings}
+              isEditing={isEditing}
             />
           )}
 
           {activeTab === 'notifications' && (
-            <NotificationsTab 
-              settings={settings} 
-              setSettings={setSettings} 
-              isEditing={isEditing} 
+            <NotificationsTab
+              settings={settings}
+              setSettings={setSettings}
+              isEditing={isEditing}
             />
           )}
 
           {activeTab === 'privacy' && (
-            <PrivacyTab 
-              settings={settings} 
-              setSettings={setSettings} 
-              isEditing={isEditing} 
+            <PrivacyTab
+              settings={settings}
+              setSettings={setSettings}
+              isEditing={isEditing}
             />
           )}
 
           {activeTab === 'security' && (
-            <SecurityTab 
-              settings={settings} 
-              setSettings={setSettings} 
-              isEditing={isEditing} 
+            <SecurityTab
+              settings={settings}
+              setSettings={setSettings}
+              isEditing={isEditing}
             />
           )}
 

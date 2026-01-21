@@ -9,15 +9,15 @@ export default function ContractDocumentPage() {
   const { projectName, id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Determine mode from route
   const mode = location.pathname.includes('/sign') ? 'sign' : 'view';
-  
+
   // Fetch offer data using the helper function
   const offer = getMockOfferById(id);
-  
+
   const [isPending, setIsPending] = useState(false);
-  
+
   if (!offer) {
     return (
       <div className="min-h-screen bg-background p-6">
@@ -45,17 +45,17 @@ export default function ContractDocumentPage() {
   const handleSign = async (signerType, signatureData) => {
     console.log(`${signerType} signed:`, signatureData);
     setIsPending(true);
-    
+
     try {
       // TODO: Make API call to save signature
       // await api.saveSignature(id, signerType, signatureData);
-      
+
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // Show success message (you can add a toast notification here)
       console.log('Contract signed successfully!');
-      
+
       // Navigate back to view offer page after signing
       navigate(`/projects/${projectName}/offers/${id}/view`);
     } catch (error) {
@@ -77,12 +77,12 @@ export default function ContractDocumentPage() {
 
   return (
     <div className="">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="container mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => navigate(`/projects/${projectName}/offers/${id}/view`)}
             >
@@ -96,15 +96,15 @@ export default function ContractDocumentPage() {
 
           {mode === 'view' && (
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handlePrint}
               >
                 <Printer className="w-4 h-4 mr-2" /> Print
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handleDownload}
               >

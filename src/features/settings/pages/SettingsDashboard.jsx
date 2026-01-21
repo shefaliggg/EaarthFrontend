@@ -16,17 +16,17 @@ import { div } from 'framer-motion/client';
 export default function SettingsDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Get active tab from URL or default to 'account'
   const getTabFromUrl = () => {
     const path = location.pathname.split('/').pop();
     const validTabs = ['account', 'display', 'notifications', 'privacy', 'regional', 'data', 'agent', 'activity'];
     return validTabs.includes(path) ? path : 'account';
   };
-  
+
   const [activeTab, setActiveTab] = useState(getTabFromUrl());
 
   // Update URL when tab changes
@@ -119,7 +119,7 @@ export default function SettingsDashboard() {
 
     console.log('Saving settings...', profile);
     setIsEditing(false);
-    
+
     // Clear password fields after save
     setProfile({
       ...profile,
@@ -127,7 +127,7 @@ export default function SettingsDashboard() {
       newPassword: '',
       confirmPassword: '',
     });
-    
+
     toast.success('✅ Settings saved successfully!');
   };
 
@@ -143,7 +143,7 @@ export default function SettingsDashboard() {
 
   return (
     <div className="min-h-screen transition-colors duration-400 ">
-      <div className="max-w-7xl mx-auto  space-y-6">
+      <div className="container mx-auto  space-y-6">
         {/* HEADER + SUMMARY */}
         <SettingsSummary
           isDarkMode={isDarkMode}
@@ -161,7 +161,7 @@ export default function SettingsDashboard() {
         />
 
         {/* TAB CONTENTS */}
-         <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
+        <div className="rounded-lg border shadow-md border-border bg-card p-6 transition-colors duration-400">
           {activeTab === 'account' && (
             <AccountSettings
               profile={profile}

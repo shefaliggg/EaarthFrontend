@@ -43,7 +43,8 @@ export default function CrewDashboard() {
 
   return (
     <div className="">
-      <div className="max-w-7xl mx-auto space-y-3">
+      {/* Main Content */}
+      <div className="container mx-auto space-y-6">
         {/* Welcome Header */}
         <PageHeader
           title="WELCOME BACK, EMMA THOMPSON"
@@ -69,7 +70,7 @@ export default function CrewDashboard() {
               </div>
               <span className="bg-purple-100 dark:bg-lavender-900/30 text-purple-700 dark:text-lavender-300 text-xs font-semibold px-2 py-0.5 rounded">BETA</span>
             </div>
-            
+  
             <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
               Good morning, Emma. You have a <span className="font-semibold text-gray-900 dark:text-white">05:45 Call</span> at Pinewood (Stage 7). Heavy rain is expected during Scene 42B (Ext. Forest), so the unit might move to Cover Set (Stage 4) after lunch.
             </p>

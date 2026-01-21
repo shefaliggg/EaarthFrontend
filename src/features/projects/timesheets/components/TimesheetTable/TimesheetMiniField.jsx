@@ -72,33 +72,35 @@ export function TimesheetMiniField({
                     <div className="flex items-center gap-[1px]">
                         {/* INPUT */}
                         <Input
-                            type="text"
-                            inputMode="numeric"
+                            type="number"
+                            // inputMode="numeric"
                             value={numValue || ""}
                             onChange={(e) =>
                                 onChange(fieldKey, Number(e.target.value) || 0)
                             }
                             className={cn(
                                 "h-4 w-7 px-0.5 text-[10px] text-right",
-                                "bg-transparent border-none shadow-none",
+                                "bg-transparent border-none shadow-none rounded-none",
                                 "focus-visible:ring-0 focus-visible:outline-none"
                             )}
                         />
 
                         {/* STEPPER */}
-                        <div className="flex flex-col opacity-50 group-hover:opacity-100 transition-opacity space-y-[1px]">
+                        <div className="flex flex-col space-y-[1px]">
                             <Button
                                 size={"icon"}
+                                variant={"secondary"}
                                 type="button"
                                 onClick={increment}
-                                className="h-2 w-2 flex items-center justify-center rounded hover:bg-purple-200/60 dark:hover:bg-purple-800/60"
+                                className="h-2 w-2 flex items-center justify-center rounded bg-secondary/50 hover:bg-primary"
                             >
                                 <Plus className="size-2" />
                             </Button>
                             <Button
                                 size={"icon"}
+                                variant={"secondary"}
                                 onClick={decrement}
-                                className="h-2 w-2 flex items-center justify-center rounded hover:bg-purple-200/60 dark:hover:bg-purple-800/60"
+                                className="h-2 w-2 flex items-center justify-center rounded bg-secondary/50 hover:bg-primary"
                             >
                                 <Minus className="size-2" />
                             </Button>
