@@ -8,6 +8,11 @@ import {
   Settings,
   HelpCircle,
   ChevronDown,
+  MessageCircle,
+  LayoutPanelLeft,
+  Columns,
+  Grid,
+  Type,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -23,6 +28,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 
@@ -30,6 +38,9 @@ import eaarthLogo from '@/assets/eaarth.webp';
 import NavigationDropdown from './NavigationDropdown';
 import { adminDropdownList } from '../../config/adminDropdownNavList';
 import { useProjectMenus } from '../../hooks/useProjectMenuList';
+import { cn, getFullName } from '../../config/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { triggerGlobalLogout } from '../../../features/auth/config/globalLogoutConfig';
 
 export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -46,8 +57,8 @@ export default function Header() {
   const userType = 'crew';
 
   /* ---------- NAME, ROLE & INITIALS ---------- */
-  const fullName = currentUser?.name?.trim() || 'Mohad Shanid';
-  const role = currentUser?.role || 'Camera Operator';
+  const fullName = getFullName(currentUser) || 'Not Available';
+  const role = currentUser?.userType || 'Not Available';
 
   const nameParts = fullName.split(' ').filter(Boolean);
   const firstName = nameParts[0] || '';
@@ -85,7 +96,7 @@ export default function Header() {
   return (
     <>
       <div className="h-16 border-b sticky top-0 z-40 bg-background">
-        <div className="px-6 h-full flex items-center justify-between">
+        <div className="px-6 h-full grid grid-cols-[1fr_auto_1fr] items-center gap-4">
 
           {/* LEFT */}
           <img
@@ -96,21 +107,23 @@ export default function Header() {
           />
 
           {/* CENTER NAV */}
-          <nav className="flex items-center gap-2">
-            {navigationMenuList.map(
-              (menu) =>
-                menu && (
-                  <NavigationDropdown
-                    key={menu.id}
-                    menu={menu}
-                    displayMode={displayMode}
-                  />
-                )
-            )}
+          <nav className="flex items-center justify-center gap-2">
+            {role !== "none" &&
+              navigationMenuList.map(
+                (menu) =>
+                  menu && (
+                    <NavigationDropdown
+                      key={menu.id}
+                      menu={menu}
+                      displayMode={displayMode}
+                    />
+                  )
+              )
+            }
           </nav>
 
           {/* RIGHT */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
 
             {/* NOTIFICATIONS */}
             <Button
@@ -129,30 +142,25 @@ export default function Header() {
 
             {/* TOGGLES */}
             <DarkmodeButton />
-            <DisplayModeTrigger
-              displayMode={displayMode}
-              setDisplayMode={setDisplayMode}
-            />
 
             {/* PROFILE (LAST) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 px-2 py-1.5"
+                  className="flex pl-1.5 h-11 group"
                 >
                   {/* Avatar / Initials */}
-                  {avatar ? (
-                    <img
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage
                       src={avatar}
                       alt={displayName}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-full h-full rounded-full object-cover"
                     />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+                    <AvatarFallback className={"group-hover:bg-muted"}>
                       {initials}
-                    </div>
-                  )}
+                    </AvatarFallback>
+                  </Avatar>
 
                   {/* NAME + ROLE */}
                   <div className="flex flex-col items-start leading-tight">
@@ -164,25 +172,25 @@ export default function Header() {
                     </span>
                   </div>
 
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  {/* <ChevronDown className="text-muted-foreground" /> */}
                 </Button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-56">
 
-                <DropdownMenuItem onClick={() => setShowMessages(true)}>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Messages
-                  {messageCount > 0 && (
-                    <span className="ml-auto text-xs bg-purple-600 text-white rounded-full px-2">
-                      {messageCount}
-                    </span>
-                  )}
-                </DropdownMenuItem>
-
                 <DropdownMenuItem onClick={() => navigate('/projects/Myoffers')}>
                   <FileText className="w-4 h-4 mr-2" />
                   My Offers
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => setShowMessages(true)}>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  My Messages
+                  {messageCount > 0 && (
+                    <span className="bg-purple-600 text-white text-xs rounded-full px-1.5 mt-1 ml-auto">
+                      {messageCount}
+                    </span>
+                  )}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
@@ -202,11 +210,55 @@ export default function Header() {
                   Help & Support
                 </DropdownMenuItem>
 
+                {/* <DropdownMenuSeparator /> */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2">
+                    <LayoutPanelLeft className="w-4 h-4 mr-2" />
+                    Display Mode
+                  </DropdownMenuSubTrigger>
+
+                  <DropdownMenuSubContent className="w-44">
+                    <DropdownMenuItem
+                      onClick={() => setDisplayMode("text-icon")}
+                      className={cn(displayMode === "text-icon" && "bg-accent text-white")}
+                    >
+                      <Columns className={cn(
+                        "w-4 h-4 mr-2",
+                        displayMode === "text-icon" && "text-white"
+                      )} />
+                      Text + Icon
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setDisplayMode("icon-only")}
+                      className={cn(displayMode === "icon-only" && "bg-accent text-white")}
+                    >
+                      <Grid className={cn(
+                        "w-4 h-4 mr-2",
+                        displayMode === "icon-only" && "text-white"
+                      )} />
+                      Icon Only
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setDisplayMode("text-only")}
+                      className={cn(displayMode === "text-only" && "bg-accent text-white")}
+                    >
+                      <Type className={cn(
+                        "w-4 h-4 mr-2",
+                        displayMode === "text-only" && "text-white"
+                      )} />
+                      Text Only
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() => navigate('/login')}
+                  onClick={() => triggerGlobalLogout()}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
