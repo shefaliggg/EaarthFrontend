@@ -6,10 +6,14 @@ import ProjectOnboarding from '../components/ProjectOnboarding';
 import ProjectTimesheet from "../components/ProjectTimesheet";
 import ProjectCrewOnboardingSteps from '../components/ProjectCrewOnboardingSteps';
 import { StepperWrapper } from '../../../shared/components/stepper/StepperWrapper';
-
+import ConfirmActionDialog from '../../../shared/components/modals/ConfirmActionDialog';
+import { INITIALIZE_PROJECT_CONFIG } from '../../../shared/config/ConfirmActionsConfig';
 
 function CreateProject() {
-  const [activeTab, setActiveTab] = useState('details'); // 'details', 'general', 'onboarding', 'timesheet', or 'crew-onboarding'
+  const [activeTab, setActiveTab] = useState('details');
+  const [confirmModal, setConfirmModal] = useState({ open: false });
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState(null);
 
   const steps = [
     { id: "details", label: "Project Details" },
@@ -19,19 +23,41 @@ function CreateProject() {
     { id: "crew-onboarding", label: "Crew Onboarding Steps" },
   ];
 
+  const handleInitializeClick = () => {
+    setConfirmModal({ open: true });
+  };
+
+  const handleConfirmInitialize = async ({ note }) => {
+    setIsCreating(true);
+    setError(null);
+    
+    try {
+      // Your project initialization logic here
+      console.log("Initializing project with note:", note);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Close modal on success
+      setConfirmModal({ open: false });
+      
+      // Handle success (e.g., navigate or show success message)
+    } catch (err) {
+      setError(err.message || "Failed to initialize project");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Create Project"
-
         icon="FolderPlus"
         primaryAction={{
           label: "Initialize Project Creation",
           icon: "Rocket",
-          clickAction: () => {
-            // Handle save logic here
-            console.log("Save project");
-          },
+          clickAction: handleInitializeClick,
         }}
         secondaryActions={[
           {
@@ -39,7 +65,6 @@ function CreateProject() {
             icon: "X",
             variant: "outline",
             clickAction: () => {
-              // Handle cancel logic
               window.history.back();
             },
           },
@@ -48,19 +73,14 @@ function CreateProject() {
 
       <ProjectDetails />
 
-
-      {/* <StepperWrapper steps={steps}>
-        <ProjectGeneral />
-        <ProjectOnboarding />
-        <ProjectTimesheet />
-        <ProjectCrewOnboardingSteps />
-      </StepperWrapper> */}
-      {/* Tab Content */}
-      {/* {activeTab === 'details' && <ProjectDetails />}
-      {activeTab === 'general' && <ProjectGeneral />}
-      {activeTab === 'onboarding' && <ProjectOnboarding />}
-      {activeTab === "timesheet" && <ProjectTimesheet />}
-      {activeTab === "crew-onboarding" && <ProjectCrewOnboardingSteps />} */}
+      <ConfirmActionDialog
+        open={confirmModal.open}
+        onOpenChange={(open) => setConfirmModal({ open })}
+        config={INITIALIZE_PROJECT_CONFIG}
+        loading={isCreating}
+        error={error}
+        onConfirm={handleConfirmInitialize}
+      />
     </div>
   );
 }
