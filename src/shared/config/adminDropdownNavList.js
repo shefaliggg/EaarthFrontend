@@ -8,9 +8,24 @@ const displayModeItem = {
   icon: Icon.LayoutPanelLeft,
   type: "submenu",
   children: [
-    { id: "text-icon", label: "Text + Icon", icon: Icon.Columns, action: "display-mode" },
-    { id: "icon-only", label: "Icon Only", icon: Icon.Grid, action: "display-mode" },
-    { id: "text-only", label: "Text Only", icon: Icon.Type, action: "display-mode" },
+    {
+      id: "text-icon",
+      label: "Text + Icon",
+      icon: Icon.Columns,
+      action: "display-mode",
+    },
+    {
+      id: "icon-only",
+      label: "Icon Only",
+      icon: Icon.Grid,
+      action: "display-mode",
+    },
+    {
+      id: "text-only",
+      label: "Text Only",
+      icon: Icon.Type,
+      action: "display-mode",
+    },
   ],
 };
 
@@ -64,7 +79,14 @@ const crewMenu = [
 ];
 
 // TEMP: studio admin uses crew menu
-const studioAdminMenu = [...crewMenu];
+const studioAdminMenu = [
+  {
+    id: "profile",
+    label: "My Profile",
+    icon: Icon.User,
+    route: "/profile",
+  },
+];
 
 /* ===== EXPORT ===== */
 

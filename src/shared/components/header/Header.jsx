@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Bell,
   MessageSquare,
@@ -182,23 +182,20 @@ export default function Header() {
 
               <DropdownMenuContent align="end" className="w-56">
                 {adminMenuItems.map((item) => {
-                  const IconComp = item.icon;
-
-                  if (item.separatorBefore) return <DropdownMenuSeparator key={item.id} />;
 
                   if (item.type === "submenu") {
                     return (
-                      <DropdownMenuSub key={item.id}>
-                        <DropdownMenuSubTrigger className="gap-2">
-                          <SmartIcon icon={item.icon} className="mr-2" />
-                          {item.label}
-                        </DropdownMenuSubTrigger>
+                      <Fragment>
+                        {item.separatorBefore && <DropdownMenuSeparator key={item.id} />}
 
-                        <DropdownMenuSubContent className="w-44">
-                          {item.children.map((child) => {
-                            const ChildIcon = child.icon;
+                        <DropdownMenuSub key={item.id}>
+                          <DropdownMenuSubTrigger className="gap-2">
+                            <SmartIcon icon={item.icon} className="mr-2" />
+                            {item.label}
+                          </DropdownMenuSubTrigger>
 
-                            return (
+                          <DropdownMenuSubContent className="w-44">
+                            {item.children.map((child) => (
                               <DropdownMenuItem
                                 key={child.id}
                                 onClick={() =>
@@ -217,31 +214,35 @@ export default function Header() {
                                 />
                                 {child.label}
                               </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                            ))}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </Fragment>
                     );
                   }
 
                   return (
-                    <DropdownMenuItem
-                      key={item.id}
-                      className={cn(item.danger && "text-red-600")}
-                      onClick={() => {
-                        if (item.route) navigate(item.route);
-                        if (item.action) actionHandlers[item.action]?.();
-                      }}
-                    >
-                      <IconComp className="w-4 h-4 mr-2" />
-                      {item.label}
+                    <Fragment>
+                      {item.separatorBefore && <DropdownMenuSeparator key={item.id} />}
 
-                      {item.badge && messageCount > 0 && (
-                        <span className="bg-purple-600 text-background text-xs rounded-full px-1.5 ml-auto">
-                          {messageCount}
-                        </span>
-                      )}
-                    </DropdownMenuItem>
+                      <DropdownMenuItem
+                        key={item.id}
+                        className={cn(item.danger && "text-red-600")}
+                        onClick={() => {
+                          if (item.route) navigate(item.route);
+                          if (item.action) actionHandlers[item.action]?.();
+                        }}
+                      >
+                        <SmartIcon icon={item.icon} className="w-4 h-4 mr-2" />
+                        {item.label}
+
+                        {item.badge && messageCount > 0 && (
+                          <span className="bg-purple-600 text-background text-xs rounded-full px-1.5 ml-auto">
+                            {messageCount}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    </Fragment>
                   );
                 })}
               </DropdownMenuContent>
