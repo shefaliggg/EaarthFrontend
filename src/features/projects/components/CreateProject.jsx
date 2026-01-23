@@ -12,22 +12,22 @@ function CreateProject() {
   const [activeTab, setActiveTab] = useState('details'); // 'details', 'general', 'onboarding', 'timesheet', or 'crew-onboarding'
 
   const steps = [
-  { id: "details", label: "Project Details" },
-  { id: "general", label: "General Settings" },
-  { id: "onboarding", label: "Project Onboarding" },
-  { id: "timesheet", label: "Timesheet Setup" },
-  { id: "crew-onboarding", label: "Crew Onboarding Steps" },
-];
+    { id: "details", label: "Project Details" },
+    { id: "general", label: "General Settings" },
+    { id: "onboarding", label: "Project Onboarding" },
+    { id: "timesheet", label: "Timesheet Setup" },
+    { id: "crew-onboarding", label: "Crew Onboarding Steps" },
+  ];
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Create Project"
-        subtitle="Set up a new project with all necessary details"
+
         icon="FolderPlus"
         primaryAction={{
-          label: "Save Project",
-          icon: "Save",
+          label: "Initialize Project Creation",
+          icon: "Rocket",
           clickAction: () => {
             // Handle save logic here
             console.log("Save project");
@@ -46,16 +46,15 @@ function CreateProject() {
         ]}
       />
 
-      {/* Tabs */}
-     
+      <ProjectDetails />
 
-      <StepperWrapper steps={steps}>
-        <ProjectDetails />
+
+      {/* <StepperWrapper steps={steps}>
         <ProjectGeneral />
         <ProjectOnboarding />
         <ProjectTimesheet />
         <ProjectCrewOnboardingSteps />
-      </StepperWrapper>
+      </StepperWrapper> */}
       {/* Tab Content */}
       {/* {activeTab === 'details' && <ProjectDetails />}
       {activeTab === 'general' && <ProjectGeneral />}
