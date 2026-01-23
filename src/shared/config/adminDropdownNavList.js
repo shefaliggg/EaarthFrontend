@@ -1,105 +1,75 @@
 import * as Icon from "lucide-react";
 
-export function adminDropdownList(userRole = "studio-admin") {
-  const commonListTopItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: Icon.LayoutDashboard,
-      route: "/home",
-    },
-    {
-      id: "staff",
-      label: "Team",
-      icon: Icon.Briefcase,
-      route: "/staff",
-    },
-  ];
+//common menu
 
-  const commonListBottomItems = [
-    {
-      id: "profile",
-      label: "Profile",
-      icon: Icon.User,
-      route: "/profile",
-      separatorBefore: true,
-    },
-    {
-      id: "support",
-      label: "Help and Support",
-      icon: Icon.HelpCircle,
-      route: "/support",
-    },
-    {
-      id: "logout",
-      label: "Logout",
-      icon: Icon.LogOut,
-      danger: true,
-      separatorBefore: true,
-    },
-  ];
+const displayModeItem = {
+  id: "display-mode",
+  label: "Display Mode",
+  icon: Icon.LayoutPanelLeft,
+  type: "submenu",
+  children: [
+    { id: "text-icon", label: "Text + Icon", icon: Icon.Columns, action: "display-mode" },
+    { id: "icon-only", label: "Icon Only", icon: Icon.Grid, action: "display-mode" },
+    { id: "text-only", label: "Text Only", icon: Icon.Type, action: "display-mode" },
+  ],
+};
 
-  const studioAdminMenu = {
-    id: "studio-admin",
-    triggerLabel: "Studio Admin",
-    triggerIcon: Icon.LayoutDashboard,
-    dropdownLabel: "Studio Admin",
-    align: "end",
-    items: [
-      ...commonListTopItems,
-      {
-        id: "studio-settings",
-        label: "Studio Settings",
-        icon: Icon.Settings,
-        route: "/studio-settings",
-      },
-      {
-        id: "user-settings",
-        label: "User Settings",
-        icon: Icon.Settings,
-        route: "/user-settings",
-      },
-      ...commonListBottomItems
-    ],
-  };
+const commonBottom = [
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Icon.Settings,
+    route: "/settings",
+    separatorBefore: true,
+  },
+  {
+    id: "support",
+    label: "Help & Support",
+    icon: Icon.HelpCircle,
+    route: "/support",
+  },
+  displayModeItem,
+  {
+    id: "logout",
+    label: "Logout",
+    icon: Icon.LogOut,
+    action: "logout",
+    danger: true,
+    separatorBefore: true,
+  },
+];
 
-  // const crewMenu = {
-  //   id: "crew-menu",
-  //   triggerLabel: "Crew",
-  //   triggerIcon: Icon.Users,
-  //   dropdownLabel: "Crew Menu",
-  //   align: "end",
-  //   items: [
-  //     {
-  //       id: "crew-schedule",
-  //       label: "My Schedule",
-  //       icon: Icon.Calendar,
-  //       route: "/crew/schedule",
-  //     },
-  //     {
-  //       id: "crew-tasks",
-  //       label: "My Tasks",
-  //       icon: Icon.CheckSquare,
-  //       route: "/crew/tasks",
-  //     },
-  //     {
-  //       id: "crew-notifications",
-  //       label: "Notifications",
-  //       icon: Icon.Bell,
-  //       route: "/crew/notifications",
-  //     },
-  //     {
-  //       id: "crew-settings",
-  //       label: "Settings",
-  //       icon: Icon.Settings,
-  //       route: "/crew/settings",
-  //     },
-  //     ...commonListBottomItems
-  //   ],
-  // };
+//role specific
 
-  if (userRole === "studio-admin") return studioAdminMenu;
-  // if (userRole === "crew") return crewMenu;
-  
-  return null;
-}
+const crewMenu = [
+  {
+    id: "offers",
+    label: "My Offers",
+    icon: Icon.FileText,
+    route: "/projects/Myoffers",
+  },
+  {
+    id: "messages",
+    label: "My Messages",
+    icon: Icon.MessageCircle,
+    action: "messages",
+    badge: true,
+  },
+  {
+    id: "profile",
+    label: "My Profile",
+    icon: Icon.User,
+    route: "/profile",
+  },
+];
+
+// TEMP: studio admin uses crew menu
+const studioAdminMenu = [...crewMenu];
+
+/* ===== EXPORT ===== */
+
+export const adminDropdownConfig = (role) => {
+  if (role === "studio_admin") return [...studioAdminMenu, ...commonBottom];
+  if (role === "crew") return [...crewMenu, ...commonBottom];
+  return [...commonBottom];
+};

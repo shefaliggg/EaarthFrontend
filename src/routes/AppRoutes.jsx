@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import AuthRoutes from "../features/auth/routes/AuthRoutes";
-import ErrorBoundary from "../shared/components/ErrorBoundary";
+import ErrorBoundary from "../shared/components/wrappers/ErrorBoundary";
 import DashboardRoutes from "./DashboardRoutes";
 import { lazy } from "react";
 import RootLayout from "@/layouts/RootLayout";

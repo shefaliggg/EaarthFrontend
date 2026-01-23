@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-// import ErrorBoundary from '@/shared/components/ErrorBoundary';
+// import ErrorBoundary from '@/shared/components/wrappers/ErrorBoundary';
 // import { Navigate } from 'react-router-dom';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
@@ -10,7 +10,7 @@ const SettingsRoutes = {
   children: [
     { index: true, element: <SettingsDashboard /> },
     { path: ":tab", element: <SettingsDashboard /> },
-    
+
     { path: "*", element: <NotFound /> },
   ],
 };

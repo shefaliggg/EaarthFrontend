@@ -1,14 +1,19 @@
 import React from "react";
 import { Button } from "@/shared/components/ui/button";
-import { Building2, Mail, ArrowRight } from "lucide-react";
+import { Building2, Mail, ArrowRight, Film } from "lucide-react";
 import { getFullName } from "../../../shared/config/utils";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 
 export default function NoAffiliationDashboard() {
     const { currentUser } = useSelector((state) => state.user);
 
     return (
-        <div className="max-w-2xl mx-auto text-center">
+         <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-2xl mx-auto text-center">
             <img
                 src="eaarth.webp"
                 alt="Eaarth Logo"
@@ -25,10 +30,14 @@ export default function NoAffiliationDashboard() {
                 will appear here.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="bg-card border rounded-xl p-8 flex flex-col items-center justify-center gap-2">
                     <Building2 className="w-6 h-6 text-primary" />
                     <span className="text-sm text-muted-foreground">No Previous Affiliated Organisations</span>
+                </div>
+                <div className="bg-card border rounded-xl p-8 flex flex-col items-center justify-center gap-2">
+                    <Film className="w-6 h-6 text-primary" />
+                    <span className="text-sm text-muted-foreground">No Previous Projects</span>
                 </div>
                 <div className="bg-card border rounded-xl p-8 flex flex-col items-center justify-center gap-2">
                     <Mail className="w-6 h-6 text-primary" />
@@ -50,6 +59,6 @@ export default function NoAffiliationDashboard() {
             <p className="text-center text-xs text-slate-500 mt-6">
                 © {new Date().getFullYear()} Eaarth. All rights reserved.
             </p>
-        </div >
+        </motion.div>
     );
 }

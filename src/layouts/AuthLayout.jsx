@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import DarkmodeButton from "../shared/components/DarkmodeButton";
+import DarkmodeButton from "../shared/components/buttons/DarkmodeButton";
 import SuspenseOutlet from "../shared/components/SuspenseOutlet";
 
 const AuthLayout = () => {

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import LoadingScreen from "./LoadingScreen";
+import { StepperWrapper } from "./stepper/StepperWrapper";
 
 const CrewDashboard = lazy(() => import("../../features/crew/pages/CrewDashboard"));
 const StudioDashboard = lazy(() => import("../../features/studio/pages/StudioDashboard"));

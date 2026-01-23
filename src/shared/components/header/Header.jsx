@@ -17,8 +17,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import DarkmodeButton from '../DarkmodeButton';
-import DisplayModeTrigger from './DisplayModeTrigger';
+import DarkmodeButton from '../buttons/DarkmodeButton';
 import { NotificationsPanel } from '../NotificationPanel';
 import { ChatPanel } from '../ChatPanel';
 
@@ -36,11 +35,12 @@ import {
 
 import eaarthLogo from '@/assets/eaarth.webp';
 import NavigationDropdown from './NavigationDropdown';
-import { adminDropdownList } from '../../config/adminDropdownNavList';
 import { useProjectMenus } from '../../hooks/useProjectMenuList';
 import { cn, getFullName } from '../../config/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { triggerGlobalLogout } from '../../../features/auth/config/globalLogoutConfig';
+import { SmartIcon } from '../SmartIcon';
+import { adminDropdownConfig } from '../../config/adminDropdownNavList';
 
 export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -54,9 +54,7 @@ export default function Header() {
   const location = useLocation();
 
   const { currentUser } = useSelector((state) => state.user);
-  const userType = 'crew';
 
-  /* ---------- NAME, ROLE & INITIALS ---------- */
   const fullName = getFullName(currentUser) || 'Not Available';
   const role = currentUser?.userType || 'Not Available';
 
@@ -80,11 +78,17 @@ export default function Header() {
   ];
 
   const projectMenus = useProjectMenus(PROJECTS);
+  console.log("role", role, "currentUser", currentUser);
 
-  const navigationMenuList =
-    userType === 'crew'
-      ? [...projectMenus, adminDropdownList(userType)]
-      : projectMenus;
+  const navigationMenuList = [...projectMenus]
+
+  const adminMenuItems = adminDropdownConfig(role);
+
+  const actionHandlers = {
+    logout: () => triggerGlobalLogout(),
+    messages: () => setShowMessages(true),
+    "display-mode": (value) => setDisplayMode(value),
+  };
 
   useEffect(() => {
     document.body.classList.toggle(
@@ -134,7 +138,7 @@ export default function Header() {
             >
               <Bell className="w-5 h-5" />
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full px-1.5">
+                <span className="absolute -top-1 -right-1 bg-purple-600 text-background text-xs rounded-full px-1.5">
                   {notificationCount}
                 </span>
               )}
@@ -177,92 +181,69 @@ export default function Header() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-56">
+                {adminMenuItems.map((item) => {
+                  const IconComp = item.icon;
 
-                <DropdownMenuItem onClick={() => navigate('/projects/Myoffers')}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  My Offers
-                </DropdownMenuItem>
+                  if (item.separatorBefore) return <DropdownMenuSeparator key={item.id} />;
 
-                <DropdownMenuItem onClick={() => setShowMessages(true)}>
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  My Messages
-                  {messageCount > 0 && (
-                    <span className="bg-purple-600 text-white text-xs rounded-full px-1.5 mt-1 ml-auto">
-                      {messageCount}
-                    </span>
-                  )}
-                </DropdownMenuItem>
+                  if (item.type === "submenu") {
+                    return (
+                      <DropdownMenuSub key={item.id}>
+                        <DropdownMenuSubTrigger className="gap-2">
+                          <SmartIcon icon={item.icon} className="mr-2" />
+                          {item.label}
+                        </DropdownMenuSubTrigger>
 
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  <User className="w-4 h-4 mr-2" />
-                  My Profile
-                </DropdownMenuItem>
+                        <DropdownMenuSubContent className="w-44">
+                          {item.children.map((child) => {
+                            const ChildIcon = child.icon;
 
-                <DropdownMenuSeparator />
+                            return (
+                              <DropdownMenuItem
+                                key={child.id}
+                                onClick={() =>
+                                  actionHandlers["display-mode"](child.id)
+                                }
+                                className={cn(
+                                  displayMode === child.id && "bg-accent text-background"
+                                )}
+                              >
+                                <SmartIcon
+                                  icon={child.icon}
+                                  className={cn(
+                                    "mr-2",
+                                    displayMode === child.id && "text-background"
+                                  )}
+                                />
+                                {child.label}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    );
+                  }
 
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={() => navigate('/support')}>
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  Help & Support
-                </DropdownMenuItem>
-
-                {/* <DropdownMenuSeparator /> */}
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-2">
-                    <LayoutPanelLeft className="w-4 h-4 mr-2" />
-                    Display Mode
-                  </DropdownMenuSubTrigger>
-
-                  <DropdownMenuSubContent className="w-44">
+                  return (
                     <DropdownMenuItem
-                      onClick={() => setDisplayMode("text-icon")}
-                      className={cn(displayMode === "text-icon" && "bg-accent text-white")}
+                      key={item.id}
+                      className={cn(item.danger && "text-red-600")}
+                      onClick={() => {
+                        if (item.route) navigate(item.route);
+                        if (item.action) actionHandlers[item.action]?.();
+                      }}
                     >
-                      <Columns className={cn(
-                        "w-4 h-4 mr-2",
-                        displayMode === "text-icon" && "text-white"
-                      )} />
-                      Text + Icon
+                      <IconComp className="w-4 h-4 mr-2" />
+                      {item.label}
+
+                      {item.badge && messageCount > 0 && (
+                        <span className="bg-purple-600 text-background text-xs rounded-full px-1.5 ml-auto">
+                          {messageCount}
+                        </span>
+                      )}
                     </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => setDisplayMode("icon-only")}
-                      className={cn(displayMode === "icon-only" && "bg-accent text-white")}
-                    >
-                      <Grid className={cn(
-                        "w-4 h-4 mr-2",
-                        displayMode === "icon-only" && "text-white"
-                      )} />
-                      Icon Only
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => setDisplayMode("text-only")}
-                      className={cn(displayMode === "text-only" && "bg-accent text-white")}
-                    >
-                      <Type className={cn(
-                        "w-4 h-4 mr-2",
-                        displayMode === "text-only" && "text-white"
-                      )} />
-                      Text Only
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => triggerGlobalLogout()}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

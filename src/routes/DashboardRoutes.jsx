@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import ErrorBoundary from '@/shared/components/ErrorBoundary';
+import ErrorBoundary from '@/shared/components/wrappers/ErrorBoundary';
 import { Navigate } from 'react-router-dom';
 
 import DashboardLayout from '../layouts/DashboardLayout';
