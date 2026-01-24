@@ -11,12 +11,12 @@ import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
 import StudioRoutes from '../features/studio/routes/StudioRoutes';
 import SupportDashboard from '../features/support/pages/SupportDashboard';
 import CrewRoutes from '../features/crew/routes/CrewRoutes';
+import GuardRoute from './GuardRoute';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
-// const HelpAndSupport = lazy(() => import('../features/support/pages/Help&Support'));
 
 const DashboardRoutes = {
-    path: '/', element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
+    path: '/', element: <GuardRoute allowedRoles='all'><DashboardLayout /></GuardRoute>,
     children: [
         { index: true, element: <Navigate to="home" replace /> },
         { path: 'home', element: <RoleBasedDashboard /> },

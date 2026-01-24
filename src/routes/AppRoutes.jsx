@@ -5,6 +5,7 @@ import DashboardRoutes from "./DashboardRoutes";
 import { lazy } from "react";
 import RootLayout from "@/layouts/RootLayout";
 import { AuthProvider } from "@/features/auth/context/AuthContext";
+import Unauthorized from "../shared/pages/Unauthorized";
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmail'));
@@ -25,6 +26,7 @@ const AppRoutes = [
       DashboardRoutes,
 
       { path: '*', element: <NotFound /> },
+      { path: '/unauthorized', element: <Unauthorized /> },
     ],
   },
 ];

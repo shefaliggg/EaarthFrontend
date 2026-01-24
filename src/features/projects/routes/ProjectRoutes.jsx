@@ -14,38 +14,56 @@ import pettyCashRoutes from './PettyCashRoutes';
 import TimesheetsRoutes from './TimesheetsRoutes';
 import ProjectCalendarRoutes from './ProjectCalendarRoutes';
 import MyOffer from '../../crew/pages/Myoffer';
+import GuardRoute from '../../../routes/GuardRoute';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
 const ProjectRoutes = {
-    path: '/projects',
-    children: [
-        { index: true, element: <ProjectList /> },
+  path: '/projects',
+  element: <GuardRoute allowedRoles="all" />,
+
+  children: [
+    { index: true, element: <ProjectList /> },
+
+    // studio_admin only
+    {
+      element: <GuardRoute allowedRoles={['studio_admin']} />,
+      children: [
         { path: 'create', element: <CreateProject /> },
-        { path: 'reports', element: <ViewReports /> },
-        { path: 'Myoffers', element: <MyOffer /> },
-        { path: 'team', element: <ManageTeam /> },
-        { path: 'analytics', element: <StudioAnalytics /> },
         { path: ':id/edit', element: <EditProject /> },
-        { path: 'details/:projectId', element: <ProjectDetails /> },
-        {
-            path: ":projectName",
-            children: [
-                { index: true, element: <ProjectDetails /> },
+      ],
+    },
 
-                TimesheetsRoutes,
-                FuelAndMileageRoutes,
-                pettyCashRoutes,
-                
-                ProjectAppsRoutes,
-                ProjectDepartmentsRoutes,
-                ProjectCalendarRoutes,
+    // crew only
+    {
+      element: <GuardRoute allowedRoles={['crew']} />,
+      children: [
+        { path: 'Myoffers', element: <MyOffer /> },
+      ],
+    },
 
-                { path: '*', element: <NotFound /> }
+    // everyone else
+    { path: 'reports', element: <ViewReports /> },
+    { path: 'team', element: <ManageTeam /> },
+    { path: 'details/:projectId', element: <ProjectDetails /> },
 
-            ],
-        }
-    ]
+    {
+      path: ":projectName",
+      children: [
+        { index: true, element: <ProjectDetails /> },
+
+        TimesheetsRoutes,
+        FuelAndMileageRoutes,
+        pettyCashRoutes,
+
+        ProjectAppsRoutes,
+        ProjectDepartmentsRoutes,
+        ProjectCalendarRoutes,
+
+        { path: '*', element: <NotFound /> }
+      ],
+    }
+  ]
 };
 
 export default ProjectRoutes;

@@ -1,23 +1,32 @@
-import { Navigate, Outlet } from "react-router-dom";
-import ErrorBoundary from "@/shared/components/ErrorBoundary";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/context/AuthContext";
+import ErrorBoundary from "../shared/components/wrappers/ErrorBoundary";
 
+const GuardRoute = ({ allowedRoles = "all", children }) => {
+  const { user, initialLoading } = useAuth();
+  const location = useLocation();
+  const userType = user?.userType;
 
-const GuardRoute = ({ allowedRoles }) => {
-    const { user, initialLoading } = useAuth();
-    const userType = user?.userType ?? "";
+  if (initialLoading) return null;
 
-    if (initialLoading) return null; 
-
-    if (!user || !allowedRoles.includes(userType)) {
-        return <Navigate to="/unauthorized" replace />;
-    }
-
+  if (
+    allowedRoles !== "all" &&
+    !allowedRoles.includes(userType)
+  ) {
     return (
-        <ErrorBoundary>
-            <Outlet />
-        </ErrorBoundary>
+      <Navigate
+        to="/unauthorized"
+        state={{ from: location.pathname }}
+        replace
+      />
     );
+  }
+
+  return (
+    <ErrorBoundary>
+      {children ? children : <Outlet />}
+    </ErrorBoundary>
+  );
 };
 
 export default GuardRoute;
