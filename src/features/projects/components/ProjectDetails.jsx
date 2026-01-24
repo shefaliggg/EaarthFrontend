@@ -170,7 +170,7 @@ const ProjectDetails = ({ onComplete }) => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto px-6">
       <Stepper steps={steps} activeStep={step} />
 
       <div className="min-h-[calc(100vh-300px)] flex flex-col justify-between mt-6">
