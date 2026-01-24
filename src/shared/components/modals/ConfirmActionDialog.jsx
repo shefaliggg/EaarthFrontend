@@ -32,12 +32,14 @@ export default function ConfirmActionDialog({
         reasons = [],
         requireReason = false,
         allowNote = false,
-        notesPlaceholder = "Add internal notes for context or audit purposes..."
+        notesPlaceholder = "Add internal notes for context or audit purposes...",
+        successMessage
     } = config || {};
 
     const isDanger = variant === "danger";
     const isSuccess = variant === "success";
     const isWarning = variant === "warning";
+    const isInfo = variant === "info";
 
     const [reason, setReason] = useState("");
     const [note, setNote] = useState("");
@@ -49,11 +51,38 @@ export default function ConfirmActionDialog({
         }
     }, [open]);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (requireReason && !reason) return toast.error("Please select a reason for this action.");
         console.log("Confirming action with reason:", reason, "and note:", note);
-        onConfirm({ reason, note });
+        
+        try {
+            await onConfirm({ reason, note });
+            
+            // Show success message if provided
+            if (successMessage) {
+                toast.success(successMessage);
+            }
+        } catch (err) {
+            // Error handling - parent component should handle this
+            console.error("Confirmation failed:", err);
+        }
     };
+
+    // Show success toast when action completes successfully
+    useEffect(() => {
+        if (!loading && !error && !open && (reason || note)) {
+            // Only show toast after dialog closes and there was an action
+            const successMessages = {
+                danger: "Action completed successfully",
+                warning: "Action completed successfully",
+                success: "Action completed successfully",
+                info: "Project creation initialized successfully"
+            };
+            
+            const message = successMessages[variant] || "Action completed successfully";
+            toast.success(message);
+        }
+    }, [loading, error, open, reason, note, variant]);
 
     const variantStyles = {
         danger: {
@@ -76,6 +105,13 @@ export default function ConfirmActionDialog({
             borderColor: "border-emerald-100",
             button: "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-emerald-100",
             glow: "shadow-[0_0_40px_rgba(16,185,129,0.1)]"
+        },
+        info: {
+            iconBg: "bg-blue-50",
+            iconColor: "text-blue-600",
+            borderColor: "border-blue-100",
+            button: "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-blue-100",
+            glow: "shadow-[0_0_40px_rgba(59,130,246,0.1)]"
         }
     };
 
@@ -107,6 +143,8 @@ export default function ConfirmActionDialog({
                         )}>
                             {isSuccess ? (
                                 <CheckCircle2 className="h-7 w-7" strokeWidth={2} />
+                            ) : isInfo ? (
+                                <Info className="h-7 w-7" strokeWidth={2} />
                             ) : (
                                 <AlertTriangle className="h-7 w-7" strokeWidth={2} />
                             )}
@@ -123,27 +161,8 @@ export default function ConfirmActionDialog({
                         )}
                     </div>
                 </div>
-                {(error || reasons.length > 0 || allowNote) && (
+                {(reasons.length > 0 || allowNote) && (
                     <div className="px-6 py-5 bg-background">
-                        {/* Error Message */}
-                        {error && (
-                            <div
-                                className={cn(
-                                    "mb-5 flex items-start gap-3 rounded-xl border",
-                                    "border-red-200 bg-red-50 px-4 py-3",
-                                    "text-sm text-red-800"
-                                )}
-                                role="alert"
-                            >
-                                <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-                                <div className="flex-1">
-                                    <p className="font-medium leading-tight">Action failed</p>
-                                    <p className="mt-0.5 text-red-700">{error}</p>
-                                </div>
-                            </div>
-                        )}
-
-
                         {/* Optional Inputs */}
                         {(reasons.length > 0 || allowNote) && (
                             <div className="space-y-5">

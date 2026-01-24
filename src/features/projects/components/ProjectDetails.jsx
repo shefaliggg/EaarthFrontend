@@ -1,12 +1,14 @@
-
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import EditableTextDataField from "../../../shared/components/wrappers/EditableTextDataField";
 import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
 import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
 import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
+import { Stepper } from '../../../shared/components/stepper/Stepper';
+import { CardNavigator } from '../../../shared/components/stepper/CardNavigator';
+import { ProjectApplications } from '../components/ProjectApplications';
 
-// Button Toggle Component for Project Type and Legal Territory
+// Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {
   return (
     <div className="flex flex-col gap-2">
@@ -18,6 +20,7 @@ const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = fals
         {options.map((option) => (
           <button
             key={option}
+            type="button"
             onClick={() => onChange(option)}
             className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
               selected === option
@@ -46,6 +49,7 @@ const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) =>
           <label key={option.value} className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
+              name={label}
               checked={selected === option.value}
               onChange={() => onChange(option.value)}
               className="w-4 h-4 text-purple-600 focus:ring-purple-500"
@@ -59,10 +63,13 @@ const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) =>
 };
 
 // Currency Input Component
-const CurrencyInput = ({ label, currency, amount, onCurrencyChange, onAmountChange }) => {
+const CurrencyInput = ({ label, currency, amount, onCurrencyChange, onAmountChange, required = false }) => {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label className="text-sm font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
       <div className="flex gap-2">
         <select
           value={currency}
@@ -72,12 +79,15 @@ const CurrencyInput = ({ label, currency, amount, onCurrencyChange, onAmountChan
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
           <option value="GBP">GBP</option>
+          <option value="INR">INR</option>
         </select>
         <input
           type="number"
           value={amount}
           onChange={(e) => onAmountChange(e.target.value)}
           placeholder="0.00"
+          min="0"
+          step="0.01"
           className="h-10 px-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1"
         />
       </div>
@@ -85,7 +95,8 @@ const CurrencyInput = ({ label, currency, amount, onCurrencyChange, onAmountChan
   );
 };
 
-const ProjectDetails = () => {
+const ProjectDetails = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     projectName: '',
     productionCompany: '',
@@ -101,11 +112,12 @@ const ProjectDetails = () => {
     constructionUnionAgreement: 'None',
     budget: 'Major (over £30 million)',
     showBudgetToCrew: false,
-    budgetCurrency: 'USD',
-    budgetAmount: '0.00',
+    budgetCurrency: 'GBP',
+    budgetAmount: '',
     producer: '',
     director: '',
-    productionManager: ''
+    productionManager: '',
+    selectedApplications: []
   });
 
   const updateField = (field, value) => {
@@ -118,194 +130,264 @@ const ProjectDetails = () => {
     { value: 'Low (under £10 million)', label: 'Low (under £10 million)' }
   ];
 
+  const steps = [
+    { id: 'basic', label: 'Basic Information' },
+    { id: 'config', label: 'Project Configuration' },
+    { id: 'financial', label: 'Financial & Personnel' },
+    { id: 'applications', label: 'Project Applications' }
+  ];
+
+  // Validation logic
+  const canProceed = () => {
+    switch (step) {
+      case 0:
+        return formData.projectName.trim() && formData.productionCompany.trim();
+      case 1:
+        return formData.projectType && formData.legalTerritory;
+      case 2:
+        return formData.budgetAmount && parseFloat(formData.budgetAmount) > 0;
+      case 3:
+        return true; // Applications are optional
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (canProceed()) {
+      setStep(prev => Math.min(prev + 1, steps.length - 1));
+    }
+  };
+
+  const handleBack = () => {
+    setStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleFinish = () => {
+    if (canProceed() && onComplete) {
+      onComplete(formData);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Basic Information */}
-      <CardWrapper 
-        title="Basic Information" 
-        variant="default"
-        showLabel={true}
-      >
-        {/* Row 1: Project Name, Production Company, Genre */}
-        <div className="grid grid-cols-3 gap-4">
-          <EditableTextDataField
-            label="Project Name"
-            value={formData.projectName}
-            onChange={(val) => updateField('projectName', val)}
-            isEditing={true}
-            placeholder="Enter project name"
-          />
-          <EditableTextDataField
-            label="Production Company"
-            value={formData.productionCompany}
-            onChange={(val) => updateField('productionCompany', val)}
-            isEditing={true}
-            placeholder="Enter production company"
-          />
-          <EditableTextDataField
-            label="Genre"
-            value={formData.genre}
-            onChange={(val) => updateField('genre', val)}
-            isEditing={true}
-            placeholder="e.g., Drama, Action, Comedy"
-          />
-        </div>
+    <div className="max-w-5xl mx-auto p-6">
+      <Stepper steps={steps} activeStep={step} />
 
-        {/* Row 2: Primary Location, Start Date, End Date */}
-        <div className="grid grid-cols-3 gap-4">
-          <EditableTextDataField
-            label="Primary Location"
-            value={formData.primaryLocation}
-            onChange={(val) => updateField('primaryLocation', val)}
-            isEditing={true}
-            placeholder="City, Country"
-          />
-          <EditableTextDataField
-            label="Start Date"
-            value={formData.startDate}
-            onChange={(val) => updateField('startDate', val)}
-            isEditing={true}
-            placeholder="dd-mm-yyyy"
-          />
-          <EditableTextDataField
-            label="End Date"
-            value={formData.endDate}
-            onChange={(val) => updateField('endDate', val)}
-            isEditing={true}
-            placeholder="dd-mm-yyyy"
-          />
-        </div>
+      <div className="min-h-[calc(100vh-300px)] flex flex-col justify-between mt-6">
+        <div className="flex-1">
+          <div
+            key={step}
+            className="animate-in fade-in slide-in-from-right-4 duration-200"
+          >
+            {/* Step 0: Basic Information */}
+            {step === 0 && (
+              <CardWrapper title="Basic Information" variant="default" showLabel={true}>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <EditableTextDataField
+                      label="Project Name"
+                      value={formData.projectName}
+                      onChange={(val) => updateField('projectName', val)}
+                      isEditing={true}
+                      placeholder="Enter project name"
+                      required={true}
+                    />
+                    <EditableTextDataField
+                      label="Production Company"
+                      value={formData.productionCompany}
+                      onChange={(val) => updateField('productionCompany', val)}
+                      isEditing={true}
+                      placeholder="Enter production company"
+                      required={true}
+                    />
+                    <EditableTextDataField
+                      label="Genre"
+                      value={formData.genre}
+                      onChange={(val) => updateField('genre', val)}
+                      isEditing={true}
+                      placeholder="e.g., Drama, Action"
+                    />
+                  </div>
 
-        {/* Row 3: Project Description - Full Width */}
-        <EditableTextDataField
-          label="Project Description"
-          value={formData.projectDescription}
-          onChange={(val) => updateField('projectDescription', val)}
-          isEditing={true}
-          multiline={true}
-          placeholder="Enter project description..."
-        />
-      </CardWrapper>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <EditableTextDataField
+                      label="Primary Location"
+                      value={formData.primaryLocation}
+                      onChange={(val) => updateField('primaryLocation', val)}
+                      isEditing={true}
+                      placeholder="City, Country"
+                    />
+                    <EditableTextDataField
+                      label="Start Date"
+                      value={formData.startDate}
+                      onChange={(val) => updateField('startDate', val)}
+                      isEditing={true}
+                      placeholder="dd-mm-yyyy"
+                      type="date"
+                    />
+                    <EditableTextDataField
+                      label="End Date"
+                      value={formData.endDate}
+                      onChange={(val) => updateField('endDate', val)}
+                      isEditing={true}
+                      placeholder="dd-mm-yyyy"
+                      type="date"
+                    />
+                  </div>
 
-      {/* Project Configuration */}
-      <CardWrapper 
-        title="Project Configuration" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="grid grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <ButtonToggleGroup
-              label="Project type"
-              options={['Feature Film', 'Television']}
-              selected={formData.projectType}
-              onChange={(val) => updateField('projectType', val)}
-              showInfo={true}
-            />
+                  <EditableTextDataField
+                    label="Project Description"
+                    value={formData.projectDescription}
+                    onChange={(val) => updateField('projectDescription', val)}
+                    isEditing={true}
+                    multiline={true}
+                    placeholder="Enter project description..."
+                  />
+                </div>
+              </CardWrapper>
+            )}
 
-            <EditableCheckboxField
-              label="Show project type in offers?"
-              checked={formData.showProjectTypeInOffers}
-              onChange={(val) => updateField('showProjectTypeInOffers', val)}
-              isEditing={true}
-            />
+            {/* Step 1: Project Configuration */}
+            {step === 1 && (
+              <CardWrapper title="Project Configuration" variant="default" showLabel={true}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    <ButtonToggleGroup
+                      label="Project type"
+                      options={['Feature Film', 'Television']}
+                      selected={formData.projectType}
+                      onChange={(val) => updateField('projectType', val)}
+                      showInfo={true}
+                    />
 
-            <EditableSelectField
-              label="Budget"
-              value={formData.budget}
-              items={budgetOptions}
-              isEditing={true}
-              onChange={(val) => updateField('budget', val)}
-            />
+                    <EditableCheckboxField
+                      label="Show project type in offers?"
+                      checked={formData.showProjectTypeInOffers}
+                      onChange={(val) => updateField('showProjectTypeInOffers', val)}
+                      isEditing={true}
+                    />
 
-            <EditableCheckboxField
-              label="Show budget level to crew members?"
-              checked={formData.showBudgetToCrew}
-              onChange={(val) => updateField('showBudgetToCrew', val)}
-              isEditing={true}
-            />
+                    <EditableSelectField
+                      label="Budget Range"
+                      value={formData.budget}
+                      items={budgetOptions}
+                      isEditing={true}
+                      onChange={(val) => updateField('budget', val)}
+                    />
+
+                    <EditableCheckboxField
+                      label="Show budget level to crew members?"
+                      checked={formData.showBudgetToCrew}
+                      onChange={(val) => updateField('showBudgetToCrew', val)}
+                      isEditing={true}
+                    />
+                  </div>
+
+                  <div className="space-y-6">
+                    <ButtonToggleGroup
+                      label="Legal territory"
+                      options={['United Kingdom', 'Iceland', 'Ireland', 'Malta']}
+                      selected={formData.legalTerritory}
+                      onChange={(val) => updateField('legalTerritory', val)}
+                    />
+
+                    <RadioGroup
+                      label="Union agreement"
+                      options={[
+                        { value: 'None', label: 'None' },
+                        { value: 'PACT/BECTU Agreement (2021)', label: 'PACT/BECTU Agreement (2021)' }
+                      ]}
+                      selected={formData.unionAgreement}
+                      onChange={(val) => updateField('unionAgreement', val)}
+                      showInfo={true}
+                    />
+
+                    <RadioGroup
+                      label="Construction union agreement"
+                      options={[
+                        { value: 'None', label: 'None' },
+                        { value: 'PACT/BECTU Agreement', label: 'PACT/BECTU Agreement' },
+                        { value: 'Custom Agreement', label: 'Custom Agreement' }
+                      ]}
+                      selected={formData.constructionUnionAgreement}
+                      onChange={(val) => updateField('constructionUnionAgreement', val)}
+                    />
+                  </div>
+                </div>
+              </CardWrapper>
+            )}
+
+            {/* Step 2: Financial & Key Personnel */}
+            {step === 2 && (
+              <CardWrapper title="Financial Details & Key Personnel" variant="default" showLabel={true}>
+                <div className="space-y-6">
+                  {/* Financial Section */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">Budget Information</h4>
+                    <CurrencyInput
+                      label="Budget Amount"
+                      currency={formData.budgetCurrency}
+                      amount={formData.budgetAmount}
+                      onCurrencyChange={(val) => updateField('budgetCurrency', val)}
+                      onAmountChange={(val) => updateField('budgetAmount', val)}
+                      required={true}
+                    />
+                  </div>
+
+                  {/* Key Personnel Section */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">Key Personnel</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <EditableTextDataField
+                        label="Producer"
+                        value={formData.producer}
+                        onChange={(val) => updateField('producer', val)}
+                        isEditing={true}
+                        placeholder="Enter producer name"
+                      />
+                      <EditableTextDataField
+                        label="Director"
+                        value={formData.director}
+                        onChange={(val) => updateField('director', val)}
+                        isEditing={true}
+                        placeholder="Enter director name"
+                      />
+                      <EditableTextDataField
+                        label="Production Manager"
+                        value={formData.productionManager}
+                        onChange={(val) => updateField('productionManager', val)}
+                        isEditing={true}
+                        placeholder="Enter production manager"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardWrapper>
+            )}
+
+            {/* Step 3: Project Applications */}
+            {step === 3 && (
+              <CardWrapper title="Project Applications" variant="default" showLabel={true}>
+                <ProjectApplications
+                  selectedApps={formData.selectedApplications}
+                  onChange={(apps) => updateField('selectedApplications', apps)}
+                />
+              </CardWrapper>
+            )}
           </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <ButtonToggleGroup
-              label="Legal territory"
-              options={['United Kingdom', 'Iceland', 'Ireland', 'Malta']}
-              selected={formData.legalTerritory}
-              onChange={(val) => updateField('legalTerritory', val)}
-            />
-
-            <RadioGroup
-              label="Union agreement"
-              options={[
-                { value: 'None', label: 'None' },
-                { value: 'PACT/BECTU Agreement (2021)', label: 'PACT/BECTU Agreement (2021)' }
-              ]}
-              selected={formData.unionAgreement}
-              onChange={(val) => updateField('unionAgreement', val)}
-              showInfo={true}
-            />
-
-            <RadioGroup
-              label="Construction union agreement"
-              options={[
-                { value: 'None', label: 'None' },
-                { value: 'PACT/BECTU Agreement', label: 'PACT/BECTU Agreement' },
-                { value: 'Custom Agreement', label: 'Custom Agreement' }
-              ]}
-              selected={formData.constructionUnionAgreement}
-              onChange={(val) => updateField('constructionUnionAgreement', val)}
-            />
-          </div>
         </div>
-      </CardWrapper>
 
-      {/* Financial Details */}
-      <CardWrapper 
-        title="Financial Details" 
-        variant="default"
-        showLabel={true}
-      >
-        <CurrencyInput
-          label="Budget Amount"
-          currency={formData.budgetCurrency}
-          amount={formData.budgetAmount}
-          onCurrencyChange={(val) => updateField('budgetCurrency', val)}
-          onAmountChange={(val) => updateField('budgetAmount', val)}
-        />
-      </CardWrapper>
-
-      {/* Key Personnel */}
-      <CardWrapper 
-        title="Key Personnel" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="grid grid-cols-3 gap-4">
-          <EditableTextDataField
-            label="Producer"
-            value={formData.producer}
-            onChange={(val) => updateField('producer', val)}
-            isEditing={true}
-            placeholder="Enter producer name"
-          />
-          <EditableTextDataField
-            label="Director"
-            value={formData.director}
-            onChange={(val) => updateField('director', val)}
-            isEditing={true}
-            placeholder="Enter director name"
-          />
-          <EditableTextDataField
-            label="Production Manager"
-            value={formData.productionManager}
-            onChange={(val) => updateField('productionManager', val)}
-            isEditing={true}
-            placeholder="Enter production manager name"
+        <div className="py-4 mt-6">
+          <CardNavigator
+            currentStep={step}
+            totalSteps={steps.length}
+            onNext={handleNext}
+            onBack={handleBack}
+            onFinish={handleFinish}
+            canProceed={canProceed()}
           />
         </div>
-      </CardWrapper>
+      </div>
     </div>
   );
 };

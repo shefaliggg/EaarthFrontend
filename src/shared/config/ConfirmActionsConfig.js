@@ -66,14 +66,18 @@ export const REMOVE_STUDIO_ADMIN_CONFIG = {
 };
 
 export const INITIALIZE_PROJECT_CONFIG = {
-  variant: "warning",
-  title: "Would you like to Initialize Project Creation?",
-  description: "An Official from Eaarth will contact you to finalize the project setup with the provided details.",
+  variant: "info",
+  title: "Initialize Project Creation?",
+  description:
+    "This will start the project setup process. An Eaarth official will contact you to review and finalize the details.",
   confirmText: "Initialize Project",
   cancelText: "Cancel",
   allowNote: true,
-  notesPlaceholder: "Add any specific details or requirements for the project...",
+  notesPlaceholder:
+    "Add any specific requirements or notes for the project setup...",
+  successMessage: "Project creation initialized successfully! Our team will contact you soon."
 };
+
 
 export const statusConfigMap = {
   suspend: SUSPEND_STUDIO_CONFIG,
