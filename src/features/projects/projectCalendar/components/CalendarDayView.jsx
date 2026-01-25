@@ -8,7 +8,6 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { getProductionWeekLabel } from "./productionPhases";
 
-
 /* ================= CONFIG ================= */
 
 const HOUR_HEIGHT = 48;
@@ -107,7 +106,7 @@ export default function CalendarDayView({ currentDate, events, onDayClick }) {
         <div className="bg-white dark:bg-[#0f0e13] pr-4 text-muted-foreground flex items-center justify-end">
           Time
         </div>
-       <div className="relative text-center py-1">
+        <div className="relative text-center py-1">
           {/* PHASE BADGE (Top Right) */}
           <span
             className="absolute top-4 right-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide
@@ -148,7 +147,9 @@ export default function CalendarDayView({ currentDate, events, onDayClick }) {
               <TooltipTrigger asChild>
                 <div
                   key={e.id}
-                  className="bg-primary w-full text-[12px] pl-2 py-0.5 rounded-lg overflow-hidden text-white"
+                  className=" 
+  text-black text-center dark:text-white
+  bg-purple-200 dark:bg-[#34014f] w-full text-[12px] pl-2 py-0.5 rounded-lg overflow-hidden"
                 >
                   {e.title}
                 </div>
@@ -214,7 +215,9 @@ export default function CalendarDayView({ currentDate, events, onDayClick }) {
                   <TooltipTrigger asChild>
                     <div
                       style={getEventStyle(event, colIndex, columns.length)}
-                      className="cursor-pointer absolute bg-primary w-full text-[12px]  pl-2 pb-1 rounded-lg overflow-hidden text-white"
+                      className="cursor-pointer absolute  outline-1 outline-white/70 dark:outline-black/70
+  text-black text-center dark:text-white
+  bg-purple-200 dark:bg-[#34014f] w-full text-[12px]  pl-2 pb-1 rounded-lg overflow-hidden"
                     >
                       {event.title}
                     </div>

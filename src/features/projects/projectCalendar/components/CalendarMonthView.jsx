@@ -117,7 +117,7 @@ function CalendarMonthView({
                       {visibleEvents.map((event) => (
                         <Tooltip key={event.id || event._id}>
                           <TooltipTrigger asChild>
-                            <div className="bg-primary whitespace-nowrap w-full text-[11px]  pl-2 py-0.5 rounded-lg overflow-hidden text-white">
+                            <div className="text-black text-center dark:text-white bg-purple-200 dark:bg-purple-800/40 whitespace-nowrap w-full text-[11px]  pl-2 py-0.5 rounded-lg overflow-hidden">
                               {event.title}
                             </div>
                           </TooltipTrigger>
@@ -170,7 +170,7 @@ function CalendarMonthView({
                             {dayEvents.map((event) => (
                               <Tooltip key={event.id}>
                                 <TooltipTrigger asChild>
-                                  <div className="bg-primary whitespace-nowrap mb-1 w-full text-[11px]  pl-2 py-0.5 rounded-lg overflow-hidden text-white">
+                                  <div className="text-black text-center dark:text-white bg-purple-200 dark:bg-purple-800/40 whitespace-nowrap mb-1 w-full text-[11px]  pl-2 py-0.5 rounded-lg overflow-hidden">
                                     {event.title}
                                   </div>
                                 </TooltipTrigger>

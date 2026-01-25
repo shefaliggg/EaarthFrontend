@@ -125,8 +125,6 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border dark:border-[#2a1b3d] bg-background">
-
-
         {/* --------------------------------------- */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)] ">
           {/* Time column (kept empty) */}
@@ -184,7 +182,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                   <TooltipTrigger asChild>
                     <div
                       key={e.id}
-                      className="bg-primary w-full text-[11px] pl-2 py-0.5 rounded-lg overflow-hidden text-white"
+                      className="text-black text-center dark:text-white bg-purple-200 dark:bg-[#34014f] w-full text-[11px] pl-2 py-0.5 rounded-lg overflow-hidden"
                     >
                       {e.title}
                     </div>
@@ -267,7 +265,13 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                             onDayClick();
                           }}
                           style={getEventStyle(e, colIndex, columns.length)}
-                          className="cursor-pointer absolute bg-primary w-full text-[12px]  pl-2 pb-2 rounded-lg overflow-hidden text-white"
+                          className="
+  cursor-pointer absolute
+   outline-1 outline-white/70 dark:outline-black/70
+  text-black text-center dark:text-white
+  bg-purple-200 dark:bg-[#34014f]
+  w-full text-[12px] pl-2 pb-2 rounded-lg overflow-hidden
+"
                         >
                           {e.title}
                         </div>
