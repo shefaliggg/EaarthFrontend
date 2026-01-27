@@ -100,7 +100,7 @@ const CURRENCIES = [
 ];
 
 const OVERTIME_RATE_FIELDS = [
- { key: "addHod", label: "Add HOD" },
+  { key: "addHod", label: "Add HOUR" },
   { key: "enhancedOT", label: "Enhanced O/T" },
   { key: "cameraOT", label: "Camera O/T" },
   { key: "postOT", label: "Post O/T" },
@@ -112,11 +112,11 @@ const OVERTIME_RATE_FIELDS = [
   { key: "nightPen", label: "Night Pen" },
 ];
 
-const CUSTOM_OVERTIME_FIELDS = [
- 
-  { key: "salaryWeekly", label: "Salary Weekly" },
-  { key: "salaryDaily", label: "Salary Daily" },
-  { key: "salaryHourly", label: "Salary Hourly" },
+const SALARY_FIELDS = [
+
+  // { key: "salaryWeekly", label: "Salary Weekly" },
+  // { key: "salaryDaily", label: "Pay Per Day" },
+  // { key: "salaryHourly", label: "Salary Hourly" },
   { key: "sixthDay", label: "6th Day" },
   { key: "seventhDay", label: "7th Day" },
   { key: "publicHoliday", label: "Public Holiday" },
@@ -341,9 +341,9 @@ export default function CreateOffer() {
   };
 
   const updateCustomOvertimeRate = (id, field, value) => {
-    setRoles(roles.map(r => 
-      r.id === id 
-        ? { ...r, customOvertimeRates: { ...r.customOvertimeRates, [field]: value } } 
+    setRoles(roles.map(r =>
+      r.id === id
+        ? { ...r, customOvertimeRates: { ...r.customOvertimeRates, [field]: value } }
         : r
     ));
   };
@@ -1047,62 +1047,15 @@ export default function CreateOffer() {
                       </FormField>
                     </div>
 
-                    {/* Overtime - Full width */}
-                    <FormField label="Overtime">
-                      <div className="flex gap-6 pt-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`overtime-${role.id}`}
-                            value="CALCULATED"
-                            checked={role.overtimeType === "CALCULATED"}
-                            onChange={() => updateRole(role.id, { overtimeType: "CALCULATED" })}
-                            className="w-4 h-4 text-primary"
-                          />
-                          <span className="text-sm font-medium">CALCULATED PER AGREEMENT</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`overtime-${role.id}`}
-                            value="CUSTOM"
-                            checked={role.overtimeType === "CUSTOM"}
-                            onChange={() => updateRole(role.id, { overtimeType: "CUSTOM" })}
-                            className="w-4 h-4 text-primary"
-                          />
-                          <span className="text-sm font-medium">CUSTOM OVERTIME RATES</span>
-                        </label>
-                      </div>
-                    </FormField>
-
-                    {/* Calculated Per Agreement Rates - Grid when visible */}
-                    {role.overtimeType === "CALCULATED" && (
-                      <div className="space-y-4 p-4 rounded-lg bg-muted/30">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {CUSTOM_OVERTIME_FIELDS.map((field) => (
-                            <FormField key={field.key} label={field.label}>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={role.customOvertimeRates[field.key]}
-                                onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
-                                placeholder="0.00"
-                              />
-                            </FormField>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* Rate & Compensation Section */}
-                    <div className="border rounded-lg p-4 bg-primary/5">
+                    <div className="border rounded-lg p-4 bg-primary/5 space-y-6">
                       <div className="flex items-center gap-2 mb-4">
                         <DollarSign className="w-5 h-5 text-primary" />
                         <h4 className="text-sm font-bold text-primary uppercase">Rate & Compensation</h4>
                       </div>
 
                       {/* Rate Type Buttons - 3 columns layout */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 pb-6 border-b">
                         <CurrencyInput
                           label={`${role.rateType === "DAILY" ? "Daily" : "Weekly"} Rate Amount`}
                           value={role.rateAmount}
@@ -1110,6 +1063,18 @@ export default function CreateOffer() {
                           currency={role.currency}
                           required
                         />
+
+                        {SALARY_FIELDS.map((field) => (
+                          <FormField key={field.key} label={field.label}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={role.customOvertimeRates[field.key]}
+                              onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
+                              placeholder="0.00"
+                            />
+                          </FormField>
+                        ))}
 
                         <FormField label="Standard Working Hours">
                           <Input
@@ -1132,22 +1097,48 @@ export default function CreateOffer() {
                         </div>
                       </div>
 
+                      {/* Overtime - Full width */}
+                      <FormField label="Overtime">
+                        <div className="flex gap-6 pt-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`overtime-${role.id}`}
+                              value="CALCULATED"
+                              checked={role.overtimeType === "CALCULATED"}
+                              onChange={() => updateRole(role.id, { overtimeType: "CALCULATED" })}
+                              className="w-4 h-4 text-primary"
+                            />
+                            <span className="text-sm font-medium">CALCULATED PER AGREEMENT</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`overtime-${role.id}`}
+                              value="CUSTOM"
+                              checked={role.overtimeType === "CUSTOM"}
+                              onChange={() => updateRole(role.id, { overtimeType: "CUSTOM" })}
+                              className="w-4 h-4 text-primary"
+                            />
+                            <span className="text-sm font-medium">CUSTOM OVERTIME RATES</span>
+                          </label>
+                        </div>
+                      </FormField>
+
                       {/* Custom Overtime Rates - Grid when visible */}
                       {role.overtimeType === "CUSTOM" && (
-                        <div className="space-y-4 mt-4 p-4 rounded-lg bg-muted/30">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {OVERTIME_RATE_FIELDS.map((field) => (
-                              <FormField key={field.key} label={field.label}>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={role.customOvertimeRates[field.key]}
-                                  onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
-                                  placeholder="0.00"
-                                />
-                              </FormField>
-                            ))}
-                          </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {OVERTIME_RATE_FIELDS.map((field) => (
+                            <FormField key={field.key} label={field.label}>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={role.customOvertimeRates[field.key]}
+                                onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
+                                placeholder="0.00"
+                              />
+                            </FormField>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -1583,9 +1574,9 @@ export default function CreateOffer() {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Passport */}
-                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
-                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
-                    <FileText className="w-8 h-8 text-purple-600" />
+                <div className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-5 h-5 text-purple-600" />
                   </div>
                   <p className="text-sm font-bold uppercase text-center mb-3">Passport</p>
                   <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
@@ -1596,9 +1587,9 @@ export default function CreateOffer() {
                 </div>
 
                 {/* Right to Work Verification */}
-                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
-                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
-                    <FileText className="w-8 h-8 text-purple-600" />
+                <div className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-5 h-5 text-purple-600" />
                   </div>
                   <p className="text-sm font-bold uppercase text-center mb-3">Right to Work Verification</p>
                   <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
@@ -1609,9 +1600,9 @@ export default function CreateOffer() {
                 </div>
 
                 {/* Employment Contract */}
-                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
-                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
-                    <FileText className="w-8 h-8 text-purple-600" />
+                <div className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-5 h-5 text-purple-600" />
                   </div>
                   <p className="text-sm font-bold uppercase text-center mb-3">Employment Contract</p>
                   <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
@@ -1622,9 +1613,9 @@ export default function CreateOffer() {
                 </div>
 
                 {/* Tax Forms */}
-                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
-                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
-                    <FileText className="w-8 h-8 text-purple-600" />
+                <div className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-5 h-5 text-purple-600" />
                   </div>
                   <p className="text-sm font-bold uppercase text-center mb-3">Tax Forms (P45/P46)</p>
                   <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
@@ -1710,7 +1701,7 @@ export default function CreateOffer() {
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="max-w-md text-center">
           <div className="py-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <div className="w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <DialogTitle className="text-xl mb-2">Offer Sent Successfully!</DialogTitle>

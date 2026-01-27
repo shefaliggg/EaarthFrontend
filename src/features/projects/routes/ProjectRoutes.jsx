@@ -4,6 +4,7 @@ import ProjectList from '../pages/ProjectList';
 import CreateProject from '../components/CreateProject';
 import EditProject from '../components/EditProject';
 import ProjectDetails from '../components/ProjectDetails';
+import ProjectDetailsPage from '../pages/ProjectDetails';
 import ProjectGeneral from '../components/ProjectGeneral';
 import ProjectOnboarding from '../components/ProjectOnboarding';
 import ProjectTimesheet from '../components/ProjectTimesheet';
@@ -65,10 +66,10 @@ const ProjectRoutes = {
       ],
     },
 
-    // Other project-specific routes
     {
       path: ':projectName',
       children: [
+        { index: true, element: <ProjectDetailsPage /> },          // default page for settings
         TimesheetsRoutes,
         FuelAndMileageRoutes,
         pettyCashRoutes,
