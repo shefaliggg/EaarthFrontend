@@ -80,6 +80,7 @@ const ENGAGEMENT_TYPES = [
   { value: "SCHD", label: "SCHD (DAILY/WEEKLY)" },
   { value: "LONG_FORM", label: "LONG FORM" },
 ];
+
 const RATE_TYPES = [
   { value: "DAILY", label: "DAILY" },
   { value: "WEEKLY", label: "WEEKLY" },
@@ -97,6 +98,35 @@ const CURRENCIES = [
   { value: "USD", label: "USD ($)" },
   { value: "EUR", label: "EUR (€)" },
 ];
+
+const OVERTIME_RATE_FIELDS = [
+ { key: "addHod", label: "Add HOD" },
+  { key: "enhancedOT", label: "Enhanced O/T" },
+  { key: "cameraOT", label: "Camera O/T" },
+  { key: "postOT", label: "Post O/T" },
+  { key: "preOT", label: "Pre O/T" },
+  { key: "sta", label: "STA" },
+  { key: "lateMeal", label: "Late Meal" },
+  { key: "brokenMeal", label: "Broken Meal" },
+  { key: "travelDawnEarly", label: "Travel Dawn / Early" },
+  { key: "nightPen", label: "Night Pen" },
+];
+
+const CUSTOM_OVERTIME_FIELDS = [
+ 
+  { key: "salaryWeekly", label: "Salary Weekly" },
+  { key: "salaryDaily", label: "Salary Daily" },
+  { key: "salaryHourly", label: "Salary Hourly" },
+  { key: "sixthDay", label: "6th Day" },
+  { key: "seventhDay", label: "7th Day" },
+  { key: "publicHoliday", label: "Public Holiday" },
+  { key: "travelDay", label: "Travel Day" },
+  { key: "travelDayTurnaround", label: "Travel Day Turnaround" },
+  { key: "sixthDayHourlyMin6", label: "6th day hourly (MIN 6 HOURS)" },
+  { key: "seventhDayHourlyMin6", label: "7th day hourly (MIN 6 HOURS)" },
+];
+
+
 
 const getDefaultAllowances = () => ({
   boxRental: false,
@@ -217,12 +247,26 @@ const createDefaultRole = (index) => ({
   rateDescription: "",
   overtimeType: "CALCULATED",
   customOvertimeRates: {
-    nonShootOvertimeRate: "",
-    shootOvertimeRate: "",
-    minimumHours6thDay: "",
-    sixthDayHourlyRate: "",
-    minimumHours7thDay: "",
-    seventhDayHourlyRate: ""
+    salaryWeekly: "",
+    salaryDaily: "",
+    salaryHourly: "",
+    sixthDay: "",
+    seventhDay: "",
+    publicHoliday: "",
+    travelDay: "",
+    travelDayTurnaround: "",
+    sixthDayHourlyMin6: "",
+    seventhDayHourlyMin6: "",
+    addHod: "",
+    enhancedOT: "",
+    cameraOT: "",
+    postOT: "",
+    preOT: "",
+    sta: "",
+    lateMeal: "",
+    brokenMeal: "",
+    travelDawnEarly: "",
+    nightPen: "",
   },
   budgetCode: "",
   allowances: getDefaultAllowances(),
@@ -244,6 +288,7 @@ export default function CreateOffer() {
     taxStatus: true,
     roles: true,
     notes: true,
+    attachments: true,
   });
 
   const [formData, setFormData] = useState({
@@ -260,6 +305,11 @@ export default function CreateOffer() {
     otherDealProvisions: "",
     additionalNotes: "",
     isLivingInUk: true,
+    // Template attachments
+    dailyLoanOutAgreement: true,
+    boxRentalForm: true,
+    policyAcknowledgement: false,
+    crewInformationForm: false,
   });
 
   const [roles, setRoles] = useState([createDefaultRole(0)]);
@@ -288,6 +338,14 @@ export default function CreateOffer() {
 
   const updateRoleAllowances = (id, updates) => {
     setRoles(roles.map(r => r.id === id ? { ...r, allowances: { ...r.allowances, ...updates } } : r));
+  };
+
+  const updateCustomOvertimeRate = (id, field, value) => {
+    setRoles(roles.map(r => 
+      r.id === id 
+        ? { ...r, customOvertimeRates: { ...r.customOvertimeRates, [field]: value } } 
+        : r
+    ));
   };
 
   const handleSave = async () => {
@@ -926,20 +984,6 @@ export default function CreateOffer() {
                           onChange={(v) => updateRole(role.id, { rateType: v })}
                           options={RATE_TYPES}
                         />
-                        {/* <div className="flex gap-2">
-                          {["DAILY", "WEEKLY"].map(type => (
-                            <Button
-                              key={type}
-                              type="button"
-                              variant={role.rateType === type ? "default" : "outline"}
-                              size="sm"
-                              className={cn(role.rateType === type ? "bg-primary" : "border-primary/30")}
-                              onClick={() => updateRole(role.id, { rateType: type })}
-                            >
-                              {type}
-                            </Button>
-                          ))}
-                        </div> */}
                       </FormField>
                     </div>
 
@@ -1031,15 +1075,24 @@ export default function CreateOffer() {
                       </div>
                     </FormField>
 
-                    {/* Budget Code - Full width */}
-                    {/* <FormField label="Budget Code">
-                      <Input
-                        value={role.budgetCode}
-                        onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })}
-                        placeholder="E.G. 847-13-001"
-                        className="uppercase"
-                      />
-                    </FormField> */}
+                    {/* Calculated Per Agreement Rates - Grid when visible */}
+                    {role.overtimeType === "CALCULATED" && (
+                      <div className="space-y-4 p-4 rounded-lg bg-muted/30">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {CUSTOM_OVERTIME_FIELDS.map((field) => (
+                            <FormField key={field.key} label={field.label}>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={role.customOvertimeRates[field.key]}
+                                onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
+                                placeholder="0.00"
+                              />
+                            </FormField>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Rate & Compensation Section */}
                     <div className="border rounded-lg p-4 bg-primary/5">
@@ -1079,64 +1132,22 @@ export default function CreateOffer() {
                         </div>
                       </div>
 
-                      {/* Shift Hours, Overtime, Budget - 3 columns */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-
-                        {/* <FormField label="Budget Code">
-                          <Input
-                            value={role.budgetCode}
-                            onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })}
-                            placeholder="E.G. 847-13-001"
-                            className="uppercase"
-                          />
-                        </FormField> */}
-                      </div>
-
-                      {/* Holiday Pay Checkbox */}
-
-
-                      {/* Custom Overtime Rates - 3 columns when visible */}
+                      {/* Custom Overtime Rates - Grid when visible */}
                       {role.overtimeType === "CUSTOM" && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 p-4 rounded-lg bg-muted/30">
-                          <CurrencyInput
-                            label="Non-Shoot Overtime Rate"
-                            value={role.customOvertimeRates.nonShootOvertimeRate}
-                            onChange={(v) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, nonShootOvertimeRate: v } })}
-                            currency={role.currency}
-                          />
-                          <CurrencyInput
-                            label="Shoot Overtime Rate"
-                            value={role.customOvertimeRates.shootOvertimeRate}
-                            onChange={(v) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, shootOvertimeRate: v } })}
-                            currency={role.currency}
-                          />
-                          <FormField label="6th Day Minimum Hours">
-                            <Input
-                              type="number"
-                              value={role.customOvertimeRates.minimumHours6thDay}
-                              onChange={(e) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, minimumHours6thDay: e.target.value } })}
-                            />
-                          </FormField>
-                          <CurrencyInput
-                            label="6th Day Hourly Rate"
-                            value={role.customOvertimeRates.sixthDayHourlyRate}
-                            onChange={(v) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, sixthDayHourlyRate: v } })}
-                            currency={role.currency}
-                          />
-                          <FormField label="7th Day Minimum Hours">
-                            <Input
-                              type="number"
-                              value={role.customOvertimeRates.minimumHours7thDay}
-                              onChange={(e) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, minimumHours7thDay: e.target.value } })}
-                            />
-                          </FormField>
-                          <CurrencyInput
-                            label="7th Day Hourly Rate"
-                            value={role.customOvertimeRates.seventhDayHourlyRate}
-                            onChange={(v) => updateRole(role.id, { customOvertimeRates: { ...role.customOvertimeRates, seventhDayHourlyRate: v } })}
-                            currency={role.currency}
-                          />
+                        <div className="space-y-4 mt-4 p-4 rounded-lg bg-muted/30">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {OVERTIME_RATE_FIELDS.map((field) => (
+                              <FormField key={field.key} label={field.label}>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={role.customOvertimeRates[field.key]}
+                                  onChange={(e) => updateCustomOvertimeRate(role.id, field.key, e.target.value)}
+                                  placeholder="0.00"
+                                />
+                              </FormField>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1556,6 +1567,73 @@ export default function CreateOffer() {
                   </TabsContent>
                 ))}
               </Tabs>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Attached Template Bundle */}
+        <Card className="border-0 py-0 shadow-sm overflow-hidden">
+          <SectionHeader
+            title="Attached Template Bundle"
+            icon={FileText}
+            section="attachments"
+            isOpen={expandedSections.attachments}
+          />
+          {expandedSections.attachments && (
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Passport */}
+                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-bold uppercase text-center mb-3">Passport</p>
+                  <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
+                    <Download className="w-4 h-4" />
+                    Download
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Uploaded: 12 Jan</p>
+                </div>
+
+                {/* Right to Work Verification */}
+                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-bold uppercase text-center mb-3">Right to Work Verification</p>
+                  <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
+                    <Download className="w-4 h-4" />
+                    Download
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Uploaded: 12 Jan</p>
+                </div>
+
+                {/* Employment Contract */}
+                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-bold uppercase text-center mb-3">Employment Contract</p>
+                  <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
+                    <Download className="w-4 h-4" />
+                    Download
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Uploaded: 12 Jan</p>
+                </div>
+
+                {/* Tax Forms */}
+                <div className="flex flex-col items-center p-6 rounded-lg border bg-card hover:border-primary/50 transition-colors">
+                  <div className="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-bold uppercase text-center mb-3">Tax Forms (P45/P46)</p>
+                  <Button variant="ghost" size="sm" className="text-primary gap-2 mb-2">
+                    <Download className="w-4 h-4" />
+                    Download
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Uploaded: 12 Jan</p>
+                </div>
+              </div>
             </CardContent>
           )}
         </Card>
