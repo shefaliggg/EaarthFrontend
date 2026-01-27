@@ -319,6 +319,24 @@ export function useProjectMenus(allProjects = []) {
     triggerIcon: Icon.Settings,
     items: [
       {
+      id: "details",
+      label: "Project Details",
+      icon: Icon.FileText,
+      route: `/projects/${projectName}/settings/details`,
+    },
+    {
+      id: "general",
+      label: "General Settings",
+      icon: Icon.Settings2,
+      route: `/projects/${projectName}/settings/general`,
+    },
+    {
+      id: "onboarding",
+      label: "Onboarding Settings",
+      icon: Icon.UserPlus,
+      route: `/projects/${projectName}/settings/onboarding`,
+    },
+      {
         id: "calendar",
         label: "Calendar Settings",
         icon: Icon.Calendar,
