@@ -73,16 +73,6 @@ const WORKING_WEEKS = [
   { value: "5_6_DAYS", label: "5/6 days" },
 ];
 
-const PRODUCTION_PHASES = [
-  { value: "", label: "SELECT PRODUCTION PHASE" },
-  { value: "PREP", label: "PREP" },
-  { value: "SHOOT", label: "SHOOT" },
-  { value: "WRAP", label: "WRAP" },
-  { value: "PREP_SHOOT", label: "PREP & SHOOT" },
-  { value: "SHOOT_WRAP", label: "SHOOT & WRAP" },
-  { value: "ALL", label: "ALL (PREP, SHOOT & WRAP)" },
-];
-
 const ENGAGEMENT_TYPES = [
   { value: "", label: "SELECT ENGAGEMENT TYPE" },
   { value: "LOAN_OUT", label: "LOAN OUT" },
@@ -90,11 +80,9 @@ const ENGAGEMENT_TYPES = [
   { value: "SCHD", label: "SCHD (DAILY/WEEKLY)" },
   { value: "LONG_FORM", label: "LONG FORM" },
 ];
-
-const OVERTIME_TYPES = [
-  { value: "CALCULATED", label: "CALCULATED (STANDARD)" },
-  { value: "CUSTOM", label: "CUSTOM RATES" },
-  { value: "NONE", label: "NO OVERTIME" },
+const RATE_TYPES = [
+  { value: "DAILY", label: "DAILY" },
+  { value: "WEEKLY", label: "WEEKLY" },
 ];
 
 const CAP_TYPES = [
@@ -224,7 +212,7 @@ const createDefaultRole = (index) => ({
   currency: "GBP",
   rateAmount: "",
   feePerDay: "",
-  shiftHours: "10",
+  standardWorkingHours: "10",
   holidayPayInclusive: false,
   rateDescription: "",
   overtimeType: "CALCULATED",
@@ -271,6 +259,7 @@ export default function CreateOffer() {
     otherStatusDeterminationReason: "",
     otherDealProvisions: "",
     additionalNotes: "",
+    isLivingInUk: true,
   });
 
   const [roles, setRoles] = useState([createDefaultRole(0)]);
@@ -520,9 +509,9 @@ export default function CreateOffer() {
   );
 
   return (
-    <div className="">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="sticky px-4 py-3">
+      <div className="sticky py-3">
         <div className="flex items-center justify-between container mx-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${projectName}/onboarding`)}>
@@ -550,7 +539,7 @@ export default function CreateOffer() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto p-4 space-y-4">
+      <div className="container mx-auto space-y-4">
         {/* Recipient Section */}
         <Card className="border-0 shadow-sm py-0 overflow-hidden">
           <SectionHeader
@@ -714,6 +703,32 @@ export default function CreateOffer() {
                   />
                 </FormField>
               )}
+
+              {/* Working in UK - Full width */}
+              <FormField label="Working in the UK?" required>
+                <div className="flex gap-6 pt-2">
+                  {["YES", "NEVER"].map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name={`workingInUK`}
+                        value={opt}
+                        checked={formData.isLivingInUk}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isLivingInUk: e.target.value,
+                          })}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <span className="text-sm font-medium">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormField>
             </CardContent>
           )}
         </Card>
@@ -896,32 +911,6 @@ export default function CreateOffer() {
                       </FormField>
                     </div>
 
-                    {/* Working in UK - Full width */}
-                    <FormField label="Working in the UK?" required>
-                      <div className="flex gap-6 pt-2">
-                        {["YES", "NEVER"].map((opt) => (
-                          <label
-                            key={opt}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            <input
-                              type="radio"
-                              name={`workingInUK-${role.id}`}
-                              value={opt}
-                              checked={role.workingInUnitedKingdom === opt}
-                              onChange={(e) =>
-                                updateRole(role.id, {
-                                  workingInUnitedKingdom: e.target.value,
-                                })
-                              }
-                              className="w-4 h-4 text-primary"
-                            />
-                            <span className="text-sm font-medium">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </FormField>
-
                     {/* Engagement & Phase - 2 columns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Engagement Type" required>
@@ -931,13 +920,26 @@ export default function CreateOffer() {
                           options={ENGAGEMENT_TYPES}
                         />
                       </FormField>
-
-                      <FormField label="Production Phase" required>
+                      <FormField label="Rate Type">
                         <SelectField
-                          value={role.productionPhase}
-                          onChange={(v) => updateRole(role.id, { productionPhase: v })}
-                          options={PRODUCTION_PHASES}
+                          value={role.rateType}
+                          onChange={(v) => updateRole(role.id, { rateType: v })}
+                          options={RATE_TYPES}
                         />
+                        {/* <div className="flex gap-2">
+                          {["DAILY", "WEEKLY"].map(type => (
+                            <Button
+                              key={type}
+                              type="button"
+                              variant={role.rateType === type ? "default" : "outline"}
+                              size="sm"
+                              className={cn(role.rateType === type ? "bg-primary" : "border-primary/30")}
+                              onClick={() => updateRole(role.id, { rateType: type })}
+                            >
+                              {type}
+                            </Button>
+                          ))}
+                        </div> */}
                       </FormField>
                     </div>
 
@@ -956,14 +958,6 @@ export default function CreateOffer() {
                           type="date"
                           value={role.endDate}
                           onChange={(e) => updateRole(role.id, { endDate: e.target.value })}
-                        />
-                      </FormField>
-
-                      <FormField label="Daily or Weekly" required>
-                        <SelectField
-                          value={role.rateType}
-                          onChange={(v) => updateRole(role.id, { rateType: v })}
-                          options={[{ value: "DAILY", label: "DAILY" }, { value: "WEEKLY", label: "WEEKLY" }]}
                         />
                       </FormField>
                     </div>
@@ -1038,14 +1032,14 @@ export default function CreateOffer() {
                     </FormField>
 
                     {/* Budget Code - Full width */}
-                    <FormField label="Budget Code">
+                    {/* <FormField label="Budget Code">
                       <Input
                         value={role.budgetCode}
                         onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })}
                         placeholder="E.G. 847-13-001"
                         className="uppercase"
                       />
-                    </FormField>
+                    </FormField> */}
 
                     {/* Rate & Compensation Section */}
                     <div className="border rounded-lg p-4 bg-primary/5">
@@ -1056,31 +1050,6 @@ export default function CreateOffer() {
 
                       {/* Rate Type Buttons - 3 columns layout */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                        <FormField label="Rate Type">
-                          <div className="flex gap-2">
-                            {["DAILY", "WEEKLY"].map(type => (
-                              <Button
-                                key={type}
-                                type="button"
-                                variant={role.rateType === type ? "default" : "outline"}
-                                size="sm"
-                                className={cn(role.rateType === type ? "bg-primary" : "border-primary/30")}
-                                onClick={() => updateRole(role.id, { rateType: type })}
-                              >
-                                {type}
-                              </Button>
-                            ))}
-                          </div>
-                        </FormField>
-
-                        <FormField label="Currency">
-                          <SelectField
-                            value={role.currency}
-                            onChange={(v) => updateRole(role.id, { currency: v })}
-                            options={CURRENCIES}
-                          />
-                        </FormField>
-
                         <CurrencyInput
                           label={`${role.rateType === "DAILY" ? "Daily" : "Weekly"} Rate Amount`}
                           value={role.rateAmount}
@@ -1088,59 +1057,44 @@ export default function CreateOffer() {
                           currency={role.currency}
                           required
                         />
-                      </div>
 
-                      {/* Shift Hours, Overtime, Budget - 3 columns */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <FormField label="Shift Hours">
+                        <FormField label="Standard Working Hours">
                           <Input
                             type="number"
-                            value={role.shiftHours}
-                            onChange={(e) => updateRole(role.id, { shiftHours: e.target.value })}
+                            value={role.standardWorkingHours}
+                            onChange={(e) => updateRole(role.id, { standardWorkingHours: e.target.value })}
                             placeholder="10"
                           />
                         </FormField>
 
-                        <FormField label="Overtime Type">
-                          <SelectField
-                            value={role.overtimeType}
-                            onChange={(v) => updateRole(role.id, { overtimeType: v })}
-                            options={OVERTIME_TYPES}
+                        <div className="flex items-center gap-3 mt-4 p-3 rounded-lg bg-muted/50">
+                          <Checkbox
+                            id={`holidayPay-${role.id}`}
+                            checked={role.holidayPayInclusive}
+                            onCheckedChange={(checked) => updateRole(role.id, { holidayPayInclusive: checked })}
                           />
-                        </FormField>
+                          <Label htmlFor={`holidayPay-${role.id}`} className="text-sm cursor-pointer font-medium">
+                            Holiday Pay Inclusive in Rate
+                          </Label>
+                        </div>
+                      </div>
 
-                        <FormField label="Budget Code">
+                      {/* Shift Hours, Overtime, Budget - 3 columns */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+
+                        {/* <FormField label="Budget Code">
                           <Input
                             value={role.budgetCode}
                             onChange={(e) => updateRole(role.id, { budgetCode: e.target.value.toUpperCase() })}
                             placeholder="E.G. 847-13-001"
                             className="uppercase"
                           />
-                        </FormField>
-                      </div>
-
-                      {/* Rate Description - Full width */}
-                      <div className="mt-4">
-                        <FormField label="Rate Description / Notes">
-                          <Input
-                            value={role.rateDescription}
-                            onChange={(e) => updateRole(role.id, { rateDescription: e.target.value })}
-                            placeholder="Additional rate details or notes"
-                          />
-                        </FormField>
+                        </FormField> */}
                       </div>
 
                       {/* Holiday Pay Checkbox */}
-                      <div className="flex items-center gap-3 mt-4 p-3 rounded-lg bg-muted/50">
-                        <Checkbox
-                          id={`holidayPay-${role.id}`}
-                          checked={role.holidayPayInclusive}
-                          onCheckedChange={(checked) => updateRole(role.id, { holidayPayInclusive: checked })}
-                        />
-                        <Label htmlFor={`holidayPay-${role.id}`} className="text-sm cursor-pointer font-medium">
-                          Holiday Pay Inclusive in Rate
-                        </Label>
-                      </div>
+
 
                       {/* Custom Overtime Rates - 3 columns when visible */}
                       {role.overtimeType === "CUSTOM" && (
@@ -1566,13 +1520,7 @@ export default function CreateOffer() {
                             />
                           </FormField>
                           <CurrencyInput
-                            label="Daily Rate"
-                            value={role.allowances.livingAllowanceDailyRate}
-                            onChange={(v) => updateRoleAllowances(role.id, { livingAllowanceDailyRate: v })}
-                            currency={role.allowances.livingAllowanceCurrency}
-                          />
-                          <CurrencyInput
-                            label="Weekly Rate"
+                            label={<>Weekly Rate<span className="font-medium text-amber-600 lowercase">(daily rate is derived from weekly rate)</span></>}
                             value={role.allowances.livingAllowanceWeeklyRate}
                             onChange={(v) => updateRoleAllowances(role.id, { livingAllowanceWeeklyRate: v })}
                             currency={role.allowances.livingAllowanceCurrency}
