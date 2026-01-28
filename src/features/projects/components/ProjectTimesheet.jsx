@@ -1,3 +1,4 @@
+// ProjectTimesheet.jsx
 import { useState } from 'react';
 import { Info, Plus, Trash2, Edit } from 'lucide-react';
 import EditableTextDataField from "../../../shared/components/wrappers/EditableTextDataField";
@@ -32,8 +33,16 @@ const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) =>
 
 const ProjectTimesheet = () => {
   const [formData, setFormData] = useState({
+    // Payroll company
+    payrollCompany: 'Sargent Disc',
+    crewDataCSVExport: 'Team Engine',
+    payrollCSVExport: 'Sargent Disc',
+    
+    // Timecards
     timecardsActiveFrom: 'Mon',
     weekEndingDay: 'Monday',
+    
+    // Scheduled tasks
     crewReminderDay: 'Monday',
     crewReminderTime: '09:00',
     crewSubmissionDay: 'Monday',
@@ -42,6 +51,13 @@ const ProjectTimesheet = () => {
     departmentReminderTime: '09:00',
     departmentApprovalDay: 'Monday',
     departmentApprovalTime: '17:00',
+    
+    // Working hours
+    standardWorkingDay: '10 + 1',
+    semiContinuousWorkingDay: '9 + 0.5',
+    continuousWorkingDay: '9',
+    
+    // Rules
     calculateBrokenTurnaround: 'Only between consecutive work days (rest day always resets)',
     useOfficialRestDays: false,
     restDay1Turnaround: '11 hours',
@@ -52,20 +68,50 @@ const ProjectTimesheet = () => {
     postWrapOvertimeCamera: 'Uses inclusive minutes',
     dawnCallPreCall: 'Apply dawn call until 5am then pre-call',
     dawnCallInclusive: 'Uses inclusive minutes',
+    
+    // Preferences
     crewApprovalPDF: 'Auto',
     requireMealTimes: false,
     onlyPrePostTransport: false,
     travelTimeScheduling: 'Travel time happens outside of all worked hours',
+    
+    // Roundings
     cameraOvertimeRounding: 'Every 15 mins',
     otherOvertimeRounding: 'Every 15 mins'
   });
 
-  const [customDays, setCustomDays] = useState([
-    { id: 1, type: 'Driver - Cast Travel', paidAs: 'Percentage', dailyRate: '150.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
-    { id: 2, type: 'Half Day', paidAs: 'Percentage', dailyRate: '50.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
-    { id: 3, type: 'Sick - Paid', paidAs: 'Percentage', dailyRate: '100.00%', holidayPay: 'Accrue', sixthSeventh: "Don't reset and don't count", payAllowances: 'No', showToCrew: 'No' },
-    { id: 4, type: 'Travel & Turnaround', paidAs: 'Percentage', dailyRate: '200.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
-    { id: 5, type: 'Travel Somerset', paidAs: 'Percentage', dailyRate: '150.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'No', showToCrew: 'No' }
+  const [projectPlaces, setProjectPlaces] = useState({
+    units: [
+      { id: 1, name: 'Main', dates: '28 Sep 2023 - 17 Dec 2023' },
+      { id: 2, name: 'Splinter Camera', dates: '5 Oct 2023 - 10 Dec 2023' },
+      { id: 3, name: '2nd Unit (Main)', dates: '12 Oct 2023 - 11 Dec 2023' }
+    ],
+    regularPlaces: ['Off set', 'Stream'],
+    nearbyBases: [
+      'West London Studio',
+      'Shinfield Studios',
+      'Pinewood',
+      'Longcross',
+      'Arborfield (Main)',
+      'Reading (West)',
+      'Wokingham',
+      'Bracknell Forest',
+      'Swallowfield'
+    ]
+  });
+
+  const [departmentDefaults, setDepartmentDefaults] = useState([
+    { id: 1, department: 'Art Dept', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '1', minutesAfter: '' },
+    { id: 2, department: 'Art Dept', regularStartFinish: 'Off Set', cameraOvertime: '11', otherOvertime: 'Yes', minutesBefore: '1', minutesAfter: '' },
+    { id: 3, department: 'Assistant Directors', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 4, department: 'Assistant Directors', regularStartFinish: 'Off Set', cameraOvertime: '11', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 5, department: 'Camera', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 6, department: 'Camera', regularStartFinish: 'Off Set', cameraOvertime: '11', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 7, department: 'Continuity', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 8, department: 'Continuity', regularStartFinish: 'Off Set', cameraOvertime: '11', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 9, department: 'Costume', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 10, department: 'Costume', regularStartFinish: 'Off Set', cameraOvertime: '11', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '30' },
+    { id: 11, department: 'Hair and Make-up', regularStartFinish: 'On Set', cameraOvertime: 'Yes', otherOvertime: 'Yes', minutesBefore: '30', minutesAfter: '' }
   ]);
 
   const [allowances, setAllowances] = useState({
@@ -76,6 +122,25 @@ const ProjectTimesheet = () => {
     software: false,
     vehicle: false
   });
+
+  const [customDays, setCustomDays] = useState([
+    { id: 1, type: 'Driver - Cast Travel', paidAs: 'Percentage', dailyRate: '150.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
+    { id: 2, type: 'Half Day', paidAs: 'Percentage', dailyRate: '50.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
+    { id: 3, type: 'Sick - Paid', paidAs: 'Percentage', dailyRate: '100.00%', holidayPay: 'Accrue', sixthSeventh: "Don't reset and don't count", payAllowances: 'No', showToCrew: 'No' },
+    { id: 4, type: 'Travel & Turnaround', paidAs: 'Percentage', dailyRate: '200.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'Yes', showToCrew: 'Yes' },
+    { id: 5, type: 'Travel Somerset', paidAs: 'Percentage', dailyRate: '150.00%', holidayPay: 'Accrue', sixthSeventh: 'Resets day count', payAllowances: 'No', showToCrew: 'No' }
+  ]);
+
+  const [customFields, setCustomFields] = useState([
+    { id: 1, name: 'Special stips 3', value: 'N/A' },
+    { id: 2, name: 'Special stips 7', value: 'N/A' },
+    { id: 3, name: 'Special stips 1', value: 'N/A' },
+    { id: 4, name: 'Special stips 5', value: 'N/A' },
+    { id: 5, name: 'Special stips 6', value: 'N/A' },
+    { id: 6, name: 'Special stips 9', value: 'N/A' },
+    { id: 7, name: 'Special stips 2', value: 'N/A' },
+    { id: 8, name: 'Special stips 4', value: 'N/A' }
+  ]);
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -96,6 +161,22 @@ const ProjectTimesheet = () => {
 
   const deleteCustomDay = (id) => {
     setCustomDays(customDays.filter(day => day.id !== id));
+  };
+
+  const addPlace = () => {
+    // Logic to add new place
+  };
+
+  const addDepartmentDefault = () => {
+    // Logic to add new department default
+  };
+
+  const addCustomField = () => {
+    setCustomFields([...customFields, {
+      id: customFields.length + 1,
+      name: '',
+      value: 'N/A'
+    }]);
   };
 
   const weekDayOptions = [
@@ -125,8 +206,64 @@ const ProjectTimesheet = () => {
     { value: 'Every 1 hour', label: 'Every 1 hour' }
   ];
 
+  const payrollCompanyOptions = [
+    { value: 'Sargent Disc', label: 'Sargent Disc' },
+    { value: 'Other Company', label: 'Other Company' }
+  ];
+
+  const csvExportOptions = [
+    { value: 'Team Engine', label: 'Team Engine' },
+    { value: 'Sargent Disc', label: 'Sargent Disc' }
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Configure timecard settings for your project</h1>
+        </div>
+        <button className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all">
+          Update timecard settings
+        </button>
+      </div>
+
+      {/* Payroll company */}
+      <CardWrapper title="" variant="default" showLabel={false}>
+        <div className="space-y-4">
+          <EditableSelectField
+            label="Payroll company"
+            value={formData.payrollCompany}
+            items={payrollCompanyOptions}
+            isEditing={true}
+            onChange={(val) => updateField('payrollCompany', val)}
+          />
+
+          <div className="flex items-center gap-2">
+            <EditableSelectField
+              label="Crew Data CSV export layout"
+              value={formData.crewDataCSVExport}
+              items={csvExportOptions}
+              isEditing={true}
+              onChange={(val) => updateField('crewDataCSVExport', val)}
+            />
+            <span className="text-xs text-gray-500 mt-6">(Optional)</span>
+            <Info className="w-4 h-4 text-gray-400 mt-6" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <EditableSelectField
+              label="Payroll CSV export layout"
+              value={formData.payrollCSVExport}
+              items={csvExportOptions}
+              isEditing={true}
+              onChange={(val) => updateField('payrollCSVExport', val)}
+            />
+            <span className="text-xs text-gray-500 mt-6">(Optional)</span>
+            <Info className="w-4 h-4 text-gray-400 mt-6" />
+          </div>
+        </div>
+      </CardWrapper>
+
       {/* Timecards */}
       <CardWrapper title="Timecards" variant="default" showLabel={true}>
         <div className="grid grid-cols-2 gap-4">
@@ -242,7 +379,6 @@ const ProjectTimesheet = () => {
       </CardWrapper>
 
       {/* Working hours */}
-      {/* Working hours */}
       <CardWrapper
         title="Working hours"
         variant="default"
@@ -255,9 +391,9 @@ const ProjectTimesheet = () => {
             <RadioGroup
               label="Standard working day"
               options={[
-                { value: '10 + 1', label: '10 + 1' },
-                { value: '10.5 + 1', label: '10.5 + 1' },
-                { value: '11 + 1', label: '11 + 1' }
+                { value: 'Standard working day: 10 + 1', label: 'Standard working day: 10 + 1' },
+                { value: 'Standard working day: 10.5 + 1', label: 'Standard working day: 10.5 + 1' },
+                { value: 'Standard working day: 11 + 1', label: 'Standard working day: 11 + 1' }
               ]}
               selected={formData.standardWorkingDay}
               onChange={(val) => updateField('standardWorkingDay', val)}
@@ -269,10 +405,10 @@ const ProjectTimesheet = () => {
             <RadioGroup
               label="Semi-continuous working day"
               options={[
-                { value: '9 + 0.5', label: '9 + 0.5' },
-                { value: '9.5 + 0.5', label: '9.5 + 0.5' },
-                { value: '10 + 0.5', label: '10 + 0.5' },
-                { value: '10.5 + 0.5', label: '10.5 + 0.5' }
+                { value: 'Semi-continuous working day: 9 + 0.5', label: 'Semi-continuous working day: 9 + 0.5' },
+                { value: 'Semi-continuous working day: 9.5 + 0.5', label: 'Semi-continuous working day: 9.5 + 0.5' },
+                { value: 'Semi-continuous working day: 10 + 0.5', label: 'Semi-continuous working day: 10 + 0.5' },
+                { value: 'Semi-continuous working day: 10.5 + 0.5', label: 'Semi-continuous working day: 10.5 + 0.5' }
               ]}
               selected={formData.semiContinuousWorkingDay}
               onChange={(val) => updateField('semiContinuousWorkingDay', val)}
@@ -284,9 +420,9 @@ const ProjectTimesheet = () => {
             <RadioGroup
               label="Continuous working day"
               options={[
-                { value: '9', label: '9' },
-                { value: '9.5', label: '9.5' },
-                { value: '10', label: '10' }
+                { value: 'Continuous working day: 9', label: 'Continuous working day: 9' },
+                { value: 'Continuous working day: 9.5', label: 'Continuous working day: 9.5' },
+                { value: 'Continuous working day: 10', label: 'Continuous working day: 10' }
               ]}
               selected={formData.continuousWorkingDay}
               onChange={(val) => updateField('continuousWorkingDay', val)}
@@ -295,8 +431,140 @@ const ProjectTimesheet = () => {
         </div>
       </CardWrapper>
 
+      {/* Project places */}
+      <CardWrapper
+        title="Project places"
+        variant="default"
+        showLabel={true}
+        description="Groups & areas in which your crew might work."
+        actions={
+          <button
+            onClick={addPlace}
+            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add new place
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          {/* Units */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h4 className="text-sm font-semibold text-gray-900">Units</h4>
+              <Info className="w-4 h-4 text-gray-400" />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left text-xs font-medium text-gray-700 pb-2">Name</th>
+                    <th className="text-left text-xs font-medium text-gray-700 pb-2">Dates/notes</th>
+                    <th className="text-right text-xs font-medium text-gray-700 pb-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectPlaces.units.map((unit) => (
+                    <tr key={unit.id} className="border-b border-gray-100">
+                      <td className="py-3 text-sm">{unit.name}</td>
+                      <td className="py-3 text-sm text-gray-600">{unit.dates}</td>
+                      <td className="py-3 text-right">
+                        <div className="flex gap-2 justify-end">
+                          <button className="text-blue-600 hover:text-blue-800">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="text-red-600 hover:text-red-800">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Regular places */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Regular places</h4>
+            <div className="flex flex-wrap gap-2">
+              {projectPlaces.regularPlaces.map((place, index) => (
+                <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm">
+                  {place}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Nearby bases */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Nearby bases</h4>
+            <div className="space-y-2">
+              {projectPlaces.nearbyBases.map((base, index) => (
+                <div key={index} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+                  <span className="text-sm text-gray-700">{base}</span>
+                  <button className="text-red-600 hover:text-red-800">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CardWrapper>
+
+      {/* Department defaults */}
+      <CardWrapper
+        title="Department defaults"
+        variant="default"
+        showLabel={true}
+        description="Default overtime settings per department and regular site."
+        actions={
+          <button
+            onClick={addDepartmentDefault}
+            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add department default
+          </button>
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Department</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Regular start/finish</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Camera overtime</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Other overtime</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Minutes before</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Minutes after</th>
+                <th className="text-right text-xs font-medium text-gray-700 pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {departmentDefaults.map((dept) => (
+                <tr key={dept.id} className="border-b border-gray-100">
+                  <td className="py-3 text-sm">{dept.department}</td>
+                  <td className="py-3 text-sm">{dept.regularStartFinish}</td>
+                  <td className="py-3 text-sm">{dept.cameraOvertime}</td>
+                  <td className="py-3 text-sm">{dept.otherOvertime}</td>
+                  <td className="py-3 text-sm">{dept.minutesBefore}</td>
+                  <td className="py-3 text-sm">{dept.minutesAfter}</td>
+                  <td className="py-3 text-right">
+                    <button className="text-red-600 hover:text-red-800">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardWrapper>
+
       {/* Rules */}
-    {/* Rules */}
       <CardWrapper title="Rules" variant="default" showLabel={true}>
         <div className="space-y-6">
           {/* Calculate broken turnaround for dailies */}
@@ -316,24 +584,29 @@ const ProjectTimesheet = () => {
             checked={formData.useOfficialRestDays}
             onChange={(val) => updateField('useOfficialRestDays', val)}
             isEditing={true}
-            showInfo={true}
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <EditableSelectField
-              label="1 rest day turnaround period"
-              value={formData.restDay1Turnaround}
-              items={turnaroundOptions}
-              isEditing={true}
-              onChange={(val) => updateField('restDay1Turnaround', val)}
-            />
-            <EditableSelectField
-              label="2 rest day turnaround period"
-              value={formData.restDay2Turnaround}
-              items={turnaroundOptions}
-              isEditing={true}
-              onChange={(val) => updateField('restDay2Turnaround', val)}
-            />
+            <div className="flex items-center gap-2">
+              <EditableSelectField
+                label="1 rest day turnaround period"
+                value={formData.restDay1Turnaround}
+                items={turnaroundOptions}
+                isEditing={true}
+                onChange={(val) => updateField('restDay1Turnaround', val)}
+              />
+              <Info className="w-4 h-4 text-gray-400 mt-6" />
+            </div>
+            <div className="flex items-center gap-2">
+              <EditableSelectField
+                label="2 rest day turnaround period"
+                value={formData.restDay2Turnaround}
+                items={turnaroundOptions}
+                isEditing={true}
+                onChange={(val) => updateField('restDay2Turnaround', val)}
+              />
+              <Info className="w-4 h-4 text-gray-400 mt-6" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -434,13 +707,15 @@ const ProjectTimesheet = () => {
             isEditing={true}
           />
 
-          <EditableCheckboxField
-            label="Only apply pre and post overtime for Transport department specific offers"
-            checked={formData.onlyPrePostTransport}
-            onChange={(val) => updateField('onlyPrePostTransport', val)}
-            isEditing={true}
-          />
-          <p className="text-xs text-gray-500">When inactive all overtime and penalties will apply.</p>
+          <div>
+            <EditableCheckboxField
+              label="Only apply pre and post overtime for Transport department specific offers"
+              checked={formData.onlyPrePostTransport}
+              onChange={(val) => updateField('onlyPrePostTransport', val)}
+              isEditing={true}
+            />
+            <p className="text-xs text-gray-500 mt-1">When inactive all overtime and penalties will apply.</p>
+          </div>
 
           <RadioGroup
             label="When including Travel time in your scheduled shooting day"
@@ -522,6 +797,42 @@ const ProjectTimesheet = () => {
         </div>
       </CardWrapper>
 
+      {/* Daily Allowances / Overrides */}
+      <CardWrapper
+        title="Daily Allowances / Overrides"
+        variant="default"
+        showLabel={true}
+        description="Set specific values for any field (Mileage, Travel, Per Diem, etc.) for selected crew on specific days."
+        actions={
+          <button className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all">
+            <Plus className="w-4 h-4" />
+            Add Override
+          </button>
+        }
+      >
+        <div className="text-center py-8 text-gray-500">
+          No overrides set. Click "Add Override" to create one.
+        </div>
+      </CardWrapper>
+
+      {/* Upgrade Roles */}
+      <CardWrapper
+        title="Upgrade Roles"
+        variant="default"
+        showLabel={true}
+        description="Define available upgrade roles and their default daily rates."
+        actions={
+          <button className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-all">
+            <Plus className="w-4 h-4" />
+            Add Upgrade Role
+          </button>
+        }
+      >
+        <div className="text-center py-8 text-gray-500">
+          No upgrade roles defined. Click "Add Upgrade Role" to create one.
+        </div>
+      </CardWrapper>
+
       {/* Custom days */}
       <CardWrapper
         title="Custom days"
@@ -563,12 +874,12 @@ const ProjectTimesheet = () => {
                   <td className="py-3 text-sm">{day.showToCrew}</td>
                   <td className="py-3">
                     <div className="flex gap-2">
-                      <button className="text-gray-600 hover:text-purple-600">
+                      <button className="text-blue-600 hover:text-blue-800">
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => deleteCustomDay(day.id)}
-                        className="text-gray-600 hover:text-red-600"
+                        className="text-red-600 hover:text-red-800"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -580,6 +891,74 @@ const ProjectTimesheet = () => {
           </table>
         </div>
       </CardWrapper>
+
+      {/* Custom documents */}
+      <CardWrapper
+        title="Custom documents"
+        variant="default"
+        showLabel={true}
+        description={
+          <span>
+            To add or remove custom documents,{' '}
+            <a href="#" className="text-purple-600 hover:text-purple-800">please contact Team Engine</a>
+          </span>
+        }
+      >
+      </CardWrapper>
+
+      {/* Custom fields */}
+      <CardWrapper
+        title="Custom fields"
+        variant="default"
+        showLabel={true}
+        description="Create custom fields for basic pay, overtime, or allowance categories"
+        actions={
+          <button
+            onClick={addCustomField}
+            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add custom field
+          </button>
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Name</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Value</th>
+                <th className="text-left text-xs font-medium text-gray-700 pb-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customFields.map((field) => (
+                <tr key={field.id} className="border-b border-gray-100">
+                  <td className="py-3 text-sm">{field.name}</td>
+                  <td className="py-3 text-sm text-gray-600">{field.value}</td>
+                  <td className="py-3">
+                    <div className="flex gap-2">
+                      <button className="text-blue-600 hover:text-blue-800">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardWrapper>
+
+      {/* Save Button */}
+      <div className="flex justify-end pt-6">
+        <button className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all">
+          Update timecard settings
+        </button>
+      </div>
     </div>
   );
 };

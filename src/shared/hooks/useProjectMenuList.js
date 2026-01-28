@@ -331,6 +331,12 @@ export function useProjectMenus(allProjects = []) {
       route: `/projects/${projectName}/settings/general`,
     },
     {
+      id: "construction",
+      label: "Construction Settings",
+      icon: Icon.Settings2,
+      route: `/projects/${projectName}/settings/construction`,
+    },
+    {
       id: "onboarding",
       label: "Onboarding Settings",
       icon: Icon.UserPlus,
@@ -346,7 +352,7 @@ export function useProjectMenus(allProjects = []) {
         id: "timecard",
         label: "Timesheets Settings",
         icon: Icon.Clock,
-        route: `/projects/${projectName}/timecard`,
+        route: `/projects/${projectName}/settings/timesheet`,
       },
     ],
   };

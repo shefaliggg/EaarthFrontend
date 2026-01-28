@@ -21,6 +21,7 @@ import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import StudioAnalytics from '../components/StudioAnalytics';
 import MyOffer from '../../crew/pages/Myoffer';
+import ProjectConstruction from '../components/ProjectConstruction';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -58,6 +59,7 @@ const ProjectRoutes = {
       children: [
         { index: true, element: <ProjectDetails /> },          // default page for settings
         { path: 'details', element: <ProjectDetails /> },
+        { path: 'construction', element: <ProjectConstruction /> },
         { path: 'general', element: <ProjectGeneral /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
