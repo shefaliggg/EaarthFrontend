@@ -27,6 +27,7 @@ import ProjectNotifications from '../components/ProjectNotifications';
 import SignersRecipients from '../components/SignersRecipients';
 import ApprovalWorkflows from '../components/ApprovalWorkflows';
 import Billing from '../components/Billing';
+import ProjectDetail from '../components/ProjectDetail';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -64,6 +65,7 @@ const ProjectRoutes = {
       children: [
         { index: true, element: <ProjectDetails /> },          // default page for settings
         { path: 'details', element: <ProjectDetails /> },
+        { path: 'detail', element: <ProjectDetail /> },
         { path: 'construction', element: <ProjectConstruction /> },
         { path: 'general', element: <ProjectGeneral /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
