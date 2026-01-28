@@ -354,6 +354,36 @@ export function useProjectMenus(allProjects = []) {
         icon: Icon.Clock,
         route: `/projects/${projectName}/settings/timesheet`,
       },
+      {
+        id: "roles",
+        label: "Roles Settings",
+        icon: Icon.User,
+        route: `/projects/${projectName}/settings/roles`,
+      },
+      {
+        id: "notifications",
+        label: "Notifications Settings",
+        icon: Icon.User,
+        route: `/projects/${projectName}/settings/notifications`,
+      },
+      {
+        id: "signers-recipients",
+        label: "Signers & Recipients Settings",
+        icon: Icon.User,
+        route: `/projects/${projectName}/settings/signers-recipients`,
+      },
+      {
+        id: "approval-workflows",
+        label: "Approval Workflows",
+        icon: Icon.User,
+        route: `/projects/${projectName}/settings/approval-workflows`,
+      },
+      {
+        id: "billing",
+        label: "Billing",
+        icon: Icon.User,
+        route: `/projects/${projectName}/settings/billing`,
+      },
     ],
   };
 

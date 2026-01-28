@@ -22,6 +22,11 @@ import { ManageTeam } from '../components/ManageTeam';
 import StudioAnalytics from '../components/StudioAnalytics';
 import MyOffer from '../../crew/pages/Myoffer';
 import ProjectConstruction from '../components/ProjectConstruction';
+import ProjectRoles from '../components/ProjectRoles';
+import ProjectNotifications from '../components/ProjectNotifications';
+import SignersRecipients from '../components/SignersRecipients';
+import ApprovalWorkflows from '../components/ApprovalWorkflows';
+import Billing from '../components/Billing';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -63,6 +68,11 @@ const ProjectRoutes = {
         { path: 'general', element: <ProjectGeneral /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
+        { path: 'roles', element: <ProjectRoles /> },
+        { path: 'notifications', element: <ProjectNotifications /> },
+        { path: 'signers-recipients', element: <SignersRecipients /> },
+        { path: 'approval-workflows', element: <ApprovalWorkflows /> },
+        { path: 'billing', element: <Billing /> },
         // { path: 'calendar', element: <ProjectCalendarSettings /> }, // your calendar settings
         { path: '*', element: <NotFound /> },
       ],
