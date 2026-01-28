@@ -1,5 +1,6 @@
 import * as LucideIcons from "lucide-react";
 import { SelectMenu } from "../menus/SelectMenu";
+import { cn } from "@/shared/config/utils";
 
 function EditableSelectField({
   label,
@@ -14,7 +15,7 @@ function EditableSelectField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-primary">
+      <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-wider text-gray-700 dark:text-gray-400">
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {label}
       </div>
@@ -24,10 +25,14 @@ function EditableSelectField({
           items={items}
           selected={value}
           onSelect={onChange}
-          className="w-full"
+          className="w-full shadow-none"
         />
       ) : (
-        <div className="h-9 flex items-center rounded-md border bg-muted/30 px-3 text-sm font-medium">
+        <div className={cn(
+          "h-10 flex items-center rounded-md px-3 text-sm font-medium shadow-none",
+          "bg-gray-100 dark:bg-gray-800",
+          "border border-transparent"
+        )}>
           {selectedItem?.label ?? "Not set"}
         </div>
       )}

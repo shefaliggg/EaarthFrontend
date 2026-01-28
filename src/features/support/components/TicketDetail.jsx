@@ -486,7 +486,7 @@ export function TicketDetail({ ticket, isDarkMode, onSendReply, sendingReply = f
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 placeholder={sendingReply ? "Sending..." : "Type your reply..."}
-                className="w-full h-10 px-4 rounded-xl border text-sm bg-input border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                className="w-full h-10 px-4 rounded-md border border-transparent shadow-none text-sm bg-gray-100 dark:bg-gray-800 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
                 disabled={sendingReply}
                 onKeyDown={handleKeyPress}
               />

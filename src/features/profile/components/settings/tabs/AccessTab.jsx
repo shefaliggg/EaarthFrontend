@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { UserPlus, Users, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { EditableInput } from '../../../../../shared/components/forms';
 
 export function AccessTab({ 
   agentAccesses, 
@@ -67,17 +68,16 @@ export function AccessTab({
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Recipient's Email Address</label>
-            <input
-              type="email"
-              value={agentEmail}
-              onChange={(e) => setAgentEmail(e.target.value)}
-              placeholder="agent@example.com"
-              className="w-full px-4 py-3 bg-input border border-border rounded-lg outline-none focus:border-primary text-foreground placeholder-muted-foreground transition-all duration-300"
-            />
-          </div>
+        <div className="space-y-6">
+          <EditableInput
+            isEditing={true}
+            label="Recipient's Email Address"
+            type="email"
+            value={agentEmail}
+            onChange={(e) => setAgentEmail(e.target.value)}
+            placeholder="agent@example.com"
+            required
+          />
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">Permissions</label>

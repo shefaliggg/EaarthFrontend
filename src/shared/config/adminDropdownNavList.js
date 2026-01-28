@@ -29,6 +29,33 @@ const displayModeItem = {
   ],
 };
 
+const themeItem = {
+  id: "theme",
+  label: "Theme",
+  icon: Icon.Moon,
+  type: "submenu",
+  children: [
+    {
+      id: "system",
+      label: "System Based",
+      icon: Icon.Monitor,
+      action: "theme",
+    },
+    {
+      id: "dark",
+      label: "Dark Mode",
+      icon: Icon.Moon,
+      action: "theme",
+    },
+    {
+      id: "light",
+      label: "Light Mode",
+      icon: Icon.Sun,
+      action: "theme",
+    },
+  ],
+};
+
 const commonBottom = [
   {
     id: "settings",
@@ -43,6 +70,7 @@ const commonBottom = [
     icon: Icon.HelpCircle,
     route: "/support",
   },
+  themeItem,
   displayModeItem,
   {
     id: "logout",

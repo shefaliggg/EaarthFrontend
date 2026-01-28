@@ -4,7 +4,7 @@ import LoadingScreen from "./LoadingScreen";
 import { StepperWrapper } from "./stepper/StepperWrapper";
 
 const CrewDashboard = lazy(() => import("../../features/crew/pages/CrewDashboard"));
-const StudioDashboard = lazy(() => import("../../features/studio/pages/StudioDashboard"));
+const ProjectList = lazy(() => import("../../features/projects/pages/ProjectList"));
 const NoAffiliationDashboard = lazy(() => import("../../features/auth/pages/NoAffiliationDashboard"));
 
 
@@ -18,10 +18,10 @@ const RoleBasedDashboard = () => {
         return <CrewDashboard />;
 
       case "studio_admin":
-        return <StudioDashboard />;
+        return <ProjectList />;
 
       case "agency_admin":
-        return <StudioDashboard />;
+        return <ProjectList />;
 
       case "none":
       default:

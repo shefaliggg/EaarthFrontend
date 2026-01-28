@@ -58,7 +58,7 @@ export default function MyTickets({ tickets, onTicketClick }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tickets by ID, subject, or description..."
-              className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
+              className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border border-transparent shadow-none rounded-md focus:outline-none text-foreground"
             />
           </div>
           <button

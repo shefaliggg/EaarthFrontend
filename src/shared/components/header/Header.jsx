@@ -17,7 +17,6 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import DarkmodeButton from '../buttons/DarkmodeButton';
 import { NotificationsPanel } from '../NotificationPanel';
 import { ChatPanel } from '../ChatPanel';
 
@@ -46,6 +45,7 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [displayMode, setDisplayMode] = useState('text-icon');
+  const [currentTheme, setCurrentTheme] = useState('');
 
   const [notificationCount] = useState(5);
   const [messageCount] = useState(3);
@@ -84,11 +84,50 @@ export default function Header() {
 
   const adminMenuItems = adminDropdownConfig(role);
 
+  const handleThemeChange = (value) => {
+    setCurrentTheme(value);
+    localStorage.setItem("theme", value);
+
+    if (value === "dark") {
+      document.body.classList.add("dark");
+    } else if (value === "light") {
+      document.body.classList.remove("dark");
+    } else {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+    }
+
+    setTimeout(() => {
+      window.dispatchEvent(new Event("theme-change"));
+    }, 0);
+  };
+
   const actionHandlers = {
     logout: () => triggerGlobalLogout(),
     messages: () => setShowMessages(true),
     "display-mode": (value) => setDisplayMode(value),
+    "theme": (value) => handleThemeChange(value),
   };
+
+  useEffect(() => {
+    if (localStorage.getItem('theme') === "dark") {
+      document.body.classList.add("dark");
+      setCurrentTheme('dark');
+    } else if (localStorage.getItem('theme') === "light") {
+      document.body.classList.remove("dark");
+      setCurrentTheme('light');
+    } else {
+      setCurrentTheme('system');
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     document.body.classList.toggle(
@@ -144,9 +183,6 @@ export default function Header() {
               )}
             </Button>
 
-            {/* TOGGLES */}
-            <DarkmodeButton />
-
             {/* PROFILE (LAST) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -195,26 +231,32 @@ export default function Header() {
                           </DropdownMenuSubTrigger>
 
                           <DropdownMenuSubContent className="w-44">
-                            {item.children.map((child) => (
-                              <DropdownMenuItem
-                                key={child.id}
-                                onClick={() =>
-                                  actionHandlers["display-mode"](child.id)
-                                }
-                                className={cn(
-                                  displayMode === child.id && "bg-accent text-background"
-                                )}
-                              >
-                                <SmartIcon
-                                  icon={child.icon}
+                            {item.children.map((child) => {
+                              const isActive = item.id === "display-mode" 
+                                ? displayMode === child.id 
+                                : currentTheme === child.id;
+                              
+                              return (
+                                <DropdownMenuItem
+                                  key={child.id}
+                                  onClick={() =>
+                                    actionHandlers[child.action](child.id)
+                                  }
                                   className={cn(
-                                    "mr-2",
-                                    displayMode === child.id && "text-background"
+                                    isActive && "bg-accent text-background"
                                   )}
-                                />
-                                {child.label}
-                              </DropdownMenuItem>
-                            ))}
+                                >
+                                  <SmartIcon
+                                    icon={child.icon}
+                                    className={cn(
+                                      "mr-2",
+                                      isActive && "text-background"
+                                    )}
+                                  />
+                                  {child.label}
+                                </DropdownMenuItem>
+                              );
+                            })}
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
                       </Fragment>
