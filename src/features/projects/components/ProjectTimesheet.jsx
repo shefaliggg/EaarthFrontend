@@ -5,6 +5,7 @@ import EditableTextDataField from "../../../shared/components/wrappers/EditableT
 import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
 import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
 import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
+import { PageHeader } from "../../../shared/components/PageHeader";
 
 // Radio Group Component
 const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) => {
@@ -217,15 +218,17 @@ const ProjectTimesheet = () => {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Configure timecard settings for your project</h1>
-        </div>
-        <button className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all">
-          Update timecard settings
-        </button>
-      </div>
+    <div className="space-y-4 max-w-7xl mx-auto p-4">
+      <PageHeader
+        title="Timesheet"
+        subtitle="Configure timecard settings for your project"
+        icon="Settings"
+        primaryAction={{
+          label: "Update timecard settings",
+          clickAction: () => console.log("Saving..."),
+          variant: "default",
+        }}
+      />
 
       {/* Payroll company */}
       <CardWrapper title="" variant="default" showLabel={false}>
@@ -239,25 +242,29 @@ const ProjectTimesheet = () => {
           />
 
           <div className="flex items-center gap-2">
-            <EditableSelectField
-              label="Crew Data CSV export layout"
-              value={formData.crewDataCSVExport}
-              items={csvExportOptions}
-              isEditing={true}
-              onChange={(val) => updateField('crewDataCSVExport', val)}
-            />
+            <div className="flex-1">
+              <EditableSelectField
+                label="Crew Data CSV export layout"
+                value={formData.crewDataCSVExport}
+                items={csvExportOptions}
+                isEditing={true}
+                onChange={(val) => updateField('crewDataCSVExport', val)}
+              />
+            </div>
             <span className="text-xs text-gray-500 mt-6">(Optional)</span>
             <Info className="w-4 h-4 text-gray-400 mt-6" />
           </div>
 
           <div className="flex items-center gap-2">
-            <EditableSelectField
-              label="Payroll CSV export layout"
-              value={formData.payrollCSVExport}
-              items={csvExportOptions}
-              isEditing={true}
-              onChange={(val) => updateField('payrollCSVExport', val)}
-            />
+            <div className="flex-1">
+              <EditableSelectField
+                label="Payroll CSV export layout"
+                value={formData.payrollCSVExport}
+                items={csvExportOptions}
+                isEditing={true}
+                onChange={(val) => updateField('payrollCSVExport', val)}
+              />
+            </div>
             <span className="text-xs text-gray-500 mt-6">(Optional)</span>
             <Info className="w-4 h-4 text-gray-400 mt-6" />
           </div>
@@ -291,10 +298,10 @@ const ProjectTimesheet = () => {
         showLabel={true}
         description="Reminder and deadline notifications sent to crew."
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Crew reminder */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Crew reminder</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Crew reminder</h4>
             <div className="grid grid-cols-2 gap-4">
               <EditableSelectField
                 label="Crew reminder day"
@@ -315,7 +322,7 @@ const ProjectTimesheet = () => {
 
           {/* Crew submission deadline */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Crew submission deadline</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Crew submission deadline</h4>
             <div className="grid grid-cols-2 gap-4">
               <EditableSelectField
                 label="Crew submission day"
@@ -336,7 +343,7 @@ const ProjectTimesheet = () => {
 
           {/* Department reminder */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Department reminder</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Department reminder</h4>
             <div className="grid grid-cols-2 gap-4">
               <EditableSelectField
                 label="Department reminder day"
@@ -357,7 +364,7 @@ const ProjectTimesheet = () => {
 
           {/* Department approval deadline */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Department approval deadline</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Department approval deadline</h4>
             <div className="grid grid-cols-2 gap-4">
               <EditableSelectField
                 label="Department approval deadline day"
@@ -385,7 +392,7 @@ const ProjectTimesheet = () => {
         showLabel={true}
         description="The variations of your standard working hours. Selections will be made available in the Calendar."
       >
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-4">
           {/* Standard working day */}
           <div>
             <RadioGroup
@@ -440,17 +447,17 @@ const ProjectTimesheet = () => {
         actions={
           <button
             onClick={addPlace}
-            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             Add new place
           </button>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Units */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <h4 className="text-sm font-semibold text-gray-900">Units</h4>
               <Info className="w-4 h-4 text-gray-400" />
             </div>
@@ -466,9 +473,9 @@ const ProjectTimesheet = () => {
                 <tbody>
                   {projectPlaces.units.map((unit) => (
                     <tr key={unit.id} className="border-b border-gray-100">
-                      <td className="py-3 text-sm">{unit.name}</td>
-                      <td className="py-3 text-sm text-gray-600">{unit.dates}</td>
-                      <td className="py-3 text-right">
+                      <td className="py-2 text-sm">{unit.name}</td>
+                      <td className="py-2 text-sm text-gray-600">{unit.dates}</td>
+                      <td className="py-2 text-right">
                         <div className="flex gap-2 justify-end">
                           <button className="text-blue-600 hover:text-blue-800">
                             <Edit className="w-4 h-4" />
@@ -487,7 +494,7 @@ const ProjectTimesheet = () => {
 
           {/* Regular places */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Regular places</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Regular places</h4>
             <div className="flex flex-wrap gap-2">
               {projectPlaces.regularPlaces.map((place, index) => (
                 <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm">
@@ -499,10 +506,10 @@ const ProjectTimesheet = () => {
 
           {/* Nearby bases */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Nearby bases</h4>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Nearby bases</h4>
             <div className="space-y-2">
               {projectPlaces.nearbyBases.map((base, index) => (
-                <div key={index} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md">
+                <div key={index} className="flex items-center justify-between py-1.5 px-3 bg-gray-50 rounded-md">
                   <span className="text-sm text-gray-700">{base}</span>
                   <button className="text-red-600 hover:text-red-800">
                     <Trash2 className="w-4 h-4" />
@@ -523,9 +530,9 @@ const ProjectTimesheet = () => {
         actions={
           <button
             onClick={addDepartmentDefault}
-            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             Add department default
           </button>
         }
@@ -546,13 +553,13 @@ const ProjectTimesheet = () => {
             <tbody>
               {departmentDefaults.map((dept) => (
                 <tr key={dept.id} className="border-b border-gray-100">
-                  <td className="py-3 text-sm">{dept.department}</td>
-                  <td className="py-3 text-sm">{dept.regularStartFinish}</td>
-                  <td className="py-3 text-sm">{dept.cameraOvertime}</td>
-                  <td className="py-3 text-sm">{dept.otherOvertime}</td>
-                  <td className="py-3 text-sm">{dept.minutesBefore}</td>
-                  <td className="py-3 text-sm">{dept.minutesAfter}</td>
-                  <td className="py-3 text-right">
+                  <td className="py-2 text-sm">{dept.department}</td>
+                  <td className="py-2 text-sm">{dept.regularStartFinish}</td>
+                  <td className="py-2 text-sm">{dept.cameraOvertime}</td>
+                  <td className="py-2 text-sm">{dept.otherOvertime}</td>
+                  <td className="py-2 text-sm">{dept.minutesBefore}</td>
+                  <td className="py-2 text-sm">{dept.minutesAfter}</td>
+                  <td className="py-2 text-right">
                     <button className="text-red-600 hover:text-red-800">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -566,7 +573,7 @@ const ProjectTimesheet = () => {
 
       {/* Rules */}
       <CardWrapper title="Rules" variant="default" showLabel={true}>
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Calculate broken turnaround for dailies */}
           <RadioGroup
             label="Calculate broken turnaround for dailies"
@@ -588,30 +595,34 @@ const ProjectTimesheet = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
-              <EditableSelectField
-                label="1 rest day turnaround period"
-                value={formData.restDay1Turnaround}
-                items={turnaroundOptions}
-                isEditing={true}
-                onChange={(val) => updateField('restDay1Turnaround', val)}
-              />
+              <div className="flex-1">
+                <EditableSelectField
+                  label="1 rest day turnaround period"
+                  value={formData.restDay1Turnaround}
+                  items={turnaroundOptions}
+                  isEditing={true}
+                  onChange={(val) => updateField('restDay1Turnaround', val)}
+                />
+              </div>
               <Info className="w-4 h-4 text-gray-400 mt-6" />
             </div>
             <div className="flex items-center gap-2">
-              <EditableSelectField
-                label="2 rest day turnaround period"
-                value={formData.restDay2Turnaround}
-                items={turnaroundOptions}
-                isEditing={true}
-                onChange={(val) => updateField('restDay2Turnaround', val)}
-              />
+              <div className="flex-1">
+                <EditableSelectField
+                  label="2 rest day turnaround period"
+                  value={formData.restDay2Turnaround}
+                  items={turnaroundOptions}
+                  isEditing={true}
+                  onChange={(val) => updateField('restDay2Turnaround', val)}
+                />
+              </div>
               <Info className="w-4 h-4 text-gray-400 mt-6" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             {/* Left Column */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <RadioGroup
                 label="6th & 7th day count"
                 options={[
@@ -649,7 +660,7 @@ const ProjectTimesheet = () => {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <RadioGroup
                 label="Post wrap overtime after Camera overtime"
                 options={[
@@ -804,13 +815,13 @@ const ProjectTimesheet = () => {
         showLabel={true}
         description="Set specific values for any field (Mileage, Travel, Per Diem, etc.) for selected crew on specific days."
         actions={
-          <button className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all">
-            <Plus className="w-4 h-4" />
+          <button className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all">
+            <Plus className="w-3 h-3" />
             Add Override
           </button>
         }
       >
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-6 text-gray-500">
           No overrides set. Click "Add Override" to create one.
         </div>
       </CardWrapper>
@@ -822,13 +833,13 @@ const ProjectTimesheet = () => {
         showLabel={true}
         description="Define available upgrade roles and their default daily rates."
         actions={
-          <button className="flex items-center gap-2 px-4 py-2 text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-all">
-            <Plus className="w-4 h-4" />
+          <button className="flex items-center gap-1 px-3 py-1 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-all">
+            <Plus className="w-3 h-3" />
             Add Upgrade Role
           </button>
         }
       >
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-6 text-gray-500">
           No upgrade roles defined. Click "Add Upgrade Role" to create one.
         </div>
       </CardWrapper>
@@ -841,9 +852,9 @@ const ProjectTimesheet = () => {
         actions={
           <button
             onClick={addCustomDay}
-            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             Add custom day type
           </button>
         }
@@ -865,14 +876,14 @@ const ProjectTimesheet = () => {
             <tbody>
               {customDays.map((day) => (
                 <tr key={day.id} className="border-b border-gray-100">
-                  <td className="py-3 text-sm">{day.type}</td>
-                  <td className="py-3 text-sm">{day.paidAs}</td>
-                  <td className="py-3 text-sm">{day.dailyRate}</td>
-                  <td className="py-3 text-sm">{day.holidayPay}</td>
-                  <td className="py-3 text-sm">{day.sixthSeventh}</td>
-                  <td className="py-3 text-sm">{day.payAllowances}</td>
-                  <td className="py-3 text-sm">{day.showToCrew}</td>
-                  <td className="py-3">
+                  <td className="py-2 text-sm">{day.type}</td>
+                  <td className="py-2 text-sm">{day.paidAs}</td>
+                  <td className="py-2 text-sm">{day.dailyRate}</td>
+                  <td className="py-2 text-sm">{day.holidayPay}</td>
+                  <td className="py-2 text-sm">{day.sixthSeventh}</td>
+                  <td className="py-2 text-sm">{day.payAllowances}</td>
+                  <td className="py-2 text-sm">{day.showToCrew}</td>
+                  <td className="py-2">
                     <div className="flex gap-2">
                       <button className="text-blue-600 hover:text-blue-800">
                         <Edit className="w-4 h-4" />
@@ -915,9 +926,9 @@ const ProjectTimesheet = () => {
         actions={
           <button
             onClick={addCustomField}
-            className="flex items-center gap-2 px-4 py-2 text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3" />
             Add custom field
           </button>
         }
@@ -934,9 +945,9 @@ const ProjectTimesheet = () => {
             <tbody>
               {customFields.map((field) => (
                 <tr key={field.id} className="border-b border-gray-100">
-                  <td className="py-3 text-sm">{field.name}</td>
-                  <td className="py-3 text-sm text-gray-600">{field.value}</td>
-                  <td className="py-3">
+                  <td className="py-2 text-sm">{field.name}</td>
+                  <td className="py-2 text-sm text-gray-600">{field.value}</td>
+                  <td className="py-2">
                     <div className="flex gap-2">
                       <button className="text-blue-600 hover:text-blue-800">
                         <Edit className="w-4 h-4" />
@@ -952,13 +963,6 @@ const ProjectTimesheet = () => {
           </table>
         </div>
       </CardWrapper>
-
-      {/* Save Button */}
-      <div className="flex justify-end pt-6">
-        <button className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all">
-          Update timecard settings
-        </button>
-      </div>
     </div>
   );
 };
