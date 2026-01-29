@@ -17,48 +17,85 @@ export const useLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = useCallback(async (e) => {
-    if (e) e.preventDefault();
-    
-    // Validate inputs
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (e) => {
+      if (e) e.preventDefault();
 
-    // Clear any previous errors
-    dispatch(clearUserError());
-
-    try {
-      const resultAction = await dispatch(
-        loginUserThunk({ email, password, rememberMe })
-      );
-
-      if (loginUserThunk.fulfilled.match(resultAction)) {
-        const response = resultAction.payload;
-        
-        console.log("✅ Login successful, navigating to OTP");
-
-        // Navigate to OTP screen with required state
-        navigate("/auth/otp-verification", {
-          state: {
-            email: email.toLowerCase().trim(),
-            password, // Keep password for resend OTP
-            rememberMe,
-            otpSend: response?.data?.otpSend || false,
-            devOtp: response?.data?.otp, // Only in development
-          },
-        });
-      } else {
-        // Handle error from thunk
-        const errorMessage = resultAction.payload || "Login failed";
-        toast.error(errorMessage);
+      // Validate inputs
+      if (!email || !password) {
+        toast.error("Please fill in all fields");
+        return;
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error(err.message || "An error occurred during login");
-    }
-  }, [dispatch, email, password, rememberMe, navigate]);
+
+      // Clear any previous errors
+      dispatch(clearUserError());
+
+      try {
+        const resultAction = await dispatch(
+          loginUserThunk({ email, password, rememberMe }),
+        );
+
+        if (loginUserThunk.fulfilled.match(resultAction)) {
+          const response = resultAction.payload;
+
+          if (response?.redirect === "temp-login") {
+            toast.info("Almost there!", {
+              description:
+                response.redirectReason ||
+                "Please complete your setup to continue.",
+            });
+
+            navigate("/auth/temp-login", {
+              replace: true,
+              state: {
+                email: response.data?.email || email,
+                fromInvite: false,
+              },
+            });
+            return;
+          }
+
+          if (response?.redirect === "kyc-verification") {
+            toast.info("Almost there!", {
+              description:
+                response.redirectReason ||
+                "Please complete your KYC to continue.",
+            });
+
+            navigate("/auth/upload-id", {
+              replace: true,
+              state: {
+                email: response.data?.email || email,
+                userId: response.data?.userId || "",
+              },
+            });
+            return;
+          }
+
+          console.log("✅ Login successful, navigating to OTP");
+
+          // Navigate to OTP screen with required state
+          navigate("/auth/otp-verification", {
+            state: {
+              email: email.toLowerCase().trim(),
+              password, // Keep password for resend OTP
+              rememberMe,
+              otpSend: response?.data?.otpSend || false,
+              devOtp: response?.data?.otp, // Only in development
+            },
+          });
+        } else {
+          // Handle error from thunk
+          const errorMessage = resultAction.payload || "Login failed";
+          toast.error(errorMessage);
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        toast.error(err.message || "An error occurred during login");
+      }
+    },
+    [dispatch, email, password, rememberMe, navigate],
+  );
 
   return {
     email,
