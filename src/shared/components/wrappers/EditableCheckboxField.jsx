@@ -2,6 +2,7 @@ import * as LucideIcons from "lucide-react";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { SmartIcon } from "../SmartIcon";
 import { StatusBadge } from "../badges/StatusBadge";
+import { cn } from "@/shared/config/utils";
 
 function EditableCheckboxField({
     label,
@@ -19,7 +20,10 @@ function EditableCheckboxField({
                 <span>{label}</span>
             </div> */}
 
-            <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
+            <div className={cn(
+                "flex items-center gap-2 rounded-md p-2.5 shadow-none",
+                "bg-gray-100 dark:bg-gray-800"
+            )}>
                 {isEditing ? (
                     <Checkbox
                         checked={checked}

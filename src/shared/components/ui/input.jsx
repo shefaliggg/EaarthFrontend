@@ -9,21 +9,16 @@ function Input({ className, type = "text", ...props }) {
         `
         w-full min-w-0
         placeholder:normal-case
-        rounded-3xl px-3.5 py-1.5
-        border border-border
-        bg-background
+        rounded-md px-3 py-2
+        border border-transparent
+        bg-gray-100 dark:bg-gray-800
         text-foreground
         placeholder:text-muted-foreground
 
-        shadow-sm
+        shadow-none
         transition-all duration-200 ease-out
 
         focus-visible:outline-none
-        focus-visible:ring-2
-        focus-visible:ring-ring/40
-        focus-visible:border-ring
-
-        hover:border-muted-foreground/60
 
         disabled:cursor-not-allowed
         disabled:opacity-50

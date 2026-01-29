@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Upload, FileText, CheckCircle, Trash2, Download } from "lucide-react";
+import { EditableInput, EditableSelect, EditableTextarea } from "../../../../../shared/components/forms";
 
 /* -------------------------------------------------
    FORM FIELD WRAPPER
@@ -28,50 +29,51 @@ export function Field({
   placeholder = "",
   isEditing,
 }) {
-  const baseClasses = `
-    w-full px-4 py-2 border border-border rounded-3xl 
-    transition-all duration-300 font-normal bg-input text-foreground 
-    placeholder-muted-foreground placeholder:text-xs
-    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
+  const colSpanClasses = cols === 2 ? "md:col-span-2" : cols === 3 ? "md:col-span-3" : "";
 
-  return (
-    <div className={cols === 2 ? "md:col-span-2" : cols === 3 ? "md:col-span-3" : ""}>
-      <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-        {label}
-      </label>
+  // Convert options array to EditableSelect format
+  const selectOptions = options ? options.map(opt => ({ value: opt, label: opt })) : [];
 
-      {options ? (
-        <select
+  if (options) {
+    return (
+      <div className={colSpanClasses}>
+        <EditableSelect
+          isEditing={isEditing}
+          label={label}
           value={value}
           onChange={onChange}
-          disabled={!isEditing}
-          className={baseClasses}
-        >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      ) : type === "textarea" ? (
-        <textarea
+          options={selectOptions}
+          placeholder={placeholder || "Select an option"}
+        />
+      </div>
+    );
+  }
+
+  if (type === "textarea") {
+    return (
+      <div className={colSpanClasses}>
+        <EditableTextarea
+          isEditing={isEditing}
+          label={label}
           value={value}
           onChange={onChange}
-          disabled={!isEditing}
           placeholder={placeholder}
           rows={3}
-          className={`${baseClasses} resize-none`}
         />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          disabled={!isEditing}
-          placeholder={placeholder}
-          className={baseClasses}
-        />
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={colSpanClasses}>
+      <EditableInput
+        isEditing={isEditing}
+        label={label}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
     </div>
   );
 }
@@ -87,40 +89,37 @@ export function PhoneField({
   onNumberChange,
   isEditing,
 }) {
-  const selectClasses = `
-    w-24 px-2 py-2 border border-border rounded-3xl 
-    transition-all duration-300 font-medium bg-input text-foreground 
-    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
-  const inputClasses = `
-    flex-1 px-4 py-2 border border-border rounded-3xl 
-    transition-all duration-300 font-normal bg-input text-foreground 
-    placeholder-muted-foreground placeholder:text-xs
-    focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
+  const countryCodes = [
+    { value: "+44", label: "+44" },
+    { value: "+1", label: "+1" },
+    { value: "+91", label: "+91" },
+    { value: "+61", label: "+61" },
+    { value: "+33", label: "+33" },
+    { value: "+49", label: "+49" },
+  ];
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+      <label className="block text-[12px] font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wide mb-2">
         {label}
       </label>
 
       <div className="flex gap-2">
-        <select value={codeValue} onChange={onCodeChange} disabled={!isEditing} className={selectClasses}>
-          {["+44", "+1", "+91", "+61", "+33", "+49"].map((code) => (
-            <option key={code} value={code}>{code}</option>
-          ))}
-        </select>
+        <EditableSelect
+          isEditing={isEditing}
+          value={codeValue}
+          onChange={onCodeChange}
+          options={countryCodes}
+          className="w-24"
+        />
 
-        <input
+        <EditableInput
+          isEditing={isEditing}
           type="tel"
           value={numberValue}
           onChange={onNumberChange}
-          disabled={!isEditing}
           placeholder="Phone number"
-          className={inputClasses}
+          className="flex-1"
         />
       </div>
     </div>

@@ -1,16 +1,23 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
 import { PageHeader } from "../../../shared/components/PageHeader";
 import SearchBar from "../../../shared/components/SearchBar";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
+import { SmartIcon } from "../../../shared/components/SmartIcon";
+import { getFullName } from "../../../shared/config/utils";
 import ProjectCard from "../components/ProjectCard";
 
 function ProjectList() {
+  const { currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   /* -------------------- DATA -------------------- */
   const projects = [
@@ -53,7 +60,7 @@ function ProjectList() {
       title: "MUMBAI CHRONICLES",
       type: "Television Series",
       category: "tv",
-      period: "wrap",
+      period: "post",
       progress: 85,
       role: "ANIMATION ARTIST",
       studios: ["Netflix", "Hotstar"],
@@ -140,8 +147,12 @@ function ProjectList() {
 
   const tabOptions = [
     { value: "all", label: "ALL PROJECTS", icon: "LayoutGrid" },
-    { value: "film", label: "FEATURE FILMS", icon: "Film" },
-    { value: "tv", label: "TELEVISION", icon: "Tv" },
+    { 
+      value: "archived", 
+      label: showArchived ? "SHOW ACTIVE" : "SHOW ARCHIVED", 
+      icon: "Archive",
+      onClick: () => setShowArchived(!showArchived)
+    },
   ];
 
   /* -------------------- FILTERING -------------------- */
@@ -162,45 +173,69 @@ function ProjectList() {
     <div className=" space-y-6">
       {/* Page Header */}
       <PageHeader
-        title="MY PROJECTS"
+        title={
+          <>
+            Welcome back,{" "}
+            <span className="text-primary">
+              {getFullName(currentUser)}
+            </span>
+          </>
+        }
         icon="Film"
 
        
         secondaryActions={[
           {
-            label: showArchived ? "SHOW ACTIVE" : "SHOW ARCHIVED",
-            icon: "Archive",
-            variant: showArchived ? "default" : "outline",
-            clickAction: () => setShowArchived(!showArchived),
-          },
-          {
-            label: "AI INSIGHTS",
-            icon: "Sparkles",
-            variant: "outline",
-            clickAction: () => console.log("AI Insights"),
+            label: "CREATE PROJECT",
+            icon: "Plus",
+            variant: "default",
+            clickAction: () => navigate("/projects/create"),
           },
         ]}
       />
 
-      {/* Filter Tabs and Search Bar in Same Row */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+      {/* Filter Tabs and Search Icon in Same Row */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         {/* Filter Tabs */}
         <div className="flex-shrink-0">
           <FilterPillTabs
             options={tabOptions}
             value={activeTab}
             onChange={setActiveTab}
-            transparentBg={false}
+            transparentBg={true}
           />
         </div>
 
-        {/* Search Bar */}
-        <div className="w-full lg:flex-1">
-          <SearchBar
-            placeholder="SEARCH PROJECTS OR ROLES..."
-            value={searchQuery}
-            onValueChange={(e) => setSearchQuery(e.target.value)}
-          />
+        {/* Search Icon/Input */}
+        <div className="flex items-center gap-2">
+          {isSearchOpen ? (
+            <div className="w-64 lg:w-80">
+              <SearchBar
+                placeholder="SEARCH PROJECTS OR ROLES..."
+                value={searchQuery}
+                onValueChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+            >
+              <SmartIcon icon="Search" className="w-5 h-5 text-primary-foreground stroke-[2.5]" />
+            </button>
+          )}
+          {isSearchOpen && (
+            <button
+              onClick={() => {
+                setIsSearchOpen(false);
+                setSearchQuery("");
+              }}
+              className="p-2 hover:bg-accent rounded-lg transition-colors"
+            >
+              <SmartIcon icon="X" className="w-5 h-5 stroke-[2.5]" />
+            </button>
+          )}
         </div>
       </div>
 

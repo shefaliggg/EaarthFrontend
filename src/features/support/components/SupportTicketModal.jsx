@@ -131,7 +131,7 @@ export default function SupportTicketModal({ open, onClose }) {
                   required
                   disabled={loading}
                   rows={6}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                  className="w-full rounded-md border border-transparent shadow-none bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none resize-none"
                 />
               </div>
 

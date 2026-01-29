@@ -55,13 +55,39 @@ function ProjectCard({ project, index }) {
   const getPeriodColor = (period) => {
     switch (period) {
       case "prep":
-        return "bg-sky-100 text-blue-800 border-sky-300 dark:bg-sky-700/70 dark:text-sky-100 dark:border-sky-700";
+        return "text-primary";
       case "shoot":
-        return "bg-mint-100 text-green-800 border-mint-300 dark:bg-mint-700/70 dark:text-mint-100 dark:border-mint-700";
+        return "text-primary";
       case "wrap":
-        return "bg-peach-100 text-orange-800 border-peach-300 dark:bg-peach-700/70 dark:text-peach-100 dark:border-peach-700";
+        return "text-primary";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
+        return "text-primary";
+    }
+  };
+
+  const getStatusBubbleColor = (period) => {
+    switch (period) {
+      case "prep":
+        return "bg-yellow-500";
+      case "shoot":
+        return "bg-green-500";
+      case "wrap":
+        return "bg-gray-400";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
+  const getStatusLabel = (period) => {
+    switch (period) {
+      case "prep":
+        return "SETUP";
+      case "shoot":
+        return "LIVE";
+      case "wrap":
+        return "WRAP";
+      default:
+        return period?.toUpperCase();
     }
   };
 
@@ -112,33 +138,8 @@ function ProjectCard({ project, index }) {
     >
       {/* Content */}
       <div className="p-4 space-y-3">
-        {/* Top Row: Rating (Left) and Status Badge (Right) */}
-        <div className="flex items-center justify-between">
-          {/* Rating - Left */}
-          {project.rating && (
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-              <span className="text-xs font-medium text-gray-800 dark:text-white">
-                {project.rating}
-              </span>
-            </div>
-          )}
-
-          {/* Status Badge - Right */}
-          <Badge
-            className={`px-2 py-0.5 rounded-lg border flex items-center gap-1 ${getPeriodColor(
-              project.period
-            )}`}
-          >
-            <PeriodIcon className="w-3 h-3" />
-            <span className="text-[10px] font-medium uppercase">
-              {project.period}
-            </span>
-          </Badge>
-        </div>
-
         {/* Icon and Project Title in One Row */}
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-start gap-2 pb-3 border-b border-gray-100 dark:border-gray-700">
           {/* Project Icon */}
           <div className="w-10 h-10 rounded-lg bg-[#9333ea]/10 dark:bg-[#9333ea]/20 flex items-center justify-center shrink-0">
             <ProjectIcon className="w-5 h-5 text-[#9333ea]" />
@@ -152,6 +153,18 @@ function ProjectCard({ project, index }) {
             <p className="text-[10px] font-medium text-gray-700 dark:text-gray-400 uppercase truncate">
               {project.type}
             </p>
+          </div>
+          
+          {/* Status Badge - Right */}
+          <div
+            className={`px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 ${getPeriodColor(
+              project.period
+            )}`}
+          >
+            <PeriodIcon className="w-3 h-3" />
+            <span className="text-[10px] font-medium uppercase">
+              {project.period}
+            </span>
           </div>
         </div>
 
@@ -188,18 +201,28 @@ function ProjectCard({ project, index }) {
 
         {/* Stats - Updated with Start Date, End Date, and Team Size */}
         <div className="grid grid-cols-3 gap-2">
-          <Stat icon={Users} value={project.teamSize} />
-          <Stat icon={Calendar} value={formatDate(project.startDate)} />
-          <Stat icon={CalendarCheck} value={formatDate(project.endDate)} />
+          <Stat label="CAST & CREW" value={project.teamSize} />
+          <Stat label="START DATE" value={formatDate(project.startDate)} />
+          <Stat label="END DATE" value={formatDate(project.endDate)} />
         </div>
 
         {/* Studios */}
-        <div className="flex flex-wrap gap-1.5">
-          {project.studios?.map((studio, i) => (
-            <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5">
-              {studio}
-            </Badge>
-          ))}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5 flex-1">
+            {project.studios?.map((studio, i) => (
+              <Badge key={i} variant="secondary" className="text-[9px] px-2 py-0.5">
+                {studio}
+              </Badge>
+            ))}
+          </div>
+          
+          {/* Status Bubble */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className={`w-2 h-2 rounded-full ${getStatusBubbleColor(project.period)}`} />
+            <span className="text-[9px] font-medium text-gray-700 dark:text-gray-400 uppercase">
+              {getStatusLabel(project.period)}
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -207,10 +230,12 @@ function ProjectCard({ project, index }) {
 }
 
 /* Reusable Stat */
-function Stat({ icon: Icon, value }) {
+function Stat({ label, value }) {
   return (
     <div className="px-2 py-1.5 rounded-lg bg-card text-center">
-      <Icon className="w-3.5 h-3.5 mx-auto mb-0.5 text-[#9333ea] dark:text-gray-400" />
+      <p className="text-[9px] font-medium text-gray-700 dark:text-gray-400 uppercase mb-0.5">
+        {label}
+      </p>
       <p className="text-[10px] font-bold text-gray-900 dark:text-white truncate">
         {value}
       </p>

@@ -319,10 +319,10 @@ export function useProjectMenus(allProjects = []) {
     triggerIcon: Icon.Settings,
     items: [
       {
-      id: "details",
-      label: "Project Details",
+      id: "detail",
+      label: "Project Detail",
       icon: Icon.FileText,
-      route: `/projects/${projectName}/settings/details`,
+      route: `/projects/${projectName}/settings/detail`,
     },
     {
       id: "general",
