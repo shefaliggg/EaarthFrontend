@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { 
-  Hash, 
-  Users, 
-  Search, 
+import {
+  Hash,
+  Users,
+  Search,
   X,
-  Briefcase, 
-  Video, 
-  Zap, 
-  Mic, 
-  Shield, 
+  Briefcase,
+  Video,
+  Zap,
+  Mic,
+  Shield,
   Utensils,
   Palette,
   Scissors,
@@ -26,6 +26,8 @@ import {
   Check,
   Loader2,
   Star,
+  Mail,
+  AtSign,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/config/utils";
@@ -45,7 +47,7 @@ const formatTime = (timestamp) => {
   if (hours < 24) return `${hours}h`;
   if (days === 1) return "Yesterday";
   if (days < 7) return `${days}d ago`;
-  
+
   const date = new Date(timestamp);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
@@ -56,18 +58,18 @@ const formatLastSeen = (timestamp) => {
   const diff = now - timestamp;
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
-  
+
   if (minutes < 1) return "Active now";
   if (minutes < 60) return `Last seen ${minutes}m ago`;
   if (hours < 24) return `Last seen ${hours}h ago`;
   return `Last seen ${Math.floor(hours / 24)}d ago`;
 };
 
-export default function ChatLeftSidebar({ 
-  activeTab = "team", 
+export default function ChatLeftSidebar({
+  activeTab = "team",
   onTabChange,
   selectedChat,
-  onChatSelect 
+  onChatSelect
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -84,11 +86,11 @@ export default function ChatLeftSidebar({
 
   // Team Chat - Departments/Groups with pinning and muting
   const [departments, setDepartments] = useState([
-    { 
-      id: "production", 
-      name: "Production", 
-      icon: Briefcase, 
-      members: 15, 
+    {
+      id: "production",
+      name: "Production",
+      icon: Briefcase,
+      members: 15,
       online: 8,
       unread: 3,
       mentions: 1,
@@ -98,12 +100,12 @@ export default function ChatLeftSidebar({
       isMuted: false,
       isFavorite: true,
     },
-    { 
-      id: "camera", 
-      name: "Camera Department", 
-      icon: Video, 
+    {
+      id: "camera",
+      name: "Camera Department",
+      icon: Video,
       members: 8,
-      online: 5, 
+      online: 5,
       unread: 0,
       mentions: 0,
       lastMessage: "New equipment arrived",
@@ -112,12 +114,12 @@ export default function ChatLeftSidebar({
       isMuted: false,
       isFavorite: false,
     },
-    { 
-      id: "stunts", 
-      name: "Stunt Team", 
-      icon: Zap, 
+    {
+      id: "stunts",
+      name: "Stunt Team",
+      icon: Zap,
       members: 12,
-      online: 7, 
+      online: 7,
       unread: 5,
       mentions: 2,
       lastMessage: "Safety briefing tomorrow",
@@ -126,12 +128,12 @@ export default function ChatLeftSidebar({
       isMuted: false,
       isFavorite: true,
     },
-    { 
-      id: "sound", 
-      name: "Sound Department", 
-      icon: Mic, 
+    {
+      id: "sound",
+      name: "Sound Department",
+      icon: Mic,
       members: 6,
-      online: 4, 
+      online: 4,
       unread: 1,
       mentions: 0,
       lastMessage: "Audio levels look good",
@@ -140,12 +142,12 @@ export default function ChatLeftSidebar({
       isMuted: true,
       isFavorite: false,
     },
-    { 
-      id: "security", 
-      name: "Security", 
-      icon: Shield, 
+    {
+      id: "security",
+      name: "Security",
+      icon: Shield,
       members: 10,
-      online: 6, 
+      online: 6,
       unread: 0,
       mentions: 0,
       lastMessage: "Perimeter check complete",
@@ -154,12 +156,12 @@ export default function ChatLeftSidebar({
       isMuted: false,
       isFavorite: false,
     },
-    { 
-      id: "catering", 
-      name: "Catering", 
-      icon: Utensils, 
+    {
+      id: "catering",
+      name: "Catering",
+      icon: Utensils,
       members: 7,
-      online: 3, 
+      online: 3,
       unread: 2,
       mentions: 0,
       lastMessage: "Lunch menu updated",
@@ -168,12 +170,12 @@ export default function ChatLeftSidebar({
       isMuted: false,
       isFavorite: false,
     },
-    { 
-      id: "vfx", 
-      name: "VFX & Post-Production", 
-      icon: Palette, 
+    {
+      id: "vfx",
+      name: "VFX & Post-Production",
+      icon: Palette,
       members: 9,
-      online: 6, 
+      online: 6,
       unread: 0,
       mentions: 0,
       lastMessage: "Renders completed",
@@ -182,12 +184,12 @@ export default function ChatLeftSidebar({
       isMuted: true,
       isFavorite: false,
     },
-    { 
-      id: "editing", 
-      name: "Editing", 
-      icon: Scissors, 
+    {
+      id: "editing",
+      name: "Editing",
+      icon: Scissors,
       members: 5,
-      online: 3, 
+      online: 3,
       unread: 1,
       mentions: 0,
       lastMessage: "Final cut review needed",
@@ -341,7 +343,7 @@ export default function ChatLeftSidebar({
 
   const activeOnlineCount = teamMembers.filter(m => m.status === "online").length;
   const totalMembers = teamMembers.length;
-  const totalUnread = activeTab === "team" 
+  const totalUnread = activeTab === "team"
     ? departments.reduce((sum, d) => sum + d.unread, 0)
     : teamMembers.reduce((sum, m) => sum + m.unread, 0);
 
@@ -354,7 +356,7 @@ export default function ChatLeftSidebar({
 
   const togglePin = (id, type) => {
     if (type === "team") {
-      setDepartments(deps => deps.map(d => 
+      setDepartments(deps => deps.map(d =>
         d.id === id ? { ...d, isPinned: !d.isPinned } : d
       ));
     } else {
@@ -367,7 +369,7 @@ export default function ChatLeftSidebar({
 
   const toggleMute = (id, type) => {
     if (type === "team") {
-      setDepartments(deps => deps.map(d => 
+      setDepartments(deps => deps.map(d =>
         d.id === id ? { ...d, isMuted: !d.isMuted } : d
       ));
     } else {
@@ -380,7 +382,7 @@ export default function ChatLeftSidebar({
 
   const toggleFavorite = (id, type) => {
     if (type === "team") {
-      setDepartments(deps => deps.map(d => 
+      setDepartments(deps => deps.map(d =>
         d.id === id ? { ...d, isFavorite: !d.isFavorite } : d
       ));
     } else {
@@ -393,7 +395,7 @@ export default function ChatLeftSidebar({
 
   const markAsRead = (id, type) => {
     if (type === "team") {
-      setDepartments(deps => deps.map(d => 
+      setDepartments(deps => deps.map(d =>
         d.id === id ? { ...d, unread: 0, mentions: 0 } : d
       ));
     } else {
@@ -445,19 +447,76 @@ export default function ChatLeftSidebar({
     setDragOverItem(null);
   };
 
+  let active = "team"
+
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col bg-background">
+    <div className="flex flex-col gap-4">
+      <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <h3 className="font-bold mb-3">Conversations</h3>
+        <div className="space-y-2">
+          {/* Team Chat */}
+          <button
+            className={cn(
+              "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
+              activeFilter === "all"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
+            )}
+             onClick={() => {
+                setActiveFilter("all");
+                onTabChange?.("all");
+              }}
+          >
+            <Hash className="w-4 h-4" />
+            <div className="flex-1">
+              <p className="text-sm font-bold">Department Chat</p>
+              <p className="text-xs opacity-80">All project members</p>
+            </div>
+          </button>
+          <button
+            className={cn(
+              "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
+              activeFilter === "individual"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
+            )}
+             onClick={() => {
+                setActiveFilter("individual");
+                onTabChange?.("personal");
+              }}
+          >
+            <Users className="w-5 h-5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold">Individual Chat</p>
+              <p className="text-xs opacity-80">personal chat with members</p>
+            </div>
+          </button>
+          <button
+            className={cn(
+              "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
+              "cursor-not-allowed bg-muted opacity-50"
+            )}
+          >
+            <Mail className="w-5 h-5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold">Email</p>
+              <p className="text-xs opacity-80">External Contacts</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Single Card Container */}
-      <div className="flex-1 flex flex-col rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="flex-1 flex flex-col rounded-lg border bg-card shadow-sm overflow-hidden min-h-[calc(100vh-38px)] h-[calc(100vh-38px)] max-h-[calc(100vh-38px)] sticky top-5">
         {/* Header with Tabs */}
-        <div className="border-b bg-card px-4 py-2.5">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold">Avatar</h2>
+        <div className="border-b bg-card px-4 py-2.5 pt-3">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold">{activeFilter === "all" ? "All Departments" : activeFilter === "individual" ? "Direct Messages" : "Email"}</h2>
             <div className="flex items-center gap-2">
-              
-              <button className="p-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+
+              {/* <button className="p-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                 <X className="w-4.5 h-4.5 rotate-45" />
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -467,7 +526,7 @@ export default function ChatLeftSidebar({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Ask Meta AI or Search"
+              placeholder="Search"
               className="pl-9 pr-3 h-9 bg-muted/50 border-0 rounded-lg text-xs placeholder:text-muted-foreground"
             />
             {searchQuery && (
@@ -481,7 +540,7 @@ export default function ChatLeftSidebar({
           </div>
 
           {/* Main Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+          {/* <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <FilterTab
               active={activeFilter === "all"}
               onClick={() => {
@@ -506,7 +565,7 @@ export default function ChatLeftSidebar({
               }}
               label="Individual"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Scrollable Content */}
@@ -518,7 +577,7 @@ export default function ChatLeftSidebar({
               ))}
             </div>
           ) : (
-            <div className="py-1">
+            <div className="p-1 px-2 space-y-0.5">
               {/* Show All - both groups and individuals */}
               {activeFilter === "all" && (
                 <>
@@ -562,7 +621,7 @@ export default function ChatLeftSidebar({
                   ))}
 
                   {/* Individuals */}
-                  {filteredMembers.map((member) => (
+                  {/* {filteredMembers.map((member) => (
                     <ChatItem
                       key={member.id}
                       item={member}
@@ -576,7 +635,7 @@ export default function ChatLeftSidebar({
                       onDragOver={(e) => handleDragOver(e, member)}
                       onDrop={(e) => handleDrop(e, member, "personal")}
                     />
-                  ))}
+                  ))} */}
                 </>
               )}
 
@@ -695,11 +754,11 @@ function FilterTab({ active, onClick, label, count }) {
 }
 
 // Chat Item Component
-function ChatItem({ 
-  item, 
-  type, 
-  isSelected, 
-  onClick, 
+function ChatItem({
+  item,
+  type,
+  isSelected,
+  onClick,
   onContextMenu,
   isDragging,
   isDragOver,
@@ -718,9 +777,9 @@ function ChatItem({
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      onDragEnd={() => {}}
+      onDragEnd={() => { }}
       className={cn(
-        "w-full px-3 py-2.5 text-left transition-all hover:bg-muted/50 relative border-b border-border/50",
+        "w-full px-3 py-2.5 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
         isSelected && "bg-muted",
         isDragging && "opacity-50",
         isDragOver && "bg-primary/10"
@@ -729,15 +788,15 @@ function ChatItem({
       <div className="flex items-center gap-2.5">
         {/* Icon/Avatar */}
         {isGroup ? (
-          <div className="p-2 rounded-full bg-muted flex-shrink-0">
-            <Icon className="w-5 h-5 text-foreground" />
+          <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+            <Icon className="w-4 h-4 text-primary" />
           </div>
         ) : (
           <div className="relative flex-shrink-0">
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
               {item.avatar}
             </div>
-            <span 
+            <span
               className={cn(
                 "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
                 item.status === "online" && "bg-green-500",
@@ -774,17 +833,18 @@ function ChatItem({
                 {isGroup && item.lastMessage}
               </p>
             </div>
-            
+
             {/* Badges */}
             <div className="flex items-center gap-1 flex-shrink-0">
               {item.isPinned && <Pin className="w-3 h-3 text-muted-foreground" />}
               {item.mentions > 0 && (
-                <Badge className="bg-green-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
+                <Badge className="bg-purple-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
+                  <span className="text-xs mb-0.5">@</span>
                   {item.mentions}
                 </Badge>
               )}
               {item.unread > 0 && !item.isMuted && item.mentions === 0 && (
-                <Badge className="bg-green-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
+                <Badge className="bg-purple-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
                   {item.unread}
                 </Badge>
               )}
@@ -863,9 +923,9 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onFavorite, onM
       <div className="h-px bg-border my-1" />
       <MenuItem icon={Archive} label="Archive chat" onClick={onClose} />
       {type === "personal" && (
-        <MenuItem 
-          icon={UserX} 
-          label="Block user" 
+        <MenuItem
+          icon={UserX}
+          label="Block user"
           onClick={onClose}
           className="text-red-500 hover:bg-red-500/10"
         />
@@ -873,9 +933,9 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onFavorite, onM
       {type === "team" && (
         <>
           <MenuItem icon={Volume2} label="Group info" onClick={onClose} />
-          <MenuItem 
-            icon={LogOut} 
-            label="Exit group" 
+          <MenuItem
+            icon={LogOut}
+            label="Exit group"
             onClick={onClose}
             className="text-red-500 hover:bg-red-500/10"
           />

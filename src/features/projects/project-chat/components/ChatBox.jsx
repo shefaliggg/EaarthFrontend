@@ -28,6 +28,7 @@ import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
+import { AutoHeight } from "../../../../shared/components/wrappers/AutoHeight";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -42,6 +43,7 @@ export default function RealisticChatUI() {
   const [editingMessage, setEditingMessage] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const textareaRef = useRef(null);
@@ -160,8 +162,8 @@ export default function RealisticChatUI() {
   ]);
 
   const scrollToBottom = useCallback((smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({ 
-      behavior: smooth ? "smooth" : "auto" 
+    messagesEndRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "auto"
     });
     setIsUserAtBottom(true);
     setNewMessagesCount(0);
@@ -172,7 +174,7 @@ export default function RealisticChatUI() {
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
     setIsUserAtBottom(isNearBottom);
-    
+
     if (isNearBottom) {
       setNewMessagesCount(0);
     }
@@ -224,26 +226,26 @@ export default function RealisticChatUI() {
         state: "sending",
         replyTo: replyTo,
       };
-      
+
       setMessages(prev => [...prev, newMessage]);
       setMessageInput("");
       setReplyTo(null);
       localStorage.removeItem('chat-draft');
-      
+
       // Auto-scroll only if user was at bottom
       if (isUserAtBottom) {
         setTimeout(() => scrollToBottom(), 50);
       }
-      
+
       // Simulate state changes
       setTimeout(() => {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m.id === newMessage.id ? { ...m, state: "sent" } : m
         ));
       }, 500);
-      
+
       setTimeout(() => {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m.id === newMessage.id ? { ...m, state: "delivered" } : m
         ));
       }, 1500);
@@ -292,9 +294,9 @@ export default function RealisticChatUI() {
 
   const handleDeleteMessage = (messageId, deleteFor = 'me') => {
     if (deleteFor === 'everyone') {
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, deleted: true, content: null } 
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId
+          ? { ...msg, deleted: true, content: null }
           : msg
       ));
     } else {
@@ -312,14 +314,14 @@ export default function RealisticChatUI() {
 
   const handleUpdateMessage = () => {
     if (editingMessage && messageInput.trim()) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === editingMessage.id 
-          ? { 
-              ...msg, 
-              content: messageInput, 
-              edited: true,
-              editedAt: Date.now() 
-            } 
+      setMessages(prev => prev.map(msg =>
+        msg.id === editingMessage.id
+          ? {
+            ...msg,
+            content: messageInput,
+            edited: true,
+            editedAt: Date.now()
+          }
           : msg
       ));
       setMessageInput("");
@@ -352,7 +354,7 @@ export default function RealisticChatUI() {
   }, []);
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-100px)] flex flex-col max-w-5xl mx-auto">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] sticky top-5 flex flex-col mx-auto">
       {/* Compact Header */}
       <div className="flex items-center justify-between p-3 border-b  rounded-t-3xl backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -376,7 +378,7 @@ export default function RealisticChatUI() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button 
+          <button
             className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors"
             aria-label="Summarize conversation"
           >
@@ -384,7 +386,7 @@ export default function RealisticChatUI() {
             <span className="hidden sm:inline">Summarize</span>
           </button>
 
-          <button 
+          <button
             className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors hidden sm:flex"
             aria-label="Translate messages"
           >
@@ -393,14 +395,14 @@ export default function RealisticChatUI() {
 
           <div className="w-px h-8 bg-border mx-0.5" />
 
-          <button 
+          <button
             className="p-1.5 rounded-md hover:bg-accent transition-colors"
             aria-label="Search messages"
           >
             {/* <Search className="w-4 h-4" /> */}
           </button>
 
-          <button 
+          <button
             className="p-1.5 rounded-md hover:bg-accent transition-colors"
             aria-label="Settings"
           >
@@ -410,7 +412,7 @@ export default function RealisticChatUI() {
       </div>
 
       {/* Messages Container */}
-      <div 
+      <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 space-y-1.5 relative scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
@@ -465,6 +467,8 @@ export default function RealisticChatUI() {
               setShowReactionPicker={setShowReactionPicker}
               onReaction={handleReaction}
               onScrollToReply={scrollToMessage}
+              hoveredMessageId={hoveredMessageId}
+              setHoveredMessageId={setHoveredMessageId}
             />
           );
         })}
@@ -495,17 +499,6 @@ export default function RealisticChatUI() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Scroll to Bottom Button */}
-      {showScrollButton && !newMessagesCount && (
-        <button
-          onClick={() => scrollToBottom()}
-          className="absolute bottom-32 right-6 p-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
-          aria-label="Scroll to bottom"
-        >
-          <ChevronDown className="w-5 h-5" />
-        </button>
-      )}
-
       {/* Context Menu */}
       {contextMenu && (
         <ContextMenu
@@ -528,6 +521,18 @@ export default function RealisticChatUI() {
 
       {/* Input Area */}
       <div className="border-t p-4 space-y-2.5 rounded-b-3xl backdrop-blur-sm flex-shrink-0 relative">
+
+        {/* Scroll to Bottom Button */}
+        {showScrollButton && !newMessagesCount && (
+          <button
+            onClick={() => scrollToBottom()}
+            className="absolute -top-14 left-1/2 -translate-x-1/2 z-20 p-2 rounded-full bg-primary/50 backdrop-blur-sm text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            aria-label="Scroll to bottom"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+        )}
+
         {/* New Messages Indicator - Centered above input */}
         {!isUserAtBottom && newMessagesCount > 0 && (
           <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-20">
@@ -541,7 +546,7 @@ export default function RealisticChatUI() {
             </button>
           </div>
         )}
-        
+
         {/* Reply Preview */}
         {replyTo && (
           <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl">
@@ -585,14 +590,14 @@ export default function RealisticChatUI() {
 
         {/* Message Input */}
         <div className="flex rounded-xl items-end gap-2">
-          <button 
+          <button
             className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Attach file"
           >
             <Paperclip className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <button 
+          <button
             className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Add emoji"
           >
@@ -616,7 +621,7 @@ export default function RealisticChatUI() {
             />
           </div>
 
-          <button 
+          <button
             className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Record voice message"
           >
@@ -644,11 +649,13 @@ export default function RealisticChatUI() {
 }
 
 // Message Bubble Component
-function MessageBubble({ 
-  message, 
-  isGroupStart, 
-  isGroupEnd, 
-  isSelected, 
+function MessageBubble({
+  message,
+  hoveredMessageId,
+  setHoveredMessageId,
+  isGroupStart,
+  isGroupEnd,
+  isSelected,
   onSelect,
   onContextMenu,
   onReply,
@@ -660,11 +667,14 @@ function MessageBubble({
   onReaction,
   onScrollToReply,
 }) {
-  const [showActions, setShowActions] = useState(false);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
 
+  const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
+
+  const hoverTimeout = useRef(null);
 
   // Voice message playback simulation
   useEffect(() => {
@@ -714,8 +724,6 @@ function MessageBubble({
         isOwn ? "flex-row-reverse" : "flex-row",
         isGroupStart ? "mt-4" : "mt-1"
       )}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       onContextMenu={(e) => onContextMenu(e, message)}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -732,9 +740,16 @@ function MessageBubble({
           )}
         </div>
       )}
-
       {/* Message Content */}
-      <div className={cn("flex flex-col max-w-[50%]", isOwn ? "items-end" : "items-start")}>
+      <div
+        onMouseEnter={() => {
+          setHoveredMessageId(message.id);
+        }}
+
+        onMouseLeave={() => {
+          setHoveredMessageId(null);
+        }}
+        className={cn("flex flex-col max-w-[50%]", isOwn ? "items-end" : "items-start")}>
         {/* Sender name and time - only on group start */}
         {!isOwn && isGroupStart && (
           <div className="flex items-center gap-2 mb-1 px-1">
@@ -754,22 +769,22 @@ function MessageBubble({
 
         {/* Reply Preview */}
         {message.replyTo && (
-          <div 
+          <div
             onClick={() => onScrollToReply(message.replyTo.id)}
             className={cn(
-              "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-full",
-              isOwn ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-muted/50 border-primary"
+              "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+              isOwn ? "bg-primary/30 border-primary-foreground/30" : "bg-muted/50 border-primary"
             )}
           >
-            <div className={cn("text-[10px] font-semibold mb-1", isOwn ? "text-primary-foreground/70" : "text-primary")}>
+            <div className={cn("text-[10px] font-semibold mb-1", isOwn ? "text-primary" : "text-primary")}>
               {message.replyTo.sender}
             </div>
-            <div className={cn("text-xs truncate", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
+            <div className={cn("text-xs truncate", isOwn ? "text-foreground" : "text-muted-foreground")}>
               {message.replyTo.content}
             </div>
           </div>
         )}
-
+        <AutoHeight>
         {/* Message Bubble */}
         <div
           className={cn(
@@ -779,12 +794,8 @@ function MessageBubble({
               : "bg-muted",
             // Rounded corners based on message position
             isGroupStart && isGroupEnd && "rounded-[20px]",
-            isOwn && isGroupStart && !isGroupEnd && "rounded-[20px] rounded-br-md",
-            isOwn && !isGroupStart && isGroupEnd && "rounded-[20px] rounded-tr-md",
-            isOwn && !isGroupStart && !isGroupEnd && "rounded-[20px] rounded-tr-md rounded-br-md",
-            !isOwn && isGroupStart && !isGroupEnd && "rounded-[20px] rounded-bl-md",
-            !isOwn && !isGroupStart && isGroupEnd && "rounded-[20px] rounded-tl-md",
-            !isOwn && !isGroupStart && !isGroupEnd && "rounded-[20px] rounded-tl-md rounded-bl-md",
+            isOwn && "rounded-[20px] rounded-br-none",
+            !isOwn && "rounded-[20px] rounded-tl-none",
             isSelected && "ring-2 ring-primary/50 scale-[1.02]"
           )}
         >
@@ -878,61 +889,62 @@ function MessageBubble({
             ))}
           </div>
         )}
-
-        {/* Hover Actions - Animated */}
-        <div
-          className={cn(
-            "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
-            isOwn ? "flex-row-reverse" : "flex-row",
-            showActions ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
-          )}
-        >
-          <ActionButton 
-            icon={Reply} 
-            tooltip="Reply" 
-            onClick={(e) => {
-              e.stopPropagation();
-              onReply(message);
-            }}
-          />
-          {isOwn && canEdit && (
-            <ActionButton 
-              icon={Edit3} 
-              tooltip="Edit" 
-              className="text-blue-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(message);
-              }}
-            />
-          )}
-          <ActionButton icon={Forward} tooltip="Forward" />
-          <ActionButton icon={Star} tooltip="Star" />
-          <ActionButton 
-            icon={Smile} 
-            tooltip="React"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowReactionPicker(showReactionPicker === message.id ? null : message.id);
-            }}
-          />
-          {isOwn && (
-            <ActionButton 
-              icon={Trash} 
-              tooltip="Delete" 
-              className="text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(message.id, 'me');
-              }}
-            />
-          )}
-          <ActionButton icon={MoreVertical} tooltip="More" />
-        </div>
+          {showActions &&
+            <div
+              className={cn(
+                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
+                isOwn ? "flex-row-reverse" : "flex-row",
+                // showActions ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+              )}
+            >
+              <ActionButton
+                icon={Reply}
+                tooltip="Reply"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReply(message);
+                }}
+              />
+              {isOwn && canEdit && (
+                <ActionButton
+                  icon={Edit3}
+                  tooltip="Edit"
+                  className="text-blue-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(message);
+                  }}
+                />
+              )}
+              <ActionButton icon={Forward} tooltip="Forward" />
+              <ActionButton icon={Star} tooltip="Star" />
+              <ActionButton
+                icon={Smile}
+                tooltip="React"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReactionPicker(showReactionPicker === message.id ? null : message.id);
+                }}
+              />
+              {isOwn && (
+                <ActionButton
+                  icon={Trash}
+                  tooltip="Delete"
+                  className="text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(message.id, 'me');
+                  }}
+                />
+              )}
+              <ActionButton icon={MoreVertical} tooltip="More" />
+            </div>
+          }
+        </AutoHeight>
 
         {/* Reaction Picker */}
         {showReactionPicker === message.id && (
-          <div 
+          <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
               isOwn ? "flex-row-reverse" : "flex-row"
@@ -955,7 +967,7 @@ function MessageBubble({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -963,7 +975,7 @@ function MessageBubble({
 function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit }) {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ x, y });
-  
+
   useEffect(() => {
     if (menuRef.current) {
       const rect = menuRef.current.getBoundingClientRect();
@@ -985,23 +997,23 @@ function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit
       {message.isOwn && canEdit && (
         <MenuItem icon={Edit3} label="Edit" onClick={onEdit} />
       )}
-      <MenuItem icon={Forward} label="Forward" onClick={() => {}} />
-      <MenuItem icon={Star} label="Star" onClick={() => {}} />
+      <MenuItem icon={Forward} label="Forward" onClick={() => { }} />
+      <MenuItem icon={Star} label="Star" onClick={() => { }} />
       <MenuItem icon={Copy} label="Copy" onClick={onCopy} />
-      <MenuItem icon={Pin} label="Pin" onClick={() => {}} />
-      
+      <MenuItem icon={Pin} label="Pin" onClick={() => { }} />
+
       {message.isOwn && (
         <>
           <div className="h-px bg-border my-1" />
-          <MenuItem 
-            icon={Trash} 
-            label="Delete for me" 
+          <MenuItem
+            icon={Trash}
+            label="Delete for me"
             onClick={() => onDelete(message.id, 'me')}
             className="text-red-500 hover:bg-red-500/10"
           />
-          <MenuItem 
-            icon={Trash} 
-            label="Delete for everyone" 
+          <MenuItem
+            icon={Trash}
+            label="Delete for everyone"
             onClick={() => onDelete(message.id, 'everyone')}
             className="text-red-500 hover:bg-red-500/10"
           />

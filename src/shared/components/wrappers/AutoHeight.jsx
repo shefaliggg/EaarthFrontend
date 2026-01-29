@@ -3,16 +3,19 @@ import { useRef, useLayoutEffect, useState } from "react";
 
 export function AutoHeight({ children, className = "" }) {
   const ref = useRef(null);
-  const [height, setHeight] = useState("auto");
+  const [height, setHeight] = useState(0);
 
   useLayoutEffect(() => {
     if (!ref.current) return;
-    setHeight(ref.current.scrollHeight);
+    const newHeight = ref.current.scrollHeight;
+    setHeight(newHeight);
   }, [children]);
 
   return (
     <motion.div
+      initial={{ height: 0 }}
       animate={{ height }}
+      exit={{ height: 0 }}
       transition={{
         duration: 0.25,
         ease: [0.22, 1, 0.36, 1],
