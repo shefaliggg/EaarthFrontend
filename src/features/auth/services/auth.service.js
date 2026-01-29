@@ -1,4 +1,3 @@
-// src/features/auth/services/auth.service.js
 import { axiosConfig } from "../config/axiosConfig";
 
 export const authService = {
@@ -76,30 +75,70 @@ getCurrentUser: async () => {
   }
 },
 
-  forgotPassword: async (email) => {
-    const { data } = await axiosConfig.post("/auth/password/forgot", {
-      email: email.toLowerCase().trim(),
-    });
+  setNewPassword: async ({ userId, newPassword }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/set-password", {
+        userId,
+        newPassword,
+      });
 
-    if (!data?.success) {
-      throw new Error(data?.message || "Failed to send reset email");
+      if (!data?.success)
+        throw new Error(data?.message || "Failed to set password");
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to set password."
+      );
     }
-
-    return data;
   },
 
-  resetPassword: async ({ email, otp, newPassword }) => {
-    const { data } = await axiosConfig.post("/auth/password/reset", {
-      email: email.toLowerCase().trim(),
-      otp,
-      newPassword,
-    });
+  verifyIdentity: async (formData) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/face/verify", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    if (!data?.success) {
-      throw new Error(data?.message || "Password reset failed");
+      if (!data) throw new Error("No response from server");
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Identity verification failed."
+      );
     }
+  },
 
-    return data;
+  sendResetPasswordOtp: async (email) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/reset-password", {
+        email: email.toLowerCase().trim(),
+      });
+
+      if (!data?.success)
+        throw new Error(data?.message || "Failed to send OTP");
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to send reset OTP."
+      );
+    }
+  },
+
+  verifyResetPasswordOtp: async ({ email, otp, password }) => {
+    try {
+      const { data } = await axiosConfig.post("/auth/password/verify-otp", {
+        email: email.toLowerCase().trim(),
+        otp,
+        password,
+      });
+
+      if (!data?.success)
+        throw new Error(data?.message || "Failed to reset password");
+      return data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to reset password."
+      );
+    }
   },
 
   // LOGOUT
