@@ -1,19 +1,27 @@
-import CommingSoon from "../../../../shared/components/overlays/CommingSoon";
+import React, { useState } from "react";
 import { PageHeader } from "../../../../shared/components/PageHeader";
 import ChatLeftSidebar from "../components/ChatLeftSidebar";
-import TeamChatProduction from "../components/TeamChatProduction";
-import VideoVoiceCommunication from "../components/VideoVoiceCommunication";
+import ChatBox from "../components/ChatBox";
 
 function ProjectChat() {
+  const [activeTab, setActiveTab] = useState("team");
+  const [selectedChat, setSelectedChat] = useState(null);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader icon="MessageSquare" title="Project Chat" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <ChatLeftSidebar />
-
-        <div className="lg:col-span-3 space-y-6">
-          {/* <div className="relative">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Left Sidebar - Sticky */}
+        <div className="lg:col-span-1">
+          <ChatLeftSidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            selectedChat={selectedChat}
+            onChatSelect={setSelectedChat}
+          />
+        </div>
+        {/* <div className="relative">
             <VideoVoiceCommunication
               onMeetingNotes={() => console.log("Meeting Notes")}
               onTranscribe={() => console.log("Transcribe")}
@@ -22,8 +30,9 @@ function ProjectChat() {
             <CommingSoon />
           </div> */}
 
-
-          <TeamChatProduction />
+        {/* Main Chat Area */}
+        <div className="lg:col-span-3">
+          <ChatBox selectedChat={selectedChat} />
         </div>
       </div>
     </div>
