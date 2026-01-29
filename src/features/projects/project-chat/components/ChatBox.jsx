@@ -352,9 +352,9 @@ export default function RealisticChatUI() {
   }, []);
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-100px)] flex flex-col">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-100px)] flex flex-col max-w-5xl mx-auto">
       {/* Compact Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-card/95 backdrop-blur-sm flex-shrink-0">
+      <div className="flex items-center justify-between p-3 border-b  rounded-t-3xl backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <Avatar className="h-9 w-9 border-2 border-primary/20">
             <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
@@ -397,7 +397,7 @@ export default function RealisticChatUI() {
             className="p-1.5 rounded-md hover:bg-accent transition-colors"
             aria-label="Search messages"
           >
-            <Search className="w-4 h-4" />
+            {/* <Search className="w-4 h-4" /> */}
           </button>
 
           <button 
@@ -413,7 +413,7 @@ export default function RealisticChatUI() {
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-3 space-y-1 relative scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto p-4 space-y-1.5 relative scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
         role="log"
         aria-live="polite"
         aria-label="Chat messages"
@@ -427,8 +427,8 @@ export default function RealisticChatUI() {
           // Date Separator
           if (msg.type === "date-separator") {
             return (
-              <div key={msg.id} className="flex justify-center my-3" role="separator">
-                <div className="bg-muted/50 px-2.5 py-1 rounded-full text-[10px] text-muted-foreground font-medium">
+              <div key={msg.id} className="flex justify-center my-4" role="separator">
+                <div className="bg-muted/50 px-3 py-1.5 rounded-full text-xs text-muted-foreground font-medium">
                   {msg.date}
                 </div>
               </div>
@@ -438,11 +438,11 @@ export default function RealisticChatUI() {
           // System Message
           if (msg.type === "system") {
             return (
-              <div key={msg.id} className="flex justify-center my-2" role="status">
-                <div className="bg-muted/30 px-2.5 py-1 rounded-lg text-[10px] text-muted-foreground flex items-center gap-1.5">
-                  <AlertCircle className="w-3 h-3" />
+              <div key={msg.id} className="flex justify-center my-3" role="status">
+                <div className="bg-muted/30 px-3 py-1.5 rounded-lg text-xs text-muted-foreground flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5" />
                   {msg.content}
-                  <span className="text-[9px]">{msg.time}</span>
+                  <span className="text-[10px]">{msg.time}</span>
                 </div>
               </div>
             );
@@ -471,20 +471,20 @@ export default function RealisticChatUI() {
 
         {/* Typing Indicator */}
         {isTyping && (
-          <div className="flex gap-2.5 items-end" role="status" aria-label="Someone is typing">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-muted text-[10px]">MJ</AvatarFallback>
+          <div className="flex gap-3 items-end" role="status" aria-label="Someone is typing">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-muted text-xs">MJ</AvatarFallback>
             </Avatar>
 
-            <div className="bg-muted px-3 py-2 rounded-2xl rounded-bl-md">
+            <div className="bg-muted px-4 py-2.5 rounded-2xl rounded-bl-md">
               <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" />
+                <span className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" />
                 <span
-                  className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
                   style={{ animationDelay: "150ms" }}
                 />
                 <span
-                  className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
                   style={{ animationDelay: "300ms" }}
                 />
               </div>
@@ -495,28 +495,14 @@ export default function RealisticChatUI() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* New Messages Indicator */}
-      {!isUserAtBottom && newMessagesCount > 0 && (
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20">
-          <button
-            onClick={() => scrollToBottom()}
-            className="bg-primary text-primary-foreground px-3 py-1.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-1.5 text-xs font-medium"
-            aria-label={`${newMessagesCount} new messages`}
-          >
-            <ChevronDown className="w-3.5 h-3.5" />
-            {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''}
-          </button>
-        </div>
-      )}
-
       {/* Scroll to Bottom Button */}
       {showScrollButton && !newMessagesCount && (
         <button
           onClick={() => scrollToBottom()}
-          className="absolute bottom-28 right-6 p-1.5 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          className="absolute bottom-32 right-6 p-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
           aria-label="Scroll to bottom"
         >
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-5 h-5" />
         </button>
       )}
 
@@ -541,33 +527,47 @@ export default function RealisticChatUI() {
       )}
 
       {/* Input Area */}
-      <div className="border-t p-3 space-y-2 bg-card/95 backdrop-blur-sm flex-shrink-0">
+      <div className="border-t p-4 space-y-2.5 rounded-b-3xl backdrop-blur-sm flex-shrink-0 relative">
+        {/* New Messages Indicator - Centered above input */}
+        {!isUserAtBottom && newMessagesCount > 0 && (
+          <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-20">
+            <button
+              onClick={() => scrollToBottom()}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2 text-sm font-medium"
+              aria-label={`${newMessagesCount} new messages`}
+            >
+              <ChevronDown className="w-4 h-4" />
+              {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''}
+            </button>
+          </div>
+        )}
+        
         {/* Reply Preview */}
         {replyTo && (
-          <div className="flex items-center gap-1.5 bg-muted/50 p-1.5 rounded-md">
+          <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl">
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
+              <div className="text-xs font-semibold text-primary mb-1 truncate">
                 Replying to {replyTo.sender}
               </div>
-              <div className="text-[10px] text-muted-foreground truncate">
+              <div className="text-xs text-muted-foreground truncate">
                 {replyTo.content}
               </div>
             </div>
             <button
               onClick={() => setReplyTo(null)}
-              className="p-0.5 hover:bg-muted rounded flex-shrink-0"
+              className="p-1 hover:bg-muted rounded flex-shrink-0"
               aria-label="Cancel reply"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {/* Edit Mode Indicator */}
         {editingMessage && (
-          <div className="flex items-center gap-1.5 bg-blue-500/10 p-1.5 rounded-md border border-blue-500/20">
-            <Edit3 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-            <div className="flex-1 text-[10px] text-blue-600 font-medium">
+          <div className="flex items-center gap-2 bg-blue-500/10 p-2 rounded-xl border border-blue-500/20">
+            <Edit3 className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            <div className="flex-1 text-xs text-blue-600 font-medium">
               Editing message
             </div>
             <button
@@ -575,64 +575,28 @@ export default function RealisticChatUI() {
                 setEditingMessage(null);
                 setMessageInput("");
               }}
-              className="p-0.5 hover:bg-blue-500/20 rounded flex-shrink-0"
+              className="p-1 hover:bg-blue-500/20 rounded flex-shrink-0"
               aria-label="Cancel editing"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* Smart Replies */}
-        {!editingMessage && !replyTo && (
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
-              {[
-                { label: "Sounds good", variant: "default" },
-                { label: "I'll review it", variant: "muted" },
-                { label: "Schedule meeting", variant: "outline" },
-                { label: "Approved ✓", variant: "success" },
-              ].map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => setMessageInput(item.label)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-[10px] font-medium border transition-all whitespace-nowrap",
-                    "hover:shadow-sm hover:border-primary hover:scale-105 active:scale-95",
-                    item.variant === "default" &&
-                      "bg-primary/10 text-primary border-primary/30",
-                    item.variant === "muted" &&
-                      "bg-muted text-muted-foreground border-border",
-                    item.variant === "outline" &&
-                      "bg-card text-foreground border-border",
-                    item.variant === "success" &&
-                      "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                  )}
-                  aria-label={`Quick reply: ${item.label}`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Message Input */}
-        <div className="flex items-end gap-1.5">
+        <div className="flex rounded-xl items-end gap-2">
           <button 
-            className="p-1.5 rounded-md hover:bg-accent transition-colors mb-0.5"
+            className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Attach file"
           >
-            <Paperclip className="w-4 h-4 text-muted-foreground" />
+            <Paperclip className="w-5 h-5 text-muted-foreground" />
           </button>
 
           <button 
-            className="p-1.5 rounded-md hover:bg-accent transition-colors mb-0.5"
+            className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Add emoji"
           >
-            <Smile className="w-4 h-4 text-muted-foreground" />
+            <Smile className="w-5 h-5 text-muted-foreground" />
           </button>
 
           <div className="flex-1 relative">
@@ -643,34 +607,34 @@ export default function RealisticChatUI() {
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-3 py-2 rounded-md border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-xs"
+              className="w-full px-4 py-2.5 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm h-11"
               style={{
-                minHeight: "38px",
-                maxHeight: "100px",
+                minHeight: "44px",
+                maxHeight: "120px",
               }}
               aria-label="Message input"
             />
           </div>
 
           <button 
-            className="p-1.5 rounded-md hover:bg-accent transition-colors mb-0.5"
+            className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
             aria-label="Record voice message"
           >
-            <Mic className="w-4 h-4 text-primary" />
+            <Mic className="w-5 h-5 text-primary" />
           </button>
 
           <button
             onClick={editingMessage ? handleUpdateMessage : handleSendMessage}
             disabled={!messageInput.trim()}
             className={cn(
-              "h-9 px-3 rounded-md text-[10px] flex items-center gap-1.5 transition-all mb-0.5",
+              "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
               messageInput.trim()
                 ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )}
             aria-label={editingMessage ? "Update message" : "Send message"}
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-4 h-4" />
             {editingMessage ? "Update" : "Send"}
           </button>
         </div>
@@ -679,7 +643,7 @@ export default function RealisticChatUI() {
   );
 }
 
-// Message Bubble Component (keeping your existing implementation but with smaller sizing)
+// Message Bubble Component
 function MessageBubble({ 
   message, 
   isGroupStart, 
@@ -726,15 +690,15 @@ function MessageBubble({
       <div
         id={`message-${message.id}`}
         className={cn(
-          "flex gap-2.5 group transition-all",
+          "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-2.5" : "mt-0.5"
+          isGroupStart ? "mt-4" : "mt-1"
         )}
       >
-        {!isOwn && <div className="w-7" />}
-        <div className={cn("flex flex-col max-w-[65%]", isOwn ? "items-end" : "items-start")}>
-          <div className="bg-muted/50 px-2.5 py-1.5 rounded-lg italic text-xs text-muted-foreground flex items-center gap-1.5">
-            <Trash className="w-3 h-3" />
+        {!isOwn && <div className="w-8" />}
+        <div className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
+          <div className="bg-muted/50 px-3 py-2 rounded-xl italic text-sm text-muted-foreground flex items-center gap-2">
+            <Trash className="w-4 h-4" />
             This message was deleted
           </div>
         </div>
@@ -746,9 +710,9 @@ function MessageBubble({
     <div
       id={`message-${message.id}`}
       className={cn(
-        "flex gap-2.5 group transition-all",
+        "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-2.5" : "mt-0.5"
+        isGroupStart ? "mt-4" : "mt-1"
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -758,10 +722,10 @@ function MessageBubble({
     >
       {/* Avatar - only show on group start for others */}
       {!isOwn && (
-        <div className={cn("w-7", isGroupStart ? "" : "invisible")}>
+        <div className={cn("w-8", isGroupStart ? "" : "invisible")}>
           {isGroupStart && (
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-muted text-[10px]">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-muted text-xs">
                 {message.avatar}
               </AvatarFallback>
             </Avatar>
@@ -770,18 +734,18 @@ function MessageBubble({
       )}
 
       {/* Message Content */}
-      <div className={cn("flex flex-col max-w-[65%]", isOwn ? "items-end" : "items-start")}>
+      <div className={cn("flex flex-col max-w-[50%]", isOwn ? "items-end" : "items-start")}>
         {/* Sender name and time - only on group start */}
         {!isOwn && isGroupStart && (
-          <div className="flex items-center gap-1.5 mb-0.5 px-0.5">
-            <span className="font-semibold text-[10px] text-foreground">
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <span className="font-semibold text-xs text-foreground">
               {message.sender}
             </span>
-            <span className="text-[9px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               {message.time}
             </span>
             {message.readBy && (
-              <Badge variant="outline" className="text-[8px] h-3.5 px-1">
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5">
                 Read by {message.readBy}
               </Badge>
             )}
@@ -793,14 +757,14 @@ function MessageBubble({
           <div 
             onClick={() => onScrollToReply(message.replyTo.id)}
             className={cn(
-              "w-full mb-0.5 px-2 py-1.5 rounded-md border-l-2 cursor-pointer hover:bg-muted/50 transition-colors",
+              "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-full",
               isOwn ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-muted/50 border-primary"
             )}
           >
-            <div className={cn("text-[9px] font-semibold mb-0.5", isOwn ? "text-primary-foreground/70" : "text-primary")}>
+            <div className={cn("text-[10px] font-semibold mb-1", isOwn ? "text-primary-foreground/70" : "text-primary")}>
               {message.replyTo.sender}
             </div>
-            <div className={cn("text-[10px] truncate", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
+            <div className={cn("text-xs truncate", isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
               {message.replyTo.content}
             </div>
           </div>
@@ -809,34 +773,30 @@ function MessageBubble({
         {/* Message Bubble */}
         <div
           className={cn(
-            "relative px-2.5 py-1.5 transition-all",
+            "relative px-4 py-2.5 transition-all inline-block max-w-full",
             isOwn
-              ? cn(
-                  "bg-primary text-primary-foreground",
-                  isGroupStart && isGroupEnd && "rounded-2xl",
-                  isGroupStart && !isGroupEnd && "rounded-2xl rounded-br-md",
-                  !isGroupStart && isGroupEnd && "rounded-2xl rounded-tr-md",
-                  !isGroupStart && !isGroupEnd && "rounded-2xl rounded-tr-md rounded-br-md"
-                )
-              : cn(
-                  "bg-muted",
-                  isGroupStart && isGroupEnd && "rounded-2xl",
-                  isGroupStart && !isGroupEnd && "rounded-2xl rounded-bl-md",
-                  !isGroupStart && isGroupEnd && "rounded-2xl rounded-tl-md",
-                  !isGroupStart && !isGroupEnd && "rounded-2xl rounded-tl-md rounded-bl-md"
-                ),
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted",
+            // Rounded corners based on message position
+            isGroupStart && isGroupEnd && "rounded-[20px]",
+            isOwn && isGroupStart && !isGroupEnd && "rounded-[20px] rounded-br-md",
+            isOwn && !isGroupStart && isGroupEnd && "rounded-[20px] rounded-tr-md",
+            isOwn && !isGroupStart && !isGroupEnd && "rounded-[20px] rounded-tr-md rounded-br-md",
+            !isOwn && isGroupStart && !isGroupEnd && "rounded-[20px] rounded-bl-md",
+            !isOwn && !isGroupStart && isGroupEnd && "rounded-[20px] rounded-tl-md",
+            !isOwn && !isGroupStart && !isGroupEnd && "rounded-[20px] rounded-tl-md rounded-bl-md",
             isSelected && "ring-2 ring-primary/50 scale-[1.02]"
           )}
         >
           {/* Text Message */}
           {message.content && (
             <div>
-              <p className="text-xs whitespace-pre-wrap break-words">
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                 {message.content}
               </p>
               {message.edited && (
                 <span className={cn(
-                  "text-[9px] italic ml-1.5",
+                  "text-[10px] italic ml-2",
                   isOwn ? "text-primary-foreground/50" : "text-muted-foreground"
                 )}>
                   (edited)
@@ -847,11 +807,11 @@ function MessageBubble({
 
           {/* Voice Message */}
           {message.type === "voice" && (
-            <div className="flex items-center gap-2.5 min-w-[220px]">
+            <div className="flex items-center gap-3 min-w-[260px] max-w-full">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className={cn(
-                  "p-1.5 rounded-full transition-colors flex-shrink-0",
+                  "p-2 rounded-full transition-colors flex-shrink-0",
                   isOwn
                     ? "bg-primary-foreground/20 hover:bg-primary-foreground/30"
                     : "bg-primary/10 hover:bg-primary/20"
@@ -859,18 +819,18 @@ function MessageBubble({
                 aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
               >
                 {isPlaying ? (
-                  <Pause className="w-3.5 h-3.5" />
+                  <Pause className="w-4 h-4" />
                 ) : (
-                  <Play className="w-3.5 h-3.5" />
+                  <Play className="w-4 h-4" />
                 )}
               </button>
 
-              <div className="flex-1 flex items-center gap-0.5 h-7 relative">
+              <div className="flex-1 flex items-center gap-0.5 h-8 relative min-w-0">
                 {message.waveform.map((height, i) => (
                   <div
                     key={i}
                     className={cn(
-                      "w-0.5 rounded-full transition-all",
+                      "w-1 rounded-full transition-all flex-shrink-0",
                       i < (playProgress / 100) * message.waveform.length
                         ? isOwn ? "bg-primary-foreground" : "bg-primary"
                         : isOwn ? "bg-primary-foreground/30" : "bg-primary/30"
@@ -880,13 +840,13 @@ function MessageBubble({
                 ))}
               </div>
 
-              <span className={cn("text-[10px] flex-shrink-0", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>
+              <span className={cn("text-xs flex-shrink-0 font-medium", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>
                 {message.duration}
               </span>
               <div className="relative flex-shrink-0">
-                <Mic className={cn("w-3.5 h-3.5", isOwn ? "text-primary-foreground/50" : "text-muted-foreground")} />
+                <Mic className={cn("w-4 h-4", isOwn ? "text-primary-foreground/50" : "text-muted-foreground")} />
                 {!message.played && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
                 )}
               </div>
             </div>
@@ -894,8 +854,8 @@ function MessageBubble({
 
           {/* Message State & Time (for own messages) */}
           {isOwn && isGroupEnd && (
-            <div className="flex items-center justify-end gap-0.5 mt-0.5">
-              <span className="text-[9px] text-primary-foreground/70">
+            <div className="flex items-center justify-end gap-1 mt-1">
+              <span className="text-[10px] text-primary-foreground/70">
                 {message.time}
               </span>
               <MessageStateIcon state={message.state} />
@@ -905,77 +865,76 @@ function MessageBubble({
 
         {/* Reactions */}
         {message.reactions && Object.keys(message.reactions).length > 0 && (
-          <div className={cn("flex gap-0.5 mt-0.5", isOwn ? "flex-row-reverse" : "flex-row")}>
+          <div className={cn("flex gap-1 mt-1", isOwn ? "flex-row-reverse" : "flex-row")}>
             {Object.entries(message.reactions).map(([emoji, count]) => (
               <button
                 key={emoji}
                 onClick={() => onReaction(message.id, emoji)}
-                className="bg-muted/80 hover:bg-muted px-1.5 py-0.5 rounded-full text-[10px] flex items-center gap-0.5 transition-all hover:scale-110"
+                className="bg-muted/80 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
               >
                 <span>{emoji}</span>
-                <span className="text-[9px] font-medium">{count}</span>
+                <span className="text-[10px] font-medium">{count}</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Hover Actions */}
-        {showActions && (
-          <div
-            className={cn(
-              "flex gap-0.5 mt-0.5 opacity-0 group-hover:opacity-100 transition-all",
-              isOwn ? "flex-row-reverse" : "flex-row"
-            )}
-          >
+        {/* Hover Actions - Animated */}
+        <div
+          className={cn(
+            "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
+            isOwn ? "flex-row-reverse" : "flex-row",
+            showActions ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+          )}
+        >
+          <ActionButton 
+            icon={Reply} 
+            tooltip="Reply" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onReply(message);
+            }}
+          />
+          {isOwn && canEdit && (
             <ActionButton 
-              icon={Reply} 
-              tooltip="Reply" 
+              icon={Edit3} 
+              tooltip="Edit" 
+              className="text-blue-500"
               onClick={(e) => {
                 e.stopPropagation();
-                onReply(message);
+                onEdit(message);
               }}
             />
-            {isOwn && canEdit && (
-              <ActionButton 
-                icon={Edit3} 
-                tooltip="Edit" 
-                className="text-blue-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(message);
-                }}
-              />
-            )}
-            <ActionButton icon={Forward} tooltip="Forward" />
-            <ActionButton icon={Star} tooltip="Star" />
+          )}
+          <ActionButton icon={Forward} tooltip="Forward" />
+          <ActionButton icon={Star} tooltip="Star" />
+          <ActionButton 
+            icon={Smile} 
+            tooltip="React"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowReactionPicker(showReactionPicker === message.id ? null : message.id);
+            }}
+          />
+          {isOwn && (
             <ActionButton 
-              icon={Smile} 
-              tooltip="React"
+              icon={Trash} 
+              tooltip="Delete" 
+              className="text-red-500"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowReactionPicker(showReactionPicker === message.id ? null : message.id);
+                onDelete(message.id, 'me');
               }}
             />
-            {isOwn && (
-              <ActionButton 
-                icon={Trash} 
-                tooltip="Delete" 
-                className="text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(message.id, 'me');
-                }}
-              />
-            )}
-            <ActionButton icon={MoreVertical} tooltip="More" />
-          </div>
-        )}
+          )}
+          <ActionButton icon={MoreVertical} tooltip="More" />
+        </div>
 
         {/* Reaction Picker */}
         {showReactionPicker === message.id && (
           <div 
             className={cn(
-              "flex gap-1 mt-1.5 p-1.5 bg-card border rounded-lg shadow-lg z-10",
+              "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
               isOwn ? "flex-row-reverse" : "flex-row"
             )}
             onClick={(e) => e.stopPropagation()}
@@ -987,7 +946,7 @@ function MessageBubble({
                   e.stopPropagation();
                   onReaction(message.id, emoji);
                 }}
-                className="text-lg hover:scale-125 transition-transform p-0.5"
+                className="text-xl hover:scale-125 transition-transform p-1"
                 aria-label={`React with ${emoji}`}
               >
                 {emoji}
@@ -1017,7 +976,7 @@ function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit
   return (
     <div
       ref={menuRef}
-      className="fixed bg-card border rounded-lg shadow-xl py-0.5 z-50 min-w-[160px]"
+      className="fixed bg-card border rounded-xl shadow-xl py-1 z-50 min-w-[180px]"
       style={{ left: position.x, top: position.y }}
       onClick={(e) => e.stopPropagation()}
       role="menu"
@@ -1033,7 +992,7 @@ function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit
       
       {message.isOwn && (
         <>
-          <div className="h-px bg-border my-0.5" />
+          <div className="h-px bg-border my-1" />
           <MenuItem 
             icon={Trash} 
             label="Delete for me" 
@@ -1057,13 +1016,13 @@ function MenuItem({ icon: Icon, label, onClick, className }) {
   return (
     <button
       className={cn(
-        "w-full px-3 py-1.5 text-xs flex items-center gap-2.5 hover:bg-muted transition-colors text-left",
+        "w-full px-4 py-2 text-sm flex items-center gap-3 hover:bg-muted transition-colors text-left",
         className
       )}
       onClick={onClick}
       role="menuitem"
     >
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className="w-4 h-4" />
       {label}
     </button>
   );
@@ -1076,12 +1035,12 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       title={tooltip}
       onClick={onClick}
       className={cn(
-        "p-1 rounded-md bg-muted/80 hover:bg-muted transition-all hover:scale-110 active:scale-95",
+        "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
         className
       )}
       aria-label={tooltip}
     >
-      <Icon className="w-3 h-3" />
+      <Icon className="w-3.5 h-3.5" />
     </button>
   );
 }
@@ -1090,13 +1049,13 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
 function MessageStateIcon({ state }) {
   switch (state) {
     case "sending":
-      return <Clock className="w-2.5 h-2.5 text-primary-foreground/50 animate-pulse" />;
+      return <Clock className="w-3 h-3 text-primary-foreground/50 animate-pulse" />;
     case "sent":
-      return <Check className="w-2.5 h-2.5 text-primary-foreground/70" />;
+      return <Check className="w-3 h-3 text-primary-foreground/70" />;
     case "delivered":
-      return <CheckCheck className="w-2.5 h-2.5 text-primary-foreground/70" />;
+      return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
-      return <CheckCheck className="w-2.5 h-2.5 text-blue-400" />;
+      return <CheckCheck className="w-3 h-3 text-blue-400" />;
     default:
       return null;
   }

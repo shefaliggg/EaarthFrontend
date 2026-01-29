@@ -25,6 +25,7 @@ import {
   UserX,
   Check,
   Loader2,
+  Star,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/config/utils";
@@ -69,7 +70,7 @@ export default function ChatLeftSidebar({
   onChatSelect 
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
   const [contextMenu, setContextMenu] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -95,6 +96,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 1800000, // 30m ago
       isPinned: true,
       isMuted: false,
+      isFavorite: true,
     },
     { 
       id: "camera", 
@@ -108,6 +110,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 86400000, // Yesterday
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     { 
       id: "stunts", 
@@ -121,6 +124,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 5400000, // 1.5h ago
       isPinned: true,
       isMuted: false,
+      isFavorite: true,
     },
     { 
       id: "sound", 
@@ -134,6 +138,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 7200000, // 2h ago
       isPinned: false,
       isMuted: true,
+      isFavorite: false,
     },
     { 
       id: "security", 
@@ -147,6 +152,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 172800000, // 2 days ago
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     { 
       id: "catering", 
@@ -160,6 +166,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 3600000, // 1h ago
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     { 
       id: "vfx", 
@@ -173,6 +180,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 86400000, // Yesterday
       isPinned: false,
       isMuted: true,
+      isFavorite: false,
     },
     { 
       id: "editing", 
@@ -186,6 +194,7 @@ export default function ChatLeftSidebar({
       timestamp: Date.now() - 259200000, // 3 days ago
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
   ]);
 
@@ -204,6 +213,7 @@ export default function ChatLeftSidebar({
       unread: 2,
       isPinned: true,
       isMuted: false,
+      isFavorite: true,
     },
     {
       id: "sarah",
@@ -218,6 +228,7 @@ export default function ChatLeftSidebar({
       unread: 0,
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     {
       id: "daniel",
@@ -232,6 +243,7 @@ export default function ChatLeftSidebar({
       unread: 0,
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     {
       id: "emma",
@@ -246,6 +258,7 @@ export default function ChatLeftSidebar({
       unread: 1,
       isPinned: true,
       isMuted: false,
+      isFavorite: true,
     },
     {
       id: "james",
@@ -260,6 +273,7 @@ export default function ChatLeftSidebar({
       unread: 0,
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     {
       id: "lisa",
@@ -274,6 +288,7 @@ export default function ChatLeftSidebar({
       unread: 0,
       isPinned: false,
       isMuted: false,
+      isFavorite: false,
     },
     {
       id: "ryan",
@@ -288,49 +303,47 @@ export default function ChatLeftSidebar({
       unread: 3,
       isPinned: false,
       isMuted: true,
+      isFavorite: false,
     },
   ]);
 
-  // Filter and sort logic
-  const filteredDepartments = departments
-    .filter(dept => dept.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      // Pinned first
+  // Filter logic
+  const filterItems = (items) => {
+    let filtered = items.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (activeFilter) {
+      case "unread":
+        filtered = filtered.filter(item => item.unread > 0 || item.mentions > 0);
+        break;
+      case "favorites":
+        filtered = filtered.filter(item => item.isFavorite);
+        break;
+      case "groups":
+        // Only applicable for team tab
+        break;
+      default:
+        break;
+    }
+
+    return filtered.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
-      // Then by unread with mentions
       if (a.mentions > 0 && b.mentions === 0) return -1;
       if (a.mentions === 0 && b.mentions > 0) return 1;
-      // Then by timestamp
       return b.timestamp - a.timestamp;
     });
+  };
 
-  const filteredMembers = teamMembers
-    .filter(member =>
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.role.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      // Pinned first
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      // Then by unread
-      if (a.unread > 0 && b.unread === 0) return -1;
-      if (a.unread === 0 && b.unread > 0) return 1;
-      // Then by online status
-      if (a.status === "online" && b.status !== "online") return -1;
-      if (a.status !== "online" && b.status === "online") return 1;
-      // Then by timestamp
-      return b.timestamp - a.timestamp;
-    });
-
-  const pinnedDepartments = filteredDepartments.filter(d => d.isPinned);
-  const unpinnedDepartments = filteredDepartments.filter(d => !d.isPinned);
-  const pinnedMembers = filteredMembers.filter(m => m.isPinned);
-  const unpinnedMembers = filteredMembers.filter(m => !m.isPinned);
+  const filteredDepartments = filterItems(departments);
+  const filteredMembers = filterItems(teamMembers);
 
   const activeOnlineCount = teamMembers.filter(m => m.status === "online").length;
   const totalMembers = teamMembers.length;
+  const totalUnread = activeTab === "team" 
+    ? departments.reduce((sum, d) => sum + d.unread, 0)
+    : teamMembers.reduce((sum, m) => sum + m.unread, 0);
 
   // Context menu handlers
   const handleContextMenu = (e, item, type) => {
@@ -360,6 +373,19 @@ export default function ChatLeftSidebar({
     } else {
       setTeamMembers(members => members.map(m =>
         m.id === id ? { ...m, isMuted: !m.isMuted } : m
+      ));
+    }
+    setContextMenu(null);
+  };
+
+  const toggleFavorite = (id, type) => {
+    if (type === "team") {
+      setDepartments(deps => deps.map(d => 
+        d.id === id ? { ...d, isFavorite: !d.isFavorite } : d
+      ));
+    } else {
+      setTeamMembers(members => members.map(m =>
+        m.id === id ? { ...m, isFavorite: !m.isFavorite } : m
       ));
     }
     setContextMenu(null);
@@ -420,243 +446,217 @@ export default function ChatLeftSidebar({
   };
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-3">
-      {/* Compact Tab Switcher */}
-      <div className="rounded-lg border bg-card shadow-sm">
-        <div className="grid grid-cols-2 gap-1.5 p-1.5">
-          <button
-            onClick={() => {
-              onTabChange?.("team");
-              setSearchQuery("");
-              setIsSearchOpen(false);
-            }}
-            className={cn(
-              "px-3 py-2 rounded-md text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
-              activeTab === "team"
-                ? "bg-primary text-primary-foreground shadow"
-                : "hover:bg-muted text-muted-foreground"
-            )}
-          >
-            <Hash className="w-3.5 h-3.5" />
-            Team
-          </button>
-          <button
-            onClick={() => {
-              onTabChange?.("personal");
-              setSearchQuery("");
-              setIsSearchOpen(false);
-            }}
-            className={cn(
-              "px-3 py-2 rounded-md text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
-              activeTab === "personal"
-                ? "bg-primary text-primary-foreground shadow"
-                : "hover:bg-muted text-muted-foreground"
-            )}
-          >
-            <Users className="w-3.5 h-3.5" />
-            Personal
-          </button>
-        </div>
-      </div>
-
-      {/* Compact Header & Search */}
-      <div className="rounded-lg border bg-card shadow-sm">
-        <div className="p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm truncate">
-                {activeTab === "team" ? "Groups" : "Direct Messages"}
-              </h3>
-              <p className="text-[10px] text-muted-foreground">
-                {activeTab === "team" 
-                  ? `${departments.length} groups` 
-                  : `${activeOnlineCount}/${totalMembers} online`
-                }
-              </p>
+    <div className="h-[calc(100vh-100px)] flex flex-col bg-background">
+      {/* Single Card Container */}
+      <div className="flex-1 flex flex-col rounded-lg border bg-card shadow-sm overflow-hidden">
+        {/* Header with Tabs */}
+        <div className="border-b bg-card px-4 py-2.5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-bold">Chats</h2>
+            <div className="flex items-center gap-2">
+              
+              <button className="p-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                <X className="w-4.5 h-4.5 rotate-45" />
+              </button>
             </div>
-            
-            <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={cn(
-                "p-1.5 rounded-md transition-all flex-shrink-0",
-                isSearchOpen ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-              )}
-              aria-label="Toggle search"
-            >
-              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-            </button>
           </div>
 
-          {isSearchOpen && (
-            <div className="relative animate-in slide-in-from-top-2">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={activeTab === "team" ? "Search groups..." : "Search people..."}
-                className="pl-8 pr-8 h-8 text-xs"
-                autoFocus
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+          {/* Search Bar */}
+          <div className="relative mb-2.5">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Ask Meta AI or Search"
+              className="pl-9 pr-3 h-9 bg-muted/50 border-0 rounded-lg text-xs placeholder:text-muted-foreground"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted/80"
+              >
+                <X className="w-3 h-3 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Main Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <FilterTab
+              active={activeFilter === "all"}
+              onClick={() => {
+                setActiveFilter("all");
+                onTabChange?.("all");
+              }}
+              label="All"
+            />
+            <FilterTab
+              active={activeFilter === "groups"}
+              onClick={() => {
+                setActiveFilter("groups");
+                onTabChange?.("team");
+              }}
+              label="Groups"
+            />
+            <FilterTab
+              active={activeFilter === "individual"}
+              onClick={() => {
+                setActiveFilter("individual");
+                onTabChange?.("personal");
+              }}
+              label="Individual"
+            />
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+          {isLoading ? (
+            <div className="p-2 space-y-1">
+              {[...Array(8)].map((_, i) => (
+                <SkeletonItem key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-1">
+              {/* Show All - both groups and individuals */}
+              {activeFilter === "all" && (
+                <>
+                  {/* All Departments */}
+                  <ChatItem
+                    item={{
+                      id: "all-departments",
+                      name: "All Departments",
+                      icon: Hash,
+                      members: departments.reduce((sum, d) => sum + d.members, 0),
+                      online: departments.reduce((sum, d) => sum + d.online, 0),
+                      unread: 0,
+                      mentions: 0,
+                      lastMessage: "Company-wide announcements",
+                      timestamp: Date.now(),
+                      isPinned: true,
+                      isMuted: false,
+                      isFavorite: false,
+                    }}
+                    type="group"
+                    isSelected={selectedChat?.id === "all-departments"}
+                    onClick={() => onChatSelect?.({ id: "all-departments", type: "group" })}
+                    onContextMenu={(e) => handleContextMenu(e, { id: "all-departments" }, "team")}
+                  />
+
+                  {/* Groups */}
+                  {filteredDepartments.map((dept) => (
+                    <ChatItem
+                      key={dept.id}
+                      item={dept}
+                      type="group"
+                      isSelected={selectedChat?.id === dept.id}
+                      onClick={() => onChatSelect?.({ ...dept, type: "group" })}
+                      onContextMenu={(e) => handleContextMenu(e, dept, "team")}
+                      isDragging={draggedItem?.item.id === dept.id}
+                      isDragOver={dragOverItem === dept.id}
+                      onDragStart={(e) => handleDragStart(e, dept, "team")}
+                      onDragOver={(e) => handleDragOver(e, dept)}
+                      onDrop={(e) => handleDrop(e, dept, "team")}
+                    />
+                  ))}
+
+                  {/* Individuals */}
+                  {filteredMembers.map((member) => (
+                    <ChatItem
+                      key={member.id}
+                      item={member}
+                      type="dm"
+                      isSelected={selectedChat?.id === member.id}
+                      onClick={() => onChatSelect?.({ ...member, type: "dm" })}
+                      onContextMenu={(e) => handleContextMenu(e, member, "personal")}
+                      isDragging={draggedItem?.item.id === member.id}
+                      isDragOver={dragOverItem === member.id}
+                      onDragStart={(e) => handleDragStart(e, member, "personal")}
+                      onDragOver={(e) => handleDragOver(e, member)}
+                      onDrop={(e) => handleDrop(e, member, "personal")}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Show only Groups */}
+              {activeFilter === "groups" && (
+                <>
+                  <ChatItem
+                    item={{
+                      id: "all-departments",
+                      name: "All Departments",
+                      icon: Hash,
+                      members: departments.reduce((sum, d) => sum + d.members, 0),
+                      online: departments.reduce((sum, d) => sum + d.online, 0),
+                      unread: 0,
+                      mentions: 0,
+                      lastMessage: "Company-wide announcements",
+                      timestamp: Date.now(),
+                      isPinned: true,
+                      isMuted: false,
+                      isFavorite: false,
+                    }}
+                    type="group"
+                    isSelected={selectedChat?.id === "all-departments"}
+                    onClick={() => onChatSelect?.({ id: "all-departments", type: "group" })}
+                    onContextMenu={(e) => handleContextMenu(e, { id: "all-departments" }, "team")}
+                  />
+
+                  {filteredDepartments.map((dept) => (
+                    <ChatItem
+                      key={dept.id}
+                      item={dept}
+                      type="group"
+                      isSelected={selectedChat?.id === dept.id}
+                      onClick={() => onChatSelect?.({ ...dept, type: "group" })}
+                      onContextMenu={(e) => handleContextMenu(e, dept, "team")}
+                      isDragging={draggedItem?.item.id === dept.id}
+                      isDragOver={dragOverItem === dept.id}
+                      onDragStart={(e) => handleDragStart(e, dept, "team")}
+                      onDragOver={(e) => handleDragOver(e, dept)}
+                      onDrop={(e) => handleDrop(e, dept, "team")}
+                    />
+                  ))}
+
+                  {filteredDepartments.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-xs text-muted-foreground">No groups found</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Show only Individuals */}
+              {activeFilter === "individual" && (
+                <>
+                  {filteredMembers.map((member) => (
+                    <ChatItem
+                      key={member.id}
+                      item={member}
+                      type="dm"
+                      isSelected={selectedChat?.id === member.id}
+                      onClick={() => onChatSelect?.({ ...member, type: "dm" })}
+                      onContextMenu={(e) => handleContextMenu(e, member, "personal")}
+                      isDragging={draggedItem?.item.id === member.id}
+                      isDragOver={dragOverItem === member.id}
+                      onDragStart={(e) => handleDragStart(e, member, "personal")}
+                      onDragOver={(e) => handleDragOver(e, member)}
+                      onDrop={(e) => handleDrop(e, member, "personal")}
+                    />
+                  ))}
+
+                  {filteredMembers.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-xs text-muted-foreground">No members found</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
         </div>
-      </div>
-
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto rounded-lg border bg-card shadow-sm scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {isLoading ? (
-          // Skeleton Loading
-          <div className="p-2 space-y-1.5">
-            {[...Array(8)].map((_, i) => (
-              <SkeletonItem key={i} />
-            ))}
-          </div>
-        ) : (
-          <>
-            {/* Team Chat Groups */}
-            {activeTab === "team" && (
-              <div className="p-2 space-y-1">
-                {/* All Departments - Always at top */}
-                <ChatItem
-                  item={{
-                    id: "all-departments",
-                    name: "All Departments",
-                    icon: Hash,
-                    members: departments.reduce((sum, d) => sum + d.members, 0),
-                    online: departments.reduce((sum, d) => sum + d.online, 0),
-                    unread: 0,
-                    mentions: 0,
-                    lastMessage: "Company-wide announcements",
-                    timestamp: Date.now(),
-                    isPinned: true,
-                    isMuted: false,
-                  }}
-                  type="group"
-                  isSelected={selectedChat?.id === "all-departments"}
-                  onClick={() => onChatSelect?.({ id: "all-departments", type: "group" })}
-                  onContextMenu={(e) => handleContextMenu(e, { id: "all-departments" }, "team")}
-                />
-
-                {/* Pinned Groups */}
-                {pinnedDepartments.length > 0 && (
-                  <>
-                    <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                      Pinned
-                    </div>
-                    {pinnedDepartments.map((dept) => (
-                      <ChatItem
-                        key={dept.id}
-                        item={dept}
-                        type="group"
-                        isSelected={selectedChat?.id === dept.id}
-                        onClick={() => onChatSelect?.({ ...dept, type: "group" })}
-                        onContextMenu={(e) => handleContextMenu(e, dept, "team")}
-                        isDragging={draggedItem?.item.id === dept.id}
-                        isDragOver={dragOverItem === dept.id}
-                        onDragStart={(e) => handleDragStart(e, dept, "team")}
-                        onDragOver={(e) => handleDragOver(e, dept)}
-                        onDrop={(e) => handleDrop(e, dept, "team")}
-                      />
-                    ))}
-                  </>
-                )}
-
-                {/* Regular Groups */}
-                {unpinnedDepartments.length > 0 && pinnedDepartments.length > 0 && (
-                  <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Groups
-                  </div>
-                )}
-                {unpinnedDepartments.map((dept) => (
-                  <ChatItem
-                    key={dept.id}
-                    item={dept}
-                    type="group"
-                    isSelected={selectedChat?.id === dept.id}
-                    onClick={() => onChatSelect?.({ ...dept, type: "group" })}
-                    onContextMenu={(e) => handleContextMenu(e, dept, "team")}
-                    isDragging={draggedItem?.item.id === dept.id}
-                    isDragOver={dragOverItem === dept.id}
-                    onDragStart={(e) => handleDragStart(e, dept, "team")}
-                    onDragOver={(e) => handleDragOver(e, dept)}
-                    onDrop={(e) => handleDrop(e, dept, "team")}
-                  />
-                ))}
-
-                {filteredDepartments.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-xs text-muted-foreground">No groups found</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Personal Chat Members */}
-            {activeTab === "personal" && (
-              <div className="p-2 space-y-1">
-                {/* Pinned Chats */}
-                {pinnedMembers.length > 0 && (
-                  <>
-                    <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                      Pinned
-                    </div>
-                    {pinnedMembers.map((member) => (
-                      <ChatItem
-                        key={member.id}
-                        item={member}
-                        type="dm"
-                        isSelected={selectedChat?.id === member.id}
-                        onClick={() => onChatSelect?.({ ...member, type: "dm" })}
-                        onContextMenu={(e) => handleContextMenu(e, member, "personal")}
-                        isDragging={draggedItem?.item.id === member.id}
-                        isDragOver={dragOverItem === member.id}
-                        onDragStart={(e) => handleDragStart(e, member, "personal")}
-                        onDragOver={(e) => handleDragOver(e, member)}
-                        onDrop={(e) => handleDrop(e, member, "personal")}
-                      />
-                    ))}
-                  </>
-                )}
-
-                {/* Regular Chats */}
-                {unpinnedMembers.length > 0 && pinnedMembers.length > 0 && (
-                  <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Direct Messages
-                  </div>
-                )}
-                {unpinnedMembers.map((member) => (
-                  <ChatItem
-                    key={member.id}
-                    item={member}
-                    type="dm"
-                    isSelected={selectedChat?.id === member.id}
-                    onClick={() => onChatSelect?.({ ...member, type: "dm" })}
-                    onContextMenu={(e) => handleContextMenu(e, member, "personal")}
-                    isDragging={draggedItem?.item.id === member.id}
-                    isDragOver={dragOverItem === member.id}
-                    onDragStart={(e) => handleDragStart(e, member, "personal")}
-                    onDragOver={(e) => handleDragOver(e, member)}
-                    onDrop={(e) => handleDrop(e, member, "personal")}
-                  />
-                ))}
-
-                {filteredMembers.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-xs text-muted-foreground">No members found</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
       </div>
 
       {/* Context Menu */}
@@ -668,11 +668,29 @@ export default function ChatLeftSidebar({
           type={contextMenu.type}
           onPin={() => togglePin(contextMenu.item.id, contextMenu.type)}
           onMute={() => toggleMute(contextMenu.item.id, contextMenu.type)}
+          onFavorite={() => toggleFavorite(contextMenu.item.id, contextMenu.type)}
           onMarkAsRead={() => markAsRead(contextMenu.item.id, contextMenu.type)}
           onClose={() => setContextMenu(null)}
         />
       )}
     </div>
+  );
+}
+
+// Filter Tab Component
+function FilterTab({ active, onClick, label, count }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap flex-shrink-0",
+        active
+          ? "bg-primary text-primary-foreground shadow"
+          : "bg-muted text-muted-foreground hover:bg-muted/80"
+      )}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -702,30 +720,26 @@ function ChatItem({
       onDrop={onDrop}
       onDragEnd={() => {}}
       className={cn(
-        "w-full p-2 rounded-md text-left transition-all group relative",
-        isSelected && "bg-primary/10 ring-1 ring-primary",
-        !isSelected && "hover:bg-muted/50",
+        "w-full px-3 py-2.5 text-left transition-all hover:bg-muted/50 relative border-b border-border/50",
+        isSelected && "bg-muted",
         isDragging && "opacity-50",
-        isDragOver && "ring-2 ring-primary"
+        isDragOver && "bg-primary/10"
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2.5">
         {/* Icon/Avatar */}
         {isGroup ? (
-          <div className={cn(
-            "p-1.5 rounded-md mt-0.5 flex-shrink-0",
-            isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-          )}>
-            <Icon className="w-4 h-4" />
+          <div className="p-2 rounded-full bg-muted flex-shrink-0">
+            <Icon className="w-5 h-5 text-foreground" />
           </div>
         ) : (
           <div className="relative flex-shrink-0">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
               {item.avatar}
             </div>
             <span 
               className={cn(
-                "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-card",
+                "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
                 item.status === "online" && "bg-green-500",
                 item.status === "away" && "bg-yellow-500",
                 item.status === "offline" && "bg-gray-400"
@@ -736,58 +750,49 @@ function ChatItem({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-1 mb-0.5">
+          <div className="flex items-center justify-between gap-2 mb-0.5">
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate">{item.name}</p>
-              {item.isPinned && <Pin className="w-2.5 h-2.5 text-primary flex-shrink-0" />}
-              {item.isMuted && <BellOff className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />}
+              <p className="text-sm font-semibold truncate">{item.name}</p>
+              {item.isFavorite && <Star className="w-3 h-3 fill-yellow-500 text-yellow-500 flex-shrink-0" />}
             </div>
-            <span className="text-[9px] text-muted-foreground flex-shrink-0">
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">
               {formatTime(item.timestamp)}
             </span>
           </div>
 
-          {/* Role or Last Message */}
-          {!isGroup && item.role && (
-            <p className="text-[9px] text-muted-foreground/80 mb-0.5">{item.role}</p>
-          )}
-
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] text-muted-foreground truncate flex-1">
-              {item.lastMessage}
-            </p>
+            <div className="flex items-center gap-1 flex-1 min-w-0">
+              {item.isMuted && <VolumeX className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
+              <p className="text-xs text-muted-foreground truncate">
+                {!isGroup && item.unread > 0 && (
+                  <span className="text-foreground font-medium">
+                    {item.lastMessage.substring(0, 20)}
+                    {item.lastMessage.length > 20 && "..."}
+                  </span>
+                )}
+                {!isGroup && item.unread === 0 && item.lastMessage}
+                {isGroup && item.lastMessage}
+              </p>
+            </div>
             
             {/* Badges */}
             <div className="flex items-center gap-1 flex-shrink-0">
+              {item.isPinned && <Pin className="w-3 h-3 text-muted-foreground" />}
               {item.mentions > 0 && (
-                <Badge className="bg-red-500 text-white text-[9px] h-4 min-w-4 px-1 flex items-center justify-center">
-                  @{item.mentions}
+                <Badge className="bg-green-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
+                  {item.mentions}
                 </Badge>
               )}
               {item.unread > 0 && !item.isMuted && item.mentions === 0 && (
-                <Badge className="bg-primary text-primary-foreground text-[9px] h-4 min-w-4 px-1 flex items-center justify-center">
+                <Badge className="bg-green-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
                   {item.unread}
                 </Badge>
               )}
               {item.unread > 0 && item.isMuted && (
-                <Badge variant="outline" className="text-[9px] h-4 min-w-4 px-1 flex items-center justify-center">
-                  {item.unread}
-                </Badge>
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
               )}
             </div>
           </div>
-
-          {/* Status info for DMs */}
-          {!isGroup && item.status !== "online" && (
-            <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-              {formatLastSeen(item.lastSeen)}
-            </p>
-          )}
-          {!isGroup && item.status === "online" && item.device && (
-            <p className="text-[9px] text-green-600 mt-0.5">
-              Active on {item.device}
-            </p>
-          )}
         </div>
       </div>
     </button>
@@ -797,16 +802,15 @@ function ChatItem({
 // Skeleton Loading Component
 function SkeletonItem() {
   return (
-    <div className="p-2 rounded-md animate-pulse">
-      <div className="flex items-start gap-2">
-        <div className="w-8 h-8 bg-muted rounded-full flex-shrink-0" />
+    <div className="px-3 py-2.5 animate-pulse border-b border-border/50">
+      <div className="flex items-center gap-2.5">
+        <div className="w-10 h-10 bg-muted rounded-full flex-shrink-0" />
         <div className="flex-1 space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="h-3 bg-muted rounded w-24" />
-            <div className="h-2 bg-muted rounded w-8" />
+            <div className="h-3.5 bg-muted rounded w-32" />
+            <div className="h-2.5 bg-muted rounded w-12" />
           </div>
-          <div className="h-2.5 bg-muted rounded w-full" />
-          <div className="h-2 bg-muted rounded w-16" />
+          <div className="h-3 bg-muted rounded w-full" />
         </div>
       </div>
     </div>
@@ -814,7 +818,7 @@ function SkeletonItem() {
 }
 
 // Context Menu Component
-function ContextMenuComponent({ x, y, item, type, onPin, onMute, onMarkAsRead, onClose }) {
+function ContextMenuComponent({ x, y, item, type, onPin, onMute, onFavorite, onMarkAsRead, onClose }) {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ x, y });
 
@@ -830,19 +834,24 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onMarkAsRead, o
   return (
     <div
       ref={menuRef}
-      className="fixed bg-card border rounded-lg shadow-xl py-1 z-50 min-w-[180px]"
+      className="fixed bg-card border rounded-lg shadow-xl py-1.5 z-50 min-w-[200px]"
       style={{ left: position.x, top: position.y }}
       onClick={(e) => e.stopPropagation()}
     >
       <MenuItem
         icon={item.isPinned ? X : Pin}
-        label={item.isPinned ? "Unpin" : "Pin"}
+        label={item.isPinned ? "Unpin chat" : "Pin chat"}
         onClick={onPin}
       />
       <MenuItem
         icon={item.isMuted ? Bell : BellOff}
-        label={item.isMuted ? "Unmute" : "Mute"}
+        label={item.isMuted ? "Unmute notifications" : "Mute notifications"}
         onClick={onMute}
+      />
+      <MenuItem
+        icon={item.isFavorite ? Star : Star}
+        label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
+        onClick={onFavorite}
       />
       {(item.unread > 0 || item.mentions > 0) && (
         <MenuItem
@@ -852,22 +861,25 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onMarkAsRead, o
         />
       )}
       <div className="h-px bg-border my-1" />
-      <MenuItem icon={Archive} label="Archive" onClick={onClose} />
+      <MenuItem icon={Archive} label="Archive chat" onClick={onClose} />
       {type === "personal" && (
         <MenuItem 
           icon={UserX} 
-          label="Block" 
+          label="Block user" 
           onClick={onClose}
           className="text-red-500 hover:bg-red-500/10"
         />
       )}
       {type === "team" && (
-        <MenuItem 
-          icon={LogOut} 
-          label="Leave group" 
-          onClick={onClose}
-          className="text-red-500 hover:bg-red-500/10"
-        />
+        <>
+          <MenuItem icon={Volume2} label="Group info" onClick={onClose} />
+          <MenuItem 
+            icon={LogOut} 
+            label="Exit group" 
+            onClick={onClose}
+            className="text-red-500 hover:bg-red-500/10"
+          />
+        </>
       )}
     </div>
   );
@@ -877,7 +889,7 @@ function MenuItem({ icon: Icon, label, onClick, className }) {
   return (
     <button
       className={cn(
-        "w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted transition-colors text-left",
+        "w-full px-3 py-1.5 text-xs flex items-center gap-2.5 hover:bg-muted transition-colors text-left",
         className
       )}
       onClick={onClick}
