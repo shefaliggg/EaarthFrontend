@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Upload, FileText, CheckCircle, Trash2, Download } from "lucide-react";
-import { EditableInput, EditableSelect, EditableTextarea } from "../../../../../shared/components/forms";
+import EditableSelect from "../../../../shared/components/forms/EditableSelect";
+import EditableTextarea from "../../../../shared/components/forms/EditableTextarea";
+import EditableInput from "../../../../shared/components/forms/EditableInput"; 
 
 /* -------------------------------------------------
    FORM FIELD WRAPPER
