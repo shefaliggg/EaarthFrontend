@@ -6,9 +6,6 @@ import eaarthLogo from '../../../assets/eaarth.webp';
 export const VerifyEmailPage = ({ onSuccess }) => {
   const { status, message, inviteData } = useVerifyEmail(onSuccess);
 
-  // --------------------------
-  // LOADING STATE
-  // --------------------------
   if (status === 'loading') {
     return (
       <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">

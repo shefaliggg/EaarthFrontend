@@ -41,11 +41,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { triggerGlobalLogout } from '../../../features/auth/config/globalLogoutConfig';
 import { SmartIcon } from '../SmartIcon';
 import { adminDropdownConfig } from '../../config/adminDropdownNavList';
+import { useScrollHeaderTracker } from '../../hooks/useScrollHeaderTracker';
 
 export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [displayMode, setDisplayMode] = useState('text-icon');
+  const showHeader = useScrollHeaderTracker()
 
   const [notificationCount] = useState(5);
   const [messageCount] = useState(3);
@@ -99,7 +101,7 @@ export default function Header() {
 
   return (
     <>
-      <div className="h-16 border-b sticky top-0 z-40 bg-background">
+      <div className={`h-16 border-b sticky top-0 z-40 bg-background transition-transform duration-300  ${showHeader ? "translate-y-0" : "-translate-y-full"}`}>
         <div className="px-6 h-full grid grid-cols-[1fr_auto_1fr] items-center gap-4">
 
           {/* LEFT */}

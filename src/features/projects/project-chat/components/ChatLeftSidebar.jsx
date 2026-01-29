@@ -1,6 +1,7 @@
 import { Hash, Mail, Users, Briefcase, Video, Zap, Mic, Shield, Utensils } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/config/utils";
+import FilterPillTabs from "../../../../shared/components/FilterPillTabs";
 
 export default function ChatLeftSidebar({ active = "team" }) {
   const departments = [
@@ -35,6 +36,20 @@ export default function ChatLeftSidebar({ active = "team" }) {
               <p className="text-xs opacity-80">All project members</p>
             </div>
           </button>
+          <button
+            className={cn(
+              "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
+              active === "personal"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-muted"
+            )}
+          >
+            <Users className="w-5 h-5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold">Personal Chat</p>
+              <p className="text-xs opacity-80">all project members</p>
+            </div>
+          </button>
 
           {/* Email */}
           <button
@@ -57,14 +72,31 @@ export default function ChatLeftSidebar({ active = "team" }) {
         </div>
       </div>
 
+
       {/* Departments */}
       <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold">Departments</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold">Department</h3>
           <Badge variant="outline" className="text-[10px]">6 groups</Badge>
         </div>
+        {/* <FilterPillTabs
+          options={[
+            {
+              value: "team",
+              label: "Team",
+            },
+            {
+              value: "individual",
+              label: "Individual",
+            },
+          ]}
+          value={"team"}
+          // fullWidth={true}
+          // onChange={(value) => setStatusFilter(value)}
+          // transparentBg={false}
+        /> */}
 
-        <div className="space-y-2">
+        <div className="space-y-2 mt-3">
           {departments.map((dept) => (
             <button
               key={dept.id}
@@ -89,7 +121,7 @@ export default function ChatLeftSidebar({ active = "team" }) {
         </div>
       </div>
 
-      
+
       <div className="rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold">Direct Messages</h3>

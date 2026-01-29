@@ -18,8 +18,11 @@ import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
+import { useScrollHeaderTracker } from '@/shared/hooks/useScrollHeaderTracker';
 
 export default function TeamChatProduction() {
+  const showHeader = useScrollHeaderTracker()
+
   const messages = [
     {
       id: 1,
@@ -47,7 +50,7 @@ export default function TeamChatProduction() {
   ];
 
   return (
-    <div className="rounded-xl border bg-card shadow-sm h-[750px] flex flex-col">
+    <div className={`rounded-xl border bg-card shadow-sm h-[calc(100svh-24px)] flex flex-col sticky top-3 `}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
@@ -212,13 +215,13 @@ export default function TeamChatProduction() {
                   "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
                   "hover:shadow-sm hover:border-primary",
                   item.variant === "default" &&
-                    "bg-primary/10 text-primary border-primary/30",
+                  "bg-primary/10 text-primary border-primary/30",
                   item.variant === "muted" &&
-                    "bg-muted text-muted-foreground border-border",
+                  "bg-muted text-muted-foreground border-border",
                   item.variant === "outline" &&
-                    "bg-card text-foreground border-border",
+                  "bg-card text-foreground border-border",
                   item.variant === "success" &&
-                    "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                  "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
                 )}
               >
                 {item.label}
