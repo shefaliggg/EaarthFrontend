@@ -35,6 +35,7 @@ const ProjectRoutes = {
   path: '/projects',
   element: <GuardRoute allowedRoles="all" />,
   children: [
+    
     { index: true, element: <ProjectList /> },
 
     // studio_admin only

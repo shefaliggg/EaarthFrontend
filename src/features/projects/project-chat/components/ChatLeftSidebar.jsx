@@ -66,13 +66,12 @@ const formatLastSeen = (timestamp) => {
 };
 
 export default function ChatLeftSidebar({
-  activeTab = "team",
+  activeTab = "all",
   onTabChange,
   selectedChat,
   onChatSelect
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
   const [contextMenu, setContextMenu] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -99,6 +98,9 @@ export default function ChatLeftSidebar({
       isPinned: true,
       isMuted: false,
       isFavorite: true,
+      // Backend data
+      conversationType: "DEPARTMENT",
+      department: "Production",
     },
     {
       id: "camera",
@@ -113,6 +115,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "Camera Department",
     },
     {
       id: "stunts",
@@ -127,6 +131,8 @@ export default function ChatLeftSidebar({
       isPinned: true,
       isMuted: false,
       isFavorite: true,
+      conversationType: "DEPARTMENT",
+      department: "Stunt Team",
     },
     {
       id: "sound",
@@ -141,6 +147,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: true,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "Sound Department",
     },
     {
       id: "security",
@@ -155,6 +163,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "Security",
     },
     {
       id: "catering",
@@ -169,6 +179,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "Catering",
     },
     {
       id: "vfx",
@@ -183,6 +195,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: true,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "VFX & Post-Production",
     },
     {
       id: "editing",
@@ -197,6 +211,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DEPARTMENT",
+      department: "Editing",
     },
   ]);
 
@@ -216,6 +232,9 @@ export default function ChatLeftSidebar({
       isPinned: true,
       isMuted: false,
       isFavorite: true,
+      // Backend data
+      conversationType: "DIRECT",
+      userId: "marcus",
     },
     {
       id: "sarah",
@@ -231,6 +250,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DIRECT",
+      userId: "sarah",
     },
     {
       id: "daniel",
@@ -246,6 +267,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DIRECT",
+      userId: "daniel",
     },
     {
       id: "emma",
@@ -261,6 +284,8 @@ export default function ChatLeftSidebar({
       isPinned: true,
       isMuted: false,
       isFavorite: true,
+      conversationType: "DIRECT",
+      userId: "emma",
     },
     {
       id: "james",
@@ -276,6 +301,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DIRECT",
+      userId: "james",
     },
     {
       id: "lisa",
@@ -291,6 +318,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: false,
       isFavorite: false,
+      conversationType: "DIRECT",
+      userId: "lisa",
     },
     {
       id: "ryan",
@@ -306,6 +335,8 @@ export default function ChatLeftSidebar({
       isPinned: false,
       isMuted: true,
       isFavorite: false,
+      conversationType: "DIRECT",
+      userId: "ryan",
     },
   ]);
 
@@ -315,7 +346,7 @@ export default function ChatLeftSidebar({
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    switch (activeFilter) {
+    switch (activeTab) {
       case "unread":
         filtered = filtered.filter(item => item.unread > 0 || item.mentions > 0);
         break;
@@ -343,7 +374,7 @@ export default function ChatLeftSidebar({
 
   const activeOnlineCount = teamMembers.filter(m => m.status === "online").length;
   const totalMembers = teamMembers.length;
-  const totalUnread = activeTab === "team"
+  const totalUnread = activeTab === "all"
     ? departments.reduce((sum, d) => sum + d.unread, 0)
     : teamMembers.reduce((sum, m) => sum + m.unread, 0);
 
@@ -447,7 +478,33 @@ export default function ChatLeftSidebar({
     setDragOverItem(null);
   };
 
-  let active = "team"
+  // 🔥 Handle chat selection with proper type mapping
+  const handleChatClick = (item, itemType) => {
+    // Map to frontend types
+    const chatData = {
+      id: item.id,
+      type: itemType, // "group" or "dm" or "all"
+      name: item.name,
+      icon: item.icon,
+      department: item.department,
+      userId: item.userId,
+      avatar: item.avatar,
+      role: item.role,
+      status: item.status,
+      members: item.members,
+      online: item.online,
+      unread: item.unread,
+      mentions: item.mentions,
+      lastMessage: item.lastMessage,
+      timestamp: item.timestamp,
+      isPinned: item.isPinned,
+      isMuted: item.isMuted,
+      isFavorite: item.isFavorite,
+    };
+
+    console.log("🔘 Chat clicked:", chatData);
+    onChatSelect?.(chatData);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -458,14 +515,11 @@ export default function ChatLeftSidebar({
           <button
             className={cn(
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-              activeFilter === "all"
+              activeTab === "all"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted"
             )}
-             onClick={() => {
-                setActiveFilter("all");
-                onTabChange?.("all");
-              }}
+            onClick={() => onTabChange?.("all")}
           >
             <Hash className="w-4 h-4" />
             <div className="flex-1">
@@ -476,14 +530,11 @@ export default function ChatLeftSidebar({
           <button
             className={cn(
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-              activeFilter === "individual"
+              activeTab === "personal"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted"
             )}
-             onClick={() => {
-                setActiveFilter("individual");
-                onTabChange?.("personal");
-              }}
+            onClick={() => onTabChange?.("personal")}
           >
             <Users className="w-5 h-5" />
             <div className="flex-1">
@@ -511,12 +562,10 @@ export default function ChatLeftSidebar({
         {/* Header with Tabs */}
         <div className="border-b bg-card px-4 py-2.5 pt-3">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">{activeFilter === "all" ? "All Departments" : activeFilter === "individual" ? "Direct Messages" : "Email"}</h2>
+            <h2 className="text-lg font-bold">
+              {activeTab === "all" ? "All Departments" : activeTab === "personal" ? "Direct Messages" : "Email"}
+            </h2>
             <div className="flex items-center gap-2">
-
-              {/* <button className="p-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                <X className="w-4.5 h-4.5 rotate-45" />
-              </button> */}
             </div>
           </div>
 
@@ -538,34 +587,6 @@ export default function ChatLeftSidebar({
               </button>
             )}
           </div>
-
-          {/* Main Tabs */}
-          {/* <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <FilterTab
-              active={activeFilter === "all"}
-              onClick={() => {
-                setActiveFilter("all");
-                onTabChange?.("all");
-              }}
-              label="All"
-            />
-            <FilterTab
-              active={activeFilter === "groups"}
-              onClick={() => {
-                setActiveFilter("groups");
-                onTabChange?.("team");
-              }}
-              label="Groups"
-            />
-            <FilterTab
-              active={activeFilter === "individual"}
-              onClick={() => {
-                setActiveFilter("individual");
-                onTabChange?.("personal");
-              }}
-              label="Individual"
-            />
-          </div> */}
         </div>
 
         {/* Scrollable Content */}
@@ -578,8 +599,8 @@ export default function ChatLeftSidebar({
             </div>
           ) : (
             <div className="p-1 px-2 space-y-0.5">
-              {/* Show All - both groups and individuals */}
-              {activeFilter === "all" && (
+              {/* Show Department Chats */}
+              {activeTab === "all" && (
                 <>
                   {/* All Departments */}
                   <ChatItem
@@ -599,51 +620,7 @@ export default function ChatLeftSidebar({
                     }}
                     type="group"
                     isSelected={selectedChat?.id === "all-departments"}
-                    onClick={() => onChatSelect?.({ id: "all-departments", type: "group" })}
-                    onContextMenu={(e) => handleContextMenu(e, { id: "all-departments" }, "team")}
-                  />
-
-                  {/* Groups */}
-                  {filteredDepartments.map((dept) => (
-                    <ChatItem
-                      key={dept.id}
-                      item={dept}
-                      type="group"
-                      isSelected={selectedChat?.id === dept.id}
-                      onClick={() => onChatSelect?.({ ...dept, type: "group" })}
-                      onContextMenu={(e) => handleContextMenu(e, dept, "team")}
-                      isDragging={draggedItem?.item.id === dept.id}
-                      isDragOver={dragOverItem === dept.id}
-                      onDragStart={(e) => handleDragStart(e, dept, "team")}
-                      onDragOver={(e) => handleDragOver(e, dept)}
-                      onDrop={(e) => handleDrop(e, dept, "team")}
-                    />
-                  ))}
-
-                  {/* Individuals */}
-                  {/* {filteredMembers.map((member) => (
-                    <ChatItem
-                      key={member.id}
-                      item={member}
-                      type="dm"
-                      isSelected={selectedChat?.id === member.id}
-                      onClick={() => onChatSelect?.({ ...member, type: "dm" })}
-                      onContextMenu={(e) => handleContextMenu(e, member, "personal")}
-                      isDragging={draggedItem?.item.id === member.id}
-                      isDragOver={dragOverItem === member.id}
-                      onDragStart={(e) => handleDragStart(e, member, "personal")}
-                      onDragOver={(e) => handleDragOver(e, member)}
-                      onDrop={(e) => handleDrop(e, member, "personal")}
-                    />
-                  ))} */}
-                </>
-              )}
-
-              {/* Show only Groups */}
-              {activeFilter === "groups" && (
-                <>
-                  <ChatItem
-                    item={{
+                    onClick={() => handleChatClick({
                       id: "all-departments",
                       name: "All Departments",
                       icon: Hash,
@@ -656,20 +633,18 @@ export default function ChatLeftSidebar({
                       isPinned: true,
                       isMuted: false,
                       isFavorite: false,
-                    }}
-                    type="group"
-                    isSelected={selectedChat?.id === "all-departments"}
-                    onClick={() => onChatSelect?.({ id: "all-departments", type: "group" })}
+                    }, "all")}
                     onContextMenu={(e) => handleContextMenu(e, { id: "all-departments" }, "team")}
                   />
 
+                  {/* Individual Departments */}
                   {filteredDepartments.map((dept) => (
                     <ChatItem
                       key={dept.id}
                       item={dept}
                       type="group"
                       isSelected={selectedChat?.id === dept.id}
-                      onClick={() => onChatSelect?.({ ...dept, type: "group" })}
+                      onClick={() => handleChatClick(dept, "group")}
                       onContextMenu={(e) => handleContextMenu(e, dept, "team")}
                       isDragging={draggedItem?.item.id === dept.id}
                       isDragOver={dragOverItem === dept.id}
@@ -681,14 +656,14 @@ export default function ChatLeftSidebar({
 
                   {filteredDepartments.length === 0 && (
                     <div className="text-center py-12">
-                      <p className="text-xs text-muted-foreground">No groups found</p>
+                      <p className="text-xs text-muted-foreground">No departments found</p>
                     </div>
                   )}
                 </>
               )}
 
-              {/* Show only Individuals */}
-              {activeFilter === "individual" && (
+              {/* Show Individual Chats */}
+              {activeTab === "personal" && (
                 <>
                   {filteredMembers.map((member) => (
                     <ChatItem
@@ -696,7 +671,7 @@ export default function ChatLeftSidebar({
                       item={member}
                       type="dm"
                       isSelected={selectedChat?.id === member.id}
-                      onClick={() => onChatSelect?.({ ...member, type: "dm" })}
+                      onClick={() => handleChatClick(member, "dm")}
                       onContextMenu={(e) => handleContextMenu(e, member, "personal")}
                       isDragging={draggedItem?.item.id === member.id}
                       isDragOver={dragOverItem === member.id}
@@ -767,7 +742,7 @@ function ChatItem({
   onDrop,
 }) {
   const Icon = item.icon;
-  const isGroup = type === "group";
+  const isGroup = type === "group" || type === "all";
 
   return (
     <button
@@ -780,7 +755,7 @@ function ChatItem({
       onDragEnd={() => { }}
       className={cn(
         "w-full px-3 py-2.5 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
-        isSelected && "bg-muted",
+        isSelected && "bg-muted ring-2 ring-primary/20",
         isDragging && "opacity-50",
         isDragOver && "bg-primary/10"
       )}
