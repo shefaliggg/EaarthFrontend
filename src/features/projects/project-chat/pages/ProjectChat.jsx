@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { PageHeader } from "../../../../shared/components/PageHeader";
 import ChatLeftSidebar from "../components/ChatLeftSidebar";
 import ChatBox from "../components/ChatBox";
+import VideoVoiceCommunication from "../components/VideoVoiceCommunication";
 
 function ProjectChat() {
   const [activeTab, setActiveTab] = useState("team");
@@ -27,8 +28,8 @@ function ProjectChat() {
               onTranscribe={() => console.log("Transcribe")}
               onVideoCall={() => console.log("Video Call")}
             />
-            <CommingSoon />
-          </div> */}
+            {/* <CommingSoon /> */}
+          {/* </div> */} 
 
         {/* Main Chat Area */}
         <div className="lg:col-span-3">
