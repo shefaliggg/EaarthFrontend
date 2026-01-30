@@ -1,5 +1,5 @@
 import React from "react";
-import { Eye, EyeOff, Loader } from "lucide-react";
+import { CircleX, Eye, EyeOff, InfoIcon, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import eaarthLogo from "../../../assets/eaarth.webp";
 import { useLogin } from "../hooks/useLogin";
@@ -43,7 +43,8 @@ export const LoginPage = () => {
             </p>
 
             {error && (
-              <div className="bg-red-600/20 text-red-300 p-2 rounded-lg mb-3 text-xs">
+              <div className="bg-red-600/20 text-red-900 dark:text-red-100 p-2 py-3 rounded-lg mb-3 text-xs flex items-center gap-1">
+                <CircleX  className="size-4"/>
                 {error}
               </div>
             )}

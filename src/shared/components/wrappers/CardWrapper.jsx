@@ -4,8 +4,8 @@ import { SmartIcon } from "../SmartIcon";
 import { cn } from "../../config/utils";
 
 export default function CardWrapper({
-    title = "AI-Powered Predictive Insights",
-    icon: Icon = Sparkles,
+    title,
+    icon: Icon,
     iconColor = "text-primary",
     description = "",
     children,

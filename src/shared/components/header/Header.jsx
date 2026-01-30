@@ -14,7 +14,7 @@ import {
   Grid,
   Type,
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { NotificationsPanel } from '../NotificationPanel';
@@ -54,6 +54,10 @@ export default function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
+
+  // Extract project ID from URL or use default
+  const projectId = params.projectId || 'avatar-1';
 
   const { currentUser } = useSelector((state) => state.user);
 
@@ -80,7 +84,6 @@ export default function Header() {
   ];
 
   const projectMenus = useProjectMenus(PROJECTS);
-  console.log("role", role, "currentUser", currentUser);
 
   const navigationMenuList = [...projectMenus]
 
@@ -213,8 +216,6 @@ export default function Header() {
                       {role}
                     </span>
                   </div>
-
-                  {/* <ChevronDown className="text-muted-foreground" /> */}
                 </Button>
               </DropdownMenuTrigger>
 
@@ -223,10 +224,10 @@ export default function Header() {
 
                   if (item.type === "submenu") {
                     return (
-                      <Fragment>
-                        {item.separatorBefore && <DropdownMenuSeparator key={item.id} />}
+                      <Fragment key={item.id}>
+                        {item.separatorBefore && <DropdownMenuSeparator />}
 
-                        <DropdownMenuSub key={item.id}>
+                        <DropdownMenuSub>
                           <DropdownMenuSubTrigger className="gap-2">
                             <SmartIcon icon={item.icon} className="mr-2" />
                             {item.label}
@@ -266,11 +267,10 @@ export default function Header() {
                   }
 
                   return (
-                    <Fragment>
-                      {item.separatorBefore && <DropdownMenuSeparator key={item.id} />}
+                    <Fragment key={item.id}>
+                      {item.separatorBefore && <DropdownMenuSeparator />}
 
                       <DropdownMenuItem
-                        key={item.id}
                         className={cn(item.danger && "text-red-600")}
                         onClick={() => {
                           if (item.route) navigate(item.route);
@@ -299,6 +299,7 @@ export default function Header() {
         <NotificationsPanel
           isOpen={showNotifications}
           onClose={() => setShowNotifications(false)}
+          projectId={projectId}
         />
       )}
 

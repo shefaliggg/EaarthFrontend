@@ -8,7 +8,18 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <Toaster />
+      <Toaster
+        position="bottom-right"
+        expand={false}
+        richColors
+        toastOptions={{
+          style: {
+            background: "var(--background)",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+          },
+        }}
+      />
     </>
   );
 }
