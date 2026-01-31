@@ -480,6 +480,8 @@ export default function ChatLeftSidebar({
 
   // 🔥 Handle chat selection with proper type mapping
   const handleChatClick = (item, itemType) => {
+    console.log("🔘 ChatLeftSidebar: Chat clicked", { item, itemType });
+    
     // Map to frontend types
     const chatData = {
       id: item.id,
@@ -502,7 +504,7 @@ export default function ChatLeftSidebar({
       isFavorite: item.isFavorite,
     };
 
-    console.log("🔘 Chat clicked:", chatData);
+    console.log("📤 ChatLeftSidebar: Sending chat data to parent:", chatData);
     onChatSelect?.(chatData);
   };
 

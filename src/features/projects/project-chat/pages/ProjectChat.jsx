@@ -17,13 +17,13 @@ function ProjectChat() {
     if (location.state?.selectedChat) {
       const chatData = location.state.selectedChat;
 
-      console.log("📩 Received chat data:", chatData);
+      console.log("📩 ProjectChat: Received chat data from location:", chatData);
       console.log("🔍 Chat type:", chatData.type);
 
       // ✅ Determine which tab to show based on chat type
       const tab = getTabForConversationType(chatData.type);
       
-      console.log("📌 Setting active tab to:", tab);
+      console.log("📌 ProjectChat: Setting active tab to:", tab);
 
       // Set the correct tab
       setActiveTab(tab);
@@ -37,14 +37,14 @@ function ProjectChat() {
   }, [location.state]);
 
   const handleTabChange = (newTab) => {
-    console.log("🔄 Tab changed to:", newTab);
+    console.log("🔄 ProjectChat: Tab changed to:", newTab);
     setActiveTab(newTab);
     // Clear selection when switching tabs manually
     setSelectedChat(null);
   };
 
   const handleChatSelect = (chat) => {
-    console.log("💬 Chat selected:", chat);
+    console.log("💬 ProjectChat: Chat selected:", chat);
     setSelectedChat(chat);
   };
 
