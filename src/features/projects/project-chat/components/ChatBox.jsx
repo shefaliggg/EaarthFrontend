@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
+  Search,
   Settings2,
   Reply,
   Edit3,
@@ -26,7 +27,8 @@ import {
   Video as VideoIcon,
   FileText,
   MapPin,
-  Camera,
+  ChevronLeft,
+  ChevronRight,
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
@@ -38,7 +40,7 @@ import EmojiPicker from "emoji-picker-react";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-export default function EnhancedRealisticChatUI({ selectedChat }) {
+export default function EnhancedChatUI({ selectedChat }) {
   const [messageInput, setMessageInput] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -51,16 +53,15 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   
-  // Feature states
+  // New feature states
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  
-  // Poll feature states
-  const [showPollModal, setShowPollModal] = useState(false);
-  const [pollQuestion, setPollQuestion] = useState("");
-  const [pollOptions, setPollOptions] = useState(["", ""]);
   
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -72,14 +73,35 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
   const audioChunksRef = useRef([]);
   const recordingIntervalRef = useRef(null);
 
+  // 🔥 Store messages by chat ID to maintain conversation history
   const [messagesByChat, setMessagesByChat] = useState({});
   const [currentChatId, setCurrentChatId] = useState(null);
 
+  // 🔥 KEY FEATURE: Scroll to bottom function (from first code)
+  const scrollToBottom = useCallback((smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "auto"
+    });
+    setIsUserAtBottom(true);
+    setNewMessagesCount(0);
+  }, []);
+
+  // 🔥 CRITICAL: Initial mount - scroll to bottom on first load AND on refresh
+  useEffect(() => {
+    // Delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      scrollToBottom(false); // Use instant scroll for initial mount
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [scrollToBottom]);
+
+  // 🔥 Update messages when selectedChat changes - PREVENTS SCROLL JUMP
   useEffect(() => {
     if (selectedChat?.id) {
       console.log("💬 Chat changed to:", selectedChat);
       setCurrentChatId(selectedChat.id);
       
+      // Initialize messages for new chat if not exists
       if (!messagesByChat[selectedChat.id]) {
         const initialMessages = generateInitialMessages(selectedChat);
         setMessagesByChat(prev => ({
@@ -88,18 +110,28 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
         }));
       }
       
+      // Reset UI state when switching chats
       setReplyTo(null);
       setEditingMessage(null);
+      setIsSearchOpen(false);
+      setSearchQuery("");
       setSelectedMessage(null);
       setShowReactionPicker(null);
       setShowAttachMenu(false);
+      setShowEmojiPicker(false);
       
-      setTimeout(() => scrollToBottom(false), 100);
+      // 🔥 CRITICAL: Scroll to bottom AFTER messages load to prevent jump
+      setTimeout(() => {
+        scrollToBottom(false); // Use instant scroll for chat switching
+        setIsUserAtBottom(true);
+      }, 150);
     }
-  }, [selectedChat?.id]);
+  }, [selectedChat?.id, scrollToBottom]);
 
+  // Get current messages for the active chat
   const messages = currentChatId ? (messagesByChat[currentChatId] || []) : [];
 
+  // 🔥 Function to generate initial messages based on chat type
   const generateInitialMessages = (chat) => {
     const baseMessages = [
       {
@@ -184,13 +216,29 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     return baseMessages;
   };
 
-  const scrollToBottom = useCallback((smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: smooth ? "smooth" : "auto"
-    });
-    setIsUserAtBottom(true);
-    setNewMessagesCount(0);
-  }, []);
+  // Search functionality
+  useEffect(() => {
+    if (!searchQuery) {
+      setSearchResults([]);
+      return;
+    }
+
+    const results = messages.filter(
+      (m) =>
+        m.content &&
+        m.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    setSearchResults(results);
+    setActiveResultIndex(0);
+  }, [searchQuery, messages]);
+
+  const goToSearchResult = useCallback((index) => {
+    const msg = searchResults[index];
+    if (!msg) return;
+    scrollToMessage(msg.id);
+    setActiveResultIndex(index);
+  }, [searchResults]);
 
   const handleScroll = useCallback((e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -203,6 +251,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     }
   }, []);
 
+  // Auto-grow textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -210,6 +259,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     }
   }, [messageInput]);
 
+  // Load draft from localStorage
   useEffect(() => {
     if (currentChatId) {
       const draft = localStorage.getItem(`chat-draft-${currentChatId}`);
@@ -217,12 +267,14 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     }
   }, [currentChatId]);
 
+  // Save draft to localStorage
   useEffect(() => {
     if (currentChatId) {
       localStorage.setItem(`chat-draft-${currentChatId}`, messageInput);
     }
   }, [messageInput, currentChatId]);
 
+  // Simulate new message arrival
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isUserAtBottom) {
@@ -232,6 +284,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     return () => clearTimeout(timer);
   }, [isUserAtBottom]);
 
+  // Close pickers on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.emoji-picker-container') && !e.target.closest('.emoji-button')) {
@@ -259,6 +312,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
         replyTo: replyTo,
       };
 
+      // Update messages for current chat
       setMessagesByChat(prev => ({
         ...prev,
         [currentChatId]: [...(prev[currentChatId] || []), newMessage]
@@ -268,10 +322,12 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
       setReplyTo(null);
       localStorage.removeItem(`chat-draft-${currentChatId}`);
 
+      // 🔥 Auto-scroll to bottom when sending message (only if user was at bottom)
       if (isUserAtBottom) {
         setTimeout(() => scrollToBottom(), 50);
       }
 
+      // Simulate state changes
       setTimeout(() => {
         setMessagesByChat(prev => ({
           ...prev,
@@ -304,6 +360,8 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     if (e.key === "Escape") {
       setReplyTo(null);
       setEditingMessage(null);
+      setIsSearchOpen(false);
+      setSearchQuery("");
     }
   };
 
@@ -399,164 +457,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     setTimeout(() => setSelectedMessage(null), 2000);
   };
 
-  // 📍 Location Sharing Handler
-  const sendLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Location not supported by your browser");
-      return;
-    }
-
-    if (!currentChatId) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-
-        const newMessage = {
-          id: Date.now(),
-          sender: "You",
-          avatar: "YO",
-          isOwn: true,
-          type: "location",
-          lat: latitude,
-          lng: longitude,
-          label: "Current location",
-          time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-          timestamp: Date.now(),
-          state: "sending",
-        };
-
-        setMessagesByChat(prev => ({
-          ...prev,
-          [currentChatId]: [...(prev[currentChatId] || []), newMessage]
-        }));
-
-        setShowAttachMenu(false);
-
-        if (isUserAtBottom) {
-          setTimeout(() => scrollToBottom(), 50);
-        }
-
-        // Simulate state changes
-        setTimeout(() => {
-          setMessagesByChat(prev => ({
-            ...prev,
-            [currentChatId]: prev[currentChatId].map(m =>
-              m.id === newMessage.id ? { ...m, state: "sent" } : m
-            )
-          }));
-        }, 500);
-
-        setTimeout(() => {
-          setMessagesByChat(prev => ({
-            ...prev,
-            [currentChatId]: prev[currentChatId].map(m =>
-              m.id === newMessage.id ? { ...m, state: "delivered" } : m
-            )
-          }));
-        }, 1500);
-      },
-      (error) => {
-        alert("Permission denied or location unavailable");
-        console.error("Location error:", error);
-      }
-    );
-  };
-
-  // 📊 Poll Creation Handler
-  const handleCreatePoll = () => {
-    if (!pollQuestion.trim() || !currentChatId) {
-      alert("Please enter a question");
-      return;
-    }
-
-    const validOptions = pollOptions.filter(opt => opt.trim());
-    if (validOptions.length < 2) {
-      alert("Please enter at least 2 options");
-      return;
-    }
-
-    const newMessage = {
-      id: Date.now(),
-      sender: "You",
-      avatar: "YO",
-      isOwn: true,
-      type: "poll",
-      question: pollQuestion,
-      options: validOptions.map((text, index) => ({
-        id: index + 1,
-        text: text.trim(),
-        votes: 0,
-        voters: []
-      })),
-      allowMultiple: false,
-      voted: false,
-      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      timestamp: Date.now(),
-      state: "sending",
-    };
-
-    setMessagesByChat(prev => ({
-      ...prev,
-      [currentChatId]: [...(prev[currentChatId] || []), newMessage]
-    }));
-
-    // Reset poll form
-    setPollQuestion("");
-    setPollOptions(["", ""]);
-    setShowPollModal(false);
-    setShowAttachMenu(false);
-
-    if (isUserAtBottom) {
-      setTimeout(() => scrollToBottom(), 50);
-    }
-
-    // Simulate state changes
-    setTimeout(() => {
-      setMessagesByChat(prev => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map(m =>
-          m.id === newMessage.id ? { ...m, state: "sent" } : m
-        )
-      }));
-    }, 500);
-
-    setTimeout(() => {
-      setMessagesByChat(prev => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map(m =>
-          m.id === newMessage.id ? { ...m, state: "delivered" } : m
-        )
-      }));
-    }, 1500);
-  };
-
-  // Handle poll voting
-  const handlePollVote = (messageId, optionId) => {
-    if (!currentChatId) return;
-
-    setMessagesByChat(prev => ({
-      ...prev,
-      [currentChatId]: prev[currentChatId].map(msg => {
-        if (msg.id === messageId && msg.type === "poll") {
-          // Check if already voted
-          if (msg.voted) return msg;
-
-          return {
-            ...msg,
-            voted: true,
-            options: msg.options.map(opt =>
-              opt.id === optionId
-                ? { ...opt, votes: opt.votes + 1, voters: [...(opt.voters || []), "You"] }
-                : opt
-            )
-          };
-        }
-        return msg;
-      })
-    }));
-  };
-
+  // File upload handlers
   const handleFileUpload = (e, type) => {
     if (!currentChatId) return;
     
@@ -585,10 +486,12 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
 
     setShowAttachMenu(false);
 
+    // 🔥 Auto-scroll when uploading file (only if user was at bottom)
     if (isUserAtBottom) {
       setTimeout(() => scrollToBottom(), 50);
     }
 
+    // Simulate state changes
     setTimeout(() => {
       setMessagesByChat(prev => ({
         ...prev,
@@ -610,6 +513,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     e.target.value = '';
   };
 
+  // Voice recording handlers
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -647,6 +551,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
           [currentChatId]: [...(prev[currentChatId] || []), newMessage]
         }));
         
+        // 🔥 Auto-scroll when sending voice message (only if user was at bottom)
         if (isUserAtBottom) {
           setTimeout(() => scrollToBottom(), 50);
         }
@@ -707,6 +612,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     }, 0);
   };
 
+  // Close context menu on click outside
   useEffect(() => {
     const handleClick = () => {
       setContextMenu(null);
@@ -716,6 +622,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
+  // 🔥 Show empty state if no chat selected
   if (!selectedChat) {
     return (
       <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] sticky top-5 flex items-center justify-center">
@@ -736,75 +643,122 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
     <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] sticky top-5 flex flex-col mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b rounded-t-3xl backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          {selectedChat.type === "dm" ? (
-            <Avatar className="h-9 w-9 border-2 border-primary/20">
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
-                {selectedChat.avatar}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className="p-2 rounded-full bg-primary/10">
-              {selectedChat.icon && <selectedChat.icon className="w-5 h-5 text-primary" />}
-            </div>
-          )}
-
-          <div>
-            <h3 className="font-semibold text-sm">{selectedChat.name}</h3>
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        {!isSearchOpen ? (
+          <>
+            <div className="flex items-center gap-2.5">
               {selectedChat.type === "dm" ? (
-                <>
-                  <span className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    selectedChat.status === "online" && "bg-green-500 animate-pulse",
-                    selectedChat.status === "away" && "bg-yellow-500",
-                    selectedChat.status === "offline" && "bg-gray-400"
-                  )} />
-                  <span>{selectedChat.role}</span>
-                </>
+                <Avatar className="h-9 w-9 border-2 border-primary/20">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
+                    {selectedChat.avatar}
+                  </AvatarFallback>
+                </Avatar>
               ) : (
-                <>
-                  <span>{selectedChat.members || 0} members</span>
-                  {selectedChat.online > 0 && (
+                <div className="p-2 rounded-full bg-primary/10">
+                  {selectedChat.icon && <selectedChat.icon className="w-5 h-5 text-primary" />}
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold text-sm">{selectedChat.name}</h3>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  {selectedChat.type === "dm" ? (
                     <>
-                      <span className="w-0.5 h-0.5 bg-muted-foreground rounded-full" />
-                      <span className="flex items-center gap-1 text-green-500 font-medium">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        {selectedChat.online} online
-                      </span>
+                      <span className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        selectedChat.status === "online" && "bg-green-500 animate-pulse",
+                        selectedChat.status === "away" && "bg-yellow-500",
+                        selectedChat.status === "offline" && "bg-gray-400"
+                      )} />
+                      <span>{selectedChat.role}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{selectedChat.members || 0} members</span>
+                      {selectedChat.online > 0 && (
+                        <>
+                          <span className="w-0.5 h-0.5 bg-muted-foreground rounded-full" />
+                          <span className="flex items-center gap-1 text-green-500 font-medium">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                            {selectedChat.online} online
+                          </span>
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
+                </div>
+              </div>
             </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors"
+                aria-label="Summarize conversation"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">Summarize</span>
+              </button>
+
+              <div className="w-px h-8 bg-border mx-0.5" />
+
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-1.5 rounded-md hover:bg-accent transition-colors"
+                aria-label="Search messages"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+
+              <button
+                className="p-1.5 rounded-md hover:bg-accent transition-colors"
+                aria-label="Settings"
+              >
+                <Settings2 className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 w-full">
+            <button
+              onClick={() => {
+                setIsSearchOpen(false);
+                setSearchQuery("");
+                setSearchResults([]);
+              }}
+              className="p-1.5 rounded-md hover:bg-accent transition-colors flex-shrink-0"
+              aria-label="Close search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search messages..."
+              className="flex-1 h-8"
+              autoFocus
+            />
+
+            {searchResults.length > 0 && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>{activeResultIndex + 1} / {searchResults.length}</span>
+                <button
+                  onClick={() => goToSearchResult(Math.max(0, activeResultIndex - 1))}
+                  disabled={activeResultIndex === 0}
+                  className="p-1 rounded hover:bg-accent disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => goToSearchResult(Math.min(searchResults.length - 1, activeResultIndex + 1))}
+                  disabled={activeResultIndex === searchResults.length - 1}
+                  className="p-1 rounded hover:bg-accent disabled:opacity-50"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors"
-            aria-label="Summarize conversation"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="hidden sm:inline">Summarize</span>
-          </button>
-
-          <button
-            className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors hidden sm:flex"
-            aria-label="Translate messages"
-          >
-            Translate
-          </button>
-
-          <div className="w-px h-8 bg-border mx-0.5" />
-
-          <button
-            className="p-1.5 rounded-md hover:bg-accent transition-colors"
-            aria-label="Settings"
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Messages Container */}
@@ -863,7 +817,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
               onScrollToReply={scrollToMessage}
               hoveredMessageId={hoveredMessageId}
               setHoveredMessageId={setHoveredMessageId}
-              onPollVote={handlePollVote}
+              searchQuery={searchQuery}
             />
           );
         })}
@@ -893,7 +847,6 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Context Menu */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -911,68 +864,6 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
           }}
           canEdit={canEditMessage(contextMenu.message)}
         />
-      )}
-
-      {/* Poll Creation Modal */}
-      {showPollModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowPollModal(false)}>
-          <div className="bg-card p-5 rounded-xl w-[360px] space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Create Poll</h3>
-              <button onClick={() => setShowPollModal(false)} className="p-1 hover:bg-muted rounded">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <Input
-              placeholder="Ask a question..."
-              value={pollQuestion}
-              onChange={(e) => setPollQuestion(e.target.value)}
-              className="text-sm"
-            />
-
-            <div className="space-y-2">
-              {pollOptions.map((option, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    placeholder={`Option ${index + 1}`}
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...pollOptions];
-                      newOptions[index] = e.target.value;
-                      setPollOptions(newOptions);
-                    }}
-                    className="text-sm"
-                  />
-                  {index > 1 && (
-                    <button
-                      onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
-                      className="p-2 hover:bg-muted rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {pollOptions.length < 6 && (
-              <button
-                onClick={() => setPollOptions([...pollOptions, ""])}
-                className="text-sm text-primary hover:underline"
-              >
-                + Add option
-              </button>
-            )}
-
-            <button
-              onClick={handleCreatePoll}
-              className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 font-medium hover:opacity-90 transition-opacity"
-            >
-              Create Poll
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Input Area */}
@@ -1077,30 +968,30 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
 
               {showAttachMenu && (
                 <div className="absolute bottom-14 left-0 bg-card border rounded-xl shadow-xl p-2 flex gap-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                  <AttachMenuItem
+                  <AttachmentButton
                     icon={ImageIcon}
                     label="Photo"
                     onClick={() => fileInputRef.current?.click()}
                   />
-                  <AttachMenuItem
+                  <AttachmentButton
                     icon={VideoIcon}
                     label="Video"
                     onClick={() => videoInputRef.current?.click()}
                   />
-                  <AttachMenuItem
+                  <AttachmentButton
                     icon={FileText}
                     label="File"
                     onClick={() => documentInputRef.current?.click()}
                   />
-                  <AttachMenuItem
+                  <AttachmentButton
                     icon={MapPin}
                     label="Location"
-                    onClick={sendLocation}
+                    onClick={() => alert('Location sharing coming soon!')}
                   />
-                  <AttachMenuItem
+                  <AttachmentButton
                     icon={BarChart3}
                     label="Poll"
-                    onClick={() => setShowPollModal(true)}
+                    onClick={() => alert('Poll feature coming soon!')}
                   />
                 </div>
               )}
@@ -1196,7 +1087,7 @@ export default function EnhancedRealisticChatUI({ selectedChat }) {
   );
 }
 
-function AttachMenuItem({ icon: Icon, label, onClick }) {
+function AttachmentButton({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -1228,7 +1119,7 @@ function MessageBubble({
   setShowReactionPicker,
   onReaction,
   onScrollToReply,
-  onPollVote,
+  searchQuery,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
@@ -1252,6 +1143,19 @@ function MessageBubble({
       setPlayProgress(0);
     }
   }, [isPlaying, message.type, message.totalDuration]);
+
+  const highlightText = (text) => {
+    if (!searchQuery || !text) return text;
+    
+    const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+    return parts.map((part, i) => 
+      part.toLowerCase() === searchQuery.toLowerCase() ? (
+        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800">{part}</mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   if (message.deleted) {
     return (
@@ -1299,12 +1203,8 @@ function MessageBubble({
       )}
 
       <div
-        onMouseEnter={() => {
-          setHoveredMessageId(message.id);
-        }}
-        onMouseLeave={() => {
-          setHoveredMessageId(null);
-        }}
+        onMouseEnter={() => setHoveredMessageId(message.id)}
+        onMouseLeave={() => setHoveredMessageId(null)}
         className={cn("flex flex-col max-w-[50%]", isOwn ? "items-end" : "items-start")}
       >
         {!isOwn && isGroupStart && (
@@ -1350,11 +1250,10 @@ function MessageBubble({
               isSelected && "ring-2 ring-primary/50 scale-[1.02]"
             )}
           >
-            {/* Text Message */}
             {message.content && !message.type && (
               <div>
                 <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                  {message.content}
+                  {highlightText(message.content)}
                 </p>
                 {message.edited && (
                   <span className={cn(
@@ -1367,19 +1266,17 @@ function MessageBubble({
               </div>
             )}
 
-            {/* Image Message */}
             {message.type === "image" && (
               <div className="space-y-2">
                 <img
                   src={message.url}
                   alt="Shared image"
-                  className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/20"
+                  className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
                   onClick={() => window.open(message.url, '_blank')}
                 />
               </div>
             )}
 
-            {/* Video Message */}
             {message.type === "video" && (
               <div className="space-y-2">
                 <video
@@ -1390,7 +1287,6 @@ function MessageBubble({
               </div>
             )}
 
-            {/* Document Message */}
             {message.type === "document" && (
               <div className="flex items-center gap-3 min-w-[200px]">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -1410,7 +1306,6 @@ function MessageBubble({
               </div>
             )}
 
-            {/* Voice Message */}
             {message.type === "voice" && (
               <div className="flex items-center gap-3 min-w-[260px] max-w-full">
                 <button
@@ -1454,86 +1349,6 @@ function MessageBubble({
                     <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* 📍 Location Message */}
-            {message.type === "location" && (
-              <a
-                href={`https://www.google.com/maps?q=${message.lat},${message.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <div className="rounded-xl overflow-hidden border min-w-[280px]">
-                  <img
-                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${message.lat},${message.lng}&zoom=15&size=300x180&markers=color:red%7C${message.lat},${message.lng}&key=YOUR_API_KEY`}
-                    alt="Location"
-                    className="w-full h-[180px] object-cover bg-muted"
-                    onError={(e) => {
-                      e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='180'%3E%3Crect width='300' height='180' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3EMap Preview%3C/text%3E%3C/svg%3E`;
-                    }}
-                  />
-                  <div className={cn(
-                    "p-2 text-xs flex items-center gap-1.5",
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )}>
-                    <MapPin className="w-3.5 h-3.5" />
-                    {message.label}
-                  </div>
-                </div>
-              </a>
-            )}
-
-            {/* 📊 Poll Message */}
-            {message.type === "poll" && (
-              <div className="space-y-3 min-w-[280px]">
-                <p className="font-medium text-sm">{message.question}</p>
-
-                {message.options.map((opt) => {
-                  const totalVotes = message.options.reduce((sum, o) => sum + o.votes, 0);
-                  const percentage = totalVotes > 0 ? (opt.votes / totalVotes) * 100 : 0;
-
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => !message.voted && onPollVote(message.id, opt.id)}
-                      disabled={message.voted}
-                      className={cn(
-                        "w-full px-3 py-2.5 rounded-lg border text-sm flex justify-between items-center transition-all relative overflow-hidden",
-                        message.voted
-                          ? "cursor-default"
-                          : "hover:bg-muted cursor-pointer"
-                      )}
-                    >
-                      {/* Progress bar background */}
-                      <div
-                        className={cn(
-                          "absolute inset-0 transition-all duration-500",
-                          isOwn ? "bg-primary-foreground/20" : "bg-primary/10"
-                        )}
-                        style={{ width: `${percentage}%` }}
-                      />
-
-                      <span className="relative z-10 font-medium">{opt.text}</span>
-                      <span className={cn(
-                        "relative z-10 font-semibold",
-                        isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                      )}>
-                        {message.voted ? `${opt.votes} (${Math.round(percentage)}%)` : opt.votes}
-                      </span>
-                    </button>
-                  );
-                })}
-
-                {message.voted && (
-                  <p className={cn(
-                    "text-xs text-center",
-                    isOwn ? "text-primary-foreground/50" : "text-muted-foreground"
-                  )}>
-                    {message.options.reduce((sum, o) => sum + o.votes, 0)} total votes
-                  </p>
-                )}
               </div>
             )}
 
