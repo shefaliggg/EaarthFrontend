@@ -74,24 +74,7 @@ export const CardNavigator = ({
             canProceed && "group-hover:translate-x-1"
           )} />
         </button>
-      ) : (
-        <button
-          onClick={onFinish}
-          disabled={!canProceed}
-          className={cn(
-            "group flex items-center gap-2.5 px-8 py-3 rounded-lg font-semibold text-base transition-all duration-200",
-            canProceed
-              ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 active:scale-95 shadow-lg shadow-green-200 hover:shadow-xl hover:shadow-green-300"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-          )}
-        >
-          <Rocket className={cn(
-            "w-5 h-5 transition-transform",
-            canProceed && "group-hover:rotate-12 group-hover:-translate-y-0.5"
-          )} />
-          <span>Initialize Project</span>
-        </button>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -1,133 +1,100 @@
 import React from 'react';
-import { Calendar, FileText, Clock, Users, Check, MessageSquare, Crown, Sparkles } from 'lucide-react';
+import { Calendar, FileText, Clock, Users, MessageSquare, Bell, FileStack, DollarSign, ShoppingCart, Truck, Play, Clipboard, Box, Dog, Car, MapPin, Cloud, Clock2, Star, Users2 } from 'lucide-react';
+import { Switch } from '../../../shared/components/ui/switch';
 
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
-const ApplicationCard = ({ icon: Icon, title, description, isSelected, onClick, isFree, isPremium }) => (
+const ApplicationCard = ({ icon: Icon, title, description, price, isSelected, onClick, isFree, isPremium }) => (
   <button
     onClick={onClick}
     disabled={isFree}
     className={cn(
-      "relative p-6 rounded-xl border-2 transition-all duration-200 text-left w-full group",
-      !isFree && "hover:shadow-lg active:scale-[0.98]",
+      "relative p-4 rounded-lg border transition-all duration-200 text-left w-full group flex items-center gap-3 h-20",
+      !isFree && "hover:shadow-md active:scale-[0.98] cursor-pointer",
       isFree && "cursor-default",
       isSelected
-        ? "border-purple-600 bg-gradient-to-br from-purple-50 to-white shadow-lg shadow-purple-100"
-        : "border-gray-200 hover:border-purple-300 bg-white hover:bg-purple-50/50"
+        ? "border-purple-600 bg-purple-50 shadow-md"
+        : "border-gray-200 hover:border-purple-300 bg-white hover:bg-purple-50/30"
     )}
   >
-    {/* Free Badge */}
-    {isFree && (
-      <div className="absolute top-3 right-3 px-2.5 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full flex items-center gap-1">
-        <Check className="w-3 h-3" />
-        FREE
-      </div>
-    )}
+    {/* Icon */}
+    <div
+      className={cn(
+        "p-2 rounded-md transition-all duration-200 flex-shrink-0",
+        isSelected || isFree
+          ? "bg-purple-600 text-white"
+          : "bg-gray-100 text-gray-600 group-hover:bg-purple-100 group-hover:text-purple-600"
+      )}
+    >
+      <Icon className="w-4 h-4" strokeWidth={2} />
+    </div>
 
-    {/* Premium Badge */}
-    {isPremium && !isFree && (
-      <div className="absolute top-3 right-3 px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full flex items-center gap-1 shadow-md">
-        <Crown className="w-3 h-3" />
-        PREMIUM
-      </div>
-    )}
-
-    {/* Selection Indicator - Only for non-free items */}
-    {!isFree && (
-      <div
-        className={cn(
-          "absolute top-4 right-4 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
-          isSelected
-            ? "border-purple-600 bg-purple-600 scale-100"
-            : "border-gray-300 bg-white group-hover:border-purple-400 scale-90"
-        )}
-      >
-        {isSelected && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-      </div>
-    )}
-
-    <div className="flex items-start gap-4 pr-12">
-      {/* Icon */}
-      <div
-        className={cn(
-          "p-3.5 rounded-lg transition-all duration-200",
-          isSelected || isFree
-            ? "bg-purple-600 text-white shadow-md shadow-purple-200"
-            : "bg-gray-100 text-gray-600 group-hover:bg-purple-100 group-hover:text-purple-600"
-        )}
-      >
-        <Icon className="w-6 h-6" strokeWidth={2} />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 pt-1">
+    {/* Content */}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2">
         <h3
           className={cn(
-            "font-semibold mb-1.5 transition-colors duration-200",
-            isSelected || isFree ? "text-purple-900" : "text-gray-900 group-hover:text-purple-700"
+            "font-medium text-sm transition-colors duration-200 truncate",
+            isSelected || isFree ? "text-gray-900" : "text-gray-900 group-hover:text-purple-700"
           )}
         >
           {title}
         </h3>
-        <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+        {isFree ? (
+          <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full whitespace-nowrap">FREE</span>
+        ) : (
+          <span className="text-xs font-semibold text-purple-600 whitespace-nowrap">{price}</span>
+        )}
       </div>
+      <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{description}</p>
     </div>
 
-    {/* Hover Effect - Only for non-free items */}
-    {!isFree && (
-      <div
-        className={cn(
-          "absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 pointer-events-none",
-          "bg-gradient-to-br from-purple-100/20 to-transparent",
-          !isSelected && "group-hover:opacity-100"
-        )}
-      />
-    )}
+    {/* Toggle Button */}
+    <Switch
+      checked={isSelected}
+      onCheckedChange={() => onClick()}
+      disabled={isFree}
+      className={cn(
+        isFree && "opacity-100 cursor-default",
+        isFree ? "data-[state=checked]:bg-green-600" : "data-[state=checked]:bg-purple-600"
+      )}
+    />
   </button>
 );
 
 export const ProjectApplications = ({ selectedApps = [], onChange }) => {
   const applications = [
-    {
-      id: 'callsheet',
-      icon: FileText,
-      title: 'Call Sheet',
-      description: 'Create and distribute daily call sheets with real-time updates',
-      isFree: true,
-      isPremium: false
-    },
-    {
-      id: 'chat',
-      icon: MessageSquare,
-      title: 'Team Chat & Collaboration',
-      description: 'Real-time messaging, file sharing, and team communication hub',
-      isFree: true,
-      isPremium: false
-    },
-    {
-      id: 'onboarding',
-      icon: Users,
-      title: 'Crew Onboarding',
-      description: 'Streamline crew registration, documentation, and compliance management',
-      isFree: false,
-      isPremium: true
-    },
-    {
-      id: 'timesheet',
-      icon: Clock,
-      title: 'Timesheet Management',
-      description: 'Track crew hours, overtime, and working time records with automated calculations',
-      isFree: false,
-      isPremium: true
-    },
-    {
-      id: 'calendar',
-      icon: Calendar,
-      title: 'Production Calendar',
-      description: 'Schedule shoots, meetings, and key milestones across the production timeline',
-      isFree: false,
-      isPremium: true
-    }
+    // Free Apps
+    { id: 'chat', icon: MessageSquare, title: 'Project Chat', description: 'Real-time messaging and collaboration', price: 'FREE', isFree: true, isPremium: false },
+    { id: 'crew', icon: Users, title: 'Crew', description: 'Crew management system', price: 'FREE', isFree: true, isPremium: false },
+    { id: 'cast', icon: Users2, title: 'Cast', description: 'Cast management system', price: 'FREE', isFree: true, isPremium: false },
+    { id: 'documents', icon: FileText, title: 'Documents', description: 'Document storage and sharing', price: 'FREE', isFree: true, isPremium: false },
+    
+    // Premium Applications
+    { id: 'calendar', icon: Calendar, title: 'Project Calendar', description: 'Schedule shoots and milestones', price: '$10/mo', isFree: false, isPremium: true },
+    { id: 'callsheets', icon: FileText, title: 'Call Sheets', description: 'Detailed daily call sheets', price: '$5/mo', isFree: false, isPremium: true },
+    { id: 'schedule', icon: Clock2, title: 'Shooting Schedule', description: 'Production scheduling', price: '$8/mo', isFree: false, isPremium: true },
+    { id: 'asset', icon: Box, title: 'Asset', description: 'Asset management', price: '$12/mo', isFree: false, isPremium: true },
+    { id: 'costume', icon: Users2, title: 'Costume', description: 'Costume tracking', price: '$15/mo', isFree: false, isPremium: true },
+    { id: 'catering', icon: Truck, title: 'Catering', description: 'Catering management', price: '$20/mo', isFree: false, isPremium: true },
+    { id: 'accounts', icon: DollarSign, title: 'Accounts', description: 'Financial management', price: '$25/mo', isFree: false, isPremium: true },
+    { id: 'script', icon: FileStack, title: 'Script', description: 'Script management', price: '$8/mo', isFree: false, isPremium: true },
+    { id: 'market', icon: ShoppingCart, title: 'Market', description: 'Marketplace integration', price: '$10/mo', isFree: false, isPremium: true },
+    { id: 'transport', icon: Truck, title: 'Transport', description: 'Transport management', price: '$12/mo', isFree: false, isPremium: true },
+    { id: 'eplayer', icon: Play, title: 'E Player', description: 'Video player', price: '$15/mo', isFree: false, isPremium: true },
+    { id: 'forms', icon: Clipboard, title: 'Forms', description: 'Form builder', price: '$5/mo', isFree: false, isPremium: true },
+    { id: 'props', icon: Box, title: 'Props & Assets', description: 'Props management', price: '$18/mo', isFree: false, isPremium: true },
+    { id: 'animals', icon: Dog, title: 'Animals', description: 'Animal coordination', price: '$22/mo', isFree: false, isPremium: true },
+    { id: 'vehicles', icon: Car, title: 'Vehicles', description: 'Vehicle management', price: '$15/mo', isFree: false, isPremium: true },
+    { id: 'locations', icon: MapPin, title: 'Locations', description: 'Location scouting', price: '$12/mo', isFree: false, isPremium: true },
+    { id: 'cloud', icon: Cloud, title: 'Cloud', description: 'Cloud storage', price: '$30/mo', isFree: false, isPremium: true },
+    { id: 'timesheets', icon: Clock, title: 'Timesheets', description: 'Track crew hours', price: '$10/mo', isFree: false, isPremium: true },
+    { id: 'noticeboard', icon: Bell, title: 'Notice Board', description: 'Announcement board', price: '$5/mo', isFree: false, isPremium: true },
+    { id: 'breakdown', icon: FileStack, title: 'Script Breakdown', description: 'Script analysis', price: '$8/mo', isFree: false, isPremium: true },
+    { id: 'reports', icon: FileText, title: 'Production Reports', description: 'Daily reports', price: '$12/mo', isFree: false, isPremium: true },
+    { id: 'casting', icon: Star, title: 'Casting Calls', description: 'Casting management', price: '$20/mo', isFree: false, isPremium: true },
+    { id: 'budget', icon: DollarSign, title: 'Budget', description: 'Budget tracking', price: '$15/mo', isFree: false, isPremium: true },
+    { id: 'eearth_sign', icon: Clipboard, title: 'EAARTH Sign', description: 'Digital signing', price: '$18/mo', isFree: false, isPremium: true }
   ];
 
   // Free apps are always included
@@ -146,145 +113,41 @@ export const ProjectApplications = ({ selectedApps = [], onChange }) => {
 
   const premiumApps = applications.filter(app => !app.isFree);
   const selectedPremiumCount = selectedApps.length;
+  const totalPrice = selectedApps.reduce((sum, appId) => {
+    const app = applications.find(a => a.id === appId);
+    const price = app?.price?.replace(/[^\d]/g, '') || 0;
+    return sum + parseInt(price);
+  }, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Select Project Applications
-        </h3>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          Choose which tools you want to enable for this project. Free applications are included by default.
-        </p>
-
-        {/* Info Banner */}
-        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <Sparkles className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-blue-900">
-              Free tier includes {freeApps.length} essential applications
-            </p>
-            <p className="text-xs text-blue-700 mt-1">
-              Premium applications can be added to unlock advanced features and capabilities
-            </p>
-          </div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-gray-900">Available Applications</h3>
+          <p className="text-xs text-gray-600">Select the applications you want to enable for this project</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-500">Selected Total</p>
+          <p className="text-sm font-semibold text-purple-600">${totalPrice}/mo</p>
         </div>
       </div>
 
       {/* Application Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {applications.map((app) => (
           <ApplicationCard
             key={app.id}
             icon={app.icon}
             title={app.title}
             description={app.description}
+            price={app.price}
             isSelected={allSelectedApps.includes(app.id)}
             onClick={() => toggleApp(app.id)}
             isFree={app.isFree}
             isPremium={app.isPremium}
           />
         ))}
-      </div>
-
-      {/* Selection Summary */}
-      <div className="space-y-3">
-        {/* Free Apps Summary */}
-        <div className="p-4 rounded-lg border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold bg-green-600 text-white shadow-md shadow-green-200">
-                {freeApps.length}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  Free Applications Included
-                </p>
-                <p className="text-xs text-gray-600">
-                  Call Sheet & Team Chat available at no cost
-                </p>
-              </div>
-            </div>
-            <Check className="w-5 h-5 text-green-600" />
-          </div>
-        </div>
-
-        {/* Premium Apps Summary */}
-        <div
-          className={cn(
-            "p-4 rounded-lg border-2 transition-all duration-300",
-            selectedPremiumCount > 0
-              ? "bg-gradient-to-r from-purple-50 to-amber-50 border-purple-200"
-              : "bg-gray-50 border-gray-200"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300",
-                  selectedPremiumCount > 0
-                    ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md shadow-purple-200"
-                    : "bg-gray-300 text-gray-600"
-                )}
-              >
-                {selectedPremiumCount}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {selectedPremiumCount === 0 && "No premium applications selected"}
-                  {selectedPremiumCount === 1 && "1 premium application selected"}
-                  {selectedPremiumCount > 1 && `${selectedPremiumCount} premium applications selected`}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {selectedPremiumCount === 0
-                    ? `${premiumApps.length} premium tools available to enhance your project`
-                    : "Premium features will be available immediately after project creation"}
-                </p>
-              </div>
-            </div>
-
-            {selectedPremiumCount > 0 && (
-              <button
-                onClick={() => onChange([])}
-                className="text-xs font-medium text-purple-600 hover:text-purple-700 hover:underline transition-colors"
-              >
-                Clear premium
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Total Summary */}
-        <div className="p-4 rounded-lg bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center text-sm font-bold">
-                  {allSelectedApps.length}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    Total Applications: {allSelectedApps.length} of {applications.length}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {freeApps.length} free + {selectedPremiumCount} premium
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {selectedPremiumCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 rounded-full">
-                <Crown className="w-3.5 h-3.5 text-amber-700" />
-                <span className="text-xs font-semibold text-amber-900">
-                  Premium Tier
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

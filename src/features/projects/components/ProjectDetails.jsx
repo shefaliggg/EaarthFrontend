@@ -7,13 +7,14 @@ import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
 import { Stepper } from '../../../shared/components/stepper/Stepper';
 import { CardNavigator } from '../../../shared/components/stepper/CardNavigator';
 import { ProjectApplications } from '../components/ProjectApplications';
+import { OrderSummary } from '../components/OrderSummary';
 
 // Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-[11px] font-normal text-gray-500 uppercase tracking-wider">{label}</label>
         {showInfo && <Info className="w-4 h-4 text-gray-400" />}
       </div>
       <div className="flex gap-2 flex-wrap">
@@ -22,7 +23,7 @@ const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = fals
             key={option}
             type="button"
             onClick={() => onChange(option)}
-            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
               selected === option
                 ? 'bg-purple-600 text-white border-purple-600'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
@@ -41,10 +42,10 @@ const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) =>
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-[11px] font-normal text-gray-500 uppercase tracking-wider">{label}</label>
         {showInfo && <Info className="w-4 h-4 text-gray-400" />}
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-4">
         {options.map((option) => (
           <label key={option.value} className="flex items-center gap-2 cursor-pointer">
             <input
@@ -99,7 +100,6 @@ const ProjectDetails = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     projectName: '',
-    productionCompany: '',
     genre: '',
     primaryLocation: '',
     startDate: '',
@@ -117,7 +117,25 @@ const ProjectDetails = ({ onComplete }) => {
     producer: '',
     director: '',
     productionManager: '',
-    selectedApplications: []
+    selectedApplications: [],
+    packageTier: 'agency',
+    billingPeriod: 'weekly',
+    promoCode: '',
+    financialController: {
+      fullName: '',
+      email: '',
+      permission: false
+    },
+    productionManager: {
+      fullName: '',
+      email: '',
+      permission: false
+    },
+    productionAdmin: {
+      fullName: '',
+      email: '',
+      permission: false
+    }
   });
 
   const updateField = (field, value) => {
@@ -131,23 +149,23 @@ const ProjectDetails = ({ onComplete }) => {
   ];
 
   const steps = [
-    { id: 'basic', label: 'Basic Information' },
-    { id: 'config', label: 'Project Configuration' },
-    { id: 'financial', label: 'Financial & Personnel' },
-    { id: 'applications', label: 'Project Applications' }
+    { id: 'details', label: 'Project Details' },
+    { id: 'package', label: 'Select Package' },
+    { id: 'applications', label: 'Project Applications' },
+    { id: 'order', label: 'Order Summary' }
   ];
 
   // Validation logic
   const canProceed = () => {
     switch (step) {
       case 0:
-        return formData.projectName.trim() && formData.productionCompany.trim();
+        return formData.projectName.trim() && formData.projectType && formData.legalTerritory;
       case 1:
-        return formData.projectType && formData.legalTerritory;
+        return formData.packageTier; // Package tier is required
       case 2:
-        return formData.budgetAmount && parseFloat(formData.budgetAmount) > 0;
-      case 3:
         return true; // Applications are optional
+      case 3:
+        return true; // Order summary is final step
       default:
         return true;
     }
@@ -170,207 +188,238 @@ const ProjectDetails = ({ onComplete }) => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6">
+    <div className="max-w-5xl mx-auto px-4">
       <Stepper steps={steps} activeStep={step} />
 
-      <div className="min-h-[calc(100vh-300px)] flex flex-col justify-between mt-6">
+      <div className="flex flex-col justify-between mt-4">
         <div className="flex-1">
           <div
             key={step}
             className="animate-in fade-in slide-in-from-right-4 duration-200"
           >
-            {/* Step 0: Basic Information */}
+            {/* Step 0: Complete Project Details Form */}
             {step === 0 && (
-              <CardWrapper title="Basic Information" variant="default" showLabel={true}>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <EditableTextDataField
-                      label="Project Name"
-                      value={formData.projectName}
-                      onChange={(val) => updateField('projectName', val)}
-                      isEditing={true}
-                      placeholder="Enter project name"
-                      required={true}
-                    />
-                    <EditableTextDataField
-                      label="Production Company"
-                      value={formData.productionCompany}
-                      onChange={(val) => updateField('productionCompany', val)}
-                      isEditing={true}
-                      placeholder="Enter production company"
-                      required={true}
-                    />
-                    <EditableTextDataField
-                      label="Genre"
-                      value={formData.genre}
-                      onChange={(val) => updateField('genre', val)}
-                      isEditing={true}
-                      placeholder="e.g., Drama, Action"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <EditableTextDataField
-                      label="Primary Location"
-                      value={formData.primaryLocation}
-                      onChange={(val) => updateField('primaryLocation', val)}
-                      isEditing={true}
-                      placeholder="City, Country"
-                    />
-                    <EditableTextDataField
-                      label="Start Date"
-                      value={formData.startDate}
-                      onChange={(val) => updateField('startDate', val)}
-                      isEditing={true}
-                      placeholder="dd-mm-yyyy"
-                      type="date"
-                    />
-                    <EditableTextDataField
-                      label="End Date"
-                      value={formData.endDate}
-                      onChange={(val) => updateField('endDate', val)}
-                      isEditing={true}
-                      placeholder="dd-mm-yyyy"
-                      type="date"
-                    />
-                  </div>
+              <CardWrapper title="Project Details" variant="default" showLabel={true}>
+                <div className="space-y-4">
+                  <EditableTextDataField
+                    label="Project Name"
+                    value={formData.projectName}
+                    onChange={(val) => updateField('projectName', val)}
+                    isEditing={true}
+                    placeholder="Project name"
+                    required={true}
+                  />
 
                   <EditableTextDataField
-                    label="Project Description"
-                    value={formData.projectDescription}
-                    onChange={(val) => updateField('projectDescription', val)}
+                    label="Genre"
+                    value={formData.genre}
+                    onChange={(val) => updateField('genre', val)}
                     isEditing={true}
-                    multiline={true}
-                    placeholder="Enter project description..."
+                    placeholder="Drama, Action..."
                   />
-                </div>
-              </CardWrapper>
-            )}
 
-            {/* Step 1: Project Configuration */}
-            {step === 1 && (
-              <CardWrapper title="Project Configuration" variant="default" showLabel={true}>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-6">
+                  <EditableTextDataField
+                    label="Location"
+                    value={formData.primaryLocation}
+                    onChange={(val) => updateField('primaryLocation', val)}
+                    isEditing={true}
+                    placeholder="City, Country"
+                  />
+
+                  <div className="space-y-2">
                     <ButtonToggleGroup
-                      label="Project type"
+                      label="Project Type"
                       options={['Feature Film', 'Television']}
                       selected={formData.projectType}
                       onChange={(val) => updateField('projectType', val)}
                       showInfo={true}
                     />
-
-                    <EditableCheckboxField
-                      label="Show project type in offers?"
-                      checked={formData.showProjectTypeInOffers}
-                      onChange={(val) => updateField('showProjectTypeInOffers', val)}
-                      isEditing={true}
-                    />
-
-                    <EditableSelectField
-                      label="Budget Range"
-                      value={formData.budget}
-                      items={budgetOptions}
-                      isEditing={true}
-                      onChange={(val) => updateField('budget', val)}
-                    />
-
-                    <EditableCheckboxField
-                      label="Show budget level to crew members?"
-                      checked={formData.showBudgetToCrew}
-                      onChange={(val) => updateField('showBudgetToCrew', val)}
-                      isEditing={true}
-                    />
                   </div>
 
-                  <div className="space-y-6">
-                    <ButtonToggleGroup
-                      label="Legal territory"
-                      options={['United Kingdom', 'Iceland', 'Ireland', 'Malta']}
-                      selected={formData.legalTerritory}
-                      onChange={(val) => updateField('legalTerritory', val)}
-                    />
+                  <EditableTextDataField
+                    label="Start Date"
+                    value={formData.startDate}
+                    onChange={(val) => updateField('startDate', val)}
+                    isEditing={true}
+                    type="date"
+                  />
 
-                    <RadioGroup
-                      label="Union agreement"
-                      options={[
-                        { value: 'None', label: 'None' },
-                        { value: 'PACT/BECTU Agreement (2021)', label: 'PACT/BECTU Agreement (2021)' }
-                      ]}
-                      selected={formData.unionAgreement}
-                      onChange={(val) => updateField('unionAgreement', val)}
-                      showInfo={true}
-                    />
+                  <EditableTextDataField
+                    label="End Date"
+                    value={formData.endDate}
+                    onChange={(val) => updateField('endDate', val)}
+                    isEditing={true}
+                    type="date"
+                  />
 
-                    <RadioGroup
-                      label="Construction union agreement"
-                      options={[
-                        { value: 'None', label: 'None' },
-                        { value: 'PACT/BECTU Agreement', label: 'PACT/BECTU Agreement' },
-                        { value: 'Custom Agreement', label: 'Custom Agreement' }
-                      ]}
-                      selected={formData.constructionUnionAgreement}
-                      onChange={(val) => updateField('constructionUnionAgreement', val)}
-                    />
+                  <EditableTextDataField
+                    label="Description"
+                    value={formData.projectDescription}
+                    onChange={(val) => updateField('projectDescription', val)}
+                    isEditing={true}
+                    placeholder="Project description..."
+                  />
+                </div>
+              </CardWrapper>
+            )}
+
+            {/* Step 1: Package Tier Selection */}
+            {step === 1 && (
+              <CardWrapper title="Select Your Package Tier" variant="default" showLabel={true}>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-6">Choose the branding and features level that fits your needs</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Basic Package */}
+                    <button
+                      onClick={() => updateField('packageTier', 'basic')}
+                      className={`p-6 rounded-lg border-2 transition-all ${
+                        formData.packageTier === 'basic'
+                          ? 'border-purple-600 bg-purple-50'
+                          : 'border-gray-200 bg-white hover:border-purple-300'
+                      }`}
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Basic</h3>
+                      <p className="text-sm text-gray-600 mb-3">Basic Package</p>
+                      <p className="text-sm text-gray-600 mb-4">Earth branding with limited access</p>
+                      <p className="text-lg font-bold text-purple-600 mb-4">$20/week base</p>
+                      <div className="space-y-2 text-sm text-gray-700 mb-4">
+                        <p>🌍 Earth Branding</p>
+                        <p>10GB Storage</p>
+                        <p>Limited Access</p>
+                        <p className="font-semibold mt-3">Includes:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Earth Branding Only</li>
+                          <li>10GB Cloud Storage</li>
+                          <li>Limited App Access</li>
+                          <li>Basic Features</li>
+                          <li>Email Support</li>
+                        </ul>
+                      </div>
+                      <button className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                        Select Basic Package
+                      </button>
+                    </button>
+
+                    {/* Agency Package */}
+                    <button
+                      onClick={() => updateField('packageTier', 'agency')}
+                      className={`p-6 rounded-lg border-2 transition-all relative ${
+                        formData.packageTier === 'agency'
+                          ? 'border-purple-600 bg-purple-50'
+                          : 'border-gray-200 bg-white hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="absolute top-3 right-3 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        Most Popular
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Agency</h3>
+                      <p className="text-sm text-gray-600 mb-3">Agency Package</p>
+                      <p className="text-sm text-gray-600 mb-4">Earth + Project branding with more flexibility</p>
+                      <p className="text-lg font-bold text-purple-600 mb-4">$40/week base</p>
+                      <div className="space-y-2 text-sm text-gray-700 mb-4">
+                        <p>🌍 Earth + 📁 Project Branding</p>
+                        <p>100GB Storage</p>
+                        <p>Full Access</p>
+                        <p className="font-semibold mt-3">Includes:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Earth Branding</li>
+                          <li>Project-Level Branding</li>
+                          <li>100GB Cloud Storage</li>
+                          <li>Full App Access</li>
+                          <li>Advanced Features</li>
+                          <li>Priority Support</li>
+                          <li>Custom Templates</li>
+                        </ul>
+                      </div>
+                      <button className="w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+                        Select Agency Package
+                      </button>
+                    </button>
+
+                    {/* White Label Package */}
+                    <button
+                      onClick={() => updateField('packageTier', 'whitelabel')}
+                      className={`p-6 rounded-lg border-2 transition-all ${
+                        formData.packageTier === 'whitelabel'
+                          ? 'border-purple-600 bg-purple-50'
+                          : 'border-gray-200 bg-white hover:border-purple-300'
+                      }`}
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">White Label</h3>
+                      <p className="text-sm text-gray-600 mb-3">White Label Package</p>
+                      <p className="text-sm text-gray-600 mb-4">Complete studio branding control</p>
+                      <p className="text-lg font-bold text-purple-600 mb-4">$70/week base</p>
+                      <div className="space-y-2 text-sm text-gray-700 mb-4">
+                        <p>🎨 Your Studio Branding</p>
+                        <p>Unlimited Storage</p>
+                        <p>Complete Control</p>
+                        <p className="font-semibold mt-3">Includes:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Complete White Label</li>
+                          <li>Your Studio Branding</li>
+                          <li>Unlimited Storage</li>
+                          <li>All Apps Included</li>
+                          <li>Full API Access</li>
+                          <li>Premium Support 24/7</li>
+                          <li>Custom Domain</li>
+                          <li>Remove All Earth Branding</li>
+                          <li>Advanced Analytics</li>
+                        </ul>
+                      </div>
+                      <button className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+                        Select White Label Package
+                      </button>
+                    </button>
                   </div>
                 </div>
               </CardWrapper>
             )}
 
-            {/* Step 2: Financial & Key Personnel */}
+            {/* Step 2: Project Applications */}
             {step === 2 && (
-              <CardWrapper title="Financial Details & Key Personnel" variant="default" showLabel={true}>
-                <div className="space-y-6">
-                  {/* Financial Section */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">Budget Information</h4>
-                    <CurrencyInput
-                      label="Budget Amount"
-                      currency={formData.budgetCurrency}
-                      amount={formData.budgetAmount}
-                      onCurrencyChange={(val) => updateField('budgetCurrency', val)}
-                      onAmountChange={(val) => updateField('budgetAmount', val)}
-                      required={true}
-                    />
-                  </div>
-
-                  {/* Key Personnel Section */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-semibold text-gray-900 border-b pb-2">Key Personnel</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <EditableTextDataField
-                        label="Producer"
-                        value={formData.producer}
-                        onChange={(val) => updateField('producer', val)}
-                        isEditing={true}
-                        placeholder="Enter producer name"
-                      />
-                      <EditableTextDataField
-                        label="Director"
-                        value={formData.director}
-                        onChange={(val) => updateField('director', val)}
-                        isEditing={true}
-                        placeholder="Enter director name"
-                      />
-                      <EditableTextDataField
-                        label="Production Manager"
-                        value={formData.productionManager}
-                        onChange={(val) => updateField('productionManager', val)}
-                        isEditing={true}
-                        placeholder="Enter production manager"
-                      />
+              <CardWrapper title="Project Applications" variant="default" showLabel={true}>
+                {/* Selected Package Info */}
+                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900">
+                        {formData.packageTier === 'basic' && 'Basic'}
+                        {formData.packageTier === 'agency' && 'Agency'}
+                        {formData.packageTier === 'whitelabel' && 'White Label'}
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {formData.packageTier === 'basic' && 'Basic Package'}
+                        {formData.packageTier === 'agency' && 'Agency Package'}
+                        {formData.packageTier === 'whitelabel' && 'White Label Package'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-purple-600">
+                        {formData.packageTier === 'basic' && '$20/week'}
+                        {formData.packageTier === 'agency' && '$40/week'}
+                        {formData.packageTier === 'whitelabel' && '$70/week'}
+                      </p>
+                      <p className="text-xs text-gray-500">Base Price</p>
                     </div>
                   </div>
                 </div>
-              </CardWrapper>
-            )}
 
-            {/* Step 3: Project Applications */}
-            {step === 3 && (
-              <CardWrapper title="Project Applications" variant="default" showLabel={true}>
                 <ProjectApplications
                   selectedApps={formData.selectedApplications}
                   onChange={(apps) => updateField('selectedApplications', apps)}
+                />
+              </CardWrapper>
+            )}
+
+            {/* Step 3: Order Summary */}
+            {step === 3 && (
+              <CardWrapper title="Order Summary" variant="default" showLabel={true}>
+                <OrderSummary
+                  formData={formData}
+                  updateField={updateField}
+                  onEdit={setStep}
+                  onComplete={handleFinish}
                 />
               </CardWrapper>
             )}

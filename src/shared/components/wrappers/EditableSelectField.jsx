@@ -9,13 +9,14 @@ function EditableSelectField({
   items,
   isEditing,
   onChange,
+  selectClassName,
 }) {
   const Icon = icon && LucideIcons[icon];
   const selectedItem = items.find(i => i.value === value);
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-wider text-gray-700 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-gray-500 dark:text-gray-500">
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {label}
       </div>
@@ -25,7 +26,7 @@ function EditableSelectField({
           items={items}
           selected={value}
           onSelect={onChange}
-          className="w-full shadow-none"
+          className={cn("w-full shadow-none", selectClassName)}
         />
       ) : (
         <div className={cn(

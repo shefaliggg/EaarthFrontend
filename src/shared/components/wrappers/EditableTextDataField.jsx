@@ -12,12 +12,15 @@ function EditableTextDataField({
     onChange,
     multiline = false,
     placeholder = "Enter value",
+    type,
+    required,
+    inputClassName,
 }) {
 
     return (
         <div className="flex flex-col gap-1.5 rounded-xl">
             {/* Label */}
-            <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-wider text-gray-700 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-gray-500 dark:text-gray-500">
                 {icon && <SmartIcon icon={icon} size="md" />}
                 <span>{label}</span>
             </div>
@@ -51,14 +54,16 @@ function EditableTextDataField({
                         />
                     ) : (
                         <Input
+                            type={type}
                             value={value ?? ""}
                             onChange={(e) => onChange?.(e.target.value)}
                             placeholder={placeholder}
                             className={cn(
-                                "rounded-md shadow-none",
+                                "rounded-md shadow-none h-8 text-sm font-medium text-gray-900",
                                 "bg-gray-100 dark:bg-gray-800",
                                 "border border-transparent",
-                                "focus:outline-none"
+                                "focus:outline-none",
+                                inputClassName
                             )}
                         />
                     )}

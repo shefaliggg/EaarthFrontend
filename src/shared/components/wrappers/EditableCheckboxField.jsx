@@ -34,7 +34,7 @@ function EditableCheckboxField({
                 )}
 
                 {label && (
-                    <p className="text-xs text-muted-foreground leading-snug">
+                    <p className="text-xs font-medium text-gray-900 dark:text-gray-900 leading-snug">
                         {label}
                     </p>
                 )}
