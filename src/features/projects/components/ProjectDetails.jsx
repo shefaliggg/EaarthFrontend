@@ -200,7 +200,7 @@ const ProjectDetails = ({ onComplete }) => {
             {/* Step 0: Complete Project Details Form */}
             {step === 0 && (
               <CardWrapper title="Project Details" variant="default" showLabel={true}>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <EditableTextDataField
                     label="Project Name"
                     value={formData.projectName}
@@ -252,13 +252,15 @@ const ProjectDetails = ({ onComplete }) => {
                     type="date"
                   />
 
-                  <EditableTextDataField
-                    label="Description"
-                    value={formData.projectDescription}
-                    onChange={(val) => updateField('projectDescription', val)}
-                    isEditing={true}
-                    placeholder="Project description..."
-                  />
+                  <div className="md:col-span-2">
+                    <EditableTextDataField
+                      label="Description"
+                      value={formData.projectDescription}
+                      onChange={(val) => updateField('projectDescription', val)}
+                      isEditing={true}
+                      placeholder="Project description..."
+                    />
+                  </div>
                 </div>
               </CardWrapper>
             )}
