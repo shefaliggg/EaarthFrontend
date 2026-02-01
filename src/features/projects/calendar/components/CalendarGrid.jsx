@@ -77,7 +77,7 @@ export default function CalendarGrid({
 
   if (view === "conflicts") {
     return (
-      <CalendarConflictsView conflicts={conflicts} onEditEvent={onEditEvent} />
+      <CalendarConflictsView conflicts={conflicts} currentDate={currentDate} />
     );
   }
 

@@ -1,0 +1,340 @@
+import { startOfWeek, addDays, format } from "date-fns";
+import { Clock, MapPin } from "lucide-react";
+import { cn } from "../../../../shared/config/utils";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/shared/components/ui/tooltip";
+import { getProductionWeekLabel } from "./productionPhases";
+
+// CONFIG
+const HOUR_HEIGHT = 48;
+const DAY_MINUTES = 1440;
+const MIN_EVENT_HEIGHT = 16;
+
+// TIME UTILS
+function timeToMinutes(time) {
+  if (!time) return null;
+  const [clock, period] = time.split(" ");
+  let [h, m] = clock.split(":").map(Number);
+  if (period === "PM" && h !== 12) h += 12;
+  if (period === "AM" && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+const dateKey = (date) => format(date, "yyyy-MM-dd");
+const formatHour = (h) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
+
+// EVENT NORMALIZATION FOR WEEK VIEW
+function normalizeWeekEvents(events) {
+  const output = [];
+
+  for (const e of events) {
+    if (!e.startDateTime) continue;
+
+    const start = new Date(e.startDateTime);
+    const end = new Date(e.endDateTime);
+
+    const startDateStr = format(start, "yyyy-MM-dd");
+    const endDateStr = format(end, "yyyy-MM-dd");
+
+    let current = new Date(start);
+    current.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
+
+    while (current <= endDate) {
+      const currentDateStr = format(current, "yyyy-MM-dd");
+      const isFirst = currentDateStr === startDateStr;
+      const isLast = currentDateStr === endDateStr;
+
+      const startTime = format(start, "h:mm a");
+      const endTime = format(end, "h:mm a");
+
+      let _start = 0;
+      let _end = DAY_MINUTES;
+
+      if (!e.allDay) {
+        if (isFirst) _start = timeToMinutes(startTime) ?? 0;
+        if (isLast) _end = timeToMinutes(endTime) ?? DAY_MINUTES;
+      }
+
+      output.push({
+        ...e,
+        _currentDate: currentDateStr,
+        _start,
+        _end,
+        _startTime: startTime,
+        _endTime: endTime,
+      });
+
+      current = addDays(current, 1);
+    }
+  }
+
+  return output;
+}
+
+// WEEK HELPERS
+function getWeek(date) {
+  return Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
+}
+
+function getEventsForDay(events, date) {
+  const key = dateKey(date);
+  return events.filter((e) => e._currentDate === key && !e.allDay);
+}
+
+function getAllDayEvents(events, date) {
+  const key = dateKey(date);
+  return events.filter((e) => e._currentDate === key && e.allDay);
+}
+
+// OVERLAP LAYOUT
+function layoutEvents(events) {
+  const columns = [];
+  for (const event of events) {
+    let placed = false;
+    for (const col of columns) {
+      const last = col[col.length - 1];
+      if (event._start >= last._end) {
+        col.push(event);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) columns.push([event]);
+  }
+  return columns;
+}
+
+function getEventStyle(event, colIndex, colCount) {
+  const rawHeight = ((event._end - event._start) / 60) * HOUR_HEIGHT;
+  return {
+    top: (event._start / 60) * HOUR_HEIGHT,
+    height: Math.max(rawHeight, MIN_EVENT_HEIGHT),
+    width: `${100 / colCount}%`,
+    left: `${(100 / colCount) * colIndex}%`,
+  };
+}
+
+function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
+  const week = getWeek(currentDate);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const normalized = normalizeWeekEvents(events);
+  const isToday = (date) => date.toDateString() === new Date().toDateString();
+
+  // Soft colors with proper backgrounds for no transparency issues
+  const getEventColors = (eventType) => {
+    switch (eventType) {
+      case "shoot":
+        return "bg-lavender-100 dark:bg-lavender-900 text-lavender-800 dark:text-lavender-200 border-lavender-300 dark:border-lavender-700";
+      case "prep":
+        return "bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200 border-sky-300 dark:border-sky-700";
+      case "wrap":
+        return "bg-mint-100 dark:bg-mint-900 text-mint-800 dark:text-mint-200 border-mint-300 dark:border-mint-700";
+      default:
+        return "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-700";
+    }
+  };
+
+  const getAllDayEventColors = (eventType) => {
+    switch (eventType) {
+      case "shoot":
+        return "bg-lavender-200 dark:bg-lavender-800 text-lavender-900 dark:text-lavender-100 border-lavender-400 dark:border-lavender-600";
+      case "prep":
+        return "bg-sky-200 dark:bg-sky-800 text-sky-900 dark:text-sky-100 border-sky-400 dark:border-sky-600";
+      case "wrap":
+        return "bg-mint-200 dark:bg-mint-800 text-mint-900 dark:text-mint-100 border-mint-400 dark:border-mint-600";
+      default:
+        return "bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 border-purple-400 dark:border-purple-600";
+    }
+  };
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
+      {/* PRODUCTION WEEK BANNER */}
+      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+        <div className="bg-card border-r border-primary/20"></div>
+        <div className="col-start-2 col-span-7 text-center py-3 text-xs font-bold uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
+          {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
+        </div>
+      </div>
+
+      {/* HEADER - Day Names and Dates */}
+      <div className="grid grid-cols-[80px_repeat(7,1fr)] text-[11px] font-black uppercase border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
+        <div className="bg-card border-r border-primary/20 pr-3 text-muted-foreground flex justify-end py-2">
+          <span className="text-[10px]">TIME</span>
+        </div>
+        {week.map((d) => (
+          <div
+            key={d}
+            className={cn(
+              "py-1 flex flex-col items-center justify-center border-r border-primary/20 last:border-r-0 transition-colors",
+              isToday(d) && "bg-purple-100/50 dark:bg-purple-900/30"
+            )}
+          >
+            <p className="text-[11px] font-black uppercase text-purple-800 dark:text-purple-300">
+              {format(d, "EEE")}
+            </p>
+            <p
+              className={cn(
+                "text-[14px] font-bold w-7 h-7 rounded-full flex items-center justify-center text-purple-800 dark:text-purple-300 transition-colors mt-0.5",
+                isToday(d) && "bg-purple-200 dark:bg-purple-800/40"
+              )}
+            >
+              {d.getDate()}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ALL DAY ROW */}
+      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+        <div className="bg-muted/40 border-r border-b border-primary/20 flex items-center justify-center text-xs font-bold text-purple-800 dark:text-purple-300 min-h-12">
+          ALL DAY
+        </div>
+
+        {week.map((date) => (
+          <div
+            key={date}
+            className="flex cursor-pointer gap-1 p-1 flex-col items-start border-r border-b border-primary/20 last:border-r-0 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden min-h-12"
+            onClick={() => {
+              setCurrentDate(date);
+              onDayClick();
+            }}
+          >
+            {getAllDayEvents(normalized, date).map((e) => (
+              <Tooltip key={e.id || e._id}>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      "w-full text-[10px] font-semibold px-1.5 py-0.5 rounded-md overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md border-l-4",
+                      getAllDayEventColors(e.eventType)
+                    )}
+                  >
+                    {e.title}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                  <div className="flex flex-col gap-2 p-1">
+                    <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+                      {e.title}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="font-medium">All Day Event</span>
+                    </div>
+                    {e.location && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span className="font-medium">{e.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* TIME GRID */}
+      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+        {/* TIME LABELS - PERFECTLY CENTERED */}
+        <div>
+          {hours.map((h) => (
+            <div
+              key={h}
+              className="bg-muted/40 border-primary/20 border-b border-r h-12 flex items-center justify-center"
+            >
+              <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">
+                {formatHour(h)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* DAY COLUMNS */}
+        {week.map((date) => {
+          const dayEvents = getEventsForDay(normalized, date);
+          const columns = layoutEvents(dayEvents);
+
+          return (
+            <div
+              key={date}
+              onClick={() => {
+                setCurrentDate(date);
+                onDayClick();
+              }}
+              className="border-r border-primary/20 last:border-r-0 relative bg-card"
+            >
+              {/* Hour background grid */}
+              {hours.map((h) => (
+                <div
+                  key={h}
+                  className="h-12 border-b border-primary/20 hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-all duration-200"
+                />
+              ))}
+
+              {/* Events layer - positioned absolutely to sit ON TOP of grid */}
+              <div className="absolute inset-0 pointer-events-none">
+                {columns.map((col, colIndex) =>
+                  col.map((e) => {
+                    const startTime = new Date(e.startDateTime);
+                    const endTime = new Date(e.endDateTime);
+
+                    return (
+                      <Tooltip key={e.id || e._id}>
+                        <TooltipTrigger asChild>
+                          <div
+                            style={getEventStyle(e, colIndex, columns.length)}
+                            className={cn(
+                              "cursor-pointer absolute text-[10px] font-semibold px-1.5 py-1 rounded-md overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-l-[3px] pointer-events-auto",
+                              getEventColors(e.eventType)
+                            )}
+                          >
+                            <div className="font-bold truncate">{e.title}</div>
+                            {e._end - e._start > 30 && (
+                              <div className="text-[9px] opacity-80 truncate">
+                                {format(startTime, "h:mm a")}
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                          <div className="flex flex-col gap-2 p-1">
+                            <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+                              {e.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span className="font-medium">
+                                {format(startTime, "h:mm a")} -{" "}
+                                {format(endTime, "h:mm a")}
+                              </span>
+                            </div>
+                            {e.location && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <MapPin className="w-3.5 h-3.5" />
+                                <span className="font-medium">{e.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default CalendarWeekView;

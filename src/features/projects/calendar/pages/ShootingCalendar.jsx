@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SelectMenu } from "../../../../shared/components/menus/SelectMenu";
 import { Button } from "../../../../shared/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, Clock, Edit, MapPin, Zap } from "lucide-react";
@@ -13,6 +13,7 @@ import { Label } from "../../../../shared/components/ui/label";
 import { Input } from "../../../../shared/components/ui/input";
 import { Checkbox } from "../../../../shared/components/ui/checkbox";
 import { Textarea } from "../../../../shared/components/ui/textarea";
+import { projectEvents } from "./projectEvents";
 
 const WORKPLACES_LIST = [
   'Bourne Wood', 'Brecon Beacons', 'Crychan Forest', 'Dartmoor', 'Forest of Dean',
@@ -27,91 +28,37 @@ function ShootingCalender() {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate())
   })
 
-  const [calendarSchedule, setCalendarSchedule] = useState({
-    // Week 1 (Dec 2-8, 2025)
-    '2025-12-02': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 48, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio Day - Stage 7' },
-    '2025-12-03': { unit: 'Main', unitCall: '07:00', unitWrap: '18:15', workingHours: '10 (CWD)', cameraOT: '1.25', dayType: 'Shoot', dayNumber: 49, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Studio Day - Stage 7' },
-    '2025-12-04': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 50, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Elstree' },
-    '2025-12-05': { unit: 'Main', unitCall: '07:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 51, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Elstree - Stage 2' },
-    '2025-12-06': { unit: 'Main', unitCall: '12:00', unitWrap: '22:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 52, workplaces: ['Sky Studios Elstree'], set: 'Stage 2', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '18:00', mealEnd: '19:00', notes: 'Night Shoot - Elstree Stage 2', nightPenalty: 'Paid'},
-    '2025-12-07': { dayType: 'Rest', dayNumber: '-' },
-    '2025-12-08': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 2 (Dec 9-15, 2025) - Current week
-    '2025-12-09': { unit: 'Main', unitCall: '06:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 53, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '12:30', mealEnd: '13:30', notes: 'Forest location shoot - Early call', dawn: 'Paid' },
-    '2025-12-10': { unit: 'Main', unitCall: '06:30', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 54, workplaces: ['Bourne Wood'], set: 'Exterior', travelTo: '0.5', travelToPaid: 'Paid', travelFrom: '0.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Bourne Wood - Continuation' },
-    '2025-12-11': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 55, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Wales location - Travel allowance' },
-    '2025-12-12': { unit: 'Main', unitCall: '07:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.5', dayType: 'Shoot', dayNumber: 56, workplaces: ['Crychan Forest'], set: 'Exterior', travelTo: '1.5', travelToPaid: 'Paid', travelFrom: '1.5', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Wales - Day 2' },
-    '2025-12-13': { unit: 'Main', unitCall: '14:00', unitWrap: '01:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 57, workplaces: ['Brecon Beacons'], set: 'Exterior', travelTo: '1.0', travelToPaid: 'Paid', travelFrom: '1.0', travelFromPaid: 'Paid', mealStart: '20:00', mealEnd: '21:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night exterior - Brecon', nightPenalty: 'Paid'},
-    '2025-12-14': { dayType: 'Rest', dayNumber: '-' },
-    '2025-12-15': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 3 (Dec 16-22, 2025)
-    '2025-12-16': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 58, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Back to Studio - Stage 7' },
-    '2025-12-17': { unit: 'Main', unitCall: '08:00', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 59, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
-    '2025-12-18': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 60, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
-    '2025-12-19': { unit: 'Main', unitCall: '08:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '2.0', dayType: 'Shoot', dayNumber: 61, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - VFX sequence' },
-    '2025-12-20': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 62, workplaces: ['Shepperton Studios'], set: 'Stage 7', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Studio - Stage 7' },
-    '2025-12-21': { dayType: 'Rest', dayNumber: '-' },
-    '2025-12-22': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 4 (Dec 23-29, 2025) - Holiday Break
-    '2025-12-23': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
-    '2025-12-24': { dayType: 'Rest', dayNumber: '-', notes: 'Christmas Eve', isPublicHoliday: true },
-    '2025-12-25': { dayType: 'Rest', dayNumber: '-', notes: 'Christmas Day', isPublicHoliday: true },
-    '2025-12-26': { dayType: 'Rest', dayNumber: '-', notes: 'Boxing Day', isPublicHoliday: true },
-    '2025-12-27': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
-    '2025-12-28': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
-    '2025-12-29': { dayType: 'Rest', dayNumber: '-', notes: 'Holiday Break' },
-
-    // Week 5 (Dec 30, 2025 - Jan 5, 2026) - Holiday/Prep Week
-    '2025-12-30': { unit: 'Main', unitCall: '09:00', unitWrap: '17:00', workingHours: '8 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 63, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Prep/Rehearsal Day' },
-    '2025-12-31': { dayType: 'Rest', dayNumber: '-', notes: 'New Years Eve' },
-    '2026-01-01': { dayType: 'Rest', dayNumber: '-', notes: 'New Years Day', isPublicHoliday: true },
-    '2026-01-02': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 64, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Back to work - Stage 12' },
-    '2026-01-03': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 65, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12 - Interior' },
-    '2026-01-04': { dayType: 'Rest', dayNumber: '-' },
-    '2026-01-05': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 6 (Jan 6-12, 2026)
-    '2026-01-06': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 66, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12 - Continues' },
-    '2026-01-07': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 67, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Stage 12' },
-    '2026-01-08': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 68, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
-    '2026-01-09': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 69, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
-    '2026-01-10': { unit: 'Main', unitCall: '07:00', unitWrap: '17:30', workingHours: '10 (CWD)', cameraOT: '0.5', dayType: 'Shoot', dayNumber: 70, workplaces: ['Warner Bros. Studios Leavesden'], set: 'Stage 12', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Stage 12' },
-    '2026-01-11': { dayType: 'Rest', dayNumber: '-' },
-    '2026-01-12': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 7 (Jan 13-19, 2026)
-    '2026-01-13': { unit: 'Main', unitCall: '06:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 71, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '12:30', mealEnd: '13:30', notes: 'Location shoot - Early call', dawn: 'Paid' },
-    '2026-01-14': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 72, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Black Park - Day 2' },
-    '2026-01-15': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 73, workplaces: ['Black Park'], set: 'Exterior', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Black Park - Final day' },
-    '2026-01-16': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 74, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Pinewood - Stage 5' },
-    '2026-01-17': { unit: 'Main', unitCall: '08:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '2.0', dayType: 'Shoot', dayNumber: 75, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - Action sequence' },
-    '2026-01-18': { dayType: 'Rest', dayNumber: '-' },
-    '2026-01-19': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 8 (Jan 20-26, 2026)
-    '2026-01-20': { unit: 'Main', unitCall: '07:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 76, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
-    '2026-01-21': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 77, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Pinewood - Stage 5' },
-    '2026-01-22': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 78, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
-    '2026-01-23': { unit: 'Main', unitCall: '13:00', unitWrap: '00:00', unitCallNextDay: false, unitWrapNextDay: true, workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 79, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '19:00', mealEnd: '20:00', mealStartNextDay: false, mealEndNextDay: false, notes: 'Night shoot - Pinewood Stage 5', nightPenalty: 'Paid'},
-    '2026-01-24': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 80, workplaces: ['Pinewood Studios'], set: 'Stage 5', travelTo: '0.0', travelToPaid: 'Paid', travelFrom: '0.0', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Pinewood - Stage 5' },
-    '2026-01-25': { dayType: 'Rest', dayNumber: '-' },
-    '2026-01-26': { dayType: 'Rest', dayNumber: '-' },
-
-    // Week 9 (Jan 27-31, 2026) - Final week of January
-    '2026-01-27': { unit: 'Main', unitCall: '07:00', unitWrap: '17:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 81, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Move to Ealing - Stage 1' },
-    '2026-01-28': { unit: 'Main', unitCall: '07:30', unitWrap: '18:30', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 82, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:30', mealEnd: '14:30', notes: 'Ealing - Stage 1 Interior' },
-    '2026-01-29': { unit: 'Main', unitCall: '08:00', unitWrap: '19:00', workingHours: '10 (CWD)', cameraOT: '1.0', dayType: 'Shoot', dayNumber: 83, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Ealing - Stage 1' },
-    '2026-01-30': { unit: 'Main', unitCall: '07:00', unitWrap: '20:00', workingHours: '10 (CWD)', cameraOT: '3.0', dayType: 'Shoot', dayNumber: 84, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '14:00', mealEnd: '15:00', lateMeal: '1.0', lateMealPaid: 'Paid', notes: 'Long day - Climax sequence' },
-    '2026-01-31': { unit: 'Main', unitCall: '08:00', unitWrap: '18:00', workingHours: '10 (CWD)', cameraOT: '0.0', dayType: 'Shoot', dayNumber: 85, workplaces: ['Ealing Studios'], set: 'Stage 1', travelTo: '0.25', travelToPaid: 'Paid', travelFrom: '0.25', travelFromPaid: 'Paid', mealStart: '13:00', mealEnd: '14:00', notes: 'Ealing - Final day January' },
-  });
+ const [calendarSchedule, setCalendarSchedule] = useState({});
 
   // Edit Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDate, setEditingDate] = useState(null);
   const [formData, setFormData] = useState(null);
+
+ useEffect(() => {
+  const shootDays = projectEvents.filter(e => e.eventType === "shoot");
+
+  const generated = {};
+
+  shootDays.forEach(event => {
+    const start = new Date(event.startDate);
+    const end = new Date(event.endDate);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split("T")[0];
+
+      generated[dateStr] = {
+        dayType: "Shoot",
+        workplaces: [event.location],
+        notes: event.title,
+        dayNumber: "-",
+      };
+    }
+  });
+
+  setCalendarSchedule(generated);
+}, [projectEvents.length]);
+
 
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -304,43 +251,29 @@ function ShootingCalender() {
     return nextDay ? `${time} (+1)` : time;
   };
 
-  const summaryStats = [
-    {
-      label: "Shoot Days",
-      value: 5,
-      icon: "Activity",
-      iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-    },
-    {
-      label: "Rest Days",
-      value: 2,
-      icon: "Coffee",
-      iconBg: "bg-blue-100 dark:bg-blue-900/30",
-      iconColor: "text-blue-600 dark:text-blue-400",
-    },
-    {
-      label: "Total Hours",
-      value: "50.0h",
-      icon: "Clock",
-      iconBg: "bg-yellow-100 dark:bg-yellow-900/30",
-      iconColor: "text-yellow-600 dark:text-yellow-400",
-    },
-    {
-      label: "Locations",
-      value: 1,
-      icon: "MapPin",
-      iconBg: "bg-violet-100 dark:bg-violet-900/30",
-      iconColor: "text-violet-600 dark:text-violet-400",
-    },
-    {
-      label: "Camera O/T",
-      value: "2.5h",
-      icon: "Zap",
-      iconBg: "bg-orange-100 dark:bg-orange-900/30",
-      iconColor: "text-orange-600 dark:text-orange-400",
-    },
-  ];
+ const summaryStats = [
+  {
+    label: "Shoot Days",
+    value: stats.shootDays,
+  },
+  {
+    label: "Rest Days",
+    value: stats.restDays,
+  },
+  {
+    label: "Total Hours",
+    value: `${stats.totalHours.toFixed(1)}h`,
+  },
+  {
+    label: "Locations",
+    value: stats.locations,
+  },
+  {
+    label: "Camera O/T",
+    value: `${stats.totalOT}h`,
+  },
+];
+
 
   const DAY_TYPES = [
     "Shoot",
