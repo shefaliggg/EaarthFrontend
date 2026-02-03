@@ -167,7 +167,7 @@ function TimesheetGeneralSettings() {
 
 
   return (
-    <div className='space-y-6'>
+    <div className='container mx-auto space-y-6'>
       <CardWrapper
         title="Crew & Production"
         icon="User"

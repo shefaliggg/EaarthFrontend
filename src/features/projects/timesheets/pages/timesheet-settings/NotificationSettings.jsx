@@ -77,7 +77,7 @@ function NotificationSettings() {
   });
 
   return (
-    <div className='space-y-6'>
+    <div className='container mx-auto space-y-6'>
       <CardWrapper
         title="Notifications"
         description='Manage who receives email notifications of these events. (Production base email address is used if no other email is added.)'

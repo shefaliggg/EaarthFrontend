@@ -73,7 +73,7 @@ export default function AccountSettings({ isDarkMode }) {
   ];
 
   return (
-    <div className="h-full overflow-y-auto  space-y-6">
+    <div className="container mx-auto h-full overflow-y-auto space-y-6">
       {/* Breadcrumbs */}
       <UrlBreadcrumbs />
 

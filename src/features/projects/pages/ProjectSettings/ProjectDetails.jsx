@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
-import EditableTextDataField from "../../../shared/components/wrappers/EditableTextDataField";
-import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
-import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
-import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
-import { Stepper } from '../../../shared/components/stepper/Stepper';
-import { CardNavigator } from '../../../shared/components/stepper/CardNavigator';
-import { ProjectApplications } from '../components/ProjectApplications';
-import { OrderSummary } from '../components/OrderSummary';
+import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
+import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
+import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import { Stepper } from '../../../../shared/components/stepper/Stepper';
+import { CardNavigator } from '../../../../shared/components/stepper/CardNavigator';
+import { ProjectApplications } from '../../components/ProjectApplications';
+import { OrderSummary } from '../../components/OrderSummary';
 
 // Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {

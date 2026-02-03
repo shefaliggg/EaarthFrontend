@@ -3,11 +3,12 @@ import GuardRoute from '../../../routes/GuardRoute';
 import ProjectList from '../pages/ProjectList';
 import CreateProject from '../components/CreateProject';
 import EditProject from '../components/EditProject';
-import ProjectDetails from '../components/ProjectDetails';
+import ProjectDetails from '../pages/ProjectSettings/ProjectDetails';
 import ProjectDetailsPage from '../pages/ProjectDetails';
-import ProjectGeneral from '../components/ProjectGeneral';
-import ProjectOnboarding from '../components/ProjectOnboarding';
-import ProjectTimesheet from '../components/ProjectTimesheet';
+import ProjectSettings from '../pages/ProjectSettings/ProjectSettings';
+import ProjectGeneral from '../pages/ProjectSettings/ProjectGeneral';
+import ProjectOnboarding from '../pages/ProjectSettings/ProjectOnboarding';
+import ProjectTimesheet from '../pages/ProjectSettings/ProjectTimesheet';
 // import ProjectCalendarSettings from '../components/'; // your calendar settings page
 
 import ProjectAppsRoutes from './ProjectAppsRoutes';
@@ -21,13 +22,13 @@ import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import StudioAnalytics from '../components/StudioAnalytics';
 import MyOffer from '../../crew/pages/Myoffer';
-import ProjectConstruction from '../components/ProjectConstruction';
-import ProjectRoles from '../components/ProjectRoles';
-import ProjectNotifications from '../components/ProjectNotifications';
-import SignersRecipients from '../components/SignersRecipients';
-import ApprovalWorkflows from '../components/ApprovalWorkflows';
-import Billing from '../components/Billing';
-import ProjectDetail from '../components/ProjectDetail';
+import ProjectConstruction from '../pages/ProjectSettings/ProjectConstruction';
+import ProjectRoles from '../pages/ProjectSettings/ProjectRoles';
+import ProjectNotifications from '../pages/ProjectSettings/ProjectNotifications';
+import SignersRecipients from '../pages/ProjectSettings/SignersRecipients';
+import ApprovalWorkflows from '../pages/ProjectSettings/ApprovalWorkflows';
+import Billing from '../pages/ProjectSettings/Billing';
+import ProjectDetail from '../pages/ProjectSettings/ProjectDetail';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -64,7 +65,7 @@ const ProjectRoutes = {
     {
       path: ':projectName/settings',
       children: [
-        { index: true, element: <ProjectDetails /> },          // default page for settings
+        { index: true, element: <ProjectSettings /> },          // default page for settings
         { path: 'details', element: <ProjectDetails /> },
         { path: 'detail', element: <ProjectDetail /> },
         { path: 'construction', element: <ProjectConstruction /> },

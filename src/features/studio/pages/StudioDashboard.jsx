@@ -16,7 +16,7 @@ export default function StudioDashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       <PageHeader
         title={
           <>

@@ -173,25 +173,6 @@ const ProjectRoles = () => {
 
   return (
     <div className="space-y-3 pb-6">
-      {/* Page Header */}
-      <PageHeader
-        title="Roles Permissions"
-        icon="Shield"
-        primaryAction={{
-          label: "Save Changes",
-          icon: "Save",
-          clickAction: () => console.log("Save changes"),
-          variant: "default"
-        }}
-        secondaryActions={[
-          {
-            label: "Cancel",
-            variant: "outline",
-            clickAction: () => console.log("Cancel")
-          }
-        ]}
-      />
-
       {/* Security Section */}
       <CardWrapper
         title="Security"

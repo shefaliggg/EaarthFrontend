@@ -1,11 +1,11 @@
 // ProjectGeneral.jsx
 import { useState } from 'react';
 import { Info, Plus, Minus, Trash2 } from 'lucide-react';
-import EditableTextDataField from "../../../shared/components/wrappers/EditableTextDataField";
-import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
-import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
-import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../shared/components/PageHeader";
+import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
+import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
+import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import { PageHeader } from "../../../../shared/components/PageHeader";
 
 // Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {
@@ -312,22 +312,7 @@ const ProjectGeneral = () => {
   ];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4">
-      {/* Page Header */}
-      <PageHeader
-        title="General"
-        subtitle="Configure general project settings"
-        icon="Settings"
-        primaryAction={{
-          label: "Save Changes",
-          clickAction: () => {
-            console.log("Saving changes...");
-            // Add your save logic here
-          },
-          variant: "default",
-        }}
-      />
-
+    <div className="space-y-4">
       {/* 1. Basic */}
       <CardWrapper 
         title="Basic" 

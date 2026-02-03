@@ -297,7 +297,7 @@ function ShootingCalender() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="container mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <SelectMenu
             selected={selectedUnit}

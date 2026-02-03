@@ -21,7 +21,7 @@ function ProjectCastCrew() {
   ];
 
   return (
-    <div className="w-full min-h-screen space-y-6">
+    <div className="container mx-auto space-y-6">
 
       {/* Header */}
       <div className="flex justify-between items-center">

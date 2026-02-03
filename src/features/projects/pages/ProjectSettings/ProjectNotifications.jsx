@@ -263,28 +263,8 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto p-4 space-y-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         
-        {/* Page Header */}
-        <PageHeader
-          title="Notification Settings"
-          icon="Bell"
-          primaryAction={{
-            label: "Save Changes",
-            icon: "Save",
-            clickAction: () => console.log("Save changes"),
-            variant: "default"
-          }}
-          secondaryActions={[
-            {
-              label: "Test Notifications",
-              icon: "Send",
-              variant: "outline",
-              clickAction: () => console.log("Test notifications")
-            }
-          ]}
-        />
-
         {/* Filter Pills */}
         <div className="bg-card rounded-lg border border-border p-4">
           <FilterPillTabs

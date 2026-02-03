@@ -43,37 +43,6 @@ const Billing = () => {
 
   return (
     <div className="space-y-3 pb-6">
-      <PageHeader
-        title="Billing"
-        subtitle="Contact details for Team Engine to send invoices to"
-        icon="Receipt"
-        primaryAction={
-          isEditing
-            ? {
-                label: "Save Changes",
-                icon: "Save",
-                clickAction: handleSave,
-              }
-            : {
-                label: "Edit",
-                icon: "Pencil",
-                clickAction: () => setIsEditing(true),
-              }
-        }
-        secondaryActions={
-          isEditing
-            ? [
-                {
-                  label: "Cancel",
-                  icon: "X",
-                  variant: "outline",
-                  clickAction: handleCancel,
-                },
-              ]
-            : []
-        }
-      />
-
       <CardWrapper
         title="Billing Information"
         icon="FileText"

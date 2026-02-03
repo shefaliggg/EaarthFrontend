@@ -167,8 +167,8 @@ const FinancialSummary = () => {
     };
 
     return (
-        <div>
-            <div className="mx-auto space-y-6">
+        <div className="container mx-auto">
+            <div className="space-y-6">
                 {/* Main Financial Table */}
                 <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
                     <Table className="text-xs">

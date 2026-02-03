@@ -607,7 +607,7 @@ function TimesheetTable() {
     }, [selectedWeek, calendarSchedule, daysOfWeek, selectedCrewInfo, currentUserRole]);
 
     return (
-        <div className="">
+        <div className="container mx-auto">
             <div className={`rounded-xl border-2 border-purple-500 dark:border-purple-950 shadow-2xl overflow-hidden bg-card`}>
                 {(() => {
                     const isPastWeek = getWeekStatus(selectedWeek) === 'past';

@@ -79,7 +79,7 @@ export default function CalendarSettings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       {/* ACTION BAR */}
       <div className="flex justify-end gap-2">
         {!isEditMode ? (

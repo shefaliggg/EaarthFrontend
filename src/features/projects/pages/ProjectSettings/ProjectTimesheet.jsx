@@ -1,11 +1,11 @@
 // ProjectTimesheet.jsx
 import { useState } from 'react';
 import { Info, Plus, Trash2, Edit } from 'lucide-react';
-import EditableTextDataField from "../../../shared/components/wrappers/EditableTextDataField";
-import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
-import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
-import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../shared/components/PageHeader";
+import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
+import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
+import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import { PageHeader } from "../../../../shared/components/PageHeader";
 
 // Radio Group Component
 const RadioGroup = ({ label, options, selected, onChange, showInfo = false }) => {
@@ -218,18 +218,7 @@ const ProjectTimesheet = () => {
   ];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4">
-      <PageHeader
-        title="Timesheet"
-        subtitle="Configure timecard settings for your project"
-        icon="Settings"
-        primaryAction={{
-          label: "Update timecard settings",
-          clickAction: () => console.log("Saving..."),
-          variant: "default",
-        }}
-      />
-
+    <div className="space-y-4">
       {/* Payroll company */}
       <CardWrapper title="" variant="default" showLabel={false}>
         <div className="space-y-4">

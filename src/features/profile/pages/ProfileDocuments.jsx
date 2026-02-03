@@ -37,7 +37,7 @@ export default function ProfileDocuments({ isDarkMode = false }) {
   });
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div className="container mx-auto h-full flex flex-col space-y-4">
       {/* Header Section */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-[#faf5ff] dark:bg-[#9333ea] flex items-center justify-center">

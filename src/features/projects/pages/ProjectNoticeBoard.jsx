@@ -114,7 +114,7 @@ function ProjectNoticeBoard() {
 
 
   return (
-    <div className="w-full space-y-4">
+    <div className="container mx-auto space-y-4">
       {/* TITLE WRAPPER — Replace Later */}
       <div className="space-y-1">
         <div className="flex justify-between items-center">

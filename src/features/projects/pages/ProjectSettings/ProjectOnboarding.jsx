@@ -8,10 +8,10 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { Switch } from "@/shared/components/ui/switch";
-import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
-import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../shared/components/PageHeader";
-import SearchBar from "../../../shared/components/SearchBar";
+import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import { PageHeader } from "../../../../shared/components/PageHeader";
+import SearchBar from "../../../../shared/components/SearchBar";
 
 // Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {
@@ -164,18 +164,7 @@ Many thanks for your hard work on the production.`,
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4">
-      <PageHeader
-        title="Onboarding"
-        subtitle="Configure onboarding and offer handling settings"
-        icon="Settings"
-        primaryAction={{
-          label: "Save Changes",
-          clickAction: () => console.log("Saving..."),
-          variant: "default",
-        }}
-      />
-
+    <div className="space-y-4">
       {/* Offer Settings */}
       <CardWrapper title="Offer Settings" variant="default" showLabel={true}>
         <ButtonToggleGroup

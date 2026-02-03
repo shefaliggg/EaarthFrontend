@@ -60,7 +60,7 @@ function ProjectCloudStorage() {
   const clearSelection = () => setSelectedItems([]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="container mx-auto h-full flex flex-col">
       <div className="flex-1 space-y-6 p-0">
         <div className="space-y-6">
           <div className="flex items-center justify-between">

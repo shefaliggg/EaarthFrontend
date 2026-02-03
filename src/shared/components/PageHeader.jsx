@@ -51,11 +51,11 @@ export function PageHeader({
       return (
         <div
           className={cn(
-            "w-14 h-14 rounded-full flex items-center justify-center shadow-lg shrink-0",
+            "w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0",
             "bg-primary text-primary-foreground"
           )}
         >
-          <IconComponent className="w-7 h-7" />
+          <IconComponent className="w-5 h-5" />
         </div>
       );
     }
@@ -79,7 +79,7 @@ export function PageHeader({
           {renderIdentity()}
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-extrabold! mt-0.5 leading-none text-foreground">
+            <h1 className="text-xl font-extrabold! mt-0.5 leading-none text-foreground">
               {renderTitle(title)}
             </h1>
 

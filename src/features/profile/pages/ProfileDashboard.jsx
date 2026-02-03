@@ -114,7 +114,7 @@ export default function ProfileDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       {/* HEADER + SUMMARY */}
       <ProfileSummary
         profile={profile}

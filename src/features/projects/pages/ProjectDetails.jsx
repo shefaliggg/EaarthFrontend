@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   FileText,
@@ -56,25 +56,26 @@ const applications = [
   { name: 'EAARTH Sign', icon: Clipboard, status: 'inactive' }
 ];
 
-export default function ProjectDetails() {
+export default function ProjectDashboard() {
   const { projectName } = useParams();
+  const navigate = useNavigate();
   const displayTitle = projectName ? projectName.replace(/-/g, ' ') : 'Project';
 
   return (
-    <div className="max-w-5xl mx-auto py-8">
+    <div className="container mx-auto py-8">
       <PageHeader 
-        title={displayTitle} 
+        title="PROJECT DASHBOARD" 
         icon="Film"
         secondaryActions={[
           {
             label: "Settings",
             icon: "Settings",
-            variant: "outline",
-            clickAction: () => console.log('Settings clicked')
+            variant: "default",
+            clickAction: () => navigate(`/projects/${projectName}/settings`)
           }
         ]}
       />
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {applications.map((app) => (
           <div
             key={app.name}

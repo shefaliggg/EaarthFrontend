@@ -117,7 +117,7 @@ export default function CrewReview() {
   console.log('CrewReview loaded:', { id, projectName, offer, firstRole });
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       <div className="flex items-center gap-4 flex-wrap">
         <Button 
           variant="ghost" 

@@ -479,7 +479,7 @@ function CustomSettings() {
     }
   ];
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
 
       {/* Daily Allowances / Overrides */}
       <CardWrapper

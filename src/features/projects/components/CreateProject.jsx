@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageHeader } from "../../../shared/components/PageHeader";
-import ProjectDetails from '../components/ProjectDetails';
+import ProjectDetails from '../pages/ProjectSettings/ProjectDetails';
 import ConfirmActionDialog from '../../../shared/components/modals/ConfirmActionDialog';
 import { INITIALIZE_PROJECT_CONFIG } from '../../../shared/config/ConfirmActionsConfig';
 

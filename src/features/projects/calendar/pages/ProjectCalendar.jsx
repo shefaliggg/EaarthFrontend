@@ -11,7 +11,7 @@ function ProjectCalendar() {
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       <CalendarToolbar
         currentDate={calendar.currentDate}
         view={calendar.view}

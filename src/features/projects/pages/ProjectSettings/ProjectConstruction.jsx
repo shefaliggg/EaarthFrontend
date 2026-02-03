@@ -1,10 +1,10 @@
 // ProjectConstruction.jsx
 import { useState } from 'react';
 import { Info } from 'lucide-react';
-import EditableSelectField from "../../../shared/components/wrappers/EditableSelectField";
-import EditableCheckboxField from "../../../shared/components/wrappers/EditableCheckboxField";
-import CardWrapper from "../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../shared/components/PageHeader";
+import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
+import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import { PageHeader } from "../../../../shared/components/PageHeader";
 
 // Radio Button Group Component
 const RadioButtonGroup = ({ label, options, selected, onChange }) => {
@@ -169,22 +169,7 @@ const ProjectConstruction = () => {
   ];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4">
-      {/* Page Header */}
-      <PageHeader
-        title="Construction"
-        subtitle="Configure default settings for Construction crew"
-        icon="HardHat"
-        primaryAction={{
-          label: "Update construction defaults",
-          clickAction: () => {
-            console.log("Updating construction defaults...");
-            // Add your save logic here
-          },
-          variant: "default",
-        }}
-      />
-
+    <div className="space-y-4">
       {/* Daily rate & hours */}
       <CardWrapper 
         title="Daily rate & hours" 
