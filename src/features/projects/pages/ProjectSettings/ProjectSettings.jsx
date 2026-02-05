@@ -15,8 +15,7 @@ import {
 } from 'lucide-react'
 
 // Import all settings components
-import ProjectDetail from './ProjectDetail'
-import ProjectGeneral from './ProjectGeneral'
+import ProjectDetailsGeneral from './ProjectDetailsGeneral'
 import ProjectConstruction from './ProjectConstruction'
 import ProjectOnboarding from './ProjectOnboarding'
 import ProjectTimesheet from './ProjectTimesheet'
@@ -27,8 +26,7 @@ import ApprovalWorkflows from './ApprovalWorkflows'
 import Billing from './Billing'
 
 const settingsMenuItems = [
-  { id: 'detail', label: 'Project Details', icon: FileText, component: ProjectDetail },
-  { id: 'general', label: 'General', icon: Settings, component: ProjectGeneral },
+  { id: 'details-general', label: 'Project Details', icon: FileText, component: ProjectDetailsGeneral },
   { id: 'construction', label: 'Construction', icon: HardHat, component: ProjectConstruction },
   { id: 'onboarding', label: 'Onboarding', icon: UserCog, component: ProjectOnboarding },
   { id: 'timesheet', label: 'Timesheet', icon: Clock, component: ProjectTimesheet },
@@ -41,9 +39,9 @@ const settingsMenuItems = [
 
 function ProjectSettings() {
   const { projectName } = useParams()
-  const [activeTab, setActiveTab] = useState('general')
+  const [activeTab, setActiveTab] = useState('details-general')
 
-  const ActiveComponent = settingsMenuItems.find(item => item.id === activeTab)?.component || ProjectGeneral
+  const ActiveComponent = settingsMenuItems.find(item => item.id === activeTab)?.component || ProjectDetailsGeneral
 
   return (
     <div className="space-y-4">

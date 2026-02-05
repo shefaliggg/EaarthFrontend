@@ -15,18 +15,18 @@ function EditableRadioField({
   return (
     <div className="flex flex-col gap-1.5 rounded-xl">
       {/* Label */}
-      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-700 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {icon && <SmartIcon icon={icon} size="md" />}
         <span>{label}</span>
       </div>
 
       {/* View Mode */}
       {!isEditing ? (
-        <div className="h-10 flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-3 text-sm font-medium uppercase shadow-none">
+        <div className="text-sm font-medium text-foreground">
           {selectedOption ? (
             selectedOption.label
           ) : (
-            <span className="italic text-muted-foreground">
+            <span className="text-muted-foreground">
               Not Available
             </span>
           )}

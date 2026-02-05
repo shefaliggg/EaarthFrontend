@@ -18,7 +18,7 @@ export default function CardWrapper({
             {showLabel &&
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <h3 className="font-semibold mb-2 flex items-center gap-2 text-muted-foreground">
                             <SmartIcon icon={Icon} size="lg" className={cn(iconColor)} />
                             {title}
                         </h3>
