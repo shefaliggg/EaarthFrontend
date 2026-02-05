@@ -1,11 +1,13 @@
 import { startOfWeek, addDays, format } from "date-fns";
 import { Clock, MapPin } from "lucide-react";
 import { cn } from "../../../../shared/config/utils";
+import { useState, useEffect, useRef } from "react";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { getProductionWeekLabel } from "./productionPhases";
 
 // CONFIG
@@ -120,17 +122,49 @@ function getEventStyle(event, colIndex, colCount) {
   };
 }
 
+function isPastEvent(event) {
+  if (!event.endDateTime) return false;
+  return new Date(event.endDateTime) < new Date();
+}
+
 function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
+  const [expandedEventId, setExpandedEventId] = useState(null);
+  const scrollRef = useRef(null);
+
   const week = getWeek(currentDate);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+
+    const today = new Date();
+
+    // Check if today is in the current visible week
+    const isCurrentWeek = week.some(
+      (d) => d.toDateString() === today.toDateString(),
+    );
+
+    if (!isCurrentWeek) return;
+
+    const minutesNow = today.getHours() * 60 + today.getMinutes();
+
+    // Scroll so "now" is slightly below the top
+    const scrollTop = (minutesNow / 60) * HOUR_HEIGHT - HOUR_HEIGHT * 2;
+
+    scrollRef.current.scrollTo({
+      top: Math.max(scrollTop, 0),
+      behavior: "smooth",
+    });
+  }, [currentDate]);
+
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const normalized = normalizeWeekEvents(events);
   const isToday = (date) => date.toDateString() === new Date().toDateString();
 
-  // Soft colors with proper backgrounds for no transparency issues
+  // Soft colors with proper backgrounds
   const getEventColors = (eventType) => {
     switch (eventType) {
       case "shoot":
-        return "bg-lavender-100 dark:bg-lavender-900 text-lavender-800 dark:text-lavender-200 border-lavender-300 dark:border-lavender-700";
+        return "bg-peach-100 dark:bg-peach-900/30 text-peach-800 dark:text-peach-200 border-peach-400 dark:border-peach-700";
       case "prep":
         return "bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200 border-sky-300 dark:border-sky-700";
       case "wrap":
@@ -143,9 +177,9 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
   const getAllDayEventColors = (eventType) => {
     switch (eventType) {
       case "shoot":
-        return "bg-lavender-200 dark:bg-lavender-800 text-lavender-900 dark:text-lavender-100 border-lavender-400 dark:border-lavender-600";
+        return "bg-peach-100 dark:bg-peach-900/30 text-peach-800 dark:text-peach-200 border-peach-400 dark:border-peach-700";
       case "prep":
-        return "bg-sky-200 dark:bg-sky-800 text-sky-900 dark:text-sky-100 border-sky-400 dark:border-sky-600";
+        return "bg-sky-200 dark:bg-sky-800/80 text-sky-900 dark:text-sky-100 border-sky-400 dark:border-sky-600";
       case "wrap":
         return "bg-mint-200 dark:bg-mint-800 text-mint-900 dark:text-mint-100 border-mint-400 dark:border-mint-600";
       default:
@@ -154,186 +188,224 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
   };
 
   return (
-    <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* PRODUCTION WEEK BANNER */}
-      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
-        <div className="bg-card border-r border-primary/20"></div>
-        <div className="col-start-2 col-span-7 text-center py-3 text-xs font-bold uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
-          {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
-        </div>
-      </div>
-
-      {/* HEADER - Day Names and Dates */}
-      <div className="grid grid-cols-[80px_repeat(7,1fr)] text-[11px] font-black uppercase border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
-        <div className="bg-card border-r border-primary/20 pr-3 text-muted-foreground flex justify-end py-2">
-          <span className="text-[10px]">TIME</span>
-        </div>
-        {week.map((d) => (
-          <div
-            key={d}
-            className={cn(
-              "py-1 flex flex-col items-center justify-center border-r border-primary/20 last:border-r-0 transition-colors",
-              isToday(d) && "bg-purple-100/50 dark:bg-purple-900/30"
-            )}
-          >
-            <p className="text-[11px] font-black uppercase text-purple-800 dark:text-purple-300">
-              {format(d, "EEE")}
-            </p>
-            <p
-              className={cn(
-                "text-[14px] font-bold w-7 h-7 rounded-full flex items-center justify-center text-purple-800 dark:text-purple-300 transition-colors mt-0.5",
-                isToday(d) && "bg-purple-200 dark:bg-purple-800/40"
-              )}
-            >
-              {d.getDate()}
-            </p>
+    <>
+      <div className="rounded-xl border border-primary/20 shadow-lg bg-card overflow-hidden">
+        {/* WEEK PHASE BANNER */}
+        <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+          <div className="bg-card border-r border-primary/20"></div>
+          <div className="col-start-2 col-span-7 py-3 text-center text-xs font-bold uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
+            {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
           </div>
-        ))}
-      </div>
-
-      {/* ALL DAY ROW */}
-      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
-        <div className="bg-muted/40 border-r border-b border-primary/20 flex items-center justify-center text-xs font-bold text-purple-800 dark:text-purple-300 min-h-12">
-          ALL DAY
         </div>
-
-        {week.map((date) => (
-          <div
-            key={date}
-            className="flex cursor-pointer gap-1 p-1 flex-col items-start border-r border-b border-primary/20 last:border-r-0 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden min-h-12"
-            onClick={() => {
-              setCurrentDate(date);
-              onDayClick();
-            }}
-          >
-            {getAllDayEvents(normalized, date).map((e) => (
-              <Tooltip key={e.id || e._id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className={cn(
-                      "w-full text-[10px] font-semibold px-1.5 py-0.5 rounded-md overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md border-l-4",
-                      getAllDayEventColors(e.eventType)
-                    )}
-                  >
-                    {e.title}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
-                  <div className="flex flex-col gap-2 p-1">
-                    <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
-                      {e.title}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span className="font-medium">All Day Event</span>
-                    </div>
-                    {e.location && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span className="font-medium">{e.location}</span>
-                      </div>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
+        {/* WEEK HEADER ROW (Time column + day labels) */}
+        <div className="grid grid-cols-[80px_1fr] text-[11px] font-black uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
+          <div className="flex justify-end py-2 pr-3 text-[10px] text-muted-foreground bg-card border-r border-b border-primary/20">
+            TIME
+          </div>
+          <div className="grid grid-cols-7 pr-5 border-primary/20 border-b">
+            {week.map((date) => (
+              <div
+                className={cn(
+                  "flex flex-col items-center py-1 border-primary/20 border-r last:border-r-0",
+                  isToday(date) && "bg-purple-100/50 dark:bg-purple-900/30",
+                )}
+              >
+                <p className="text-[11px] font-black uppercase text-purple-800 dark:text-purple-300">
+                  {format(date, "EEE")}
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 text-[14px] font-bold text-purple-800 dark:text-purple-300",
+                    isToday(date) &&
+                      "flex items-center justify-center w-7 h-7 rounded-full bg-purple-200 dark:bg-purple-800/40",
+                  )}
+                >
+                  {date.getDate()}
+                </p>
+              </div>
             ))}
           </div>
-        ))}
-      </div>
-
-      {/* TIME GRID */}
-      <div className="grid grid-cols-[80px_repeat(7,1fr)]">
-        {/* TIME LABELS - PERFECTLY CENTERED */}
-        <div>
-          {hours.map((h) => (
-            <div
-              key={h}
-              className="bg-muted/40 border-primary/20 border-b border-r h-12 flex items-center justify-center"
-            >
-              <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">
-                {formatHour(h)}
-              </span>
-            </div>
-          ))}
         </div>
-
-        {/* DAY COLUMNS */}
-        {week.map((date) => {
-          const dayEvents = getEventsForDay(normalized, date);
-          const columns = layoutEvents(dayEvents);
-
-          return (
-            <div
-              key={date}
-              onClick={() => {
-                setCurrentDate(date);
-                onDayClick();
-              }}
-              className="border-r border-primary/20 last:border-r-0 relative bg-card"
-            >
-              {/* Hour background grid */}
-              {hours.map((h) => (
-                <div
-                  key={h}
-                  className="h-12 border-b border-primary/20 hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-all duration-200"
-                />
-              ))}
-
-              {/* Events layer - positioned absolutely to sit ON TOP of grid */}
-              <div className="absolute inset-0 pointer-events-none">
-                {columns.map((col, colIndex) =>
-                  col.map((e) => {
-                    const startTime = new Date(e.startDateTime);
-                    const endTime = new Date(e.endDateTime);
-
-                    return (
-                      <Tooltip key={e.id || e._id}>
-                        <TooltipTrigger asChild>
-                          <div
-                            style={getEventStyle(e, colIndex, columns.length)}
-                            className={cn(
-                              "cursor-pointer absolute text-[10px] font-semibold px-1.5 py-1 rounded-md overflow-hidden shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-l-[3px] pointer-events-auto",
-                              getEventColors(e.eventType)
-                            )}
-                          >
-                            <div className="font-bold truncate">{e.title}</div>
-                            {e._end - e._start > 30 && (
-                              <div className="text-[9px] opacity-80 truncate">
-                                {format(startTime, "h:mm a")}
-                              </div>
-                            )}
+        {/* ALL DAY EVENTS ROW */}
+        <div className="grid grid-cols-[80px_1fr]">
+          <div className="flex items-center justify-center min-h-12 text-xs font-bold text-purple-800 dark:text-purple-300 bg-muted/40 border-r border-b border-primary/20">
+            ALL DAY
+          </div>
+          {/* ALL-DAY EVENTS DAY COLUMNS */}
+          <div className="grid grid-cols-7 border-b border-primary/20 mr-5">
+            {week.map((date) => (
+              <div
+                key={date}
+                className="flex flex-col items-start gap-1 p-1 border-r border-primary/20 last:border-r-0 cursor-pointer hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden"
+                onClick={() => {
+                  setCurrentDate(date);
+                  onDayClick();
+                }}
+              >
+                {getAllDayEvents(normalized, date).map((e) => (
+                  <Tooltip key={e.id || e._id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-4 transition-all duration-200 hover:shadow-md",
+                          getAllDayEventColors(e.eventType),
+                        )}
+                      >
+                        {e.title}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                      <div className="flex flex-col gap-2 p-1">
+                        <p className="font-bold text-sm text-purple-800 dark:text-purple-300 border-b border-primary/20 pb-1">
+                          {e.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="font-medium">All Day Event</span>
+                        </div>
+                        {e.location && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="font-medium">{e.location}</span>
                           </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
-                          <div className="flex flex-col gap-2 p-1">
-                            <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
-                              {e.title}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span className="font-medium">
-                                {format(startTime, "h:mm a")} -{" "}
-                                {format(endTime, "h:mm a")}
-                              </span>
-                            </div>
-                            {e.location && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span className="font-medium">{e.location}</span>
-                              </div>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })
-                )}
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        </div>
+        {/* Scrollable time grid (hour rows + day columns) */}
+        <div
+          ref={scrollRef}
+          style={{
+            height: "calc(100vh - 440px)", 
+          }}
+          className="grid grid-cols-[80px_1fr] overflow-auto"
+        >
+          <div>
+            {hours.map((h) => (
+              <div
+                key={h}
+                className="bg-muted/40 border-primary/20 border-b last:border-b-0 border-r h-12 flex items-center justify-center"
+              >
+                <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">
+                  {formatHour(h)}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Day columns grid (one column per week day) */}
+          <div className="grid grid-cols-7 mr-3">
+            {week.map((date) => {
+              const dayEvents = getEventsForDay(normalized, date);
+              const columns = layoutEvents(dayEvents);
+              return (
+                <div
+                  key={date}
+                  onClick={() => {
+                    setCurrentDate(date);
+                    onDayClick();
+                  }}
+                  className="border-r border-primary/20 last:border-r-0 relative bg-card"
+                >
+                  {/* Hour background grid */}
+                  {hours.map((h) => (
+                    <div
+                      key={h}
+                      className="h-12 border-b border-primary/20 hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-all duration-200"
+                    />
+                  ))}
+
+                  {/* Events layer */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {columns.map((col, colIndex) =>
+                      col.map((e) => {
+                        const startTime = new Date(e.startDateTime);
+                        const endTime = new Date(e.endDateTime);
+
+                        const past = isPastEvent(e);
+                        const eventId = e.id || e._id;
+                        const isExpanded = expandedEventId === eventId;
+
+                        return (
+                          <Tooltip key={eventId}>
+                            <TooltipTrigger asChild>
+                              <div
+                                onClick={(evt) => {
+                                  evt.stopPropagation();
+                                  if (past) {
+                                    setExpandedEventId(
+                                      isExpanded ? null : eventId,
+                                    );
+                                  }
+                                }}
+                                style={{
+                                  ...getEventStyle(e, colIndex, columns.length),
+                                  height:
+                                    past && !isExpanded
+                                      ? 18
+                                      : getEventStyle(
+                                          e,
+                                          colIndex,
+                                          columns.length,
+                                        ).height,
+                                }}
+                                className={cn(
+                                  "cursor-pointer absolute text-[10px] font-semibold px-1.5 py-1 rounded-md overflow-hidden shadow-md transition-all duration-200 border-l-[3px] pointer-events-auto",
+                                  past && !isExpanded && "opacity-50",
+                                  getEventColors(e.eventType),
+                                )}
+                              >
+                                <div className="font-bold truncate">
+                                  {e.title}
+                                </div>
+
+                                {(!past || isExpanded) &&
+                                  e._end - e._start > 30 && (
+                                    <div className="text-[9px] opacity-80 truncate">
+                                      {format(startTime, "h:mm a")}
+                                    </div>
+                                  )}
+                              </div>
+                            </TooltipTrigger>
+
+                            <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                              <div className="flex flex-col gap-2 p-1">
+                                <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+                                  {e.title}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  <span className="font-medium">
+                                    {format(startTime, "h:mm a")} –{" "}
+                                    {format(endTime, "h:mm a")}
+                                  </span>
+                                </div>
+                                {e.location && (
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span className="font-medium">
+                                      {e.location}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }),
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
