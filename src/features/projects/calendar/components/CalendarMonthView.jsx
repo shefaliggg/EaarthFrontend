@@ -115,7 +115,7 @@ function CalendarMonthView({
               >
                 {/* WEEK LABEL  */}
                 <div className="flex h-62 justify-center items-center bg-muted/40 border-r border-b border-primary/20">
-                  <span className="text-xs font-bold text-purple-800 dark:text-purple-300 rotate-90 whitespace-nowrap">
+                  <span className="text-xs font-bold text-purple-800 dark:text-purple-300 rotate-270 whitespace-nowrap">
                     {weekLabel || ""}
                   </span>
                 </div>
