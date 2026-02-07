@@ -52,7 +52,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
-  
+
   // New feature states
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -62,7 +62,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  
+
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const textareaRef = useRef(null);
@@ -80,56 +80,50 @@ export default function EnhancedChatUI({ selectedChat }) {
   // 🔥 KEY FEATURE: Scroll to bottom function (from first code)
   const scrollToBottom = useCallback((smooth = true) => {
     messagesEndRef.current?.scrollIntoView({
-      behavior: smooth ? "smooth" : "auto"
+      behavior: smooth ? "smooth" : "auto",
     });
     setIsUserAtBottom(true);
     setNewMessagesCount(0);
   }, []);
 
-  // 🔥 CRITICAL: Initial mount - scroll to bottom on first load AND on refresh
   useEffect(() => {
-    // Delay to ensure DOM is fully rendered
-    const timer = setTimeout(() => {
-      scrollToBottom(false); // Use instant scroll for initial mount
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [scrollToBottom]);
+    scrollToBottom(false);
+  }, []);
 
   // 🔥 Update messages when selectedChat changes - PREVENTS SCROLL JUMP
   useEffect(() => {
-    if (selectedChat?.id) {
-      console.log("💬 Chat changed to:", selectedChat);
-      setCurrentChatId(selectedChat.id);
-      
-      // Initialize messages for new chat if not exists
-      if (!messagesByChat[selectedChat.id]) {
-        const initialMessages = generateInitialMessages(selectedChat);
-        setMessagesByChat(prev => ({
-          ...prev,
-          [selectedChat.id]: initialMessages
-        }));
-      }
-      
-      // Reset UI state when switching chats
-      setReplyTo(null);
-      setEditingMessage(null);
-      setIsSearchOpen(false);
-      setSearchQuery("");
-      setSelectedMessage(null);
-      setShowReactionPicker(null);
-      setShowAttachMenu(false);
-      setShowEmojiPicker(false);
-      
-      // 🔥 CRITICAL: Scroll to bottom AFTER messages load to prevent jump
-      setTimeout(() => {
-        scrollToBottom(false); // Use instant scroll for chat switching
-        setIsUserAtBottom(true);
-      }, 150);
+    if (!selectedChat?.id) return;
+    console.log("💬 Chat changed to:", selectedChat);
+    setCurrentChatId(selectedChat.id);
+
+    // Initialize temp messages for new chat if not exists
+    if (!messagesByChat[selectedChat.id]) {
+      const initialMessages = generateInitialMessages(selectedChat);
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [selectedChat.id]: initialMessages,
+      }));
     }
-  }, [selectedChat?.id, scrollToBottom]);
+
+    // Reset UI state when switching chats
+    setReplyTo(null);
+    setEditingMessage(null);
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setSelectedMessage(null);
+    setShowReactionPicker(null);
+    setShowAttachMenu(false);
+    setShowEmojiPicker(false);
+
+    // 🔥 CRITICAL: Scroll to bottom AFTER messages load to prevent jump
+    setTimeout(() => {
+      scrollToBottom(false); // Use instant scroll for chat switching
+      setIsUserAtBottom(true);
+    }, 150);
+  }, [selectedChat?.id]);
 
   // Get current messages for the active chat
-  const messages = currentChatId ? (messagesByChat[currentChatId] || []) : [];
+  const messages = currentChatId ? messagesByChat[currentChatId] || [] : [];
 
   // 🔥 Function to generate initial messages based on chat type
   const generateInitialMessages = (chat) => {
@@ -147,7 +141,8 @@ export default function EnhancedChatUI({ selectedChat }) {
         {
           id: "system-1",
           type: "system",
-          content: "Welcome to All Departments chat - Company-wide announcements",
+          content:
+            "Welcome to All Departments chat - Company-wide announcements",
           time: "9:00 AM",
         },
         {
@@ -156,7 +151,8 @@ export default function EnhancedChatUI({ selectedChat }) {
           avatar: "AD",
           time: "10:30 AM",
           timestamp: Date.now() - 7200000,
-          content: "Welcome everyone! This is the main communication channel for all departments.",
+          content:
+            "Welcome everyone! This is the main communication channel for all departments.",
           isOwn: false,
           state: "seen",
           readBy: 125,
@@ -226,19 +222,22 @@ export default function EnhancedChatUI({ selectedChat }) {
     const results = messages.filter(
       (m) =>
         m.content &&
-        m.content.toLowerCase().includes(searchQuery.toLowerCase())
+        m.content.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     setSearchResults(results);
     setActiveResultIndex(0);
-  }, [searchQuery, messages]);
+  }, [searchQuery]);
 
-  const goToSearchResult = useCallback((index) => {
-    const msg = searchResults[index];
-    if (!msg) return;
-    scrollToMessage(msg.id);
-    setActiveResultIndex(index);
-  }, [searchResults]);
+  const goToSearchResult = useCallback(
+    (index) => {
+      const msg = searchResults[index];
+      if (!msg) return;
+      scrollToMessage(msg.id);
+      setActiveResultIndex(index);
+    },
+    [searchResults],
+  );
 
   const handleScroll = useCallback((e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -254,8 +253,9 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Auto-grow textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        Math.min(textareaRef.current.scrollHeight, 120) + "px";
     }
   }, [messageInput]);
 
@@ -278,7 +278,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isUserAtBottom) {
-        setNewMessagesCount(prev => prev + 1);
+        setNewMessagesCount((prev) => prev + 1);
       }
     }, 5000);
     return () => clearTimeout(timer);
@@ -287,15 +287,21 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Close pickers on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.emoji-picker-container') && !e.target.closest('.emoji-button')) {
+      if (
+        !e.target.closest(".emoji-picker-container") &&
+        !e.target.closest(".emoji-button")
+      ) {
         setShowEmojiPicker(false);
       }
-      if (!e.target.closest('.attach-menu-container') && !e.target.closest('.attach-button')) {
+      if (
+        !e.target.closest(".attach-menu-container") &&
+        !e.target.closest(".attach-button")
+      ) {
         setShowAttachMenu(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   const handleSendMessage = () => {
@@ -304,7 +310,10 @@ export default function EnhancedChatUI({ selectedChat }) {
         id: Date.now(),
         sender: "You",
         avatar: "YO",
-        time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
         timestamp: Date.now(),
         content: messageInput,
         isOwn: true,
@@ -313,11 +322,11 @@ export default function EnhancedChatUI({ selectedChat }) {
       };
 
       // Update messages for current chat
-      setMessagesByChat(prev => ({
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: [...(prev[currentChatId] || []), newMessage]
+        [currentChatId]: [...(prev[currentChatId] || []), newMessage],
       }));
-      
+
       setMessageInput("");
       setReplyTo(null);
       localStorage.removeItem(`chat-draft-${currentChatId}`);
@@ -329,20 +338,20 @@ export default function EnhancedChatUI({ selectedChat }) {
 
       // Simulate state changes
       setTimeout(() => {
-        setMessagesByChat(prev => ({
+        setMessagesByChat((prev) => ({
           ...prev,
-          [currentChatId]: prev[currentChatId].map(m =>
-            m.id === newMessage.id ? { ...m, state: "sent" } : m
-          )
+          [currentChatId]: prev[currentChatId].map((m) =>
+            m.id === newMessage.id ? { ...m, state: "sent" } : m,
+          ),
         }));
       }, 500);
 
       setTimeout(() => {
-        setMessagesByChat(prev => ({
+        setMessagesByChat((prev) => ({
           ...prev,
-          [currentChatId]: prev[currentChatId].map(m =>
-            m.id === newMessage.id ? { ...m, state: "delivered" } : m
-          )
+          [currentChatId]: prev[currentChatId].map((m) =>
+            m.id === newMessage.id ? { ...m, state: "delivered" } : m,
+          ),
         }));
       }, 1500);
     }
@@ -376,10 +385,10 @@ export default function EnhancedChatUI({ selectedChat }) {
 
   const handleReaction = (messageId, emoji) => {
     if (!currentChatId) return;
-    
-    setMessagesByChat(prev => ({
+
+    setMessagesByChat((prev) => ({
       ...prev,
-      [currentChatId]: prev[currentChatId].map(msg => {
+      [currentChatId]: prev[currentChatId].map((msg) => {
         if (msg.id === messageId) {
           const reactions = { ...msg.reactions };
           if (reactions[emoji]) {
@@ -390,27 +399,27 @@ export default function EnhancedChatUI({ selectedChat }) {
           return { ...msg, reactions };
         }
         return msg;
-      })
+      }),
     }));
     setShowReactionPicker(null);
   };
 
-  const handleDeleteMessage = (messageId, deleteFor = 'me') => {
+  const handleDeleteMessage = (messageId, deleteFor = "me") => {
     if (!currentChatId) return;
-    
-    if (deleteFor === 'everyone') {
-      setMessagesByChat(prev => ({
+
+    if (deleteFor === "everyone") {
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: prev[currentChatId].map(msg =>
-          msg.id === messageId
-            ? { ...msg, deleted: true, content: null }
-            : msg
-        )
+        [currentChatId]: prev[currentChatId].map((msg) =>
+          msg.id === messageId ? { ...msg, deleted: true, content: null } : msg,
+        ),
       }));
     } else {
-      setMessagesByChat(prev => ({
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: prev[currentChatId].filter(msg => msg.id !== messageId)
+        [currentChatId]: prev[currentChatId].filter(
+          (msg) => msg.id !== messageId,
+        ),
       }));
     }
     setContextMenu(null);
@@ -425,18 +434,18 @@ export default function EnhancedChatUI({ selectedChat }) {
 
   const handleUpdateMessage = () => {
     if (editingMessage && messageInput.trim() && currentChatId) {
-      setMessagesByChat(prev => ({
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: prev[currentChatId].map(msg =>
+        [currentChatId]: prev[currentChatId].map((msg) =>
           msg.id === editingMessage.id
             ? {
-              ...msg,
-              content: messageInput,
-              edited: true,
-              editedAt: Date.now()
-            }
-            : msg
-        )
+                ...msg,
+                content: messageInput,
+                edited: true,
+                editedAt: Date.now(),
+              }
+            : msg,
+        ),
       }));
       setMessageInput("");
       setEditingMessage(null);
@@ -452,7 +461,7 @@ export default function EnhancedChatUI({ selectedChat }) {
 
   const scrollToMessage = (messageId) => {
     const element = document.getElementById(`message-${messageId}`);
-    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
     setSelectedMessage(messageId);
     setTimeout(() => setSelectedMessage(null), 2000);
   };
@@ -460,7 +469,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   // File upload handlers
   const handleFileUpload = (e, type) => {
     if (!currentChatId) return;
-    
+
     const file = e.target.files[0];
     if (!file) return;
 
@@ -469,7 +478,10 @@ export default function EnhancedChatUI({ selectedChat }) {
       id: Date.now(),
       sender: "You",
       avatar: "YO",
-      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
       timestamp: Date.now(),
       type: type,
       url: url,
@@ -479,9 +491,9 @@ export default function EnhancedChatUI({ selectedChat }) {
       state: "sending",
     };
 
-    setMessagesByChat(prev => ({
+    setMessagesByChat((prev) => ({
       ...prev,
-      [currentChatId]: [...(prev[currentChatId] || []), newMessage]
+      [currentChatId]: [...(prev[currentChatId] || []), newMessage],
     }));
 
     setShowAttachMenu(false);
@@ -493,24 +505,24 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     // Simulate state changes
     setTimeout(() => {
-      setMessagesByChat(prev => ({
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: prev[currentChatId].map(m =>
-          m.id === newMessage.id ? { ...m, state: "sent" } : m
-        )
+        [currentChatId]: prev[currentChatId].map((m) =>
+          m.id === newMessage.id ? { ...m, state: "sent" } : m,
+        ),
       }));
     }, 500);
 
     setTimeout(() => {
-      setMessagesByChat(prev => ({
+      setMessagesByChat((prev) => ({
         ...prev,
-        [currentChatId]: prev[currentChatId].map(m =>
-          m.id === newMessage.id ? { ...m, state: "delivered" } : m
-        )
+        [currentChatId]: prev[currentChatId].map((m) =>
+          m.id === newMessage.id ? { ...m, state: "delivered" } : m,
+        ),
       }));
     }, 1500);
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
   // Voice recording handlers
@@ -526,15 +538,20 @@ export default function EnhancedChatUI({ selectedChat }) {
 
       mediaRecorderRef.current.onstop = () => {
         if (!currentChatId) return;
-        
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
         const url = URL.createObjectURL(audioBlob);
-        
+
         const newMessage = {
           id: Date.now(),
           sender: "You",
           avatar: "YO",
-          time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          time: new Date().toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+          }),
           timestamp: Date.now(),
           type: "voice",
           url: url,
@@ -546,17 +563,17 @@ export default function EnhancedChatUI({ selectedChat }) {
           waveform: Array.from({ length: 18 }, () => Math.random() * 100),
         };
 
-        setMessagesByChat(prev => ({
+        setMessagesByChat((prev) => ({
           ...prev,
-          [currentChatId]: [...(prev[currentChatId] || []), newMessage]
+          [currentChatId]: [...(prev[currentChatId] || []), newMessage],
         }));
-        
+
         // 🔥 Auto-scroll when sending voice message (only if user was at bottom)
         if (isUserAtBottom) {
           setTimeout(() => scrollToBottom(), 50);
         }
 
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         setRecordingTime(0);
       };
 
@@ -564,11 +581,11 @@ export default function EnhancedChatUI({ selectedChat }) {
       setIsRecording(true);
 
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (err) {
-      console.error('Error accessing microphone:', err);
-      alert('Could not access microphone. Please check permissions.');
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please check permissions.");
     }
   };
 
@@ -593,15 +610,17 @@ export default function EnhancedChatUI({ selectedChat }) {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleEmojiClick = (emojiData) => {
-    const cursorPos = textareaRef.current?.selectionStart || messageInput.length;
+    const cursorPos =
+      textareaRef.current?.selectionStart || messageInput.length;
     const textBefore = messageInput.substring(0, cursorPos);
     const textAfter = messageInput.substring(cursorPos);
     setMessageInput(textBefore + emojiData.emoji + textAfter);
-    
+    console.log("emoji data", emojiData);
+
     setTimeout(() => {
       if (textareaRef.current) {
         const newPos = cursorPos + emojiData.emoji.length;
@@ -618,21 +637,24 @@ export default function EnhancedChatUI({ selectedChat }) {
       setContextMenu(null);
       setShowReactionPicker(null);
     };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
   }, []);
 
   // 🔥 Show empty state if no chat selected
   if (!selectedChat) {
     return (
-      <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] sticky top-5 flex items-center justify-center">
+      <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex items-center justify-center">
         <div className="text-center space-y-3 p-8">
           <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold">Select a chat to start messaging</h3>
+          <h3 className="text-lg font-semibold">
+            Select a chat to start messaging
+          </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Choose a department group or individual member from the sidebar to begin your conversation
+            Choose a department group or individual member from the sidebar to
+            begin your conversation
           </p>
         </div>
       </div>
@@ -640,7 +662,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   }
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] sticky top-5 flex flex-col mx-auto">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex flex-col mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b rounded-t-3xl backdrop-blur-sm flex-shrink-0">
         {!isSearchOpen ? (
@@ -654,7 +676,9 @@ export default function EnhancedChatUI({ selectedChat }) {
                 </Avatar>
               ) : (
                 <div className="p-2 rounded-full bg-primary/10">
-                  {selectedChat.icon && <selectedChat.icon className="w-5 h-5 text-primary" />}
+                  {selectedChat.icon && (
+                    <selectedChat.icon className="w-5 h-5 text-primary" />
+                  )}
                 </div>
               )}
 
@@ -663,12 +687,15 @@ export default function EnhancedChatUI({ selectedChat }) {
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   {selectedChat.type === "dm" ? (
                     <>
-                      <span className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        selectedChat.status === "online" && "bg-green-500 animate-pulse",
-                        selectedChat.status === "away" && "bg-yellow-500",
-                        selectedChat.status === "offline" && "bg-gray-400"
-                      )} />
+                      <span
+                        className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          selectedChat.status === "online" &&
+                            "bg-green-500 animate-pulse",
+                          selectedChat.status === "away" && "bg-yellow-500",
+                          selectedChat.status === "offline" && "bg-gray-400",
+                        )}
+                      />
                       <span>{selectedChat.role}</span>
                     </>
                   ) : (
@@ -729,7 +756,7 @@ export default function EnhancedChatUI({ selectedChat }) {
             >
               <X className="w-4 h-4" />
             </button>
-            
+
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -740,16 +767,24 @@ export default function EnhancedChatUI({ selectedChat }) {
 
             {searchResults.length > 0 && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>{activeResultIndex + 1} / {searchResults.length}</span>
+                <span>
+                  {activeResultIndex + 1} / {searchResults.length}
+                </span>
                 <button
-                  onClick={() => goToSearchResult(Math.max(0, activeResultIndex - 1))}
+                  onClick={() =>
+                    goToSearchResult(Math.max(0, activeResultIndex - 1))
+                  }
                   disabled={activeResultIndex === 0}
                   className="p-1 rounded hover:bg-accent disabled:opacity-50"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => goToSearchResult(Math.min(searchResults.length - 1, activeResultIndex + 1))}
+                  onClick={() =>
+                    goToSearchResult(
+                      Math.min(searchResults.length - 1, activeResultIndex + 1),
+                    )
+                  }
                   disabled={activeResultIndex === searchResults.length - 1}
                   className="p-1 rounded hover:bg-accent disabled:opacity-50"
                 >
@@ -765,7 +800,7 @@ export default function EnhancedChatUI({ selectedChat }) {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-1.5 relative scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+        className="flex-1 overflow-y-auto p-4 space-y-1.5 relative"
         role="log"
         aria-live="polite"
         aria-label="Chat messages"
@@ -773,12 +808,28 @@ export default function EnhancedChatUI({ selectedChat }) {
         {messages.map((msg, index) => {
           const prevMsg = messages[index - 1];
           const nextMsg = messages[index + 1];
-          const isGroupStart = !prevMsg || prevMsg.sender !== msg.sender || prevMsg.type === "date-separator" || prevMsg.type === "system" || msg.type === "date-separator" || msg.type === "system";
-          const isGroupEnd = !nextMsg || nextMsg.sender !== msg.sender || nextMsg.type === "date-separator" || nextMsg.type === "system" || msg.type === "date-separator" || msg.type === "system";
+          const isGroupStart =
+            !prevMsg ||
+            prevMsg.sender !== msg.sender ||
+            prevMsg.type === "date-separator" ||
+            prevMsg.type === "system" ||
+            msg.type === "date-separator" ||
+            msg.type === "system";
+          const isGroupEnd =
+            !nextMsg ||
+            nextMsg.sender !== msg.sender ||
+            nextMsg.type === "date-separator" ||
+            nextMsg.type === "system" ||
+            msg.type === "date-separator" ||
+            msg.type === "system";
 
           if (msg.type === "date-separator") {
             return (
-              <div key={msg.id} className="flex justify-center my-4" role="separator">
+              <div
+                key={msg.id}
+                className="flex justify-center my-4"
+                role="separator"
+              >
                 <div className="bg-muted/50 px-3 py-1.5 rounded-full text-xs text-muted-foreground font-medium">
                   {msg.date}
                 </div>
@@ -788,7 +839,11 @@ export default function EnhancedChatUI({ selectedChat }) {
 
           if (msg.type === "system") {
             return (
-              <div key={msg.id} className="flex justify-center my-3" role="status">
+              <div
+                key={msg.id}
+                className="flex justify-center my-3"
+                role="status"
+              >
                 <div className="bg-muted/30 px-3 py-1.5 rounded-lg text-xs text-muted-foreground flex items-center gap-2">
                   <AlertCircle className="w-3.5 h-3.5" />
                   {msg.content}
@@ -823,7 +878,11 @@ export default function EnhancedChatUI({ selectedChat }) {
         })}
 
         {isTyping && (
-          <div className="flex gap-3 items-end" role="status" aria-label="Someone is typing">
+          <div
+            className="flex gap-3 items-end"
+            role="status"
+            aria-label="Someone is typing"
+          >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-muted text-xs">MJ</AvatarFallback>
             </Avatar>
@@ -886,7 +945,7 @@ export default function EnhancedChatUI({ selectedChat }) {
               aria-label={`${newMessagesCount} new messages`}
             >
               <ChevronDown className="w-4 h-4" />
-              {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''}
+              {newMessagesCount} new message{newMessagesCount > 1 ? "s" : ""}
             </button>
           </div>
         )}
@@ -956,7 +1015,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         )}
 
         {!isRecording && (
-          <div className="flex rounded-xl items-end gap-2">
+          <div className="flex rounded-xl items-end  gap-2">
             <div className="relative attach-menu-container">
               <button
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
@@ -986,13 +1045,13 @@ export default function EnhancedChatUI({ selectedChat }) {
                   <AttachmentButton
                     icon={MapPin}
                     label="Location"
-                    onClick={() => alert('Location sharing coming soon!')}
+                    onClick={() => alert("Location sharing coming soon!")}
                   />
-                  <AttachmentButton
+                  {/* <AttachmentButton
                     icon={BarChart3}
                     label="Poll"
                     onClick={() => alert('Poll feature coming soon!')}
-                  />
+                  /> */}
                 </div>
               )}
 
@@ -1001,20 +1060,20 @@ export default function EnhancedChatUI({ selectedChat }) {
                 type="file"
                 accept="image/*"
                 hidden
-                onChange={(e) => handleFileUpload(e, 'image')}
+                onChange={(e) => handleFileUpload(e, "image")}
               />
               <input
                 ref={videoInputRef}
                 type="file"
                 accept="video/*"
                 hidden
-                onChange={(e) => handleFileUpload(e, 'video')}
+                onChange={(e) => handleFileUpload(e, "video")}
               />
               <input
                 ref={documentInputRef}
                 type="file"
                 hidden
-                onChange={(e) => handleFileUpload(e, 'document')}
+                onChange={(e) => handleFileUpload(e, "document")}
               />
             </div>
 
@@ -1041,7 +1100,7 @@ export default function EnhancedChatUI({ selectedChat }) {
               )}
             </div>
 
-            <div className="flex-1 relative">
+            <div className="flex-1 relative -mb-1.5">
               <textarea
                 ref={textareaRef}
                 value={messageInput}
@@ -1049,11 +1108,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 rows={1}
-                className="w-full px-4 py-2.5 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm h-11"
-                style={{
-                  minHeight: "44px",
-                  maxHeight: "120px",
-                }}
+                className="w-full px-4 py-2 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-11!"
                 aria-label="Message input"
               />
             </div>
@@ -1061,9 +1116,16 @@ export default function EnhancedChatUI({ selectedChat }) {
             <button
               onClick={isRecording ? stopRecording : startRecording}
               className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
-              aria-label={isRecording ? "Stop recording" : "Record voice message"}
+              aria-label={
+                isRecording ? "Stop recording" : "Record voice message"
+              }
             >
-              <Mic className={cn("w-5 h-5", isRecording ? "text-red-500" : "text-primary")} />
+              <Mic
+                className={cn(
+                  "w-5 h-5",
+                  isRecording ? "text-red-500" : "text-primary",
+                )}
+              />
             </button>
 
             <button
@@ -1073,7 +1135,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                 "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
                 messageInput.trim()
                   ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
               aria-label={editingMessage ? "Update message" : "Send message"}
             >
@@ -1091,7 +1153,7 @@ function AttachmentButton({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-accent transition-colors min-w-[60px]"
+      className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-primary/20 transition-colors min-w-[60px]"
       title={label}
     >
       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1135,7 +1197,7 @@ function MessageBubble({
             setIsPlaying(false);
             return 100;
           }
-          return prev + (100 / message.totalDuration);
+          return prev + 100 / message.totalDuration;
         });
       }, 1000);
       return () => clearInterval(interval);
@@ -1146,14 +1208,16 @@ function MessageBubble({
 
   const highlightText = (text) => {
     if (!searchQuery || !text) return text;
-    
-    const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
-    return parts.map((part, i) => 
+
+    const parts = text.split(new RegExp(`(${searchQuery})`, "gi"));
+    return parts.map((part, i) =>
       part.toLowerCase() === searchQuery.toLowerCase() ? (
-        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800">{part}</mark>
+        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800">
+          {part}
+        </mark>
       ) : (
         part
-      )
+      ),
     );
   };
 
@@ -1164,11 +1228,13 @@ function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1"
+          isGroupStart ? "mt-4" : "mt-1",
         )}
       >
         {!isOwn && <div className="w-8" />}
-        <div className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
+        <div
+          className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}
+        >
           <div className="bg-muted/50 px-3 py-2 rounded-xl italic text-sm text-muted-foreground flex items-center gap-2">
             <Trash className="w-4 h-4" />
             This message was deleted
@@ -1184,7 +1250,7 @@ function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1"
+        isGroupStart ? "mt-4" : "mt-1",
       )}
       onContextMenu={(e) => onContextMenu(e, message)}
       role="article"
@@ -1205,7 +1271,10 @@ function MessageBubble({
       <div
         onMouseEnter={() => setHoveredMessageId(message.id)}
         onMouseLeave={() => setHoveredMessageId(null)}
-        className={cn("flex flex-col max-w-[50%]", isOwn ? "items-end" : "items-start")}
+        className={cn(
+          "flex flex-col max-w-[60%]",
+          // isOwn ? "items-end" : "items-start",
+        )}
       >
         {!isOwn && isGroupStart && (
           <div className="flex items-center gap-2 mb-1 px-1">
@@ -1223,152 +1292,197 @@ function MessageBubble({
           </div>
         )}
 
-        {message.replyTo && (
-          <div
-            onClick={() => onScrollToReply(message.replyTo.id)}
-            className={cn(
-              "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
-              isOwn ? "bg-primary/30 border-primary-foreground/30" : "bg-muted/50 border-primary"
-            )}
-          >
-            <div className={cn("text-[10px] font-semibold mb-1", isOwn ? "text-primary" : "text-primary")}>
-              {message.replyTo.sender}
-            </div>
-            <div className={cn("text-xs truncate", isOwn ? "text-foreground" : "text-muted-foreground")}>
-              {message.replyTo.content}
-            </div>
-          </div>
-        )}
-
-        <AutoHeight>
+        <AutoHeight className="w-full">
           <div
             className={cn(
-              "relative px-4 py-2.5 transition-all inline-block max-w-full",
-              isOwn ? "bg-primary text-primary-foreground" : "bg-muted",
+              "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
+              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
               isOwn && "rounded-[20px] rounded-br-none",
               !isOwn && "rounded-[20px] rounded-tl-none",
-              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
+              isSelected && "ring-2 ring-primary/50 scale-[1.02]",
             )}
           >
-            {message.content && !message.type && (
-              <div>
-                <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                  {highlightText(message.content)}
-                </p>
-                {message.edited && (
-                  <span className={cn(
-                    "text-[10px] italic ml-2",
-                    isOwn ? "text-primary-foreground/50" : "text-muted-foreground"
-                  )}>
-                    (edited)
-                  </span>
+            {message.replyTo && (
+              <div
+                onClick={() => onScrollToReply(message.replyTo.id)}
+                className={cn(
+                  "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                  isOwn
+                    ? "bg-muted/80 border-primary-foreground/30"
+                    : "bg-muted/50 border-primary",
                 )}
-              </div>
-            )}
-
-            {message.type === "image" && (
-              <div className="space-y-2">
-                <img
-                  src={message.url}
-                  alt="Shared image"
-                  className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
-                  onClick={() => window.open(message.url, '_blank')}
-                />
-              </div>
-            )}
-
-            {message.type === "video" && (
-              <div className="space-y-2">
-                <video
-                  src={message.url}
-                  controls
-                  className="rounded-lg max-w-[300px] max-h-[300px]"
-                />
-              </div>
-            )}
-
-            {message.type === "document" && (
-              <div className="flex items-center gap-3 min-w-[200px]">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{message.fileName}</p>
-                  <p className="text-xs text-muted-foreground">{message.fileSize}</p>
-                </div>
-                <a
-                  href={message.url}
-                  download={message.fileName}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </a>
-              </div>
-            )}
-
-            {message.type === "voice" && (
-              <div className="flex items-center gap-3 min-w-[260px] max-w-full">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
+              >
+                <div
                   className={cn(
-                    "p-2 rounded-full transition-colors flex-shrink-0",
-                    isOwn
-                      ? "bg-primary-foreground/20 hover:bg-primary-foreground/30"
-                      : "bg-primary/10 hover:bg-primary/20"
+                    "text-[10px] font-semibold mb-1",
+                    isOwn ? "text-primary" : "text-primary",
                   )}
-                  aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
                 >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4" />
-                  ) : (
-                    <Play className="w-4 h-4" />
+                  {message.replyTo.sender}
+                </div>
+                <div
+                  className={cn(
+                    "text-[10px]",
+                    isOwn ? "text-foreground" : "text-muted-foreground",
                   )}
-                </button>
+                >
+                  {message.replyTo.content}
+                </div>
+              </div>
+            )}
+            <div className="p-2 py-1">
+              {message.content && !message.type && (
+                <div>
+                  <p className="text-sm leading-relaxed">
+                    {highlightText(message.content)}
+                  </p>
+                </div>
+              )}
 
-                <div className="flex-1 flex items-center gap-0.5 h-8 relative min-w-0">
-                  {message.waveform.map((height, i) => (
-                    <div
-                      key={i}
+              {message.type === "image" && (
+                <div className="space-y-2">
+                  <img
+                    src={message.url}
+                    alt="Shared image"
+                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
+                    onClick={() => window.open(message.url, "_blank")}
+                  />
+                </div>
+              )}
+
+              {message.type === "video" && (
+                <div className="space-y-2">
+                  <video
+                    src={message.url}
+                    controls
+                    className="rounded-lg max-w-[300px] max-h-[300px]"
+                  />
+                </div>
+              )}
+
+              {message.type === "document" && (
+                <div className="flex items-center gap-3 min-w-[200px]">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {message.fileName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {message.fileSize}
+                    </p>
+                  </div>
+                  <a
+                    href={message.url}
+                    download={message.fileName}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </a>
+                </div>
+              )}
+
+              {message.type === "voice" && (
+                <div className="flex items-center gap-3 min-w-[260px] max-w-full">
+                  <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className={cn(
+                      "p-2 rounded-full transition-colors flex-shrink-0",
+                      isOwn
+                        ? "bg-primary-foreground/20 hover:bg-primary-foreground/30"
+                        : "bg-primary/10 hover:bg-primary/20",
+                    )}
+                    aria-label={
+                      isPlaying ? "Pause voice message" : "Play voice message"
+                    }
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <div className="flex-1 flex items-center gap-0.5 h-8 relative min-w-0">
+                    {message.waveform.map((height, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "w-1 rounded-full transition-all flex-shrink-0",
+                          i < (playProgress / 100) * message.waveform.length
+                            ? isOwn
+                              ? "bg-primary-foreground"
+                              : "bg-primary"
+                            : isOwn
+                              ? "bg-primary-foreground/30"
+                              : "bg-primary/30",
+                        )}
+                        style={{ height: `${height}%` }}
+                      />
+                    ))}
+                  </div>
+
+                  <span
+                    className={cn(
+                      "text-xs flex-shrink-0 font-medium",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {message.duration}
+                  </span>
+                  <div className="relative flex-shrink-0">
+                    <Mic
                       className={cn(
-                        "w-1 rounded-full transition-all flex-shrink-0",
-                        i < (playProgress / 100) * message.waveform.length
-                          ? isOwn ? "bg-primary-foreground" : "bg-primary"
-                          : isOwn ? "bg-primary-foreground/30" : "bg-primary/30"
+                        "w-4 h-4",
+                        isOwn
+                          ? "text-primary-foreground/50"
+                          : "text-muted-foreground",
                       )}
-                      style={{ height: `${height}%` }}
                     />
-                  ))}
+                    {!message.played && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+                    )}
+                  </div>
                 </div>
+              )}
 
-                <span className={cn("text-xs flex-shrink-0 font-medium", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                  {message.duration}
-                </span>
-                <div className="relative flex-shrink-0">
-                  <Mic className={cn("w-4 h-4", isOwn ? "text-primary-foreground/50" : "text-muted-foreground")} />
-                  {!message.played && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+              {isOwn && (
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  {message.edited && (
+                    <span
+                      className={cn(
+                        "text-[10px] italic mr-1",
+                        isOwn
+                          ? "text-primary-foreground/50"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      (edited)
+                    </span>
                   )}
+                  <span className="text-[10px] text-primary-foreground/70">
+                    {message.time}
+                  </span>
+                  <MessageStateIcon state={message.state} />
                 </div>
-              </div>
-            )}
-
-            {isOwn && isGroupEnd && (
-              <div className="flex items-center justify-end gap-1 mt-1">
-                <span className="text-[10px] text-primary-foreground/70">
-                  {message.time}
-                </span>
-                <MessageStateIcon state={message.state} />
-              </div>
-            )}
+              )}
+            </div>
           </div>
-
           {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div className={cn("flex gap-1 mt-1", isOwn ? "flex-row-reverse" : "flex-row")}>
+            <div
+              className={cn(
+                "flex gap-1 mt-1",
+                isOwn ? "flex-row-reverse" : "flex-row",
+              )}
+            >
               {Object.entries(message.reactions).map(([emoji, count]) => (
                 <button
                   key={emoji}
                   onClick={() => onReaction(message.id, emoji)}
-                  className="bg-muted/80 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+                  className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
                 >
                   <span>{emoji}</span>
                   <span className="text-[10px] font-medium">{count}</span>
@@ -1380,8 +1494,8 @@ function MessageBubble({
           {showActions && (
             <div
               className={cn(
-                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
-                isOwn ? "flex-row-reverse" : "flex-row"
+                "flex gap-1 mt-1.5 transition-all duration-300 ease-out flex-row",
+                isOwn ? "justify-end" : "justify-start",
               )}
             >
               <ActionButton
@@ -1410,7 +1524,9 @@ function MessageBubble({
                 tooltip="React"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowReactionPicker(showReactionPicker === message.id ? null : message.id);
+                  setShowReactionPicker(
+                    showReactionPicker === message.id ? null : message.id,
+                  );
                 }}
               />
               {isOwn && (
@@ -1420,7 +1536,7 @@ function MessageBubble({
                   className="text-red-500"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDelete(message.id, 'me');
+                    onDelete(message.id, "me");
                   }}
                 />
               )}
@@ -1433,7 +1549,7 @@ function MessageBubble({
           <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
-              isOwn ? "flex-row-reverse" : "flex-row"
+              isOwn ? "flex-row-reverse" : "flex-row",
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1457,7 +1573,16 @@ function MessageBubble({
   );
 }
 
-function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit }) {
+function ContextMenu({
+  x,
+  y,
+  message,
+  onReply,
+  onEdit,
+  onDelete,
+  onCopy,
+  canEdit,
+}) {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ x, y });
 
@@ -1482,10 +1607,10 @@ function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit
       {message.isOwn && canEdit && (
         <MenuItem icon={Edit3} label="Edit" onClick={onEdit} />
       )}
-      <MenuItem icon={Forward} label="Forward" onClick={() => { }} />
-      <MenuItem icon={Star} label="Star" onClick={() => { }} />
+      <MenuItem icon={Forward} label="Forward" onClick={() => {}} />
+      <MenuItem icon={Star} label="Star" onClick={() => {}} />
       <MenuItem icon={Copy} label="Copy" onClick={onCopy} />
-      <MenuItem icon={Pin} label="Pin" onClick={() => { }} />
+      <MenuItem icon={Pin} label="Pin" onClick={() => {}} />
 
       {message.isOwn && (
         <>
@@ -1493,13 +1618,13 @@ function ContextMenu({ x, y, message, onReply, onEdit, onDelete, onCopy, canEdit
           <MenuItem
             icon={Trash}
             label="Delete for me"
-            onClick={() => onDelete(message.id, 'me')}
+            onClick={() => onDelete(message.id, "me")}
             className="text-red-500 hover:bg-red-500/10"
           />
           <MenuItem
             icon={Trash}
             label="Delete for everyone"
-            onClick={() => onDelete(message.id, 'everyone')}
+            onClick={() => onDelete(message.id, "everyone")}
             className="text-red-500 hover:bg-red-500/10"
           />
         </>
@@ -1513,7 +1638,7 @@ function MenuItem({ icon: Icon, label, onClick, className }) {
     <button
       className={cn(
         "w-full px-4 py-2 text-sm flex items-center gap-3 hover:bg-muted transition-colors text-left",
-        className
+        className,
       )}
       onClick={onClick}
       role="menuitem"
@@ -1531,7 +1656,7 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       onClick={onClick}
       className={cn(
         "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
-        className
+        className,
       )}
       aria-label={tooltip}
     >
@@ -1543,13 +1668,15 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
 function MessageStateIcon({ state }) {
   switch (state) {
     case "sending":
-      return <Clock className="w-3 h-3 text-primary-foreground/50 animate-pulse" />;
+      return (
+        <Clock className="w-3 h-3 text-primary-foreground/50 animate-pulse" />
+      );
     case "sent":
       return <Check className="w-3 h-3 text-primary-foreground/70" />;
     case "delivered":
       return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
-      return <CheckCheck className="w-3 h-3 text-blue-400" />;
+      return <CheckCheck className="w-3 h-3 text-green-400" />;
     default:
       return null;
   }

@@ -560,7 +560,7 @@ export default function ChatLeftSidebar({
       </div>
 
       {/* Single Card Container */}
-      <div className="flex-1 flex flex-col rounded-lg border bg-card shadow-sm overflow-hidden min-h-[calc(100vh-38px)] h-[calc(100vh-38px)] max-h-[calc(100vh-38px)] sticky top-5">
+      <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[818px] sticky top-5">
         {/* Header with Tabs */}
         <div className="border-b bg-card px-4 py-2.5 pt-3">
           <div className="flex items-center justify-between mb-3">

@@ -52,7 +52,7 @@ function ProjectChat() {
     <div className='space-y-6 container mx-auto'>
       <PageHeader icon="MessageSquare" title="Project Chat" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh)]">
         {/* Left Sidebar - Sticky */}
         <div className="lg:col-span-1">
           <ChatLeftSidebar
@@ -71,7 +71,7 @@ function ProjectChat() {
               onTranscribe={() => console.log("Transcribe")}
               onVideoCall={() => console.log("Video Call")}
             />
-            <CommingSoon />
+            {/* <CommingSoon /> */}
           </div>
 
           <ChatBox selectedChat={selectedChat} />
