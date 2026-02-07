@@ -28,6 +28,7 @@ import {
   Star,
   Mail,
   AtSign,
+  InfoIcon,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/config/utils";
@@ -880,16 +881,16 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onFavorite, onM
         label={item.isPinned ? "Unpin chat" : "Pin chat"}
         onClick={onPin}
       />
-      <MenuItem
+      {/* <MenuItem
         icon={item.isMuted ? Bell : BellOff}
         label={item.isMuted ? "Unmute notifications" : "Mute notifications"}
         onClick={onMute}
-      />
-      <MenuItem
+      /> */}
+      {/* <MenuItem
         icon={item.isFavorite ? Star : Star}
         label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
         onClick={onFavorite}
-      />
+      /> */}
       {(item.unread > 0 || item.mentions > 0) && (
         <MenuItem
           icon={Check}
@@ -897,25 +898,25 @@ function ContextMenuComponent({ x, y, item, type, onPin, onMute, onFavorite, onM
           onClick={onMarkAsRead}
         />
       )}
-      <div className="h-px bg-border my-1" />
-      <MenuItem icon={Archive} label="Archive chat" onClick={onClose} />
-      {type === "personal" && (
+      {/* <div className="h-px bg-border my-1" /> */}
+      {/* <MenuItem icon={Archive} label="Archive chat" onClick={onClose} /> */}
+      {/* {type === "personal" && (
         <MenuItem
           icon={UserX}
           label="Block user"
           onClick={onClose}
           className="text-red-500 hover:bg-red-500/10"
         />
-      )}
+      )} */}
       {type === "team" && (
         <>
-          <MenuItem icon={Volume2} label="Group info" onClick={onClose} />
-          <MenuItem
+          <MenuItem icon={InfoIcon} label="Group info" onClick={onClose} />
+          {/* <MenuItem
             icon={LogOut}
             label="Exit group"
             onClick={onClose}
             className="text-red-500 hover:bg-red-500/10"
-          />
+          /> */}
         </>
       )}
     </div>
