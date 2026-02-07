@@ -921,6 +921,7 @@ export default function EnhancedChatUI({ selectedChat }) {
             navigator.clipboard.writeText(contextMenu.message.content);
             setContextMenu(null);
           }}
+          onReaction={handleReaction}
           canEdit={canEditMessage(contextMenu.message)}
         />
       )}
@@ -1506,6 +1507,20 @@ function MessageBubble({
                   onReply(message);
                 }}
               />
+              <ActionButton icon={Forward} tooltip="Forward" />
+
+              <ActionButton icon={Star} tooltip="Star" />
+              <ActionButton icon={Pin} tooltip="Pin" />
+              <ActionButton
+                icon={Smile}
+                tooltip="React"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReactionPicker(
+                    showReactionPicker === message.id ? null : message.id,
+                  );
+                }}
+              />
               {isOwn && canEdit && (
                 <ActionButton
                   icon={Edit3}
@@ -1517,18 +1532,6 @@ function MessageBubble({
                   }}
                 />
               )}
-              <ActionButton icon={Forward} tooltip="Forward" />
-              <ActionButton icon={Star} tooltip="Star" />
-              <ActionButton
-                icon={Smile}
-                tooltip="React"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id,
-                  );
-                }}
-              />
               {isOwn && (
                 <ActionButton
                   icon={Trash}
@@ -1540,7 +1543,7 @@ function MessageBubble({
                   }}
                 />
               )}
-              <ActionButton icon={MoreVertical} tooltip="More" />
+              {/* <ActionButton icon={MoreVertical} tooltip="More" /> */}
             </div>
           )}
         </AutoHeight>
@@ -1581,6 +1584,7 @@ function ContextMenu({
   onEdit,
   onDelete,
   onCopy,
+  onReaction,
   canEdit,
 }) {
   const menuRef = useRef(null);
@@ -1629,6 +1633,27 @@ function ContextMenu({
           />
         </>
       )}
+
+      <div
+        className={cn(
+          "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
+          // isOwn ? "flex-row-reverse" : "flex-row",
+        )}
+      >
+        {REACTIONS.map((emoji) => (
+          <button
+            key={emoji}
+            onClick={(e) => {
+              // e.stopPropagation();
+              onReaction(message.id, emoji);
+            }}
+            className="text-xl hover:scale-125 transition-transform p-1"
+            aria-label={`React with ${emoji}`}
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
