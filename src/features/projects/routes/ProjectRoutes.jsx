@@ -6,7 +6,6 @@ import EditProject from '../components/EditProject';
 import ProjectDetails from '../pages/ProjectSettings/ProjectDetails';
 import ProjectDetailsPage from '../pages/ProjectDetails';
 import ProjectSettings from '../pages/ProjectSettings/ProjectSettings';
-import ProjectGeneral from '../pages/ProjectSettings/ProjectGeneral';
 import ProjectOnboarding from '../pages/ProjectSettings/ProjectOnboarding';
 import ProjectTimesheet from '../pages/ProjectSettings/ProjectTimesheet';
 // import ProjectCalendarSettings from '../components/'; // your calendar settings page
@@ -28,7 +27,6 @@ import ProjectNotifications from '../pages/ProjectSettings/ProjectNotifications'
 import SignersRecipients from '../pages/ProjectSettings/SignersRecipients';
 import ApprovalWorkflows from '../pages/ProjectSettings/ApprovalWorkflows';
 import Billing from '../pages/ProjectSettings/Billing';
-import ProjectDetail from '../pages/ProjectSettings/ProjectDetail';
 
 const NotFound = lazy(() => import('@/shared/pages/NotFound'));
 
@@ -67,9 +65,7 @@ const ProjectRoutes = {
       children: [
         { index: true, element: <ProjectSettings /> },          // default page for settings
         { path: 'details', element: <ProjectDetails /> },
-        { path: 'detail', element: <ProjectDetail /> },
         { path: 'construction', element: <ProjectConstruction /> },
-        { path: 'general', element: <ProjectGeneral /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
         { path: 'roles', element: <ProjectRoles /> },

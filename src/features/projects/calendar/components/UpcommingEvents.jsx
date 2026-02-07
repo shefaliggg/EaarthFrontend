@@ -24,19 +24,19 @@ export default function UpcomingEvents({
   const getEventLimit = () => {
     switch (view) {
       case "day":
-        return 10;
+        return 18;
       case "week":
-        return 8;
+        return 10;
       case "month":
-        return 5;
-      case "year":
-        return 5;
-      case "gantt":
-        return 4;
-      case "timeline":
-        return 7;
-      default:
         return 6;
+      case "year":
+        return 18;
+      case "gantt":
+        return 18;
+      case "timeline":
+        return 18;
+      default:
+        return 18;
     }
   };
 

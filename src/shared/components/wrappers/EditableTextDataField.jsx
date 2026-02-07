@@ -20,16 +20,16 @@ function EditableTextDataField({
     return (
         <div className="flex flex-col gap-1.5 rounded-xl">
             {/* Label */}
-            <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-gray-500 dark:text-gray-500">
+            <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
                 {icon && <SmartIcon icon={icon} size="md" />}
                 <span>{label}</span>
             </div>
 
             {/* Value */}
             {!isEditing ? (
-                <div className="text-sm font-medium text-foreground bg-gray-100 dark:bg-gray-800 uppercase p-2.5 rounded-md border border-transparent shadow-none">
+                <div className="text-sm font-medium text-foreground">
                     {value === null || value === undefined || value === "" ? (
-                        <span className="italic text-muted-foreground">
+                        <span className="text-muted-foreground">
                             Not Available
                         </span>
                     ) : typeof value === "string" ? (

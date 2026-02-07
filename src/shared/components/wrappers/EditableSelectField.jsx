@@ -16,7 +16,7 @@ function EditableSelectField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-gray-500 dark:text-gray-500">
+      <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
         {Icon && <Icon className="w-3.5 h-3.5" />}
         {label}
       </div>
@@ -29,12 +29,10 @@ function EditableSelectField({
           className={cn("w-full shadow-none", selectClassName)}
         />
       ) : (
-        <div className={cn(
-          "h-10 flex items-center rounded-md px-3 text-sm font-medium shadow-none",
-          "bg-gray-100 dark:bg-gray-800",
-          "border border-transparent"
-        )}>
-          {selectedItem?.label ?? "Not set"}
+        <div className="text-sm font-medium text-foreground">
+          {selectedItem?.label ?? (
+            <span className="text-muted-foreground">Not Available</span>
+          )}
         </div>
       )}
     </div>
