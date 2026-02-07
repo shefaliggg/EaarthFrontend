@@ -1,12 +1,11 @@
 import { startOfWeek, addDays, format } from "date-fns";
 import { Clock, MapPin } from "lucide-react";
-import { cn } from "../../../../shared/config/utils";
+import { cn } from "@/shared/config/utils";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { getProductionWeekLabel } from "./productionPhases";
 
 // CONFIG
@@ -214,7 +213,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                     <TooltipTrigger asChild>
                       <div
                         className={cn(
-                          "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-4 transition-all duration-200 hover:shadow-md",
+                          "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                           getAllDayEventColors(e.eventType),
                         )}
                       >
