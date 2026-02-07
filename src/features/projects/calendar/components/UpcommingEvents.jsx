@@ -26,7 +26,7 @@ export default function UpcomingEvents({
       case "day":
         return 18;
       case "week":
-        return 3;
+        return 10;
       case "month":
         return 6;
       case "year":
