@@ -1,6 +1,6 @@
 // ProjectTimesheet.jsx
 import { useState } from 'react';
-import { Info, Plus, Trash2, Edit } from 'lucide-react';
+import { Info, Plus, Trash2, Edit, X } from 'lucide-react';
 import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
 import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
 import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
@@ -174,6 +174,12 @@ const ProjectTimesheet = () => {
     { id: 7, name: 'Special stips 2', value: 'N/A' },
     { id: 8, name: 'Special stips 4', value: 'N/A' }
   ]);
+
+  const [editingCard, setEditingCard] = useState(null);
+
+  const toggleCardEdit = (cardName) => {
+    setEditingCard(editingCard === cardName ? null : cardName);
+  };
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -398,6 +404,18 @@ const ProjectTimesheet = () => {
             title="Construction - Daily rate & hours" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('constructionDailyRate')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'constructionDailyRate' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               <EditableSelectField
@@ -405,7 +423,7 @@ const ProjectTimesheet = () => {
                 value={formData.usePactRate}
                 items={pactRateOptions}
                 onChange={(val) => updateField('usePactRate', val)}
-                isEditing={true}
+                isEditing={editingCard === 'constructionDailyRate'}
               />
               
               <div className="flex flex-col gap-1">
@@ -414,7 +432,7 @@ const ProjectTimesheet = () => {
                   value={formData.defaultWorkingHours}
                   items={workingHoursOptions}
                   onChange={(val) => updateField('defaultWorkingHours', val)}
-                  isEditing={true}
+                  isEditing={editingCard === 'constructionDailyRate'}
                 />
                 <p className="text-xs text-gray-500">Excluding breaks.</p>
               </div>
@@ -426,6 +444,18 @@ const ProjectTimesheet = () => {
             title="Construction - Breaks" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('constructionBreaks')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'constructionBreaks' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="max-w-md">
               <div className="flex items-center gap-2 mb-1">
@@ -441,7 +471,7 @@ const ProjectTimesheet = () => {
                 value={formData.unpaidBreaksDuration}
                 items={unpaidBreaksOptions}
                 onChange={(val) => updateField('unpaidBreaksDuration', val)}
-                isEditing={true}
+                isEditing={editingCard === 'constructionBreaks'}
               />
             </div>
           </CardWrapper>
@@ -454,6 +484,18 @@ const ProjectTimesheet = () => {
         title="Construction - 6th day" 
         variant="default"
         showLabel={true}
+        actions={
+          <button
+            onClick={() => toggleCardEdit('construction6thDay')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'construction6thDay' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -462,7 +504,7 @@ const ProjectTimesheet = () => {
               value={formData.sixthDayRateCalculation}
               items={sixthDayCalculationOptions}
               onChange={(val) => updateField('sixthDayRateCalculation', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction6thDay'}
             />
             
             <EditableSelectField
@@ -470,7 +512,7 @@ const ProjectTimesheet = () => {
               value={formData.sixthDayRateApply}
               items={whenApplyOptions}
               onChange={(val) => updateField('sixthDayRateApply', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction6thDay'}
             />
           </div>
 
@@ -480,7 +522,7 @@ const ProjectTimesheet = () => {
               value={formData.sixthDayRatePayment}
               items={paymentTypeOptions}
               onChange={(val) => updateField('sixthDayRatePayment', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction6thDay'}
             />
 
             <EditableSelectField
@@ -488,7 +530,7 @@ const ProjectTimesheet = () => {
               value={formData.sixthDayHolidayPay}
               items={holidayPayOptions}
               onChange={(val) => updateField('sixthDayHolidayPay', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction6thDay'}
             />
           </div>
         </div>
@@ -499,6 +541,18 @@ const ProjectTimesheet = () => {
         title="Construction - 7th day" 
         variant="default"
         showLabel={true}
+        actions={
+          <button
+            onClick={() => toggleCardEdit('construction7thDay')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'construction7thDay' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 items-end">
@@ -507,7 +561,7 @@ const ProjectTimesheet = () => {
               value={formData.seventhDayRateCalculation}
               items={seventhDayCalculationOptions}
               onChange={(val) => updateField('seventhDayRateCalculation', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction7thDay'}
             />
             
             <div className="pb-2">
@@ -515,7 +569,7 @@ const ProjectTimesheet = () => {
                 label="Pay Unsocial Hours 2 for all hours worked on 7th day?"
                 checked={formData.seventhDayPayUnsocialHours}
                 onChange={(val) => updateField('seventhDayPayUnsocialHours', val)}
-                isEditing={true}
+                isEditing={editingCard === 'construction7thDay'}
               />
             </div>
           </div>
@@ -526,7 +580,7 @@ const ProjectTimesheet = () => {
               value={formData.seventhDayRatePayment}
               items={paymentTypeOptions}
               onChange={(val) => updateField('seventhDayRatePayment', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction7thDay'}
             />
 
             <EditableSelectField
@@ -534,7 +588,7 @@ const ProjectTimesheet = () => {
               value={formData.seventhDayHolidayPay}
               items={holidayPayOptions}
               onChange={(val) => updateField('seventhDayHolidayPay', val)}
-              isEditing={true}
+              isEditing={editingCard === 'construction7thDay'}
             />
           </div>
         </div>
@@ -545,6 +599,18 @@ const ProjectTimesheet = () => {
         title="Construction - Overtime" 
         variant="default"
         showLabel={true}
+        actions={
+          <button
+            onClick={() => toggleCardEdit('constructionOvertime')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'constructionOvertime' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -553,7 +619,7 @@ const ProjectTimesheet = () => {
               value={formData.overtimeRateCalculation}
               items={overtimeCalculationOptions}
               onChange={(val) => updateField('overtimeRateCalculation', val)}
-              isEditing={true}
+              isEditing={editingCard === 'constructionOvertime'}
             />
             
             <EditableSelectField
@@ -561,7 +627,7 @@ const ProjectTimesheet = () => {
               value={formData.overtimeCaps}
               items={overtimeCapsOptions}
               onChange={(val) => updateField('overtimeCaps', val)}
-              isEditing={true}
+              isEditing={editingCard === 'constructionOvertime'}
             />
           </div>
 
@@ -571,7 +637,7 @@ const ProjectTimesheet = () => {
               value={formData.overtimeHolidayPay}
               items={holidayPayOptions}
               onChange={(val) => updateField('overtimeHolidayPay', val)}
-              isEditing={true}
+              isEditing={editingCard === 'constructionOvertime'}
             />
             
             <EditableSelectField
@@ -579,7 +645,7 @@ const ProjectTimesheet = () => {
               value={formData.applyUnsocialHours}
               items={unsocialHoursOptions}
               onChange={(val) => updateField('applyUnsocialHours', val)}
-              isEditing={true}
+              isEditing={editingCard === 'constructionOvertime'}
             />
           </div>
         </div>
@@ -593,6 +659,18 @@ const ProjectTimesheet = () => {
             title="Construction - Travel time" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('travelTime')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'travelTime' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="flex items-center justify-between py-1.5">
               <label className="text-sm text-gray-700">Travel time paid?</label>
@@ -614,6 +692,18 @@ const ProjectTimesheet = () => {
             title="Construction - Broken turnaround" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('brokenTurnaround')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'brokenTurnaround' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="flex items-center justify-between py-1.5">
               <label className="text-sm text-gray-700">Broken turnaround paid?</label>
@@ -639,13 +729,24 @@ const ProjectTimesheet = () => {
         {/* LEFT COLUMN */}
         <div className="lg:col-span-3 space-y-4">
           {/* Payroll company */}
-          <CardWrapper title="" variant="default" showLabel={false}>
+          <CardWrapper title="" variant="default" showLabel={false} actions={
+            <button
+              onClick={() => toggleCardEdit('payrollCompany')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'payrollCompany' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          }>
             <div className="space-y-4">
               <EditableSelectField
                 label="Payroll company"
                 value={formData.payrollCompany}
                 items={payrollCompanyOptions}
-                isEditing={true}
+                isEditing={editingCard === 'payrollCompany'}
                 onChange={(val) => updateField('payrollCompany', val)}
               />
 
@@ -655,7 +756,7 @@ const ProjectTimesheet = () => {
                     label="Crew Data CSV export layout"
                     value={formData.crewDataCSVExport}
                     items={csvExportOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'payrollCompany'}
                     onChange={(val) => updateField('crewDataCSVExport', val)}
                   />
                 </div>
@@ -669,7 +770,7 @@ const ProjectTimesheet = () => {
                     label="Payroll CSV export layout"
                     value={formData.payrollCSVExport}
                     items={csvExportOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'payrollCompany'}
                     onChange={(val) => updateField('payrollCSVExport', val)}
                   />
                 </div>
@@ -687,6 +788,18 @@ const ProjectTimesheet = () => {
             title="Scheduled tasks"
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('scheduledTasks')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'scheduledTasks' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-4">
               {/* Crew reminder */}
@@ -697,14 +810,14 @@ const ProjectTimesheet = () => {
                     label="Crew reminder day"
                     value={formData.crewReminderDay}
                     items={weekDayOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('crewReminderDay', val)}
                   />
                   <EditableSelectField
                     label="Crew reminder time"
                     value={formData.crewReminderTime}
                     items={timeOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('crewReminderTime', val)}
                   />
                 </div>
@@ -718,14 +831,14 @@ const ProjectTimesheet = () => {
                     label="Crew submission day"
                     value={formData.crewSubmissionDay}
                     items={weekDayOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('crewSubmissionDay', val)}
                   />
                   <EditableSelectField
                     label="Crew submission time"
                     value={formData.crewSubmissionTime}
                     items={timeOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('crewSubmissionTime', val)}
                   />
                 </div>
@@ -739,14 +852,14 @@ const ProjectTimesheet = () => {
                     label="Department reminder day"
                     value={formData.departmentReminderDay}
                     items={weekDayOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('departmentReminderDay', val)}
                   />
                   <EditableSelectField
                     label="Department reminder time"
                     value={formData.departmentReminderTime}
                     items={timeOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('departmentReminderTime', val)}
                   />
                 </div>
@@ -760,14 +873,14 @@ const ProjectTimesheet = () => {
                     label="Department approval deadline day"
                     value={formData.departmentApprovalDay}
                     items={weekDayOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('departmentApprovalDay', val)}
                   />
                   <EditableSelectField
                     label="Department approval deadline time"
                     value={formData.departmentApprovalTime}
                     items={timeOptions}
-                    isEditing={true}
+                    isEditing={editingCard === 'scheduledTasks'}
                     onChange={(val) => updateField('departmentApprovalTime', val)}
                   />
                 </div>
@@ -779,20 +892,31 @@ const ProjectTimesheet = () => {
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-3 space-y-4">
           {/* Timecards */}
-          <CardWrapper title="Timecards" variant="default" showLabel={true}>
+          <CardWrapper title="Timecards" variant="default" showLabel={true} actions={
+            <button
+              onClick={() => toggleCardEdit('timecards')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'timecards' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          }>
             <div className="space-y-4">
               <EditableTextDataField
                 label="Timecards active from"
                 value={formData.timecardsActiveFrom}
                 onChange={(val) => updateField('timecardsActiveFrom', val)}
-                isEditing={true}
+                isEditing={editingCard === 'timecards'}
                 placeholder="Mon"
               />
               <EditableSelectField
                 label="Week ending day"
                 value={formData.weekEndingDay}
                 items={weekDayOptions}
-                isEditing={true}
+                isEditing={editingCard === 'timecards'}
                 onChange={(val) => updateField('weekEndingDay', val)}
               />
             </div>
@@ -810,6 +934,18 @@ const ProjectTimesheet = () => {
         title="Working hours"
         variant="default"
         showLabel={true}
+        actions={
+          <button
+            onClick={() => toggleCardEdit('workingHours')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'workingHours' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
         <div className="space-y-4">
           {/* Standard working day */}
@@ -860,7 +996,18 @@ const ProjectTimesheet = () => {
 
       {/* Rules - 9 columns */}
       <div className="lg:col-span-9 flex">
-      <CardWrapper title="Rules" variant="default" showLabel={true}>
+      <CardWrapper title="Rules" variant="default" showLabel={true} actions={
+        <button
+          onClick={() => toggleCardEdit('rules')}
+          className="p-2 hover:bg-gray-100 rounded transition-colors"
+        >
+          {editingCard === 'rules' ? (
+            <X className="w-4 h-4 text-gray-600" />
+          ) : (
+            <Edit className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
+      }>
         <div className="grid grid-cols-2 gap-4">
           {/* Left Column */}
           <div className="space-y-4">
@@ -993,13 +1140,25 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button
-            onClick={addDepartmentDefault}
-            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-          >
-            <Plus className="w-3 h-3" />
-            Add department default
-          </button>
+          <>
+            <button
+              onClick={() => toggleCardEdit('departmentDefaults')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'departmentDefaults' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            <button
+              onClick={addDepartmentDefault}
+              className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            >
+              <Plus className="w-3 h-3" />
+              Add department default
+            </button>
+          </>
         }
       >
         <div className="overflow-x-auto">
@@ -1044,13 +1203,25 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button
-            onClick={addPlace}
-            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-          >
-            <Plus className="w-3 h-3" />
-            Add new place
-          </button>
+          <>
+            <button
+              onClick={() => toggleCardEdit('projectPlaces')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'projectPlaces' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            <button
+              onClick={addPlace}
+              className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            >
+              <Plus className="w-3 h-3" />
+              Add new place
+            </button>
+          </>
         }
       >
         <div className="space-y-4">
@@ -1123,26 +1294,48 @@ const ProjectTimesheet = () => {
 
       {/* RIGHT - Preferences */}
       <div className="lg:col-span-3 space-y-4">
-      <CardWrapper title="Roundings" variant="default" showLabel={true}>
+      <CardWrapper title="Roundings" variant="default" showLabel={true} actions={
+        <button
+          onClick={() => toggleCardEdit('roundings')}
+          className="p-2 hover:bg-gray-100 rounded transition-colors"
+        >
+          {editingCard === 'roundings' ? (
+            <X className="w-4 h-4 text-gray-600" />
+          ) : (
+            <Edit className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
+      }>
         <div className="grid grid-cols-2 gap-4">
           <EditableSelectField
             label="Camera overtime rounding"
             value={formData.cameraOvertimeRounding}
             items={roundingOptions}
-            isEditing={true}
+            isEditing={editingCard === 'roundings'}
             onChange={(val) => updateField('cameraOvertimeRounding', val)}
           />
           <EditableSelectField
             label="Other overtime rounding"
             value={formData.otherOvertimeRounding}
             items={roundingOptions}
-            isEditing={true}
+            isEditing={editingCard === 'roundings'}
             onChange={(val) => updateField('otherOvertimeRounding', val)}
           />
         </div>
       </CardWrapper>
 
-      <CardWrapper title="Preferences" variant="default" showLabel={true}>
+      <CardWrapper title="Preferences" variant="default" showLabel={true} actions={
+        <button
+          onClick={() => toggleCardEdit('preferences')}
+          className="p-2 hover:bg-gray-100 rounded transition-colors"
+        >
+          {editingCard === 'preferences' ? (
+            <X className="w-4 h-4 text-gray-600" />
+          ) : (
+            <Edit className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
+      }>
         <div className="space-y-4">
           <RadioGroup
             label="If a timecard is automatically submitted, in the 'crew approval' on the PDF, show"
@@ -1158,7 +1351,7 @@ const ProjectTimesheet = () => {
             label="Require meal start and end times to be entered on timecard?"
             checked={formData.requireMealTimes}
             onChange={(val) => updateField('requireMealTimes', val)}
-            isEditing={true}
+            isEditing={editingCard === 'preferences'}
           />
 
           <div>
@@ -1166,7 +1359,7 @@ const ProjectTimesheet = () => {
               label="Only apply pre and post overtime for Transport department specific offers"
               checked={formData.onlyPrePostTransport}
               onChange={(val) => updateField('onlyPrePostTransport', val)}
-              isEditing={true}
+              isEditing={editingCard === 'preferences'}
             />
             <p className="text-xs text-gray-500 mt-1">When inactive all overtime and penalties will apply.</p>
           </div>
@@ -1196,9 +1389,15 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all">
-            <Plus className="w-3 h-3" />
-            Add Override
+          <button
+            onClick={() => toggleCardEdit('dailyAllowances')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'dailyAllowances' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
           </button>
         }
       >
@@ -1213,9 +1412,15 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button className="flex items-center gap-1 px-3 py-1 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 transition-all">
-            <Plus className="w-3 h-3" />
-            Add Upgrade Role
+          <button
+            onClick={() => toggleCardEdit('upgradeRoles')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'upgradeRoles' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
           </button>
         }
       >
@@ -1230,13 +1435,25 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button
-            onClick={addCustomDay}
-            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-          >
-            <Plus className="w-3 h-3" />
-            Add custom day type
-          </button>
+          <>
+            <button
+              onClick={() => toggleCardEdit('customDays')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'customDays' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            <button
+              onClick={addCustomDay}
+              className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            >
+              <Plus className="w-3 h-3" />
+              Add custom day type
+            </button>
+          </>
         }
       >
         <div className="overflow-x-auto">
@@ -1288,6 +1505,18 @@ const ProjectTimesheet = () => {
         title="Custom documents"
         variant="default"
         showLabel={true}
+        actions={
+          <button
+            onClick={() => toggleCardEdit('customDocuments')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'customDocuments' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
       </CardWrapper>
 
@@ -1297,13 +1526,25 @@ const ProjectTimesheet = () => {
         variant="default"
         showLabel={true}
         actions={
-          <button
-            onClick={addCustomField}
-            className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-          >
-            <Plus className="w-3 h-3" />
-            Add custom field
-          </button>
+          <>
+            <button
+              onClick={() => toggleCardEdit('customFields')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'customFields' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            <button
+              onClick={addCustomField}
+              className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+            >
+              <Plus className="w-3 h-3" />
+              Add custom field
+            </button>
+          </>
         }
       >
         <div className="overflow-x-auto">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Info, Plus, Download, Trash2 } from 'lucide-react';
+import { Info, Plus, Download, Trash2, Edit, X } from 'lucide-react';
 import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 import CardWrapper from "@/shared/components/wrappers/CardWrapper";
@@ -22,6 +22,11 @@ import {
 const ProjectRoles = () => {
   const [twoFactorAuth, setTwoFactorAuth] = useState("none");
   const [activeTab, setActiveTab] = useState("assignments");
+  const [editingCard, setEditingCard] = useState(null);
+
+  const toggleCardEdit = (cardName) => {
+    setEditingCard(editingCard === cardName ? null : cardName);
+  };
 
   // Permission table data
   const rolesPermissions = [
@@ -218,16 +223,28 @@ const ProjectRoles = () => {
         icon="Users"
         iconColor="text-orange-500"
         actions={
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="text-primary border-primary hover:bg-primary/10 h-7">
-              <Plus className="w-3 h-3 mr-1" />
-              Assign role
-            </Button>
-            <Button size="sm" variant="outline" className="h-7">
-              <Download className="w-3 h-3 mr-1" />
-              Export
-            </Button>
-          </div>
+          <>
+            <button
+              onClick={() => toggleCardEdit('projectRoles')}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              {editingCard === 'projectRoles' ? (
+                <X className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Edit className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="text-primary border-primary hover:bg-primary/10 h-7">
+                <Plus className="w-3 h-3 mr-1" />
+                Assign role
+              </Button>
+              <Button size="sm" variant="outline" className="h-7">
+                <Download className="w-3 h-3 mr-1" />
+                Export
+              </Button>
+            </div>
+          </>
         }
       >
         <div className="flex items-center gap-2 mb-2">
@@ -340,6 +357,18 @@ const ProjectRoles = () => {
         title="Role Permissions"
         icon="Shield"
         iconColor="text-orange-500"
+        actions={
+          <button
+            onClick={() => toggleCardEdit('rolePermissions')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'rolePermissions' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+        }
       >
         <div className="overflow-x-auto">
           <Table>

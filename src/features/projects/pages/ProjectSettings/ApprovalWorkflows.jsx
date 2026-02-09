@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit, ChevronRight, AlertCircle, Clock, DollarSign, FileText, Check, Briefcase, FileSignature } from 'lucide-react';
+import { Plus, Trash2, Edit, ChevronRight, AlertCircle, Clock, DollarSign, FileText, Check, Briefcase, FileSignature, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CardWrapper from '@/shared/components/wrappers/CardWrapper';
 import EditableTextDataField from '@/shared/components/wrappers/EditableTextDataField';
@@ -11,6 +11,11 @@ import { SmartIcon } from '@/shared/components/SmartIcon';
 export default function ApprovalWorkflowsManagement() {
   const [editingWorkflowId, setEditingWorkflowId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
+
+  const toggleCardEdit = (cardName) => {
+    setEditingCard(editingCard === cardName ? null : cardName);
+  };
 
   const [workflows, setWorkflows] = useState([
     {
@@ -119,13 +124,25 @@ export default function ApprovalWorkflowsManagement() {
       icon="FileSignature"
       description="Configure approval chains for timesheets, expenses, and more"
       actions={
-        <Button 
-          onClick={() => setShowAddModal(true)}
-          className="bg-gradient-to-r from-lavender-500 to-pastel-pink-500 hover:from-lavender-600 hover:to-pastel-pink-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Workflow
-        </Button>
+        <>
+          <button
+            onClick={() => toggleCardEdit('approvalWorkflows')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+          >
+            {editingCard === 'approvalWorkflows' ? (
+              <X className="w-4 h-4 text-gray-600" />
+            ) : (
+              <Edit className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
+          <Button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-gradient-to-r from-lavender-500 to-pastel-pink-500 hover:from-lavender-600 hover:to-pastel-pink-600"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Workflow
+          </Button>
+        </>
       }
     >
       {/* Workflows List */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Mail, Bell, Users, Settings } from 'lucide-react';
+import { Plus, Trash2, Mail, Bell, Users, Settings, Edit, X } from 'lucide-react';
 import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Badge } from "@/shared/components/ui/badge";
@@ -7,6 +7,11 @@ import FilterPillTabs from "@/shared/components/FilterPillTabs";
 
 const Notifications = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [editingCard, setEditingCard] = useState(null);
+
+  const toggleCardEdit = (cardName) => {
+    setEditingCard(editingCard === cardName ? null : cardName);
+  };
 
   const [notificationData] = useState([
     {
