@@ -99,7 +99,22 @@ const YesNoToggle = ({ label, value, onChange }) => {
 };
 
 export default function ProjectDetailsGeneral() {
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
+  const [editingCompanyId, setEditingCompanyId] = useState(null);
+  const [editingHiatusId, setEditingHiatusId] = useState(null);
+  
+  const toggleCardEdit = (cardName) => {
+    setEditingCard(editingCard === cardName ? null : cardName);
+  };
+  
+  const toggleCompanyEdit = (companyId) => {
+    setEditingCompanyId(editingCompanyId === companyId ? null : companyId);
+  };
+  
+  const toggleHiatusEdit = (hiatusId) => {
+    setEditingHiatusId(editingHiatusId === hiatusId ? null : hiatusId);
+  };
   
   // Project Detail states
   const [projectName, setProjectName] = useState("");
@@ -378,45 +393,76 @@ export default function ProjectDetailsGeneral() {
     setIsEditing(false);
   };
 
+  // Calculate progress percentage based on filled fields
+  const calculateProgress = () => {
+    const fields = [
+      projectName,
+      projectType,
+      genre,
+      startDate,
+      endDate,
+      location,
+      description,
+      basicCurrency,
+      workingWeek,
+      legalTerritory,
+      unionAgreement,
+      budgetLevel,
+      currency,
+      formData.prepStart,
+      formData.prepEnd,
+      formData.shootStart,
+      formData.shootEnd,
+      formData.postProductionStart,
+      formData.postProductionEnd,
+      formData.companies.length > 0 ? formData.companies[0].name : '',
+    ];
+    
+    const filledFields = fields.filter(field => field !== null && field !== undefined && field !== '').length;
+    return Math.round((filledFields / fields.length) * 100);
+  };
+
+  const progress = calculateProgress();
+
   return (
     <div className="space-y-4">
-      {/* Title with Edit/Save/Cancel Buttons */}
+      {/* Title with Tabs */}
       <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Project Details</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-base font-semibold">Project Details</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-green-500 transition-all duration-300" style={{ width: '75%' }}></div>
+            </div>
+            <span className="text-sm font-medium text-gray-600">75%</span>
+          </div>
+        </div>
         <div className="flex gap-2">
-          {!isEditing ? (
-            <Button
-              onClick={() => setIsEditing(true)}
-              variant="default"
-              size="sm"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-          ) : (
-            <>
-              <Button
-                onClick={handleCancel}
-                variant="outline"
-                size="sm"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                variant="default"
-                size="sm"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save
-              </Button>
-            </>
-          )}
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              activeTab === 'general'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-purple-600 hover:bg-gray-200'
+            }`}
+          >
+            General
+          </button>
+          <button
+            onClick={() => setActiveTab('financial')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              activeTab === 'financial'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-purple-600 hover:bg-gray-200'
+            }`}
+          >
+            Financial & Rates
+          </button>
         </div>
       </div>
 
-      {/* Unified 3:6:3 Grid Layout for All Cards */}
+      {/* Tab Content - General */}
+      {activeTab === 'general' && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* LEFT COLUMN (3/12) */}
         <div className="lg:col-span-3 space-y-4">
@@ -424,13 +470,25 @@ export default function ProjectDetailsGeneral() {
           <CardWrapper
             title="Key Personnel"
             icon="Users"
+            actions={
+              <button
+                onClick={() => toggleCardEdit('keyPersonnel')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'keyPersonnel' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               <EditableTextDataField
                 label="Producer"
                 value={producer}
                 onChange={setProducer}
-                isEditing={isEditing}
+                isEditing={editingCard === 'keyPersonnel'}
                 icon="User"
                 placeholder="Enter producer name"
               />
@@ -439,7 +497,7 @@ export default function ProjectDetailsGeneral() {
                 label="Director"
                 value={director}
                 onChange={setDirector}
-                isEditing={isEditing}
+                isEditing={editingCard === 'keyPersonnel'}
                 icon="Video"
                 placeholder="Enter director name"
               />
@@ -448,7 +506,7 @@ export default function ProjectDetailsGeneral() {
                 label="Production Manager"
                 value={productionManager}
                 onChange={setProductionManager}
-                isEditing={isEditing}
+                isEditing={editingCard === 'keyPersonnel'}
                 icon="Briefcase"
                 placeholder="Enter production manager"
               />
@@ -460,6 +518,18 @@ export default function ProjectDetailsGeneral() {
             title="Basic"
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('basic')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'basic' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               <EditableSelectField
@@ -467,7 +537,7 @@ export default function ProjectDetailsGeneral() {
                 value={basicCurrency}
                 items={basicCurrencyOptions}
                 onChange={setBasicCurrency}
-                isEditing={isEditing}
+                isEditing={editingCard === 'basic'}
               />
               
               <EditableSelectField
@@ -475,177 +545,14 @@ export default function ProjectDetailsGeneral() {
                 value={workingWeek}
                 items={workingWeekOptions}
                 onChange={setWorkingWeek}
-                isEditing={isEditing}
+                isEditing={editingCard === 'basic'}
               />
 
               <EditableCheckboxField
                 label="Show prep/wrap mins in Offer View?"
                 checked={showPrepWrapMins}
                 onChange={setShowPrepWrapMins}
-                isEditing={isEditing}
-              />
-            </div>
-          </CardWrapper>
-
-          {/* Overall dates */}
-          <CardWrapper 
-            title="Overall dates" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="space-y-2">
-              <EditableTextDataField
-                label="Prep start"
-                value={formData.prepStart}
-                onChange={(val) => updateField('prepStart', val)}
-                isEditing={true}
-                placeholder="dd-mm-yyyy"
-              />
-              <EditableTextDataField
-                label="Prep end"
-                value={formData.prepEnd}
-                onChange={(val) => updateField('prepEnd', val)}
-                isEditing={true}
-                placeholder="dd-mm-yyyy"
-              />
-              <NumberInputWithControls
-                label="Shoot duration days"
-                value={formData.shootDurationDays}
-                onChange={(val) => updateField('shootDurationDays', val)}
-                showInfo={true}
-              />
-              <EditableTextDataField
-                label="Shoot start"
-                value={formData.shootStart}
-                onChange={(val) => updateField('shootStart', val)}
-                isEditing={true}
-                placeholder="29-09-2025"
-              />
-              <EditableTextDataField
-                label="Shoot end"
-                value={formData.shootEnd}
-                onChange={(val) => updateField('shootEnd', val)}
-                isEditing={true}
-                placeholder="11-02-2025"
-              />
-            </div>
-          </CardWrapper>
-
-          {/* Hiatus Dates */}
-          <CardWrapper 
-            title="Hiatus Dates" 
-            variant="default"
-            showLabel={true}
-            actions={
-              <button
-                onClick={addHiatus}
-                className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-              >
-                <Plus className="w-3 h-3" />
-                Add hiatus
-              </button>
-            }
-          >
-            <div className="space-y-3">
-              {hiatuses.map((hiatus, index) => (
-                <div key={hiatus.id} className="space-y-2">
-                  <div>
-                    <label className="text-xs text-gray-600 block mb-1">Hiatus {index + 1} start</label>
-                    <input
-                      type="date"
-                      value={hiatus.start}
-                      onChange={(e) => {
-                        const newHiatuses = [...hiatuses];
-                        newHiatuses[index].start = e.target.value;
-                        setHiatuses(newHiatuses);
-                      }}
-                      className="w-full h-9 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 block mb-1">Hiatus {index + 1} end</label>
-                    <input
-                      type="date"
-                      value={hiatus.end}
-                      onChange={(e) => {
-                        const newHiatuses = [...hiatuses];
-                        newHiatuses[index].end = e.target.value;
-                        setHiatuses(newHiatuses);
-                      }}
-                      className="w-full h-9 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  {hiatuses.length > 1 && (
-                    <button
-                      onClick={() => removeHiatus(hiatus.id)}
-                      className="h-9 w-9 flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-all"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardWrapper>
-
-          {/* Post Production Dates */}
-          <CardWrapper 
-            title="Post Production Dates" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="space-y-2">
-              <EditableTextDataField
-                label="Post production start"
-                value={formData.postProductionStart}
-                onChange={(val) => updateField('postProductionStart', val)}
-                isEditing={true}
-                placeholder="dd-mm-yyyy"
-              />
-              <EditableTextDataField
-                label="Post production end"
-                value={formData.postProductionEnd}
-                onChange={(val) => updateField('postProductionEnd', val)}
-                isEditing={true}
-                placeholder="dd-mm-yyyy"
-              />
-            </div>
-          </CardWrapper>
-
-          {/* Overtime */}
-          <CardWrapper 
-            title="Overtime" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="grid grid-cols-1 gap-4">
-              <EditableTextDataField
-                label="Other"
-                value={formData.customOvertimeRates.other}
-                onChange={(val) => updateNestedField('customOvertimeRates', 'other', val)}
-                isEditing={true}
-                placeholder=""
-              />
-              <EditableTextDataField
-                label="Camera - standard day"
-                value={formData.customOvertimeRates.cameraStandardDay}
-                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraStandardDay', val)}
-                isEditing={true}
-                placeholder=""
-              />
-              <EditableTextDataField
-                label="Camera - Continuous day"
-                value={formData.customOvertimeRates.cameraContinuousDay}
-                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraContinuousDay', val)}
-                isEditing={true}
-                placeholder=""
-              />
-              <EditableTextDataField
-                label="Camera - semi-continuous day"
-                value={formData.customOvertimeRates.cameraSemiContinuousDay}
-                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraSemiContinuousDay', val)}
-                isEditing={true}
-                placeholder=""
+                isEditing={editingCard === 'basic'}
               />
             </div>
           </CardWrapper>
@@ -657,6 +564,18 @@ export default function ProjectDetailsGeneral() {
           <CardWrapper
             title="Basic Information"
             icon="Info"
+            actions={
+              <button
+                onClick={() => toggleCardEdit('basicInformation')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'basicInformation' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               {/* Row 1: Project Name, Genre */}
@@ -665,7 +584,7 @@ export default function ProjectDetailsGeneral() {
                   label="Project Name"
                   value={projectName}
                   onChange={setProjectName}
-                  isEditing={isEditing}
+                  isEditing={editingCard === 'basicInformation'}
                   icon="Film"
                   placeholder="Enter project name"
                 />
@@ -674,7 +593,7 @@ export default function ProjectDetailsGeneral() {
                   label="Genre"
                   value={genre}
                   onChange={setGenre}
-                  isEditing={isEditing}
+                  isEditing={editingCard === 'basicInformation'}
                   icon="Tag"
                   placeholder="e.g., Drama, Action"
                 />
@@ -686,7 +605,7 @@ export default function ProjectDetailsGeneral() {
                   <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     <span>Start Date</span>
                   </div>
-                  {!isEditing ? (
+                  {editingCard !== 'basicInformation' ? (
                     <div className="text-sm font-medium text-foreground h-8 flex items-center">
                       {startDate || <span className="text-muted-foreground">Not Available</span>}
                     </div>
@@ -704,7 +623,7 @@ export default function ProjectDetailsGeneral() {
                   <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     <span>End Date</span>
                   </div>
-                  {!isEditing ? (
+                  {editingCard !== 'basicInformation' ? (
                     <div className="text-sm font-medium text-foreground h-8 flex items-center">
                       {endDate || <span className="text-muted-foreground">Not Available</span>}
                     </div>
@@ -724,7 +643,7 @@ export default function ProjectDetailsGeneral() {
                 label="Primary Location"
                 value={location}
                 onChange={setLocation}
-                isEditing={isEditing}
+                isEditing={editingCard === 'basicInformation'}
                 icon="MapPin"
                 placeholder="City, Country"
               />
@@ -734,7 +653,7 @@ export default function ProjectDetailsGeneral() {
                 label="Project Description"
                 value={description}
                 onChange={setDescription}
-                isEditing={isEditing}
+                isEditing={editingCard === 'basicInformation'}
                 icon="FileText"
                 placeholder="Enter project description..."
                 multiline={true}
@@ -746,6 +665,18 @@ export default function ProjectDetailsGeneral() {
           <CardWrapper
             title="Project Configuration"
             icon="Settings"
+            actions={
+              <button
+                onClick={() => toggleCardEdit('projectConfiguration')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'projectConfiguration' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               {/* Row 1: Project Type, Legal Territory */}
@@ -755,17 +686,17 @@ export default function ProjectDetailsGeneral() {
                     label="Project Type"
                     value={projectType}
                     options={projectTypeOptions}
-                    isEditing={isEditing}
+                    isEditing={editingCard === 'projectConfiguration'}
                     onChange={setProjectType}
                     icon="Film"
                   />
-                  {isEditing && (
+                  {editingCard === 'projectConfiguration' && (
                     <div className="mt-1">
                       <EditableCheckboxField
                         label="Show project type in offers?"
                         checked={showProjectTypeInOffers}
                         onChange={setShowProjectTypeInOffers}
-                        isEditing={isEditing}
+                        isEditing={editingCard === 'projectConfiguration'}
                       />
                     </div>
                   )}
@@ -775,7 +706,7 @@ export default function ProjectDetailsGeneral() {
                   label="Legal Territory"
                   value={legalTerritory}
                   options={legalTerritoryOptions}
-                  isEditing={isEditing}
+                  isEditing={editingCard === 'projectConfiguration'}
                   onChange={setLegalTerritory}
                   icon="Globe"
                 />
@@ -799,7 +730,7 @@ export default function ProjectDetailsGeneral() {
                     label=""
                     value={unionAgreement}
                     options={unionAgreementOptions}
-                    isEditing={isEditing}
+                    isEditing={editingCard === 'projectConfiguration'}
                     onChange={setUnionAgreement}
                   />
                 </div>
@@ -808,7 +739,7 @@ export default function ProjectDetailsGeneral() {
                   label="Construction Union Agreement"
                   value={constructionUnionAgreement}
                   options={constructionUnionAgreementOptions}
-                  isEditing={isEditing}
+                  isEditing={editingCard === 'projectConfiguration'}
                   onChange={setConstructionUnionAgreement}
                   icon="HardHat"
                 />
@@ -821,17 +752,17 @@ export default function ProjectDetailsGeneral() {
                     label="Budget Level"
                     value={budgetLevel}
                     items={budgetLevelOptions}
-                    isEditing={isEditing}
+                    isEditing={editingCard === 'projectConfiguration'}
                     onChange={setBudgetLevel}
                     icon="DollarSign"
                   />
-                  {isEditing && (
+                  {editingCard === 'projectConfiguration' && (
                     <div className="mt-1">
                       <EditableCheckboxField
                         label="Show budget level to crew members?"
                         checked={showBudgetToCrew}
                         onChange={setShowBudgetToCrew}
-                        isEditing={isEditing}
+                        isEditing={editingCard === 'projectConfiguration'}
                       />
                     </div>
                   )}
@@ -841,7 +772,7 @@ export default function ProjectDetailsGeneral() {
                   label="Currency"
                   value={currency}
                   items={currencyOptions}
-                  isEditing={isEditing}
+                  isEditing={editingCard === 'projectConfiguration'}
                   onChange={setCurrency}
                   icon="DollarSign"
                 />
@@ -849,11 +780,450 @@ export default function ProjectDetailsGeneral() {
             </div>
           </CardWrapper>
 
+          {/* Production base */}
+          <CardWrapper 
+            title="Production base" 
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('productionBase')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'productionBase' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-700">Production base address <span className="text-gray-500 font-normal italic">(Optional)</span></div>
+              
+              {editingCard === 'productionBase' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={formData.productionBase.addressLine1}
+                    onChange={(e) => updateNestedField('productionBase', 'addressLine1', e.target.value)}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Address line 1"
+                  />
+                  <input
+                    type="text"
+                    value={formData.productionBase.addressLine2}
+                    onChange={(e) => updateNestedField('productionBase', 'addressLine2', e.target.value)}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Address line 2"
+                  />
+                  <input
+                    type="text"
+                    value={formData.productionBase.city}
+                    onChange={(e) => updateNestedField('productionBase', 'city', e.target.value)}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="City"
+                  />
+                  <input
+                    type="text"
+                    value={formData.productionBase.postcode}
+                    onChange={(e) => updateNestedField('productionBase', 'postcode', e.target.value)}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Postcode"
+                  />
+                </div>
+              ) : (
+                <div className="text-sm text-gray-700 space-y-1">
+                  {formData.productionBase.addressLine1 && <div>{formData.productionBase.addressLine1}</div>}
+                  {formData.productionBase.addressLine2 && <div>{formData.productionBase.addressLine2}</div>}
+                  {formData.productionBase.city && <div>{formData.productionBase.city}</div>}
+                  {formData.productionBase.postcode && <div>{formData.productionBase.postcode}</div>}
+                  {!formData.productionBase.addressLine1 && !formData.productionBase.addressLine2 && !formData.productionBase.city && !formData.productionBase.postcode && (
+                    <div className="text-gray-500 italic">Not provided</div>
+                  )}
+                </div>
+              )}
+              <EditableSelectField
+                label="Country"
+                value={formData.productionBase.country}
+                items={countryOptions}
+                onChange={(val) => updateNestedField('productionBase', 'country', val)}
+                isEditing={editingCard === 'productionBase'}
+              />
+              {editingCard === 'productionBase' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="text-sm font-medium text-gray-700">Telephone number</label>
+                      <Info className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.productionBase.telephone}
+                      onChange={(e) => updateNestedField('productionBase', 'telephone', e.target.value)}
+                      className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="e.g. 020 3945 9013"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="text-sm font-medium text-gray-700">Email address</label>
+                      <Info className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      value={formData.productionBase.email}
+                      onChange={(e) => updateNestedField('productionBase', 'email', e.target.value)}
+                      className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="e.g. werewolfproduction@gmail.com"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="text-sm font-medium text-gray-700">Telephone number</label>
+                      <Info className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      {formData.productionBase.telephone || <span className="text-gray-500 italic">e.g. 020 3945 9013</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <label className="text-sm font-medium text-gray-700">Email address</label>
+                      <Info className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      {formData.productionBase.email || <span className="text-gray-500 italic">e.g. werewolfproduction@gmail.com</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardWrapper>
+        </div>
+
+        {/* RIGHT COLUMN (3/12) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Overall dates */}
+          <CardWrapper 
+            title="Overall dates" 
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('overallDates')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'overallDates' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              <EditableTextDataField
+                label="Prep start"
+                value={formData.prepStart}
+                onChange={(val) => updateField('prepStart', val)}
+                isEditing={editingCard === 'overallDates'}
+                placeholder="dd-mm-yyyy"
+              />
+              <EditableTextDataField
+                label="Prep end"
+                value={formData.prepEnd}
+                onChange={(val) => updateField('prepEnd', val)}
+                isEditing={editingCard === 'overallDates'}
+                placeholder="dd-mm-yyyy"
+              />
+              {editingCard === 'overallDates' ? (
+                <NumberInputWithControls
+                  label="Shoot duration days"
+                  value={formData.shootDurationDays}
+                  onChange={(val) => updateField('shootDurationDays', val)}
+                  showInfo={true}
+                />
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">Shoot duration days</label>
+                    <Info className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    {formData.shootDurationDays || <span className="text-gray-500 italic">0</span>}
+                  </div>
+                </div>
+              )}
+              <EditableTextDataField
+                label="Shoot start"
+                value={formData.shootStart}
+                onChange={(val) => updateField('shootStart', val)}
+                isEditing={editingCard === 'overallDates'}
+                placeholder="29-09-2025"
+              />
+              <EditableTextDataField
+                label="Shoot end"
+                value={formData.shootEnd}
+                onChange={(val) => updateField('shootEnd', val)}
+                isEditing={editingCard === 'overallDates'}
+                placeholder="11-02-2025"
+              />
+            </div>
+          </CardWrapper>
+
+          {/* Hiatus Dates */}
+          <CardWrapper 
+            title="Hiatus Dates" 
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={addHiatus}
+                className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
+              >
+                <Plus className="w-3 h-3" />
+                Add hiatus
+              </button>
+            }
+          >
+            <div className="space-y-3">
+              {hiatuses.map((hiatus, index) => (
+                <div key={hiatus.id} className="space-y-2 p-3 border rounded-lg bg-slate-50/50">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Hiatus {index + 1}</h4>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => toggleHiatusEdit(hiatus.id)}
+                        className="h-7 w-7 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded transition-all"
+                      >
+                        {editingHiatusId === hiatus.id ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          <Edit className="h-4 w-4" />
+                        )}
+                      </button>
+                      {hiatuses.length > 1 && (
+                        <button
+                          onClick={() => removeHiatus(hiatus.id)}
+                          className="h-7 w-7 flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-all"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {editingHiatusId === hiatus.id ? (
+                    <>
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">Start date</label>
+                        <input
+                          type="date"
+                          value={hiatus.start}
+                          onChange={(e) => {
+                            const newHiatuses = [...hiatuses];
+                            newHiatuses[index].start = e.target.value;
+                            setHiatuses(newHiatuses);
+                          }}
+                          className="w-full h-9 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600 block mb-1">End date</label>
+                        <input
+                          type="date"
+                          value={hiatus.end}
+                          onChange={(e) => {
+                            const newHiatuses = [...hiatuses];
+                            newHiatuses[index].end = e.target.value;
+                            setHiatuses(newHiatuses);
+                          }}
+                          className="w-full h-9 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-xs font-medium text-gray-600 mb-1">Start date</div>
+                        <div className="text-sm text-gray-700">
+                          {hiatus.start || <span className="text-gray-500 italic">Not set</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-gray-600 mb-1">End date</div>
+                        <div className="text-sm text-gray-700">
+                          {hiatus.end || <span className="text-gray-500 italic">Not set</span>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardWrapper>
+
+          {/* Post Production Dates */}
+          <CardWrapper 
+            title="Post Production Dates" 
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('postProductionDates')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'postProductionDates' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              <EditableTextDataField
+                label="Post production start"
+                value={formData.postProductionStart}
+                onChange={(val) => updateField('postProductionStart', val)}
+                isEditing={editingCard === 'postProductionDates'}
+                placeholder="dd-mm-yyyy"
+              />
+              <EditableTextDataField
+                label="Post production end"
+                value={formData.postProductionEnd}
+                onChange={(val) => updateField('postProductionEnd', val)}
+                isEditing={editingCard === 'postProductionDates'}
+                placeholder="dd-mm-yyyy"
+              />
+            </div>
+          </CardWrapper>
+        </div>
+      </div>
+      )}
+
+      {/* Tab Content - Financial & Rates */}
+      {activeTab === 'financial' && (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* LEFT COLUMN (3/12) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Overtime */}
+          <CardWrapper 
+            title="Overtime" 
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('overtime')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'overtime' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
+          >
+            <div className="grid grid-cols-1 gap-4">
+              <EditableTextDataField
+                label="Other"
+                value={formData.customOvertimeRates.other}
+                onChange={(val) => updateNestedField('customOvertimeRates', 'other', val)}
+                isEditing={editingCard === 'overtime'}
+                placeholder=""
+              />
+              <EditableTextDataField
+                label="Camera - standard day"
+                value={formData.customOvertimeRates.cameraStandardDay}
+                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraStandardDay', val)}
+                isEditing={editingCard === 'overtime'}
+                placeholder=""
+              />
+              <EditableTextDataField
+                label="Camera - Continuous day"
+                value={formData.customOvertimeRates.cameraContinuousDay}
+                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraContinuousDay', val)}
+                isEditing={editingCard === 'overtime'}
+                placeholder=""
+              />
+              <EditableTextDataField
+                label="Camera - semi-continuous day"
+                value={formData.customOvertimeRates.cameraSemiContinuousDay}
+                onChange={(val) => updateNestedField('customOvertimeRates', 'cameraSemiContinuousDay', val)}
+                isEditing={editingCard === 'overtime'}
+                placeholder=""
+              />
+            </div>
+          </CardWrapper>
+
+          {/* Meal penalties Section */}
+          <CardWrapper
+            title="Meal penalties"
+            variant="default"
+            showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('mealPenalties')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'mealPenalties' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              <EditableTextDataField
+                label="Breakfast penalty"
+                value={breakfastPenalty}
+                onChange={setBreakfastPenalty}
+                isEditing={editingCard === 'mealPenalties'}
+                placeholder="5.00"
+              />
+              <EditableTextDataField
+                label="Lunch penalty"
+                value={lunchPenalty}
+                onChange={setLunchPenalty}
+                isEditing={editingCard === 'mealPenalties'}
+                placeholder="5.00"
+              />
+              <EditableTextDataField
+                label="Dinner penalty"
+                value={dinnerPenalty}
+                onChange={setDinnerPenalty}
+                isEditing={editingCard === 'mealPenalties'}
+                placeholder="10.00"
+              />
+            </div>
+          </CardWrapper>
+        </div>
+
+        {/* CENTER COLUMN (6/12) */}
+        <div className="lg:col-span-6 space-y-4">
           {/* Allowances */}
           <CardWrapper 
             title="Allowances" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('allowances')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'allowances' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="grid grid-cols-2 gap-x-8">
               {/* Left column */}
@@ -878,7 +1248,7 @@ export default function ProjectDetailsGeneral() {
                   value={formData.allowances.equipment}
                   onChange={(val) => updateNestedField('allowances', 'equipment', val)}
                 />
-                
+
                 {/* Mobile with nested options */}
                 <div>
                   <YesNoToggle
@@ -892,17 +1262,23 @@ export default function ProjectDetailsGeneral() {
                         label="Require mobile phone allowance bill?"
                         checked={formData.mobileRequireBill}
                         onChange={(val) => updateField('mobileRequireBill', val)}
-                        isEditing={true}
+                        isEditing={editingCard === 'allowances'}
                       />
                       <div>
                         <label className="text-xs text-gray-600 block mb-1">Mobile phone bill reimbursement default items</label>
-                        <input
-                          type="text"
-                          value={formData.mobileBillItems}
-                          onChange={(e) => updateField('mobileBillItems', e.target.value)}
-                          className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          placeholder="Reimbursement of mobile phone bill"
-                        />
+                        {editingCard === 'allowances' ? (
+                          <input
+                            type="text"
+                            value={formData.mobileBillItems}
+                            onChange={(e) => updateField('mobileBillItems', e.target.value)}
+                            className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Reimbursement of mobile phone bill"
+                          />
+                        ) : (
+                          <div className="text-sm text-gray-700">
+                            {formData.mobileBillItems || <span className="text-gray-500 italic">Reimbursement of mobile phone bill</span>}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -924,13 +1300,13 @@ export default function ProjectDetailsGeneral() {
                         label="Require copy of Business Insurance?"
                         checked={formData.carRequireInsurance}
                         onChange={(val) => updateField('carRequireInsurance', val)}
-                        isEditing={true}
+                        isEditing={editingCard === 'allowances'}
                       />
                       <EditableCheckboxField
                         label="Require copy of Driving License?"
                         checked={formData.carRequireLicense}
                         onChange={(val) => updateField('carRequireLicense', val)}
-                        isEditing={true}
+                        isEditing={editingCard === 'allowances'}
                       />
                     </div>
                   )}
@@ -951,38 +1327,46 @@ export default function ProjectDetailsGeneral() {
                   />
                   {formData.allowances.perDiem && (
                     <div className="ml-4 mt-2 pl-3 border-l-2 border-gray-200 space-y-2">
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-600 block mb-1">Currency</label>
-                          <select
-                            value={formData.perDiemCurrency}
-                            onChange={(e) => updateField('perDiemCurrency', e.target.value)}
-                            className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          >
-                            <option value="GBP">GBP</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                          </select>
+                      {editingCard === 'allowances' ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-600 block mb-1">Currency</label>
+                            <select
+                              value={formData.perDiemCurrency}
+                              onChange={(e) => updateField('perDiemCurrency', e.target.value)}
+                              className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                              <option value="GBP">GBP</option>
+                              <option value="USD">USD</option>
+                              <option value="EUR">EUR</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600 block mb-1">Shoot rate</label>
+                            <input
+                              type="number"
+                              value={formData.perDiemShootRate}
+                              onChange={(e) => updateField('perDiemShootRate', e.target.value)}
+                              className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600 block mb-1">Non-shoot rate</label>
+                            <input
+                              type="number"
+                              value={formData.perDiemNonShootRate}
+                              onChange={(e) => updateField('perDiemNonShootRate', e.target.value)}
+                              className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs text-gray-600 block mb-1">Shoot rate</label>
-                          <input
-                            type="number"
-                            value={formData.perDiemShootRate}
-                            onChange={(e) => updateField('perDiemShootRate', e.target.value)}
-                            className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
+                      ) : (
+                        <div className="text-sm text-gray-700 space-y-1">
+                          <div><span className="font-medium">Currency:</span> {formData.perDiemCurrency}</div>
+                          <div><span className="font-medium">Shoot rate:</span> {formData.perDiemShootRate}</div>
+                          <div><span className="font-medium">Non-shoot rate:</span> {formData.perDiemNonShootRate}</div>
                         </div>
-                        <div>
-                          <label className="text-xs text-gray-600 block mb-1">Non-shoot rate</label>
-                          <input
-                            type="number"
-                            value={formData.perDiemNonShootRate}
-                            onChange={(e) => updateField('perDiemNonShootRate', e.target.value)}
-                            className="w-full h-8 px-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -996,228 +1380,23 @@ export default function ProjectDetailsGeneral() {
             </div>
           </CardWrapper>
 
-          {/* Production base */}
-          <CardWrapper 
-            title="Production base" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-700">Production base address <span className="text-gray-500 font-normal italic">(Optional)</span></div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={formData.productionBase.addressLine1}
-                  onChange={(e) => updateNestedField('productionBase', 'addressLine1', e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Address line 1"
-                />
-                <input
-                  type="text"
-                  value={formData.productionBase.addressLine2}
-                  onChange={(e) => updateNestedField('productionBase', 'addressLine2', e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Address line 2"
-                />
-                <input
-                  type="text"
-                  value={formData.productionBase.city}
-                  onChange={(e) => updateNestedField('productionBase', 'city', e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="City"
-                />
-                <input
-                  type="text"
-                  value={formData.productionBase.postcode}
-                  onChange={(e) => updateNestedField('productionBase', 'postcode', e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Postcode"
-                />
-              </div>
-              <EditableSelectField
-                label="Country"
-                value={formData.productionBase.country}
-                items={countryOptions}
-                onChange={(val) => updateNestedField('productionBase', 'country', val)}
-                isEditing={true}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-gray-700">Telephone number</label>
-                    <Info className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={formData.productionBase.telephone}
-                    onChange={(e) => updateNestedField('productionBase', 'telephone', e.target.value)}
-                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g. 020 3945 9013"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <label className="text-sm font-medium text-gray-700">Email address</label>
-                    <Info className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    value={formData.productionBase.email}
-                    onChange={(e) => updateNestedField('productionBase', 'email', e.target.value)}
-                    className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g. werewolfproduction@gmail.com"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardWrapper>
-
-          {/* Company */}
-          <CardWrapper 
-            title="Company" 
-            variant="default"
-            showLabel={true}
-            actions={
-              <button
-                onClick={addCompany}
-                className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-all"
-              >
-                <Plus className="w-3 h-3" />
-                Add company
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              {formData.companies.map((company, index) => (
-                <div key={company.id} className="p-3 border rounded-lg bg-slate-50/50 relative">
-                  {formData.companies.length > 1 && (
-                    <button
-                      onClick={() => removeCompany(company.id)}
-                      className="absolute top-2 right-2 h-7 w-7 flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-all"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        value={company.title}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].title = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Company title (e.g. Production Company)"
-                      />
-                      
-                      <input
-                        type="text"
-                        value={company.name}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].name = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Company name (e.g. Werewolf Productions Ltd)"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      value={company.registrationNumber}
-                      onChange={(e) => {
-                        const newCompanies = [...formData.companies];
-                        newCompanies[index].registrationNumber = e.target.value;
-                        setFormData({ ...formData, companies: newCompanies });
-                      }}
-                      className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Registration number (e.g. 12345678)"
-                    />
-
-                    <div className="text-xs font-medium text-gray-700 mt-2">Company address</div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        value={company.addressLine1}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].addressLine1 = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Address line 1"
-                      />
-
-                      <input
-                        type="text"
-                        value={company.addressLine2}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].addressLine2 = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Address line 2"
-                      />
-
-                      <input
-                        type="text"
-                        value={company.city}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].city = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="City"
-                      />
-
-                      <input
-                        type="text"
-                        value={company.postcode}
-                        onChange={(e) => {
-                          const newCompanies = [...formData.companies];
-                          newCompanies[index].postcode = e.target.value;
-                          setFormData({ ...formData, companies: newCompanies });
-                        }}
-                        className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Postcode"
-                      />
-                    </div>
-
-                    <select
-                      value={company.country}
-                      onChange={(e) => {
-                        const newCompanies = [...formData.companies];
-                        newCompanies[index].country = e.target.value;
-                        setFormData({ ...formData, companies: newCompanies });
-                      }}
-                      className="w-full h-9 px-3 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      {countryOptions.map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardWrapper>
-        </div>
-
-        {/* RIGHT COLUMN (3/12) */}
-        <div className="lg:col-span-3 space-y-4">
           {/* Holiday Pay */}
           <CardWrapper 
             title="Holiday Pay" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('holidayPay')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'holidayPay' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-3">
               <ButtonToggleGroup
@@ -1231,7 +1410,7 @@ export default function ProjectDetailsGeneral() {
                 label="Different holiday pay percentage for Dailies"
                 checked={formData.differentHolidayForDailies}
                 onChange={(val) => updateField('differentHolidayForDailies', val)}
-                isEditing={true}
+                isEditing={editingCard === 'holidayPay'}
               />
 
               <div className="flex flex-col gap-1">
@@ -1241,48 +1420,47 @@ export default function ProjectDetailsGeneral() {
                     label="6th and 7th days"
                     checked={formData.withholdHolidayPay6th7th}
                     onChange={(val) => updateField('withholdHolidayPay6th7th', val)}
-                    isEditing={true}
+                    isEditing={editingCard === 'holidayPay'}
                   />
                   <EditableCheckboxField
                     label="Overtime"
                     checked={formData.withholdHolidayPayOvertime}
                     onChange={(val) => updateField('withholdHolidayPayOvertime', val)}
-                    isEditing={true}
+                    isEditing={editingCard === 'holidayPay'}
                   />
                 </div>
               </div>
             </div>
           </CardWrapper>
+        </div>
 
-          {/* Meal penalties Section */}
-          <CardWrapper
-            title="Meal penalties"
+        {/* RIGHT COLUMN (3/12) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Offer Settings */}
+          <CardWrapper 
+            title="Offer Settings" 
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('offerSettings')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'offerSettings' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
-            <div className="space-y-2">
-              <EditableTextDataField
-                label="Breakfast penalty"
-                value={breakfastPenalty}
-                onChange={setBreakfastPenalty}
-                isEditing={isEditing}
-                placeholder="5.00"
-              />
-              <EditableTextDataField
-                label="Lunch penalty"
-                value={lunchPenalty}
-                onChange={setLunchPenalty}
-                isEditing={isEditing}
-                placeholder="5.00"
-              />
-              <EditableTextDataField
-                label="Dinner penalty"
-                value={dinnerPenalty}
-                onChange={setDinnerPenalty}
-                isEditing={isEditing}
-                placeholder="10.00"
-              />
-            </div>
+            <ButtonToggleGroup
+              label="Offer end date"
+              options={offerEndDateOptions}
+              selected={formData.offerEndDate}
+              onChange={(val) => updateField('offerEndDate', val)}
+              showInfo={true}
+            />
           </CardWrapper>
 
           {/* 6th/7th days Section */}
@@ -1290,6 +1468,18 @@ export default function ProjectDetailsGeneral() {
             title="6th/7th days"
             variant="default"
             showLabel={true}
+            actions={
+              <button
+                onClick={() => toggleCardEdit('sixthSeventhDays')}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                {editingCard === 'sixthSeventhDays' ? (
+                  <X className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Edit className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            }
           >
             <div className="space-y-2">
               <EditableSelectField
@@ -1302,7 +1492,7 @@ export default function ProjectDetailsGeneral() {
                 value={sixthDayFeeMultiplier}
                 items={multiplierOptions}
                 onChange={setSixthDayFeeMultiplier}
-                isEditing={isEditing}
+                isEditing={editingCard === 'sixthSeventhDays'}
               />
 
               <EditableSelectField
@@ -1315,82 +1505,20 @@ export default function ProjectDetailsGeneral() {
                 value={seventhDayFeeMultiplier}
                 items={multiplierOptions}
                 onChange={setSeventhDayFeeMultiplier}
-                isEditing={isEditing}
+                isEditing={editingCard === 'sixthSeventhDays'}
               />
 
               <EditableCheckboxField
                 label="Share minimum hours on 6th and 7th days in offers?"
                 checked={shareMinimumHours}
                 onChange={setShareMinimumHours}
-                isEditing={isEditing}
+                isEditing={editingCard === 'sixthSeventhDays'}
               />
-            </div>
-          </CardWrapper>
-
-          {/* Working Hours */}
-          <CardWrapper 
-            title="Working Hours" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="space-y-1">
-              <EditableSelectField
-                label={
-                  <div className="flex items-center gap-2">
-                    <span>Default standard working hours</span>
-                    <Info className="w-4 h-4 text-gray-400" />
-                  </div>
-                }
-                value={formData.defaultWorkingHours}
-                items={workingHoursOptions}
-                onChange={(val) => updateField('defaultWorkingHours', val)}
-                isEditing={true}
-              />
-              <p className="text-xs text-gray-500 mt-1">Excluding lunch.</p>
-            </div>
-          </CardWrapper>
-
-          {/* Offer Settings */}
-          <CardWrapper 
-            title="Offer Settings" 
-            variant="default"
-            showLabel={true}
-          >
-            <ButtonToggleGroup
-              label="Offer end date"
-              options={offerEndDateOptions}
-              selected={formData.offerEndDate}
-              onChange={(val) => updateField('offerEndDate', val)}
-              showInfo={true}
-            />
-          </CardWrapper>
-
-          {/* Weekly Rate Display */}
-          <CardWrapper 
-            title="Weekly Rate Display" 
-            variant="default"
-            showLabel={true}
-          >
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Show Weekly rate for Daily crew in</label>
-              <div className="space-y-2">
-                <EditableCheckboxField
-                  label="Offer view"
-                  checked={formData.showWeeklyRateInOfferView}
-                  onChange={(val) => updateField('showWeeklyRateInOfferView', val)}
-                  isEditing={true}
-                />
-                <EditableCheckboxField
-                  label="Documents"
-                  checked={formData.showWeeklyRateInDocuments}
-                  onChange={(val) => updateField('showWeeklyRateInDocuments', val)}
-                  isEditing={true}
-                />
-              </div>
             </div>
           </CardWrapper>
         </div>
       </div>
+      )}
     </div>
   );
 }

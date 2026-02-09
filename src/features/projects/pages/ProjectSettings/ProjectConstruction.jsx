@@ -1,10 +1,10 @@
 // ProjectConstruction.jsx
 import { useState } from 'react';
-import { Info } from 'lucide-react';
+import { Info, Edit, Save, X } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
 import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
 import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../../shared/components/PageHeader";
 
 // Radio Button Group Component
 const RadioButtonGroup = ({ label, options, selected, onChange }) => {
@@ -49,6 +49,7 @@ const ToggleSwitch = ({ label, checked, onChange }) => {
 };
 
 const ProjectConstruction = () => {
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     // Daily rate & hours
     usePactRate: 'Extract holiday pay from gross rate on Rate card',
@@ -168,228 +169,301 @@ const ProjectConstruction = () => {
     { value: "Don't apply", label: "Don't apply" },
   ];
 
+  const handleSave = () => {
+    console.log("Saving construction settings...");
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Daily rate & hours */}
-      <CardWrapper 
-        title="Daily rate & hours" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <EditableSelectField
-            label="Use PACT/BECTU Rate card for Daily rate?"
-            value={formData.usePactRate}
-            items={pactRateOptions}
-            onChange={(val) => updateField('usePactRate', val)}
-            isEditing={true}
-          />
-          
-          <div className="flex flex-col gap-1">
-            <EditableSelectField
-              label="Default standard working hours"
-              value={formData.defaultWorkingHours}
-              items={workingHoursOptions}
-              onChange={(val) => updateField('defaultWorkingHours', val)}
-              isEditing={true}
-            />
-            <p className="text-xs text-gray-500">Excluding breaks.</p>
-          </div>
+      {/* Title with Edit/Save/Cancel Buttons */}
+      <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
+        <h2 className="text-base font-semibold">Project Construction</h2>
+        <div className="flex gap-2">
+          {!isEditing ? (
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="default"
+              size="sm"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                size="sm"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                variant="default"
+                size="sm"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            </>
+          )}
         </div>
-      </CardWrapper>
+      </div>
 
-      {/* Breaks */}
-      <CardWrapper 
-        title="Breaks" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="max-w-md">
-          <div className="flex items-center gap-2 mb-1">
-            <label className="text-sm font-medium text-gray-700">Duration of unpaid breaks</label>
-            <div className="relative group">
-              <Info className="w-4 h-4 text-gray-400 cursor-help" />
-              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                The PACT/BECTU Agreement specifies a 30 minute unpaid morning break and unpaid lunch of 1 hour. You might have agreed different break period(s) for an overall shorter day. This break period duration will only be used to determine when overtime becomes applicable.
+      {/* Unified 3:6:3 Grid Layout for All Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* LEFT COLUMN (3/12) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Travel time */}
+          <CardWrapper 
+            title="Travel time" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="flex items-center justify-between py-1.5">
+              <label className="text-sm text-gray-700">Travel time paid?</label>
+              <button
+                onClick={() => updateField('travelTimePaid', !formData.travelTimePaid)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.travelTimePaid ? 'bg-purple-600' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                  formData.travelTimePaid ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+          </CardWrapper>
+
+          {/* Broken turnaround */}
+          <CardWrapper 
+            title="Broken turnaround" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="flex items-center justify-between py-1.5">
+              <label className="text-sm text-gray-700">Broken turnaround paid?</label>
+              <button
+                onClick={() => updateField('brokenTurnaroundPaid', !formData.brokenTurnaroundPaid)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.brokenTurnaroundPaid ? 'bg-purple-600' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                  formData.brokenTurnaroundPaid ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+            </div>
+          </CardWrapper>
+        </div>
+
+        {/* CENTER COLUMN (6/12) */}
+        <div className="lg:col-span-6 space-y-4">
+          {/* Daily rate & hours */}
+          <CardWrapper 
+            title="Daily rate & hours" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="space-y-2">
+              <EditableSelectField
+                label="Use PACT/BECTU Rate card for Daily rate?"
+                value={formData.usePactRate}
+                items={pactRateOptions}
+                onChange={(val) => updateField('usePactRate', val)}
+                isEditing={isEditing}
+              />
+              
+              <div className="flex flex-col gap-1">
+                <EditableSelectField
+                  label="Default standard working hours"
+                  value={formData.defaultWorkingHours}
+                  items={workingHoursOptions}
+                  onChange={(val) => updateField('defaultWorkingHours', val)}
+                  isEditing={isEditing}
+                />
+                <p className="text-xs text-gray-500">Excluding breaks.</p>
               </div>
             </div>
-          </div>
-          <EditableSelectField
-            value={formData.unpaidBreaksDuration}
-            items={unpaidBreaksOptions}
-            onChange={(val) => updateField('unpaidBreaksDuration', val)}
-            isEditing={true}
-          />
-        </div>
-      </CardWrapper>
+          </CardWrapper>
 
-      {/* 6th day */}
-      <CardWrapper 
-        title="6th day" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="space-y-4">
-          {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-4">
-            <EditableSelectField
-              label="6th day rate calculation"
-              value={formData.sixthDayRateCalculation}
-              items={sixthDayCalculationOptions}
-              onChange={(val) => updateField('sixthDayRateCalculation', val)}
-              isEditing={true}
-            />
-            
-            <EditableSelectField
-              label="When does 6th day rate apply?"
-              value={formData.sixthDayRateApply}
-              items={whenApplyOptions}
-              onChange={(val) => updateField('sixthDayRateApply', val)}
-              isEditing={true}
-            />
-          </div>
-
-          {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <RadioButtonGroup
-              label="6th day rate payment"
-              options={paymentTypeOptions}
-              selected={formData.sixthDayRatePayment}
-              onChange={(val) => updateField('sixthDayRatePayment', val)}
-            />
-
-            <EditableSelectField
-              label="Holiday pay application"
-              value={formData.sixthDayHolidayPay}
-              items={holidayPayOptions}
-              onChange={(val) => updateField('sixthDayHolidayPay', val)}
-              isEditing={true}
-            />
-          </div>
-        </div>
-      </CardWrapper>
-
-      {/* 7th day */}
-      <CardWrapper 
-        title="7th day" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="space-y-4">
-          {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-4 items-end">
-            <EditableSelectField
-              label="7th day rate calculation"
-              value={formData.seventhDayRateCalculation}
-              items={seventhDayCalculationOptions}
-              onChange={(val) => updateField('seventhDayRateCalculation', val)}
-              isEditing={true}
-            />
-            
-            <div className="pb-2">
-              <EditableCheckboxField
-                label="Pay Unsocial Hours 2 for all hours worked on 7th day?"
-                checked={formData.seventhDayPayUnsocialHours}
-                onChange={(val) => updateField('seventhDayPayUnsocialHours', val)}
-                isEditing={true}
+          {/* Breaks */}
+          <CardWrapper 
+            title="Breaks" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="max-w-md">
+              <div className="flex items-center gap-2 mb-1">
+                <label className="text-sm font-medium text-gray-700">Duration of unpaid breaks</label>
+                <div className="relative group">
+                  <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                    The PACT/BECTU Agreement specifies a 30 minute unpaid morning break and unpaid lunch of 1 hour. You might have agreed different break period(s) for an overall shorter day. This break period duration will only be used to determine when overtime becomes applicable.
+                  </div>
+                </div>
+              </div>
+              <EditableSelectField
+                value={formData.unpaidBreaksDuration}
+                items={unpaidBreaksOptions}
+                onChange={(val) => updateField('unpaidBreaksDuration', val)}
+                isEditing={isEditing}
               />
             </div>
-          </div>
+          </CardWrapper>
 
-          {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <RadioButtonGroup
-              label="7th day rate payment"
-              options={paymentTypeOptions}
-              selected={formData.seventhDayRatePayment}
-              onChange={(val) => updateField('seventhDayRatePayment', val)}
-            />
+          {/* 6th day */}
+          <CardWrapper 
+            title="6th day" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="space-y-4">
+              {/* Row 1 */}
+              <div className="grid grid-cols-2 gap-4">
+                <EditableSelectField
+                  label="6th day rate calculation"
+                  value={formData.sixthDayRateCalculation}
+                  items={sixthDayCalculationOptions}
+                  onChange={(val) => updateField('sixthDayRateCalculation', val)}
+                  isEditing={isEditing}
+                />
+                
+                <EditableSelectField
+                  label="When does 6th day rate apply?"
+                  value={formData.sixthDayRateApply}
+                  items={whenApplyOptions}
+                  onChange={(val) => updateField('sixthDayRateApply', val)}
+                  isEditing={isEditing}
+                />
+              </div>
 
-            <EditableSelectField
-              label="Holiday pay application"
-              value={formData.seventhDayHolidayPay}
-              items={holidayPayOptions}
-              onChange={(val) => updateField('seventhDayHolidayPay', val)}
-              isEditing={true}
-            />
-          </div>
+              {/* Row 2 */}
+              <div className="grid grid-cols-2 gap-4">
+                <EditableSelectField
+                  label="6th day rate payment"
+                  value={formData.sixthDayRatePayment}
+                  items={paymentTypeOptions}
+                  onChange={(val) => updateField('sixthDayRatePayment', val)}
+                  isEditing={isEditing}
+                />
+
+                <EditableSelectField
+                  label="Holiday pay application"
+                  value={formData.sixthDayHolidayPay}
+                  items={holidayPayOptions}
+                  onChange={(val) => updateField('sixthDayHolidayPay', val)}
+                  isEditing={isEditing}
+                />
+              </div>
+            </div>
+          </CardWrapper>
+
+          {/* 7th day */}
+          <CardWrapper 
+            title="7th day" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="space-y-4">
+              {/* Row 1 */}
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <EditableSelectField
+                  label="7th day rate calculation"
+                  value={formData.seventhDayRateCalculation}
+                  items={seventhDayCalculationOptions}
+                  onChange={(val) => updateField('seventhDayRateCalculation', val)}
+                  isEditing={isEditing}
+                />
+                
+                <div className="pb-2">
+                  <EditableCheckboxField
+                    label="Pay Unsocial Hours 2 for all hours worked on 7th day?"
+                    checked={formData.seventhDayPayUnsocialHours}
+                    onChange={(val) => updateField('seventhDayPayUnsocialHours', val)}
+                    isEditing={isEditing}
+                  />
+                </div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="grid grid-cols-2 gap-4">
+                <EditableSelectField
+                  label="7th day rate payment"
+                  value={formData.seventhDayRatePayment}
+                  items={paymentTypeOptions}
+                  onChange={(val) => updateField('seventhDayRatePayment', val)}
+                  isEditing={isEditing}
+                />
+
+                <EditableSelectField
+                  label="Holiday pay application"
+                  value={formData.seventhDayHolidayPay}
+                  items={holidayPayOptions}
+                  onChange={(val) => updateField('seventhDayHolidayPay', val)}
+                  isEditing={isEditing}
+                />
+              </div>
+            </div>
+          </CardWrapper>
+
+          {/* Overtime */}
+          <CardWrapper 
+            title="Overtime" 
+            variant="default"
+            showLabel={true}
+          >
+            <div className="space-y-4">
+              {/* Row 1 */}
+              <div className="grid grid-cols-2 gap-4">
+                <EditableSelectField
+                  label="O/T rate calculation"
+                  value={formData.overtimeRateCalculation}
+                  items={overtimeCalculationOptions}
+                  onChange={(val) => updateField('overtimeRateCalculation', val)}
+                  isEditing={isEditing}
+                />
+                
+                <EditableSelectField
+                  label="O/T caps"
+                  value={formData.overtimeCaps}
+                  items={overtimeCapsOptions}
+                  onChange={(val) => updateField('overtimeCaps', val)}
+                  isEditing={isEditing}
+                />
+              </div>
+
+              {/* Row 2 */}
+              <div className="grid grid-cols-2 gap-4">
+                <EditableSelectField
+                  label="Holiday pay application"
+                  value={formData.overtimeHolidayPay}
+                  items={holidayPayOptions}
+                  onChange={(val) => updateField('overtimeHolidayPay', val)}
+                  isEditing={isEditing}
+                />
+                
+                <EditableSelectField
+                  label="Apply unsocial hours"
+                  value={formData.applyUnsocialHours}
+                  items={unsocialHoursOptions}
+                  onChange={(val) => updateField('applyUnsocialHours', val)}
+                  isEditing={isEditing}
+                />
+              </div>
+            </div>
+          </CardWrapper>
         </div>
-      </CardWrapper>
 
-      {/* Overtime */}
-      <CardWrapper 
-        title="Overtime" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="space-y-4">
-          {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-4">
-            <EditableSelectField
-              label="O/T rate calculation"
-              value={formData.overtimeRateCalculation}
-              items={overtimeCalculationOptions}
-              onChange={(val) => updateField('overtimeRateCalculation', val)}
-              isEditing={true}
-            />
-            
-            <EditableSelectField
-              label="O/T caps"
-              value={formData.overtimeCaps}
-              items={overtimeCapsOptions}
-              onChange={(val) => updateField('overtimeCaps', val)}
-              isEditing={true}
-            />
-          </div>
-
-          {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <EditableSelectField
-              label="Holiday pay application"
-              value={formData.overtimeHolidayPay}
-              items={holidayPayOptions}
-              onChange={(val) => updateField('overtimeHolidayPay', val)}
-              isEditing={true}
-            />
-            
-            <EditableSelectField
-              label="Apply unsocial hours"
-              value={formData.applyUnsocialHours}
-              items={unsocialHoursOptions}
-              onChange={(val) => updateField('applyUnsocialHours', val)}
-              isEditing={true}
-            />
-          </div>
+        {/* RIGHT COLUMN (3/12) */}
+        <div className="lg:col-span-3 space-y-4">
         </div>
-      </CardWrapper>
-
-      {/* Travel time & Broken turnaround */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Travel time */}
-        <CardWrapper 
-          title="Travel time" 
-          variant="default"
-          showLabel={true}
-        >
-          <ToggleSwitch
-            label="Travel time paid?"
-            checked={formData.travelTimePaid}
-            onChange={(val) => updateField('travelTimePaid', val)}
-          />
-        </CardWrapper>
-
-        {/* Broken turnaround */}
-        <CardWrapper 
-          title="Broken turnaround" 
-          variant="default"
-          showLabel={true}
-        >
-          <ToggleSwitch
-            label="Broken turnaround paid?"
-            checked={formData.brokenTurnaroundPaid}
-            onChange={(val) => updateField('brokenTurnaroundPaid', val)}
-          />
-        </CardWrapper>
       </div>
     </div>
   );

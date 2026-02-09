@@ -11,12 +11,12 @@ import {
   FileSignature, 
   Workflow, 
   CreditCard,
-  UserCog
+  UserCog,
+  CheckCircle2
 } from 'lucide-react'
 
 // Import all settings components
 import ProjectDetailsGeneral from './ProjectDetailsGeneral'
-import ProjectConstruction from './ProjectConstruction'
 import ProjectOnboarding from './ProjectOnboarding'
 import ProjectTimesheet from './ProjectTimesheet'
 import ProjectRoles from './ProjectRoles'
@@ -26,15 +26,14 @@ import ApprovalWorkflows from './ApprovalWorkflows'
 import Billing from './Billing'
 
 const settingsMenuItems = [
-  { id: 'details-general', label: 'Project Details', icon: FileText, component: ProjectDetailsGeneral },
-  { id: 'construction', label: 'Construction', icon: HardHat, component: ProjectConstruction },
-  { id: 'onboarding', label: 'Onboarding', icon: UserCog, component: ProjectOnboarding },
-  { id: 'timesheet', label: 'Timesheet', icon: Clock, component: ProjectTimesheet },
-  { id: 'roles', label: 'Roles', icon: Users, component: ProjectRoles },
-  { id: 'notifications', label: 'Notifications', icon: Bell, component: ProjectNotifications },
-  { id: 'signers-recipients', label: 'Signers & Recipients', icon: FileSignature, component: SignersRecipients },
-  { id: 'approval-workflows', label: 'Approval Workflows', icon: Workflow, component: ApprovalWorkflows },
-  { id: 'billing', label: 'Billing', icon: CreditCard, component: Billing },
+  { id: 'details-general', label: 'Project Details', icon: FileText, component: ProjectDetailsGeneral, completed: true },
+  { id: 'onboarding', label: 'Onboarding', icon: UserCog, component: ProjectOnboarding, completed: false },
+  { id: 'timesheet', label: 'Timesheet', icon: Clock, component: ProjectTimesheet, completed: false },
+  { id: 'roles', label: 'Roles', icon: Users, component: ProjectRoles, completed: true },
+  { id: 'notifications', label: 'Notifications', icon: Bell, component: ProjectNotifications, completed: true },
+  { id: 'signers-recipients', label: 'Signers & Recipients', icon: FileSignature, component: SignersRecipients, completed: false },
+  { id: 'approval-workflows', label: 'Approval Workflows', icon: Workflow, component: ApprovalWorkflows, completed: true },
+  { id: 'billing', label: 'Billing', icon: CreditCard, component: Billing, completed: false },
 ]
 
 function ProjectSettings() {
@@ -69,7 +68,10 @@ function ProjectSettings() {
                   }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${
+                    item.completed ? 'text-green-500' : 'text-gray-300'
+                  }`} />
                 </button>
               )
             })}

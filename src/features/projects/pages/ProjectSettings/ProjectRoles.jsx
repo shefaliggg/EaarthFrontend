@@ -21,6 +21,7 @@ import {
 
 const ProjectRoles = () => {
   const [twoFactorAuth, setTwoFactorAuth] = useState("none");
+  const [activeTab, setActiveTab] = useState("assignments");
 
   // Permission table data
   const rolesPermissions = [
@@ -172,36 +173,45 @@ const ProjectRoles = () => {
   };
 
   return (
-    <div className="space-y-3 pb-6">
-      {/* Security Section */}
-      <CardWrapper
-        title="Security"
-        icon="Lock"
-        iconColor="text-orange-500"
-      >
-        <div className="space-y-2">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground block">
-              2-factor authentication
-            </label>
-            <Select value={twoFactorAuth} onValueChange={setTwoFactorAuth}>
-              <SelectTrigger className="w-full max-w-md h-8">
-                <SelectValue placeholder="Select 2FA requirement" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="optional">Optional</SelectItem>
-                <SelectItem value="mandatory">Mandatory</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="space-y-4">
+      {/* Heading with Tabs */}
+      <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <h2 className="text-base font-semibold">Roles</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-green-500 transition-all duration-300" style={{ width: '80%' }}></div>
+            </div>
+            <span className="text-sm font-medium text-gray-600">80%</span>
           </div>
-          
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Applicable users must enter a one-time password once every 24 hours for each device or browser.
-          </p>
         </div>
-      </CardWrapper>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab("assignments")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              activeTab === "assignments"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-100 text-purple-600 hover:bg-gray-200"
+            }`}
+          >
+            Assignments
+          </button>
+          <button
+            onClick={() => setActiveTab("permissions")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              activeTab === "permissions"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-100 text-purple-600 hover:bg-gray-200"
+            }`}
+          >
+            Permissions
+          </button>
+        </div>
+      </div>
 
+      {/* Tab Content - Assignments */}
+      {activeTab === "assignments" && (
+      <div className="space-y-3 pb-6">
       {/* Project Roles Section */}
       <CardWrapper
         title="Project roles"
@@ -319,20 +329,12 @@ const ProjectRoles = () => {
           </div>
         </div>
       </CardWrapper>
-
-      {/* Info Banner */}
-      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-2 flex items-start gap-2">
-        <Info className="w-3.5 h-3.5 text-blue-600 mt-0.5 shrink-0" />
-        <div>
-          <h3 className="text-xs font-medium text-blue-900 dark:text-blue-100">How do I assign these roles to my crew?</h3>
-          <p className="text-[10px] text-blue-700 dark:text-blue-300 leading-relaxed mt-0.5">
-            This page defines the <strong>capabilities</strong> of each role. To assign a specific crew member to one of these roles, go to the 
-            <span className="font-semibold text-blue-800 dark:text-blue-200 cursor-pointer hover:underline mx-1">Team Members</span> 
-            page and update their profile.
-          </p>
-        </div>
       </div>
+      )}
 
+      {/* Tab Content - Permissions */}
+      {activeTab === "permissions" && (
+      <div className="space-y-3 pb-6">
       {/* Permissions Table */}
       <CardWrapper
         title="Role Permissions"
@@ -393,6 +395,8 @@ const ProjectRoles = () => {
           </Button>
         </div>
       </CardWrapper>
+      </div>
+      )}
     </div>
   );
 };

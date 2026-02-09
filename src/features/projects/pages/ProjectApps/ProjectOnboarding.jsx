@@ -227,6 +227,10 @@ export default function ProjectOnboarding() {
     setShowCreateDialog(true);
   };
 
+  const handleCrewSearch = () => {
+    navigate(`/projects/${selectedRole}/crew-search`);
+  };
+
   const clickableStats = WORKFLOW_STATS.map(stat => ({
     ...stat,
     onClick: () => handleStatClick(stat),
@@ -239,6 +243,14 @@ export default function ProjectOnboarding() {
         <PageHeader
           title={ROLE_PAGE_TITLES[selectedRole] || "CREW ONBOARDING"}
           icon="Users"
+          secondaryActions={[
+            {
+              label: "Crew Search",
+              icon: "Search",
+              variant: "outline",
+              clickAction: handleCrewSearch,
+            }
+          ]}
           primaryAction={{
             label: "Create Offer",
             icon: "Plus",

@@ -10,6 +10,7 @@ import CrewReview from '../../crew/pages/CrewReview';
 import BulkOfferCreate from '../../crew/pages/BulkOfferCreate';
 import CreateOfferDialog from '../../crew/components/CreateOfferDialog';
 import CreateOffer from '../../crew/pages/CreateOffer';
+import CrewSearch from '../pages/CrewSearch';
 
 
 // import ContractDocumentPage from '../../crew/pages/ContractDocumentPage';
@@ -80,6 +81,7 @@ const ProjectAppsRoutes = {
         
         // Other app routes
         { path: 'onboarding', element: <ProjectOnboarding /> },
+        { path: 'crew-search', element: <CrewSearch /> },
         { path: 'cloud', element: <ProjectAppCloud /> },
         { path: 'chat', element: <ProjectChat /> },
 

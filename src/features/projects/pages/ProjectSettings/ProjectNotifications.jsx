@@ -265,14 +265,32 @@ const Notifications = () => {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto space-y-4">
         
-        {/* Filter Pills */}
-        <div className="bg-card rounded-lg border border-border p-4">
-          <FilterPillTabs
-            options={tabOptions}
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            transparentBg={false}
-          />
+        {/* Heading with Filter */}
+        <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <h2 className="text-base font-semibold">Notifications</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 transition-all duration-300" style={{ width: '90%' }}></div>
+              </div>
+              <span className="text-sm font-medium text-gray-600">90%</span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {tabOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setSelectedCategory(option.value)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  selectedCategory === option.value
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-100 text-purple-600 hover:bg-gray-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Notification Cards Grid */}

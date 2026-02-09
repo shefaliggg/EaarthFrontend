@@ -14,7 +14,7 @@ export default function CardWrapper({
     showLabel = true
 }) {
     return (
-        <div className={`${variant === "ghost" ? "border-transparent bg-transparent space-y-6" : "bg-background p-6 rounded-3xl border space-y-4"}`}>
+        <div className={`${variant === "ghost" ? "border-transparent bg-transparent space-y-6" : "bg-background p-6 rounded-3xl border space-y-2"}`}>
             {showLabel &&
                 <div className="flex items-center justify-between">
                     <div>

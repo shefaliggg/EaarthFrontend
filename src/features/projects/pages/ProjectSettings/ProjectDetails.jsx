@@ -150,8 +150,8 @@ const ProjectDetails = ({ onComplete }) => {
 
   const steps = [
     { id: 'details', label: 'Project Details' },
-    { id: 'package', label: 'Select Package' },
     { id: 'applications', label: 'Project Applications' },
+    { id: 'package', label: 'Select Package' },
     { id: 'order', label: 'Order Summary' }
   ];
 
@@ -161,9 +161,9 @@ const ProjectDetails = ({ onComplete }) => {
       case 0:
         return formData.projectName.trim() && formData.projectType && formData.legalTerritory;
       case 1:
-        return formData.packageTier; // Package tier is required
-      case 2:
         return true; // Applications are optional
+      case 2:
+        return formData.packageTier; // Package tier is required
       case 3:
         return true; // Order summary is final step
       default:
@@ -265,8 +265,18 @@ const ProjectDetails = ({ onComplete }) => {
               </CardWrapper>
             )}
 
-            {/* Step 1: Package Tier Selection */}
+            {/* Step 1: Project Applications */}
             {step === 1 && (
+              <CardWrapper title="Project Applications" variant="default" showLabel={true}>
+                <ProjectApplications
+                  selectedApps={formData.selectedApplications}
+                  onChange={(apps) => updateField('selectedApplications', apps)}
+                />
+              </CardWrapper>
+            )}
+
+            {/* Step 2: Select Package Tier */}
+            {step === 2 && (
               <CardWrapper title="Select Your Package Tier" variant="default" showLabel={true}>
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600 mb-6">Choose the branding and features level that fits your needs</p>
@@ -375,42 +385,6 @@ const ProjectDetails = ({ onComplete }) => {
                     </button>
                   </div>
                 </div>
-              </CardWrapper>
-            )}
-
-            {/* Step 2: Project Applications */}
-            {step === 2 && (
-              <CardWrapper title="Project Applications" variant="default" showLabel={true}>
-                {/* Selected Package Info */}
-                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-900">
-                        {formData.packageTier === 'basic' && 'Basic'}
-                        {formData.packageTier === 'agency' && 'Agency'}
-                        {formData.packageTier === 'whitelabel' && 'White Label'}
-                      </h4>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        {formData.packageTier === 'basic' && 'Basic Package'}
-                        {formData.packageTier === 'agency' && 'Agency Package'}
-                        {formData.packageTier === 'whitelabel' && 'White Label Package'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-purple-600">
-                        {formData.packageTier === 'basic' && '$20/week'}
-                        {formData.packageTier === 'agency' && '$40/week'}
-                        {formData.packageTier === 'whitelabel' && '$70/week'}
-                      </p>
-                      <p className="text-xs text-gray-500">Base Price</p>
-                    </div>
-                  </div>
-                </div>
-
-                <ProjectApplications
-                  selectedApps={formData.selectedApplications}
-                  onChange={(apps) => updateField('selectedApplications', apps)}
-                />
               </CardWrapper>
             )}
 

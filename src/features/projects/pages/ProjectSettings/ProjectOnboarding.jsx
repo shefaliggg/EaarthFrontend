@@ -165,187 +165,203 @@ Many thanks for your hard work on the production.`,
 
   return (
     <div className="space-y-4">
-      {/* Offer Settings */}
-      <CardWrapper title="Offer Settings" variant="default" showLabel={true}>
-        <ButtonToggleGroup
-          label="Offer end date"
-          options={[
-            { value: 'Optional', label: 'Optional' },
-            { value: 'Mandatory', label: 'Mandatory' }
-          ]}
-          selected={formData.offerEndDate}
-          onChange={(val) => updateField('offerEndDate', val)}
-          showInfo={true}
-        />
-      </CardWrapper>
+      {/* Heading */}
+      <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
+        <h2 className="text-base font-semibold">Onboarding</h2>
+      </div>
 
-      {/* Offer handling */}
-      <CardWrapper 
-        title="Offer handling" 
-        variant="default"
-        showLabel={true}
-        description="How you'd like offers to be reviewed prior to sending to crew."
-      >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="share-status" className="cursor-pointer text-sm">
-                Share status determination with crew members?
-              </Label>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Enable to share tax status determination information</p>
-                </TooltipContent>
-              </Tooltip>
+      {/* Offer handling and Notice in 5:7 ratio */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Offer handling */}
+        <div className="lg:col-span-5">
+        <CardWrapper 
+          title="Offer handling" 
+          variant="default"
+          showLabel={true}
+        >
+          <div className="space-y-3 -mt-2.5 min-h-80">
+            <div>
+              <ButtonToggleGroup
+                label="Offer end date"
+                options={[
+                  { value: 'Optional', label: 'Optional' },
+                  { value: 'Mandatory', label: 'Mandatory' }
+                ]}
+                selected={formData.offerEndDate}
+                onChange={(val) => updateField('offerEndDate', val)}
+                showInfo={true}
+              />
             </div>
-            <Switch
-              id="share-status"
-              checked={formData.shareStatusDetermination}
-              onCheckedChange={(val) => updateField('shareStatusDetermination', val)}
-            />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Label className="text-sm">Tax status handling</Label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-3 h-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Select how tax status should be handled</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Select value={formData.taxStatusHandling} onValueChange={(val) => updateField('taxStatusHandling', val)}>
+                  <SelectTrigger className="w-full h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Accounts approver required for self-employed or loan out">
+                      Accounts approver required
+                    </SelectItem>
+                    <SelectItem value="No approval required">No approval required</SelectItem>
+                    <SelectItem value="Approval required for all">Approval required</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Label htmlFor="tax-query-email" className="text-sm">Tax status query email</Label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-3 h-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Email address for tax status queries</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  id="tax-query-email"
+                  type="email"
+                  value={formData.taxStatusQueryEmail}
+                  onChange={(e) => updateField('taxStatusQueryEmail', e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full h-8 text-xs"
+                />
+              </div>
+            </div>
+
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
-                <Label className="text-sm">Tax status handling</Label>
+                <Label className="text-sm">Offer approval</Label>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Info className="w-4 h-4 text-muted-foreground" />
+                    <Info className="w-3 h-3 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Select how tax status should be handled</p>
+                    <p className="text-xs">Define the approval workflow</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <Select value={formData.taxStatusHandling} onValueChange={(val) => updateField('taxStatusHandling', val)}>
-                <SelectTrigger className="w-full">
+              <Select value={formData.offerApproval} onValueChange={(val) => updateField('offerApproval', val)}>
+                <SelectTrigger className="w-full h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Accounts approver required for self-employed or loan out">
-                    Accounts approver required for self-employed or loan out
-                  </SelectItem>
+                  <SelectItem value="Production > Accounts">Production &gt; Accounts</SelectItem>
+                  <SelectItem value="Accounts only">Accounts only</SelectItem>
+                  <SelectItem value="Production only">Production only</SelectItem>
                   <SelectItem value="No approval required">No approval required</SelectItem>
-                  <SelectItem value="Approval required for all">Approval required for all</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Available options based on 'Share status determination' selection.
-              </p>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 w-full border-t border-border pt-3">
               <div className="flex items-center gap-2 mb-1">
-                <Label htmlFor="tax-query-email" className="text-sm">Tax status query email</Label>
+                <Label className="text-sm">Share status determination with crew members?</Label>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Info className="w-4 h-4 text-muted-foreground" />
+                    <Info className="w-3 h-3 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Email address for tax status queries</p>
+                    <p className="text-xs">Enable to share tax status determination information</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <Input
-                id="tax-query-email"
-                type="email"
-                value={formData.taxStatusQueryEmail}
-                onChange={(e) => updateField('taxStatusQueryEmail', e.target.value)}
-                placeholder="ssunnysurani@icloud.com"
-                className="w-full h-9"
+              <div className="flex gap-2">
+                <button
+                  onClick={() => updateField('shareStatusDetermination', true)}
+                  className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                    formData.shareStatusDetermination === true
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                  }`}
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => updateField('shareStatusDetermination', false)}
+                  className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                    formData.shareStatusDetermination === false
+                      ? 'bg-gray-100 text-gray-700 border-gray-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </CardWrapper>
+        </div>
+
+        {/* Notice */}
+        <div className="lg:col-span-7">
+        <CardWrapper 
+          title="Notice" 
+          variant="default"
+          showLabel={true}
+        >
+          <div className="space-y-4 -mt-2.5 min-h-80 flex flex-col">
+            <div className="space-y-1 flex flex-col flex-grow">
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-sm">Notice email wording</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Notice period</Label>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
+                    onClick={() => updateField('noticePeriod', Math.max(0, formData.noticePeriod - 1))}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={formData.noticePeriod}
+                    onChange={(e) => updateField('noticePeriod', Number(e.target.value))}
+                    className="text-center h-7 w-14 text-xs"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
+                    onClick={() => updateField('noticePeriod', formData.noticePeriod + 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground ml-1">days</span>
+                </div>
+              </div>
+              <Textarea
+                value={formData.noticeEmailWording}
+                onChange={(e) => updateField('noticeEmailWording', e.target.value)}
+                rows={3}
+                className="w-full resize-none font-mono text-xs flex-grow"
               />
             </div>
           </div>
-
-          <div className="space-y-1 max-w-md">
-            <div className="flex items-center gap-2 mb-1">
-              <Label className="text-sm">Offer approval</Label>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Define the approval workflow</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <Select value={formData.offerApproval} onValueChange={(val) => updateField('offerApproval', val)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Production > Accounts">Production &gt; Accounts</SelectItem>
-                <SelectItem value="Accounts only">Accounts only</SelectItem>
-                <SelectItem value="Production only">Production only</SelectItem>
-                <SelectItem value="No approval required">No approval required</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Available options based on 'Tax status handling' selection.
-            </p>
-          </div>
+        </CardWrapper>
         </div>
-      </CardWrapper>
-
-      {/* Notice */}
-      <CardWrapper 
-        title="Notice" 
-        variant="default"
-        showLabel={true}
-        description="Settings for 'Notice of termination of contract' emails."
-      >
-        <div className="space-y-4">
-          <div className="max-w-xs">
-            <Label className="text-sm mb-1 block">Notice period</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
-                onClick={() => updateField('noticePeriod', Math.max(0, formData.noticePeriod - 1))}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                type="number"
-                value={formData.noticePeriod}
-                onChange={(e) => updateField('noticePeriod', Number(e.target.value))}
-                className="text-center h-9"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
-                onClick={() => updateField('noticePeriod', formData.noticePeriod + 1)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">In days.</p>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-sm">Notice email wording</Label>
-            <Textarea
-              value={formData.noticeEmailWording}
-              onChange={(e) => updateField('noticeEmailWording', e.target.value)}
-              rows={10}
-              className="w-full resize-none font-mono text-sm"
-            />
-          </div>
-        </div>
-      </CardWrapper>
+      </div>
 
       {/* Penny Contract Settings */}
       <CardWrapper 
         title="Penny Contract Settings" 
         variant="default"
         showLabel={true}
-        description="Manage confidential rate visibility for sensitive crew contracts"
         actions={
           <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
             <span>{formData.pennyContracts} Penny Contracts</span>
@@ -406,72 +422,6 @@ Many thanks for your hard work on the production.`,
               </table>
             </div>
           </div>
-
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <SearchBar
-                placeholder="Search crew by name or role..."
-                value={formData.crewSearchQuery}
-                onValueChange={(e) => updateField('crewSearchQuery', e.target.value)}
-              />
-              <Select value={formData.departmentFilter} onValueChange={(val) => updateField('departmentFilter', val)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Departments">All Departments</SelectItem>
-                  <SelectItem value="Camera">Camera</SelectItem>
-                  <SelectItem value="Sound">Sound</SelectItem>
-                  <SelectItem value="Grip">Grip</SelectItem>
-                  <SelectItem value="Electric">Electric</SelectItem>
-                  <SelectItem value="Art">Art</SelectItem>
-                  <SelectItem value="Costume">Costume</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Crew Member</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Role</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Department</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Contract</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Status</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold uppercase">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {crewMembers.map((crew) => (
-                    <tr key={crew.id} className="border-b border-border hover:bg-muted/50">
-                      <td className="py-2 px-3 text-sm font-medium">{crew.name}</td>
-                      <td className="py-2 px-3 text-sm">{crew.role}</td>
-                      <td className="py-2 px-3 text-sm">{crew.department}</td>
-                      <td className="py-2 px-3 text-sm">{crew.contractType}</td>
-                      <td className="py-2 px-3">
-                        {crew.status === 'Standard' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            Standard
-                          </span>
-                        ) : (
-                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-    <Lock className="w-3 h-3" />
-    Penny contract
-  </span>
-                        )}
-                      </td>
-                      <td className="py-2 px-3">
-                        <Button variant="ghost" size="sm" className="text-xs text-purple-600 hover:text-purple-800 h-7 px-2">
-                          {crew.status === 'Standard' ? 'Enable Protection' : 'Remove Protection'}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       </CardWrapper>
 
@@ -480,12 +430,6 @@ Many thanks for your hard work on the production.`,
         title="Required templates" 
         variant="default"
         showLabel={true}
-        description={
-          <span>
-            Which documents will you need? To update templates,{' '}
-            <a href="#" className="text-purple-600 hover:text-purple-800">contact Team Engine</a>.
-          </span>
-        }
       >
         <div className="space-y-4">
           <div>
