@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MapPin, DollarSign, Car, Heart } from 'lucide-react';
+import { User, MapPin, DollarSign, Car, Heart, PenTool } from 'lucide-react';
 
 export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
   const tabs = [
@@ -7,7 +7,8 @@ export default function ProfileTabs({ activeTab, setActiveTab, isDarkMode }) {
     { value: 'contact', label: 'CONTACT', icon: MapPin },
     { value: 'financial', label: 'FINANCIAL', icon: DollarSign },
     { value: 'allowances', label: 'ALLOWANCES', icon: Car },
-    { value: 'health', label: 'HEALTH', icon: Heart }
+    { value: 'health', label: 'HEALTH', icon: Heart },
+    { value: 'signature', label: 'MY SIGNATURE', icon: PenTool }
   ];
 
   return (

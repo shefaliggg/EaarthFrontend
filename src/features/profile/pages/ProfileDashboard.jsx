@@ -6,6 +6,7 @@ import ContactDetails from "../components/tabs/ContactDetails";
 import FinanceDetails from "../components/tabs/FinancialDetails";
 import AllowanceDetails from "../components/tabs/AllowancesDetails";
 import HealthDetails from "../components/tabs/HealthDetails";
+import MySignature from "../components/tabs/MySignature";
 
 export default function ProfileDashboard() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -98,6 +99,9 @@ export default function ProfileDashboard() {
     // Health
     dietaryRequirements: "",
     allergies: "",
+    
+    // Signature
+    signature: null,
   });
 
   // Save button action
@@ -173,6 +177,15 @@ export default function ProfileDashboard() {
 
       {activeTab === "health" && (
         <HealthDetails
+          profile={profile}
+          setProfile={setProfile}
+          isEditing={isEditing}
+          isDarkMode={isDarkMode}
+        />
+      )}
+
+      {activeTab === "signature" && (
+        <MySignature
           profile={profile}
           setProfile={setProfile}
           isEditing={isEditing}
