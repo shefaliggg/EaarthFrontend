@@ -889,13 +889,13 @@ export default function EnhancedChatUI({ selectedChat }) {
 
             <div className="bg-muted px-4 py-2.5 rounded-2xl rounded-bl-md">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" />
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                 <span
-                  className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
                   style={{ animationDelay: "150ms" }}
                 />
                 <span
-                  className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
                   style={{ animationDelay: "300ms" }}
                 />
               </div>
@@ -1297,7 +1297,7 @@ function MessageBubble({
           <div
             className={cn(
               "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
-              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
+              isOwn ? "bg-primary dark:bg-primary/50 text-primary-foreground" : "bg-muted",
               isOwn && "rounded-[20px] rounded-br-none",
               !isOwn && "rounded-[20px] rounded-tl-none",
               isSelected && "ring-2 ring-primary/50 scale-[1.02]",
