@@ -10,8 +10,6 @@ import {
   CheckCheck,
   Check,
   Mic,
-  Play,
-  Pause,
   Sparkles,
   Smile,
   Send,
@@ -30,6 +28,9 @@ import {
   Download,
   Trash2,
   CornerDownRight,
+  Play,
+  Pause,
+  Volume2,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -61,8 +62,21 @@ import chatApi from "../api/chat.api";
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 // ⚠️ TEMPORARY: Hardcoded project ID
-// TODO: Replace with dynamic project ID from Redux/Context/URL
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
+
+// ✅ Helper to get full S3 URL from key
+const getFileUrl = (fileKey) => {
+  if (!fileKey) return null;
+  
+  // If already a full URL, return as is
+  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+    return fileKey;
+  }
+  
+  // Otherwise, construct S3 URL
+  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+  return `${S3_BASE_URL}/${fileKey}`;
+};
 
 export default function EnhancedChatUI({ selectedChat }) {
   const [messageInput, setMessageInput] = useState("");
@@ -93,7 +107,10 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [isTyping, setIsTyping] = useState(false);
+
+  // Image preview dialog
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -141,10 +158,6 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Load messages when chat changes
   useEffect(() => {
     if (selectedChat?.id) {
-      console.log(
-        "🔄 ChatBox: Loading messages for conversation:",
-        selectedChat.id,
-      );
       loadMessages(selectedChat.id);
       markAsRead(selectedChat.id);
 
@@ -175,7 +188,7 @@ export default function EnhancedChatUI({ selectedChat }) {
     const results = messages.filter(
       (m) =>
         m.content &&
-        m.content.toLowerCase().includes(searchQuery.toLowerCase()),
+        m.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     setSearchResults(results);
@@ -189,7 +202,7 @@ export default function EnhancedChatUI({ selectedChat }) {
       scrollToMessage(msg.id);
       setActiveResultIndex(index);
     },
-    [searchResults],
+    [searchResults]
   );
 
   const handleScroll = useCallback(
@@ -207,7 +220,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         loadMessages(selectedChat.id, true);
       }
     },
-    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages],
+    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]
   );
 
   // Auto-grow textarea
@@ -254,100 +267,37 @@ export default function EnhancedChatUI({ selectedChat }) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // ✅ FIXED: Complete send message handler with proper replyTo structure
   const handleSendMessage = async () => {
-    console.log("🚀 handleSendMessage called");
-
     const trimmedMessage = messageInput.trim();
 
-    if (!trimmedMessage) {
-      console.error("❌ No message input");
-      return;
-    }
-
-    if (!selectedChat?.id) {
-      console.error("❌ No chat selected");
-      return;
-    }
-
-    console.log("✅ All validations passed, preparing to send message");
+    if (!trimmedMessage) return;
+    if (!selectedChat?.id) return;
 
     const messageData = {
       text: trimmedMessage,
       type: "TEXT",
+      ...(replyTo && { replyTo }),
     };
 
-    // ✅ CRITICAL FIX: Build complete replyTo object matching backend validation
-    if (replyTo) {
-      console.log("📝 Building replyTo object from:", replyTo);
-
-      // Extract sender ID from various possible locations
-      const senderId =
-        replyTo._raw?.senderId?._id ||
-        replyTo._raw?.senderId ||
-        replyTo.senderId;
-
-      if (!senderId) {
-        console.error(
-          "❌ Cannot reply: sender ID missing from message:",
-          replyTo,
-        );
-        alert("Cannot reply to this message. Sender information is missing.");
-        return;
-      }
-
-      // Build complete replyTo object matching backend Joi validation
-      messageData.replyTo = {
-        messageId: replyTo.id,
-        senderId: senderId,
-        preview: (replyTo.content || "").substring(0, 200), // Truncate to max 200 chars
-        type: (replyTo.type || "text").toUpperCase(), // Convert to uppercase (TEXT, IMAGE, etc.)
-      };
-
-      console.log("✅ Complete replyTo object:", messageData.replyTo);
-    }
-
-    console.log("📤 Sending message:", {
-      conversationId: selectedChat.id,
-      messageData,
-    });
+    const projectId =
+      selectedChat?.projectId ||
+      selectedChat?._raw?.projectId ||
+      DEFAULT_PROJECT_ID;
 
     try {
-      // ⚠️ TEMPORARY: Use hardcoded projectId
-      // TODO: Replace with dynamic projectId from selectedChat, Redux, or Context
-      const projectId =
-        selectedChat?.projectId ||
-        selectedChat?._raw?.projectId ||
-        DEFAULT_PROJECT_ID;
-
-      console.log("🔑 Using projectId:", projectId, {
-        fromChat: !!selectedChat?.projectId,
-        fromRaw: !!selectedChat?._raw?.projectId,
-        fromDefault: projectId === DEFAULT_PROJECT_ID,
-      });
-
       await sendMessageToStore(selectedChat.id, projectId, messageData);
 
-      console.log("✅ Message sent successfully");
-
-      // Clear input and reply state
       setMessageInput("");
       setReplyTo(null);
       localStorage.removeItem(`chat-draft-${selectedChat.id}`);
 
-      // Scroll to bottom if user is already at bottom
       if (isUserAtBottom) {
         setTimeout(() => scrollToBottom(), 100);
       }
     } catch (error) {
       console.error("❌ Failed to send message:", error);
-      console.error("Error response:", error.response?.data);
-
-      // Show user-friendly error message
       const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Unknown error occurred";
+        error.response?.data?.message || error.message || "Unknown error";
       alert(`Failed to send message: ${errorMessage}`);
     }
   };
@@ -372,24 +322,18 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Reaction handler
   const handleReaction = async (messageId, emoji) => {
     try {
-      console.log("😊 Adding reaction:", {
-        conversationId: selectedChat.id,
-        messageId,
-        emoji,
-      });
       await chatApi.toggleReaction(selectedChat.id, messageId, emoji);
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle reaction:", error);
-      console.error("Error details:", error.response?.data);
       alert(
-        `Failed to add reaction: ${error.response?.data?.message || error.message}`,
+        `Failed to add reaction: ${error.response?.data?.message || error.message}`
       );
     }
     setShowReactionPicker(null);
   };
 
-  // Delete message handlers
+  // ✅ FIXED: Delete message handlers
   const handleDeleteClick = (message) => {
     setMessageToDelete(message);
     setDeleteDialogOpen(true);
@@ -399,15 +343,15 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (!messageToDelete) return;
 
     try {
-      console.log("🗑️ Deleting for me:", messageToDelete.id);
       await chatApi.deleteMessageForMe(selectedChat.id, messageToDelete.id);
-      await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
+      // Reload messages to update UI
+      await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to delete message:", error);
       alert(
-        `Failed to delete message: ${error.response?.data?.message || error.message}`,
+        `Failed to delete message: ${error.response?.data?.message || error.message}`
       );
     }
   };
@@ -416,19 +360,16 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (!messageToDelete) return;
 
     try {
-      console.log("🗑️ Deleting for everyone:", messageToDelete.id);
-      await chatApi.deleteMessageForEveryone(
-        selectedChat.id,
-        messageToDelete.id,
-      );
-      await loadMessages(selectedChat.id);
+      await chatApi.deleteMessageForEveryone(selectedChat.id, messageToDelete.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
+      // Reload messages to update UI
+      await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to delete message:", error);
       alert(
         error.response?.data?.message ||
-          "Failed to delete message. Please try again.",
+          "Failed to delete message. Please try again."
       );
     }
   };
@@ -443,11 +384,10 @@ export default function EnhancedChatUI({ selectedChat }) {
   const handleUpdateMessage = async () => {
     if (editingMessage && messageInput.trim() && selectedChat?.id) {
       try {
-        console.log("✏️ Editing message:", editingMessage.id);
         await chatApi.editMessage(
           selectedChat.id,
           editingMessage.id,
-          messageInput,
+          messageInput
         );
         setMessageInput("");
         setEditingMessage(null);
@@ -457,7 +397,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         console.error("Failed to edit message:", error);
         alert(
           error.response?.data?.message ||
-            "Failed to edit message. Please try again.",
+            "Failed to edit message. Please try again."
         );
       }
     }
@@ -465,7 +405,6 @@ export default function EnhancedChatUI({ selectedChat }) {
 
   // Forward message handlers
   const handleForwardClick = (message) => {
-    console.log("📨 Forwarding message:", message);
     setMessageToForward(message);
     setSelectedConversations([]);
     setForwardDialogOpen(true);
@@ -478,10 +417,9 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
 
     try {
-      console.log("📤 Forwarding to conversations:", selectedConversations);
-
       const senderId =
-        messageToForward._raw?.senderId?._id || messageToForward._raw?.senderId;
+        messageToForward._raw?.senderId?._id ||
+        messageToForward._raw?.senderId;
 
       for (const convId of selectedConversations) {
         const messageData = {
@@ -497,36 +435,39 @@ export default function EnhancedChatUI({ selectedChat }) {
           },
         };
 
-        console.log("📨 Sending forward to:", convId, messageData);
         await chatApi.sendMessage(convId, messageData);
       }
 
       setForwardDialogOpen(false);
       setMessageToForward(null);
       setSelectedConversations([]);
-      alert(
-        `Message forwarded to ${selectedConversations.length} conversation(s)!`,
-      );
+      alert(`Message forwarded to ${selectedConversations.length} conversation(s)!`);
     } catch (error) {
       console.error("Failed to forward message:", error);
-      console.error("Error details:", error.response?.data);
       alert(
-        `Failed to forward message: ${error.response?.data?.message || error.message}`,
+        `Failed to forward message: ${error.response?.data?.message || error.message}`
       );
     }
   };
 
-  // ✅ UPDATED: Reply handler - stores complete message object
   const handleReply = (message) => {
-    console.log("💬 Replying to message:", message);
+    const senderId =
+      message._raw?.senderId?._id ||
+      message._raw?.senderId ||
+      null;
 
-    // Store complete message object for building replyTo payload
+    if (!senderId) {
+      console.error("❌ Cannot reply: senderId missing from message", message);
+      alert("Cannot reply to this message. Sender information is missing.");
+      return;
+    }
+
     setReplyTo({
-      id: message.id,
-      sender: message.sender,
-      content: message.content,
-      type: message.type,
-      _raw: message._raw, // Keep raw data for senderId extraction
+      messageId: message.id,
+      senderId: senderId,
+      preview: (message.content || "").substring(0, 200),
+      type: (message.type || "text").toUpperCase(),
+      senderName: message.sender || "Unknown",
     });
 
     textareaRef.current?.focus();
@@ -535,13 +476,12 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Star/Favorite handler
   const handleToggleFavorite = async (messageId, isFavorited) => {
     try {
-      console.log("⭐ Toggling favorite:", { messageId, isFavorited });
       await chatApi.toggleFavorite(selectedChat.id, messageId, !isFavorited);
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
       alert(
-        `Failed to star message: ${error.response?.data?.message || error.message}`,
+        `Failed to star message: ${error.response?.data?.message || error.message}`
       );
     }
   };
@@ -572,16 +512,53 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
   };
 
-  const handleFileUpload = (e, type) => {
+  // ✅ FIXED: File upload with proper FormData construction
+  const handleFileUpload = async (e, uploadType) => {
     if (!selectedChat?.id) return;
-
     const file = e.target.files[0];
     if (!file) return;
 
-    console.log("File upload not implemented yet:", file, type);
-
-    setShowAttachMenu(false);
     e.target.value = "";
+    setShowAttachMenu(false);
+
+    const projectId =
+      selectedChat?.projectId ||
+      selectedChat?._raw?.projectId ||
+      DEFAULT_PROJECT_ID;
+
+    const typeMap = {
+      image: "IMAGE",
+      video: "VIDEO",
+      document: "FILE",
+    };
+    const messageType = typeMap[uploadType] || "FILE";
+
+    const formData = new FormData();
+    formData.append("attachments", file);
+    formData.append("projectId", projectId);
+    formData.append("type", messageType);
+    formData.append("text", "");
+
+    if (replyTo) {
+      formData.append("replyTo[messageId]", replyTo.messageId);
+      formData.append("replyTo[senderId]", replyTo.senderId);
+      formData.append("replyTo[preview]", replyTo.preview || "");
+      formData.append("replyTo[type]", replyTo.type || "TEXT");
+    }
+
+    try {
+      await sendMessageToStore(selectedChat.id, projectId, {
+        formData,
+      });
+
+      setReplyTo(null);
+      if (isUserAtBottom) setTimeout(() => scrollToBottom(), 100);
+    } catch (error) {
+      console.error("❌ Failed to upload file:", error);
+      alert(
+        `Failed to send file: ${error.response?.data?.message || error.message}`
+      );
+    }
   };
 
   const startRecording = async () => {
@@ -652,6 +629,12 @@ export default function EnhancedChatUI({ selectedChat }) {
     }, 0);
   };
 
+  // ✅ Image preview handler
+  const handleImageClick = (imageUrl) => {
+    setPreviewImageUrl(imageUrl);
+    setImagePreviewOpen(true);
+  };
+
   if (!selectedChat) {
     return (
       <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex items-center justify-center">
@@ -704,7 +687,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                             selectedChat.status === "online" &&
                               "bg-green-500 animate-pulse",
                             selectedChat.status === "away" && "bg-yellow-500",
-                            selectedChat.status === "offline" && "bg-gray-400",
+                            selectedChat.status === "offline" && "bg-gray-400"
                           )}
                         />
                         <span>{selectedChat.role}</span>
@@ -793,10 +776,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                   <button
                     onClick={() =>
                       goToSearchResult(
-                        Math.min(
-                          searchResults.length - 1,
-                          activeResultIndex + 1,
-                        ),
+                        Math.min(searchResults.length - 1, activeResultIndex + 1)
                       )
                     }
                     disabled={activeResultIndex === searchResults.length - 1}
@@ -904,35 +884,10 @@ export default function EnhancedChatUI({ selectedChat }) {
                 hoveredMessageId={hoveredMessageId}
                 setHoveredMessageId={setHoveredMessageId}
                 searchQuery={searchQuery}
+                onImageClick={handleImageClick}
               />
             );
           })}
-
-          {isTyping && (
-            <div
-              className="flex gap-3 items-end"
-              role="status"
-              aria-label="Someone is typing"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-muted text-xs">MJ</AvatarFallback>
-              </Avatar>
-
-              <div className="bg-muted px-4 py-2.5 rounded-2xl rounded-bl-md">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
 
           <div ref={messagesEndRef} />
         </div>
@@ -962,16 +917,15 @@ export default function EnhancedChatUI({ selectedChat }) {
             </div>
           )}
 
-          {/* ✅ UPDATED: Reply preview with sender name */}
           {replyTo && (
-            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl">
+            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border-l-4 border-primary">
               <Reply className="w-4 h-4 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-primary mb-1 truncate">
-                  Replying to {replyTo.sender}
+                <div className="text-xs font-semibold text-primary mb-0.5 truncate">
+                  Replying to {replyTo.senderName}
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {replyTo.content}
+                  {replyTo.preview}
                 </div>
               </div>
               <button
@@ -1132,21 +1086,19 @@ export default function EnhancedChatUI({ selectedChat }) {
                 <Mic
                   className={cn(
                     "w-5 h-5",
-                    isRecording ? "text-red-500" : "text-primary",
+                    isRecording ? "text-red-500" : "text-primary"
                   )}
                 />
               </button>
 
               <button
-                onClick={
-                  editingMessage ? handleUpdateMessage : handleSendMessage
-                }
+                onClick={editingMessage ? handleUpdateMessage : handleSendMessage}
                 disabled={!messageInput.trim() || isSendingMessage}
                 className={cn(
                   "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
                   messageInput.trim() && !isSendingMessage
                     ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
-                    : "bg-muted text-muted-foreground cursor-not-allowed",
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
                 aria-label={editingMessage ? "Update message" : "Send message"}
               >
@@ -1158,7 +1110,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         </div>
       </div>
 
-      {/* Delete Message Dialog */}
+      {/* ✅ Delete Message Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1213,14 +1165,14 @@ export default function EnhancedChatUI({ selectedChat }) {
                       setSelectedConversations((prev) =>
                         isSelected
                           ? prev.filter((id) => id !== conv.id)
-                          : [...prev, conv.id],
+                          : [...prev, conv.id]
                       );
                     }}
                     className={cn(
                       "w-full p-3 rounded-lg border text-left transition-all",
                       isSelected
                         ? "bg-primary/10 border-primary"
-                        : "hover:bg-muted border-transparent",
+                        : "hover:bg-muted border-transparent"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -1229,7 +1181,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                           "w-4 h-4 rounded border-2 flex items-center justify-center",
                           isSelected
                             ? "bg-primary border-primary"
-                            : "border-muted-foreground",
+                            : "border-muted-foreground"
                         )}
                       >
                         {isSelected && (
@@ -1270,6 +1222,27 @@ export default function EnhancedChatUI({ selectedChat }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ✅ Image Preview Dialog */}
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="max-w-4xl p-0">
+          <div className="relative">
+            <button
+              onClick={() => setImagePreviewOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {previewImageUrl && (
+              <img
+                src={previewImageUrl}
+                alt="Preview"
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -1289,6 +1262,7 @@ function AttachmentButton({ icon: Icon, label, onClick }) {
   );
 }
 
+// ✅ FIXED: MessageBubble with proper media rendering
 function MessageBubble({
   message,
   hoveredMessageId,
@@ -1310,16 +1284,17 @@ function MessageBubble({
   onReaction,
   onScrollToReply,
   searchQuery,
+  onImageClick,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
 
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
-
-  // ✅ Check if message is forwarded
-  const isForwarded = message._raw?.forwardedFrom?.conversationId;
+  const isForwarded = !!message._raw?.forwardedFrom?.conversationId;
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -1349,7 +1324,7 @@ function MessageBubble({
         </mark>
       ) : (
         part
-      ),
+      )
     );
   };
 
@@ -1360,7 +1335,7 @@ function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1",
+          isGroupStart ? "mt-4" : "mt-1"
         )}
       >
         {!isOwn && <div className="w-8" />}
@@ -1382,7 +1357,7 @@ function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1",
+        isGroupStart ? "mt-4" : "mt-1"
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -1424,21 +1399,21 @@ function MessageBubble({
           <div
             className={cn(
               "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
-              isOwn
-                ? "bg-primary dark:bg-primary/50 text-primary-foreground"
-                : "bg-muted",
+              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
               isOwn && "rounded-[20px] rounded-br-none",
               !isOwn && "rounded-[20px] rounded-tl-none",
-              isSelected && "ring-2 ring-primary/50 scale-[1.02]",
+              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
             )}
           >
             <div className="p-2 py-1">
-              {/* ✅ FORWARDED MESSAGE INDICATOR */}
+              {/* Forwarded indicator */}
               {isForwarded && (
                 <div
                   className={cn(
                     "flex items-center gap-1.5 mb-2 pb-2 border-b",
-                    isOwn ? "border-primary-foreground/20" : "border-border",
+                    isOwn
+                      ? "border-primary-foreground/20"
+                      : "border-border"
                   )}
                 >
                   <CornerDownRight
@@ -1446,7 +1421,7 @@ function MessageBubble({
                       "w-3 h-3",
                       isOwn
                         ? "text-primary-foreground/70"
-                        : "text-muted-foreground",
+                        : "text-muted-foreground"
                     )}
                   />
                   <span
@@ -1454,7 +1429,7 @@ function MessageBubble({
                       "text-[10px] italic font-medium",
                       isOwn
                         ? "text-primary-foreground/70"
-                        : "text-muted-foreground",
+                        : "text-muted-foreground"
                     )}
                   >
                     Forwarded
@@ -1462,93 +1437,143 @@ function MessageBubble({
                 </div>
               )}
 
-              {/* ✅ UPDATED: Reply Preview with better data handling */}
+              {/* Reply preview */}
               {message.replyTo && (
                 <div
                   onClick={() =>
-                    onScrollToReply(
-                      message.replyTo.id || message.replyTo.messageId,
-                    )
+                    onScrollToReply(message.replyTo.messageId)
                   }
                   className={cn(
-                    "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                    "mb-2 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
                     isOwn
-                      ? "bg-muted/80 border-primary-foreground/30"
-                      : "bg-muted/50 border-primary",
+                      ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
+                      : "bg-background/60 border-primary hover:bg-background/80"
                   )}
                 >
-                  <div
-                    className={cn(
-                      "text-[10px] font-semibold mb-1",
-                      isOwn ? "text-primary" : "text-primary",
-                    )}
-                  >
-                    {message.replyTo.sender || "Unknown User"}
+                  <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
+                    {message.replyTo.sender || "Unknown"}
                   </div>
                   <div
                     className={cn(
-                      "text-[10px]",
-                      isOwn ? "text-foreground" : "text-muted-foreground",
+                      "text-[11px] truncate",
+                      isOwn
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground"
                     )}
                   >
-                    {message.replyTo.content ||
-                      message.replyTo.preview ||
-                      "Message"}
+                    {message.replyTo.content || message.replyTo.preview || ""}
                   </div>
                 </div>
               )}
 
-              {/* Message Content */}
-              {(message.type === "text" || !message.type) &&
-                message.content && (
-                  <div>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {highlightText(message.content)}
+              {/* ✅ FIXED: Message Content with proper media handling */}
+              {(message.type === "text" || !message.type) && message.content && (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {highlightText(message.content)}
+                </p>
+              )}
+
+              {/* ✅ Image rendering */}
+              {message.type === "image" && message.url && (
+                <div className="cursor-pointer" onClick={() => onImageClick(getFileUrl(message.url))}>
+                  <img
+                    src={getFileUrl(message.url)}
+                    alt="Shared image"
+                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                    onError={(e) => {
+                      console.error("Failed to load image:", message.url);
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* ✅ Video rendering */}
+              {message.type === "video" && message.url && (
+                <video
+                  ref={videoRef}
+                  src={getFileUrl(message.url)}
+                  controls
+                  className="rounded-lg max-w-[300px] max-h-[300px]"
+                  onError={(e) => {
+                    console.error("Failed to load video:", message.url);
+                  }}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+
+              {/* ✅ Audio rendering */}
+              {message.type === "audio" && message.url && (
+                <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-lg">
+                  <button
+                    onClick={() => {
+                      if (audioRef.current) {
+                        if (isPlaying) {
+                          audioRef.current.pause();
+                        } else {
+                          audioRef.current.play();
+                        }
+                        setIsPlaying(!isPlaying);
+                      }
+                    }}
+                    className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Play className="w-5 h-5 text-primary" />
+                    )}
+                  </button>
+                  <div className="flex-1">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${playProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Audio message
                     </p>
                   </div>
-                )}
-
-              {message.type === "image" && (
-                <div className="space-y-2">
-                  <img
-                    src={message.url}
-                    alt="Shared image"
-                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
-                    onClick={() => window.open(message.url, "_blank")}
+                  <Volume2 className="w-4 h-4 text-muted-foreground" />
+                  <audio
+                    ref={audioRef}
+                    src={getFileUrl(message.url)}
+                    onEnded={() => setIsPlaying(false)}
+                    onError={(e) => {
+                      console.error("Failed to load audio:", message.url);
+                    }}
                   />
                 </div>
               )}
 
-              {message.type === "video" && (
-                <div className="space-y-2">
-                  <video
-                    src={message.url}
-                    controls
-                    className="rounded-lg max-w-[300px] max-h-[300px]"
-                  />
-                </div>
-              )}
-
-              {message.type === "document" && (
+              {/* ✅ Document/File rendering */}
+              {(message.type === "file" || message.type === "document") && message.url && (
                 <div className="flex items-center gap-3 min-w-[200px]">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {message.fileName}
+                      {message.fileName || "Document"}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {message.fileSize}
-                    </p>
+                    {message.fileSize && (
+                      <p className="text-xs text-muted-foreground">
+                        {message.fileSize}
+                      </p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => window.open(message.url, "_blank")}
+                  <a
+                    href={getFileUrl(message.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Download file"
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
               )}
 
@@ -1560,7 +1585,7 @@ function MessageBubble({
                         "text-[10px] italic mr-1",
                         isOwn
                           ? "text-primary-foreground/50"
-                          : "text-muted-foreground",
+                          : "text-muted-foreground"
                       )}
                     >
                       (edited)
@@ -1575,31 +1600,32 @@ function MessageBubble({
             </div>
           </div>
 
-          {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div
-              className={cn(
-                "flex gap-1 mt-1",
-                isOwn ? "flex-row-reverse" : "flex-row",
-              )}
-            >
-              {Object.entries(message.reactions).map(([emoji, count]) => (
-                <button
-                  key={emoji}
-                  onClick={() => onReaction(message.id, emoji)}
-                  className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
-                >
-                  <span>{emoji}</span>
-                  <span className="text-[10px] font-medium">{count}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {message.reactions &&
+            Object.keys(message.reactions).length > 0 && (
+              <div
+                className={cn(
+                  "flex gap-1 mt-1",
+                  isOwn ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                {Object.entries(message.reactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReaction(message.id, emoji)}
+                    className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[10px] font-medium">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
           {showActions && (
             <div
               className={cn(
-                "flex gap-1 mt-1.5 transition-all duration-300 ease-out flex-row",
-                isOwn ? "justify-end" : "justify-start",
+                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
+                isOwn ? "justify-end" : "justify-start"
               )}
             >
               <ActionButton
@@ -1611,7 +1637,7 @@ function MessageBubble({
                 }}
               />
               <ActionButton
-                icon={isFavorited ? Star : Star}
+                icon={Star}
                 tooltip={isFavorited ? "Unstar" : "Star"}
                 className={isFavorited ? "text-yellow-500" : ""}
                 onClick={(e) => {
@@ -1641,7 +1667,7 @@ function MessageBubble({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id,
+                    showReactionPicker === message.id ? null : message.id
                   );
                 }}
               />
@@ -1673,7 +1699,7 @@ function MessageBubble({
           <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
-              isOwn ? "flex-row-reverse" : "flex-row",
+              isOwn ? "flex-row-reverse" : "flex-row"
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1704,7 +1730,7 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       onClick={onClick}
       className={cn(
         "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
-        className,
+        className
       )}
       aria-label={tooltip}
     >

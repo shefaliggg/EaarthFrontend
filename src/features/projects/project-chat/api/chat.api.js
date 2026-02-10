@@ -3,98 +3,198 @@ import { axiosConfig } from "../../../auth/config/axiosConfig";
 const chatApi = {
   // Get conversations for a project
   getConversations: async (projectId, type) => {
-    const response = await axiosConfig.get("/chats", {
-      params: { projectId, type },
-    });
-    return response.data.data;
+    try {
+      const response = await axiosConfig.get("/chats", {
+        params: { projectId, type },
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ getConversations failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
   // Get conversation details
   getConversationById: async (conversationId) => {
-    const response = await axiosConfig.get(`/chats/${conversationId}`);
-    return response.data.data;
+    try {
+      const response = await axiosConfig.get(`/chats/${conversationId}`);
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ getConversationById failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
   // Get messages for a conversation
   getMessages: async (conversationId, limit = 20, cursor = null) => {
-    const response = await axiosConfig.get(`/chats/${conversationId}/messages`, {
-      params: { limit, cursor },
-    });
-    return response.data.data;
+    try {
+      const response = await axiosConfig.get(
+        `/chats/${conversationId}/messages`,
+        { params: { limit, cursor } }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ getMessages failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Send a message
+  // ✅ FIXED: Send message - handles both JSON and FormData
   sendMessage: async (conversationId, messageData) => {
-    const response = await axiosConfig.post(
-      `/chats/${conversationId}/messages`,
-      messageData
-    );
-    return response.data.data;
+    try {
+      const isFormData = messageData instanceof FormData;
+
+      console.log("📤 Sending message:", {
+        conversationId,
+        isFormData,
+        type: isFormData ? messageData.get("type") : messageData.type,
+      });
+
+      const config = {};
+
+      if (isFormData) {
+        // ✅ For FormData, let axios set the Content-Type header automatically
+        // This ensures the correct multipart boundary is included
+        config.headers = {
+          "Content-Type": undefined, // Critical: let browser/axios set this
+        };
+
+        // Debug: Log FormData contents
+        console.log("📋 FormData contents:");
+        for (let [key, value] of messageData.entries()) {
+          if (value instanceof File) {
+            console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+          } else {
+            console.log(`  ${key}: ${value}`);
+          }
+        }
+      } else {
+        // For JSON, axios will automatically set Content-Type: application/json
+        console.log("📋 JSON payload:", JSON.stringify(messageData, null, 2));
+      }
+
+      const response = await axiosConfig.post(
+        `/chats/${conversationId}/messages`,
+        messageData,
+        config
+      );
+
+      console.log("✅ Message sent successfully:", response.data.data);
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ sendMessage failed:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+      throw error;
+    }
   },
 
   // Mark conversation as read
   markAsRead: async (conversationId) => {
-    const response = await axiosConfig.post(`/chats/${conversationId}/read`);
-    return response.data;
+    try {
+      const response = await axiosConfig.post(`/chats/${conversationId}/read`);
+      return response.data;
+    } catch (error) {
+      console.error("❌ markAsRead failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
   // Pin/unpin conversation
   pinConversation: async (conversationId, pin) => {
-    const response = await axiosConfig.patch(`/chats/${conversationId}/pin`, {
-      pin,
-    });
-    return response.data.data;
+    try {
+      const response = await axiosConfig.patch(`/chats/${conversationId}/pin`, {
+        pin,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ pinConversation failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Add/remove favorite - ✅ UPDATED with conversationId in path
+  // Add/remove favorite
   toggleFavorite: async (conversationId, messageId, addToFavorite) => {
-    const response = await axiosConfig.patch(
-      `/chats/${conversationId}/messages/${messageId}/favorite`,
-      { addToFavorite }
-    );
-    return response.data;
+    try {
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/messages/${messageId}/favorite`,
+        { addToFavorite }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ toggleFavorite failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Add/remove reaction - ✅ UPDATED with conversationId in path
+  // Add/remove reaction
   toggleReaction: async (conversationId, messageId, emoji) => {
-    const response = await axiosConfig.patch(
-      `/chats/${conversationId}/messages/${messageId}/react`,
-      { emoji }
-    );
-    return response.data;
+    try {
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/messages/${messageId}/react`,
+        { emoji }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ toggleReaction failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Edit message - ✅ UPDATED with conversationId in path
+  // Edit message
   editMessage: async (conversationId, messageId, text) => {
-    const response = await axiosConfig.patch(
-      `/chats/${conversationId}/messages/${messageId}/edit`,
-      { text }
-    );
-    return response.data.data;
+    try {
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/messages/${messageId}/edit`,
+        { text }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ editMessage failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Delete message for me - ✅ UPDATED with conversationId in path
+  // Delete message for me
   deleteMessageForMe: async (conversationId, messageId) => {
-    const response = await axiosConfig.delete(
-      `/chats/${conversationId}/messages/${messageId}/me`
-    );
-    return response.data;
+    try {
+      const response = await axiosConfig.delete(
+        `/chats/${conversationId}/messages/${messageId}/me`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ deleteMessageForMe failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Delete message for everyone - ✅ UPDATED with conversationId in path
+  // Delete message for everyone
   deleteMessageForEveryone: async (conversationId, messageId) => {
-    const response = await axiosConfig.delete(
-      `/chats/${conversationId}/messages/${messageId}/all`
-    );
-    return response.data;
+    try {
+      const response = await axiosConfig.delete(
+        `/chats/${conversationId}/messages/${messageId}/all`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("❌ deleteMessageForEveryone failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  // Pin message in chat - ✅ UPDATED with conversationId in path
+  // Pin message in chat
   pinMessage: async (conversationId, messageId) => {
-    const response = await axiosConfig.patch(
-      `/chats/${conversationId}/messages/${messageId}/pin`
-    );
-    return response.data.data;
+    try {
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/messages/${messageId}/pin`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ pinMessage failed:", error.response?.data || error.message);
+      throw error;
+    }
   },
 };
 
