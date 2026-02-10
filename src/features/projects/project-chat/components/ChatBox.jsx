@@ -16,12 +16,10 @@ import {
   Smile,
   Send,
   Paperclip,
-  MoreVertical,
   ChevronDown,
   X,
   Clock,
   Copy,
-  Pin,
   AlertCircle,
   Image as ImageIcon,
   Video as VideoIcon,
@@ -29,96 +27,45 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
-  ArrowRight,
+  Download,
+  Trash2,
+  CornerDownRight,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
 import { AutoHeight } from "../../../../shared/components/wrappers/AutoHeight";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
 import EmojiPicker from "emoji-picker-react";
+import useChatStore from "../store/chat.store";
+import chatApi from "../api/chat.api";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-// Mock contacts data for forwarding
-const MOCK_CONTACTS = [
-  {
-    id: "self",
-    name: "Studio Notes (You)",
-    subtitle: "Ideas, drafts & reminders",
-    avatar: "🎬",
-    type: "self",
-  },
-  {
-    id: "group-1",
-    name: "AURORA PICTURES – Production",
-    subtitle: "Ethan, Sophia, Lucas, Mia, Olivia...",
-    avatar: "AP",
-    type: "group",
-  },
-  {
-    id: "group-2",
-    name: "NIGHTFALL – Cast & Crew",
-    subtitle: "Director, Lead Actor, Cinematographer...",
-    avatar: "NF",
-    type: "group",
-  },
-  {
-    id: "contact-1",
-    name: "Ethan Cole (Director)",
-    subtitle: "On set",
-    avatar: "🎥",
-    type: "contact",
-  },
-  {
-    id: "contact-2",
-    name: "Sophia Reed (Lead Actress)",
-    subtitle: "Rehearsing",
-    avatar: "🎭",
-    type: "contact",
-  },
-  {
-    id: "group-3",
-    name: "🎞️ POST-PRODUCTION TEAM 🎞️",
-    subtitle: "Editing, VFX, Sound, Color...",
-    avatar: "PP",
-    type: "group",
-  },
-  {
-    id: "contact-3",
-    name: "Lucas Grant (Cinematographer)",
-    subtitle: "Lighting test",
-    avatar: "📽️",
-    type: "contact",
-  },
-  {
-    id: "group-4",
-    name: "SOUND & MUSIC DEPARTMENT",
-    subtitle: "Composer, Foley, Mixing, Score...",
-    avatar: "SM",
-    type: "group",
-  },
-  {
-    id: "contact-4",
-    name: "Mia Turner (Producer)",
-    subtitle: "In meeting",
-    avatar: "💼",
-    type: "contact",
-  },
-  {
-    id: "group-5",
-    name: "Eaarth Studios – Core Team",
-    subtitle: "Creative, Tech, Production",
-    avatar: "ES",
-    type: "group",
-  },
-];
-
+// ⚠️ TEMPORARY: Hardcoded project ID
+// TODO: Replace with dynamic project ID from Redux/Context/URL
+const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
 export default function EnhancedChatUI({ selectedChat }) {
   const [messageInput, setMessageInput] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -128,11 +75,14 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
 
-  // Forward message states
-  const [showForwardModal, setShowForwardModal] = useState(false);
-  const [forwardMessage, setForwardMessage] = useState(null);
-  const [selectedForwardContacts, setSelectedForwardContacts] = useState([]);
-  const [forwardSearchQuery, setForwardSearchQuery] = useState("");
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+
+  // Forward dialog states
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [messageToForward, setMessageToForward] = useState(null);
+  const [selectedConversations, setSelectedConversations] = useState([]);
 
   // New feature states
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -154,9 +104,24 @@ export default function EnhancedChatUI({ selectedChat }) {
   const audioChunksRef = useRef([]);
   const recordingIntervalRef = useRef(null);
 
-  // Store messages by chat ID to maintain conversation history
-  const [messagesByChat, setMessagesByChat] = useState({});
-  const [currentChatId, setCurrentChatId] = useState(null);
+  // Get data from Zustand
+  const {
+    messagesByConversation,
+    conversations,
+    loadMessages,
+    sendMessage: sendMessageToStore,
+    markAsRead,
+    isLoadingMessages,
+    isSendingMessage,
+  } = useChatStore();
+
+  // Get messages from store
+  const messagesData =
+    selectedChat?.id && messagesByConversation[selectedChat.id]
+      ? messagesByConversation[selectedChat.id]
+      : { messages: [], hasMore: false, cursor: null };
+
+  const messages = messagesData.messages || [];
 
   // Scroll to bottom function
   const scrollToBottom = useCallback((smooth = true) => {
@@ -167,132 +132,34 @@ export default function EnhancedChatUI({ selectedChat }) {
     setNewMessagesCount(0);
   }, []);
 
+  // Initial scroll to bottom
   useEffect(() => {
     scrollToBottom(false);
   }, []);
 
-  // Update messages when selectedChat changes
+  // Load messages when chat changes
   useEffect(() => {
-    if (!selectedChat?.id) return;
-    setCurrentChatId(selectedChat.id);
+    if (selectedChat?.id) {
+      console.log("🔄 ChatBox: Loading messages for conversation:", selectedChat.id);
+      loadMessages(selectedChat.id);
+      markAsRead(selectedChat.id);
 
-    // Initialize temp messages for new chat if not exists
-    if (!messagesByChat[selectedChat.id]) {
-      const initialMessages = generateInitialMessages(selectedChat);
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [selectedChat.id]: initialMessages,
-      }));
+      // Reset UI state
+      setReplyTo(null);
+      setEditingMessage(null);
+      setIsSearchOpen(false);
+      setSearchQuery("");
+      setSelectedMessage(null);
+      setShowReactionPicker(null);
+      setShowAttachMenu(false);
+      setShowEmojiPicker(false);
+
+      setTimeout(() => {
+        scrollToBottom(false);
+        setIsUserAtBottom(true);
+      }, 150);
     }
-
-    // Reset UI state when switching chats
-    setReplyTo(null);
-    setEditingMessage(null);
-    setIsSearchOpen(false);
-    setSearchQuery("");
-    setSelectedMessage(null);
-    setShowReactionPicker(null);
-    setShowAttachMenu(false);
-    setShowEmojiPicker(false);
-    setShowForwardModal(false);
-    setForwardMessage(null);
-    setSelectedForwardContacts([]);
-
-    setTimeout(() => {
-      scrollToBottom(false);
-      setIsUserAtBottom(true);
-    }, 150);
-  }, [selectedChat?.id]);
-
-  // Get current messages for the active chat
-  const messages = currentChatId ? messagesByChat[currentChatId] || [] : [];
-
-  // Function to generate initial messages based on chat type
-  const generateInitialMessages = (chat) => {
-    const baseMessages = [
-      {
-        id: "date-sep-1",
-        type: "date-separator",
-        date: "Yesterday",
-      },
-    ];
-
-    if (chat.type === "all") {
-      return [
-        ...baseMessages,
-        {
-          id: "system-1",
-          type: "system",
-          content:
-            "Welcome to All Departments chat - Company-wide announcements",
-          time: "9:00 AM",
-        },
-        {
-          id: 1,
-          sender: "Admin",
-          avatar: "AD",
-          time: "10:30 AM",
-          timestamp: Date.now() - 7200000,
-          content:
-            "Welcome everyone! This is the main communication channel for all departments.",
-          isOwn: false,
-          state: "seen",
-          readBy: 125,
-        },
-      ];
-    }
-
-    if (chat.type === "group") {
-      return [
-        ...baseMessages,
-        {
-          id: "system-1",
-          type: "system",
-          content: `${chat.name} group chat`,
-          time: "9:15 AM",
-        },
-        {
-          id: 1,
-          sender: "Team Lead",
-          avatar: "TL",
-          time: "10:30 AM",
-          timestamp: Date.now() - 7200000,
-          content: `Hey ${chat.name} team, just reviewed the latest updates. Looks great!`,
-          isOwn: false,
-          state: "seen",
-          readBy: chat.members || 12,
-        },
-      ];
-    }
-
-    if (chat.type === "dm") {
-      return [
-        ...baseMessages,
-        {
-          id: 1,
-          sender: chat.name,
-          avatar: chat.avatar,
-          time: "10:30 AM",
-          timestamp: Date.now() - 7200000,
-          content: "Hey! How's the project going?",
-          isOwn: false,
-          state: "seen",
-        },
-        {
-          id: 2,
-          sender: "You",
-          avatar: "YO",
-          time: "10:35 AM",
-          timestamp: Date.now() - 6900000,
-          content: "Going well! Just finished reviewing the latest updates.",
-          isOwn: true,
-          state: "seen",
-        },
-      ];
-    }
-
-    return baseMessages;
-  };
+  }, [selectedChat?.id, loadMessages, markAsRead, scrollToBottom]);
 
   // Search functionality
   useEffect(() => {
@@ -304,12 +171,12 @@ export default function EnhancedChatUI({ selectedChat }) {
     const results = messages.filter(
       (m) =>
         m.content &&
-        m.content.toLowerCase().includes(searchQuery.toLowerCase()),
+        m.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     setSearchResults(results);
     setActiveResultIndex(0);
-  }, [searchQuery]);
+  }, [searchQuery, messages]);
 
   const goToSearchResult = useCallback(
     (index) => {
@@ -318,7 +185,7 @@ export default function EnhancedChatUI({ selectedChat }) {
       scrollToMessage(msg.id);
       setActiveResultIndex(index);
     },
-    [searchResults],
+    [searchResults]
   );
 
   const handleScroll = useCallback((e) => {
@@ -330,7 +197,11 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (isNearBottom) {
       setNewMessagesCount(0);
     }
-  }, []);
+
+    if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
+      loadMessages(selectedChat.id, true);
+    }
+  }, [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]);
 
   // Auto-grow textarea
   useEffect(() => {
@@ -343,18 +214,18 @@ export default function EnhancedChatUI({ selectedChat }) {
 
   // Load draft from localStorage
   useEffect(() => {
-    if (currentChatId) {
-      const draft = localStorage.getItem(`chat-draft-${currentChatId}`);
+    if (selectedChat?.id) {
+      const draft = localStorage.getItem(`chat-draft-${selectedChat.id}`);
       if (draft) setMessageInput(draft);
     }
-  }, [currentChatId]);
+  }, [selectedChat?.id]);
 
   // Save draft to localStorage
   useEffect(() => {
-    if (currentChatId) {
-      localStorage.setItem(`chat-draft-${currentChatId}`, messageInput);
+    if (selectedChat?.id) {
+      localStorage.setItem(`chat-draft-${selectedChat.id}`, messageInput);
     }
-  }, [messageInput, currentChatId]);
+  }, [messageInput, selectedChat?.id]);
 
   // Close pickers on outside click
   useEffect(() => {
@@ -376,54 +247,92 @@ export default function EnhancedChatUI({ selectedChat }) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const handleSendMessage = () => {
-    if (messageInput.trim() && currentChatId) {
-      const newMessage = {
-        id: Date.now(),
-        sender: "You",
-        avatar: "YO",
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-        timestamp: Date.now(),
-        content: messageInput,
-        isOwn: true,
-        state: "sending",
-        replyTo: replyTo,
-      };
+  // ✅ FIXED: Complete send message handler with proper replyTo structure
+  const handleSendMessage = async () => {
+    console.log("🚀 handleSendMessage called");
+    
+    const trimmedMessage = messageInput.trim();
+    
+    if (!trimmedMessage) {
+      console.error("❌ No message input");
+      return;
+    }
 
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: [...(prev[currentChatId] || []), newMessage],
-      }));
+    if (!selectedChat?.id) {
+      console.error("❌ No chat selected");
+      return;
+    }
 
-      setMessageInput("");
-      setReplyTo(null);
-      localStorage.removeItem(`chat-draft-${currentChatId}`);
+    console.log("✅ All validations passed, preparing to send message");
 
-      if (isUserAtBottom) {
-        setTimeout(() => scrollToBottom(), 50);
+    const messageData = {
+      text: trimmedMessage,
+      type: "TEXT",
+    };
+
+    // ✅ CRITICAL FIX: Build complete replyTo object matching backend validation
+    if (replyTo) {
+      console.log("📝 Building replyTo object from:", replyTo);
+      
+      // Extract sender ID from various possible locations
+      const senderId = 
+        replyTo._raw?.senderId?._id || 
+        replyTo._raw?.senderId || 
+        replyTo.senderId;
+      
+      if (!senderId) {
+        console.error("❌ Cannot reply: sender ID missing from message:", replyTo);
+        alert("Cannot reply to this message. Sender information is missing.");
+        return;
       }
 
-      // Simulate state changes
-      setTimeout(() => {
-        setMessagesByChat((prev) => ({
-          ...prev,
-          [currentChatId]: prev[currentChatId].map((m) =>
-            m.id === newMessage.id ? { ...m, state: "sent" } : m,
-          ),
-        }));
-      }, 500);
+      // Build complete replyTo object matching backend Joi validation
+      messageData.replyTo = {
+        messageId: replyTo.id,
+        senderId: senderId,
+        preview: (replyTo.content || "").substring(0, 200), // Truncate to max 200 chars
+        type: (replyTo.type || "text").toUpperCase(), // Convert to uppercase (TEXT, IMAGE, etc.)
+      };
+      
+      console.log("✅ Complete replyTo object:", messageData.replyTo);
+    }
 
-      setTimeout(() => {
-        setMessagesByChat((prev) => ({
-          ...prev,
-          [currentChatId]: prev[currentChatId].map((m) =>
-            m.id === newMessage.id ? { ...m, state: "delivered" } : m,
-          ),
-        }));
-      }, 1500);
+    console.log("📤 Sending message:", {
+      conversationId: selectedChat.id,
+      messageData,
+    });
+
+    try {
+      // ⚠️ TEMPORARY: Use hardcoded projectId
+      // TODO: Replace with dynamic projectId from selectedChat, Redux, or Context
+      const projectId = selectedChat?.projectId || selectedChat?._raw?.projectId || DEFAULT_PROJECT_ID;
+      
+      console.log("🔑 Using projectId:", projectId, {
+        fromChat: !!selectedChat?.projectId,
+        fromRaw: !!selectedChat?._raw?.projectId,
+        fromDefault: projectId === DEFAULT_PROJECT_ID
+      });
+      
+      await sendMessageToStore(selectedChat.id, projectId, messageData);
+      
+      console.log("✅ Message sent successfully");
+
+      // Clear input and reply state
+      setMessageInput("");
+      setReplyTo(null);
+      localStorage.removeItem(`chat-draft-${selectedChat.id}`);
+
+      // Scroll to bottom if user is already at bottom
+      if (isUserAtBottom) {
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    } catch (error) {
+      console.error("❌ Failed to send message:", error);
+      console.error("Error response:", error.response?.data);
+      
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.message || error.message || "Unknown error occurred";
+      alert(`Failed to send message: ${errorMessage}`);
     }
   };
 
@@ -441,79 +350,162 @@ export default function EnhancedChatUI({ selectedChat }) {
       setEditingMessage(null);
       setIsSearchOpen(false);
       setSearchQuery("");
-      setShowForwardModal(false);
     }
   };
 
-  const handleReaction = (messageId, emoji) => {
-    if (!currentChatId) return;
-
-    setMessagesByChat((prev) => ({
-      ...prev,
-      [currentChatId]: prev[currentChatId].map((msg) => {
-        if (msg.id === messageId) {
-          const reactions = { ...msg.reactions };
-          if (reactions[emoji]) {
-            reactions[emoji]++;
-          } else {
-            reactions[emoji] = 1;
-          }
-          return { ...msg, reactions };
-        }
-        return msg;
-      }),
-    }));
+  // Reaction handler
+  const handleReaction = async (messageId, emoji) => {
+    try {
+      console.log("😊 Adding reaction:", { conversationId: selectedChat.id, messageId, emoji });
+      await chatApi.toggleReaction(selectedChat.id, messageId, emoji);
+      await loadMessages(selectedChat.id);
+    } catch (error) {
+      console.error("Failed to toggle reaction:", error);
+      console.error("Error details:", error.response?.data);
+      alert(`Failed to add reaction: ${error.response?.data?.message || error.message}`);
+    }
     setShowReactionPicker(null);
   };
 
-  const handleDeleteMessage = (messageId, deleteFor = "me") => {
-    if (!currentChatId) return;
+  // Delete message handlers
+  const handleDeleteClick = (message) => {
+    setMessageToDelete(message);
+    setDeleteDialogOpen(true);
+  };
 
-    if (deleteFor === "everyone") {
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map((msg) =>
-          msg.id === messageId ? { ...msg, deleted: true, content: null } : msg,
-        ),
-      }));
-    } else {
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].filter(
-          (msg) => msg.id !== messageId,
-        ),
-      }));
+  const handleDeleteForMe = async () => {
+    if (!messageToDelete) return;
+
+    try {
+      console.log("🗑️ Deleting for me:", messageToDelete.id);
+      await chatApi.deleteMessageForMe(selectedChat.id, messageToDelete.id);
+      await loadMessages(selectedChat.id);
+      setDeleteDialogOpen(false);
+      setMessageToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      alert(`Failed to delete message: ${error.response?.data?.message || error.message}`);
     }
   };
 
+  const handleDeleteForEveryone = async () => {
+    if (!messageToDelete) return;
+
+    try {
+      console.log("🗑️ Deleting for everyone:", messageToDelete.id);
+      await chatApi.deleteMessageForEveryone(selectedChat.id, messageToDelete.id);
+      await loadMessages(selectedChat.id);
+      setDeleteDialogOpen(false);
+      setMessageToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      alert(error.response?.data?.message || "Failed to delete message. Please try again.");
+    }
+  };
+
+  // Edit message handlers
   const handleEditMessage = (message) => {
     setEditingMessage(message);
     setMessageInput(message.content);
     textareaRef.current?.focus();
   };
 
-  const handleUpdateMessage = () => {
-    if (editingMessage && messageInput.trim() && currentChatId) {
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map((msg) =>
-          msg.id === editingMessage.id
-            ? {
-                ...msg,
-                content: messageInput,
-                edited: true,
-                editedAt: Date.now(),
-              }
-            : msg,
-        ),
-      }));
-      setMessageInput("");
-      setEditingMessage(null);
-      localStorage.removeItem(`chat-draft-${currentChatId}`);
+  const handleUpdateMessage = async () => {
+    if (editingMessage && messageInput.trim() && selectedChat?.id) {
+      try {
+        console.log("✏️ Editing message:", editingMessage.id);
+        await chatApi.editMessage(selectedChat.id, editingMessage.id, messageInput);
+        setMessageInput("");
+        setEditingMessage(null);
+        localStorage.removeItem(`chat-draft-${selectedChat.id}`);
+        await loadMessages(selectedChat.id);
+      } catch (error) {
+        console.error("Failed to edit message:", error);
+        alert(error.response?.data?.message || "Failed to edit message. Please try again.");
+      }
+    }
+  };
+
+  // Forward message handlers
+  const handleForwardClick = (message) => {
+    console.log("📨 Forwarding message:", message);
+    setMessageToForward(message);
+    setSelectedConversations([]);
+    setForwardDialogOpen(true);
+  };
+
+  const handleForwardMessage = async () => {
+    if (!messageToForward || selectedConversations.length === 0) {
+      alert("Please select at least one conversation");
+      return;
+    }
+
+    try {
+      console.log("📤 Forwarding to conversations:", selectedConversations);
+      
+      const senderId = messageToForward._raw?.senderId?._id || messageToForward._raw?.senderId;
+      
+      for (const convId of selectedConversations) {
+        const messageData = {
+          projectId: selectedChat.projectId || selectedChat._raw?.projectId || DEFAULT_PROJECT_ID,
+          text: messageToForward.content || "",
+          type: (messageToForward.type || "TEXT").toUpperCase(),
+          forwardedFrom: {
+            conversationId: selectedChat.id,
+            senderId: senderId,
+          }
+        };
+
+        console.log("📨 Sending forward to:", convId, messageData);
+        await chatApi.sendMessage(convId, messageData);
+      }
+
+      setForwardDialogOpen(false);
+      setMessageToForward(null);
+      setSelectedConversations([]);
+      alert(`Message forwarded to ${selectedConversations.length} conversation(s)!`);
+    } catch (error) {
+      console.error("Failed to forward message:", error);
+      console.error("Error details:", error.response?.data);
+      alert(`Failed to forward message: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  // ✅ UPDATED: Reply handler - stores complete message object
+  const handleReply = (message) => {
+    console.log("💬 Replying to message:", message);
+    
+    // Store complete message object for building replyTo payload
+    setReplyTo({
+      id: message.id,
+      sender: message.sender,
+      content: message.content,
+      type: message.type,
+      _raw: message._raw, // Keep raw data for senderId extraction
+    });
+    
+    textareaRef.current?.focus();
+  };
+
+  // Star/Favorite handler
+  const handleToggleFavorite = async (messageId, isFavorited) => {
+    try {
+      console.log("⭐ Toggling favorite:", { messageId, isFavorited });
+      await chatApi.toggleFavorite(selectedChat.id, messageId, !isFavorited);
+      await loadMessages(selectedChat.id);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      alert(`Failed to star message: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const canEditMessage = (message) => {
+    if (!message.isOwn) return false;
+    const fifteenMinutes = 15 * 60 * 1000;
+    return Date.now() - message.timestamp < fifteenMinutes;
+  };
+
+  const canDeleteForEveryone = (message) => {
     if (!message.isOwn) return false;
     const fifteenMinutes = 15 * 60 * 1000;
     return Date.now() - message.timestamp < fifteenMinutes;
@@ -526,112 +518,25 @@ export default function EnhancedChatUI({ selectedChat }) {
     setTimeout(() => setSelectedMessage(null), 2000);
   };
 
-  // Forward message handlers
-  const handleOpenForwardModal = (message) => {
-    setForwardMessage(message);
-    setShowForwardModal(true);
-    setSelectedForwardContacts([]);
-    setForwardSearchQuery("");
-  };
-
-  const handleToggleForwardContact = (contactId) => {
-    setSelectedForwardContacts((prev) =>
-      prev.includes(contactId)
-        ? prev.filter((id) => id !== contactId)
-        : [...prev, contactId],
-    );
-  };
-
-  const handleSendForward = () => {
-    if (selectedForwardContacts.length === 0 || !forwardMessage) return;
-
-    // In a real app, you would send the message to each selected contact
-    console.log("Forwarding message to:", selectedForwardContacts);
-    console.log("Message:", forwardMessage);
-
-    // Close modal and reset
-    setShowForwardModal(false);
-    setForwardMessage(null);
-    setSelectedForwardContacts([]);
-    setForwardSearchQuery("");
-
-    // Show success message (you can add a toast notification here)
-    alert(
-      `Message forwarded to ${selectedForwardContacts.length} contact${selectedForwardContacts.length > 1 ? "s" : ""}`,
-    );
-  };
-
-  const filteredForwardContacts = MOCK_CONTACTS.filter((contact) =>
-    contact.name.toLowerCase().includes(forwardSearchQuery.toLowerCase()),
-  );
-
-  // Copy message to clipboard
   const handleCopyMessage = (message) => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
-      // You can add a toast notification here
+      alert("Message copied to clipboard!");
     }
   };
 
-  // File upload handlers
   const handleFileUpload = (e, type) => {
-    if (!currentChatId) return;
+    if (!selectedChat?.id) return;
 
     const file = e.target.files[0];
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
-    const newMessage = {
-      id: Date.now(),
-      sender: "You",
-      avatar: "YO",
-      time: new Date().toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-      timestamp: Date.now(),
-      type: type,
-      url: url,
-      fileName: file.name,
-      fileSize: (file.size / 1024).toFixed(2) + " KB",
-      isOwn: true,
-      state: "sending",
-    };
-
-    setMessagesByChat((prev) => ({
-      ...prev,
-      [currentChatId]: [...(prev[currentChatId] || []), newMessage],
-    }));
+    console.log("File upload not implemented yet:", file, type);
 
     setShowAttachMenu(false);
-
-    if (isUserAtBottom) {
-      setTimeout(() => scrollToBottom(), 50);
-    }
-
-    // Simulate state changes
-    setTimeout(() => {
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map((m) =>
-          m.id === newMessage.id ? { ...m, state: "sent" } : m,
-        ),
-      }));
-    }, 500);
-
-    setTimeout(() => {
-      setMessagesByChat((prev) => ({
-        ...prev,
-        [currentChatId]: prev[currentChatId].map((m) =>
-          m.id === newMessage.id ? { ...m, state: "delivered" } : m,
-        ),
-      }));
-    }, 1500);
-
     e.target.value = "";
   };
 
-  // Voice recording handlers
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -643,41 +548,6 @@ export default function EnhancedChatUI({ selectedChat }) {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        if (!currentChatId) return;
-
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-        const url = URL.createObjectURL(audioBlob);
-
-        const newMessage = {
-          id: Date.now(),
-          sender: "You",
-          avatar: "YO",
-          time: new Date().toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          }),
-          timestamp: Date.now(),
-          type: "voice",
-          url: url,
-          duration: formatTime(recordingTime),
-          totalDuration: recordingTime,
-          isOwn: true,
-          state: "sending",
-          played: false,
-          waveform: Array.from({ length: 18 }, () => Math.random() * 100),
-        };
-
-        setMessagesByChat((prev) => ({
-          ...prev,
-          [currentChatId]: [...(prev[currentChatId] || []), newMessage],
-        }));
-
-        if (isUserAtBottom) {
-          setTimeout(() => scrollToBottom(), 50);
-        }
-
         stream.getTracks().forEach((track) => track.stop());
         setRecordingTime(0);
       };
@@ -735,7 +605,6 @@ export default function EnhancedChatUI({ selectedChat }) {
     }, 0);
   };
 
-  // Show empty state if no chat selected
   if (!selectedChat) {
     return (
       <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex items-center justify-center">
@@ -788,7 +657,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                             selectedChat.status === "online" &&
                               "bg-green-500 animate-pulse",
                             selectedChat.status === "away" && "bg-yellow-500",
-                            selectedChat.status === "offline" && "bg-gray-400",
+                            selectedChat.status === "offline" && "bg-gray-400"
                           )}
                         />
                         <span>{selectedChat.role}</span>
@@ -877,10 +746,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                   <button
                     onClick={() =>
                       goToSearchResult(
-                        Math.min(
-                          searchResults.length - 1,
-                          activeResultIndex + 1,
-                        ),
+                        Math.min(searchResults.length - 1, activeResultIndex + 1)
                       )
                     }
                     disabled={activeResultIndex === searchResults.length - 1}
@@ -903,6 +769,22 @@ export default function EnhancedChatUI({ selectedChat }) {
           aria-live="polite"
           aria-label="Chat messages"
         >
+          {isLoadingMessages && messagesData.hasMore && (
+            <div className="flex justify-center py-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
+
+          {!isLoadingMessages && messages.length === 0 && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-2">
+                <div className="text-4xl">💬</div>
+                <p className="text-sm text-muted-foreground">No messages yet</p>
+                <p className="text-xs text-muted-foreground">Start the conversation!</p>
+              </div>
+            </div>
+          )}
+
           {messages.map((msg, index) => {
             const prevMsg = messages[index - 1];
             const nextMsg = messages[index + 1];
@@ -910,16 +792,12 @@ export default function EnhancedChatUI({ selectedChat }) {
               !prevMsg ||
               prevMsg.sender !== msg.sender ||
               prevMsg.type === "date-separator" ||
-              prevMsg.type === "system" ||
-              msg.type === "date-separator" ||
-              msg.type === "system";
+              prevMsg.type === "system";
             const isGroupEnd =
               !nextMsg ||
               nextMsg.sender !== msg.sender ||
               nextMsg.type === "date-separator" ||
-              nextMsg.type === "system" ||
-              msg.type === "date-separator" ||
-              msg.type === "system";
+              nextMsg.type === "system";
 
             if (msg.type === "date-separator") {
               return (
@@ -959,12 +837,14 @@ export default function EnhancedChatUI({ selectedChat }) {
                 isGroupEnd={isGroupEnd}
                 isSelected={selectedMessage === msg.id}
                 onSelect={() => setSelectedMessage(msg.id)}
-                onReply={(msg) => setReplyTo(msg)}
+                onReply={handleReply}
                 onEdit={handleEditMessage}
-                onDelete={handleDeleteMessage}
-                onForward={handleOpenForwardModal}
+                onDelete={handleDeleteClick}
+                onForward={handleForwardClick}
                 onCopy={handleCopyMessage}
+                onToggleFavorite={handleToggleFavorite}
                 canEdit={canEditMessage(msg)}
+                canDeleteForEveryone={canDeleteForEveryone(msg)}
                 showReactionPicker={showReactionPicker}
                 setShowReactionPicker={setShowReactionPicker}
                 onReaction={handleReaction}
@@ -975,32 +855,6 @@ export default function EnhancedChatUI({ selectedChat }) {
               />
             );
           })}
-
-          {isTyping && (
-            <div
-              className="flex gap-3 items-end"
-              role="status"
-              aria-label="Someone is typing"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-muted text-xs">MJ</AvatarFallback>
-              </Avatar>
-
-              <div className="bg-muted px-4 py-2.5 rounded-2xl rounded-bl-md">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
 
           <div ref={messagesEndRef} />
         </div>
@@ -1030,8 +884,10 @@ export default function EnhancedChatUI({ selectedChat }) {
             </div>
           )}
 
+          {/* ✅ UPDATED: Reply preview with sender name */}
           {replyTo && (
             <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl">
+              <Reply className="w-4 h-4 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold text-primary mb-1 truncate">
                   Replying to {replyTo.sender}
@@ -1198,7 +1054,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                 <Mic
                   className={cn(
                     "w-5 h-5",
-                    isRecording ? "text-red-500" : "text-primary",
+                    isRecording ? "text-red-500" : "text-primary"
                   )}
                 />
               </button>
@@ -1207,12 +1063,12 @@ export default function EnhancedChatUI({ selectedChat }) {
                 onClick={
                   editingMessage ? handleUpdateMessage : handleSendMessage
                 }
-                disabled={!messageInput.trim()}
+                disabled={!messageInput.trim() || isSendingMessage}
                 className={cn(
                   "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
-                  messageInput.trim()
+                  messageInput.trim() && !isSendingMessage
                     ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
-                    : "bg-muted text-muted-foreground cursor-not-allowed",
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
                 aria-label={editingMessage ? "Update message" : "Send message"}
               >
@@ -1224,23 +1080,113 @@ export default function EnhancedChatUI({ selectedChat }) {
         </div>
       </div>
 
-      {/* Forward Message Modal */}
-      {showForwardModal && (
-        <ForwardMessageModal
-          message={forwardMessage}
-          contacts={filteredForwardContacts}
-          selectedContacts={selectedForwardContacts}
-          searchQuery={forwardSearchQuery}
-          onSearchChange={setForwardSearchQuery}
-          onToggleContact={handleToggleForwardContact}
-          onSend={handleSendForward}
-          onClose={() => {
-            setShowForwardModal(false);
-            setForwardMessage(null);
-            setSelectedForwardContacts([]);
-          }}
-        />
-      )}
+      {/* Delete Message Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Message</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose how you want to delete this message.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleDeleteForMe}
+              className="w-full sm:w-auto"
+            >
+              Delete for me
+            </Button>
+            {messageToDelete?.isOwn && canDeleteForEveryone(messageToDelete) && (
+              <Button
+                variant="destructive"
+                onClick={handleDeleteForEveryone}
+                className="w-full sm:w-auto"
+              >
+                Delete for everyone
+              </Button>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Forward Message Dialog */}
+      <Dialog open={forwardDialogOpen} onOpenChange={setForwardDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Forward Message</DialogTitle>
+            <DialogDescription>
+              Select conversations to forward this message to.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {conversations
+              .filter(conv => conv.id !== selectedChat?.id)
+              .map((conv) => {
+                const isSelected = selectedConversations.includes(conv.id);
+                
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => {
+                      setSelectedConversations(prev => 
+                        isSelected 
+                          ? prev.filter(id => id !== conv.id)
+                          : [...prev, conv.id]
+                      );
+                    }}
+                    className={cn(
+                      "w-full p-3 rounded-lg border text-left transition-all",
+                      isSelected 
+                        ? "bg-primary/10 border-primary" 
+                        : "hover:bg-muted border-transparent"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-4 h-4 rounded border-2 flex items-center justify-center",
+                        isSelected 
+                          ? "bg-primary border-primary" 
+                          : "border-muted-foreground"
+                      )}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{conv.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {conv.type === "dm" ? "Direct Message" : "Group Chat"}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setForwardDialogOpen(false);
+                setMessageToForward(null);
+                setSelectedConversations([]);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleForwardMessage}
+              disabled={selectedConversations.length === 0}
+              className="flex-1"
+            >
+              Forward ({selectedConversations.length})
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -1273,7 +1219,9 @@ function MessageBubble({
   onDelete,
   onForward,
   onCopy,
+  onToggleFavorite,
   canEdit,
+  canDeleteForEveryone,
   showReactionPicker,
   setShowReactionPicker,
   onReaction,
@@ -1285,6 +1233,10 @@ function MessageBubble({
 
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
+  const isFavorited = message._raw?.starredBy?.length > 0;
+  
+  // ✅ Check if message is forwarded
+  const isForwarded = message._raw?.forwardedFrom?.conversationId;
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -1314,7 +1266,7 @@ function MessageBubble({
         </mark>
       ) : (
         part
-      ),
+      )
     );
   };
 
@@ -1325,7 +1277,7 @@ function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1",
+          isGroupStart ? "mt-4" : "mt-1"
         )}
       >
         {!isOwn && <div className="w-8" />}
@@ -1347,7 +1299,7 @@ function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1",
+        isGroupStart ? "mt-4" : "mt-1"
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -1392,41 +1344,63 @@ function MessageBubble({
               isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
               isOwn && "rounded-[20px] rounded-br-none",
               !isOwn && "rounded-[20px] rounded-tl-none",
-              isSelected && "ring-2 ring-primary/50 scale-[1.02]",
+              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
             )}
           >
-            {message.replyTo && (
-              <div
-                onClick={() => onScrollToReply(message.replyTo.id)}
-                className={cn(
-                  "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
-                  isOwn
-                    ? "bg-muted/80 border-primary-foreground/30"
-                    : "bg-muted/50 border-primary",
-                )}
-              >
-                <div
-                  className={cn(
-                    "text-[10px] font-semibold mb-1",
-                    isOwn ? "text-primary" : "text-primary",
-                  )}
-                >
-                  {message.replyTo.sender}
-                </div>
-                <div
-                  className={cn(
-                    "text-[10px]",
-                    isOwn ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {message.replyTo.content}
-                </div>
-              </div>
-            )}
             <div className="p-2 py-1">
-              {message.content && !message.type && (
+              {/* ✅ FORWARDED MESSAGE INDICATOR */}
+              {isForwarded && (
+                <div className={cn(
+                  "flex items-center gap-1.5 mb-2 pb-2 border-b",
+                  isOwn ? "border-primary-foreground/20" : "border-border"
+                )}>
+                  <CornerDownRight className={cn(
+                    "w-3 h-3",
+                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                  )} />
+                  <span className={cn(
+                    "text-[10px] italic font-medium",
+                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                  )}>
+                    Forwarded
+                  </span>
+                </div>
+              )}
+
+              {/* ✅ UPDATED: Reply Preview with better data handling */}
+              {message.replyTo && (
+                <div
+                  onClick={() => onScrollToReply(message.replyTo.id || message.replyTo.messageId)}
+                  className={cn(
+                    "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                    isOwn
+                      ? "bg-muted/80 border-primary-foreground/30"
+                      : "bg-muted/50 border-primary"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "text-[10px] font-semibold mb-1",
+                      isOwn ? "text-primary" : "text-primary"
+                    )}
+                  >
+                    {message.replyTo.sender || "Unknown User"}
+                  </div>
+                  <div
+                    className={cn(
+                      "text-[10px]",
+                      isOwn ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {message.replyTo.content || message.replyTo.preview || "Message"}
+                  </div>
+                </div>
+              )}
+
+              {/* Message Content */}
+              {(message.type === "text" || !message.type) && message.content && (
                 <div>
-                  <p className="text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {highlightText(message.content)}
                   </p>
                 </div>
@@ -1466,79 +1440,13 @@ function MessageBubble({
                       {message.fileSize}
                     </p>
                   </div>
-                  <a
-                    href={message.url}
-                    download={message.fileName}
-                    className="p-2 hover:bg-muted rounded-lg transition-colors"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </a>
-                </div>
-              )}
-
-              {message.type === "voice" && (
-                <div className="flex items-center gap-3 min-w-[260px] max-w-full">
                   <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className={cn(
-                      "p-2 rounded-full transition-colors flex-shrink-0",
-                      isOwn
-                        ? "bg-primary-foreground/20 hover:bg-primary-foreground/30"
-                        : "bg-primary/10 hover:bg-primary/20",
-                    )}
-                    aria-label={
-                      isPlaying ? "Pause voice message" : "Play voice message"
-                    }
+                    onClick={() => window.open(message.url, '_blank')}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                    aria-label="Download file"
                   >
-                    {isPlaying ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
+                    <Download className="w-4 h-4" />
                   </button>
-
-                  <div className="flex-1 flex items-center gap-0.5 h-8 relative min-w-0">
-                    {message.waveform.map((height, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "w-1 rounded-full transition-all flex-shrink-0",
-                          i < (playProgress / 100) * message.waveform.length
-                            ? isOwn
-                              ? "bg-primary-foreground"
-                              : "bg-primary"
-                            : isOwn
-                              ? "bg-primary-foreground/30"
-                              : "bg-primary/30",
-                        )}
-                        style={{ height: `${height}%` }}
-                      />
-                    ))}
-                  </div>
-
-                  <span
-                    className={cn(
-                      "text-xs flex-shrink-0 font-medium",
-                      isOwn
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {message.duration}
-                  </span>
-                  <div className="relative flex-shrink-0">
-                    <Mic
-                      className={cn(
-                        "w-4 h-4",
-                        isOwn
-                          ? "text-primary-foreground/50"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                    {!message.played && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
-                    )}
-                  </div>
                 </div>
               )}
 
@@ -1550,7 +1458,7 @@ function MessageBubble({
                         "text-[10px] italic mr-1",
                         isOwn
                           ? "text-primary-foreground/50"
-                          : "text-muted-foreground",
+                          : "text-muted-foreground"
                       )}
                     >
                       (edited)
@@ -1564,11 +1472,12 @@ function MessageBubble({
               )}
             </div>
           </div>
+
           {message.reactions && Object.keys(message.reactions).length > 0 && (
             <div
               className={cn(
                 "flex gap-1 mt-1",
-                isOwn ? "flex-row-reverse" : "flex-row",
+                isOwn ? "flex-row-reverse" : "flex-row"
               )}
             >
               {Object.entries(message.reactions).map(([emoji, count]) => (
@@ -1588,7 +1497,7 @@ function MessageBubble({
             <div
               className={cn(
                 "flex gap-1 mt-1.5 transition-all duration-300 ease-out flex-row",
-                isOwn ? "justify-end" : "justify-start",
+                isOwn ? "justify-end" : "justify-start"
               )}
             >
               <ActionButton
@@ -1600,6 +1509,15 @@ function MessageBubble({
                 }}
               />
               <ActionButton
+                icon={isFavorited ? Star : Star}
+                tooltip={isFavorited ? "Unstar" : "Star"}
+                className={isFavorited ? "text-yellow-500" : ""}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(message.id, isFavorited);
+                }}
+              />
+              <ActionButton
                 icon={Forward}
                 tooltip="Forward"
                 onClick={(e) => {
@@ -1607,7 +1525,6 @@ function MessageBubble({
                   onForward(message);
                 }}
               />
-              <ActionButton icon={Star} tooltip="Star" />
               <ActionButton
                 icon={Copy}
                 tooltip="Copy"
@@ -1622,7 +1539,7 @@ function MessageBubble({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id,
+                    showReactionPicker === message.id ? null : message.id
                   );
                 }}
               />
@@ -1637,17 +1554,15 @@ function MessageBubble({
                   }}
                 />
               )}
-              {isOwn && (
-                <ActionButton
-                  icon={Trash}
-                  tooltip="Delete"
-                  className="text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(message.id, "me");
-                  }}
-                />
-              )}
+              <ActionButton
+                icon={Trash2}
+                tooltip="Delete"
+                className="text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(message);
+                }}
+              />
             </div>
           )}
         </AutoHeight>
@@ -1656,7 +1571,7 @@ function MessageBubble({
           <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
-              isOwn ? "flex-row-reverse" : "flex-row",
+              isOwn ? "flex-row-reverse" : "flex-row"
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1687,7 +1602,7 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       onClick={onClick}
       className={cn(
         "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
-        className,
+        className
       )}
       aria-label={tooltip}
     >
@@ -1708,149 +1623,9 @@ function MessageStateIcon({ state }) {
       return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
       return <CheckCheck className="w-3 h-3 text-green-400" />;
+    case "failed":
+      return <X className="w-3 h-3 text-red-500" />;
     default:
       return null;
   }
-}
-
-function ForwardMessageModal({
-  message,
-  contacts,
-  selectedContacts,
-  searchQuery,
-  onSearchChange,
-  onToggleContact,
-  onSend,
-  onClose,
-}) {
-  const selectedContactObjects = contacts.filter((c) =>
-    selectedContacts.includes(c.id),
-  );
-
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-card rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">Forward message to</h2>
-            {selectedContacts.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedContacts.length} selected
-              </p>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="p-4 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search name or number"
-              className="pl-10"
-              autoFocus
-            />
-          </div>
-        </div>
-
-        {/* Selected Contacts Chips */}
-        {selectedContactObjects.length > 0 && (
-          <div className="p-3 border-b bg-muted/20">
-            <div className="flex flex-wrap gap-2">
-              {selectedContactObjects.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm"
-                >
-                  <span className="font-medium">{contact.name}</span>
-                  <button
-                    onClick={() => onToggleContact(contact.id)}
-                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                    aria-label={`Remove ${contact.name}`}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Contacts List */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-2">
-            <p className="text-xs font-semibold text-muted-foreground px-3 py-2">
-              Recent chats
-            </p>
-            {contacts.map((contact) => (
-              <button
-                key={contact.id}
-                onClick={() => onToggleContact(contact.id)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors"
-              >
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={selectedContacts.includes(contact.id)}
-                    onChange={() => {}}
-                    className="w-5 h-5 rounded border-2 border-primary/30 checked:bg-primary checked:border-primary cursor-pointer"
-                  />
-                </div>
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarFallback
-                    className={cn(
-                      "text-sm font-medium",
-                      contact.type === "self" && "bg-primary/20 text-primary",
-                      contact.type === "group" && "bg-blue-500/20 text-blue-500",
-                      contact.type === "contact" && "bg-muted",
-                    )}
-                  >
-                    {contact.avatar}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-medium text-sm truncate">{contact.name}</p>
-                  {contact.subtitle && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {contact.subtitle}
-                    </p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer with Send Button */}
-        {selectedContacts.length > 0 && (
-          <div className="p-4 border-t">
-            <button
-              onClick={onSend}
-              className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              Send to {selectedContacts.length} contact
-              {selectedContacts.length > 1 ? "s" : ""}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
