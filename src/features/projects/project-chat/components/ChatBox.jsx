@@ -10,8 +10,6 @@ import {
   CheckCheck,
   Check,
   Mic,
-  Play,
-  Pause,
   Sparkles,
   Smile,
   Send,
@@ -69,7 +67,11 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState(null);
+
+  // ✅ FIX: replyTo now stores the exact shape needed for the API payload
+  // Shape: { messageId, senderId, senderName, preview, type }
   const [replyTo, setReplyTo] = useState(null);
+
   const [editingMessage, setEditingMessage] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
@@ -140,7 +142,6 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Load messages when chat changes
   useEffect(() => {
     if (selectedChat?.id) {
-      console.log("🔄 ChatBox: Loading messages for conversation:", selectedChat.id);
       loadMessages(selectedChat.id);
       markAsRead(selectedChat.id);
 
@@ -188,20 +189,23 @@ export default function EnhancedChatUI({ selectedChat }) {
     [searchResults]
   );
 
-  const handleScroll = useCallback((e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
-    setIsUserAtBottom(isNearBottom);
+  const handleScroll = useCallback(
+    (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.target;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+      setIsUserAtBottom(isNearBottom);
 
-    if (isNearBottom) {
-      setNewMessagesCount(0);
-    }
+      if (isNearBottom) {
+        setNewMessagesCount(0);
+      }
 
-    if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
-      loadMessages(selectedChat.id, true);
-    }
-  }, [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]);
+      if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
+        loadMessages(selectedChat.id, true);
+      }
+    },
+    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]
+  );
 
   // Auto-grow textarea
   useEffect(() => {
@@ -247,91 +251,39 @@ export default function EnhancedChatUI({ selectedChat }) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // ✅ FIXED: Complete send message handler with proper replyTo structure
+  // ✅ FIXED: Send message handler — replyTo is already in the correct API shape
   const handleSendMessage = async () => {
-    console.log("🚀 handleSendMessage called");
-    
     const trimmedMessage = messageInput.trim();
-    
-    if (!trimmedMessage) {
-      console.error("❌ No message input");
-      return;
-    }
 
-    if (!selectedChat?.id) {
-      console.error("❌ No chat selected");
-      return;
-    }
+    if (!trimmedMessage) return;
+    if (!selectedChat?.id) return;
 
-    console.log("✅ All validations passed, preparing to send message");
-
+    // ✅ Build messageData — replyTo is already pre-validated in handleReply
     const messageData = {
       text: trimmedMessage,
       type: "TEXT",
+      ...(replyTo && { replyTo }), // spread replyTo only if it exists
     };
 
-    // ✅ CRITICAL FIX: Build complete replyTo object matching backend validation
-    if (replyTo) {
-      console.log("📝 Building replyTo object from:", replyTo);
-      
-      // Extract sender ID from various possible locations
-      const senderId = 
-        replyTo._raw?.senderId?._id || 
-        replyTo._raw?.senderId || 
-        replyTo.senderId;
-      
-      if (!senderId) {
-        console.error("❌ Cannot reply: sender ID missing from message:", replyTo);
-        alert("Cannot reply to this message. Sender information is missing.");
-        return;
-      }
-
-      // Build complete replyTo object matching backend Joi validation
-      messageData.replyTo = {
-        messageId: replyTo.id,
-        senderId: senderId,
-        preview: (replyTo.content || "").substring(0, 200), // Truncate to max 200 chars
-        type: (replyTo.type || "text").toUpperCase(), // Convert to uppercase (TEXT, IMAGE, etc.)
-      };
-      
-      console.log("✅ Complete replyTo object:", messageData.replyTo);
-    }
-
-    console.log("📤 Sending message:", {
-      conversationId: selectedChat.id,
-      messageData,
-    });
+    const projectId =
+      selectedChat?.projectId ||
+      selectedChat?._raw?.projectId ||
+      DEFAULT_PROJECT_ID;
 
     try {
-      // ⚠️ TEMPORARY: Use hardcoded projectId
-      // TODO: Replace with dynamic projectId from selectedChat, Redux, or Context
-      const projectId = selectedChat?.projectId || selectedChat?._raw?.projectId || DEFAULT_PROJECT_ID;
-      
-      console.log("🔑 Using projectId:", projectId, {
-        fromChat: !!selectedChat?.projectId,
-        fromRaw: !!selectedChat?._raw?.projectId,
-        fromDefault: projectId === DEFAULT_PROJECT_ID
-      });
-      
       await sendMessageToStore(selectedChat.id, projectId, messageData);
-      
-      console.log("✅ Message sent successfully");
 
-      // Clear input and reply state
       setMessageInput("");
       setReplyTo(null);
       localStorage.removeItem(`chat-draft-${selectedChat.id}`);
 
-      // Scroll to bottom if user is already at bottom
       if (isUserAtBottom) {
         setTimeout(() => scrollToBottom(), 100);
       }
     } catch (error) {
       console.error("❌ Failed to send message:", error);
-      console.error("Error response:", error.response?.data);
-      
-      // Show user-friendly error message
-      const errorMessage = error.response?.data?.message || error.message || "Unknown error occurred";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Unknown error";
       alert(`Failed to send message: ${errorMessage}`);
     }
   };
@@ -356,13 +308,13 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Reaction handler
   const handleReaction = async (messageId, emoji) => {
     try {
-      console.log("😊 Adding reaction:", { conversationId: selectedChat.id, messageId, emoji });
       await chatApi.toggleReaction(selectedChat.id, messageId, emoji);
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle reaction:", error);
-      console.error("Error details:", error.response?.data);
-      alert(`Failed to add reaction: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to add reaction: ${error.response?.data?.message || error.message}`
+      );
     }
     setShowReactionPicker(null);
   };
@@ -377,14 +329,15 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (!messageToDelete) return;
 
     try {
-      console.log("🗑️ Deleting for me:", messageToDelete.id);
       await chatApi.deleteMessageForMe(selectedChat.id, messageToDelete.id);
       await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
     } catch (error) {
       console.error("Failed to delete message:", error);
-      alert(`Failed to delete message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to delete message: ${error.response?.data?.message || error.message}`
+      );
     }
   };
 
@@ -392,14 +345,16 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (!messageToDelete) return;
 
     try {
-      console.log("🗑️ Deleting for everyone:", messageToDelete.id);
       await chatApi.deleteMessageForEveryone(selectedChat.id, messageToDelete.id);
       await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
     } catch (error) {
       console.error("Failed to delete message:", error);
-      alert(error.response?.data?.message || "Failed to delete message. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete message. Please try again."
+      );
     }
   };
 
@@ -413,22 +368,27 @@ export default function EnhancedChatUI({ selectedChat }) {
   const handleUpdateMessage = async () => {
     if (editingMessage && messageInput.trim() && selectedChat?.id) {
       try {
-        console.log("✏️ Editing message:", editingMessage.id);
-        await chatApi.editMessage(selectedChat.id, editingMessage.id, messageInput);
+        await chatApi.editMessage(
+          selectedChat.id,
+          editingMessage.id,
+          messageInput
+        );
         setMessageInput("");
         setEditingMessage(null);
         localStorage.removeItem(`chat-draft-${selectedChat.id}`);
         await loadMessages(selectedChat.id);
       } catch (error) {
         console.error("Failed to edit message:", error);
-        alert(error.response?.data?.message || "Failed to edit message. Please try again.");
+        alert(
+          error.response?.data?.message ||
+            "Failed to edit message. Please try again."
+        );
       }
     }
   };
 
   // Forward message handlers
   const handleForwardClick = (message) => {
-    console.log("📨 Forwarding message:", message);
     setMessageToForward(message);
     setSelectedConversations([]);
     setForwardDialogOpen(true);
@@ -441,22 +401,24 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
 
     try {
-      console.log("📤 Forwarding to conversations:", selectedConversations);
-      
-      const senderId = messageToForward._raw?.senderId?._id || messageToForward._raw?.senderId;
-      
+      const senderId =
+        messageToForward._raw?.senderId?._id ||
+        messageToForward._raw?.senderId;
+
       for (const convId of selectedConversations) {
         const messageData = {
-          projectId: selectedChat.projectId || selectedChat._raw?.projectId || DEFAULT_PROJECT_ID,
+          projectId:
+            selectedChat.projectId ||
+            selectedChat._raw?.projectId ||
+            DEFAULT_PROJECT_ID,
           text: messageToForward.content || "",
           type: (messageToForward.type || "TEXT").toUpperCase(),
           forwardedFrom: {
             conversationId: selectedChat.id,
             senderId: senderId,
-          }
+          },
         };
 
-        console.log("📨 Sending forward to:", convId, messageData);
         await chatApi.sendMessage(convId, messageData);
       }
 
@@ -466,36 +428,52 @@ export default function EnhancedChatUI({ selectedChat }) {
       alert(`Message forwarded to ${selectedConversations.length} conversation(s)!`);
     } catch (error) {
       console.error("Failed to forward message:", error);
-      console.error("Error details:", error.response?.data);
-      alert(`Failed to forward message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to forward message: ${error.response?.data?.message || error.message}`
+      );
     }
   };
 
-  // ✅ UPDATED: Reply handler - stores complete message object
+  // ✅ FIXED: Reply handler — builds the exact shape the API + store expects
+  // Shape matches backend Joi validation: { messageId, senderId, preview, type }
+  // Plus senderName for display in the UI preview bar
   const handleReply = (message) => {
-    console.log("💬 Replying to message:", message);
-    
-    // Store complete message object for building replyTo payload
+    // Extract senderId from the raw backend document
+    const senderId =
+      message._raw?.senderId?._id ||
+      message._raw?.senderId ||
+      null;
+
+    if (!senderId) {
+      console.error("❌ Cannot reply: senderId missing from message", message);
+      alert("Cannot reply to this message. Sender information is missing.");
+      return;
+    }
+
     setReplyTo({
-      id: message.id,
-      sender: message.sender,
-      content: message.content,
-      type: message.type,
-      _raw: message._raw, // Keep raw data for senderId extraction
+      // Fields sent to the API (match backend Joi schema exactly)
+      messageId: message.id,
+      senderId: senderId,
+      preview: (message.content || "").substring(0, 200),
+      type: (message.type || "text").toUpperCase(),
+
+      // Extra display-only field for the reply preview bar
+      senderName: message.sender || "Unknown",
     });
-    
+
     textareaRef.current?.focus();
   };
 
   // Star/Favorite handler
   const handleToggleFavorite = async (messageId, isFavorited) => {
     try {
-      console.log("⭐ Toggling favorite:", { messageId, isFavorited });
       await chatApi.toggleFavorite(selectedChat.id, messageId, !isFavorited);
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
-      alert(`Failed to star message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to star message: ${error.response?.data?.message || error.message}`
+      );
     }
   };
 
@@ -525,16 +503,58 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
   };
 
-  const handleFileUpload = (e, type) => {
+  // ✅ FIXED: Real file upload via FormData multipart — matches backend handleS3Upload middleware
+  const handleFileUpload = async (e, uploadType) => {
     if (!selectedChat?.id) return;
-
     const file = e.target.files[0];
     if (!file) return;
 
-    console.log("File upload not implemented yet:", file, type);
-
-    setShowAttachMenu(false);
+    // Reset input so same file can be re-selected
     e.target.value = "";
+    setShowAttachMenu(false);
+
+    const projectId =
+      selectedChat?.projectId ||
+      selectedChat?._raw?.projectId ||
+      DEFAULT_PROJECT_ID;
+
+    // Map upload type to message type (matches backend enum)
+    const typeMap = {
+      image: "IMAGE",
+      video: "VIDEO",
+      document: "FILE",
+    };
+    const messageType = typeMap[uploadType] || "FILE";
+
+    // Build FormData — backend expects "attachments" field name
+    const formData = new FormData();
+    formData.append("attachments", file);
+    formData.append("projectId", projectId);
+    formData.append("type", messageType);
+
+    // Add replyTo fields if replying
+    if (replyTo) {
+      formData.append("replyTo[messageId]", replyTo.messageId);
+      formData.append("replyTo[senderId]", replyTo.senderId);
+      formData.append("replyTo[preview]", replyTo.preview || "");
+      formData.append("replyTo[type]", replyTo.type || "TEXT");
+    }
+
+    try {
+      await sendMessageToStore(selectedChat.id, projectId, {
+        type: messageType,
+        formData, // store will detect this and send as multipart
+        replyTo: replyTo || null,
+      });
+
+      setReplyTo(null);
+      if (isUserAtBottom) setTimeout(() => scrollToBottom(), 100);
+    } catch (error) {
+      console.error("❌ Failed to upload file:", error);
+      alert(
+        `Failed to send file: ${error.response?.data?.message || error.message}`
+      );
+    }
   };
 
   const startRecording = async () => {
@@ -780,7 +800,9 @@ export default function EnhancedChatUI({ selectedChat }) {
               <div className="text-center space-y-2">
                 <div className="text-4xl">💬</div>
                 <p className="text-sm text-muted-foreground">No messages yet</p>
-                <p className="text-xs text-muted-foreground">Start the conversation!</p>
+                <p className="text-xs text-muted-foreground">
+                  Start the conversation!
+                </p>
               </div>
             </div>
           )}
@@ -884,16 +906,16 @@ export default function EnhancedChatUI({ selectedChat }) {
             </div>
           )}
 
-          {/* ✅ UPDATED: Reply preview with sender name */}
+          {/* ✅ FIXED: Reply preview bar — uses replyTo.senderName and replyTo.preview */}
           {replyTo && (
-            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl">
+            <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border-l-4 border-primary">
               <Reply className="w-4 h-4 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-primary mb-1 truncate">
-                  Replying to {replyTo.sender}
+                <div className="text-xs font-semibold text-primary mb-0.5 truncate">
+                  Replying to {replyTo.senderName}
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {replyTo.content}
+                  {replyTo.preview}
                 </div>
               </div>
               <button
@@ -1060,9 +1082,7 @@ export default function EnhancedChatUI({ selectedChat }) {
               </button>
 
               <button
-                onClick={
-                  editingMessage ? handleUpdateMessage : handleSendMessage
-                }
+                onClick={editingMessage ? handleUpdateMessage : handleSendMessage}
                 disabled={!messageInput.trim() || isSendingMessage}
                 className={cn(
                   "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
@@ -1098,15 +1118,16 @@ export default function EnhancedChatUI({ selectedChat }) {
             >
               Delete for me
             </Button>
-            {messageToDelete?.isOwn && canDeleteForEveryone(messageToDelete) && (
-              <Button
-                variant="destructive"
-                onClick={handleDeleteForEveryone}
-                className="w-full sm:w-auto"
-              >
-                Delete for everyone
-              </Button>
-            )}
+            {messageToDelete?.isOwn &&
+              canDeleteForEveryone(messageToDelete) && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteForEveryone}
+                  className="w-full sm:w-auto"
+                >
+                  Delete for everyone
+                </Button>
+              )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1120,38 +1141,42 @@ export default function EnhancedChatUI({ selectedChat }) {
               Select conversations to forward this message to.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {conversations
-              .filter(conv => conv.id !== selectedChat?.id)
+              .filter((conv) => conv.id !== selectedChat?.id)
               .map((conv) => {
                 const isSelected = selectedConversations.includes(conv.id);
-                
+
                 return (
                   <button
                     key={conv.id}
                     onClick={() => {
-                      setSelectedConversations(prev => 
-                        isSelected 
-                          ? prev.filter(id => id !== conv.id)
+                      setSelectedConversations((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== conv.id)
                           : [...prev, conv.id]
                       );
                     }}
                     className={cn(
                       "w-full p-3 rounded-lg border text-left transition-all",
-                      isSelected 
-                        ? "bg-primary/10 border-primary" 
+                      isSelected
+                        ? "bg-primary/10 border-primary"
                         : "hover:bg-muted border-transparent"
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center",
-                        isSelected 
-                          ? "bg-primary border-primary" 
-                          : "border-muted-foreground"
-                      )}>
-                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      <div
+                        className={cn(
+                          "w-4 h-4 rounded border-2 flex items-center justify-center",
+                          isSelected
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground"
+                        )}
+                      >
+                        {isSelected && (
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <p className="font-medium text-sm">{conv.name}</p>
@@ -1234,9 +1259,7 @@ function MessageBubble({
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
-  
-  // ✅ Check if message is forwarded
-  const isForwarded = message._raw?.forwardedFrom?.conversationId;
+  const isForwarded = !!message._raw?.forwardedFrom?.conversationId;
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -1348,83 +1371,91 @@ function MessageBubble({
             )}
           >
             <div className="p-2 py-1">
-              {/* ✅ FORWARDED MESSAGE INDICATOR */}
+              {/* Forwarded indicator */}
               {isForwarded && (
-                <div className={cn(
-                  "flex items-center gap-1.5 mb-2 pb-2 border-b",
-                  isOwn ? "border-primary-foreground/20" : "border-border"
-                )}>
-                  <CornerDownRight className={cn(
-                    "w-3 h-3",
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )} />
-                  <span className={cn(
-                    "text-[10px] italic font-medium",
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )}>
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 mb-2 pb-2 border-b",
+                    isOwn
+                      ? "border-primary-foreground/20"
+                      : "border-border"
+                  )}
+                >
+                  <CornerDownRight
+                    className={cn(
+                      "w-3 h-3",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-[10px] italic font-medium",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                    )}
+                  >
                     Forwarded
                   </span>
                 </div>
               )}
 
-              {/* ✅ UPDATED: Reply Preview with better data handling */}
+              {/* ✅ FIXED: Reply preview — consistent field names matching the store transform */}
               {message.replyTo && (
                 <div
-                  onClick={() => onScrollToReply(message.replyTo.id || message.replyTo.messageId)}
+                  onClick={() =>
+                    // ✅ Use messageId (store always writes messageId, not id)
+                    onScrollToReply(message.replyTo.messageId)
+                  }
                   className={cn(
-                    "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                    "mb-2 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
                     isOwn
-                      ? "bg-muted/80 border-primary-foreground/30"
-                      : "bg-muted/50 border-primary"
+                      ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
+                      : "bg-background/60 border-primary hover:bg-background/80"
                   )}
                 >
-                  <div
-                    className={cn(
-                      "text-[10px] font-semibold mb-1",
-                      isOwn ? "text-primary" : "text-primary"
-                    )}
-                  >
-                    {message.replyTo.sender || "Unknown User"}
+                  <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
+                    {/* ✅ Consistent: store always writes .sender into replyTo */}
+                    {message.replyTo.sender || "Unknown"}
                   </div>
                   <div
                     className={cn(
-                      "text-[10px]",
-                      isOwn ? "text-foreground" : "text-muted-foreground"
+                      "text-[11px] truncate",
+                      isOwn
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground"
                     )}
                   >
-                    {message.replyTo.content || message.replyTo.preview || "Message"}
+                    {/* ✅ Consistent: store always writes .content into replyTo */}
+                    {message.replyTo.content || message.replyTo.preview || ""}
                   </div>
                 </div>
               )}
 
               {/* Message Content */}
               {(message.type === "text" || !message.type) && message.content && (
-                <div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {highlightText(message.content)}
-                  </p>
-                </div>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {highlightText(message.content)}
+                </p>
               )}
 
               {message.type === "image" && (
-                <div className="space-y-2">
-                  <img
-                    src={message.url}
-                    alt="Shared image"
-                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
-                    onClick={() => window.open(message.url, "_blank")}
-                  />
-                </div>
+                <img
+                  src={message.url}
+                  alt="Shared image"
+                  className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
+                  onClick={() => window.open(message.url, "_blank")}
+                />
               )}
 
               {message.type === "video" && (
-                <div className="space-y-2">
-                  <video
-                    src={message.url}
-                    controls
-                    className="rounded-lg max-w-[300px] max-h-[300px]"
-                  />
-                </div>
+                <video
+                  src={message.url}
+                  controls
+                  className="rounded-lg max-w-[300px] max-h-[300px]"
+                />
               )}
 
               {message.type === "document" && (
@@ -1441,7 +1472,7 @@ function MessageBubble({
                     </p>
                   </div>
                   <button
-                    onClick={() => window.open(message.url, '_blank')}
+                    onClick={() => window.open(message.url, "_blank")}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Download file"
                   >
@@ -1473,30 +1504,31 @@ function MessageBubble({
             </div>
           </div>
 
-          {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div
-              className={cn(
-                "flex gap-1 mt-1",
-                isOwn ? "flex-row-reverse" : "flex-row"
-              )}
-            >
-              {Object.entries(message.reactions).map(([emoji, count]) => (
-                <button
-                  key={emoji}
-                  onClick={() => onReaction(message.id, emoji)}
-                  className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
-                >
-                  <span>{emoji}</span>
-                  <span className="text-[10px] font-medium">{count}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {message.reactions &&
+            Object.keys(message.reactions).length > 0 && (
+              <div
+                className={cn(
+                  "flex gap-1 mt-1",
+                  isOwn ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                {Object.entries(message.reactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReaction(message.id, emoji)}
+                    className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[10px] font-medium">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
           {showActions && (
             <div
               className={cn(
-                "flex gap-1 mt-1.5 transition-all duration-300 ease-out flex-row",
+                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
                 isOwn ? "justify-end" : "justify-start"
               )}
             >
@@ -1509,7 +1541,7 @@ function MessageBubble({
                 }}
               />
               <ActionButton
-                icon={isFavorited ? Star : Star}
+                icon={Star}
                 tooltip={isFavorited ? "Unstar" : "Star"}
                 className={isFavorited ? "text-yellow-500" : ""}
                 onClick={(e) => {

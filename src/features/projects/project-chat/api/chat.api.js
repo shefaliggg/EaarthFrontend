@@ -17,17 +17,39 @@ const chatApi = {
 
   // Get messages for a conversation
   getMessages: async (conversationId, limit = 20, cursor = null) => {
-    const response = await axiosConfig.get(`/chats/${conversationId}/messages`, {
-      params: { limit, cursor },
-    });
+    const response = await axiosConfig.get(
+      `/chats/${conversationId}/messages`,
+      { params: { limit, cursor } }
+    );
     return response.data.data;
   },
 
-  // Send a message
+  // ✅ FIXED: Send a message — handles both JSON (text) and FormData (files)
+  //
+  // For text messages, pass a plain object:
+  //   { projectId, type: "TEXT", text, replyTo?, forwardedFrom? }
+  //
+  // For file messages, pass a FormData instance directly.
+  // The FormData must already contain:
+  //   attachments (File), projectId, type, and optional replyTo[*] fields.
+  //
+  // axios automatically sets Content-Type: multipart/form-data with the correct
+  // boundary when the body is a FormData instance, so do NOT set it manually.
   sendMessage: async (conversationId, messageData) => {
+    const isFormData = messageData instanceof FormData;
+
     const response = await axiosConfig.post(
       `/chats/${conversationId}/messages`,
-      messageData
+      messageData,
+      isFormData
+        ? {
+            headers: {
+              // Let axios/browser set the boundary automatically
+              // Explicitly deleting prevents a missing-boundary bug
+              "Content-Type": undefined,
+            },
+          }
+        : {} // JSON — axios default Content-Type: application/json is correct
     );
     return response.data.data;
   },
@@ -46,7 +68,7 @@ const chatApi = {
     return response.data.data;
   },
 
-  // Add/remove favorite - ✅ UPDATED with conversationId in path
+  // Add/remove favorite
   toggleFavorite: async (conversationId, messageId, addToFavorite) => {
     const response = await axiosConfig.patch(
       `/chats/${conversationId}/messages/${messageId}/favorite`,
@@ -55,7 +77,7 @@ const chatApi = {
     return response.data;
   },
 
-  // Add/remove reaction - ✅ UPDATED with conversationId in path
+  // Add/remove reaction
   toggleReaction: async (conversationId, messageId, emoji) => {
     const response = await axiosConfig.patch(
       `/chats/${conversationId}/messages/${messageId}/react`,
@@ -64,7 +86,7 @@ const chatApi = {
     return response.data;
   },
 
-  // Edit message - ✅ UPDATED with conversationId in path
+  // Edit message
   editMessage: async (conversationId, messageId, text) => {
     const response = await axiosConfig.patch(
       `/chats/${conversationId}/messages/${messageId}/edit`,
@@ -73,7 +95,7 @@ const chatApi = {
     return response.data.data;
   },
 
-  // Delete message for me - ✅ UPDATED with conversationId in path
+  // Delete message for me
   deleteMessageForMe: async (conversationId, messageId) => {
     const response = await axiosConfig.delete(
       `/chats/${conversationId}/messages/${messageId}/me`
@@ -81,7 +103,7 @@ const chatApi = {
     return response.data;
   },
 
-  // Delete message for everyone - ✅ UPDATED with conversationId in path
+  // Delete message for everyone
   deleteMessageForEveryone: async (conversationId, messageId) => {
     const response = await axiosConfig.delete(
       `/chats/${conversationId}/messages/${messageId}/all`
@@ -89,7 +111,7 @@ const chatApi = {
     return response.data;
   },
 
-  // Pin message in chat - ✅ UPDATED with conversationId in path
+  // Pin message in chat
   pinMessage: async (conversationId, messageId) => {
     const response = await axiosConfig.patch(
       `/chats/${conversationId}/messages/${messageId}/pin`
