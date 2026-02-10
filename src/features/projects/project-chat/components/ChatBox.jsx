@@ -93,6 +93,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -140,7 +141,10 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Load messages when chat changes
   useEffect(() => {
     if (selectedChat?.id) {
-      console.log("🔄 ChatBox: Loading messages for conversation:", selectedChat.id);
+      console.log(
+        "🔄 ChatBox: Loading messages for conversation:",
+        selectedChat.id,
+      );
       loadMessages(selectedChat.id);
       markAsRead(selectedChat.id);
 
@@ -171,7 +175,7 @@ export default function EnhancedChatUI({ selectedChat }) {
     const results = messages.filter(
       (m) =>
         m.content &&
-        m.content.toLowerCase().includes(searchQuery.toLowerCase())
+        m.content.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     setSearchResults(results);
@@ -185,23 +189,26 @@ export default function EnhancedChatUI({ selectedChat }) {
       scrollToMessage(msg.id);
       setActiveResultIndex(index);
     },
-    [searchResults]
+    [searchResults],
   );
 
-  const handleScroll = useCallback((e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
-    setIsUserAtBottom(isNearBottom);
+  const handleScroll = useCallback(
+    (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.target;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+      setIsUserAtBottom(isNearBottom);
 
-    if (isNearBottom) {
-      setNewMessagesCount(0);
-    }
+      if (isNearBottom) {
+        setNewMessagesCount(0);
+      }
 
-    if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
-      loadMessages(selectedChat.id, true);
-    }
-  }, [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]);
+      if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
+        loadMessages(selectedChat.id, true);
+      }
+    },
+    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages],
+  );
 
   // Auto-grow textarea
   useEffect(() => {
@@ -250,9 +257,9 @@ export default function EnhancedChatUI({ selectedChat }) {
   // ✅ FIXED: Complete send message handler with proper replyTo structure
   const handleSendMessage = async () => {
     console.log("🚀 handleSendMessage called");
-    
+
     const trimmedMessage = messageInput.trim();
-    
+
     if (!trimmedMessage) {
       console.error("❌ No message input");
       return;
@@ -273,15 +280,18 @@ export default function EnhancedChatUI({ selectedChat }) {
     // ✅ CRITICAL FIX: Build complete replyTo object matching backend validation
     if (replyTo) {
       console.log("📝 Building replyTo object from:", replyTo);
-      
+
       // Extract sender ID from various possible locations
-      const senderId = 
-        replyTo._raw?.senderId?._id || 
-        replyTo._raw?.senderId || 
+      const senderId =
+        replyTo._raw?.senderId?._id ||
+        replyTo._raw?.senderId ||
         replyTo.senderId;
-      
+
       if (!senderId) {
-        console.error("❌ Cannot reply: sender ID missing from message:", replyTo);
+        console.error(
+          "❌ Cannot reply: sender ID missing from message:",
+          replyTo,
+        );
         alert("Cannot reply to this message. Sender information is missing.");
         return;
       }
@@ -293,7 +303,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         preview: (replyTo.content || "").substring(0, 200), // Truncate to max 200 chars
         type: (replyTo.type || "text").toUpperCase(), // Convert to uppercase (TEXT, IMAGE, etc.)
       };
-      
+
       console.log("✅ Complete replyTo object:", messageData.replyTo);
     }
 
@@ -305,16 +315,19 @@ export default function EnhancedChatUI({ selectedChat }) {
     try {
       // ⚠️ TEMPORARY: Use hardcoded projectId
       // TODO: Replace with dynamic projectId from selectedChat, Redux, or Context
-      const projectId = selectedChat?.projectId || selectedChat?._raw?.projectId || DEFAULT_PROJECT_ID;
-      
+      const projectId =
+        selectedChat?.projectId ||
+        selectedChat?._raw?.projectId ||
+        DEFAULT_PROJECT_ID;
+
       console.log("🔑 Using projectId:", projectId, {
         fromChat: !!selectedChat?.projectId,
         fromRaw: !!selectedChat?._raw?.projectId,
-        fromDefault: projectId === DEFAULT_PROJECT_ID
+        fromDefault: projectId === DEFAULT_PROJECT_ID,
       });
-      
+
       await sendMessageToStore(selectedChat.id, projectId, messageData);
-      
+
       console.log("✅ Message sent successfully");
 
       // Clear input and reply state
@@ -329,9 +342,12 @@ export default function EnhancedChatUI({ selectedChat }) {
     } catch (error) {
       console.error("❌ Failed to send message:", error);
       console.error("Error response:", error.response?.data);
-      
+
       // Show user-friendly error message
-      const errorMessage = error.response?.data?.message || error.message || "Unknown error occurred";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Unknown error occurred";
       alert(`Failed to send message: ${errorMessage}`);
     }
   };
@@ -356,13 +372,19 @@ export default function EnhancedChatUI({ selectedChat }) {
   // Reaction handler
   const handleReaction = async (messageId, emoji) => {
     try {
-      console.log("😊 Adding reaction:", { conversationId: selectedChat.id, messageId, emoji });
+      console.log("😊 Adding reaction:", {
+        conversationId: selectedChat.id,
+        messageId,
+        emoji,
+      });
       await chatApi.toggleReaction(selectedChat.id, messageId, emoji);
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle reaction:", error);
       console.error("Error details:", error.response?.data);
-      alert(`Failed to add reaction: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to add reaction: ${error.response?.data?.message || error.message}`,
+      );
     }
     setShowReactionPicker(null);
   };
@@ -384,7 +406,9 @@ export default function EnhancedChatUI({ selectedChat }) {
       setMessageToDelete(null);
     } catch (error) {
       console.error("Failed to delete message:", error);
-      alert(`Failed to delete message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to delete message: ${error.response?.data?.message || error.message}`,
+      );
     }
   };
 
@@ -393,13 +417,19 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     try {
       console.log("🗑️ Deleting for everyone:", messageToDelete.id);
-      await chatApi.deleteMessageForEveryone(selectedChat.id, messageToDelete.id);
+      await chatApi.deleteMessageForEveryone(
+        selectedChat.id,
+        messageToDelete.id,
+      );
       await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
     } catch (error) {
       console.error("Failed to delete message:", error);
-      alert(error.response?.data?.message || "Failed to delete message. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete message. Please try again.",
+      );
     }
   };
 
@@ -414,14 +444,21 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (editingMessage && messageInput.trim() && selectedChat?.id) {
       try {
         console.log("✏️ Editing message:", editingMessage.id);
-        await chatApi.editMessage(selectedChat.id, editingMessage.id, messageInput);
+        await chatApi.editMessage(
+          selectedChat.id,
+          editingMessage.id,
+          messageInput,
+        );
         setMessageInput("");
         setEditingMessage(null);
         localStorage.removeItem(`chat-draft-${selectedChat.id}`);
         await loadMessages(selectedChat.id);
       } catch (error) {
         console.error("Failed to edit message:", error);
-        alert(error.response?.data?.message || "Failed to edit message. Please try again.");
+        alert(
+          error.response?.data?.message ||
+            "Failed to edit message. Please try again.",
+        );
       }
     }
   };
@@ -442,18 +479,22 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     try {
       console.log("📤 Forwarding to conversations:", selectedConversations);
-      
-      const senderId = messageToForward._raw?.senderId?._id || messageToForward._raw?.senderId;
-      
+
+      const senderId =
+        messageToForward._raw?.senderId?._id || messageToForward._raw?.senderId;
+
       for (const convId of selectedConversations) {
         const messageData = {
-          projectId: selectedChat.projectId || selectedChat._raw?.projectId || DEFAULT_PROJECT_ID,
+          projectId:
+            selectedChat.projectId ||
+            selectedChat._raw?.projectId ||
+            DEFAULT_PROJECT_ID,
           text: messageToForward.content || "",
           type: (messageToForward.type || "TEXT").toUpperCase(),
           forwardedFrom: {
             conversationId: selectedChat.id,
             senderId: senderId,
-          }
+          },
         };
 
         console.log("📨 Sending forward to:", convId, messageData);
@@ -463,18 +504,22 @@ export default function EnhancedChatUI({ selectedChat }) {
       setForwardDialogOpen(false);
       setMessageToForward(null);
       setSelectedConversations([]);
-      alert(`Message forwarded to ${selectedConversations.length} conversation(s)!`);
+      alert(
+        `Message forwarded to ${selectedConversations.length} conversation(s)!`,
+      );
     } catch (error) {
       console.error("Failed to forward message:", error);
       console.error("Error details:", error.response?.data);
-      alert(`Failed to forward message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to forward message: ${error.response?.data?.message || error.message}`,
+      );
     }
   };
 
   // ✅ UPDATED: Reply handler - stores complete message object
   const handleReply = (message) => {
     console.log("💬 Replying to message:", message);
-    
+
     // Store complete message object for building replyTo payload
     setReplyTo({
       id: message.id,
@@ -483,7 +528,7 @@ export default function EnhancedChatUI({ selectedChat }) {
       type: message.type,
       _raw: message._raw, // Keep raw data for senderId extraction
     });
-    
+
     textareaRef.current?.focus();
   };
 
@@ -495,7 +540,9 @@ export default function EnhancedChatUI({ selectedChat }) {
       await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
-      alert(`Failed to star message: ${error.response?.data?.message || error.message}`);
+      alert(
+        `Failed to star message: ${error.response?.data?.message || error.message}`,
+      );
     }
   };
 
@@ -657,7 +704,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                             selectedChat.status === "online" &&
                               "bg-green-500 animate-pulse",
                             selectedChat.status === "away" && "bg-yellow-500",
-                            selectedChat.status === "offline" && "bg-gray-400"
+                            selectedChat.status === "offline" && "bg-gray-400",
                           )}
                         />
                         <span>{selectedChat.role}</span>
@@ -746,7 +793,10 @@ export default function EnhancedChatUI({ selectedChat }) {
                   <button
                     onClick={() =>
                       goToSearchResult(
-                        Math.min(searchResults.length - 1, activeResultIndex + 1)
+                        Math.min(
+                          searchResults.length - 1,
+                          activeResultIndex + 1,
+                        ),
                       )
                     }
                     disabled={activeResultIndex === searchResults.length - 1}
@@ -780,7 +830,9 @@ export default function EnhancedChatUI({ selectedChat }) {
               <div className="text-center space-y-2">
                 <div className="text-4xl">💬</div>
                 <p className="text-sm text-muted-foreground">No messages yet</p>
-                <p className="text-xs text-muted-foreground">Start the conversation!</p>
+                <p className="text-xs text-muted-foreground">
+                  Start the conversation!
+                </p>
               </div>
             </div>
           )}
@@ -855,6 +907,32 @@ export default function EnhancedChatUI({ selectedChat }) {
               />
             );
           })}
+
+          {isTyping && (
+            <div
+              className="flex gap-3 items-end"
+              role="status"
+              aria-label="Someone is typing"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-muted text-xs">MJ</AvatarFallback>
+              </Avatar>
+
+              <div className="bg-muted px-4 py-2.5 rounded-2xl rounded-bl-md">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce" />
+                  <span
+                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-muted-foreground/60 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div ref={messagesEndRef} />
         </div>
@@ -1054,7 +1132,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                 <Mic
                   className={cn(
                     "w-5 h-5",
-                    isRecording ? "text-red-500" : "text-primary"
+                    isRecording ? "text-red-500" : "text-primary",
                   )}
                 />
               </button>
@@ -1068,7 +1146,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                   "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
                   messageInput.trim() && !isSendingMessage
                     ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-muted text-muted-foreground cursor-not-allowed",
                 )}
                 aria-label={editingMessage ? "Update message" : "Send message"}
               >
@@ -1098,15 +1176,16 @@ export default function EnhancedChatUI({ selectedChat }) {
             >
               Delete for me
             </Button>
-            {messageToDelete?.isOwn && canDeleteForEveryone(messageToDelete) && (
-              <Button
-                variant="destructive"
-                onClick={handleDeleteForEveryone}
-                className="w-full sm:w-auto"
-              >
-                Delete for everyone
-              </Button>
-            )}
+            {messageToDelete?.isOwn &&
+              canDeleteForEveryone(messageToDelete) && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteForEveryone}
+                  className="w-full sm:w-auto"
+                >
+                  Delete for everyone
+                </Button>
+              )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1120,38 +1199,42 @@ export default function EnhancedChatUI({ selectedChat }) {
               Select conversations to forward this message to.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {conversations
-              .filter(conv => conv.id !== selectedChat?.id)
+              .filter((conv) => conv.id !== selectedChat?.id)
               .map((conv) => {
                 const isSelected = selectedConversations.includes(conv.id);
-                
+
                 return (
                   <button
                     key={conv.id}
                     onClick={() => {
-                      setSelectedConversations(prev => 
-                        isSelected 
-                          ? prev.filter(id => id !== conv.id)
-                          : [...prev, conv.id]
+                      setSelectedConversations((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== conv.id)
+                          : [...prev, conv.id],
                       );
                     }}
                     className={cn(
                       "w-full p-3 rounded-lg border text-left transition-all",
-                      isSelected 
-                        ? "bg-primary/10 border-primary" 
-                        : "hover:bg-muted border-transparent"
+                      isSelected
+                        ? "bg-primary/10 border-primary"
+                        : "hover:bg-muted border-transparent",
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center",
-                        isSelected 
-                          ? "bg-primary border-primary" 
-                          : "border-muted-foreground"
-                      )}>
-                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      <div
+                        className={cn(
+                          "w-4 h-4 rounded border-2 flex items-center justify-center",
+                          isSelected
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground",
+                        )}
+                      >
+                        {isSelected && (
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        )}
                       </div>
                       <div className="flex-1">
                         <p className="font-medium text-sm">{conv.name}</p>
@@ -1234,7 +1317,7 @@ function MessageBubble({
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
-  
+
   // ✅ Check if message is forwarded
   const isForwarded = message._raw?.forwardedFrom?.conversationId;
 
@@ -1266,7 +1349,7 @@ function MessageBubble({
         </mark>
       ) : (
         part
-      )
+      ),
     );
   };
 
@@ -1277,7 +1360,7 @@ function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1"
+          isGroupStart ? "mt-4" : "mt-1",
         )}
       >
         {!isOwn && <div className="w-8" />}
@@ -1299,7 +1382,7 @@ function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1"
+        isGroupStart ? "mt-4" : "mt-1",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -1341,27 +1424,39 @@ function MessageBubble({
           <div
             className={cn(
               "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
-              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
+              isOwn
+                ? "bg-primary dark:bg-primary/50 text-primary-foreground"
+                : "bg-muted",
               isOwn && "rounded-[20px] rounded-br-none",
               !isOwn && "rounded-[20px] rounded-tl-none",
-              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
+              isSelected && "ring-2 ring-primary/50 scale-[1.02]",
             )}
           >
             <div className="p-2 py-1">
               {/* ✅ FORWARDED MESSAGE INDICATOR */}
               {isForwarded && (
-                <div className={cn(
-                  "flex items-center gap-1.5 mb-2 pb-2 border-b",
-                  isOwn ? "border-primary-foreground/20" : "border-border"
-                )}>
-                  <CornerDownRight className={cn(
-                    "w-3 h-3",
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )} />
-                  <span className={cn(
-                    "text-[10px] italic font-medium",
-                    isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                  )}>
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 mb-2 pb-2 border-b",
+                    isOwn ? "border-primary-foreground/20" : "border-border",
+                  )}
+                >
+                  <CornerDownRight
+                    className={cn(
+                      "w-3 h-3",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-[10px] italic font-medium",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground",
+                    )}
+                  >
                     Forwarded
                   </span>
                 </div>
@@ -1370,18 +1465,22 @@ function MessageBubble({
               {/* ✅ UPDATED: Reply Preview with better data handling */}
               {message.replyTo && (
                 <div
-                  onClick={() => onScrollToReply(message.replyTo.id || message.replyTo.messageId)}
+                  onClick={() =>
+                    onScrollToReply(
+                      message.replyTo.id || message.replyTo.messageId,
+                    )
+                  }
                   className={cn(
                     "mb-1 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
                     isOwn
                       ? "bg-muted/80 border-primary-foreground/30"
-                      : "bg-muted/50 border-primary"
+                      : "bg-muted/50 border-primary",
                   )}
                 >
                   <div
                     className={cn(
                       "text-[10px] font-semibold mb-1",
-                      isOwn ? "text-primary" : "text-primary"
+                      isOwn ? "text-primary" : "text-primary",
                     )}
                   >
                     {message.replyTo.sender || "Unknown User"}
@@ -1389,22 +1488,25 @@ function MessageBubble({
                   <div
                     className={cn(
                       "text-[10px]",
-                      isOwn ? "text-foreground" : "text-muted-foreground"
+                      isOwn ? "text-foreground" : "text-muted-foreground",
                     )}
                   >
-                    {message.replyTo.content || message.replyTo.preview || "Message"}
+                    {message.replyTo.content ||
+                      message.replyTo.preview ||
+                      "Message"}
                   </div>
                 </div>
               )}
 
               {/* Message Content */}
-              {(message.type === "text" || !message.type) && message.content && (
-                <div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {highlightText(message.content)}
-                  </p>
-                </div>
-              )}
+              {(message.type === "text" || !message.type) &&
+                message.content && (
+                  <div>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      {highlightText(message.content)}
+                    </p>
+                  </div>
+                )}
 
               {message.type === "image" && (
                 <div className="space-y-2">
@@ -1441,7 +1543,7 @@ function MessageBubble({
                     </p>
                   </div>
                   <button
-                    onClick={() => window.open(message.url, '_blank')}
+                    onClick={() => window.open(message.url, "_blank")}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Download file"
                   >
@@ -1458,7 +1560,7 @@ function MessageBubble({
                         "text-[10px] italic mr-1",
                         isOwn
                           ? "text-primary-foreground/50"
-                          : "text-muted-foreground"
+                          : "text-muted-foreground",
                       )}
                     >
                       (edited)
@@ -1477,7 +1579,7 @@ function MessageBubble({
             <div
               className={cn(
                 "flex gap-1 mt-1",
-                isOwn ? "flex-row-reverse" : "flex-row"
+                isOwn ? "flex-row-reverse" : "flex-row",
               )}
             >
               {Object.entries(message.reactions).map(([emoji, count]) => (
@@ -1497,7 +1599,7 @@ function MessageBubble({
             <div
               className={cn(
                 "flex gap-1 mt-1.5 transition-all duration-300 ease-out flex-row",
-                isOwn ? "justify-end" : "justify-start"
+                isOwn ? "justify-end" : "justify-start",
               )}
             >
               <ActionButton
@@ -1539,7 +1641,7 @@ function MessageBubble({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id
+                    showReactionPicker === message.id ? null : message.id,
                   );
                 }}
               />
@@ -1571,7 +1673,7 @@ function MessageBubble({
           <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
-              isOwn ? "flex-row-reverse" : "flex-row"
+              isOwn ? "flex-row-reverse" : "flex-row",
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1602,7 +1704,7 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       onClick={onClick}
       className={cn(
         "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
-        className
+        className,
       )}
       aria-label={tooltip}
     >

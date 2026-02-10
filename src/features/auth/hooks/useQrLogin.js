@@ -4,6 +4,10 @@ import { authService } from "../services/auth.service";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import {
+  socketBaseURL,
+  socketConfig,
+} from "../../../shared/config/socketConfig";
 
 export function useQrLogin({ type = "web" }) {
   const [qrData, setQrData] = useState(null);
@@ -47,7 +51,7 @@ export function useQrLogin({ type = "web" }) {
         toast.error(err.message || "Failed to approve QR login");
       }
     },
-    [updateUser, navigate]
+    [updateUser, navigate],
   );
 
   /**
@@ -84,7 +88,7 @@ export function useQrLogin({ type = "web" }) {
         }
       }, 4000);
     },
-    [handleQrApproval]
+    [handleQrApproval],
   );
 
   /**
@@ -118,10 +122,9 @@ export function useQrLogin({ type = "web" }) {
       });
 
       // Initialize socket
-      const socket = io(baseURL, {
-        transports: ["websocket"],
-        path: "/socket.io/",
-        withCredentials: true,
+      const socket = io(socketBaseURL, {
+        ...socketConfig,
+        autoConnect: true,
       });
 
       socketRef.current = socket;
