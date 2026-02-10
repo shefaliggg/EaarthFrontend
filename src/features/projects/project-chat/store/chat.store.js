@@ -8,29 +8,48 @@ import {
   disconnectSocket as closeSocket,
 } from "../config/socketConfig";
 
-// ⚠️ TEMPORARY: Hardcoded project ID fallback
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
-// ─────────────────────────────────────────────
-// Helper: transform a raw backend message into
-// the frontend shape used everywhere in the UI.
-// Single source of truth — used for API response,
-// optimistic message, and socket incoming message.
-// ─────────────────────────────────────────────
+// ✅ Helper to get full S3 URL
+const getFileUrl = (fileKey) => {
+  if (!fileKey) return null;
+  
+  // If already a full URL, return as is
+  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+    return fileKey;
+  }
+  
+  // Otherwise, construct S3 URL
+  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+  return `${S3_BASE_URL}/${fileKey}`;
+};
+
+// ✅ Transform message from backend to frontend format
 function transformMessage(msg, currentUserId) {
   const isOwn =
     msg.senderId?._id?.toString() === currentUserId?.toString() ||
     msg.senderId?.toString() === currentUserId?.toString();
 
-  // ✅ replyTo: normalised shape — always { messageId, sender, content, preview }
+  // ✅ Extract file information
+  let url = null;
+  let fileName = null;
+  let fileSize = null;
+  
+  if (msg.content?.files && msg.content.files.length > 0) {
+    const file = msg.content.files[0];
+    url = file.url; // Store the S3 key or full URL
+    fileName = file.name;
+    fileSize = file.size ? `${(file.size / 1024).toFixed(2)} KB` : null;
+  }
+
+  // ✅ Normalize replyTo
   let replyTo = null;
   if (msg.replyTo?.messageId) {
     replyTo = {
       messageId: msg.replyTo.messageId,
-      // sender name: populated from senderId ref OR plain string
       sender:
         msg.replyTo.senderId?.name ||
-        msg.replyTo.senderName ||        // optimistic path
+        msg.replyTo.senderName ||
         "Unknown",
       content: msg.replyTo.preview || "",
       preview: msg.replyTo.preview || "",
@@ -48,11 +67,9 @@ function transformMessage(msg, currentUserId) {
     timestamp: new Date(msg.createdAt).getTime(),
     content: msg.content?.text || "",
     type: msg.type?.toLowerCase(),
-    url: msg.content?.files?.[0]?.url,
-    fileName: msg.content?.files?.[0]?.name,
-    fileSize: msg.content?.files?.[0]?.size
-      ? `${(msg.content.files[0].size / 1024).toFixed(2)} KB`
-      : null,
+    url, // S3 key or full URL
+    fileName,
+    fileSize,
     isOwn,
     state: msg.seenBy?.length > 0 ? "seen" : "delivered",
     readBy: msg.seenBy?.length || 0,
@@ -108,7 +125,6 @@ const useChatStore = create(
             set({ socketInitialized: false });
           });
 
-          // ✅ New message from socket — use shared transformMessage helper
           socket.on("message:new", ({ conversationId, message }) => {
             console.log("📨 New message received:", { conversationId, message });
             get().addMessageToConversation(conversationId, message);
@@ -279,7 +295,6 @@ const useChatStore = create(
 
           const currentUserId = get().currentUserId;
 
-          // ✅ Use shared transformer
           const transformed = result.messages.map((msg) =>
             transformMessage(msg, currentUserId)
           );
@@ -306,10 +321,6 @@ const useChatStore = create(
       },
 
       // ─── Send message ────────────────────────
-      // messageData shape for text:
-      //   { text, type, replyTo?: { messageId, senderId, preview, type, senderName } }
-      // messageData shape for files:
-      //   { type, formData: FormData, replyTo? }
       sendMessage: async (conversationId, projectIdParam, messageData) => {
         const currentUserId = get().currentUserId;
         if (!currentUserId) throw new Error("User not authenticated");
@@ -325,7 +336,7 @@ const useChatStore = create(
         const isFileUpload = !!messageData.formData;
         const tempId = `temp-${Date.now()}`;
 
-        // ✅ Optimistic message for both text and file uploads
+        // ✅ Create optimistic message
         const optimisticMessage = {
           id: tempId,
           sender: "You",
@@ -335,24 +346,38 @@ const useChatStore = create(
             minute: "2-digit",
           }),
           timestamp: Date.now(),
-          content: messageData.text || "",
-          type: messageData.type?.toLowerCase() || "text",
+          content: isFileUpload ? "" : (messageData.text || ""),
+          type: isFileUpload 
+            ? (messageData.formData.get("type")?.toLowerCase() || "file")
+            : (messageData.type?.toLowerCase() || "text"),
           isOwn: true,
           state: "sending",
-          // Show a placeholder for file uploads
           fileName: isFileUpload
             ? messageData.formData.get("attachments")?.name
             : null,
-          replyTo: messageData.replyTo
-            ? {
-                messageId: messageData.replyTo.messageId,
-                sender: messageData.replyTo.senderName || "Unknown",
-                content: messageData.replyTo.preview || "",
-                preview: messageData.replyTo.preview || "",
-              }
-            : null,
+          replyTo: null,
           _raw: null,
         };
+
+        // Extract replyTo from FormData if present
+        if (isFileUpload) {
+          const replyToMessageId = messageData.formData.get("replyTo[messageId]");
+          if (replyToMessageId) {
+            optimisticMessage.replyTo = {
+              messageId: replyToMessageId,
+              sender: messageData.formData.get("replyTo[senderName]") || "Unknown",
+              content: messageData.formData.get("replyTo[preview]") || "",
+              preview: messageData.formData.get("replyTo[preview]") || "",
+            };
+          }
+        } else if (messageData.replyTo) {
+          optimisticMessage.replyTo = {
+            messageId: messageData.replyTo.messageId,
+            sender: messageData.replyTo.senderName || "Unknown",
+            content: messageData.replyTo.preview || "",
+            preview: messageData.replyTo.preview || "",
+          };
+        }
 
         const existing = get().messagesByConversation[conversationId] || {
           messages: [],
@@ -376,17 +401,27 @@ const useChatStore = create(
           let sentMessage;
 
           if (isFileUpload) {
-            // ✅ File upload path — send raw FormData, axios sets multipart header automatically
+            console.log("📤 Sending file upload with FormData");
+            
+            for (let [key, value] of messageData.formData.entries()) {
+              if (value instanceof File) {
+                console.log(`FormData: ${key} = File(${value.name}, ${value.size} bytes)`);
+              } else {
+                console.log(`FormData: ${key} = ${value}`);
+              }
+            }
+            
             sentMessage = await chatApi.sendMessage(
               conversationId,
-              messageData.formData  // FormData instance passed directly
+              messageData.formData
             );
           } else {
-            // ✅ Text message path — build JSON payload, strip UI-only senderName
+            console.log("📤 Sending text message with JSON");
+            
             const payload = {
               projectId,
               type: (messageData.type || "TEXT").toUpperCase(),
-              text: messageData.text,
+              text: messageData.text || "",
             };
 
             if (messageData.replyTo) {
@@ -405,11 +440,14 @@ const useChatStore = create(
             sentMessage = await chatApi.sendMessage(conversationId, payload);
           }
 
-          // ✅ Replace optimistic with real message via shared transformer
+          console.log("✅ Message sent successfully:", sentMessage);
+
+          // Transform the response
           const transformed = transformMessage(sentMessage, currentUserId);
           transformed.isOwn = true;
           transformed.state = "sent";
 
+          // Replace optimistic message
           const updated = get().messagesByConversation[conversationId];
           set({
             messagesByConversation: {
@@ -426,7 +464,14 @@ const useChatStore = create(
 
           return sentMessage;
         } catch (error) {
-          // Mark optimistic as failed
+          console.error("❌ Failed to send message:", error);
+          console.error("Error details:", {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+          });
+
+          // Mark optimistic message as failed
           const updated = get().messagesByConversation[conversationId];
           set({
             messagesByConversation: {
@@ -440,13 +485,13 @@ const useChatStore = create(
             },
             isSendingMessage: false,
           });
+          
           throw error;
         }
       },
 
       // ─── Socket event handlers ───────────────
 
-      // ✅ Uses shared transformMessage — replyTo handled correctly
       addMessageToConversation: (conversationId, message) => {
         const currentUserId = get().currentUserId;
         const existing = get().messagesByConversation[conversationId];

@@ -67,11 +67,7 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState(null);
-
-  // ✅ FIX: replyTo now stores the exact shape needed for the API payload
-  // Shape: { messageId, senderId, senderName, preview, type }
   const [replyTo, setReplyTo] = useState(null);
-
   const [editingMessage, setEditingMessage] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
@@ -258,7 +254,6 @@ export default function EnhancedChatUI({ selectedChat }) {
     if (!trimmedMessage) return;
     if (!selectedChat?.id) return;
 
-    // ✅ Build messageData — replyTo is already pre-validated in handleReply
     const messageData = {
       text: trimmedMessage,
       type: "TEXT",
