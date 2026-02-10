@@ -15,7 +15,7 @@ function ProjectChat() {
   const [activeTab, setActiveTab] = useState("all");
   const location = useLocation();
   
-  // Manual project ID input for testing
+  // Manual project ID input for testing and 
   const [manualProjectId, setManualProjectId] = useState("697c899668977a7ca2b27462");
   const [useManualProject, setUseManualProject] = useState(true);
   
