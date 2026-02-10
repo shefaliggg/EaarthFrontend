@@ -28,6 +28,9 @@ import {
   Download,
   Trash2,
   CornerDownRight,
+  Play,
+  Pause,
+  Volume2,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -59,8 +62,21 @@ import chatApi from "../api/chat.api";
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 // ⚠️ TEMPORARY: Hardcoded project ID
-// TODO: Replace with dynamic project ID from Redux/Context/URL
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
+
+// ✅ Helper to get full S3 URL from key
+const getFileUrl = (fileKey) => {
+  if (!fileKey) return null;
+  
+  // If already a full URL, return as is
+  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+    return fileKey;
+  }
+  
+  // Otherwise, construct S3 URL
+  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+  return `${S3_BASE_URL}/${fileKey}`;
+};
 
 export default function EnhancedChatUI({ selectedChat }) {
   const [messageInput, setMessageInput] = useState("");
@@ -91,6 +107,10 @@ export default function EnhancedChatUI({ selectedChat }) {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+
+  // Image preview dialog
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -247,7 +267,6 @@ export default function EnhancedChatUI({ selectedChat }) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // ✅ FIXED: Send message handler — replyTo is already in the correct API shape
   const handleSendMessage = async () => {
     const trimmedMessage = messageInput.trim();
 
@@ -257,7 +276,7 @@ export default function EnhancedChatUI({ selectedChat }) {
     const messageData = {
       text: trimmedMessage,
       type: "TEXT",
-      ...(replyTo && { replyTo }), // spread replyTo only if it exists
+      ...(replyTo && { replyTo }),
     };
 
     const projectId =
@@ -314,7 +333,7 @@ export default function EnhancedChatUI({ selectedChat }) {
     setShowReactionPicker(null);
   };
 
-  // Delete message handlers
+  // ✅ FIXED: Delete message handlers
   const handleDeleteClick = (message) => {
     setMessageToDelete(message);
     setDeleteDialogOpen(true);
@@ -325,9 +344,10 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     try {
       await chatApi.deleteMessageForMe(selectedChat.id, messageToDelete.id);
-      await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
+      // Reload messages to update UI
+      await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to delete message:", error);
       alert(
@@ -341,9 +361,10 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     try {
       await chatApi.deleteMessageForEveryone(selectedChat.id, messageToDelete.id);
-      await loadMessages(selectedChat.id);
       setDeleteDialogOpen(false);
       setMessageToDelete(null);
+      // Reload messages to update UI
+      await loadMessages(selectedChat.id);
     } catch (error) {
       console.error("Failed to delete message:", error);
       alert(
@@ -429,11 +450,7 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
   };
 
-  // ✅ FIXED: Reply handler — builds the exact shape the API + store expects
-  // Shape matches backend Joi validation: { messageId, senderId, preview, type }
-  // Plus senderName for display in the UI preview bar
   const handleReply = (message) => {
-    // Extract senderId from the raw backend document
     const senderId =
       message._raw?.senderId?._id ||
       message._raw?.senderId ||
@@ -446,13 +463,10 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
 
     setReplyTo({
-      // Fields sent to the API (match backend Joi schema exactly)
       messageId: message.id,
       senderId: senderId,
       preview: (message.content || "").substring(0, 200),
       type: (message.type || "text").toUpperCase(),
-
-      // Extra display-only field for the reply preview bar
       senderName: message.sender || "Unknown",
     });
 
@@ -498,13 +512,12 @@ export default function EnhancedChatUI({ selectedChat }) {
     }
   };
 
-  // ✅ FIXED: Real file upload via FormData multipart — matches backend handleS3Upload middleware
+  // ✅ FIXED: File upload with proper FormData construction
   const handleFileUpload = async (e, uploadType) => {
     if (!selectedChat?.id) return;
     const file = e.target.files[0];
     if (!file) return;
 
-    // Reset input so same file can be re-selected
     e.target.value = "";
     setShowAttachMenu(false);
 
@@ -513,7 +526,6 @@ export default function EnhancedChatUI({ selectedChat }) {
       selectedChat?._raw?.projectId ||
       DEFAULT_PROJECT_ID;
 
-    // Map upload type to message type (matches backend enum)
     const typeMap = {
       image: "IMAGE",
       video: "VIDEO",
@@ -521,13 +533,12 @@ export default function EnhancedChatUI({ selectedChat }) {
     };
     const messageType = typeMap[uploadType] || "FILE";
 
-    // Build FormData — backend expects "attachments" field name
     const formData = new FormData();
     formData.append("attachments", file);
     formData.append("projectId", projectId);
     formData.append("type", messageType);
+    formData.append("text", "");
 
-    // Add replyTo fields if replying
     if (replyTo) {
       formData.append("replyTo[messageId]", replyTo.messageId);
       formData.append("replyTo[senderId]", replyTo.senderId);
@@ -537,9 +548,7 @@ export default function EnhancedChatUI({ selectedChat }) {
 
     try {
       await sendMessageToStore(selectedChat.id, projectId, {
-        type: messageType,
-        formData, // store will detect this and send as multipart
-        replyTo: replyTo || null,
+        formData,
       });
 
       setReplyTo(null);
@@ -618,6 +627,12 @@ export default function EnhancedChatUI({ selectedChat }) {
         textareaRef.current.focus();
       }
     }, 0);
+  };
+
+  // ✅ Image preview handler
+  const handleImageClick = (imageUrl) => {
+    setPreviewImageUrl(imageUrl);
+    setImagePreviewOpen(true);
   };
 
   if (!selectedChat) {
@@ -869,6 +884,7 @@ export default function EnhancedChatUI({ selectedChat }) {
                 hoveredMessageId={hoveredMessageId}
                 setHoveredMessageId={setHoveredMessageId}
                 searchQuery={searchQuery}
+                onImageClick={handleImageClick}
               />
             );
           })}
@@ -901,7 +917,6 @@ export default function EnhancedChatUI({ selectedChat }) {
             </div>
           )}
 
-          {/* ✅ FIXED: Reply preview bar — uses replyTo.senderName and replyTo.preview */}
           {replyTo && (
             <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border-l-4 border-primary">
               <Reply className="w-4 h-4 text-primary flex-shrink-0" />
@@ -1095,7 +1110,7 @@ export default function EnhancedChatUI({ selectedChat }) {
         </div>
       </div>
 
-      {/* Delete Message Dialog */}
+      {/* ✅ Delete Message Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1207,6 +1222,27 @@ export default function EnhancedChatUI({ selectedChat }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ✅ Image Preview Dialog */}
+      <Dialog open={imagePreviewOpen} onOpenChange={setImagePreviewOpen}>
+        <DialogContent className="max-w-4xl p-0">
+          <div className="relative">
+            <button
+              onClick={() => setImagePreviewOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {previewImageUrl && (
+              <img
+                src={previewImageUrl}
+                alt="Preview"
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -1226,6 +1262,7 @@ function AttachmentButton({ icon: Icon, label, onClick }) {
   );
 }
 
+// ✅ FIXED: MessageBubble with proper media rendering
 function MessageBubble({
   message,
   hoveredMessageId,
@@ -1247,9 +1284,12 @@ function MessageBubble({
   onReaction,
   onScrollToReply,
   searchQuery,
+  onImageClick,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
 
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
@@ -1397,11 +1437,10 @@ function MessageBubble({
                 </div>
               )}
 
-              {/* ✅ FIXED: Reply preview — consistent field names matching the store transform */}
+              {/* Reply preview */}
               {message.replyTo && (
                 <div
                   onClick={() =>
-                    // ✅ Use messageId (store always writes messageId, not id)
                     onScrollToReply(message.replyTo.messageId)
                   }
                   className={cn(
@@ -1412,7 +1451,6 @@ function MessageBubble({
                   )}
                 >
                   <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
-                    {/* ✅ Consistent: store always writes .sender into replyTo */}
                     {message.replyTo.sender || "Unknown"}
                   </div>
                   <div
@@ -1423,56 +1461,119 @@ function MessageBubble({
                         : "text-muted-foreground"
                     )}
                   >
-                    {/* ✅ Consistent: store always writes .content into replyTo */}
                     {message.replyTo.content || message.replyTo.preview || ""}
                   </div>
                 </div>
               )}
 
-              {/* Message Content */}
+              {/* ✅ FIXED: Message Content with proper media handling */}
               {(message.type === "text" || !message.type) && message.content && (
                 <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                   {highlightText(message.content)}
                 </p>
               )}
 
-              {message.type === "image" && (
-                <img
-                  src={message.url}
-                  alt="Shared image"
-                  className="rounded-lg max-w-[300px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity border border-primary/10"
-                  onClick={() => window.open(message.url, "_blank")}
-                />
+              {/* ✅ Image rendering */}
+              {message.type === "image" && message.url && (
+                <div className="cursor-pointer" onClick={() => onImageClick(getFileUrl(message.url))}>
+                  <img
+                    src={getFileUrl(message.url)}
+                    alt="Shared image"
+                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                    onError={(e) => {
+                      console.error("Failed to load image:", message.url);
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                </div>
               )}
 
-              {message.type === "video" && (
+              {/* ✅ Video rendering */}
+              {message.type === "video" && message.url && (
                 <video
-                  src={message.url}
+                  ref={videoRef}
+                  src={getFileUrl(message.url)}
                   controls
                   className="rounded-lg max-w-[300px] max-h-[300px]"
-                />
+                  onError={(e) => {
+                    console.error("Failed to load video:", message.url);
+                  }}
+                >
+                  Your browser does not support the video tag.
+                </video>
               )}
 
-              {message.type === "document" && (
+              {/* ✅ Audio rendering */}
+              {message.type === "audio" && message.url && (
+                <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-lg">
+                  <button
+                    onClick={() => {
+                      if (audioRef.current) {
+                        if (isPlaying) {
+                          audioRef.current.pause();
+                        } else {
+                          audioRef.current.play();
+                        }
+                        setIsPlaying(!isPlaying);
+                      }
+                    }}
+                    className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Play className="w-5 h-5 text-primary" />
+                    )}
+                  </button>
+                  <div className="flex-1">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${playProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Audio message
+                    </p>
+                  </div>
+                  <Volume2 className="w-4 h-4 text-muted-foreground" />
+                  <audio
+                    ref={audioRef}
+                    src={getFileUrl(message.url)}
+                    onEnded={() => setIsPlaying(false)}
+                    onError={(e) => {
+                      console.error("Failed to load audio:", message.url);
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* ✅ Document/File rendering */}
+              {(message.type === "file" || message.type === "document") && message.url && (
                 <div className="flex items-center gap-3 min-w-[200px]">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {message.fileName}
+                      {message.fileName || "Document"}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {message.fileSize}
-                    </p>
+                    {message.fileSize && (
+                      <p className="text-xs text-muted-foreground">
+                        {message.fileSize}
+                      </p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => window.open(message.url, "_blank")}
+                  <a
+                    href={getFileUrl(message.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                     aria-label="Download file"
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
               )}
 
