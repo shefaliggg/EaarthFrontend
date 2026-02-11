@@ -1,73 +1,128 @@
+// src/features/projects/project-chat/config/chatSocket.js
+// ✅ Chat-specific Socket.IO client configuration
+
 import { io } from "socket.io-client";
-import { store } from "../../../../app/store";
-import { socketBaseURL, socketConfig } from "../../../../shared/config/socketConfig";
 
 let chatSocket = null;
 
+/**
+ * Get or create the chat socket instance
+ * @returns {Socket} Socket.IO client instance
+ */
 export const getChatSocket = () => {
   if (!chatSocket) {
-    chatSocket = io(socketBaseURL, {
-      ...socketConfig,
+    const baseURL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    
+    chatSocket = io(baseURL, {
       autoConnect: false,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      withCredentials: true,
+    });
+
+    // Connection event listeners
+    chatSocket.on("connect", () => {
+      console.log("✅ Chat Socket connected:", chatSocket.id);
+    });
+
+    chatSocket.on("disconnect", (reason) => {
+      console.log("❌ Chat Socket disconnected:", reason);
+    });
+
+    chatSocket.on("connect_error", (error) => {
+      console.error("❌ Chat Socket connection error:", error);
     });
   }
+
   return chatSocket;
 };
 
-let listenersAttached = false;
-
+/**
+ * Initialize chat socket with user authentication
+ * @param {string} userId - Current user ID
+ */
 export const initChatSocket = (userId) => {
   const socket = getChatSocket();
 
+  if (!userId) {
+    console.warn("⚠️ Cannot init chat socket without userId");
+    return;
+  }
+
+  // Connect if not already connected
   if (!socket.connected) {
+    socket.auth = { userId };
     socket.connect();
     socket.emit("user:online", userId);
   }
 
-  if (listenersAttached) return;
-  listenersAttached = true;
+  return socket;
+};
 
-  // ---- MESSAGE EVENTS ----
-  chatSocket.on("message:new", ({ conversationId, message }) => {
-    // store.dispatch(messageReceived({ conversationId, message }));
-    console.log("New message received:", { conversationId, message });
-  });
+/**
+ * Disconnect chat socket
+ */
+export const disconnectChatSocket = () => {
+  if (chatSocket?.connected) {
+    chatSocket.disconnect();
+    console.log("👋 Chat Socket disconnected");
+  }
+};
 
-  chatSocket.on("message:edited", (payload) => {
-    // store.dispatch(messageEdited(payload));
-    console.log("Message edited:", payload);
-  });
+/**
+ * Join a conversation room
+ * @param {string} conversationId - Conversation ID to join
+ */
+export const joinConversation = (conversationId) => {
+  const socket = getChatSocket();
+  if (socket?.connected) {
+    socket.emit("conversation:join", conversationId);
+    console.log("📥 Joined conversation:", conversationId);
+  }
+};
 
-  chatSocket.on("message:deleted", (payload) => {
-    // store.dispatch(messageDeleted(payload));
-    console.log("Message deleted:", payload);
-  });
+/**
+ * Leave a conversation room
+ * @param {string} conversationId - Conversation ID to leave
+ */
+export const leaveConversation = (conversationId) => {
+  const socket = getChatSocket();
+  if (socket?.connected) {
+    socket.emit("conversation:leave", conversationId);
+    console.log("📤 Left conversation:", conversationId);
+  }
+};
 
-  // ---- READ RECEIPTS ----
-  chatSocket.on("conversation:read", (payload) => {
-    // store.dispatch(conversationRead(payload));
-    console.log("Conversation read:", payload);
-  });
+/**
+ * Emit typing start event
+ * @param {string} conversationId - Conversation ID
+ */
+export const emitTypingStart = (conversationId) => {
+  const socket = getChatSocket();
+  if (socket?.connected) {
+    socket.emit("typing:start", { conversationId });
+  }
+};
 
-  // ---- TYPING ----
-  chatSocket.on("typing:start", (payload) => {
-    // store.dispatch(typingStarted(payload));
-    console.log("Typing started:", payload);
-  });
+/**
+ * Emit typing stop event
+ * @param {string} conversationId - Conversation ID
+ */
+export const emitTypingStop = (conversationId) => {
+  const socket = getChatSocket();
+  if (socket?.connected) {
+    socket.emit("typing:stop", { conversationId });
+  }
+};
 
-  chatSocket.on("typing:stop", (payload) => {
-    // store.dispatch(typingStopped(payload));
-    console.log("Typing stopped:", payload);
-  });
-
-  // ---- PRESENCE ----
-  chatSocket.on("user:online", (userId) => {
-    // store.dispatch(userOnline(userId));
-    console.log("User online:", userId);
-  });
-
-  chatSocket.on("user:offline", (userId) => {
-    // store.dispatch(userOffline(userId));
-    console.log("User offline:", userId);
-  });
+export default {
+  getChatSocket,
+  initChatSocket,
+  disconnectChatSocket,
+  joinConversation,
+  leaveConversation,
+  emitTypingStart,
+  emitTypingStop,
 };

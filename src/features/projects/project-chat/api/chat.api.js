@@ -1,15 +1,33 @@
+// src/features/chat/api/chat.api.js
+// ✅ FIXED: Complete API layer with better error handling
+
 import { axiosConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
   // Get conversations for a project
   getConversations: async (projectId, type) => {
     try {
-      const response = await axiosConfig.get("/chats", {
-        params: { projectId, type },
-      });
+      console.log("📡 API: Fetching conversations", { projectId, type });
+      
+      const params = { projectId };
+      if (type) params.type = type;
+      
+      const response = await axiosConfig.get("/chats", { params });
+      
+      console.log("✅ API: Conversations fetched:", response.data.data?.length || 0, "items");
       return response.data.data;
     } catch (error) {
-      console.error("❌ getConversations failed:", error.response?.data || error.message);
+      console.error("❌ getConversations failed:");
+      console.error("  Status:", error.response?.status);
+      console.error("  Message:", error.response?.data?.message || error.message);
+      console.error("  Full error:", error.response?.data || error);
+      
+      // Log the full request details for debugging
+      if (error.config) {
+        console.error("  Request URL:", error.config.url);
+        console.error("  Request params:", error.config.params);
+      }
+      
       throw error;
     }
   },
@@ -17,7 +35,9 @@ const chatApi = {
   // Get conversation details
   getConversationById: async (conversationId) => {
     try {
+      console.log("📡 API: Fetching conversation by ID:", conversationId);
       const response = await axiosConfig.get(`/chats/${conversationId}`);
+      console.log("✅ API: Conversation fetched:", response.data.data);
       return response.data.data;
     } catch (error) {
       console.error("❌ getConversationById failed:", error.response?.data || error.message);
@@ -28,10 +48,17 @@ const chatApi = {
   // Get messages for a conversation
   getMessages: async (conversationId, limit = 20, cursor = null) => {
     try {
+      console.log("📡 API: Fetching messages", { conversationId, limit, cursor });
+      
+      const params = { limit };
+      if (cursor) params.cursor = cursor;
+      
       const response = await axiosConfig.get(
         `/chats/${conversationId}/messages`,
-        { params: { limit, cursor } }
+        { params }
       );
+      
+      console.log("✅ API: Messages fetched:", response.data.data.messages?.length || 0, "items");
       return response.data.data;
     } catch (error) {
       console.error("❌ getMessages failed:", error.response?.data || error.message);
@@ -39,12 +66,12 @@ const chatApi = {
     }
   },
 
-  // ✅ FIXED: Send message - handles both JSON and FormData
+  // Send message - handles both JSON and FormData
   sendMessage: async (conversationId, messageData) => {
     try {
       const isFormData = messageData instanceof FormData;
 
-      console.log("📤 Sending message:", {
+      console.log("📤 API: Sending message:", {
         conversationId,
         isFormData,
         type: isFormData ? messageData.get("type") : messageData.type,
@@ -53,10 +80,9 @@ const chatApi = {
       const config = {};
 
       if (isFormData) {
-        // ✅ For FormData, let axios set the Content-Type header automatically
-        // This ensures the correct multipart boundary is included
+        // For FormData, let axios set the Content-Type header automatically
         config.headers = {
-          "Content-Type": undefined, // Critical: let browser/axios set this
+          "Content-Type": "multipart/form-data",
         };
 
         // Debug: Log FormData contents
@@ -69,7 +95,6 @@ const chatApi = {
           }
         }
       } else {
-        // For JSON, axios will automatically set Content-Type: application/json
         console.log("📋 JSON payload:", JSON.stringify(messageData, null, 2));
       }
 
@@ -79,7 +104,7 @@ const chatApi = {
         config
       );
 
-      console.log("✅ Message sent successfully:", response.data.data);
+      console.log("✅ API: Message sent successfully:", response.data.data);
       return response.data.data;
     } catch (error) {
       console.error("❌ sendMessage failed:", {

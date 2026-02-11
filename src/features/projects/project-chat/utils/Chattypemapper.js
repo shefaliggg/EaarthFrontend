@@ -1,3 +1,6 @@
+// src/features/chat/utils/Chattypemapper.js
+// ✅ Maps backend conversation types to frontend UI types
+
 /**
  * Maps backend conversation types to frontend UI types
  * Backend: PROJECT_ALL, DEPARTMENT, DIRECT

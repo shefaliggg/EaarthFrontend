@@ -1,3 +1,6 @@
+// src/features/chat/socket/socketConfig.js
+// ✅ FIXED: Socket.IO configuration with correct backend URL
+
 import { io } from "socket.io-client";
 
 let socket = null;
@@ -11,28 +14,33 @@ export const initializeSocket = (userId) => {
 
   // If socket exists but disconnected, disconnect it first
   if (socket) {
+    socket.removeAllListeners();
     socket.disconnect();
     socket = null;
   }
 
-  // Get the base URL from environment or default to current origin
-  const baseURL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  // ✅ CRITICAL FIX: Use API base URL from environment (port 5000), NOT frontend URL (port 5173)
+  const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
   
   console.log("🔌 Initializing new socket connection to:", baseURL);
+  console.log("👤 User ID:", userId);
   
   socket = io(baseURL, {
     auth: {
-      token: localStorage.getItem("token"), // or however you store your auth token
       userId, // Send userId for authentication
     },
-    transports: ["websocket", "polling"],
+    transports: ["websocket", "polling"], // Try websocket first, fallback to polling
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
+    timeout: 10000, // 10 second timeout
+    withCredentials: true, // Important for CORS with credentials
   });
 
   socket.on("connect", () => {
     console.log("✅ Socket.IO connected:", socket.id);
+    // Emit user online event
+    socket.emit("user:online", userId);
   });
 
   socket.on("disconnect", (reason) => {
@@ -45,6 +53,20 @@ export const initializeSocket = (userId) => {
 
   socket.on("connect_error", (error) => {
     console.error("❌ Socket.IO connection error:", error);
+    console.log("💡 Trying to connect to:", baseURL);
+    console.log("💡 Make sure backend is running on port 5000");
+  });
+
+  socket.on("reconnect", (attemptNumber) => {
+    console.log("🔄 Socket.IO reconnected after", attemptNumber, "attempts");
+  });
+
+  socket.on("reconnect_error", (error) => {
+    console.error("❌ Socket.IO reconnection error:", error);
+  });
+
+  socket.on("reconnect_failed", () => {
+    console.error("❌ Socket.IO reconnection failed after all attempts");
   });
 
   return socket;
@@ -60,20 +82,9 @@ export const getIO = () => {
 
 export const disconnectSocket = () => {
   if (socket) {
+    socket.removeAllListeners();
     socket.disconnect();
     socket = null;
     console.log("👋 Socket.IO disconnected");
   }
 };
-
-// import { currentEnv } from "./enviroment";
-
-// export const socketConfig = {
-//   transports: ["websocket"],
-//   path: "/socket.io/",
-//   withCredentials: true,
-// };
-
-// export const socketBaseURL = currentEnv === "development"
-//   ? import.meta.env.VITE_SOCKET_IO_API_URL_DEV
-//   : import.meta.env.VITE_SOCKET_IO_API_URL_PROD;

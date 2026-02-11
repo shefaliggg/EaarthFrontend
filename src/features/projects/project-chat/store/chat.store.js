@@ -1,3 +1,6 @@
+// src/features/chat/store/chat.store.js
+// ✅ COMPLETE Production-Ready Zustand Store
+
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import chatApi from "../api/chat.api";
@@ -6,7 +9,7 @@ import {
   initializeSocket as initSocket,
   getIO,
   disconnectSocket as closeSocket,
-} from "../config/socketConfig";
+} from "../socket/socketConfig";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -14,12 +17,10 @@ const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 const getFileUrl = (fileKey) => {
   if (!fileKey) return null;
   
-  // If already a full URL, return as is
   if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
     return fileKey;
   }
   
-  // Otherwise, construct S3 URL
   const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
   return `${S3_BASE_URL}/${fileKey}`;
 };
@@ -30,27 +31,24 @@ function transformMessage(msg, currentUserId) {
     msg.senderId?._id?.toString() === currentUserId?.toString() ||
     msg.senderId?.toString() === currentUserId?.toString();
 
-  // ✅ Extract file information
+  // Extract file information
   let url = null;
   let fileName = null;
   let fileSize = null;
   
   if (msg.content?.files && msg.content.files.length > 0) {
     const file = msg.content.files[0];
-    url = file.url; // Store the S3 key or full URL
+    url = getFileUrl(file.url);
     fileName = file.name;
     fileSize = file.size ? `${(file.size / 1024).toFixed(2)} KB` : null;
   }
 
-  // ✅ Normalize replyTo
+  // Normalize replyTo
   let replyTo = null;
   if (msg.replyTo?.messageId) {
     replyTo = {
       messageId: msg.replyTo.messageId,
-      sender:
-        msg.replyTo.senderId?.name ||
-        msg.replyTo.senderName ||
-        "Unknown",
+      sender: msg.replyTo.senderId?.name || "Unknown",
       content: msg.replyTo.preview || "",
       preview: msg.replyTo.preview || "",
     };
@@ -67,7 +65,7 @@ function transformMessage(msg, currentUserId) {
     timestamp: new Date(msg.createdAt).getTime(),
     content: msg.content?.text || "",
     type: msg.type?.toLowerCase(),
-    url, // S3 key or full URL
+    url,
     fileName,
     fileSize,
     isOwn,
@@ -88,7 +86,9 @@ function transformMessage(msg, currentUserId) {
 const useChatStore = create(
   devtools(
     (set, get) => ({
-      // ─── State ───────────────────────────────
+      // ═══════════════════════════════════════
+      // STATE
+      // ═══════════════════════════════════════
       conversations: [],
       messagesByConversation: {},
       selectedChat: null,
@@ -98,16 +98,23 @@ const useChatStore = create(
       isSendingMessage: false,
       socket: null,
       socketInitialized: false,
+      typingUsers: {}, // { conversationId: [userId1, userId2] }
 
-      // ─── Socket ──────────────────────────────
+      // ═══════════════════════════════════════
+      // SOCKET MANAGEMENT
+      // ═══════════════════════════════════════
       initializeSocket: (userId) => {
         try {
           if (get().socketInitialized && get().socket?.connected) {
+            console.log("♻️ Socket already connected");
             return get().socket;
           }
 
           const existingSocket = get().socket;
-          if (existingSocket) existingSocket.disconnect();
+          if (existingSocket) {
+            existingSocket.removeAllListeners();
+            existingSocket.disconnect();
+          }
 
           const socket = initSocket(userId);
           if (!socket) {
@@ -115,6 +122,10 @@ const useChatStore = create(
             return null;
           }
 
+          // ✅ Set initial state (not initialized until connected)
+          set({ socket, socketInitialized: false });
+
+          // ═══ CONNECTION EVENTS ═══
           socket.on("connect", () => {
             console.log("✅ Socket connected:", socket.id);
             set({ socketInitialized: true });
@@ -125,6 +136,12 @@ const useChatStore = create(
             set({ socketInitialized: false });
           });
 
+          socket.on("connect_error", (error) => {
+            console.error("❌ Socket connection error:", error);
+            set({ socketInitialized: false });
+          });
+
+          // ═══ MESSAGE EVENTS ═══
           socket.on("message:new", ({ conversationId, message }) => {
             console.log("📨 New message received:", { conversationId, message });
             get().addMessageToConversation(conversationId, message);
@@ -132,6 +149,7 @@ const useChatStore = create(
           });
 
           socket.on("message:edited", ({ messageId, text, editedAt }) => {
+            console.log("✏️ Message edited:", messageId);
             get().updateMessageInConversation(messageId, {
               content: text,
               editedAt,
@@ -140,14 +158,17 @@ const useChatStore = create(
           });
 
           socket.on("message:deleted", ({ messageId }) => {
+            console.log("🗑️ Message deleted:", messageId);
             get().markMessageAsDeleted(messageId);
           });
 
           socket.on("message:reaction", ({ messageId, userId, emoji }) => {
+            console.log("👍 Reaction added:", { messageId, emoji });
             get().updateMessageReaction(messageId, userId, emoji);
           });
 
           socket.on("conversation:read", ({ conversationId, userId }) => {
+            console.log("👀 Messages marked as read:", conversationId);
             get().markConversationMessagesAsRead(conversationId, userId);
           });
 
@@ -155,7 +176,31 @@ const useChatStore = create(
             console.log("📌 Message pinned:", messageId);
           });
 
-          set({ socket, socketInitialized: true });
+          // ═══ TYPING EVENTS ═══
+          socket.on("typing:start", ({ conversationId, userId }) => {
+            set((state) => {
+              const existing = state.typingUsers[conversationId] || [];
+              if (existing.includes(userId)) return state;
+
+              return {
+                typingUsers: {
+                  ...state.typingUsers,
+                  [conversationId]: [...existing, userId],
+                },
+              };
+            });
+          });
+
+          socket.on("typing:stop", ({ conversationId, userId }) => {
+            set((state) => ({
+              typingUsers: {
+                ...state.typingUsers,
+                [conversationId]: (state.typingUsers[conversationId] || [])
+                  .filter((id) => id !== userId),
+              },
+            }));
+          });
+
           return socket;
         } catch (error) {
           console.error("❌ Error initializing socket:", error);
@@ -167,26 +212,31 @@ const useChatStore = create(
       disconnectSocket: () => {
         const socket = get().socket;
         if (socket) {
+          socket.removeAllListeners();
           closeSocket();
-          set({ socket: null, socketInitialized: false });
+          set({ socket: null, socketInitialized: false, typingUsers: {} });
         }
       },
 
       joinConversation: (conversationId) => {
         const socket = get().socket;
         if (socket?.connected) {
-          socket.emit("join:conversation", conversationId);
+          socket.emit("conversation:join", conversationId);
+          console.log("📥 Joined conversation:", conversationId);
         }
       },
 
       leaveConversation: (conversationId) => {
         const socket = get().socket;
         if (socket?.connected) {
-          socket.emit("leave:conversation", conversationId);
+          socket.emit("conversation:leave", conversationId);
+          console.log("📤 Left conversation:", conversationId);
         }
       },
 
-      // ─── Chat selection ──────────────────────
+      // ═══════════════════════════════════════
+      // CHAT SELECTION
+      // ═══════════════════════════════════════
       setSelectedChat: (chat) => {
         const prevChat = get().selectedChat;
         if (prevChat?.id) get().leaveConversation(prevChat.id);
@@ -199,7 +249,9 @@ const useChatStore = create(
         get().initializeSocket(userId);
       },
 
-      // ─── Conversations ───────────────────────
+      // ═══════════════════════════════════════
+      // CONVERSATIONS
+      // ═══════════════════════════════════════
       loadConversations: async (projectId, type) => {
         if (!projectId) return;
 
@@ -221,14 +273,12 @@ const useChatStore = create(
             let otherUser = null;
             if (conv.type === "DIRECT" && conv.members) {
               otherUser = conv.members.find(
-                (m) =>
-                  m.userId?._id?.toString() !== currentUserId.toString()
+                (m) => m.userId?._id?.toString() !== currentUserId.toString()
               );
             }
 
             const currentMember = conv.members?.find(
-              (m) =>
-                m.userId?._id?.toString() === currentUserId.toString()
+              (m) => m.userId?._id?.toString() === currentUserId.toString()
             );
             const canSendMessage = currentMember?.canSendMessage !== false;
 
@@ -277,7 +327,18 @@ const useChatStore = create(
         }
       },
 
-      // ─── Messages ────────────────────────────
+      // ✅ NEW: Update single conversation (for optimistic updates)
+      updateConversation: (conversationId, updates) => {
+        set({
+          conversations: get().conversations.map((c) =>
+            c.id === conversationId ? { ...c, ...updates } : c
+          ),
+        });
+      },
+
+      // ═══════════════════════════════════════
+      // MESSAGES
+      // ═══════════════════════════════════════
       loadMessages: async (conversationId, loadMore = false) => {
         if (!conversationId) return;
 
@@ -320,16 +381,15 @@ const useChatStore = create(
         }
       },
 
-      // ─── Send message ────────────────────────
+      // ═══════════════════════════════════════
+      // SEND MESSAGE
+      // ═══════════════════════════════════════
       sendMessage: async (conversationId, projectIdParam, messageData) => {
         const currentUserId = get().currentUserId;
         if (!currentUserId) throw new Error("User not authenticated");
 
         const selectedChat = get().selectedChat;
-        const projectId =
-          projectIdParam ||
-          selectedChat?.projectId ||
-          DEFAULT_PROJECT_ID;
+        const projectId = projectIdParam || selectedChat?.projectId || DEFAULT_PROJECT_ID;
 
         if (!projectId) throw new Error("Project ID is required");
 
@@ -352,9 +412,7 @@ const useChatStore = create(
             : (messageData.type?.toLowerCase() || "text"),
           isOwn: true,
           state: "sending",
-          fileName: isFileUpload
-            ? messageData.formData.get("attachments")?.name
-            : null,
+          fileName: isFileUpload ? messageData.formData.get("attachments")?.name : null,
           replyTo: null,
           _raw: null,
         };
@@ -385,7 +443,7 @@ const useChatStore = create(
           cursor: null,
         };
 
-        // Optimistic update
+        // ✅ Optimistic update
         set({
           messagesByConversation: {
             ...get().messagesByConversation,
@@ -401,23 +459,10 @@ const useChatStore = create(
           let sentMessage;
 
           if (isFileUpload) {
-            console.log("📤 Sending file upload with FormData");
-            
-            for (let [key, value] of messageData.formData.entries()) {
-              if (value instanceof File) {
-                console.log(`FormData: ${key} = File(${value.name}, ${value.size} bytes)`);
-              } else {
-                console.log(`FormData: ${key} = ${value}`);
-              }
-            }
-            
-            sentMessage = await chatApi.sendMessage(
-              conversationId,
-              messageData.formData
-            );
+            console.log("📤 Sending file upload");
+            sentMessage = await chatApi.sendMessage(conversationId, messageData.formData);
           } else {
-            console.log("📤 Sending text message with JSON");
-            
+            console.log("📤 Sending text message");
             const payload = {
               projectId,
               type: (messageData.type || "TEXT").toUpperCase(),
@@ -465,11 +510,6 @@ const useChatStore = create(
           return sentMessage;
         } catch (error) {
           console.error("❌ Failed to send message:", error);
-          console.error("Error details:", {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status,
-          });
 
           // Mark optimistic message as failed
           const updated = get().messagesByConversation[conversationId];
@@ -490,8 +530,9 @@ const useChatStore = create(
         }
       },
 
-      // ─── Socket event handlers ───────────────
-
+      // ═══════════════════════════════════════
+      // SOCKET EVENT HANDLERS
+      // ═══════════════════════════════════════
       addMessageToConversation: (conversationId, message) => {
         const currentUserId = get().currentUserId;
         const existing = get().messagesByConversation[conversationId];
