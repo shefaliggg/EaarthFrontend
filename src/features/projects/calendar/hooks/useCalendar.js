@@ -38,7 +38,6 @@ function detectConflicts(events) {
     }
   }
 
-  // Sort conflicts by the earliest overlap date so they appear chronologically
   return conflicts.sort((a, b) => {
     const aOverlap = Math.max(new Date(a.event1.startDateTime), new Date(a.event2.startDateTime));
     const bOverlap = Math.max(new Date(b.event1.startDateTime), new Date(b.event2.startDateTime));
@@ -68,32 +67,28 @@ function useCalendar() {
 
   const upcomingEvents = normalizeUpcomingEvents(events);
 
-  // All conflicts across entire dataset — sorted chronologically
   const conflicts = useMemo(() => detectConflicts(events), [events]);
 
-  // Calculate events count based on current view and date
   const getViewSpecificEventCount = useMemo(() => {
     const view = calendar.view;
-    
+
     if (view === "month" || view === "timeline" || view === "conflicts") {
-      // For month-based views, count events in current month
       const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
-      
+
       return events.filter(e => {
         if (!e.startDateTime) return false;
         const eventStart = new Date(e.startDateTime);
         const eventEnd = e.endDateTime ? new Date(e.endDateTime) : eventStart;
-        // Include if event overlaps with the month
         return eventStart <= monthEnd && eventEnd >= monthStart;
       }).length;
     }
-    
-    if (view === "year") {
-      // For year view, count events in current year
+
+    // Gantt view now spans a full year, so count like year view
+    if (view === "year" || view === "gantt") {
       const yearStart = new Date(currentDate.getFullYear(), 0, 1);
       const yearEnd = new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59, 999);
-      
+
       return events.filter(e => {
         if (!e.startDateTime) return false;
         const eventStart = new Date(e.startDateTime);
@@ -101,17 +96,16 @@ function useCalendar() {
         return eventStart <= yearEnd && eventEnd >= yearStart;
       }).length;
     }
-    
-    if (view === "week" || view === "gantt") {
-      // For week-based views, count events in current week
+
+    if (view === "week") {
       const weekStart = new Date(currentDate);
       weekStart.setHours(0, 0, 0, 0);
       weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-      
+
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
-      
+
       return events.filter(e => {
         if (!e.startDateTime) return false;
         const eventStart = new Date(e.startDateTime);
@@ -119,15 +113,14 @@ function useCalendar() {
         return eventStart <= weekEnd && eventEnd >= weekStart;
       }).length;
     }
-    
+
     if (view === "day") {
-      // For day view, count events on current day
       const dayStart = new Date(currentDate);
       dayStart.setHours(0, 0, 0, 0);
-      
+
       const dayEnd = new Date(currentDate);
       dayEnd.setHours(23, 59, 59, 999);
-      
+
       return events.filter(e => {
         if (!e.startDateTime) return false;
         const eventStart = new Date(e.startDateTime);
@@ -135,8 +128,7 @@ function useCalendar() {
         return eventStart <= dayEnd && eventEnd >= dayStart;
       }).length;
     }
-    
-    // Default: return all filtered events
+
     return events.length;
   }, [events, currentDate, calendar.view]);
 
@@ -145,7 +137,7 @@ function useCalendar() {
     else if (calendar.view === "week") setDate(addWeeks(currentDate, -1));
     else if (calendar.view === "month") setDate(addMonths(currentDate, -1));
     else if (calendar.view === "year") setDate(addYears(currentDate, -1));
-    else if (calendar.view === "gantt") setDate(addWeeks(currentDate, -1));
+    else if (calendar.view === "gantt") setDate(addYears(currentDate, -1));
     else if (calendar.view === "timeline") setDate(addMonths(currentDate, -1));
     else if (calendar.view === "conflicts") setDate(addMonths(currentDate, -1));
   };
@@ -155,7 +147,7 @@ function useCalendar() {
     else if (calendar.view === "week") setDate(addWeeks(currentDate, 1));
     else if (calendar.view === "month") setDate(addMonths(currentDate, 1));
     else if (calendar.view === "year") setDate(addYears(currentDate, 1));
-    else if (calendar.view === "gantt") setDate(addWeeks(currentDate, 1));
+    else if (calendar.view === "gantt") setDate(addYears(currentDate, 1));
     else if (calendar.view === "timeline") setDate(addMonths(currentDate, 1));
     else if (calendar.view === "conflicts") setDate(addMonths(currentDate, 1));
   };

@@ -34,6 +34,42 @@ function CalendarToolbar({
   onNext,
   onToday,
 }) {
+  // Helper to get the display title based on current view
+  const getTitle = () => {
+    switch (view) {
+      case "year":
+      case "gantt":
+        return format(currentDate, "yyyy");
+      case "month":
+      case "timeline":
+      case "conflicts":
+        return format(currentDate, "MMMM yyyy");
+      default:
+        return format(currentDate, "dd EEE MMM yyyy");
+    }
+  };
+
+  // Helper to get the subtitle label
+  const getSubtitle = () => {
+    switch (view) {
+      case "year":
+        return `${eventsCount} events scheduled`;
+      case "gantt":
+        return `${eventsCount} events scheduled`;
+      case "month":
+      case "timeline":
+        return `${eventsCount} events scheduled`;
+      case "conflicts":
+        return `${eventsCount} events scheduled`;
+      case "week":
+        return `${eventsCount} events scheduled`;
+      case "day":
+        return `${eventsCount} events scheduled`;
+      default:
+        return `${eventsCount} events scheduled`;
+    }
+  };
+
   return (
     <>
       <Card className="p-4">
@@ -48,21 +84,8 @@ function CalendarToolbar({
             </div>
 
             <div>
-              <h3 className="font-bold text-lg">
-                {view === "month" && format(currentDate, "MMMM yyyy")}
-                {view === "year" && format(currentDate, "yyyy")}
-                {view === "timeline" && format(currentDate, "MMMM yyyy")}
-                {view === "conflicts" && format(currentDate, "MMMM yyyy")}
-                {view !== "month" &&
-                  view !== "year" &&
-                  view !== "timeline" &&
-                  view !== "conflicts" &&
-                  format(currentDate, "dd EEE MMM yyyy")}
-              </h3>
-
-              <p className="text-xs text-muted-foreground">
-                {eventsCount} events scheduled
-              </p>
+              <h3 className="font-bold text-lg">{getTitle()}</h3>
+              <p className="text-xs text-muted-foreground">{getSubtitle()}</p>
             </div>
           </div>
 
