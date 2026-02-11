@@ -94,74 +94,6 @@ function ProjectChat() {
     setSelectedChat(chat);
   }, [setSelectedChat]);
 
-  const handleManualProjectSubmit = () => {
-    if (manualProjectId.trim()) {
-      setUseManualProject(true);
-      console.log("✅ Using manual project ID:", manualProjectId);
-    }
-  };
-
-  // Show project selector if no project
-  if (!currentProject?._id) {
-    return (
-      <div className="space-y-6 container mx-auto">
-        <PageHeader icon="MessageSquare" title="Project Chat" />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center max-w-lg w-full p-8">
-            <div className="text-6xl mb-6">💬</div>
-            <h2 className="text-2xl font-semibold mb-2">Select a Project</h2>
-            <p className="text-muted-foreground mb-6">
-              Enter a project ID to start chatting
-            </p>
-            
-            <div className="bg-card border rounded-lg p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Project ID</label>
-                <Input
-                  value={manualProjectId}
-                  onChange={(e) => setManualProjectId(e.target.value)}
-                  placeholder="Enter project ID"
-                  className="font-mono text-sm"
-                />
-              </div>
-              
-              <Button 
-                onClick={handleManualProjectSubmit}
-                className="w-full"
-                disabled={!manualProjectId.trim()}
-              >
-                Start Chat
-              </Button>
-              
-              <div className="text-xs text-muted-foreground text-left bg-muted p-3 rounded">
-                <p className="font-semibold mb-1">💡 Default Test Project ID:</p>
-                <code className="block bg-background p-2 rounded mt-1">
-                  697c899668977a7ca2b27462
-                </code>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading if no user
-  if (!currentUser?._id) {
-    return (
-      <div className="space-y-6 container mx-auto">
-        <PageHeader icon="MessageSquare" title="Project Chat" />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold mb-2">Loading User...</h2>
-            <p className="text-muted-foreground">Please wait</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Show loading if socket not initialized
   if (!socketInitialized) {
     return (
@@ -181,31 +113,6 @@ function ProjectChat() {
   return (
     <div className="space-y-6 container mx-auto">
       <PageHeader icon="MessageSquare" title="Project Chat" />
-
-      {/* Status Banner */}
-      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-            <span className="text-lg">✅</span>
-            <div>
-              <strong>Connected:</strong> {currentProject.projectName} | User: {currentUser._id} | Socket: {socketInitialized ? "✓" : "✗"}
-            </div>
-          </div>
-          
-          {useManualProject && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setUseManualProject(false);
-                setSelectedChat(null);
-              }}
-            >
-              Change Project
-            </Button>
-          )}
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-200px)]">
         {/* Left Sidebar - Conversations List */}

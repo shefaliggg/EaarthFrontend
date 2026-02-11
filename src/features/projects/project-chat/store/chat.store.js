@@ -1,27 +1,24 @@
-// src/features/chat/store/chat.store.js
-// ✅ COMPLETE Production-Ready Zustand Store
-
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
-import {
-  initializeSocket as initSocket,
-  getIO,
-  disconnectSocket as closeSocket,
-} from "../socket/socketConfig";
+import { disconnect, getSocket } from "../../../../shared/config/socketConfig";
+import { store } from "../../../../app/store";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
-// ✅ Helper to get full S3 URL
+const getCurrentUserId = () =>
+  store.getState().user.currentUser?._id;
+
 const getFileUrl = (fileKey) => {
   if (!fileKey) return null;
-  
+
   if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
     return fileKey;
   }
-  
-  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+
+  const S3_BASE_URL =
+    import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
   return `${S3_BASE_URL}/${fileKey}`;
 };
 
@@ -35,7 +32,7 @@ function transformMessage(msg, currentUserId) {
   let url = null;
   let fileName = null;
   let fileSize = null;
-  
+
   if (msg.content?.files && msg.content.files.length > 0) {
     const file = msg.content.files[0];
     url = getFileUrl(file.url);
@@ -86,152 +83,81 @@ function transformMessage(msg, currentUserId) {
 const useChatStore = create(
   devtools(
     (set, get) => ({
-      // ═══════════════════════════════════════
-      // STATE
-      // ═══════════════════════════════════════
       conversations: [],
       messagesByConversation: {},
       selectedChat: null,
-      currentUserId: null,
       isLoadingConversations: false,
       isLoadingMessages: false,
       isSendingMessage: false,
-      socket: null,
-      socketInitialized: false,
       typingUsers: {}, // { conversationId: [userId1, userId2] }
 
-      // ═══════════════════════════════════════
-      // SOCKET MANAGEMENT
-      // ═══════════════════════════════════════
-      initializeSocket: (userId) => {
-        try {
-          if (get().socketInitialized && get().socket?.connected) {
-            console.log("♻️ Socket already connected");
-            return get().socket;
-          }
+      attachSocketListeners: () => {
+        const socket = getSocket();
+        if (!socket) return;
 
-          const existingSocket = get().socket;
-          if (existingSocket) {
-            existingSocket.removeAllListeners();
-            existingSocket.disconnect();
-          }
+        console.log("🔌 Chat listeners attached");
 
-          const socket = initSocket(userId);
-          if (!socket) {
-            console.error("❌ Failed to initialize socket");
-            return null;
-          }
+        socket.on("message:new", ({ conversationId, message }) => {
+          get().addMessageToConversation(conversationId, message);
+          get().updateConversationLastMessage(conversationId, message);
+        });
 
-          // ✅ Set initial state (not initialized until connected)
-          set({ socket, socketInitialized: false });
-
-          // ═══ CONNECTION EVENTS ═══
-          socket.on("connect", () => {
-            console.log("✅ Socket connected:", socket.id);
-            set({ socketInitialized: true });
+        socket.on("message:edited", ({ messageId, text, editedAt }) => {
+          get().updateMessageInConversation(messageId, {
+            content: text,
+            editedAt,
+            edited: true,
           });
+        });
 
-          socket.on("disconnect", () => {
-            console.log("❌ Socket disconnected");
-            set({ socketInitialized: false });
-          });
+        socket.on("message:deleted", ({ messageId }) => {
+          get().markMessageAsDeleted(messageId);
+        });
 
-          socket.on("connect_error", (error) => {
-            console.error("❌ Socket connection error:", error);
-            set({ socketInitialized: false });
-          });
+        socket.on("message:reaction", ({ messageId, userId, emoji }) => {
+          get().updateMessageReaction(messageId, userId, emoji);
+        });
 
-          // ═══ MESSAGE EVENTS ═══
-          socket.on("message:new", ({ conversationId, message }) => {
-            console.log("📨 New message received:", { conversationId, message });
-            get().addMessageToConversation(conversationId, message);
-            get().updateConversationLastMessage(conversationId, message);
-          });
+        socket.on("conversation:read", ({ conversationId, userId }) => {
+          get().markConversationMessagesAsRead(conversationId, userId);
+        });
 
-          socket.on("message:edited", ({ messageId, text, editedAt }) => {
-            console.log("✏️ Message edited:", messageId);
-            get().updateMessageInConversation(messageId, {
-              content: text,
-              editedAt,
-              edited: true,
-            });
-          });
-
-          socket.on("message:deleted", ({ messageId }) => {
-            console.log("🗑️ Message deleted:", messageId);
-            get().markMessageAsDeleted(messageId);
-          });
-
-          socket.on("message:reaction", ({ messageId, userId, emoji }) => {
-            console.log("👍 Reaction added:", { messageId, emoji });
-            get().updateMessageReaction(messageId, userId, emoji);
-          });
-
-          socket.on("conversation:read", ({ conversationId, userId }) => {
-            console.log("👀 Messages marked as read:", conversationId);
-            get().markConversationMessagesAsRead(conversationId, userId);
-          });
-
-          socket.on("message:pinned", ({ messageId }) => {
-            console.log("📌 Message pinned:", messageId);
-          });
-
-          // ═══ TYPING EVENTS ═══
-          socket.on("typing:start", ({ conversationId, userId }) => {
-            set((state) => {
-              const existing = state.typingUsers[conversationId] || [];
-              if (existing.includes(userId)) return state;
-
-              return {
-                typingUsers: {
-                  ...state.typingUsers,
-                  [conversationId]: [...existing, userId],
-                },
-              };
-            });
-          });
-
-          socket.on("typing:stop", ({ conversationId, userId }) => {
-            set((state) => ({
+        socket.on("typing:start", ({ conversationId, userId }) => {
+          set((state) => {
+            const existing = state.typingUsers[conversationId] || [];
+            if (existing.includes(userId)) return state;
+            return {
               typingUsers: {
                 ...state.typingUsers,
-                [conversationId]: (state.typingUsers[conversationId] || [])
-                  .filter((id) => id !== userId),
+                [conversationId]: [...existing, userId],
               },
-            }));
+            };
           });
+        });
 
-          return socket;
-        } catch (error) {
-          console.error("❌ Error initializing socket:", error);
-          set({ socketInitialized: false });
-          return null;
-        }
-      },
-
-      disconnectSocket: () => {
-        const socket = get().socket;
-        if (socket) {
-          socket.removeAllListeners();
-          closeSocket();
-          set({ socket: null, socketInitialized: false, typingUsers: {} });
-        }
+        socket.on("typing:stop", ({ conversationId, userId }) => {
+          set((state) => {
+            const prev = state.typingUsers[conversationId] || [];
+            const next = prev.filter((id) => id !== userId);
+            if (prev.length === next.length) return state;
+            return {
+              typingUsers: {
+                ...state.typingUsers,
+                [conversationId]: next,
+              },
+            };
+          });
+        });
       },
 
       joinConversation: (conversationId) => {
-        const socket = get().socket;
-        if (socket?.connected) {
-          socket.emit("conversation:join", conversationId);
-          console.log("📥 Joined conversation:", conversationId);
-        }
+        const socket = getSocket();
+        socket?.emit("conversation:join", conversationId);
       },
 
       leaveConversation: (conversationId) => {
-        const socket = get().socket;
-        if (socket?.connected) {
-          socket.emit("conversation:leave", conversationId);
-          console.log("📤 Left conversation:", conversationId);
-        }
+        const socket = getSocket();
+        socket?.emit("conversation:leave", conversationId);
       },
 
       // ═══════════════════════════════════════
@@ -246,7 +172,7 @@ const useChatStore = create(
 
       setCurrentUserId: (userId) => {
         set({ currentUserId: userId });
-        get().initializeSocket(userId);
+        get().attachSocketListeners(userId);
       },
 
       // ═══════════════════════════════════════
@@ -273,12 +199,12 @@ const useChatStore = create(
             let otherUser = null;
             if (conv.type === "DIRECT" && conv.members) {
               otherUser = conv.members.find(
-                (m) => m.userId?._id?.toString() !== currentUserId.toString()
+                (m) => m.userId?._id?.toString() !== currentUserId.toString(),
               );
             }
 
             const currentMember = conv.members?.find(
-              (m) => m.userId?._id?.toString() === currentUserId.toString()
+              (m) => m.userId?._id?.toString() === currentUserId.toString(),
             );
             const canSendMessage = currentMember?.canSendMessage !== false;
 
@@ -290,8 +216,8 @@ const useChatStore = create(
                 conv.type === "PROJECT_ALL"
                   ? "All Departments"
                   : conv.type === "DEPARTMENT"
-                  ? conv.department?.name || "Department"
-                  : otherUser?.userId?.name || "Unknown User",
+                    ? conv.department?.name || "Department"
+                    : otherUser?.userId?.name || "Unknown User",
               department: conv.department?._id,
               departmentName: conv.department?.name,
               userId: otherUser?.userId?._id,
@@ -311,7 +237,7 @@ const useChatStore = create(
                 : Date.now(),
               isPinned:
                 conv.pinnedFor?.some(
-                  (id) => id.toString() === currentUserId.toString()
+                  (id) => id.toString() === currentUserId.toString(),
                 ) || false,
               isMuted: false,
               isFavorite: false,
@@ -331,7 +257,7 @@ const useChatStore = create(
       updateConversation: (conversationId, updates) => {
         set({
           conversations: get().conversations.map((c) =>
-            c.id === conversationId ? { ...c, ...updates } : c
+            c.id === conversationId ? { ...c, ...updates } : c,
           ),
         });
       },
@@ -357,7 +283,7 @@ const useChatStore = create(
           const currentUserId = get().currentUserId;
 
           const transformed = result.messages.map((msg) =>
-            transformMessage(msg, currentUserId)
+            transformMessage(msg, currentUserId),
           );
 
           const updatedMessages = loadMore
@@ -389,7 +315,8 @@ const useChatStore = create(
         if (!currentUserId) throw new Error("User not authenticated");
 
         const selectedChat = get().selectedChat;
-        const projectId = projectIdParam || selectedChat?.projectId || DEFAULT_PROJECT_ID;
+        const projectId =
+          projectIdParam || selectedChat?.projectId || DEFAULT_PROJECT_ID;
 
         if (!projectId) throw new Error("Project ID is required");
 
@@ -406,24 +333,28 @@ const useChatStore = create(
             minute: "2-digit",
           }),
           timestamp: Date.now(),
-          content: isFileUpload ? "" : (messageData.text || ""),
-          type: isFileUpload 
-            ? (messageData.formData.get("type")?.toLowerCase() || "file")
-            : (messageData.type?.toLowerCase() || "text"),
+          content: isFileUpload ? "" : messageData.text || "",
+          type: isFileUpload
+            ? messageData.formData.get("type")?.toLowerCase() || "file"
+            : messageData.type?.toLowerCase() || "text",
           isOwn: true,
           state: "sending",
-          fileName: isFileUpload ? messageData.formData.get("attachments")?.name : null,
+          fileName: isFileUpload
+            ? messageData.formData.get("attachments")?.name
+            : null,
           replyTo: null,
           _raw: null,
         };
 
         // Extract replyTo from FormData if present
         if (isFileUpload) {
-          const replyToMessageId = messageData.formData.get("replyTo[messageId]");
+          const replyToMessageId =
+            messageData.formData.get("replyTo[messageId]");
           if (replyToMessageId) {
             optimisticMessage.replyTo = {
               messageId: replyToMessageId,
-              sender: messageData.formData.get("replyTo[senderName]") || "Unknown",
+              sender:
+                messageData.formData.get("replyTo[senderName]") || "Unknown",
               content: messageData.formData.get("replyTo[preview]") || "",
               preview: messageData.formData.get("replyTo[preview]") || "",
             };
@@ -460,7 +391,10 @@ const useChatStore = create(
 
           if (isFileUpload) {
             console.log("📤 Sending file upload");
-            sentMessage = await chatApi.sendMessage(conversationId, messageData.formData);
+            sentMessage = await chatApi.sendMessage(
+              conversationId,
+              messageData.formData,
+            );
           } else {
             console.log("📤 Sending text message");
             const payload = {
@@ -500,7 +434,7 @@ const useChatStore = create(
               [conversationId]: {
                 ...updated,
                 messages: updated.messages.map((m) =>
-                  m.id === tempId ? transformed : m
+                  m.id === tempId ? transformed : m,
                 ),
               },
             },
@@ -519,13 +453,13 @@ const useChatStore = create(
               [conversationId]: {
                 ...updated,
                 messages: updated.messages.map((m) =>
-                  m.id === tempId ? { ...m, state: "failed" } : m
+                  m.id === tempId ? { ...m, state: "failed" } : m,
                 ),
               },
             },
             isSendingMessage: false,
           });
-          
+
           throw error;
         }
       },
@@ -558,7 +492,8 @@ const useChatStore = create(
         const conversations = get().conversations.map((conv) => {
           if (conv.id !== conversationId) return conv;
           const isOwn =
-            message.senderId?._id?.toString() === get().currentUserId?.toString();
+            message.senderId?._id?.toString() ===
+            get().currentUserId?.toString();
           return {
             ...conv,
             lastMessage: message.content?.text || "",
@@ -575,7 +510,7 @@ const useChatStore = create(
           all[convId] = {
             ...all[convId],
             messages: all[convId].messages.map((m) =>
-              m.id === messageId ? { ...m, ...updates } : m
+              m.id === messageId ? { ...m, ...updates } : m,
             ),
           };
         });
@@ -615,7 +550,7 @@ const useChatStore = create(
           await chatApi.markAsRead(conversationId);
           set({
             conversations: get().conversations.map((c) =>
-              c.id === conversationId ? { ...c, unread: 0 } : c
+              c.id === conversationId ? { ...c, unread: 0 } : c,
             ),
           });
         } catch (error) {
@@ -623,8 +558,8 @@ const useChatStore = create(
         }
       },
     }),
-    { name: "ChatStore" }
-  )
+    { name: "ChatStore" },
+  ),
 );
 
 export default useChatStore;
