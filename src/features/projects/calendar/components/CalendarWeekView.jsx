@@ -250,7 +250,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
               //  TIME AXIS — hourly labels aligned with the grid rows
               <div
                 key={h}
-                className="flex h-12 items-center justify-center bg-muted/40 border-b border-r last:border-b-0 border-primary/20"
+                className="flex h-12 items-center justify-center bg-muted/40 border-b border-r  border-primary/20"
               >
                 <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">
                   {formatHour(h)}
