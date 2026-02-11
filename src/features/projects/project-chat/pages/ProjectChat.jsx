@@ -11,6 +11,7 @@ import { getTabForConversationType } from "../utils/Chattypemapper";
 import useChatStore from "../store/chat.store";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
+import VideoVoiceCommunication from "../components/VideoVoiceCommunication";
 
 function ProjectChat() {
   const [activeTab, setActiveTab] = useState("all");
@@ -114,8 +115,33 @@ function ProjectChat() {
     <div className="space-y-6 container mx-auto">
       <PageHeader icon="MessageSquare" title="Project Chat" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-200px)]">
-        {/* Left Sidebar - Conversations List */}
+      {/* Status Banner */}
+      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+            <span className="text-lg">✅</span>
+            <div>
+              <strong>Connected:</strong> {currentProject.projectName} | User: {currentUser._id} | Socket: {socketInitialized ? "✓" : "✗"}
+            </div>
+          </div>
+          
+          {useManualProject && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setUseManualProject(false);
+                setSelectedChat(null);
+              }}
+            >
+              Change Project
+            </Button>
+          )}
+        </div>
+      </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh)]">
+        {/* Left Sidebar - Sticky */}
         <div className="lg:col-span-1">
           <ChatLeftSidebar
             activeTab={activeTab}
@@ -124,9 +150,18 @@ function ProjectChat() {
             onChatSelect={handleChatSelect}
           />
         </div>
+        
+        {/* Main Chat Area */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="relative">
+            <VideoVoiceCommunication
+              onMeetingNotes={() => console.log("Meeting Notes")}
+              onTranscribe={() => console.log("Transcribe")}
+              onVideoCall={() => console.log("Video Call")}
+            />
+            {/* <CommingSoon /> */}
+          </div>
 
-        {/* Right Side - Chat Area */}
-        <div className="lg:col-span-3">
           <ChatBox selectedChat={selectedChat} />
         </div>
       </div>
