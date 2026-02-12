@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatBox/FileAttachmentMenu.jsx
-// ✅ File attachment menu with icons
+// ✅ EXACT UI: File attachment menu matching original design
 
 import React from "react";
 import { Image as ImageIcon, Video as VideoIcon, FileText, MapPin } from "lucide-react";

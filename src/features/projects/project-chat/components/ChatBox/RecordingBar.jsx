@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatBox/RecordingBar.jsx
-// ✅ Shows when recording voice message
+// ✅ EXACT UI: Recording bar matching original design
 
 import React from "react";
 import { X } from "lucide-react";

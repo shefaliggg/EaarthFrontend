@@ -1,9 +1,9 @@
 // src/features/chat/components/ChatBox/MessageList.jsx
-// ✅ Messages container with loading states and empty states
+// ✅ EXACT UI: Messages container matching original design
 
 import React, { useState } from "react";
 import { AlertCircle } from "lucide-react";
-import MessageBubble from "../ChatBox/Messagebubble";
+import MessageBubble from "./Messagebubble";
 
 export default function MessageList({
   selectedChat,
@@ -13,6 +13,8 @@ export default function MessageList({
   messagesEndRef,
   onReply,
   onEdit,
+  onReaction,
+  onToggleFavorite,
 }) {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
@@ -26,9 +28,21 @@ export default function MessageList({
     setTimeout(() => setSelectedMessage(null), 2000);
   };
 
+  const canEditMessage = (message) => {
+    if (!message.isOwn) return false;
+    const fifteenMinutes = 15 * 60 * 1000;
+    return Date.now() - message.timestamp < fifteenMinutes;
+  };
+
+  const canDeleteForEveryone = (message) => {
+    if (!message.isOwn) return false;
+    const fifteenMinutes = 15 * 60 * 1000;
+    return Date.now() - message.timestamp < fifteenMinutes;
+  };
+
   return (
     <>
-      {/* Loading indicator */}
+      {/* Loading indicator at top */}
       {isLoadingMessages && messagesData.hasMore && (
         <div className="flex justify-center py-2">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -113,6 +127,10 @@ export default function MessageList({
             selectedChatId={selectedChat?.id}
             onReply={onReply}
             onEdit={onEdit}
+            onReaction={onReaction}
+            onToggleFavorite={onToggleFavorite}
+            canEdit={canEditMessage(msg)}
+            canDeleteForEveryone={canDeleteForEveryone(msg)}
           />
         );
       })}
