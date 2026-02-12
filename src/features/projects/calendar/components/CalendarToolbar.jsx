@@ -20,6 +20,7 @@ import {
 
 import SearchBar from "@/shared/components/SearchBar";
 import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import getApiUrl from "../../../../shared/config/enviroment";
 
 function CalendarToolbar({
   currentDate,
@@ -142,7 +143,14 @@ function CalendarToolbar({
             <Button
               variant="default"
               size="icon"
-              onClick={() => console.log("Download calendar")}
+              onClick={() => {
+                const apiBase = getApiUrl();
+                const projectName = window.location.pathname.split("/")[2];
+
+                const url = `${apiBase}/calendar/export-pdf?view=${view}&date=${currentDate.toISOString()}&projectName=${projectName}`;
+
+                window.open(url, "_blank");
+              }}
             >
               <Download className="w-4 h-4" />
             </Button>

@@ -1,5 +1,3 @@
-// useCalendar.js — with view-specific event counts
-
 import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
