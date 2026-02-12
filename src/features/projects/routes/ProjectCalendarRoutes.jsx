@@ -9,6 +9,7 @@ import CalendarLayout from "@/features/projects/calendar/layouts/CalendarLayout"
 
 const ProjectCalendar = lazy(() => import("../calendar/pages/ProjectCalendar"));
 const ShootingCalendar = lazy(() => import("../calendar/pages/ShootingCalendar"));
+const TravelManagement = lazy(() => import("../calendar/pages/TravelManagement"));
 const CalendarPrintView = lazy(() => import("../calendar/components/CalendarPrintView"));
 const CalendarSettingsTabsLayout = lazy(() => import("../calendar/layouts/CalendarSettingsTabsLayout"));
 
@@ -19,6 +20,8 @@ const ProjectCalendarRoutes = {
     { index: true, element: <ProjectCalendar /> },
     { path: "shooting", element: <ShootingCalendar /> },
     { path: "print", element: <CalendarPrintView /> },
+    { path: "print", element: <CalendarPrintView /> },
+    { path: "tmo", element: <TravelManagement /> },
     {
       path: "settings",
       element: <CalendarSettingsTabsLayout />,

@@ -2,14 +2,17 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Settings } from "lucide-react";
+// import getApiUrl from "../../../../shared/config/enviroment";
 
 function CalendarLayout() {
   const { projectName } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
   const section = (() => {
     if (location.pathname.includes("/shooting")) return "shooting";
     if (location.pathname.includes("/settings")) return "settings";
+    if (location.pathname.includes("/tmo")) return "tmo"; 
     return "calendar";
   })();
 
@@ -24,6 +27,12 @@ function CalendarLayout() {
         icon: "Calendar",
         title: "Shooting Calendar",
       };
+    // Add header config for TMO
+    if (section === "tmo")
+      return {
+        icon: "Plane",
+        title: "Tmo",
+      };
     return {
       icon: "Settings",
       title: "Calendar Settings",
@@ -32,6 +41,8 @@ function CalendarLayout() {
   })();
 
   const primaryAction = (() => {
+    // Hide 'Create Event' button on TMO page if desired, or keep it
+    if (section === "tmo") return null;
     if (section !== "calendar") return null;
 
     return {
@@ -43,6 +54,17 @@ function CalendarLayout() {
   })();
 
   const secondaryActions = (() => {
+    // If we are on the TMO page, show a "Back to Calendar" button instead
+    if (section === "tmo") {
+      return [
+        {
+          label: "Back to Calendar",
+          icon: "Calendar",
+          clickAction: () => navigate(`/projects/${projectName}/calendar`),
+        },
+      ];
+    }
+
     if (section !== "calendar") return null;
 
     return [
@@ -55,18 +77,28 @@ function CalendarLayout() {
       {
         label: "TMO",
         icon: "Plane",
-        clickAction: () => console.log("TMO"),
+        // Update this action to navigate
+        clickAction: () => navigate(`/projects/${projectName}/calendar/tmo`),
       },
       {
         label: "Export PDF",
         icon: "Download",
-        clickAction: () => console.log("Export PDF"),
+        clickAction: () => {
+          // const apiBase = getApiUrl();
+          // const projectName = window.location.pathname.split("/")[2];
+
+          // const url = `${apiBase}/calendar/export-pdf?view=${view}&date=${currentDate.toISOString()}&projectName=${projectName}`;
+
+          // window.open(url, "_blank");
+        },
       },
     ];
   })();
 
   const extraActions = (() => {
-    if (section !== "calendar") return null;
+    // You might want to hide settings on TMO page, or keep it.
+    // This logic hides it if not on main calendar.
+    if (section !== "calendar" && section !== "tmo") return null;
 
     return (
       <Button

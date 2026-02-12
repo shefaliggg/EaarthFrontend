@@ -74,7 +74,7 @@ function CalendarToolbar({
   return (
     <>
       <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="icon" onClick={onPrev}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
