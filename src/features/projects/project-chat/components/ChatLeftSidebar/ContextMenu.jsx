@@ -1,7 +1,3 @@
-// src/features/chat/components/ChatLeftSidebar/ContextMenu.jsx
-// ✅ Right-click context menu for conversations
-
-import React from "react";
 import {
   Pin,
   Archive,
@@ -10,6 +6,7 @@ import {
   Volume2,
   Star,
   MoreHorizontal,
+  Eye,
 } from "lucide-react";
 
 export default function ContextMenu({ x, y, item, type, onClose }) {
@@ -33,25 +30,14 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
       action: "pin" 
     },
     { 
-      icon: Star, 
-      label: item.isFavorite ? "Remove from favorites" : "Add to favorites", 
-      action: "favorite" 
+      icon: Eye, 
+      label: item.isRead ? "Mark as unread" : "Mark as read", 
+      action: "read" 
     },
     { 
       icon: item.isMuted ? Volume2 : VolumeX, 
       label: item.isMuted ? "Unmute notifications" : "Mute notifications", 
       action: "mute" 
-    },
-    { 
-      icon: Archive, 
-      label: "Archive conversation", 
-      action: "archive" 
-    },
-    { 
-      icon: Trash2, 
-      label: "Delete conversation", 
-      action: "delete", 
-      danger: true 
     },
   ];
 

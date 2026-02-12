@@ -1,6 +1,3 @@
-// src/features/chat/components/ChatBox/MessageInput.jsx
-// ✅ PRODUCTION: Fixed version without re-render issues
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Smile, Send, Paperclip, Mic } from "lucide-react";
 import { cn } from "@/shared/config/utils";
@@ -30,7 +27,6 @@ const MessageInput = React.memo(({
   const documentInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // ✅ Use selectors to prevent re-renders
   const sendMessage = useChatStore((state) => state.sendMessage);
   const isSendingMessage = useChatStore((state) => state.isSendingMessage);
   const emitTypingStart = useChatStore((state) => state.emitTypingStart);

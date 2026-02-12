@@ -12,7 +12,11 @@ import { getCurrentUserThunk, logoutUserThunk } from "../store/user.thunks";
 import { API_ROUTE } from "../../../constants/apiEndpoints";
 import { setLogoutFunction } from "../config/globalLogoutConfig";
 import { clearUserData, setCurrentUser } from "../store/user.slice";
-import { disconnectSocket, initSocket } from "../../../shared/config/socketConfig";
+import {
+  disconnectAllSockets,
+  initChatSocket,
+  initNotificationSocket,
+} from "../../../shared/config/socketConfig";
 
 const AuthContext = createContext(null);
 
@@ -44,13 +48,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (currentUser?._id) {
-      initSocket(currentUser._id);
+      initChatSocket(currentUser._id);
+      initNotificationSocket(currentUser._id);
     }
   }, [currentUser?._id]);
 
   useEffect(() => {
     return () => {
-      disconnectSocket();
+      disconnectAllSockets();
     };
   }, []);
 
@@ -62,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       await dispatch(logoutUserThunk()).unwrap();
-      disconnectSocket()
+      disconnectAllSockets();
     } finally {
       dispatch(clearUserData());
       navigate(API_ROUTE.AUTH.LOGIN, { replace: true });

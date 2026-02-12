@@ -31,7 +31,6 @@ import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-// ✅ Helper to get full S3 URL from key
 const getFileUrl = (fileKey) => {
   if (!fileKey) return null;
   
@@ -201,19 +200,23 @@ export default function MessageBubble({
         <AutoHeight className="w-full">
           <div
             className={cn(
-              "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
-              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
-              isOwn && "rounded-[20px] rounded-br-none",
-              !isOwn && "rounded-[20px] rounded-tl-none",
+              "relative p-1 transition-all break-words max-w-full w-fit",
+              isOwn ? "ml-auto" : "",
+              isOwn ? "bg-primary dark:bg-primary/50 text-primary-foreground" : "bg-muted",
+              isOwn && "rounded-lg rounded-r-[10px]",
+              isOwn && isGroupStart && "rounded-tr-lg",
+              isOwn && isGroupEnd && "rounded-br-none",
+              !isOwn && "rounded-lg",
+              !isOwn && isGroupStart && "rounded-lf\g rounded-tl-none",
               isSelected && "ring-2 ring-primary/50 scale-[1.02]"
             )}
           >
-            <div className="p-2 py-1">
+            <div className="p-1">
               {/* Forwarded indicator */}
               {isForwarded && (
                 <div
                   className={cn(
-                    "flex items-center gap-1.5 mb-2 pb-2 border-b",
+                    "flex items-center gap-1.5 pb-1 pr-2",
                     isOwn
                       ? "border-primary-foreground/20"
                       : "border-border"
@@ -221,7 +224,7 @@ export default function MessageBubble({
                 >
                   <CornerDownRight
                     className={cn(
-                      "w-3 h-3",
+                      "w-2 h-2",
                       isOwn
                         ? "text-primary-foreground/70"
                         : "text-muted-foreground"
@@ -229,7 +232,7 @@ export default function MessageBubble({
                   />
                   <span
                     className={cn(
-                      "text-[10px] italic font-medium",
+                      "text-[9px] italic font-medium",
                       isOwn
                         ? "text-primary-foreground/70"
                         : "text-muted-foreground"
@@ -247,7 +250,7 @@ export default function MessageBubble({
                     onScrollToReply(message.replyTo.messageId)
                   }
                   className={cn(
-                    "mb-2 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                    "mb-2 px-3 py-1 rounded-md border-l-2 cursor-pointer transition-colors max-w-full",
                     isOwn
                       ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
                       : "bg-background/60 border-primary hover:bg-background/80"
@@ -271,7 +274,7 @@ export default function MessageBubble({
 
               {/* Message Content */}
               {(message.type === "text" || !message.type) && message.content && (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
                   {highlightText(message.content)}
                 </p>
               )}

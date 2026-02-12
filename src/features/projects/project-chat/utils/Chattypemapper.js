@@ -1,11 +1,3 @@
-// src/features/chat/utils/Chattypemapper.js
-// ✅ VERIFIED: Maps backend conversation types to frontend UI types
-
-/**
- * Maps backend conversation types to frontend UI types
- * Backend: PROJECT_ALL, DEPARTMENT, DIRECT
- * Frontend: all, group, dm
- */
 export const mapConversationType = (backendType) => {
   const typeMap = {
     PROJECT_ALL: "all",
@@ -14,7 +6,6 @@ export const mapConversationType = (backendType) => {
   };
 
   const result = typeMap[backendType] || "all";
-  console.log("🔄 Mapping type:", backendType, "→", result); // ✅ Debug log
   return result;
 };
 

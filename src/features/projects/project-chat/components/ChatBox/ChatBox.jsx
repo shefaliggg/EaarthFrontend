@@ -1,6 +1,3 @@
-// src/features/chat/components/ChatBox/ChatBox.jsx
-// ✅ PRODUCTION: Fixed infinite render issue
-
 import React, { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { Sparkles, ChevronDown, AlertCircle } from "lucide-react";
 import useChatStore from "../../store/chat.store";
@@ -76,14 +73,10 @@ const ChatBox = React.memo(({ selectedChat }) => {
   // LOAD MESSAGES ON CHAT CHANGE (ONLY ONCE)
   // ═══════════════════════════════════════
   useEffect(() => {
-    if (!selectedChat?.id) return;
-
-    console.log("📥 ChatBox: Loading messages for:", selectedChat.id);
-    
+    if (!selectedChat?.id) return;    
     setLoadError(null);
     
     loadMessages(selectedChat.id).catch((error) => {
-      console.error("❌ Failed to load messages:", error);
       setLoadError(error.message || "Failed to load messages");
     });
     
