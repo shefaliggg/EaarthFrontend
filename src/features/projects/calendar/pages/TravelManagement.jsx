@@ -7,8 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// NOTE: These packages are missing from your package.json.
-// Uncomment these lines after running: yarn add jspdf html2canvas
+// NOTE: Uncomment these if you install jspdf/html2canvas later
 // import { jsPDF } from 'jspdf';
 // import html2canvas from 'html2canvas';
 
@@ -22,13 +21,122 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { cn } from "@/shared/config/utils";
 
 /* ==================================================================================
+   0. MOCK DATA (PREMIUM EXAMPLES)
+   ================================================================================== */
+
+const MOCK_TMOS = [
+  {
+    id: "tmo-001",
+    tmoNumber: "#445",
+    name: "Elidan Arzoni",
+    department: "Cast (Lead)",
+    createdAt: "2026-02-10",
+    status: "CONFIRMED",
+    contactInfo: "Lexi Milligan (Travel Coord): +44 7527 579 724\nAbdul Casal (Accomms): +44 7307 380 624",
+    attachments: [
+      { id: "att-1", name: "BA_Flight_Ticket.pdf", type: "pdf", size: "1.2 MB" },
+      { id: "att-2", name: "Hotel_Voucher_Ritz.pdf", type: "pdf", size: "850 KB" }
+    ],
+    sections: [
+      {
+        id: "sec-1",
+        type: "travel",
+        title: "LONDON LHR ➔ GENEVA GVA",
+        travelDetails: {
+          date: "2026-02-14",
+          transportToAirport: "Addison Lee Car Service (Booking #88291) - Pick up at 07:00 AM from Home Address.",
+          airline: "British Airways",
+          flightNumber: "BA 728",
+          bookingRef: "XY72LM",
+          departTime: "09:45",
+          departLocation: "London Heathrow (LHR) T5",
+          arriveTime: "12:25",
+          arriveLocation: "Geneva (GVA)",
+          luggage: "2x Checked Bags (23kg), 1x Carry-on",
+          transportOnArrival: "Production Driver (Steve) will meet at arrivals hall with 'WERWULF' sign."
+        }
+      },
+      {
+        id: "sec-2",
+        type: "accommodation",
+        title: "THE RITZ-CARLTON GENEVA",
+        accommodationDetails: {
+          startDate: "2026-02-14",
+          endDate: "2026-02-20",
+          hotelName: "The Ritz-Carlton Hotel de la Paix",
+          address: "Quai du Mont-Blanc 11, 1201 Genève, Switzerland",
+          checkIn: "From 15:00",
+          checkOut: "By 11:00",
+          roomType: "Lake View Suite",
+          notes: "Late checkout requested for 20th Feb due to night shoot. Breakfast included."
+        }
+      }
+    ]
+  },
+  {
+    id: "tmo-002",
+    tmoNumber: "#446",
+    name: "Sarah Jenkins",
+    department: "Director of Photography",
+    createdAt: "2026-02-11",
+    status: "DRAFT",
+    contactInfo: "Production Office: +44 207 999 8888",
+    attachments: [],
+    sections: [
+      {
+        id: "sec-3",
+        type: "travel",
+        title: "LOS ANGELES LAX ➔ LONDON LHR",
+        travelDetails: {
+          date: "2026-02-15",
+          transportToAirport: "Self Drive - Parking Validated",
+          airline: "Virgin Atlantic",
+          flightNumber: "VS 024",
+          bookingRef: "VS99PL",
+          departTime: "17:30",
+          departLocation: "Los Angeles (LAX) TB",
+          arriveTime: "11:50",
+          arriveLocation: "London Heathrow (LHR) T3",
+          transportOnArrival: "Unit Driver pickup."
+        }
+      }
+    ]
+  },
+  {
+    id: "tmo-003",
+    tmoNumber: "#447",
+    name: "Camera Crew (Unit A)",
+    department: "Camera",
+    createdAt: "2026-02-12",
+    status: "PENDING",
+    contactInfo: "Travel Coord: +44 7527 579 724",
+    attachments: [
+        { id: "att-3", name: "Equipment_Carnet_List.xlsx", type: "xls", size: "45 KB" }
+    ],
+    sections: [
+      {
+        id: "sec-4",
+        type: "accommodation",
+        title: "IBIS STYLES LONDON",
+        accommodationDetails: {
+          startDate: "2026-02-15",
+          endDate: "2026-02-28",
+          hotelName: "Ibis Styles London Ealing",
+          address: "Uxbridge Rd, London W5 2BS",
+          checkIn: "14:00",
+          checkOut: "10:00",
+          roomType: "6x Twin Rooms",
+          notes: "Parking for 2x Lutons arranged."
+        }
+      }
+    ]
+  }
+];
+
+/* ==================================================================================
    1. INTERNAL COMPONENTS (TravelDocument & TravelForm)
    ================================================================================== */
 
-/**
- * The Printable Document Component
- * Renders the actual TMO document layout
- */
 const TravelDocument = ({ tmo }) => {
   if (!tmo) return null;
 
@@ -200,16 +308,11 @@ const TravelDocument = ({ tmo }) => {
   );
 };
 
-/**
- * The Modal Form Component
- * Handles creating and editing TMOs
- */
 const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
-  // Setup React Hook Form
   const { register, control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: initialData || {
       id: Math.random().toString(36).substr(2, 9),
-      tmoNumber: '#446',
+      tmoNumber: '#448',
       name: '',
       department: '',
       createdAt: new Date().toISOString().split('T')[0],
@@ -218,16 +321,9 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
     }
   });
 
-  // Attachments State (managed locally since File objects are tricky in RHF)
   const [attachments, setAttachments] = useState(initialData?.attachments || []);
-  
-  // Field Array for Sections
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "sections"
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: "sections" });
 
-  // Handlers
   const handleAddSection = (type) => {
     append({
       id: Math.random().toString(36).substr(2, 9),
@@ -276,12 +372,11 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit Travel Movement Order' : 'Create New TMO'}</DialogTitle>
           <DialogDescription>
-            Fill in the details for the travel memo.
+            Fill in the details for the travel memo. These details will generate the printable PDF.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
-          {/* Header Info */}
           <div className="grid grid-cols-2 gap-4 border-b border-primary/20 pb-4">
             <div className="space-y-2">
               <Label>TMO Number</Label>
@@ -303,7 +398,6 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
             </div>
           </div>
 
-          {/* Attachments Area */}
           <div className="space-y-2 border-b border-primary/20 pb-4">
              <Label>Attachments (Tickets, Vouchers)</Label>
              <div className="flex flex-wrap gap-2 mb-2">
@@ -325,7 +419,6 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
              </div>
           </div>
 
-          {/* Dynamic Sections */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Label className="text-sm font-bold">Document Sections</Label>
@@ -356,7 +449,6 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
                     <Input {...register(`sections.${index}.title`)} className="font-bold uppercase bg-background" placeholder="e.g. LONDON TO GENEVA" />
                   </div>
 
-                  {/* Flight Fields */}
                   {field.type === 'travel' && (
                     <div className="space-y-4">
                        <div className="grid grid-cols-2 gap-4">
@@ -394,7 +486,6 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
                     </div>
                   )}
 
-                  {/* Accommodation Fields */}
                   {field.type === 'accommodation' && (
                     <div className="space-y-4">
                        <div className="grid grid-cols-2 gap-4">
@@ -462,7 +553,9 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
    2. MAIN VIEW COMPONENT (Export Default)
    ================================================================================== */
 
-export default function TravelManagement({ tmos = [], onTmoChange }) {
+export default function TravelManagement({ tmos = MOCK_TMOS, onTmoChange }) {
+  // Use passed in TMOs or fallback to state initialized with MOCK data if empty
+  const [localTmos, setLocalTmos] = useState(tmos && tmos.length > 0 ? tmos : MOCK_TMOS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTmo, setSelectedTmo] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -472,7 +565,7 @@ export default function TravelManagement({ tmos = [], onTmoChange }) {
   const printRef = useRef(null);
 
   // Filter Logic
-  const filteredTmos = tmos.filter(t => 
+  const filteredTmos = localTmos.filter(t => 
     t.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.tmoNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.department?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -493,8 +586,9 @@ export default function TravelManagement({ tmos = [], onTmoChange }) {
   const handleDelete = (id, e) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this TMO?')) {
-      const updated = tmos.filter(t => t.id !== id);
-      onTmoChange(updated);
+      const updated = localTmos.filter(t => t.id !== id);
+      setLocalTmos(updated);
+      if (onTmoChange) onTmoChange(updated);
       if (selectedTmo?.id === id) setSelectedTmo(null);
       toast.success('TMO Deleted');
     }
@@ -503,14 +597,15 @@ export default function TravelManagement({ tmos = [], onTmoChange }) {
   const handleSave = (tmo) => {
     let updatedTmos;
     if (editingTmo) {
-      updatedTmos = tmos.map(t => t.id === tmo.id ? tmo : t);
+      updatedTmos = localTmos.map(t => t.id === tmo.id ? tmo : t);
       if (selectedTmo?.id === tmo.id) setSelectedTmo(tmo);
       toast.success('TMO Updated');
     } else {
-      updatedTmos = [tmo, ...tmos];
+      updatedTmos = [tmo, ...localTmos];
       toast.success('TMO Created');
     }
-    onTmoChange(updatedTmos);
+    setLocalTmos(updatedTmos);
+    if (onTmoChange) onTmoChange(updatedTmos);
     setIsFormOpen(false);
   };
 
@@ -518,36 +613,19 @@ export default function TravelManagement({ tmos = [], onTmoChange }) {
     if (!printRef.current || !selectedTmo) return;
     
     // NOTE: Requires 'html2canvas' and 'jspdf' installed to work.
-    // Uncomment logic below after installation.
-    
     toast.error("Install 'html2canvas' and 'jspdf' to enable PDF export.");
     /*
     try {
       setIsExporting(true);
       toast.info('Generating PDF...');
-      
       await new Promise(resolve => setTimeout(resolve, 100)); // allow toast to render
-
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
+      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`TMO_${selectedTmo.tmoNumber}_${selectedTmo.name.replace(' ', '_')}.pdf`);
-      
       toast.success('PDF Downloaded!');
     } catch (error) {
       console.error('PDF Export failed:', error);
@@ -704,7 +782,7 @@ export default function TravelManagement({ tmos = [], onTmoChange }) {
                         {selectedTmo.tmoNumber}
                       </h2>
                       <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-background border-primary/20">
-                        DRAFT
+                        {selectedTmo.status || "DRAFT"}
                       </Badge>
                     </div>
                     <p className="text-sm font-medium text-muted-foreground">
