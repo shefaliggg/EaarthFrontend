@@ -41,7 +41,7 @@ function transformMessage(msg, currentUserId) {
   if (msg.replyTo?.messageId) {
     replyTo = {
       messageId: msg.replyTo.messageId,
-      sender: msg.replyTo.senderId?.name || "Unknown",
+      sender: msg.replyTo.senderId?.displayName || "Unknown",
       content: msg.replyTo.preview || "",
       preview: msg.replyTo.preview || "",
     };
@@ -49,8 +49,8 @@ function transformMessage(msg, currentUserId) {
 
   return {
     id: msg._id,
-    sender: msg.senderId?.name || "Unknown",
-    avatar: msg.senderId?.name?.charAt(0)?.toUpperCase() || "U",
+    sender: msg.senderId?.displayName || "Unknown",
+    avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "U",
     time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -86,7 +86,7 @@ const useChatStore = create(
       isLoadingConversations: false,
       isLoadingMessages: false,
       isSendingMessage: false,
-      typingUsers: {}, // ✅ STABLE: Never mutate directly
+      typingUsers: {},
       socketInitialized: false,
       
       initializeChatSocket: (userId) => {
