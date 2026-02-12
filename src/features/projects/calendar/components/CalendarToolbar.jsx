@@ -123,13 +123,14 @@ function CalendarToolbar({
                 { value: "year", label: "Year" },
                 { value: "gantt", label: "Gantt" },
                 { value: "timeline", label: "Timeline" },
+                { value: "anaytics", label: "Analytics" },
                 { value: "conflicts", label: "", icon: "AlertTriangle" },
               ]}
               value={view}
               onChange={setView}
             />
           </div>
-          <InfoTooltip content="Print Calendar">
+          {/* <InfoTooltip content="Print Calendar">
             <Button
               variant="default"
               size="icon"
@@ -154,7 +155,7 @@ function CalendarToolbar({
             >
               <Download className="w-4 h-4" />
             </Button>
-          </InfoTooltip>
+          </InfoTooltip> */}
         </div>
       </Card>
     </>

@@ -52,6 +52,16 @@ function CalendarLayout() {
         clickAction: () =>
           navigate(`/projects/${projectName}/calendar/shooting`),
       },
+      {
+        label: "TMO",
+        icon: "Plane",
+        clickAction: () => console.log("TMO"),
+      },
+      {
+        label: "Export PDF",
+        icon: "Download",
+        clickAction: () => console.log("Export PDF"),
+      },
     ];
   })();
 
