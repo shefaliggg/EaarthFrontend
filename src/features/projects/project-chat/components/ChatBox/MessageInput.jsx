@@ -1,7 +1,7 @@
 // src/features/chat/components/ChatBox/MessageInput.jsx
-// ✅ COMPLETE Message input with file upload, emoji picker, typing indicator
+// ✅ PRODUCTION: Fixed version without re-render issues
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Smile, Send, Paperclip, Mic } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import EmojiPicker from "emoji-picker-react";
@@ -10,7 +10,7 @@ import FileAttachmentMenu from "./FileAttachmentMenu";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
-export default function MessageInput({
+const MessageInput = React.memo(({ 
   selectedChat,
   replyTo,
   editingMessage,
@@ -19,7 +19,7 @@ export default function MessageInput({
   onStartRecording,
   isUserAtBottom,
   scrollToBottom,
-}) {
+}) => {
   const [messageInput, setMessageInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -30,37 +30,52 @@ export default function MessageInput({
   const documentInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  const { sendMessage, isSendingMessage, socket } = useChatStore();
+  // ✅ Use selectors to prevent re-renders
+  const sendMessage = useChatStore((state) => state.sendMessage);
+  const isSendingMessage = useChatStore((state) => state.isSendingMessage);
+  const emitTypingStart = useChatStore((state) => state.emitTypingStart);
+  const emitTypingStop = useChatStore((state) => state.emitTypingStop);
 
   // ═══════════════════════════════════════
-  // TYPING INDICATOR
+  // TYPING INDICATOR (DEBOUNCED)
   // ═══════════════════════════════════════
-  const handleTyping = () => {
-    if (!socket || !selectedChat?.id) return;
+  const handleTyping = useCallback(() => {
+    if (!selectedChat?.id) return;
 
-    // Emit typing start
-    socket.emit("typing:start", { conversationId: selectedChat.id });
+    emitTypingStart(selectedChat.id);
 
-    // Clear previous timeout
-    clearTimeout(typingTimeoutRef.current);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-    // Set timeout to emit typing stop after 1.2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("typing:stop", { conversationId: selectedChat.id });
+      emitTypingStop(selectedChat.id);
     }, 1200);
-  };
+  }, [selectedChat?.id, emitTypingStart, emitTypingStop]);
 
-  // Cleanup typing timeout on unmount
+  // ═══════════════════════════════════════
+  // CLEANUP ON UNMOUNT OR CHAT CHANGE
+  // ═══════════════════════════════════════
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      if (socket && selectedChat?.id) {
-        socket.emit("typing:stop", { conversationId: selectedChat.id });
+      if (selectedChat?.id) {
+        emitTypingStop(selectedChat.id);
       }
     };
-  }, [socket, selectedChat?.id]);
+  }, [selectedChat?.id, emitTypingStop]);
+
+  // ═══════════════════════════════════════
+  // RESET INPUT WHEN CHAT CHANGES
+  // ═══════════════════════════════════════
+  useEffect(() => {
+    if (selectedChat?.id) {
+      const draft = localStorage.getItem(`chat-draft-${selectedChat.id}`);
+      setMessageInput(draft || "");
+    }
+  }, [selectedChat?.id]);
 
   // ═══════════════════════════════════════
   // AUTO-GROW TEXTAREA
@@ -74,17 +89,10 @@ export default function MessageInput({
   }, [messageInput]);
 
   // ═══════════════════════════════════════
-  // LOAD/SAVE DRAFT
+  // SAVE DRAFT
   // ═══════════════════════════════════════
   useEffect(() => {
-    if (selectedChat?.id) {
-      const draft = localStorage.getItem(`chat-draft-${selectedChat.id}`);
-      if (draft) setMessageInput(draft);
-    }
-  }, [selectedChat?.id]);
-
-  useEffect(() => {
-    if (selectedChat?.id) {
+    if (selectedChat?.id && messageInput) {
       localStorage.setItem(`chat-draft-${selectedChat.id}`, messageInput);
     }
   }, [messageInput, selectedChat?.id]);
@@ -118,7 +126,7 @@ export default function MessageInput({
   // ═══════════════════════════════════════
   // SEND MESSAGE
   // ═══════════════════════════════════════
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     const trimmedMessage = messageInput.trim();
     if (!trimmedMessage) return;
     if (!selectedChat?.id) return;
@@ -126,18 +134,29 @@ export default function MessageInput({
     const messageData = {
       text: trimmedMessage,
       type: "TEXT",
-      ...(replyTo && { replyTo }),
+      ...(replyTo && { 
+        replyTo: {
+          messageId: replyTo.messageId,
+          senderId: replyTo.senderId,
+          preview: replyTo.preview,
+          type: replyTo.type || "TEXT",
+          senderName: replyTo.senderName,
+        }
+      }),
     };
 
     const projectId = selectedChat?.projectId || selectedChat?._raw?.projectId || DEFAULT_PROJECT_ID;
 
     try {
-      // Stop typing indicator
-      if (socket && selectedChat?.id) {
-        socket.emit("typing:stop", { conversationId: selectedChat.id });
+      if (selectedChat?.id) {
+        emitTypingStop(selectedChat.id);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
       }
       
       await sendMessage(selectedChat.id, projectId, messageData);
+      
       setMessageInput("");
       onClearReply();
       localStorage.removeItem(`chat-draft-${selectedChat.id}`);
@@ -149,16 +168,15 @@ export default function MessageInput({
       console.error("❌ Failed to send message:", error);
       alert(`Failed to send message: ${error.response?.data?.message || error.message}`);
     }
-  };
+  }, [messageInput, selectedChat, replyTo, sendMessage, emitTypingStop, onClearReply, isUserAtBottom, scrollToBottom]);
 
   // ═══════════════════════════════════════
   // KEYBOARD SHORTCUTS
   // ═══════════════════════════════════════
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (editingMessage) {
-        // Handle update message
         console.log("Update message");
       } else {
         handleSendMessage();
@@ -167,13 +185,16 @@ export default function MessageInput({
     if (e.key === "Escape") {
       onClearReply();
       onClearEdit();
+      if (selectedChat?.id) {
+        emitTypingStop(selectedChat.id);
+      }
     }
-  };
+  }, [editingMessage, handleSendMessage, onClearReply, onClearEdit, selectedChat?.id, emitTypingStop]);
 
   // ═══════════════════════════════════════
   // EMOJI PICKER
   // ═══════════════════════════════════════
-  const handleEmojiClick = (emojiData) => {
+  const handleEmojiClick = useCallback((emojiData) => {
     const cursorPos = textareaRef.current?.selectionStart || messageInput.length;
     const textBefore = messageInput.substring(0, cursorPos);
     const textAfter = messageInput.substring(cursorPos);
@@ -187,12 +208,12 @@ export default function MessageInput({
         textareaRef.current.focus();
       }
     }, 0);
-  };
+  }, [messageInput]);
 
   // ═══════════════════════════════════════
   // FILE UPLOAD
   // ═══════════════════════════════════════
-  const handleFileUpload = async (e, uploadType) => {
+  const handleFileUpload = useCallback(async (e, uploadType) => {
     if (!selectedChat?.id) return;
     const file = e.target.files[0];
     if (!file) return;
@@ -230,11 +251,13 @@ export default function MessageInput({
       console.error("❌ Failed to upload file:", error);
       alert(`Failed to send file: ${error.response?.data?.message || error.message}`);
     }
-  };
+  }, [selectedChat, replyTo, sendMessage, onClearReply, isUserAtBottom, scrollToBottom]);
+
+  const showSendButton = messageInput.trim().length > 0;
 
   return (
     <div className="flex rounded-xl items-end gap-2">
-      {/* Attachment button */}
+      {/* Attachment Button */}
       <div className="relative attach-menu-container">
         <button
           onClick={() => setShowAttachMenu(!showAttachMenu)}
@@ -257,7 +280,7 @@ export default function MessageInput({
         <input ref={documentInputRef} type="file" hidden onChange={(e) => handleFileUpload(e, "document")} />
       </div>
 
-      {/* Emoji picker */}
+      {/* Emoji Picker */}
       <div className="relative emoji-picker-container">
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -281,47 +304,52 @@ export default function MessageInput({
         )}
       </div>
 
-      {/* Text input */}
+      {/* Text Input */}
       <div className="flex-1 relative -mb-1.5">
         <textarea
           ref={textareaRef}
           value={messageInput}
           onChange={(e) => {
             setMessageInput(e.target.value);
-            handleTyping(); // Emit typing indicator
+            handleTyping();
           }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           rows={1}
-          className="w-full px-4 py-2 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-11!"
+          className="w-full px-4 py-2 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
           aria-label="Message input"
         />
       </div>
 
-      {/* Voice message */}
-      <button
-        onClick={onStartRecording}
-        className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
-        aria-label="Record voice message"
-      >
-        <Mic className="w-5 h-5 text-primary" />
-      </button>
-
-      {/* Send button */}
-      <button
-        onClick={editingMessage ? () => console.log("Update") : handleSendMessage}
-        disabled={!messageInput.trim() || isSendingMessage}
-        className={cn(
-          "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
-          messageInput.trim() && !isSendingMessage
-            ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
-            : "bg-muted text-muted-foreground cursor-not-allowed"
-        )}
-        aria-label={editingMessage ? "Update message" : "Send message"}
-      >
-        <Send className="w-4 h-4" />
-        {editingMessage ? "Update" : "Send"}
-      </button>
+      {/* Send Button / Voice Button */}
+      {!showSendButton ? (
+        <button
+          onClick={onStartRecording}
+          className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
+          aria-label="Record voice message"
+        >
+          <Mic className="w-5 h-5 text-primary" />
+        </button>
+      ) : (
+        <button
+          onClick={editingMessage ? () => console.log("Update") : handleSendMessage}
+          disabled={!messageInput.trim() || isSendingMessage}
+          className={cn(
+            "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
+            messageInput.trim() && !isSendingMessage
+              ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+          aria-label={editingMessage ? "Update message" : "Send message"}
+        >
+          <Send className="w-4 h-4" />
+          {editingMessage ? "Update" : "Send"}
+        </button>
+      )}
     </div>
   );
-}
+});
+
+MessageInput.displayName = 'MessageInput';
+
+export default MessageInput;

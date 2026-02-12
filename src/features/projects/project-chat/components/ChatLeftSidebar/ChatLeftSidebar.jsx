@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatLeftSidebar/ChatLeftSidebar.jsx
-// ✅ Main sidebar with conversations list
+// ✅ FIXED: Proper conversation filtering
 
 import React, { useState } from "react";
 import { Hash, Users, Mail, Search, X } from "lucide-react";
@@ -21,20 +21,28 @@ export default function ChatLeftSidebar({
 
   const { conversations, isLoadingConversations } = useChatStore();
 
-  // Filter conversations by search and tab
+  console.log("📋 All conversations:", conversations); // ✅ Debug log
+
+  // ✅ FIXED: Filter conversations by search and tab
   const filteredConversations = conversations.filter((conv) => {
+    // Search filter
     if (!conv.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
 
+    // ✅ CRITICAL FIX: Match backend types correctly
     if (activeTab === "all") {
+      // Show PROJECT_ALL and DEPARTMENT conversations
       return conv.type === "all" || conv.type === "group";
     } else if (activeTab === "personal") {
+      // Show DIRECT conversations only
       return conv.type === "dm";
     }
 
     return true;
   });
+
+  console.log("🔍 Filtered conversations for tab:", activeTab, filteredConversations); // ✅ Debug log
 
   // Sort: pinned first, then by timestamp
   const sortedConversations = [...filteredConversations].sort((a, b) => {
@@ -45,11 +53,13 @@ export default function ChatLeftSidebar({
     return b.timestamp - a.timestamp;
   });
 
-  // Separate by type
+  // ✅ FIXED: Separate by type for "all" tab
   const departments = sortedConversations.filter(
     (c) => c.type === "all" || c.type === "group"
   );
   const teamMembers = sortedConversations.filter((c) => c.type === "dm");
+
+  console.log("📊 Departments:", departments.length, "Team members:", teamMembers.length); // ✅ Debug log
 
   const handleContextMenu = (e, item, type) => {
     e.preventDefault();
@@ -58,6 +68,8 @@ export default function ChatLeftSidebar({
   };
 
   const handleChatClick = (item, itemType) => {
+    console.log("💬 Chat clicked:", item); // ✅ Debug log
+    
     const chatData = {
       id: item.id,
       type: itemType,
@@ -79,6 +91,7 @@ export default function ChatLeftSidebar({
       isMuted: item.isMuted,
       isFavorite: item.isFavorite,
       canSendMessage: item.canSendMessage,
+      projectId: item.projectId, // ✅ CRITICAL: Include projectId
       _raw: item._raw,
     };
 
@@ -105,6 +118,12 @@ export default function ChatLeftSidebar({
               <p className="text-sm font-bold">Department Chat</p>
               <p className="text-xs opacity-80">All project members</p>
             </div>
+            {/* ✅ Show count badge */}
+            {departments.length > 0 && (
+              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
+                {departments.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -121,6 +140,12 @@ export default function ChatLeftSidebar({
               <p className="text-sm font-bold">Individual Chat</p>
               <p className="text-xs opacity-80">Personal chat with members</p>
             </div>
+            {/* ✅ Show count badge */}
+            {teamMembers.length > 0 && (
+              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
+                {teamMembers.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -151,6 +176,10 @@ export default function ChatLeftSidebar({
                 ? "Direct Messages"
                 : "Email"}
             </h2>
+            {/* ✅ Show count */}
+            <span className="text-xs text-muted-foreground">
+              {activeTab === "all" ? departments.length : teamMembers.length} chats
+            </span>
           </div>
 
           {/* Search Bar */}
@@ -183,6 +212,7 @@ export default function ChatLeftSidebar({
             </div>
           ) : (
             <div className="p-1 px-2 space-y-0.5">
+              {/* ✅ FIXED: Show correct conversations based on tab */}
               {activeTab === "all" && (
                 <>
                   {departments.map((dept) => (
@@ -199,7 +229,9 @@ export default function ChatLeftSidebar({
                   {departments.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-xs text-muted-foreground">
-                        No departments found
+                        {searchQuery 
+                          ? `No departments found for "${searchQuery}"`
+                          : "No departments found"}
                       </p>
                     </div>
                   )}
@@ -222,7 +254,9 @@ export default function ChatLeftSidebar({
                   {teamMembers.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-xs text-muted-foreground">
-                        No members found
+                        {searchQuery 
+                          ? `No members found for "${searchQuery}"`
+                          : "No direct messages yet"}
                       </p>
                     </div>
                   )}

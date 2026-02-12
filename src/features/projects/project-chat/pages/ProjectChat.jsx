@@ -1,25 +1,22 @@
 // src/features/chat/pages/ProjectChat.jsx
-// ✅ Main chat page - coordinates sidebar and chatbox with proper data fetching
+// ✅ FIXED: Correct imports and proper initialization
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { PageHeader } from "../../../../shared/components/PageHeader";
+import { PageHeader } from "@/shared/components/PageHeader";
 import ChatLeftSidebar from "../components/ChatLeftSidebar/ChatLeftSidebar";
 import ChatBox from "../components/ChatBox/ChatBox";
 import { getTabForConversationType } from "../utils/Chattypemapper";
 import useChatStore from "../store/chat.store";
-import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import VideoVoiceCommunication from "../components/VideoVoiceCommunication";
+// import VideoVoiceCommunication from "../components/VideoVoiceCommunication"; // ✅ Comment out if not needed
+
+const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
 function ProjectChat() {
   const [activeTab, setActiveTab] = useState("all");
   const location = useLocation();
-  
-  // Manual project ID input for testing
-  const [manualProjectId, setManualProjectId] = useState("697c899668977a7ca2b27462");
-  const [useManualProject, setUseManualProject] = useState(true);
   
   // Get current project and user from Redux
   const reduxProject = useSelector((state) => state.project?.currentProject);
@@ -27,10 +24,8 @@ function ProjectChat() {
   const userUser = useSelector((state) => state.user?.currentUser);
   const currentUser = authUser || userUser;
   
-  // Use manual project if enabled, otherwise use Redux project
-  const currentProject = useManualProject 
-    ? { _id: manualProjectId, projectName: "Test Project" }
-    : reduxProject;
+  // Use Redux project or fallback to default
+  const currentProject = reduxProject || { _id: DEFAULT_PROJECT_ID, projectName: "Default Project" };
   
   // Zustand store
   const {
@@ -121,27 +116,16 @@ function ProjectChat() {
           <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
             <span className="text-lg">✅</span>
             <div>
-              <strong>Connected:</strong> {currentProject.projectName} | User: {currentUser._id} | Socket: {socketInitialized ? "✓" : "✗"}
+              <strong>Connected:</strong> {currentProject?.projectName || "Project"} | 
+              User: {currentUser?._id} | 
+              Socket: {socketInitialized ? "✓" : "✗"}
             </div>
           </div>
-          
-          {useManualProject && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setUseManualProject(false);
-                setSelectedChat(null);
-              }}
-            >
-              Change Project
-            </Button>
-          )}
         </div>
       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh)]">
-        {/* Left Sidebar - Sticky */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-200px)]">
+        {/* Left Sidebar */}
         <div className="lg:col-span-1">
           <ChatLeftSidebar
             activeTab={activeTab}
@@ -152,16 +136,7 @@ function ProjectChat() {
         </div>
         
         {/* Main Chat Area */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="relative">
-            <VideoVoiceCommunication
-              onMeetingNotes={() => console.log("Meeting Notes")}
-              onTranscribe={() => console.log("Transcribe")}
-              onVideoCall={() => console.log("Video Call")}
-            />
-            {/* <CommingSoon /> */}
-          </div>
-
+        <div className="lg:col-span-3">
           <ChatBox selectedChat={selectedChat} />
         </div>
       </div>

@@ -1,8 +1,8 @@
 // src/features/chat/components/ChatBox/ChatBox.jsx
-// ✅ Main ChatBox container - coordinates all sub-components (SPLIT VERSION)
+// ✅ PRODUCTION: Fixed infinite render issue
 
-import React, { useRef, useEffect, useCallback, useState } from "react";
-import { Sparkles, ChevronDown } from "lucide-react";
+import React, { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import { Sparkles, ChevronDown, AlertCircle } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
@@ -12,7 +12,8 @@ import ReplyPreview from "./ReplyPreview";
 import EditBanner from "./EditBanner";
 import RecordingBar from "./RecordingBar";
 
-export default function ChatBox({ selectedChat }) {
+// ✅ Use React.memo to prevent unnecessary re-renders
+const ChatBox = React.memo(({ selectedChat }) => {
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   
@@ -23,22 +24,27 @@ export default function ChatBox({ selectedChat }) {
   const [editingMessage, setEditingMessage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [loadError, setLoadError] = useState(null);
 
-  const {
-    messagesByConversation,
-    loadMessages,
-    markAsRead,
-    isLoadingMessages,
-  } = useChatStore();
+  // ✅ Use selector to prevent re-renders
+  const messagesByConversation = useChatStore((state) => state.messagesByConversation);
+  const loadMessages = useChatStore((state) => state.loadMessages);
+  const markAsRead = useChatStore((state) => state.markAsRead);
+  const isLoadingMessages = useChatStore((state) => state.isLoadingMessages);
 
-  // Get messages for this conversation
-  const messagesData = selectedChat?.id && messagesByConversation[selectedChat.id]
-    ? messagesByConversation[selectedChat.id]
-    : { messages: [], hasMore: false, cursor: null };
+  // ✅ Memoize messages data to prevent re-computation
+  const messagesData = useMemo(() => {
+    if (!selectedChat?.id || !messagesByConversation[selectedChat.id]) {
+      return { messages: [], hasMore: false, cursor: null };
+    }
+    return messagesByConversation[selectedChat.id];
+  }, [selectedChat?.id, messagesByConversation]);
 
   const messages = messagesData.messages || [];
 
-  // Scroll to bottom function
+  // ═══════════════════════════════════════
+  // SCROLL MANAGEMENT
+  // ═══════════════════════════════════════
   const scrollToBottom = useCallback((smooth = true) => {
     messagesEndRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
@@ -47,7 +53,6 @@ export default function ChatBox({ selectedChat }) {
     setNewMessagesCount(0);
   }, []);
 
-  // Handle scroll events
   const handleScroll = useCallback(
     (e) => {
       const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -64,31 +69,46 @@ export default function ChatBox({ selectedChat }) {
         loadMessages(selectedChat.id, true);
       }
     },
-    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages]
+    [messagesData.hasMore, isLoadingMessages, selectedChat?.id, loadMessages]
   );
 
-  // Load messages when chat changes
+  // ═══════════════════════════════════════
+  // LOAD MESSAGES ON CHAT CHANGE (ONLY ONCE)
+  // ═══════════════════════════════════════
   useEffect(() => {
-    if (selectedChat?.id) {
-      console.log("📥 ChatBox: Loading messages for:", selectedChat.id);
-      loadMessages(selectedChat.id);
-      markAsRead(selectedChat.id);
+    if (!selectedChat?.id) return;
 
-      // Reset UI state
-      setReplyTo(null);
-      setEditingMessage(null);
-      setIsRecording(false);
-      setRecordingTime(0);
+    console.log("📥 ChatBox: Loading messages for:", selectedChat.id);
+    
+    setLoadError(null);
+    
+    loadMessages(selectedChat.id).catch((error) => {
+      console.error("❌ Failed to load messages:", error);
+      setLoadError(error.message || "Failed to load messages");
+    });
+    
+    markAsRead(selectedChat.id).catch((error) => {
+      console.error("⚠️ Failed to mark as read:", error);
+    });
 
-      // Scroll to bottom after messages load
-      setTimeout(() => {
-        scrollToBottom(false);
-        setIsUserAtBottom(true);
-      }, 150);
-    }
-  }, [selectedChat?.id, loadMessages, markAsRead, scrollToBottom]);
+    // Reset UI state
+    setReplyTo(null);
+    setEditingMessage(null);
+    setIsRecording(false);
+    setRecordingTime(0);
 
-  // Empty state - EXACT same design
+    // Scroll to bottom after messages load
+    const scrollTimer = setTimeout(() => {
+      scrollToBottom(false);
+      setIsUserAtBottom(true);
+    }, 150);
+
+    return () => clearTimeout(scrollTimer);
+  }, [selectedChat?.id]); // ✅ ONLY depend on chat ID
+
+  // ═══════════════════════════════════════
+  // EMPTY STATE
+  // ═══════════════════════════════════════
   if (!selectedChat) {
     return (
       <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex items-center justify-center">
@@ -100,8 +120,7 @@ export default function ChatBox({ selectedChat }) {
             Select a chat to start messaging
           </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Choose a department group or individual member from the sidebar to
-            begin your conversation
+            Choose a department group or individual member from the sidebar
           </p>
         </div>
       </div>
@@ -110,10 +129,14 @@ export default function ChatBox({ selectedChat }) {
 
   return (
     <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex flex-col mx-auto">
-      {/* Header */}
+      {/* ═══════════════════════════════════════
+          HEADER
+          ═══════════════════════════════════════ */}
       <ChatHeader selectedChat={selectedChat} />
 
-      {/* Messages Container */}
+      {/* ═══════════════════════════════════════
+          MESSAGES CONTAINER
+          ═══════════════════════════════════════ */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
@@ -147,31 +170,87 @@ export default function ChatBox({ selectedChat }) {
           </div>
         )}
 
-        <MessageList
-          selectedChat={selectedChat}
-          messages={messages}
-          messagesData={messagesData}
-          isLoadingMessages={isLoadingMessages}
-          messagesEndRef={messagesEndRef}
-          onReply={setReplyTo}
-          onEdit={setEditingMessage}
-        />
+        {/* Error State */}
+        {loadError && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-3 max-w-md p-6 bg-destructive/10 rounded-lg">
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+              <h3 className="font-semibold">Failed to Load Messages</h3>
+              <p className="text-sm text-muted-foreground">{loadError}</p>
+              <button
+                onClick={() => {
+                  setLoadError(null);
+                  loadMessages(selectedChat.id);
+                }}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State (initial load) */}
+        {!loadError && isLoadingMessages && messages.length === 0 && (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex gap-2 animate-pulse">
+                <div className="w-8 h-8 rounded-full bg-muted flex-shrink-0" />
+                <div className="bg-muted rounded-2xl p-3 space-y-2 max-w-xs flex-1">
+                  <div className="h-3 bg-muted-foreground/20 rounded w-3/4" />
+                  <div className="h-3 bg-muted-foreground/20 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Messages List */}
+        {!loadError && messages.length > 0 && (
+          <MessageList
+            selectedChat={selectedChat}
+            messages={messages}
+            messagesData={messagesData}
+            isLoadingMessages={isLoadingMessages}
+            messagesEndRef={messagesEndRef}
+            onReply={setReplyTo}
+            onEdit={setEditingMessage}
+          />
+        )}
+
+        {/* Empty State */}
+        {!loadError && !isLoadingMessages && messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-2">
+              <div className="text-4xl">💬</div>
+              <p className="text-sm text-muted-foreground">No messages yet</p>
+              <p className="text-xs text-muted-foreground">
+                Start the conversation!
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Typing Indicator */}
-        <TypingIndicator conversationId={selectedChat.id} />
+        <TypingIndicator conversationId={selectedChat?.id} />
       </div>
 
-      {/* Input Area */}
+      {/* ═══════════════════════════════════════
+          INPUT AREA
+          ═══════════════════════════════════════ */}
       <div className="border-t p-4 space-y-2.5 rounded-b-3xl backdrop-blur-sm flex-shrink-0 relative">
         {/* Reply Preview */}
-        {replyTo && <ReplyPreview replyTo={replyTo} onClose={() => setReplyTo(null)} />}
+        {replyTo && (
+          <ReplyPreview 
+            replyTo={replyTo} 
+            onClose={() => setReplyTo(null)} 
+          />
+        )}
 
         {/* Edit Banner */}
         {editingMessage && (
-          <EditBanner
-            onClose={() => {
-              setEditingMessage(null);
-            }}
+          <EditBanner 
+            onClose={() => setEditingMessage(null)} 
           />
         )}
 
@@ -184,13 +263,14 @@ export default function ChatBox({ selectedChat }) {
               setRecordingTime(0);
             }}
             onSend={() => {
+              console.log("Send voice message");
               setIsRecording(false);
               setRecordingTime(0);
             }}
           />
         )}
 
-        {/* Message Input */}
+        {/* Message Input - ONLY RENDER IF NOT RECORDING */}
         {!isRecording && (
           <MessageInput
             selectedChat={selectedChat}
@@ -206,4 +286,8 @@ export default function ChatBox({ selectedChat }) {
       </div>
     </div>
   );
-}
+});
+
+ChatBox.displayName = 'ChatBox';
+
+export default ChatBox;
