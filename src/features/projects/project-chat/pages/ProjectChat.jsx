@@ -19,7 +19,6 @@ function ProjectChat() {
     reduxProject || { _id: DEFAULT_PROJECT_ID, name: "Default Project" };
 
   const {
-    selectedChat,
     setSelectedChat,
     loadConversations,
     attachSocketListeners,
@@ -51,13 +50,11 @@ function ProjectChat() {
           <ChatLeftSidebar
             activeTab={activeTab}
             onTabChange={handleTabChange}
-            selectedChat={selectedChat}
-            onChatSelect={setSelectedChat}
           />
         </div>
 
         <div className="lg:col-span-3">
-          <ChatBox selectedChat={selectedChat} />
+          <ChatBox />
         </div>
       </div>
     </div>

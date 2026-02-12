@@ -120,26 +120,29 @@ const useChatStore = create(
 
         socket.on("typing:start", ({ conversationId, userId }) => {
           const state = get();
-
           const currentUserId = getCurrentUserId();
           if (userId === currentUserId) return;
 
           const currentArray = state.typingUsers[conversationId] || [];
-
-          // Don't add if already exists
           if (currentArray.includes(userId)) return;
 
-          // ✅ Create NEW object with NEW array (immutable)
-          set(
-            {
-              typingUsers: {
-                ...state.typingUsers,
-                [conversationId]: [...currentArray, userId],
-              },
+          set({
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: [...currentArray, userId],
             },
-            false,
-            "typing:start",
-          ); // ✅ Add action name for debugging
+          });
+
+          // ⏳ auto remove after 5 seconds
+          setTimeout(() => {
+            const latest = get().typingUsers[conversationId] || [];
+            set({
+              typingUsers: {
+                ...get().typingUsers,
+                [conversationId]: latest.filter((id) => id !== userId),
+              },
+            });
+          }, 5000);
         });
 
         socket.on("typing:stop", ({ conversationId, userId }) => {
@@ -238,7 +241,13 @@ const useChatStore = create(
           get().joinConversation(chat.id);
         }
 
-        set({ selectedChat: chat });
+        set((state) => ({
+          selectedChat: chat,
+          typingUsers: {
+            ...state.typingUsers,
+            [chat?.id]: [],
+          },
+        }));
       },
 
       loadConversations: async (projectId, type) => {
@@ -492,7 +501,7 @@ const useChatStore = create(
 
           const transformed = transformMessage(sentMessage, currentUserId);
           transformed.isOwn = true;
-          transformed.state = "sent";
+          transformed.state = "failed";
 
           const updated = get().messagesByConversation[conversationId];
           set({
@@ -530,6 +539,32 @@ const useChatStore = create(
         }
       },
 
+      retryMessage: async (conversationId, message) => {
+        const { id, content, type, replyTo } = message;
+
+        // set back to sending
+        set((state) => ({
+          messagesByConversation: {
+            ...state.messagesByConversation,
+            [conversationId]: {
+              ...state.messagesByConversation[conversationId],
+              messages: state.messagesByConversation[
+                conversationId
+              ].messages.map((m) =>
+                m.id === id ? { ...m, state: "sending" } : m,
+              ),
+            },
+          },
+        }));
+
+        // resend
+        return get().sendMessage(conversationId, null, {
+          text: content,
+          type: type.toUpperCase(),
+          replyTo,
+        });
+      },
+
       addMessageToConversation: (conversationId, message) => {
         const state = get();
         const currentUserId = getCurrentUserId();
@@ -543,9 +578,12 @@ const useChatStore = create(
         const transformed = transformMessage(message, currentUserId);
 
         // 🔥 1. If message already exists (hard duplicate)
-        if (existing.messages.some((m) => m.id === transformed.id)) {
+        if (
+          existing.messages.some(
+            (m) => m.tempId && m.tempId === transformed._raw?.clientTempId,
+          )
+        )
           return;
-        }
 
         // 🔥 2. If this message is from current user,
         // try replacing optimistic temp message
