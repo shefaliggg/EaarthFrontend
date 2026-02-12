@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatBox/ReplyPreview.jsx
-// ✅ Shows reply preview when replying to a message
+// ✅ EXACT UI: Reply preview matching original design
 
 import React from "react";
 import { Reply, X } from "lucide-react";

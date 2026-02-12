@@ -1,7 +1,7 @@
-// src/features/chat/components/ChatBox/Messagebubble.jsx
-// ✅ PRODUCTION: Individual message bubble with all features
+// src/features/chat/components/ChatBox/MessageBubble.jsx
+// ✅ EXACT UI: Message bubble matching original design with hover actions
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Reply,
   Edit3,
@@ -9,36 +9,38 @@ import {
   Copy,
   Forward,
   Star,
-  MoreVertical,
+  Smile,
   Check,
   CheckCheck,
   Clock,
+  X,
   Download,
+  Play,
+  Pause,
+  Volume2,
   FileText,
-  Image as ImageIcon,
-  Video as VideoIcon,
-  File,
+  CornerDownRight,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
-import EmojiPicker from "emoji-picker-react";
+import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Badge } from "@/shared/components/ui/badge";
+import { AutoHeight } from "@/shared/components/wrappers/AutoHeight";
 import DeleteMessageDialog from "../../Dialogs/DeleteMessageDialog";
 import ForwardMessageDialog from "../../Dialogs/ForwardMessageDialog";
 import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
-import chatApi from "../../api/chat.api";
-import useChatStore from "../../store/chat.store";
 
-// Helper to get file icon
-const getFileIcon = (type) => {
-  if (type === "image") return ImageIcon;
-  if (type === "video") return VideoIcon;
-  return FileText;
-};
+const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-// Helper to check if can edit/delete
-const canEditMessage = (message) => {
-  if (!message.isOwn) return false;
-  const fifteenMinutes = 15 * 60 * 1000;
-  return Date.now() - message.timestamp < fifteenMinutes;
+// ✅ Helper to get full S3 URL from key
+const getFileUrl = (fileKey) => {
+  if (!fileKey) return null;
+  
+  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+    return fileKey;
+  }
+  
+  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+  return `${S3_BASE_URL}/${fileKey}`;
 };
 
 export default function MessageBubble({
@@ -56,400 +58,471 @@ export default function MessageBubble({
   selectedChatId,
   onReply,
   onEdit,
+  onReaction,
+  onToggleFavorite,
+  canEdit,
+  canDeleteForEveryone,
 }) {
-  const [showActions, setShowActions] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playProgress, setPlayProgress] = useState(0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
 
-  const { loadMessages } = useChatStore();
+  const showActions = hoveredMessageId === message.id;
+  const isOwn = message.isOwn;
+  const isFavorited = message._raw?.starredBy?.length > 0;
+  const isForwarded = !!message._raw?.forwardedFrom?.conversationId;
 
-  const isHovered = hoveredMessageId === message.id;
-  const canEdit = canEditMessage(message);
-  const canDelete = message.isOwn;
+  useEffect(() => {
+    if (isPlaying && message.type === "voice") {
+      const interval = setInterval(() => {
+        setPlayProgress((prev) => {
+          if (prev >= 100) {
+            setIsPlaying(false);
+            return 100;
+          }
+          return prev + 100 / message.totalDuration;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (!isPlaying) {
+      setPlayProgress(0);
+    }
+  }, [isPlaying, message.type, message.totalDuration]);
 
-  // Message action handlers
+  const highlightText = (text) => {
+    if (!searchQuery || !text) return text;
+
+    const parts = text.split(new RegExp(`(${searchQuery})`, "gi"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === searchQuery.toLowerCase() ? (
+        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  // ✅ Message action handlers
   const handleCopy = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
-      setShowActions(false);
+      alert("Message copied to clipboard!");
     }
-  };
-
-  const handleReply = () => {
-    const senderId = message._raw?.senderId?._id || message._raw?.senderId;
-    
-    if (!senderId) {
-      console.error("❌ Cannot reply: senderId missing");
-      return;
-    }
-
-    onReply({
-      messageId: message.id,
-      senderId: senderId,
-      preview: (message.content || "").substring(0, 200),
-      type: (message.type || "text").toUpperCase(),
-      senderName: message.sender || "Unknown",
-    });
-    setShowActions(false);
-  };
-
-  const handleEdit = () => {
-    onEdit(message);
-    setShowActions(false);
-  };
-
-  const handleForward = () => {
-    setShowForwardDialog(true);
-    setShowActions(false);
   };
 
   const handleDelete = () => {
     setShowDeleteDialog(true);
-    setShowActions(false);
   };
 
-  const handleToggleFavorite = async () => {
-    try {
-      const isFavorited = message._raw?.starredBy?.includes(
-        useChatStore.getState().currentUserId
-      );
-      await chatApi.toggleFavorite(selectedChatId, message.id, !isFavorited);
-      await loadMessages(selectedChatId);
-      setShowActions(false);
-    } catch (error) {
-      console.error("Failed to toggle favorite:", error);
-    }
+  const handleForward = () => {
+    setShowForwardDialog(true);
   };
 
-  const handleReaction = async (emojiData) => {
-    try {
-      await chatApi.toggleReaction(selectedChatId, message.id, emojiData.emoji);
-      await loadMessages(selectedChatId);
-      setShowReactionPicker(null);
-    } catch (error) {
-      console.error("Failed to add reaction:", error);
-    }
+  const handleImageClick = (imageUrl) => {
+    setPreviewImageUrl(imageUrl);
+    setShowImagePreview(true);
   };
 
-  // State indicator icon
-  const StateIcon = () => {
-    if (message.state === "sending") {
-      return <Clock className="w-3.5 h-3.5 text-muted-foreground animate-pulse" />;
-    }
-    if (message.state === "sent") {
-      return <Check className="w-3.5 h-3.5 text-muted-foreground" />;
-    }
-    if (message.state === "delivered") {
-      return <CheckCheck className="w-3.5 h-3.5 text-muted-foreground" />;
-    }
-    if (message.state === "seen") {
-      return <CheckCheck className="w-3.5 h-3.5 text-primary" />;
-    }
-    if (message.state === "failed") {
-      return <span className="text-xs text-red-500">Failed</span>;
-    }
-    return null;
-  };
-
-  return (
-    <>
+  if (message.deleted) {
+    return (
       <div
         id={`message-${message.id}`}
         className={cn(
-          "group relative px-2 py-0.5 transition-colors rounded-lg",
-          isSelected && "bg-primary/5",
-          isHovered && "bg-muted/30"
+          "flex gap-3 group transition-all",
+          isOwn ? "flex-row-reverse" : "flex-row",
+          isGroupStart ? "mt-4" : "mt-1"
         )}
+      >
+        {!isOwn && <div className="w-8" />}
+        <div
+          className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}
+        >
+          <div className="bg-muted/50 px-3 py-2 rounded-xl italic text-sm text-muted-foreground flex items-center gap-2">
+            <Trash2 className="w-4 h-4" />
+            This message was deleted
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      id={`message-${message.id}`}
+      className={cn(
+        "flex gap-3 group transition-all",
+        isOwn ? "flex-row-reverse" : "flex-row",
+        isGroupStart ? "mt-4" : "mt-1"
+      )}
+      role="article"
+      aria-label={`Message from ${message.sender} at ${message.time}`}
+    >
+      {!isOwn && (
+        <div className={cn("w-8", isGroupStart ? "" : "invisible")}>
+          {isGroupStart && (
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-muted text-xs">
+                {message.avatar}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+      )}
+
+      <div
         onMouseEnter={() => setHoveredMessageId(message.id)}
         onMouseLeave={() => setHoveredMessageId(null)}
+        className={cn("flex flex-col max-w-[60%]")}
       >
-        <div
-          className={cn(
-            "flex gap-2.5 items-end",
-            message.isOwn && "flex-row-reverse"
-          )}
-        >
-          {/* Avatar (only show at group start for others) */}
-          {!message.isOwn && isGroupStart && (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
-              {message.avatar}
-            </div>
-          )}
-          {!message.isOwn && !isGroupStart && <div className="w-8 flex-shrink-0" />}
+        {!isOwn && isGroupStart && (
+          <div className="flex items-center gap-2 mb-1 px-1">
+            <span className="font-semibold text-xs text-foreground">
+              {message.sender}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              {message.time}
+            </span>
+            {message.readBy && (
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5">
+                Read by {message.readBy}
+              </Badge>
+            )}
+          </div>
+        )}
 
-          {/* Message content */}
+        <AutoHeight className="w-full">
           <div
             className={cn(
-              "flex flex-col gap-1 max-w-[70%]",
-              message.isOwn && "items-end"
+              "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
+              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
+              isOwn && "rounded-[20px] rounded-br-none",
+              !isOwn && "rounded-[20px] rounded-tl-none",
+              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
             )}
           >
-            {/* Sender name (only at group start) */}
-            {!message.isOwn && isGroupStart && (
-              <div className="text-xs font-semibold text-muted-foreground ml-2">
-                {message.sender}
-              </div>
-            )}
-
-            {/* Reply preview */}
-            {message.replyTo && (
-              <div
-                onClick={() => onScrollToReply(message.replyTo.messageId)}
-                className={cn(
-                  "text-xs p-2 rounded-lg border-l-2 cursor-pointer hover:bg-muted/30 transition-colors",
-                  message.isOwn
-                    ? "bg-primary/5 border-primary-foreground/30"
-                    : "bg-muted/50 border-primary/50"
-                )}
-              >
-                <div className="font-semibold text-primary mb-0.5">
-                  {message.replyTo.sender}
-                </div>
-                <div className="text-muted-foreground line-clamp-2">
-                  {message.replyTo.content}
-                </div>
-              </div>
-            )}
-
-            {/* Message bubble */}
-            <div
-              className={cn(
-                "relative px-3 py-2 rounded-2xl shadow-sm",
-                message.isOwn
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-muted rounded-bl-sm",
-                isGroupEnd && message.isOwn && "rounded-br-2xl",
-                isGroupEnd && !message.isOwn && "rounded-bl-2xl",
-                message.deleted && "opacity-60 italic"
-              )}
-            >
-              {/* Deleted message */}
-              {message.deleted && (
-                <div className="text-xs opacity-70">
-                  This message was deleted
+            <div className="p-2 py-1">
+              {/* Forwarded indicator */}
+              {isForwarded && (
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 mb-2 pb-2 border-b",
+                    isOwn
+                      ? "border-primary-foreground/20"
+                      : "border-border"
+                  )}
+                >
+                  <CornerDownRight
+                    className={cn(
+                      "w-3 h-3",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-[10px] italic font-medium",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    Forwarded
+                  </span>
                 </div>
               )}
 
-              {/* Text content */}
-              {!message.deleted && message.content && (
-                <div className="text-sm break-words whitespace-pre-wrap">
-                  {message.content}
+              {/* Reply preview */}
+              {message.replyTo && (
+                <div
+                  onClick={() =>
+                    onScrollToReply(message.replyTo.messageId)
+                  }
+                  className={cn(
+                    "mb-2 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
+                    isOwn
+                      ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
+                      : "bg-background/60 border-primary hover:bg-background/80"
+                  )}
+                >
+                  <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
+                    {message.replyTo.sender || "Unknown"}
+                  </div>
+                  <div
+                    className={cn(
+                      "text-[11px] truncate",
+                      isOwn
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {message.replyTo.content || message.replyTo.preview || ""}
+                  </div>
                 </div>
               )}
 
-              {/* File attachments */}
-              {!message.deleted && message.type !== "text" && message.url && (
-                <div className="mt-2">
-                  {/* Image */}
-                  {message.type === "image" && (
-                    <div
-                      onClick={() => setShowImagePreview(true)}
-                      className="cursor-pointer rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-                    >
-                      <img
-                        src={message.url}
-                        alt={message.fileName || "Image"}
-                        className="max-w-xs max-h-64 rounded-lg"
-                        onError={(e) => {
-                          e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23ddd' width='200' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
-                        }}
+              {/* Message Content */}
+              {(message.type === "text" || !message.type) && message.content && (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {highlightText(message.content)}
+                </p>
+              )}
+
+              {/* Image rendering */}
+              {message.type === "image" && message.url && (
+                <div className="cursor-pointer" onClick={() => handleImageClick(getFileUrl(message.url))}>
+                  <img
+                    src={getFileUrl(message.url)}
+                    alt="Shared image"
+                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                    onError={(e) => {
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Video rendering */}
+              {message.type === "video" && message.url && (
+                <video
+                  ref={videoRef}
+                  src={getFileUrl(message.url)}
+                  controls
+                  className="rounded-lg max-w-[300px] max-h-[300px]"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+
+              {/* Audio rendering */}
+              {message.type === "audio" && message.url && (
+                <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-lg">
+                  <button
+                    onClick={() => {
+                      if (audioRef.current) {
+                        if (isPlaying) {
+                          audioRef.current.pause();
+                        } else {
+                          audioRef.current.play();
+                        }
+                        setIsPlaying(!isPlaying);
+                      }
+                    }}
+                    className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Play className="w-5 h-5 text-primary" />
+                    )}
+                  </button>
+                  <div className="flex-1">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${playProgress}%` }}
                       />
                     </div>
-                  )}
-
-                  {/* Video */}
-                  {message.type === "video" && (
-                    <video
-                      controls
-                      className="max-w-xs max-h-64 rounded-lg"
-                      src={message.url}
-                    >
-                      Your browser does not support video playback.
-                    </video>
-                  )}
-
-                  {/* File */}
-                  {(message.type === "file" || message.type === "audio") && (
-                    <a
-                      href={message.url}
-                      download={message.fileName}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-background/10 hover:bg-background/20 transition-colors"
-                    >
-                      <File className="w-5 h-5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium truncate">
-                          {message.fileName || "File"}
-                        </div>
-                        {message.fileSize && (
-                          <div className="text-[10px] opacity-70">
-                            {message.fileSize}
-                          </div>
-                        )}
-                      </div>
-                      <Download className="w-4 h-4" />
-                    </a>
-                  )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Audio message
+                    </p>
+                  </div>
+                  <Volume2 className="w-4 h-4 text-muted-foreground" />
+                  <audio
+                    ref={audioRef}
+                    src={getFileUrl(message.url)}
+                    onEnded={() => setIsPlaying(false)}
+                  />
                 </div>
               )}
 
-              {/* Reactions */}
-              {message.reactions && Object.keys(message.reactions).length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {Object.entries(message.reactions).map(([emoji, count]) => (
-                    <button
-                      key={emoji}
-                      onClick={() => handleReaction({ emoji })}
-                      className="px-2 py-0.5 rounded-full bg-background/20 hover:bg-background/30 transition-colors text-xs flex items-center gap-1"
-                    >
-                      <span>{emoji}</span>
-                      <span className="font-medium">{count}</span>
-                    </button>
-                  ))}
+              {/* Document/File rendering */}
+              {(message.type === "file" || message.type === "document") && message.url && (
+                <div className="flex items-center gap-3 min-w-[200px]">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {message.fileName || "Document"}
+                    </p>
+                    {message.fileSize && (
+                      <p className="text-xs text-muted-foreground">
+                        {message.fileSize}
+                      </p>
+                    )}
+                  </div>
+                  <a
+                    href={getFileUrl(message.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                    aria-label="Download file"
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
                 </div>
               )}
 
-              {/* Time & status */}
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 mt-1 text-[10px]",
-                  message.isOwn ? "justify-end" : "justify-start",
-                  message.isOwn
-                    ? "text-primary-foreground/70"
-                    : "text-muted-foreground"
-                )}
-              >
-                <span>{message.time}</span>
-                {message.edited && <span>(edited)</span>}
-                {message.isOwn && <StateIcon />}
-              </div>
+              {isOwn && (
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  {message.edited && (
+                    <span
+                      className={cn(
+                        "text-[10px] italic mr-1",
+                        isOwn
+                          ? "text-primary-foreground/50"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      (edited)
+                    </span>
+                  )}
+                  <span className="text-[10px] text-primary-foreground/70">
+                    {message.time}
+                  </span>
+                  <MessageStateIcon state={message.state} />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Quick actions (show on hover) */}
-          {isHovered && !message.deleted && (
+          {message.reactions &&
+            Object.keys(message.reactions).length > 0 && (
+              <div
+                className={cn(
+                  "flex gap-1 mt-1",
+                  isOwn ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                {Object.entries(message.reactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReaction(message.id, emoji)}
+                    className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[10px] font-medium">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+          {showActions && (
             <div
               className={cn(
-                "absolute -top-3 flex items-center gap-1 bg-card border rounded-lg shadow-lg p-1 z-10 animate-in fade-in slide-in-from-top-1 duration-200",
-                message.isOwn ? "right-12" : "left-12"
+                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
+                isOwn ? "justify-end" : "justify-start"
               )}
             >
-              <button
-                onClick={handleReply}
-                className="p-1.5 hover:bg-muted rounded transition-colors"
-                title="Reply"
-              >
-                <Reply className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={() =>
+              <ActionButton
+                icon={Reply}
+                tooltip="Reply"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReply(message);
+                }}
+              />
+              <ActionButton
+                icon={Star}
+                tooltip={isFavorited ? "Unstar" : "Star"}
+                className={isFavorited ? "text-yellow-500" : ""}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(message.id, isFavorited);
+                }}
+              />
+              <ActionButton
+                icon={Forward}
+                tooltip="Forward"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleForward();
+                }}
+              />
+              <ActionButton
+                icon={Copy}
+                tooltip="Copy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+              />
+              <ActionButton
+                icon={Smile}
+                tooltip="React"
+                onClick={(e) => {
+                  e.stopPropagation();
                   setShowReactionPicker(
                     showReactionPicker === message.id ? null : message.id
-                  )
-                }
-                className="p-1.5 hover:bg-muted rounded transition-colors"
-                title="React"
-              >
-                😊
-              </button>
-
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="p-1.5 hover:bg-muted rounded transition-colors"
-                title="More"
-              >
-                <MoreVertical className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Actions dropdown */}
-          {showActions && isHovered && (
-            <div
-              className={cn(
-                "absolute top-6 bg-card border rounded-lg shadow-xl py-1 min-w-[160px] z-20 animate-in fade-in slide-in-from-top-2 duration-200",
-                message.isOwn ? "right-12" : "left-12"
+                  );
+                }}
+              />
+              {isOwn && canEdit && (
+                <ActionButton
+                  icon={Edit3}
+                  tooltip="Edit"
+                  className="text-blue-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(message);
+                  }}
+                />
               )}
-            >
-              <button
-                onClick={handleCopy}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-              >
-                <Copy className="w-4 h-4" />
-                Copy
-              </button>
-
-              <button
-                onClick={handleForward}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-              >
-                <Forward className="w-4 h-4" />
-                Forward
-              </button>
-
-              <button
-                onClick={handleToggleFavorite}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-              >
-                <Star className="w-4 h-4" />
-                {message._raw?.starredBy?.includes(
-                  useChatStore.getState().currentUserId
-                )
-                  ? "Unfavorite"
-                  : "Favorite"}
-              </button>
-
-              {canEdit && (
-                <button
-                  onClick={handleEdit}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit
-                </button>
-              )}
-
-              {canDelete && (
-                <button
-                  onClick={handleDelete}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 text-red-500 hover:bg-red-500/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Emoji picker */}
-          {showReactionPicker === message.id && (
-            <div
-              className={cn(
-                "absolute top-6 z-30",
-                message.isOwn ? "right-12" : "left-12"
-              )}
-            >
-              <EmojiPicker
-                onEmojiClick={handleReaction}
-                theme="auto"
-                searchDisabled
-                emojiStyle="native"
-                width={300}
-                height={350}
+              <ActionButton
+                icon={Trash2}
+                tooltip="Delete"
+                className="text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
               />
             </div>
           )}
-        </div>
+        </AutoHeight>
+
+        {showReactionPicker === message.id && (
+          <div
+            className={cn(
+              "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
+              isOwn ? "flex-row-reverse" : "flex-row"
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReaction(message.id, emoji);
+                }}
+                className="text-xl hover:scale-125 transition-transform p-1"
+                aria-label={`React with ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Dialogs */}
+      {/* ✅ Dialogs */}
       <DeleteMessageDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         message={message}
         selectedChatId={selectedChatId}
-        canDeleteForEveryone={canEdit}
+        canDeleteForEveryone={canDeleteForEveryone}
       />
 
       <ForwardMessageDialog
@@ -462,8 +535,43 @@ export default function MessageBubble({
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
-        imageUrl={message.url}
+        imageUrl={previewImageUrl}
       />
-    </>
+    </div>
   );
+}
+
+function ActionButton({ icon: Icon, tooltip, className, onClick }) {
+  return (
+    <button
+      title={tooltip}
+      onClick={onClick}
+      className={cn(
+        "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
+        className
+      )}
+      aria-label={tooltip}
+    >
+      <Icon className="w-3.5 h-3.5" />
+    </button>
+  );
+}
+
+function MessageStateIcon({ state }) {
+  switch (state) {
+    case "sending":
+      return (
+        <Clock className="w-3 h-3 text-primary-foreground/50 animate-pulse" />
+      );
+    case "sent":
+      return <Check className="w-3 h-3 text-primary-foreground/70" />;
+    case "delivered":
+      return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
+    case "seen":
+      return <CheckCheck className="w-3 h-3 text-green-400" />;
+    case "failed":
+      return <X className="w-3 h-3 text-red-500" />;
+    default:
+      return null;
+  }
 }

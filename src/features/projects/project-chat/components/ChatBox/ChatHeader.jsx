@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatBox/ChatHeader.jsx
-// ✅ Chat header with search, settings, and chat info
+// ✅ EXACT UI: Chat header matching original design
 
 import React, { useState } from "react";
 import {

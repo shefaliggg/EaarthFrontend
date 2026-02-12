@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatBox/EditBanner.jsx
-// ✅ Shows when editing a message
+// ✅ EXACT UI: Edit banner matching original design
 
 import React from "react";
 import { Edit3, X } from "lucide-react";

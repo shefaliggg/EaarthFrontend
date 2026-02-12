@@ -1,31 +1,17 @@
 // src/features/chat/components/ChatBox/TypingIndicator.jsx
-// ✅ Shows typing indicator
+// ✅ EXACT UI: Typing indicator matching original design
 
 import React from "react";
-import useChatStore from "../../store/chat.store";
 
-export default function TypingIndicator({ conversationId }) {
-  const allTypingUsers = useChatStore((state) => state.typingUsers);
-  const currentUserId = useChatStore((state) => state.currentUserId);
-
-  const typingUsersForConvo = allTypingUsers[conversationId];
-  
-  if (!typingUsersForConvo || typingUsersForConvo.length === 0) {
-    return null;
-  }
-
-  const othersTyping = typingUsersForConvo.filter(
-    (userId) => userId !== currentUserId
-  );
-
-  if (othersTyping.length === 0) {
+export default function TypingIndicator({ typingUsers = [] }) {
+  if (!typingUsers || typingUsers.length === 0) {
     return null;
   }
 
   const displayText =
-    othersTyping.length === 1
+    typingUsers.length === 1
       ? "Someone is typing..."
-      : `${othersTyping.length} people are typing...`;
+      : `${typingUsers.length} people are typing...`;
 
   return (
     <div className="px-4 py-2 text-sm text-muted-foreground flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
