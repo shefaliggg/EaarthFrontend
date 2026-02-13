@@ -5,8 +5,7 @@ import CalendarMonthView from "./CalendarMonthView";
 import CalendarTimelineView from "./CalendarTimeLineView";
 import CalendarWeekView from "./CalendarWeekView";
 import CalendarYearView from "./CalendarYearView";
-// 1. Import the new component
-import CalendarAnalyticsView from "./CalendarAnalyticsView"; 
+import CalendarAnalyticsView from "./CalendarAnalyticsView";
 
 export default function CalendarGrid({
   view,
@@ -15,86 +14,79 @@ export default function CalendarGrid({
   onDayClick,
   events,
   conflicts,
+  analyticsData, 
   onEditEvent,
 }) {
-  if (view === "month") {
-    return (
-      <CalendarMonthView
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        onDayClick={onDayClick}
-        events={events}
-      />
-    );
+  switch (view) {
+    case "month":
+      return (
+        <CalendarMonthView
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+          onDayClick={onDayClick}
+          events={events}
+        />
+      );
+    case "day":
+      return (
+        <CalendarDayView
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+          onDayClick={onDayClick}
+          events={events}
+        />
+      );
+    case "week":
+      return (
+        <CalendarWeekView
+          currentDate={currentDate}
+          events={events}
+          onDayClick={onDayClick}
+        />
+      );
+    case "gantt":
+      return (
+        <CalendarGanttView
+          currentDate={currentDate}
+          events={events}
+          onEventClick={onDayClick}
+        />
+      );
+    case "timeline":
+      return (
+        <CalendarTimelineView
+          currentDate={currentDate}
+          events={events}
+          onEventClick={onDayClick}
+        />
+      );
+    case "year":
+      return (
+        <CalendarYearView
+          currentDate={currentDate}
+          events={events}
+          onEventClick={onDayClick}
+        />
+      );
+    case "analytics":
+      return (
+        <CalendarAnalyticsView
+          analyticsData={analyticsData}
+          currentDate={currentDate}
+        />
+      ); // <--- Pass data
+    case "conflicts":
+      return (
+        <CalendarConflictsView
+          conflicts={conflicts}
+          currentDate={currentDate}
+        />
+      );
+    default:
+      return (
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          {view.toUpperCase()} VIEW (UI Placeholder)
+        </div>
+      );
   }
-  if (view === "day") {
-    return (
-      <CalendarDayView
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        onDayClick={onDayClick}
-        events={events}
-      />
-    );
-  }
-  if (view === "week") {
-    return (
-      <CalendarWeekView
-        currentDate={currentDate}
-        events={events}
-        onDayClick={onDayClick}
-      />
-    );
-  }
-
-  if (view === "gantt") {
-    return (
-      <CalendarGanttView
-        currentDate={currentDate}
-        events={events}
-        onEventClick={onDayClick}
-      />
-    );
-  }
-
-  if (view === "timeline") {
-    return (
-      <CalendarTimelineView
-        currentDate={currentDate}
-        events={events}
-        onEventClick={onDayClick}
-      />
-    );
-  }
-
-  if (view === "year") {
-    return (
-      <CalendarYearView
-        currentDate={currentDate}
-        events={events}
-        onEventClick={onDayClick}
-      />
-    );
-  }
-
-  if (view === "analytics") {
-    return (
-      <CalendarAnalyticsView 
-        events={events} 
-        currentDate={currentDate} 
-      />
-    );
-  }
-
-  if (view === "conflicts") {
-    return (
-      <CalendarConflictsView conflicts={conflicts} currentDate={currentDate} />
-    );
-  }
-
-  return (
-    <div className="h-64 flex items-center justify-center text-muted-foreground">
-      {view.toUpperCase()} VIEW (UI Placeholder)
-    </div>
-  );
 }

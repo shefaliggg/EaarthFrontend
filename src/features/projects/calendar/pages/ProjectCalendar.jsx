@@ -2,12 +2,11 @@ import { useState } from "react";
 import CalendarToolbar from "../components/CalendarToolbar";
 import CalendarGrid from "../components/CalendarGrid";
 import CreateEventModal from "../components/CreateEventModal";
-import UpcomingEvents from "../components/UpcommingEvents";
+import UpcomingEvents from "../components/UpcommingEvents"; 
 import useCalendar from "../hooks/useCalendar";
 
 function ProjectCalendar() {
   const calendar = useCalendar();
-  console.log(calendar);
   const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
 
   return (
@@ -26,12 +25,13 @@ function ProjectCalendar() {
         onToday={calendar.today}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_580px] gap-6">
+      <div className="grid lg:grid-cols-[1fr_580px] grid-cols-1 gap-6">
         <CalendarGrid
           view={calendar.view}
           currentDate={calendar.currentDate}
           events={calendar.events}
           conflicts={calendar.conflicts}
+          analyticsData={calendar.analyticsData} 
           onDayClick={() => setIsCreateEventModalOpen(true)}
         />
 
@@ -45,7 +45,7 @@ function ProjectCalendar() {
         open={isCreateEventModalOpen}
         selectedDate={calendar.currentDate}
         onClose={() => setIsCreateEventModalOpen(false)}
-        onSave={calendar.addEvent}
+        onSave={calendar.addEvent} // Ensure addEvent exists in hook if used
       />
     </div>
   );
