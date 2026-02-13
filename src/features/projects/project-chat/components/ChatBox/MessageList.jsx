@@ -1,6 +1,3 @@
-// src/features/chat/components/ChatBox/MessageList.jsx
-// ✅ EXACT UI: Messages container matching original design
-
 import React, { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import MessageBubble from "./Messagebubble";

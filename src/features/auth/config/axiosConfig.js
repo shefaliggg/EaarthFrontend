@@ -58,10 +58,6 @@ let refreshPromise = null;
 // ---- RESPONSE INTERCEPTOR ----
 axiosConfig.interceptors.response.use(
   (response) => {
-    // ✅ DEBUG: Log successful responses
-    if (isDevelopment) {
-      console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
-    }
     return response;
   },
 

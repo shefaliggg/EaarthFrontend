@@ -24,6 +24,7 @@ export const convertToPrettyText = (text) => {
   return text
     .toString() // ensure it's a string
     .trim() // remove leading/trailing spaces
+    .toLowerCase()
     .replace(/[-_]+/g, " ") // replace dashes/underscores with space
     .replace(/\s+/g, " ") // collapse multiple spaces
     .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize first letter of each word

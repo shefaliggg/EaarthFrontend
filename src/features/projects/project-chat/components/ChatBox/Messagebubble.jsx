@@ -20,6 +20,8 @@ import {
   Volume2,
   FileText,
   CornerDownRight,
+  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -28,18 +30,19 @@ import { AutoHeight } from "@/shared/components/wrappers/AutoHeight";
 import DeleteMessageDialog from "../../Dialogs/DeleteMessageDialog";
 import ForwardMessageDialog from "../../Dialogs/ForwardMessageDialog";
 import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
+import useChatStore from "../../store/chat.store";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-// ✅ Helper to get full S3 URL from key
 const getFileUrl = (fileKey) => {
   if (!fileKey) return null;
-  
+
   if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
     return fileKey;
   }
-  
-  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
+
+  const S3_BASE_URL =
+    import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
   return `${S3_BASE_URL}/${fileKey}`;
 };
 
@@ -69,7 +72,9 @@ export default function MessageBubble({
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
-  
+    const retryMessage = useChatStore((state) => state.retryMessage);
+  const { selectedChat } = useChatStore();
+
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -106,7 +111,7 @@ export default function MessageBubble({
         </mark>
       ) : (
         part
-      )
+      ),
     );
   };
 
@@ -138,7 +143,7 @@ export default function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1"
+          isGroupStart ? "mt-4" : "mt-1",
         )}
       >
         {!isOwn && <div className="w-8" />}
@@ -160,7 +165,7 @@ export default function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1"
+        isGroupStart ? "mt-4" : "mt-1",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -199,229 +204,245 @@ export default function MessageBubble({
         )}
 
         <AutoHeight className="w-full">
-          <div
-            className={cn(
-              "relative p-1 transition-all break-words max-w-full w-fit ml-auto",
-              isOwn ? "bg-primary/50 text-primary-foreground" : "bg-muted",
-              isOwn && "rounded-[20px] rounded-br-none",
-              !isOwn && "rounded-[20px] rounded-tl-none",
-              isSelected && "ring-2 ring-primary/50 scale-[1.02]"
-            )}
-          >
-            <div className="p-2 py-1">
-              {/* Forwarded indicator */}
-              {isForwarded && (
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 mb-2 pb-2 border-b",
-                    isOwn
-                      ? "border-primary-foreground/20"
-                      : "border-border"
-                  )}
-                >
-                  <CornerDownRight
-                    className={cn(
-                      "w-3 h-3",
-                      isOwn
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "text-[10px] italic font-medium",
-                      isOwn
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    Forwarded
-                  </span>
-                </div>
+          <div className={cn("flex gap-3 w-fit", isOwn ? "flex-row-reverse ml-auto" : "")}>
+            <div
+              className={cn(
+                "relative p-1 transition-all break-words max-w-full w-fit",
+                isOwn ? "ml-auto" : "",
+                isOwn
+                  ? "bg-primary dark:bg-primary/50 text-primary-foreground"
+                  : "bg-muted",
+                isOwn && "rounded-xl rounded-r-[10px]",
+                isOwn && isGroupStart && "rounded-tr-lg",
+                isOwn && isGroupEnd && "rounded-br-none",
+                !isOwn && "rounded-xl",
+                !isOwn && isGroupStart && "rounded-lf\g rounded-tl-none",
+                isSelected && "ring-2 ring-primary/50 scale-[1.02]",
               )}
-
-              {/* Reply preview */}
-              {message.replyTo && (
-                <div
-                  onClick={() =>
-                    onScrollToReply(message.replyTo.messageId)
-                  }
-                  className={cn(
-                    "mb-2 px-3 py-2 rounded-2xl border-l-4 cursor-pointer transition-colors max-w-full",
-                    isOwn
-                      ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
-                      : "bg-background/60 border-primary hover:bg-background/80"
-                  )}
-                >
-                  <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
-                    {message.replyTo.sender || "Unknown"}
-                  </div>
+            >
+              <div className="p-1">
+                {/* Forwarded indicator */}
+                {isForwarded && (
                   <div
                     className={cn(
-                      "text-[11px] truncate",
-                      isOwn
-                        ? "text-primary-foreground/80"
-                        : "text-muted-foreground"
+                      "flex items-center gap-1.5 pb-1 pr-2",
+                      isOwn ? "border-primary-foreground/20" : "border-border",
                     )}
                   >
-                    {message.replyTo.content || message.replyTo.preview || ""}
-                  </div>
-                </div>
-              )}
-
-              {/* Message Content */}
-              {(message.type === "text" || !message.type) && message.content && (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                  {highlightText(message.content)}
-                </p>
-              )}
-
-              {/* Image rendering */}
-              {message.type === "image" && message.url && (
-                <div className="cursor-pointer" onClick={() => handleImageClick(getFileUrl(message.url))}>
-                  <img
-                    src={getFileUrl(message.url)}
-                    alt="Shared image"
-                    className="rounded-lg max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
-                    onError={(e) => {
-                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Video rendering */}
-              {message.type === "video" && message.url && (
-                <video
-                  ref={videoRef}
-                  src={getFileUrl(message.url)}
-                  controls
-                  className="rounded-lg max-w-[300px] max-h-[300px]"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              )}
-
-              {/* Audio rendering */}
-              {message.type === "audio" && message.url && (
-                <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-lg">
-                  <button
-                    onClick={() => {
-                      if (audioRef.current) {
-                        if (isPlaying) {
-                          audioRef.current.pause();
-                        } else {
-                          audioRef.current.play();
-                        }
-                        setIsPlaying(!isPlaying);
-                      }
-                    }}
-                    className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5 text-primary" />
-                    ) : (
-                      <Play className="w-5 h-5 text-primary" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <div className="h-1 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${playProgress}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Audio message
-                    </p>
-                  </div>
-                  <Volume2 className="w-4 h-4 text-muted-foreground" />
-                  <audio
-                    ref={audioRef}
-                    src={getFileUrl(message.url)}
-                    onEnded={() => setIsPlaying(false)}
-                  />
-                </div>
-              )}
-
-              {/* Document/File rendering */}
-              {(message.type === "file" || message.type === "document") && message.url && (
-                <div className="flex items-center gap-3 min-w-[200px]">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {message.fileName || "Document"}
-                    </p>
-                    {message.fileSize && (
-                      <p className="text-xs text-muted-foreground">
-                        {message.fileSize}
-                      </p>
-                    )}
-                  </div>
-                  <a
-                    href={getFileUrl(message.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                    className="p-2 hover:bg-muted rounded-lg transition-colors"
-                    aria-label="Download file"
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
-                </div>
-              )}
-
-              {isOwn && (
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  {message.edited && (
+                    <CornerDownRight
+                      className={cn(
+                        "w-2 h-2",
+                        isOwn
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground",
+                      )}
+                    />
                     <span
                       className={cn(
-                        "text-[10px] italic mr-1",
+                        "text-[9px] italic font-medium",
                         isOwn
-                          ? "text-primary-foreground/50"
-                          : "text-muted-foreground"
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground",
                       )}
                     >
-                      (edited)
+                      Forwarded
                     </span>
-                  )}
-                  <span className="text-[10px] text-primary-foreground/70">
-                    {message.time}
-                  </span>
-                  <MessageStateIcon state={message.state} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {message.reactions &&
-            Object.keys(message.reactions).length > 0 && (
-              <div
-                className={cn(
-                  "flex gap-1 mt-1",
-                  isOwn ? "flex-row-reverse" : "flex-row"
+                  </div>
                 )}
-              >
-                {Object.entries(message.reactions).map(([emoji, count]) => (
-                  <button
-                    key={emoji}
-                    onClick={() => onReaction(message.id, emoji)}
-                    className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+
+                {/* Reply preview */}
+                {message.replyTo && (
+                  <div
+                    onClick={() => onScrollToReply(message.replyTo.messageId)}
+                    className={cn(
+                      "mb-2 px-3 py-1 rounded-md border-l-2 cursor-pointer transition-colors max-w-full",
+                      isOwn
+                        ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
+                        : "bg-background/60 border-primary hover:bg-background/80",
+                    )}
                   >
-                    <span>{emoji}</span>
-                    <span className="text-[10px] font-medium">{count}</span>
-                  </button>
-                ))}
+                    <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
+                      {message.replyTo.sender || "Unknown"}
+                    </div>
+                    <div
+                      className={cn(
+                        "text-[11px] truncate",
+                        isOwn
+                          ? "text-primary-foreground/80"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {message.replyTo.content || message.replyTo.preview || ""}
+                    </div>
+                  </div>
+                )}
+
+                {/* Message Content */}
+                {(message.type === "text" || !message.type) &&
+                  message.content && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
+                      {highlightText(message.content)}
+                    </p>
+                  )}
+
+                {/* Image rendering */}
+                {message.type === "image" && message.url && (
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => handleImageClick(getFileUrl(message.url))}
+                  >
+                    <img
+                      src={getFileUrl(message.url)}
+                      alt="Shared image"
+                      className="rounded-xl max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                      onError={(e) => {
+                        e.target.src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Video rendering */}
+                {message.type === "video" && message.url && (
+                  <video
+                    ref={videoRef}
+                    src={getFileUrl(message.url)}
+                    controls
+                    className="rounded-xl max-w-[300px] max-h-[300px]"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+
+                {/* Audio rendering */}
+                {message.type === "audio" && message.url && (
+                  <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-xl">
+                    <button
+                      onClick={() => {
+                        if (audioRef.current) {
+                          if (isPlaying) {
+                            audioRef.current.pause();
+                          } else {
+                            audioRef.current.play();
+                          }
+                          setIsPlaying(!isPlaying);
+                        }
+                      }}
+                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Play className="w-5 h-5 text-primary" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="h-1 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${playProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Audio message
+                      </p>
+                    </div>
+                    <Volume2 className="w-4 h-4 text-muted-foreground" />
+                    <audio
+                      ref={audioRef}
+                      src={getFileUrl(message.url)}
+                      onEnded={() => setIsPlaying(false)}
+                    />
+                  </div>
+                )}
+
+                {/* Document/File rendering */}
+                {(message.type === "file" || message.type === "document") &&
+                  message.url && (
+                    <div className="flex items-center gap-3 min-w-[200px]">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {message.fileName || "Document"}
+                        </p>
+                        {message.fileSize && (
+                          <p className="text-xs text-muted-foreground">
+                            {message.fileSize}
+                          </p>
+                        )}
+                      </div>
+                      <a
+                        href={getFileUrl(message.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        className="p-2 hover:bg-muted rounded-xl transition-colors"
+                        aria-label="Download file"
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+
+                {isOwn && (
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    {message.edited && (
+                      <span
+                        className={cn(
+                          "text-[10px] italic mr-1",
+                          isOwn
+                            ? "text-primary-foreground/50"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        (edited)
+                      </span>
+                    )}
+                    <span className="text-[10px] text-primary-foreground/70">
+                      {message.time}
+                    </span>
+                    <MessageStateIcon state={message.state} />
+                  </div>
+                )}
               </div>
+            </div>
+            {message.state === "failed" && (
+              <button
+                onClick={() => retryMessage( selectedChat.id,message)}
+                className="text-destructive hover:scale-110"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             )}
+          </div>
+          {message.reactions && Object.keys(message.reactions).length > 0 && (
+            <div
+              className={cn(
+                "flex gap-1 mt-1",
+                isOwn ? "flex-row-reverse" : "flex-row",
+              )}
+            >
+              {Object.entries(message.reactions).map(([emoji, count]) => (
+                <button
+                  key={emoji}
+                  onClick={() => onReaction(message.id, emoji)}
+                  className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
+                >
+                  <span>{emoji}</span>
+                  <span className="text-[10px] font-medium">{count}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {showActions && (
             <div
               className={cn(
                 "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
-                isOwn ? "justify-end" : "justify-start"
+                isOwn ? "justify-end" : "justify-start",
               )}
             >
               <ActionButton
@@ -463,7 +484,7 @@ export default function MessageBubble({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id
+                    showReactionPicker === message.id ? null : message.id,
                   );
                 }}
               />
@@ -495,7 +516,7 @@ export default function MessageBubble({
           <div
             className={cn(
               "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
-              isOwn ? "flex-row-reverse" : "flex-row"
+              isOwn ? "flex-row-reverse" : "flex-row",
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -547,8 +568,8 @@ function ActionButton({ icon: Icon, tooltip, className, onClick }) {
       title={tooltip}
       onClick={onClick}
       className={cn(
-        "p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
-        className
+        "p-1.5 rounded-xl bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
+        className,
       )}
       aria-label={tooltip}
     >

@@ -1,24 +1,15 @@
-// src/features/chat/store/chat.store.js
-// ✅ FINAL FIX: Prevent infinite loops in typing state
-
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
-import { getSocket, initSocket } from "../../../../shared/config/socketConfig";
+import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
 
-const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
+export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
-const getCurrentUserId = () => store.getState().user.currentUser?._id;
-
-const getFileUrl = (fileKey) => {
-  if (!fileKey) return null;
-  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
-    return fileKey;
-  }
-  const S3_BASE_URL = import.meta.env.VITE_S3_BASE_URL || "https://your-bucket.s3.amazonaws.com";
-  return `${S3_BASE_URL}/${fileKey}`;
+const getCurrentUserId = () => {
+  const state = store.getState();
+  return state.auth?.user?._id || state.user?.currentUser?._id || null;
 };
 
 function transformMessage(msg, currentUserId) {
@@ -41,7 +32,7 @@ function transformMessage(msg, currentUserId) {
   if (msg.replyTo?.messageId) {
     replyTo = {
       messageId: msg.replyTo.messageId,
-      sender: msg.replyTo.senderId?.name || "Unknown",
+      sender: msg.replyTo.senderId?.displayName || "Unknown",
       content: msg.replyTo.preview || "",
       preview: msg.replyTo.preview || "",
     };
@@ -49,8 +40,8 @@ function transformMessage(msg, currentUserId) {
 
   return {
     id: msg._id,
-    sender: msg.senderId?.name || "Unknown",
-    avatar: msg.senderId?.name?.charAt(0)?.toUpperCase() || "U",
+    sender: msg.senderId?.displayName || "Unknown",
+    avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "U",
     time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -82,133 +73,122 @@ const useChatStore = create(
       conversations: [],
       messagesByConversation: {},
       selectedChat: null,
-      currentUserId: null,
       isLoadingConversations: false,
       isLoadingMessages: false,
       isSendingMessage: false,
-      typingUsers: {}, // ✅ STABLE: Never mutate directly
-      socketInitialized: false,
-      
-      initializeChatSocket: (userId) => {
-        try {
-          console.log("🔌 Initializing chat socket for user:", userId);
-          
-          let socket = getSocket();
-          
-          if (!socket || !socket.connected) {
-            socket = initSocket(userId);
-          }
-          
-          if (!socket) {
-            console.error("❌ Failed to initialize socket");
-            return;
-          }
+      typingUsers: {},
+      // socketInitialized: false,
 
-          set({ socketInitialized: true });
+      attachSocketListeners: () => {
+        const socket = getChatSocket();
+        if (!socket) return;
 
-          socket.off("message:new");
-          socket.off("message:edited");
-          socket.off("message:deleted");
-          socket.off("message:reaction");
-          socket.off("conversation:read");
-          socket.off("typing:start");
-          socket.off("typing:stop");
-          socket.off("user:online");
-          socket.off("user:offline");
-          socket.off("conversation:online-count");
+        socket.removeAllListeners();
 
-          socket.on("message:new", ({ conversationId, message }) => {
-            console.log("📨 New message received:", { conversationId, message });
-            get().addMessageToConversation(conversationId, message);
-            get().updateConversationLastMessage(conversationId, message);
+        socket.on("message:new", ({ conversationId, message }) => {
+          console.log("📨 New message received:", {
+            conversationId,
+            message,
+          });
+          get().addMessageToConversation(conversationId, message);
+          get().updateConversationLastMessage(conversationId, message);
+        });
+
+        socket.on("message:edited", ({ messageId, text, editedAt }) => {
+          console.log("✏️ Message edited:", { messageId, text });
+          get().updateMessageInConversation(messageId, {
+            content: text,
+            editedAt,
+            edited: true,
+          });
+        });
+
+        socket.on("message:deleted", ({ messageId }) => {
+          console.log("🗑️ Message deleted:", messageId);
+          get().markMessageAsDeleted(messageId);
+        });
+
+        socket.on("message:reaction", ({ messageId, userId, emoji }) => {
+          console.log("❤️ Message reaction:", { messageId, emoji });
+          get().updateMessageReaction(messageId, userId, emoji);
+        });
+
+        socket.on("conversation:read", ({ conversationId, userId }) => {
+          console.log("👁️ Conversation read:", { conversationId, userId });
+          get().markConversationMessagesAsRead(conversationId, userId);
+        });
+
+        socket.on("typing:start", ({ conversationId, userId }) => {
+          const state = get();
+          const currentUserId = getCurrentUserId();
+          if (userId === currentUserId) return;
+
+          const currentArray = state.typingUsers[conversationId] || [];
+          if (currentArray.includes(userId)) return;
+
+          set({
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: [...currentArray, userId],
+            },
           });
 
-          socket.on("message:edited", ({ messageId, text, editedAt }) => {
-            console.log("✏️ Message edited:", { messageId, text });
-            get().updateMessageInConversation(messageId, {
-              content: text,
-              editedAt,
-              edited: true,
-            });
-          });
-
-          socket.on("message:deleted", ({ messageId }) => {
-            console.log("🗑️ Message deleted:", messageId);
-            get().markMessageAsDeleted(messageId);
-          });
-
-          socket.on("message:reaction", ({ messageId, userId, emoji }) => {
-            console.log("❤️ Message reaction:", { messageId, emoji });
-            get().updateMessageReaction(messageId, userId, emoji);
-          });
-
-          socket.on("conversation:read", ({ conversationId, userId }) => {
-            console.log("👁️ Conversation read:", { conversationId, userId });
-            get().markConversationMessagesAsRead(conversationId, userId);
-          });
-
-          // ✅ CRITICAL FIX: Immutable typing state updates
-          socket.on("typing:start", ({ conversationId, userId }) => {
-            const state = get();
-            
-            // Ignore self
-            if (userId === state.currentUserId) return;
-            
-            const currentArray = state.typingUsers[conversationId] || [];
-            
-            // Don't add if already exists
-            if (currentArray.includes(userId)) return;
-            
-            // ✅ Create NEW object with NEW array (immutable)
+          // ⏳ auto remove after 5 seconds
+          setTimeout(() => {
+            const latest = get().typingUsers[conversationId] || [];
             set({
               typingUsers: {
-                ...state.typingUsers,
-                [conversationId]: [...currentArray, userId],
+                ...get().typingUsers,
+                [conversationId]: latest.filter((id) => id !== userId),
               },
-            }, false, "typing:start"); // ✅ Add action name for debugging
-          });
+            });
+          }, 5000);
+        });
 
-          socket.on("typing:stop", ({ conversationId, userId }) => {
-            const state = get();
-            const currentArray = state.typingUsers[conversationId] || [];
-            
-            // ✅ Create NEW object with NEW filtered array (immutable)
-            set({
+        socket.on("typing:stop", ({ conversationId, userId }) => {
+          const state = get();
+          const currentArray = state.typingUsers[conversationId] || [];
+
+          // ✅ Create NEW object with NEW filtered array (immutable)
+          set(
+            {
               typingUsers: {
                 ...state.typingUsers,
                 [conversationId]: currentArray.filter((id) => id !== userId),
               },
-            }, false, "typing:stop"); // ✅ Add action name for debugging
-          });
+            },
+            false,
+            "typing:stop",
+          ); // ✅ Add action name for debugging
+        });
 
-          socket.on("user:online", (userId) => {
-            console.log("🟢 User online:", userId);
-          });
+        socket.on("user:online", (userId) => {
+          console.log("🟢 User online:", userId);
+        });
 
-          socket.on("user:offline", (userId) => {
-            console.log("🔴 User offline:", userId);
-          });
+        socket.on("user:offline", (userId) => {
+          console.log("🔴 User offline:", userId);
+        });
 
-          socket.on("conversation:online-count", ({ conversationId, onlineCount }) => {
+        socket.on(
+          "conversation:online-count",
+          ({ conversationId, onlineCount }) => {
             console.log("👥 Online count:", { conversationId, onlineCount });
             get().updateConversation(conversationId, { online: onlineCount });
-          });
+          },
+        );
 
-          console.log("✅ Chat socket listeners attached");
-        } catch (error) {
-          console.error("❌ Socket initialization error:", error);
-          set({ socketInitialized: true });
-        }
+        console.log("✅ Chat socket listeners attached");
       },
 
       joinConversation: (conversationId) => {
         try {
-          const socket = getSocket();
+          const socket = getChatSocket();
           if (!socket?.connected) {
             console.warn("⚠️ Cannot join conversation: socket not connected");
             return;
           }
-          
+
           console.log("📥 Joining conversation:", conversationId);
           socket.emit("conversation:join", conversationId);
         } catch (error) {
@@ -218,9 +198,9 @@ const useChatStore = create(
 
       leaveConversation: (conversationId) => {
         try {
-          const socket = getSocket();
+          const socket = getChatSocket();
           if (!socket?.connected) return;
-          
+
           console.log("📤 Leaving conversation:", conversationId);
           socket.emit("conversation:leave", conversationId);
         } catch (error) {
@@ -230,9 +210,9 @@ const useChatStore = create(
 
       emitTypingStart: (conversationId) => {
         try {
-          const socket = getSocket();
+          const socket = getChatSocket();
           if (!socket?.connected || !conversationId) return;
-          
+
           socket.emit("typing:start", { conversationId });
         } catch (error) {
           console.error("❌ Error emitting typing start:", error);
@@ -241,9 +221,9 @@ const useChatStore = create(
 
       emitTypingStop: (conversationId) => {
         try {
-          const socket = getSocket();
+          const socket = getChatSocket();
           if (!socket?.connected || !conversationId) return;
-          
+
           socket.emit("typing:stop", { conversationId });
         } catch (error) {
           console.error("❌ Error emitting typing stop:", error);
@@ -251,15 +231,23 @@ const useChatStore = create(
       },
 
       setSelectedChat: (chat) => {
-        const prevChat = get().selectedChat;
-        if (prevChat?.id) get().leaveConversation(prevChat.id);
-        if (chat?.id) get().joinConversation(chat.id);
-        set({ selectedChat: chat });
-      },
+        const prev = get().selectedChat;
 
-      setCurrentUserId: (userId) => {
-        set({ currentUserId: userId });
-        get().initializeChatSocket(userId);
+        if (prev?.id) {
+          get().leaveConversation(prev.id);
+        }
+
+        if (chat?.id) {
+          get().joinConversation(chat.id);
+        }
+
+        set((state) => ({
+          selectedChat: chat,
+          typingUsers: {
+            ...state.typingUsers,
+            [chat?.id]: [],
+          },
+        }));
       },
 
       loadConversations: async (projectId, type) => {
@@ -268,18 +256,23 @@ const useChatStore = create(
           return;
         }
 
-        const currentUserId = get().currentUserId;
+        const currentUserId = getCurrentUserId();
+
         if (!currentUserId) {
           console.error("❌ No currentUserId set");
           return;
         }
 
-        console.log("🔄 Loading conversations...", { projectId, type, currentUserId });
+        console.log("🔄 Loading conversations...", {
+          projectId,
+          type,
+          currentUserId,
+        });
         set({ isLoadingConversations: true });
 
         try {
           const conversations = await chatApi.getConversations(projectId);
-          
+
           console.log("✅ Conversations received:", conversations.length);
 
           if (!conversations || conversations.length === 0) {
@@ -295,12 +288,12 @@ const useChatStore = create(
             let otherUser = null;
             if (conv.type === "DIRECT" && conv.members) {
               otherUser = conv.members.find(
-                (m) => m.userId?._id?.toString() !== currentUserId.toString()
+                (m) => m.userId?._id?.toString() !== currentUserId.toString(),
               );
             }
 
             const currentMember = conv.members?.find(
-              (m) => m.userId?._id?.toString() === currentUserId.toString()
+              (m) => m.userId?._id?.toString() === currentUserId.toString(),
             );
             const canSendMessage = currentMember?.canSendMessage !== false;
 
@@ -310,10 +303,10 @@ const useChatStore = create(
               projectId: conv.projectId,
               name:
                 conv.type === "PROJECT_ALL"
-                  ? "All Departments"
+                  ? "General"
                   : conv.type === "DEPARTMENT"
-                  ? conv.department?.name || "Department"
-                  : otherUser?.userId?.name || "Unknown User",
+                    ? conv.department?.name || "Department"
+                    : otherUser?.userId?.name || "Unknown User",
               department: conv.department?._id,
               departmentName: conv.department?.name,
               userId: otherUser?.userId?._id,
@@ -333,7 +326,7 @@ const useChatStore = create(
                 : Date.now(),
               isPinned:
                 conv.pinnedFor?.some(
-                  (id) => id.toString() === currentUserId.toString()
+                  (id) => id.toString() === currentUserId.toString(),
                 ) || false,
               isMuted: false,
               isFavorite: false,
@@ -342,11 +335,14 @@ const useChatStore = create(
             };
           });
 
-          console.log("✅ Transformed conversations:", transformed.length);
+          // console.log("✅ Transformed conversations:", transformed.length);
           set({ conversations: transformed, isLoadingConversations: false });
         } catch (error) {
           console.error("❌ Failed to load conversations:", error);
-          console.error("Error details:", error.response?.data || error.message);
+          console.error(
+            "Error details:",
+            error.response?.data || error.message,
+          );
           set({ isLoadingConversations: false, conversations: [] });
         }
       },
@@ -354,13 +350,14 @@ const useChatStore = create(
       updateConversation: (conversationId, updates) => {
         set({
           conversations: get().conversations.map((c) =>
-            c.id === conversationId ? { ...c, ...updates } : c
+            c.id === conversationId ? { ...c, ...updates } : c,
           ),
         });
       },
 
       loadMessages: async (conversationId, loadMore = false) => {
         if (!conversationId) return;
+        const currentUserId = getCurrentUserId();
 
         set({ isLoadingMessages: true });
 
@@ -374,10 +371,8 @@ const useChatStore = create(
           const cursor = loadMore ? existing.cursor : null;
           const result = await chatApi.getMessages(conversationId, 20, cursor);
 
-          const currentUserId = get().currentUserId;
-
           const transformed = result.messages.map((msg) =>
-            transformMessage(msg, currentUserId)
+            transformMessage(msg, currentUserId),
           );
 
           const updatedMessages = loadMore
@@ -402,8 +397,7 @@ const useChatStore = create(
       },
 
       sendMessage: async (conversationId, projectIdParam, messageData) => {
-        const currentUserId = get().currentUserId;
-        if (!currentUserId) throw new Error("User not authenticated");
+        const currentUserId = getCurrentUserId();
 
         const selectedChat = get().selectedChat;
         const projectId =
@@ -437,11 +431,13 @@ const useChatStore = create(
         };
 
         if (isFileUpload) {
-          const replyToMessageId = messageData.formData.get("replyTo[messageId]");
+          const replyToMessageId =
+            messageData.formData.get("replyTo[messageId]");
           if (replyToMessageId) {
             optimisticMessage.replyTo = {
               messageId: replyToMessageId,
-              sender: messageData.formData.get("replyTo[senderName]") || "Unknown",
+              sender:
+                messageData.formData.get("replyTo[senderName]") || "Unknown",
               content: messageData.formData.get("replyTo[preview]") || "",
               preview: messageData.formData.get("replyTo[preview]") || "",
             };
@@ -478,7 +474,7 @@ const useChatStore = create(
           if (isFileUpload) {
             sentMessage = await chatApi.sendMessage(
               conversationId,
-              messageData.formData
+              messageData.formData,
             );
           } else {
             const payload = {
@@ -505,7 +501,7 @@ const useChatStore = create(
 
           const transformed = transformMessage(sentMessage, currentUserId);
           transformed.isOwn = true;
-          transformed.state = "sent";
+          transformed.state = "failed";
 
           const updated = get().messagesByConversation[conversationId];
           set({
@@ -514,7 +510,7 @@ const useChatStore = create(
               [conversationId]: {
                 ...updated,
                 messages: updated.messages.map((m) =>
-                  m.id === tempId ? transformed : m
+                  m.id === tempId ? transformed : m,
                 ),
               },
             },
@@ -532,7 +528,7 @@ const useChatStore = create(
               [conversationId]: {
                 ...updated,
                 messages: updated.messages.map((m) =>
-                  m.id === tempId ? { ...m, state: "failed" } : m
+                  m.id === tempId ? { ...m, state: "failed" } : m,
                 ),
               },
             },
@@ -543,18 +539,87 @@ const useChatStore = create(
         }
       },
 
-      addMessageToConversation: (conversationId, message) => {
-        const currentUserId = get().currentUserId;
-        const existing = get().messagesByConversation[conversationId];
-        if (!existing) return;
+      retryMessage: async (conversationId, message) => {
+        const { id, content, type, replyTo } = message;
 
-        if (existing.messages.some((m) => m.id === message._id)) return;
+        // set back to sending
+        set((state) => ({
+          messagesByConversation: {
+            ...state.messagesByConversation,
+            [conversationId]: {
+              ...state.messagesByConversation[conversationId],
+              messages: state.messagesByConversation[
+                conversationId
+              ].messages.map((m) =>
+                m.id === id ? { ...m, state: "sending" } : m,
+              ),
+            },
+          },
+        }));
+
+        // resend
+        return get().sendMessage(conversationId, null, {
+          text: content,
+          type: type.toUpperCase(),
+          replyTo,
+        });
+      },
+
+      addMessageToConversation: (conversationId, message) => {
+        const state = get();
+        const currentUserId = getCurrentUserId();
+
+        const existing = state.messagesByConversation[conversationId] || {
+          messages: [],
+          hasMore: false,
+          cursor: null,
+        };
 
         const transformed = transformMessage(message, currentUserId);
 
+        // 🔥 1. If message already exists (hard duplicate)
+        if (
+          existing.messages.some(
+            (m) => m.tempId && m.tempId === transformed._raw?.clientTempId,
+          )
+        )
+          return;
+
+        // 🔥 2. If this message is from current user,
+        // try replacing optimistic temp message
+        if (transformed.isOwn) {
+          const tempMessageIndex = existing.messages.findIndex(
+            (m) =>
+              m.state === "sending" &&
+              m.content === transformed.content &&
+              Math.abs(m.timestamp - transformed.timestamp) < 5000,
+          );
+
+          if (tempMessageIndex !== -1) {
+            const updatedMessages = [...existing.messages];
+            updatedMessages[tempMessageIndex] = {
+              ...transformed,
+              state: "sent",
+            };
+
+            set({
+              messagesByConversation: {
+                ...state.messagesByConversation,
+                [conversationId]: {
+                  ...existing,
+                  messages: updatedMessages,
+                },
+              },
+            });
+
+            return;
+          }
+        }
+
+        // 🔥 3. Otherwise append normally
         set({
           messagesByConversation: {
-            ...get().messagesByConversation,
+            ...state.messagesByConversation,
             [conversationId]: {
               ...existing,
               messages: [...existing.messages, transformed],
@@ -566,8 +631,10 @@ const useChatStore = create(
       updateConversationLastMessage: (conversationId, message) => {
         const conversations = get().conversations.map((conv) => {
           if (conv.id !== conversationId) return conv;
+
           const isOwn =
-            message.senderId?._id?.toString() === get().currentUserId?.toString();
+            message.senderId?._id?.toString() ===
+            getCurrentUserId()?.toString();
           return {
             ...conv,
             lastMessage: message.content?.text || "",
@@ -584,7 +651,7 @@ const useChatStore = create(
           all[convId] = {
             ...all[convId],
             messages: all[convId].messages.map((m) =>
-              m.id === messageId ? { ...m, ...updates } : m
+              m.id === messageId ? { ...m, ...updates } : m,
             ),
           };
         });
@@ -624,46 +691,16 @@ const useChatStore = create(
           await chatApi.markAsRead(conversationId);
           set({
             conversations: get().conversations.map((c) =>
-              c.id === conversationId ? { ...c, unread: 0 } : c
+              c.id === conversationId ? { ...c, unread: 0 } : c,
             ),
           });
         } catch (error) {
           console.error("❌ Failed to mark as read:", error);
         }
       },
-
-      disconnectSocket: () => {
-        try {
-          const socket = getSocket();
-          if (socket) {
-            const selectedChat = get().selectedChat;
-            if (selectedChat?.id) {
-              socket.emit("conversation:leave", selectedChat.id);
-            }
-
-            socket.off("message:new");
-            socket.off("message:edited");
-            socket.off("message:deleted");
-            socket.off("message:reaction");
-            socket.off("conversation:read");
-            socket.off("typing:start");
-            socket.off("typing:stop");
-            socket.off("user:online");
-            socket.off("user:offline");
-            socket.off("conversation:online-count");
-
-            set({ 
-              socketInitialized: false,
-              typingUsers: {} 
-            });
-          }
-        } catch (error) {
-          console.error("❌ Error disconnecting socket:", error);
-        }
-      },
     }),
-    { name: "ChatStore" }
-  )
+    { name: "ChatStore" },
+  ),
 );
 
 export default useChatStore;

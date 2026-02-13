@@ -10,16 +10,12 @@ export const getCurrentUserThunk = createAsyncThunk(
   "user/getCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("🔄 getCurrentUserThunk - Starting...");
-
       const user = await authService.getCurrentUser();
 
       if (!user) {
-        console.log("ℹ️ No user session found");
+        console.error("ℹ️ No user session found");
         return null;
       }
-
-      console.log("✅ getCurrentUserThunk - Success:", user.email);
       return user;
 
     } catch (err) {

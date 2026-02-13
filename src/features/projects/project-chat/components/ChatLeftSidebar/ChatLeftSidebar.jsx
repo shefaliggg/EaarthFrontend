@@ -9,19 +9,18 @@ import useChatStore from "../../store/chat.store";
 import ConversationItem from "../ChatLeftSidebar/ConversationItem";
 import ContextMenu from "../ChatLeftSidebar/ContextMenu";
 import SkeletonItem from "../ChatLeftSidebar/SkeletonItem";
+import { toast } from "sonner";
 
-export default function ChatLeftSidebar({
-  activeTab = "all",
-  onTabChange,
-  selectedChat,
-  onChatSelect,
-}) {
+export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState(null);
 
-  const { conversations, isLoadingConversations } = useChatStore();
-
-  console.log("📋 All conversations:", conversations); // ✅ Debug log
+  const {
+    conversations,
+    isLoadingConversations,
+    selectedChat,
+    setSelectedChat,
+  } = useChatStore();
 
   // ✅ FIXED: Filter conversations by search and tab
   const filteredConversations = conversations.filter((conv) => {
@@ -42,7 +41,11 @@ export default function ChatLeftSidebar({
     return true;
   });
 
-  console.log("🔍 Filtered conversations for tab:", activeTab, filteredConversations); // ✅ Debug log
+  // console.log(
+  //   "🔍 Filtered conversations for tab:",
+  //   activeTab,
+  //   filteredConversations,
+  // ); // ✅ Debug log
 
   // Sort: pinned first, then by timestamp
   const sortedConversations = [...filteredConversations].sort((a, b) => {
@@ -55,11 +58,16 @@ export default function ChatLeftSidebar({
 
   // ✅ FIXED: Separate by type for "all" tab
   const departments = sortedConversations.filter(
-    (c) => c.type === "all" || c.type === "group"
+    (c) => c.type === "all" || c.type === "group",
   );
   const teamMembers = sortedConversations.filter((c) => c.type === "dm");
 
-  console.log("📊 Departments:", departments.length, "Team members:", teamMembers.length); // ✅ Debug log
+  // console.log(
+  //   "📊 Departments:",
+  //   departments.length,
+  //   "Team members:",
+  //   teamMembers.length,
+  // ); // ✅ Debug log
 
   const handleContextMenu = (e, item, type) => {
     e.preventDefault();
@@ -67,35 +75,8 @@ export default function ChatLeftSidebar({
     setContextMenu({ x: e.clientX, y: e.clientY, item, type });
   };
 
-  const handleChatClick = (item, itemType) => {
-    console.log("💬 Chat clicked:", item); // ✅ Debug log
-    
-    const chatData = {
-      id: item.id,
-      type: itemType,
-      name: item.name,
-      icon: item.icon,
-      department: item.department,
-      departmentName: item.departmentName,
-      userId: item.userId,
-      avatar: item.avatar,
-      role: item.role,
-      status: item.status,
-      members: item.members,
-      online: item.online,
-      unread: item.unread,
-      mentions: item.mentions,
-      lastMessage: item.lastMessage,
-      timestamp: item.timestamp,
-      isPinned: item.isPinned,
-      isMuted: item.isMuted,
-      isFavorite: item.isFavorite,
-      canSendMessage: item.canSendMessage,
-      projectId: item.projectId, // ✅ CRITICAL: Include projectId
-      _raw: item._raw,
-    };
-
-    onChatSelect?.(chatData);
+  const handleChatClick = (chat) => {
+    setSelectedChat(chat);
   };
 
   return (
@@ -109,7 +90,7 @@ export default function ChatLeftSidebar({
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
               activeTab === "all"
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
+                : "hover:bg-muted",
             )}
             onClick={() => onTabChange?.("all")}
           >
@@ -131,7 +112,7 @@ export default function ChatLeftSidebar({
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
               activeTab === "personal"
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
+                : "hover:bg-muted",
             )}
             onClick={() => onTabChange?.("personal")}
           >
@@ -151,7 +132,7 @@ export default function ChatLeftSidebar({
           <button
             className={cn(
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-              "cursor-not-allowed bg-muted opacity-50"
+              "cursor-not-allowed bg-muted opacity-50",
             )}
             disabled
           >
@@ -167,18 +148,19 @@ export default function ChatLeftSidebar({
       {/* Conversations List */}
       <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[818px] sticky top-5">
         {/* Header */}
-        <div className="border-b bg-card px-4 py-2.5 pt-3">
-          <div className="flex items-center justify-between mb-3">
+        <div className="border-b bg-card px-4 py-2.5 pt-3 mb-1">
+          <div className="flex items-center justify-between mb-3 px-1.5">
             <h2 className="text-lg font-bold">
               {activeTab === "all"
                 ? "All Departments"
                 : activeTab === "personal"
-                ? "Direct Messages"
-                : "Email"}
+                  ? "Direct Messages"
+                  : "Email"}
             </h2>
             {/* ✅ Show count */}
             <span className="text-xs text-muted-foreground">
-              {activeTab === "all" ? departments.length : teamMembers.length} chats
+              {activeTab === "all" ? departments.length : teamMembers.length}{" "}
+              chats
             </span>
           </div>
 
@@ -212,7 +194,6 @@ export default function ChatLeftSidebar({
             </div>
           ) : (
             <div className="p-1 px-2 space-y-0.5">
-              {/* ✅ FIXED: Show correct conversations based on tab */}
               {activeTab === "all" && (
                 <>
                   {departments.map((dept) => (
@@ -221,7 +202,13 @@ export default function ChatLeftSidebar({
                       item={dept}
                       type={dept.type}
                       isSelected={selectedChat?.id === dept.id}
-                      onClick={() => handleChatClick(dept, dept.type)}
+                      onClick={() =>
+                        dept.canSendMessage
+                          ? handleChatClick(dept, dept.type)
+                          : toast.error(
+                              "You do not have permission to send messages in this department",
+                            )
+                      }
                       onContextMenu={(e) => handleContextMenu(e, dept, "team")}
                     />
                   ))}
@@ -229,7 +216,7 @@ export default function ChatLeftSidebar({
                   {departments.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-xs text-muted-foreground">
-                        {searchQuery 
+                        {searchQuery
                           ? `No departments found for "${searchQuery}"`
                           : "No departments found"}
                       </p>
@@ -247,14 +234,16 @@ export default function ChatLeftSidebar({
                       type="dm"
                       isSelected={selectedChat?.id === member.id}
                       onClick={() => handleChatClick(member, "dm")}
-                      onContextMenu={(e) => handleContextMenu(e, member, "personal")}
+                      onContextMenu={(e) =>
+                        handleContextMenu(e, member, "personal")
+                      }
                     />
                   ))}
 
                   {teamMembers.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-xs text-muted-foreground">
-                        {searchQuery 
+                        {searchQuery
                           ? `No members found for "${searchQuery}"`
                           : "No direct messages yet"}
                       </p>

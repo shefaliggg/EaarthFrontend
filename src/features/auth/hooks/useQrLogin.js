@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { io } from "socket.io-client";
 import { authService } from "../services/auth.service";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { initSocket } from "../../../shared/config/socketConfig";
+import { initPublicSocket } from "../../../shared/config/socketConfig";
 
 export function useQrLogin({ type = "web" }) {
   const [qrData, setQrData] = useState(null);
@@ -109,7 +108,7 @@ export function useQrLogin({ type = "web" }) {
       });
 
       // Initialize socket
-      const socket = initSocket();
+      const socket = initPublicSocket();
       socket.emit("join-qr", data.socketRoom);
 
       socket.on("connect_error", (err) => {
