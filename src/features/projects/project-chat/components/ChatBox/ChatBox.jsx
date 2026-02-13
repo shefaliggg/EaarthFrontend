@@ -36,7 +36,7 @@ function ChatBox() {
   const messagesByConversation = useChatStore(
     (state) => state.messagesByConversation,
   );
-  const { selectedChat, typingUsers } = useChatStore();
+  const { selectedChat } = useChatStore();
   const loadMessages = useChatStore((state) => state.loadMessages);
   const markAsRead = useChatStore((state) => state.markAsRead);
   const isLoadingMessages = useChatStore((state) => state.isLoadingMessages);
@@ -120,7 +120,7 @@ function ChatBox() {
   // ─────────────────────────────────────────
   if (!selectedChat) {
     return (
-      <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex items-center justify-center mx-auto">
+      <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex items-center justify-center mx-auto">
         <div className="text-center space-y-3 p-8">
           <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-primary" />
@@ -137,7 +137,7 @@ function ChatBox() {
   }
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[900px] sticky top-5 flex flex-col mx-auto">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex flex-col mx-auto">
       <ChatHeader selectedChat={selectedChat} />
 
       {/* MESSAGE CONTAINER */}
@@ -175,7 +175,7 @@ function ChatBox() {
         {/* MESSAGES */}
         {!loadError && messages.length > 0 && (
           <MessageList
-            selectedChat={selectedChat}
+            // selectedChat={selectedChat}
             messages={messages}
             messagesData={messagesData}
             isLoadingMessages={isLoadingMessages}
@@ -193,9 +193,6 @@ function ChatBox() {
             </div>
           </div>
         )}
-
-        <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
-
         {/* NEW MESSAGES BUTTON (WhatsApp style) */}
         {showNewMessageButton && (
           <button
@@ -215,7 +212,21 @@ function ChatBox() {
       </div>
 
       {/* INPUT AREA */}
-      <div className="border-t p-4 space-y-2.5 rounded-b-3xl flex-shrink-0">
+      <div className="border-t p-4 space-y-2.5 rounded-b-3xl flex-shrink-0 relative">
+        {/* NEW MESSAGES BUTTON (WhatsApp style) */}
+        {showNewMessageButton && (
+          <button
+            onClick={handleScrollToNewMessages}
+            className="absolute bottom-30 right-[42%] opacity-50 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-10 animate-in slide-in-from-bottom-4 hover:scale-105 active:scale-95"
+            aria-label={`Scroll to ${unreadNewMessages} new message${unreadNewMessages > 1 ? "s" : ""}`}
+          >
+            <ChevronDown className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {unreadNewMessages > 0 && `${unreadNewMessages} `}
+              New Message{unreadNewMessages > 1 ? "s" : ""}
+            </span>
+          </button>
+        )}
         {replyTo && (
           <ReplyPreview replyTo={replyTo} onClose={() => setReplyTo(null)} />
         )}

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import MessageBubble from "./Messagebubble";
+import TypingIndicator from "./TypingIndicator";
+import useChatStore from "../../store/chat.store";
 
 export default function MessageList({
-  selectedChat,
+  // selectedChat,
   messages,
   messagesData,
   isLoadingMessages,
@@ -17,6 +19,7 @@ export default function MessageList({
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [searchQuery] = useState("");
+  const { selectedChat,typingUsers } = useChatStore();
 
   const scrollToMessage = (messageId) => {
     const element = document.getElementById(`message-${messageId}`);
@@ -131,6 +134,8 @@ export default function MessageList({
           />
         );
       })}
+
+        <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
 
       <div ref={messagesEndRef} />
     </>

@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Header from "@/shared/components/header/Header";
 import AiChatWidget from "../features/ai/components/AIChatWidget";
 import SuspenseOutlet from "../shared/components/SuspenseOutlet";
+import { Footer } from "../shared/components/Footer";
 
 const DashboardLayout = () => {
 
@@ -12,6 +13,7 @@ const DashboardLayout = () => {
         <SuspenseOutlet />
         <AiChatWidget />
       </div>
+      <Footer />
     </div>
   );
 };

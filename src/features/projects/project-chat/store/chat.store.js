@@ -40,6 +40,7 @@ function transformMessage(msg, currentUserId) {
 
   return {
     id: msg._id,
+    clientTempId: msg.clientTempId || null,
     sender: msg.senderId?.displayName || "Unknown",
     avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "U",
     time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
@@ -398,7 +399,6 @@ const useChatStore = create(
 
       sendMessage: async (conversationId, projectIdParam, messageData) => {
         const currentUserId = getCurrentUserId();
-
         const selectedChat = get().selectedChat;
         const projectId =
           projectIdParam || selectedChat?.projectId || DEFAULT_PROJECT_ID;
@@ -406,10 +406,13 @@ const useChatStore = create(
         if (!projectId) throw new Error("Project ID is required");
 
         const isFileUpload = !!messageData.formData;
-        const tempId = `temp-${Date.now()}`;
+
+        // 🔥 deterministic temp id
+        const clientTempId = `temp-${crypto.randomUUID()}`;
 
         const optimisticMessage = {
-          id: tempId,
+          id: clientTempId,
+          clientTempId,
           sender: "You",
           avatar: "Y",
           time: new Date().toLocaleTimeString("en-US", {
@@ -427,9 +430,11 @@ const useChatStore = create(
             ? messageData.formData.get("attachments")?.name
             : null,
           replyTo: null,
+          reactions: {},
           _raw: null,
         };
 
+        // Reply handling
         if (isFileUpload) {
           const replyToMessageId =
             messageData.formData.get("replyTo[messageId]");
@@ -438,17 +443,20 @@ const useChatStore = create(
               messageId: replyToMessageId,
               sender:
                 messageData.formData.get("replyTo[senderName]") || "Unknown",
-              content: messageData.formData.get("replyTo[preview]") || "",
               preview: messageData.formData.get("replyTo[preview]") || "",
             };
           }
-        } else if (messageData.replyTo) {
-          optimisticMessage.replyTo = {
-            messageId: messageData.replyTo.messageId,
-            sender: messageData.replyTo.senderName || "Unknown",
-            content: messageData.replyTo.preview || "",
-            preview: messageData.replyTo.preview || "",
-          };
+
+          // 🔥 attach temp id to formData
+          messageData.formData.append("clientTempId", clientTempId);
+        } else {
+          if (messageData.replyTo) {
+            optimisticMessage.replyTo = {
+              messageId: messageData.replyTo.messageId,
+              sender: messageData.replyTo.senderName || "Unknown",
+              preview: messageData.replyTo.preview || "",
+            };
+          }
         }
 
         const existing = get().messagesByConversation[conversationId] || {
@@ -457,6 +465,7 @@ const useChatStore = create(
           cursor: null,
         };
 
+        // 🔥 Add optimistic message
         set({
           messagesByConversation: {
             ...get().messagesByConversation,
@@ -481,6 +490,7 @@ const useChatStore = create(
               projectId,
               type: (messageData.type || "TEXT").toUpperCase(),
               text: messageData.text || "",
+              clientTempId, // 🔥 important
             };
 
             if (messageData.replyTo) {
@@ -499,36 +509,21 @@ const useChatStore = create(
             sentMessage = await chatApi.sendMessage(conversationId, payload);
           }
 
-          const transformed = transformMessage(sentMessage, currentUserId);
-          transformed.isOwn = true;
-          transformed.state = "failed";
-
-          const updated = get().messagesByConversation[conversationId];
-          set({
-            messagesByConversation: {
-              ...get().messagesByConversation,
-              [conversationId]: {
-                ...updated,
-                messages: updated.messages.map((m) =>
-                  m.id === tempId ? transformed : m,
-                ),
-              },
-            },
-            isSendingMessage: false,
-          });
-
           return sentMessage;
         } catch (error) {
           console.error("❌ Failed to send message:", error);
 
           const updated = get().messagesByConversation[conversationId];
+
           set({
             messagesByConversation: {
               ...get().messagesByConversation,
               [conversationId]: {
                 ...updated,
                 messages: updated.messages.map((m) =>
-                  m.id === tempId ? { ...m, state: "failed" } : m,
+                  m.clientTempId === clientTempId
+                    ? { ...m, state: "failed" }
+                    : m,
                 ),
               },
             },
@@ -566,65 +561,62 @@ const useChatStore = create(
       },
 
       addMessageToConversation: (conversationId, message) => {
-        const state = get();
         const currentUserId = getCurrentUserId();
 
-        const existing = state.messagesByConversation[conversationId] || {
-          messages: [],
-          hasMore: false,
-          cursor: null,
-        };
+        set((state) => {
+          const existing = state.messagesByConversation[conversationId] || {
+            messages: [],
+            hasMore: false,
+            cursor: null,
+          };
 
-        const transformed = transformMessage(message, currentUserId);
+          const transformed = transformMessage(message, currentUserId);
+          const incomingClientTempId = message.clientTempId;
 
-        // 🔥 1. If message already exists (hard duplicate)
-        if (
-          existing.messages.some(
-            (m) => m.tempId && m.tempId === transformed._raw?.clientTempId,
-          )
-        )
-          return;
+          let updatedMessages = [...existing.messages];
 
-        // 🔥 2. If this message is from current user,
-        // try replacing optimistic temp message
-        if (transformed.isOwn) {
-          const tempMessageIndex = existing.messages.findIndex(
-            (m) =>
-              m.state === "sending" &&
-              m.content === transformed.content &&
-              Math.abs(m.timestamp - transformed.timestamp) < 5000,
-          );
+          // 🔥 Replace optimistic message
+          if (incomingClientTempId) {
+            const index = updatedMessages.findIndex(
+              (m) => m.clientTempId === incomingClientTempId,
+            );
 
-          if (tempMessageIndex !== -1) {
-            const updatedMessages = [...existing.messages];
-            updatedMessages[tempMessageIndex] = {
-              ...transformed,
-              state: "sent",
-            };
+            if (index !== -1) {
+              updatedMessages[index] = {
+                ...updatedMessages[index],
+                ...transformed,
+                state: "sent",
+              };
 
-            set({
-              messagesByConversation: {
-                ...state.messagesByConversation,
-                [conversationId]: {
-                  ...existing,
-                  messages: updatedMessages,
+              return {
+                messagesByConversation: {
+                  ...state.messagesByConversation,
+                  [conversationId]: {
+                    ...existing,
+                    messages: updatedMessages,
+                  },
                 },
-              },
-            });
-
-            return;
+              };
+            }
           }
-        }
 
-        // 🔥 3. Otherwise append normally
-        set({
-          messagesByConversation: {
-            ...state.messagesByConversation,
-            [conversationId]: {
-              ...existing,
-              messages: [...existing.messages, transformed],
+          // 🔥 Prevent duplicate by real ID
+          if (updatedMessages.some((m) => m.id === transformed.id)) {
+            return state;
+          }
+
+          // 🔥 Append if new
+          updatedMessages.push(transformed);
+
+          return {
+            messagesByConversation: {
+              ...state.messagesByConversation,
+              [conversationId]: {
+                ...existing,
+                messages: updatedMessages,
+              },
             },
-          },
+          };
         });
       },
 

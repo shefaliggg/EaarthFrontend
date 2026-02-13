@@ -210,17 +210,16 @@ export default function MessageBubble({
                 "relative p-1 transition-all break-words max-w-full w-fit",
                 isOwn ? "ml-auto" : "",
                 isOwn
-                  ? "bg-primary dark:bg-primary/50 text-primary-foreground"
+                  ? "bg-primary dark:bg-primary/40 text-background"
                   : "bg-muted",
-                isOwn && "rounded-xl rounded-r-[10px]",
-                isOwn && isGroupStart && "rounded-tr-lg",
-                isOwn && isGroupEnd && "rounded-br-none",
-                !isOwn && "rounded-xl",
-                !isOwn && isGroupStart && "rounded-lf\g rounded-tl-none",
+                isOwn && "rounded-2xl rounded-tr-none",
+                // isOwn && isGroupEnd && "",
+                !isOwn && "rounded-2xl rounded-tl-none",
+                // !isOwn && isGroupStart && "rounded-2xl ",
                 isSelected && "ring-2 ring-primary/50 scale-[1.02]",
               )}
             >
-              <div className="p-1">
+              <div className="">
                 {/* Forwarded indicator */}
                 {isForwarded && (
                   <div
@@ -255,9 +254,9 @@ export default function MessageBubble({
                   <div
                     onClick={() => onScrollToReply(message.replyTo.messageId)}
                     className={cn(
-                      "mb-2 px-3 py-1 rounded-md border-l-2 cursor-pointer transition-colors max-w-full",
+                      "mb-1 pl-2 pr-4 py-1 rounded-md border-l-2 cursor-pointer transition-colors max-w-full",
                       isOwn
-                        ? "bg-primary/20 border-primary-foreground/50 hover:bg-primary/30"
+                        ? "bg-purple-200 border-primary-foreground dark:border-primary-foreground/50 hover:bg-muted/80"
                         : "bg-background/60 border-primary hover:bg-background/80",
                     )}
                   >
@@ -268,7 +267,7 @@ export default function MessageBubble({
                       className={cn(
                         "text-[11px] truncate",
                         isOwn
-                          ? "text-primary-foreground/80"
+                          ? "text-muted-foreground"
                           : "text-muted-foreground",
                       )}
                     >
@@ -388,7 +387,7 @@ export default function MessageBubble({
                   )}
 
                 {isOwn && (
-                  <div className="flex items-center justify-end gap-1 mt-1">
+                  <div className="flex items-center justify-end gap-1 mt-1 pl-3">
                     {message.edited && (
                       <span
                         className={cn(
@@ -589,7 +588,7 @@ function MessageStateIcon({ state }) {
     case "delivered":
       return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
-      return <CheckCheck className="w-3 h-3 text-green-400" />;
+      return <CheckCheck className="w-3 h-3 text-green-900" />;
     case "failed":
       return <X className="w-3 h-3 text-red-500" />;
     default:

@@ -15,8 +15,7 @@ const MessageInput = React.memo(
     onClearReply,
     onClearEdit,
     onStartRecording,
-    isUserAtBottom,
-    scrollToBottom,
+    messagesEndRef,
   }) => {
     const [messageInput, setMessageInput] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -167,9 +166,13 @@ const MessageInput = React.memo(
 
         await sendMessage(selectedChat.id, projectId, messageData);
 
-        // Auto-scroll after sending message
-        if (scrollToBottom) {
-          setTimeout(() => scrollToBottom(true), 100);
+        // ✅ Force scroll to bottom after sending
+        if (messagesEndRef?.current) {
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({
+              behavior: "smooth",
+            });
+          }, 50);
         }
       } catch (error) {
         console.error("❌ Failed to send message:", error);
@@ -184,7 +187,7 @@ const MessageInput = React.memo(
       sendMessage,
       emitTypingStop,
       onClearReply,
-      scrollToBottom,
+      messagesEndRef,
     ]);
 
     // ═══════════════════════════════════════
@@ -282,9 +285,13 @@ const MessageInput = React.memo(
           await sendMessage(selectedChat.id, projectId, { formData });
           onClearReply();
 
-          // Auto-scroll after file upload
-          if (scrollToBottom) {
-            setTimeout(() => scrollToBottom(true), 100);
+          // ✅ Force scroll to bottom after file upload
+          if (messagesEndRef?.current) {
+            setTimeout(() => {
+              messagesEndRef.current?.scrollIntoView({
+                behavior: "smooth",
+              });
+            }, 50);
           }
         } catch (error) {
           console.error("❌ Failed to upload file:", error);
@@ -293,7 +300,7 @@ const MessageInput = React.memo(
           );
         }
       },
-      [selectedChat, replyTo, sendMessage, onClearReply, scrollToBottom],
+      [selectedChat, replyTo, sendMessage, onClearReply, messagesEndRef],
     );
 
     const showSendButton = messageInput.trim().length > 0;
