@@ -26,7 +26,7 @@ const displayText =
           style={{ animationDelay: "300ms" }}
         />
       </div>
-      <span className="font-medium text-xs">{displayText}</span>
+      <span className="font-medium">{displayText}</span>
     </div>
   );
 }
