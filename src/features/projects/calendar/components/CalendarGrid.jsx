@@ -5,6 +5,8 @@ import CalendarMonthView from "./CalendarMonthView";
 import CalendarTimelineView from "./CalendarTimeLineView";
 import CalendarWeekView from "./CalendarWeekView";
 import CalendarYearView from "./CalendarYearView";
+// 1. Import the new component
+import CalendarAnalyticsView from "./CalendarAnalyticsView"; 
 
 export default function CalendarGrid({
   view,
@@ -71,6 +73,15 @@ export default function CalendarGrid({
         currentDate={currentDate}
         events={events}
         onEventClick={onDayClick}
+      />
+    );
+  }
+
+  if (view === "analytics") {
+    return (
+      <CalendarAnalyticsView 
+        events={events} 
+        currentDate={currentDate} 
       />
     );
   }

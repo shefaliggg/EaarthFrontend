@@ -44,6 +44,7 @@ function CalendarToolbar({
       case "month":
       case "timeline":
       case "conflicts":
+      case "analytics": 
         return format(currentDate, "MMMM yyyy");
       default:
         return format(currentDate, "dd EEE MMM yyyy");
@@ -74,7 +75,7 @@ function CalendarToolbar({
   return (
     <>
       <Card className="p-4">
-      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="icon" onClick={onPrev}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -123,7 +124,7 @@ function CalendarToolbar({
                 { value: "year", label: "Year" },
                 { value: "gantt", label: "Gantt" },
                 { value: "timeline", label: "Timeline" },
-                { value: "anaytics", label: "Analytics" },
+                { value: "analytics", label: "Analytics" },
                 { value: "conflicts", label: "", icon: "AlertTriangle" },
               ]}
               value={view}

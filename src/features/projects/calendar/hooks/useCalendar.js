@@ -70,7 +70,8 @@ function useCalendar() {
   const getViewSpecificEventCount = useMemo(() => {
     const view = calendar.view;
 
-    if (view === "month" || view === "timeline" || view === "conflicts") {
+    // Added 'analytics' here so the count updates correctly in the toolbar
+    if (view === "month" || view === "timeline" || view === "conflicts" || view === "analytics") {
       const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
 
@@ -82,7 +83,6 @@ function useCalendar() {
       }).length;
     }
 
-    // Gantt view now spans a full year, so count like year view
     if (view === "year" || view === "gantt") {
       const yearStart = new Date(currentDate.getFullYear(), 0, 1);
       const yearEnd = new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -130,24 +130,21 @@ function useCalendar() {
     return events.length;
   }, [events, currentDate, calendar.view]);
 
+  // --- NAVIGATION FIX ---
   const prev = () => {
     if (calendar.view === "day") setDate(addDays(currentDate, -1));
     else if (calendar.view === "week") setDate(addWeeks(currentDate, -1));
-    else if (calendar.view === "month") setDate(addMonths(currentDate, -1));
-    else if (calendar.view === "year") setDate(addYears(currentDate, -1));
-    else if (calendar.view === "gantt") setDate(addYears(currentDate, -1));
-    else if (calendar.view === "timeline") setDate(addMonths(currentDate, -1));
-    else if (calendar.view === "conflicts") setDate(addMonths(currentDate, -1));
+    else if (calendar.view === "year" || calendar.view === "gantt") setDate(addYears(currentDate, -1));
+    // Fallback for month, timeline, conflicts, AND analytics
+    else setDate(addMonths(currentDate, -1));
   };
 
   const next = () => {
     if (calendar.view === "day") setDate(addDays(currentDate, 1));
     else if (calendar.view === "week") setDate(addWeeks(currentDate, 1));
-    else if (calendar.view === "month") setDate(addMonths(currentDate, 1));
-    else if (calendar.view === "year") setDate(addYears(currentDate, 1));
-    else if (calendar.view === "gantt") setDate(addYears(currentDate, 1));
-    else if (calendar.view === "timeline") setDate(addMonths(currentDate, 1));
-    else if (calendar.view === "conflicts") setDate(addMonths(currentDate, 1));
+    else if (calendar.view === "year" || calendar.view === "gantt") setDate(addYears(currentDate, 1));
+    // Fallback for month, timeline, conflicts, AND analytics
+    else setDate(addMonths(currentDate, 1));
   };
 
   const today = () => setDate(new Date());
