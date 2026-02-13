@@ -16,11 +16,17 @@ import {
   ChevronRight,
   Printer,
   Download,
+  Plane,
+  Clapperboard,
+  Settings, // Added Settings icon
 } from "lucide-react";
 
 import SearchBar from "@/shared/components/SearchBar";
-import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import { SmartIcon } from "@/shared/components/SmartIcon";
 import getApiUrl from "../../../../shared/config/enviroment";
+import { useState } from "react";
+import CalendarFilterTabs from "./CalendarFilterTabs";
+import { useNavigate, useParams } from "react-router-dom";
 
 function CalendarToolbar({
   currentDate,
@@ -35,6 +41,8 @@ function CalendarToolbar({
   onNext,
   onToday,
 }) {
+  const navigate = useNavigate();
+  const { projectName } = useParams();
   // Helper to get the display title based on current view
   const getTitle = () => {
     switch (view) {
@@ -44,7 +52,7 @@ function CalendarToolbar({
       case "month":
       case "timeline":
       case "conflicts":
-      case "analytics": 
+      case "analytics":
         return format(currentDate, "MMMM yyyy");
       default:
         return format(currentDate, "dd EEE MMM yyyy");
@@ -72,9 +80,11 @@ function CalendarToolbar({
     }
   };
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
     <>
-      <Card className="p-4">
+      <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card p-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="icon" onClick={onPrev}>
             <ChevronLeft className="w-4 h-4" />
@@ -116,7 +126,7 @@ function CalendarToolbar({
             </SelectContent>
           </Select>
           <div className="">
-            <FilterPillTabs
+            <CalendarFilterTabs
               options={[
                 { value: "day", label: "Day" },
                 { value: "week", label: "Week" },
@@ -131,7 +141,40 @@ function CalendarToolbar({
               onChange={setView}
             />
           </div>
-          {/* <InfoTooltip content="Print Calendar">
+                  {/* Shooting Calendar Button */}
+          <InfoTooltip content="Shooting Calendar">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/shooting`)}
+            >
+              <Clapperboard className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
+          {/* TMO Button */}
+          <InfoTooltip content="TMO">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/tmo`)}
+            >
+              <Plane className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
+          {/* Settings Button */}
+          <InfoTooltip content="Settings">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/settings`)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
+          <InfoTooltip content="Print Calendar">
             <Button
               variant="default"
               size="icon"
@@ -156,9 +199,9 @@ function CalendarToolbar({
             >
               <Download className="w-4 h-4" />
             </Button>
-          </InfoTooltip> */}
+          </InfoTooltip>
         </div>
-      </Card>
+      </div>
     </>
   );
 }
