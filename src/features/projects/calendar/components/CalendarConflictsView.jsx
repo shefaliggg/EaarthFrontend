@@ -1,5 +1,3 @@
-// CalendarConflictsView.jsx — now receives currentDate and filters by visible month
-
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { AlertTriangle, Clock, MapPin, ArrowRight } from "lucide-react";
 import { cn } from "@/shared/config/utils";
@@ -20,10 +18,10 @@ function getEventColors(eventType) {
       };
     case "shoot":
       return {
-        bg: "bg-lavender-100 dark:bg-lavender-900/30",
-        text: "text-lavender-800 dark:text-lavender-200",
-        border: "border-lavender-400 dark:border-lavender-700",
-        badge: "bg-lavender-500",
+        bg: "bg-peach-100 dark:bg-peach-900/30",
+        text: "text-peach-800 dark:text-peach-200",
+        border: "border-peach-400 dark:border-peach-700",
+        badge: "bg-peach-500",
       };
     case "wrap":
       return {
@@ -136,9 +134,20 @@ function CalendarConflictsView({ conflicts, currentDate }) {
   // Total conflicts across ALL time (for the badge)
   const totalAllTime = conflicts.length;
 
+  // Count conflicts by phase combinations
+  const prepConflicts = visibleConflicts.filter(
+    c => c.event1.eventType === "prep" || c.event2.eventType === "prep"
+  ).length;
+  const shootConflicts = visibleConflicts.filter(
+    c => c.event1.eventType === "shoot" || c.event2.eventType === "shoot"
+  ).length;
+  const wrapConflicts = visibleConflicts.filter(
+    c => c.event1.eventType === "wrap" || c.event2.eventType === "wrap"
+  ).length;
+
   if (visibleConflicts.length === 0) {
     return (
-      <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
+      <div className="min-h-[calc(100vh-500px)] rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card flex flex-col">
         {/* Header */}
         <div className="bg-purple-50/80 dark:bg-purple-900/20 border-b border-primary/20 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -160,7 +169,7 @@ function CalendarConflictsView({ conflicts, currentDate }) {
         </div>
 
         {/* Empty body */}
-        <div className="py-20 flex flex-col items-center justify-center gap-4">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-green-500" />
           </div>
@@ -182,15 +191,53 @@ function CalendarConflictsView({ conflicts, currentDate }) {
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* Header */}
+      {/* Stats Header */}
+      <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4">
+        <div className="grid grid-cols-4 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-black text-red-600 dark:text-red-400">
+              {visibleConflicts.length}
+            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase">
+              This Month
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-sky-600 dark:text-sky-400">
+              {prepConflicts}
+            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase">
+              Prep Conflicts
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-peach-600 dark:text-peach-400">
+              {shootConflicts}
+            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase">
+              Shoot Conflicts
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-mint-600 dark:text-mint-400">
+              {wrapConflicts}
+            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase">
+              Wrap Conflicts
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline Header */}
       <div className="bg-purple-50/80 dark:bg-purple-900/20 border-b border-primary/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-black text-lg text-purple-800 dark:text-purple-300">
-              Schedule Conflicts
+              Conflict Details
             </h3>
             <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-              {format(currentDate, "MMMM yyyy")} • Overlapping event detection
+              {format(currentDate, "MMMM yyyy")}
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
@@ -202,87 +249,56 @@ function CalendarConflictsView({ conflicts, currentDate }) {
         </div>
       </div>
 
-      {/* Conflicts List */}
-      <div className="p-6 flex flex-col gap-5">
-        {visibleConflicts.map((conflict, idx) => {
-          const overlapStart = new Date(
-            Math.max(new Date(conflict.event1.startDateTime), new Date(conflict.event2.startDateTime))
-          );
-          const overlapEnd = new Date(
-            Math.min(new Date(conflict.event1.endDateTime), new Date(conflict.event2.endDateTime))
-          );
-          const isMultiDayOverlap = overlapStart.toDateString() !== overlapEnd.toDateString();
+      {/* Conflicts List - Scrollable */}
+      <div className="overflow-auto h-[1140px] p-6">
+        <div className="flex flex-col gap-5">
+          {visibleConflicts.map((conflict, idx) => {
+            const overlapStart = new Date(
+              Math.max(new Date(conflict.event1.startDateTime), new Date(conflict.event2.startDateTime))
+            );
+            const overlapEnd = new Date(
+              Math.min(new Date(conflict.event1.endDateTime), new Date(conflict.event2.endDateTime))
+            );
+            const isMultiDayOverlap = overlapStart.toDateString() !== overlapEnd.toDateString();
 
-          return (
-            <div key={idx} className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 overflow-hidden">
-              {/* Conflict label strip */}
-              <div className="flex items-center justify-between px-4 py-2 bg-red-100/60 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                  <span className="text-[11px] font-black text-red-600 dark:text-red-400 uppercase tracking-wide">
-                    Conflict #{idx + 1}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-200/60 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
-                  Overlap:{" "}
-                  {isMultiDayOverlap
-                    ? `${format(overlapStart, "MMM d")} – ${format(overlapEnd, "MMM d")}`
-                    : `${format(overlapStart, "h:mm a")} – ${format(overlapEnd, "h:mm a")}`}
-                </span>
-              </div>
-
-              {/* Two event cards + divider */}
-              <div className="p-4 flex flex-col gap-2">
-                <ConflictEventCard event={conflict.event1} />
-
-                <div className="flex items-center justify-center gap-2 py-0.5">
-                  <div className="flex-1 h-px bg-red-200 dark:bg-red-900/40" />
-                  <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-200/60 dark:bg-red-900/30 border border-red-300 dark:border-red-800">
-                    <ArrowRight className="w-3 h-3 text-red-500 rotate-90" />
-                    <span className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase">
-                      Overlaps
+            return (
+              <div key={idx} className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 overflow-hidden">
+                {/* Conflict label strip */}
+                <div className="flex items-center justify-between px-4 py-2 bg-red-100/60 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                    <span className="text-[11px] font-black text-red-600 dark:text-red-400 uppercase tracking-wide">
+                      Conflict #{idx + 1}
                     </span>
                   </div>
-                  <div className="flex-1 h-px bg-red-200 dark:bg-red-900/40" />
+                  <span className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-200/60 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
+                    Overlap:{" "}
+                    {isMultiDayOverlap
+                      ? `${format(overlapStart, "MMM d")} – ${format(overlapEnd, "MMM d")}`
+                      : `${format(overlapStart, "h:mm a")} – ${format(overlapEnd, "h:mm a")}`}
+                  </span>
                 </div>
 
-                <ConflictEventCard event={conflict.event2} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                {/* Two event cards + divider */}
+                <div className="p-4 flex flex-col gap-2">
+                  <ConflictEventCard event={conflict.event1} />
 
-      {/* Footer */}
-      <div className="border-t border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-xl font-black text-red-600 dark:text-red-400">
-              {visibleConflicts.length}
-            </p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-              This Month
-            </p>
-          </div>
-          <div>
-            <p className="text-xl font-black text-purple-800 dark:text-purple-300">
-              {new Set(visibleConflicts.flatMap((c) => [
-                c.event1.id || c.event1._id,
-                c.event2.id || c.event2._id,
-              ])).size}
-            </p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-              Events Involved
-            </p>
-          </div>
-          <div>
-            <p className="text-xl font-black text-amber-600 dark:text-amber-400">
-              {totalAllTime}
-            </p>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-              Total All Time
-            </p>
-          </div>
+                  <div className="flex items-center justify-center gap-2 py-0.5">
+                    <div className="flex-1 h-px bg-red-200 dark:bg-red-900/40" />
+                    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-200/60 dark:bg-red-900/30 border border-red-300 dark:border-red-800">
+                      <ArrowRight className="w-3 h-3 text-red-500 rotate-90" />
+                      <span className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase">
+                        Overlaps
+                      </span>
+                    </div>
+                    <div className="flex-1 h-px bg-red-200 dark:bg-red-900/40" />
+                  </div>
+
+                  <ConflictEventCard event={conflict.event2} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

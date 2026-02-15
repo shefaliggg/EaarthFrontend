@@ -16,10 +16,17 @@ import {
   ChevronRight,
   Printer,
   Download,
+  Plane,
+  Clapperboard,
+  Settings, // Added Settings icon
 } from "lucide-react";
 
 import SearchBar from "@/shared/components/SearchBar";
-import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import { SmartIcon } from "@/shared/components/SmartIcon";
+import getApiUrl from "../../../../shared/config/enviroment";
+import { useState } from "react";
+import CalendarFilterTabs from "./CalendarFilterTabs";
+import { useNavigate, useParams } from "react-router-dom";
 
 function CalendarToolbar({
   currentDate,
@@ -34,9 +41,50 @@ function CalendarToolbar({
   onNext,
   onToday,
 }) {
+  const navigate = useNavigate();
+  const { projectName } = useParams();
+  // Helper to get the display title based on current view
+  const getTitle = () => {
+    switch (view) {
+      case "year":
+      case "gantt":
+        return format(currentDate, "yyyy");
+      case "month":
+      case "timeline":
+      case "conflicts":
+      case "analytics":
+        return format(currentDate, "MMMM yyyy");
+      default:
+        return format(currentDate, "dd EEE MMM yyyy");
+    }
+  };
+
+  // Helper to get the subtitle label
+  const getSubtitle = () => {
+    switch (view) {
+      case "year":
+        return `${eventsCount} events scheduled`;
+      case "gantt":
+        return `${eventsCount} events scheduled`;
+      case "month":
+      case "timeline":
+        return `${eventsCount} events scheduled`;
+      case "conflicts":
+        return `${eventsCount} events scheduled`;
+      case "week":
+        return `${eventsCount} events scheduled`;
+      case "day":
+        return `${eventsCount} events scheduled`;
+      default:
+        return `${eventsCount} events scheduled`;
+    }
+  };
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
     <>
-      <Card className="p-4">
+      <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card p-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="icon" onClick={onPrev}>
             <ChevronLeft className="w-4 h-4" />
@@ -48,21 +96,8 @@ function CalendarToolbar({
             </div>
 
             <div>
-              <h3 className="font-bold text-lg">
-                {view === "month" && format(currentDate, "MMMM yyyy")}
-                {view === "year" && format(currentDate, "yyyy")}
-                {view === "timeline" && format(currentDate, "MMMM yyyy")}
-                {view === "conflicts" && format(currentDate, "MMMM yyyy")}
-                {view !== "month" &&
-                  view !== "year" &&
-                  view !== "timeline" &&
-                  view !== "conflicts" &&
-                  format(currentDate, "dd EEE MMM yyyy")}
-              </h3>
-
-              <p className="text-xs text-muted-foreground">
-                {eventsCount} events scheduled
-              </p>
+              <h3 className="font-bold text-lg">{getTitle()}</h3>
+              <p className="text-xs text-muted-foreground">{getSubtitle()}</p>
             </div>
           </div>
 
@@ -91,7 +126,7 @@ function CalendarToolbar({
             </SelectContent>
           </Select>
           <div className="">
-            <FilterPillTabs
+            <CalendarFilterTabs
               options={[
                 { value: "day", label: "Day" },
                 { value: "week", label: "Week" },
@@ -99,12 +134,46 @@ function CalendarToolbar({
                 { value: "year", label: "Year" },
                 { value: "gantt", label: "Gantt" },
                 { value: "timeline", label: "Timeline" },
+                { value: "analytics", label: "Analytics" },
                 { value: "conflicts", label: "", icon: "AlertTriangle" },
               ]}
               value={view}
               onChange={setView}
             />
           </div>
+                  {/* Shooting Calendar Button */}
+          <InfoTooltip content="Shooting Calendar">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/shooting`)}
+            >
+              <Clapperboard className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
+          {/* TMO Button */}
+          <InfoTooltip content="TMO">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/tmo`)}
+            >
+              <Plane className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
+          {/* Settings Button */}
+          <InfoTooltip content="Settings">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => navigate(`/projects/${projectName}/calendar/settings`)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+
           <InfoTooltip content="Print Calendar">
             <Button
               variant="default"
@@ -119,13 +188,20 @@ function CalendarToolbar({
             <Button
               variant="default"
               size="icon"
-              onClick={() => console.log("Download calendar")}
+              onClick={() => {
+                const apiBase = getApiUrl();
+                const projectName = window.location.pathname.split("/")[2];
+
+                const url = `${apiBase}/calendar/export-pdf?view=${view}&date=${currentDate.toISOString()}&projectName=${projectName}`;
+
+                window.open(url, "_blank");
+              }}
             >
               <Download className="w-4 h-4" />
             </Button>
           </InfoTooltip>
         </div>
-      </Card>
+      </div>
     </>
   );
 }

@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell, Calendar, FileText, Users, CheckCircle, Clock, Trash2, MessageSquare, AtSign, User, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mapConversationType } from '../../features/projects/project-chat/components/Chattypemapper';
+import { mapConversationType } from '../../features/projects/project-chat/utils/Chattypemapper';
 
 export function NotificationsPanel({ isOpen, onClose, projectId = 'avatar-1' }) {
   const [filter, setFilter] = useState('all');

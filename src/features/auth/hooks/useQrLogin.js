@@ -1,26 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { io } from "socket.io-client";
 import { authService } from "../services/auth.service";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { initPublicSocket } from "../../../shared/config/socketConfig";
 
 export function useQrLogin({ type = "web" }) {
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const socketRef = useRef(null);
   const pollRef = useRef(null);
 
   const navigate = useNavigate();
   const { updateUser } = useAuth();
-
-  const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
-
-  const baseURL = isDevelopment
-    ? import.meta.env.VITE_SOCKET_IO_API_URL_DEV
-    : import.meta.env.VITE_SOCKET_IO_API_URL_PROD;
 
   const qrGenerateMethod =
     type === "web" ? authService.generateWebQr : authService.generateMobileQr;
@@ -34,6 +27,7 @@ export function useQrLogin({ type = "web" }) {
         // tokenData must include accessToken, refreshToken, userId
         const newUser = await authService.getUserAndSetCookies(tokenData);
         updateUser(newUser);
+        initSocket(newUser._id); // upgrades same system to auth mode
 
         setQrData((prev) => ({ ...prev, status: "approved" }));
         toast.success("Login Successful", {
@@ -47,7 +41,7 @@ export function useQrLogin({ type = "web" }) {
         toast.error(err.message || "Failed to approve QR login");
       }
     },
-    [updateUser, navigate]
+    [updateUser, navigate],
   );
 
   /**
@@ -84,7 +78,7 @@ export function useQrLogin({ type = "web" }) {
         }
       }, 4000);
     },
-    [handleQrApproval]
+    [handleQrApproval],
   );
 
   /**
@@ -92,10 +86,6 @@ export function useQrLogin({ type = "web" }) {
    */
   const generateQr = useCallback(async () => {
     // Cleanup previous connections
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
@@ -118,18 +108,8 @@ export function useQrLogin({ type = "web" }) {
       });
 
       // Initialize socket
-      const socket = io(baseURL, {
-        transports: ["websocket"],
-        path: "/socket.io/",
-        withCredentials: true,
-      });
-
-      socketRef.current = socket;
-
-      socket.on("connect", () => {
-        console.log("🔥 Socket connected:", socket.id);
-        socket.emit("join-qr", data.socketRoom);
-      });
+      const socket = initPublicSocket();
+      socket.emit("join-qr", data.socketRoom);
 
       socket.on("connect_error", (err) => {
         console.warn("❌ Socket connection error:", err.message);
@@ -172,16 +152,11 @@ export function useQrLogin({ type = "web" }) {
       toast.error(message);
       setLoading(false);
     }
-  }, [qrGenerateMethod, type, startPolling, handleQrApproval, baseURL]);
+  }, [qrGenerateMethod, type, startPolling, handleQrApproval]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (socketRef.current) {
-        console.log("🔌 Disconnecting socket...");
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
       if (pollRef.current) {
         console.log("🧹 Clearing polling interval...");
         clearInterval(pollRef.current);

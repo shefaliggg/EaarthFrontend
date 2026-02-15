@@ -30,7 +30,7 @@ function NavigationDropdown({ menu, displayMode = "text-icon" }) {
     return (
       <>
         <Icon className="w-4 h-4" />
-        <span>{label}</span>
+        <span className="hidden md:inline">{label}</span>
       </>
     );
   };

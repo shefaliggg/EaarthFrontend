@@ -114,7 +114,7 @@ function CalendarMonthView({
                 className="grid grid-cols-[80px_repeat(7,1fr)]"
               >
                 {/* WEEK LABEL  */}
-                <div className="flex h-67 justify-center items-center bg-muted/40 border-r border-b border-primary/20">
+                <div className="flex h-[250px] justify-center items-center bg-muted/40 border-r border-b border-primary/20">
                   <span className="text-xs font-bold text-purple-800 dark:text-purple-300 rotate-270 whitespace-nowrap">
                     {weekLabel || ""}
                   </span>
@@ -131,19 +131,21 @@ function CalendarMonthView({
 
                   const dayEvents = getEventsForDate(events, dateString);
 
-                  const MAX_EVENTS_PER_DAY = 8;
+                  const MAX_EVENTS_PER_DAY = 7;
                   const visibleEvents = dayEvents.slice(0, MAX_EVENTS_PER_DAY);
                   const hiddenEvents = dayEvents.slice(MAX_EVENTS_PER_DAY);
 
                   return (
                     <div
                       key={dateString}
-                      onClick={() => {
-                        setCurrentDate(date);
-                        onDayClick();
+                      onClick={(e) => {
+                         // Only trigger if clicking the cell background or date number, not an event
+                         // But since we stopPropagation on events, we can just trigger here
+                        if (setCurrentDate) setCurrentDate(date);
+                        if (onDayClick) onDayClick(date);
                       }}
                       className={cn(
-                        "flex gap-1 p-2 h-67 flex-col items-end cursor-pointer transition-all duration-200 border-r border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 overflow-hidden",
+                        "flex gap-1 p-2 h-[250px] flex-col items-end cursor-pointer transition-all duration-200 border-r border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 overflow-hidden",
                         !isCurrentMonth && "opacity-50",
                         isToday &&
                           "ring-2 ring-inset ring-purple-400 dark:ring-purple-500 bg-purple-50/40 dark:bg-purple-900/10",
@@ -165,6 +167,10 @@ function CalendarMonthView({
                         <Tooltip key={event.id || event._id}>
                           <TooltipTrigger asChild>
                             <div
+                              onClick={(e) => {
+                                e.stopPropagation(); // Stop bubbling so we don't open "Create Event" modal
+                                // Add "Edit Event" logic here if needed
+                              }}
                               className={cn(
                                 "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                                 getMonthEventColors(event.eventType),
@@ -217,7 +223,7 @@ function CalendarMonthView({
                         <Popover>
                           <PopoverTrigger asChild>
                             <div
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()} // Stop bubbling
                               className={cn(
                                 "text-[11px] font-bold rounded-lg w-full py-0.5 px-2 hover:scale-[1.02] transition-transform text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 flex-shrink-0",
                                 getMoreIndicatorColors(
@@ -239,6 +245,7 @@ function CalendarMonthView({
                                 <Tooltip key={event.id || event._id}>
                                   <TooltipTrigger asChild>
                                     <div
+                                      onClick={(e) => e.stopPropagation()}
                                       className={cn(
                                         "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                                         getMonthEventColors(event.eventType),

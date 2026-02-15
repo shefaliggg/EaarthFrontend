@@ -1,15 +1,16 @@
 import { PageHeader } from "@/shared/components/PageHeader";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Outlet, useLocation} from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Settings } from "lucide-react";
+// import getApiUrl from "../../../../shared/config/enviroment";
 
 function CalendarLayout() {
-  const { projectName } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
+
   const section = (() => {
     if (location.pathname.includes("/shooting")) return "shooting";
     if (location.pathname.includes("/settings")) return "settings";
+    if (location.pathname.includes("/tmo")) return "tmo"; 
     return "calendar";
   })();
 
@@ -24,6 +25,11 @@ function CalendarLayout() {
         icon: "Calendar",
         title: "Shooting Calendar",
       };
+    if (section === "tmo")
+      return {
+        icon: "Plane",
+        title: "Tmo",
+      };
     return {
       icon: "Settings",
       title: "Calendar Settings",
@@ -32,6 +38,7 @@ function CalendarLayout() {
   })();
 
   const primaryAction = (() => {
+    if (section === "tmo") return null;
     if (section !== "calendar") return null;
 
     return {
@@ -42,45 +49,12 @@ function CalendarLayout() {
     };
   })();
 
-  const secondaryActions = (() => {
-    if (section !== "calendar") return null;
-
-    return [
-      {
-        label: "Shooting Calendar",
-        icon: "Calendar",
-        clickAction: () =>
-          navigate(`/projects/${projectName}/calendar/shooting`),
-      },
-    ];
-  })();
-
-  const extraActions = (() => {
-    if (section !== "calendar") return null;
-
-    return (
-      <Button
-        variant="outline"
-        size="lg"
-        className="gap-0 w-11 group"
-        onClick={() => navigate(`/projects/${projectName}/calendar/settings`)}
-      >
-        <Settings
-          className="w-4 h-4 text-primary group-hover:text-background"
-          strokeWidth={3}
-        />
-      </Button>
-    );
-  })();
-
   return (
     <>
       <div className="space-y-6">
         <PageHeader
           {...headerConfig}
-          primaryAction={primaryAction}
-          secondaryActions={secondaryActions}
-          extraActions={extraActions}
+          primaryAction={primaryAction} 
         />
         <Outlet />
       </div>

@@ -1,84 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { PageHeader } from "../../../../shared/components/PageHeader";
-import ChatLeftSidebar from "../components/ChatLeftSidebar";
-import ChatBox from "../components/ChatBox";
-import VideoVoiceCommunication from "../components/VideoVoiceCommunication";
-import CommingSoon from "../../../../shared/components/overlays/CommingSoon";
-import { getTabForConversationType } from "../components/Chattypemapper";
+import ChatLeftSidebar from "../components/ChatLeftSidebar/ChatLeftSidebar";
+import ChatBox from "../components/ChatBox/ChatBox";
+import useChatStore, { DEFAULT_PROJECT_ID } from "../store/chat.store";
 
 function ProjectChat() {
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedChat, setSelectedChat] = useState(null);
   const location = useLocation();
 
-  // 🔥 Handle navigation from notifications or external sources
+  const reduxProject = useSelector((state) => state.project?.currentProject);
+  const authUser = useSelector((state) => state.auth?.user);
+  const userUser = useSelector((state) => state.user?.currentUser);
+  const currentUser = authUser || userUser;
+
+  const currentProject =
+    reduxProject || { _id: DEFAULT_PROJECT_ID, name: "Default Project" };
+
+  const {
+    setSelectedChat,
+    loadConversations,
+    attachSocketListeners,
+  } = useChatStore();
+
+  // Attach socket listeners once
   useEffect(() => {
-    if (location.state?.selectedChat) {
-      const chatData = location.state.selectedChat;
+    attachSocketListeners();
+  }, []);
 
-      console.log("📩 ProjectChat: Received chat data from location:", chatData);
-      console.log("🔍 Chat type:", chatData.type);
-
-      // ✅ Determine which tab to show based on chat type
-      const tab = getTabForConversationType(chatData.type);
-      
-      console.log("📌 ProjectChat: Setting active tab to:", tab);
-
-      // Set the correct tab
-      setActiveTab(tab);
-
-      // Set the selected chat
-      setSelectedChat(chatData);
-
-      // Clear the location state to prevent re-triggering
-      window.history.replaceState({}, document.title);
+  // Load conversations when project changes
+  useEffect(() => {
+    if (currentProject?._id && currentUser?._id) {
+      loadConversations(currentProject._id, activeTab);
     }
-  }, [location.state]);
+  }, [currentProject?._id, activeTab, currentUser?._id]);
 
   const handleTabChange = (newTab) => {
-    console.log("🔄 ProjectChat: Tab changed to:", newTab);
     setActiveTab(newTab);
-    // Clear selection when switching tabs manually
     setSelectedChat(null);
   };
 
-  const handleChatSelect = (chat) => {
-    console.log("💬 ProjectChat: Chat selected:", chat);
-    setSelectedChat(chat);
-  };
-
   return (
-    <div className='space-y-6 container mx-auto'>
+    <div className="space-y-6 container mx-auto">
       <PageHeader icon="MessageSquare" title="Project Chat" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh)]">
-        {/* Left Sidebar - Sticky */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
           <ChatLeftSidebar
             activeTab={activeTab}
             onTabChange={handleTabChange}
-            selectedChat={selectedChat}
-            onChatSelect={handleChatSelect}
           />
         </div>
-        
-        {/* Main Chat Area */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="relative">
-            <VideoVoiceCommunication
-              onMeetingNotes={() => console.log("Meeting Notes")}
-              onTranscribe={() => console.log("Transcribe")}
-              onVideoCall={() => console.log("Video Call")}
-            />
-            {/* <CommingSoon /> */}
-          </div>
 
-          <ChatBox selectedChat={selectedChat} />
+        <div className="lg:col-span-3">
+          <ChatBox />
         </div>
       </div>
     </div>
   );
 }
+
 
 export default ProjectChat;

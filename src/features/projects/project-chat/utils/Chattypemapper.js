@@ -1,8 +1,3 @@
-/**
- * Maps backend conversation types to frontend UI types
- * Backend: PROJECT_ALL, DEPARTMENT, DIRECT
- * Frontend: all, group, dm
- */
 export const mapConversationType = (backendType) => {
   const typeMap = {
     PROJECT_ALL: "all",
@@ -10,12 +5,12 @@ export const mapConversationType = (backendType) => {
     DIRECT: "dm",
   };
 
-  return typeMap[backendType] || "all";
+  const result = typeMap[backendType] || "all";
+  return result;
 };
 
 /**
  * Maps frontend UI types back to backend types
- * Used when creating/updating conversations
  */
 export const mapToBackendType = (frontendType) => {
   const typeMap = {

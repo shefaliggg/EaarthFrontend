@@ -25,19 +25,19 @@ export default function UpcomingEvents({
   const getEventLimit = () => {
     switch (view) {
       case "day":
-        return 18;
+        return 28;
       case "week":
-        return 10;
+        return 28;
       case "month":
-        return 10;
+        return 28;
       case "year":
-        return 10;
+        return 20;
       case "gantt":
-        return 18;
+        return 28;
       case "timeline":
-        return 18;
+        return 28;
       default:
-        return 18;
+        return 28;
     }
   };
 
@@ -54,7 +54,7 @@ export default function UpcomingEvents({
           </span>
         </div>
         {/* BODY */}
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto h-[1230px]">
           {(!upcomingEvents || upcomingEvents.length === 0) && (
             <div className="flex flex-col items-center py-12 gap-1">
               <Calendar className="w-8 h-8 text-muted-foreground/40 mb-1" />
