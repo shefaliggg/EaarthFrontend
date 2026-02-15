@@ -5,8 +5,13 @@ import {
   setSearch as setSearchAction,
   setEventType as setEventTypeAction,
   setCurrentDate as setCurrentDateAction,
+  clearMessages,
 } from "../../store/calendar.slice";
-import { fetchCalendarEvents } from "../../store/calendar.thunks";
+import { 
+  fetchCalendarEvents, 
+  createCalendarEvent,
+  fetchCrewMembers 
+} from "../../store/calendar.thunks";
 import { 
   addDays, addWeeks, addMonths, addYears, 
   startOfWeek, format, parseISO, isValid, isSameMonth, isSameYear 
@@ -17,29 +22,23 @@ import { normalizeUpcomingEvents } from "../utils/calendar.utils";
 function detectConflicts(events) {
   const conflicts = [];
   const seen = new Set();
-
   for (let i = 0; i < events.length; i++) {
     for (let j = i + 1; j < events.length; j++) {
       const a = events[i];
       const b = events[j];
-
       if (!a.startDateTime || !a.endDateTime || !b.startDateTime || !b.endDateTime) continue;
-
       const key = [a.id || a._id, b.id || b._id].sort().join("_");
       if (seen.has(key)) continue;
-
       const aStart = new Date(a.startDateTime);
       const aEnd = new Date(a.endDateTime);
       const bStart = new Date(b.startDateTime);
       const bEnd = new Date(b.endDateTime);
-
       if (aStart < bEnd && aEnd > bStart) {
         seen.add(key);
         conflicts.push({ event1: a, event2: b });
       }
     }
   }
-
   return conflicts.sort((a, b) => {
     const aOverlap = Math.max(new Date(a.event1.startDateTime), new Date(a.event2.startDateTime));
     const bOverlap = Math.max(new Date(b.event1.startDateTime), new Date(b.event2.startDateTime));
@@ -57,7 +56,7 @@ const getViewDateRange = (view, currentDate) => {
   }
   if (view === "week") {
     const start = new Date(currentDate);
-    start.setDate(start.getDate() - start.getDay()); // Adjust based on week start preference
+    start.setDate(start.getDate() - start.getDay()); 
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
@@ -71,7 +70,6 @@ const getViewDateRange = (view, currentDate) => {
     end.setHours(23, 59, 59, 999);
     return { start, end };
   }
-  // Default: Month, Timeline, Analytics, Conflicts
   return {
     start: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
     end: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999)
@@ -83,8 +81,11 @@ function useCalendar() {
   const calendar = useSelector((state) => state.calendar);
   const currentDate = new Date(calendar.currentDate);
 
+  // Load Data on Mount
   useEffect(() => {
     dispatch(fetchCalendarEvents());
+    // Also fetch crew members so the Create Modal is populated
+    dispatch(fetchCrewMembers()); 
   }, [dispatch]);
 
   // 1. Basic Filtering
@@ -115,37 +116,26 @@ function useCalendar() {
     }).length;
   }, [events, currentDate, calendar.view]);
 
-  // 4. Analytics Data Calculation (Moved from View to Hook)
+  // 4. Analytics Data
   const analyticsData = useMemo(() => {
-    // Only calculate if needed
     if (calendar.view !== 'analytics') return null;
-
     const targetDate = isValid(currentDate) ? currentDate : new Date();
     const typeCounts = {};
     const weekCounts = {};
     let filteredCount = 0;
-
     const validEvents = events.filter(event => {
       const dateStr = event.startDateTime || event.date;
       if (!dateStr) return false;
       const date = parseISO(dateStr);
       if (!isValid(date)) return false;
-
-      // Filter for current month view
       if (!isSameMonth(date, targetDate) || !isSameYear(date, targetDate)) return false;
-
       filteredCount++;
-      
-      // Aggregations
       const type = (event.eventType || event.type || 'other').toLowerCase();
       typeCounts[type] = (typeCounts[type] || 0) + 1;
-
       const weekKey = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
       weekCounts[weekKey] = (weekCounts[weekKey] || 0) + 1;
-
       return true;
     });
-
     return {
       filteredEvents: validEvents,
       typeCounts,
@@ -159,10 +149,8 @@ function useCalendar() {
     };
   }, [events, currentDate, calendar.view]);
 
-
-  // 5. Navigation Actions
+  // 5. Actions
   const setDate = useCallback((date) => dispatch(setCurrentDateAction(date.toISOString())), [dispatch]);
-
   const prev = useCallback(() => {
     const view = calendar.view;
     if (view === "day") setDate(addDays(currentDate, -1));
@@ -181,19 +169,33 @@ function useCalendar() {
 
   const today = useCallback(() => setDate(new Date()), [setDate]);
 
+  const createEvent = useCallback((eventData) => {
+    return dispatch(createCalendarEvent(eventData));
+  }, [dispatch]);
+
+  const clearStatus = useCallback(() => {
+    dispatch(clearMessages());
+  }, [dispatch]);
+
   return {
     // State
     events,
     conflicts,
     upcomingEvents,
     eventsCount,
-    analyticsData, // New exposed data
+    analyticsData, 
     view: calendar.view,
     currentDate,
     search: calendar.filters.search,
     period: calendar.filters.eventType,
     isLoading: calendar.isLoading,
     error: calendar.error,
+
+    // Creation State
+    isCreating: calendar.isCreating,
+    createError: calendar.createError,
+    successMessage: calendar.successMessage,
+    crewMembers: calendar.crewMembers, // Expose crew for debug/use if needed
 
     // Actions
     prev,
@@ -203,6 +205,8 @@ function useCalendar() {
     setSearch: (searchText) => dispatch(setSearchAction(searchText)),
     setPeriod: (eventType) => dispatch(setEventTypeAction(eventType)),
     setCurrentDate: setDate,
+    createEvent,
+    clearStatus
   };
 }
 

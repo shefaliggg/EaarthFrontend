@@ -9,8 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
+import { format, parse } from "date-fns";
 import FilterPillTabs from "@/shared/components/FilterPillTabs";
 import CreateEventStepsRenderer from "./CreateEventStepsRenderer";
 import { createEventFormConfig } from "../config/createEventFormConfig";
@@ -21,6 +20,7 @@ export default function CreateEventModal({
   onClose,
   selectedDate,
   onSave,
+  isSubmitting,
 }) {
   const form = useForm({
     resolver: zodResolver(createEventSchema),
@@ -32,12 +32,11 @@ export default function CreateEventModal({
       endTime: "",
       isMultiDay: false,
       isAllDay: false,
-      eventType: "other",
+      eventType: "prep",
       location: "",
-      color: "#000000",
+      attendees: [],
       notes: "",
     },
-
     mode: "onTouched",
   });
 
@@ -45,14 +44,12 @@ export default function CreateEventModal({
     createEventFormConfig.steps[0].value
   );
 
-  const currentStep = createEventFormConfig.steps.find(
-    (step) => step.value === currentStepValue
-  );
-
   const currentStepIndex = createEventFormConfig.steps.findIndex(
     (step) => step.value === currentStepValue
   );
-
+  const currentStep = createEventFormConfig.steps.find(
+    (step) => step.value === currentStepValue
+  );
   const currentFields =
     createEventFormConfig.steps[currentStepIndex]?.fields?.map(
       (field) => field.name
@@ -60,35 +57,20 @@ export default function CreateEventModal({
 
   const canProceed = currentFields.every((fieldName) => {
     const value = form.watch(fieldName);
-
     if (fieldName === "isAllDay") return true;
-
     if (
       form.watch("isAllDay") &&
       ["startTime", "endTime"].includes(fieldName)
     ) {
       return true;
     }
-
+    if (["attendees", "notes", "location"].includes(fieldName)) return true;
     return Boolean(value);
   });
 
   const goToNextStep = async () => {
-    const fields =
-      createEventFormConfig.steps[currentStepIndex]?.fields?.map(
-        (field) => field.name
-      ) || [];
-
-    const isValid = await form.trigger(fields);
-
+    const isValid = await form.trigger(currentFields);
     if (isValid && currentStepIndex < createEventFormConfig.steps.length - 1) {
-      const nextFields =
-        createEventFormConfig.steps[currentStepIndex + 1]?.fields?.map(
-          (field) => field.name
-        ) || [];
-
-      nextFields.forEach((name) => form.clearErrors(name));
-
       setCurrentStepValue(
         createEventFormConfig.steps[currentStepIndex + 1].value
       );
@@ -103,40 +85,65 @@ export default function CreateEventModal({
     }
   };
 
-const handleFormSubmit = (data) => {
-  const finalEndTime = data.endTime || data.startTime;
+  const handleFormSubmit = (data) => {
+    try {
+      let finalStartDateTime;
+      let finalEndDateTime;
 
-  onSave({
-    id: Date.now(),
-    ...data,
-    endTime: finalEndTime,
-  });
+      if (data.isAllDay) {
+        finalStartDateTime = new Date(data.startDate);
+        finalStartDateTime.setHours(0, 0, 0, 0);
 
-  onClose();
-};
+        finalEndDateTime = data.endDate
+          ? new Date(data.endDate)
+          : new Date(data.startDate);
+        finalEndDateTime.setHours(23, 59, 59, 999);
+      } else {
+        const baseStart = new Date(data.startDate);
+        finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
 
+        const baseEnd = data.endDate
+          ? new Date(data.endDate)
+          : new Date(data.startDate);
+        finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
+      }
 
-useEffect(() => {
-  if (open) {
-    form.reset({
-      title: "",
-      startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
-      endDate: "",
-      startTime: "",
-      endTime: "",
-      isMultiDay: false,
-      isAllDay: false,
-      eventType: "other",
-      location: "",
-      color: "#000000",
-      notes: "",
-    });
+      const payload = {
+        title: data.title,
+        description: data.notes,
+        eventType: data.eventType,
+        location: data.location,
+        startDateTime: finalStartDateTime.toISOString(),
+        endDateTime: finalEndDateTime.toISOString(),
+        allDay: data.isAllDay, // Must be sent here
+        visibility: "all",
+        attendees: data.attendees || [],
+      };
 
-    setCurrentStepValue(createEventFormConfig.steps[0].value);
-  }
-}, [open, selectedDate]);
+      onSave(payload);
+    } catch (error) {
+      console.error("Date parsing error", error);
+    }
+  };
 
- 
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: "",
+        startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+        endDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
+        startTime: "",
+        endTime: "",
+        isAllDay: false,
+        eventType: "prep",
+        location: "",
+        attendees: [],
+        notes: "",
+      });
+      setCurrentStepValue(createEventFormConfig.steps[0].value);
+    }
+  }, [open, selectedDate, form]);
+
   return (
     <Dialog
       open={open}
@@ -160,18 +167,17 @@ useEffect(() => {
         />
 
         <div className="flex-1 overflow-y-auto pr-1">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             <CreateEventStepsRenderer step={currentStep} form={form} />
 
             <div className="pt-4 flex justify-between bg-background sticky bottom-0">
               <div>
                 {currentStepIndex > 0 && (
-                  <Button variant="outline" onClick={goToPreviousStep}>
+                  <Button
+                    variant="outline"
+                    onClick={goToPreviousStep}
+                    type="button"
+                  >
                     Previous
                   </Button>
                 )}
@@ -190,8 +196,9 @@ useEffect(() => {
                   <Button
                     onClick={form.handleSubmit(handleFormSubmit)}
                     type="submit"
+                    disabled={isSubmitting}
                   >
-                    Save Event
+                    {isSubmitting ? "Saving..." : "Save Event"}
                   </Button>
                 )}
               </div>

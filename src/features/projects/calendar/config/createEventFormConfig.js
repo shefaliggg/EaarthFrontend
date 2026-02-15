@@ -16,13 +16,10 @@ export const createEventFormConfig = {
           isSelect: true,
           items: [
             { label: "Prep", value: "prep" },
-            { label: "Scout", value: "scout" },
-            { label: "Tech", value: "tech" },
-            { label: "Stunt", value: "stunt" },
-            { label: "Cast", value: "cast" },
             { label: "Shoot", value: "shoot" },
-            { label: "Travel", value: "travel" },
+            { label: "Wrap", value: "wrap" },
             { label: "Meeting", value: "meeting" },
+            { label: "Travel", value: "travel" },
             { label: "Other", value: "other" },
           ],
         },
@@ -53,10 +50,15 @@ export const createEventFormConfig = {
     {
       id: "details",
       value: "details",
-      label: "Details",
+      label: "Notify & Details",
       fields: [
-        { name: "color", label: "Color (Hex)" },
-        { name: "notes", label: "Notes / Details", type: "textarea" },
+        // Changed here: Removed Color, Added Crew Select
+        { 
+          name: "attendees", 
+          label: "Notify Crew Members", 
+          type: "crew-select" // Custom type we will handle in renderer
+        },
+        { name: "notes", label: "Description / Notes", type: "textarea" },
       ],
     },
   ],

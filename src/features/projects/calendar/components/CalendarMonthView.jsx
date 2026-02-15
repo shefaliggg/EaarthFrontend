@@ -138,9 +138,11 @@ function CalendarMonthView({
                   return (
                     <div
                       key={dateString}
-                      onClick={() => {
-                        setCurrentDate(date);
-                        onDayClick();
+                      onClick={(e) => {
+                         // Only trigger if clicking the cell background or date number, not an event
+                         // But since we stopPropagation on events, we can just trigger here
+                        if (setCurrentDate) setCurrentDate(date);
+                        if (onDayClick) onDayClick(date);
                       }}
                       className={cn(
                         "flex gap-1 p-2 h-[250px] flex-col items-end cursor-pointer transition-all duration-200 border-r border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 overflow-hidden",
@@ -165,6 +167,10 @@ function CalendarMonthView({
                         <Tooltip key={event.id || event._id}>
                           <TooltipTrigger asChild>
                             <div
+                              onClick={(e) => {
+                                e.stopPropagation(); // Stop bubbling so we don't open "Create Event" modal
+                                // Add "Edit Event" logic here if needed
+                              }}
                               className={cn(
                                 "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                                 getMonthEventColors(event.eventType),
@@ -217,7 +223,7 @@ function CalendarMonthView({
                         <Popover>
                           <PopoverTrigger asChild>
                             <div
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()} // Stop bubbling
                               className={cn(
                                 "text-[11px] font-bold rounded-lg w-full py-0.5 px-2 hover:scale-[1.02] transition-transform text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 flex-shrink-0",
                                 getMoreIndicatorColors(
@@ -239,6 +245,7 @@ function CalendarMonthView({
                                 <Tooltip key={event.id || event._id}>
                                   <TooltipTrigger asChild>
                                     <div
+                                      onClick={(e) => e.stopPropagation()}
                                       className={cn(
                                         "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                                         getMonthEventColors(event.eventType),

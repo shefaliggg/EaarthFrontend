@@ -40,6 +40,7 @@ export default function CalendarGrid({
       return (
         <CalendarWeekView
           currentDate={currentDate}
+          setCurrentDate={setCurrentDate} // <--- ADDED THIS
           events={events}
           onDayClick={onDayClick}
         />
@@ -74,7 +75,7 @@ export default function CalendarGrid({
           analyticsData={analyticsData}
           currentDate={currentDate}
         />
-      ); // <--- Pass data
+      ); 
     case "conflicts":
       return (
         <CalendarConflictsView

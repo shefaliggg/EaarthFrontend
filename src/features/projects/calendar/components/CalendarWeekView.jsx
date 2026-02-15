@@ -126,7 +126,24 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
   const normalized = normalizeWeekEvents(events);
   const isToday = (date) => date.toDateString() === new Date().toDateString();
 
-  // Soft colors with proper backgrounds
+  // Helper to handle clicking a specific time slot
+  const handleTimeSlotClick = (date, hour) => {
+    // 1. Create a new date object based on the column date
+    const selectedDate = new Date(date);
+    // 2. Set the hour based on the row clicked
+    selectedDate.setHours(hour, 0, 0, 0);
+    
+    // 3. Update the global current date state
+    if (setCurrentDate) {
+        setCurrentDate(selectedDate);
+    }
+    
+    // 4. Trigger the modal opening logic
+    if (onDayClick) {
+        onDayClick(selectedDate);
+    }
+  };
+
   const getEventColors = (eventType) => {
     switch (eventType) {
       case "shoot":
@@ -171,6 +188,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
           <div className="grid grid-cols-7 border-primary/20 border-b">
             {week.map((date) => (
               <div
+                key={date.toString()}
                 className={cn(
                   "flex flex-col items-center py-1 border-primary/20 border-r last:border-r-0",
                   isToday(date) && "bg-purple-100/50 dark:bg-purple-900/30",
@@ -201,11 +219,14 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
           <div className="grid grid-cols-7 border-b border-primary/20">
             {week.map((date) => (
               <div
-                key={date}
+                key={date.toString()}
                 className="flex flex-col items-start gap-1 p-1 border-r border-primary/20 last:border-r-0 cursor-pointer hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden"
-                onClick={() => {
-                  setCurrentDate(date);
-                  onDayClick();
+                onClick={(e) => {
+                  // Prevent bubbling if clicking an event, but allow cell click
+                  if(e.target === e.currentTarget) {
+                    if(setCurrentDate) setCurrentDate(date);
+                    if(onDayClick) onDayClick(date);
+                  }
                 }}
               >
                 {getAllDayEvents(normalized, date).map((e) => (
@@ -216,6 +237,10 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                           "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
                           getAllDayEventColors(e.eventType),
                         )}
+                        onClick={(ev) => {
+                             ev.stopPropagation(); // Don't trigger 'Create Event' when clicking an existing event
+                             // Add edit logic here if needed
+                        }}
                       >
                         {e.title}
                       </div>
@@ -264,11 +289,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
             const columns = layoutEvents(dayEvents);
             return (
               <div
-                key={date}
-                onClick={() => {
-                  setCurrentDate(date);
-                  onDayClick();
-                }}
+                key={date.toString()}
                 className="relative border-r border-primary/20 last:border-r-0"
               >
                 {/* Events time slots grid */}
@@ -276,8 +297,10 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                   <div
                     key={h}
                     className="h-12 border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 cursor-pointer transition-all duration-200 last:border-b-0"
+                    onClick={() => handleTimeSlotClick(date, h)}
                   />
                 ))}
+                
                 {/* Events Overlay  */}
                 <div className="absolute left-1 inset-0 pointer-events-none">
                   {columns.map((col, colIndex) =>
@@ -291,9 +314,12 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                             <div
                               style={getEventStyle(e, colIndex, columns.length)}
                               className={cn(
-                                "cursor-pointer absolute pointer-events-auto flex items-center justify-center py-0.5 text-[10px] font-semibold text-center rounded-md overflow-hidden border-l-3 shadow-sm transition-all duration-200 hover:shadow-md",
+                                "cursor-pointer absolute pointer-events-auto flex items-center justify-center truncate py-0.5 text-[10px] font-semibold text-center rounded-md overflow-hidden border-l-3 shadow-sm transition-all duration-200 hover:shadow-md",
                                 getEventColors(e.eventType),
                               )}
+                              onClick={(ev) => {
+                                ev.stopPropagation(); // Stop click from bubbling to the time slot
+                              }}
                             >
                          {e.title}
                             </div>
