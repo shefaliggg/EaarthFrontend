@@ -1,11 +1,42 @@
+import { useState } from "react";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { Outlet, useLocation} from "react-router-dom";
-import { Button } from "@/shared/components/ui/button";
-import { Settings } from "lucide-react";
-// import getApiUrl from "../../../../shared/config/enviroment";
+import { Outlet, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { toast } from "sonner";
+
+import useCalendar from "../hooks/useCalendar"; 
+import CreateEventModal from "../components/CreateEventModal";
 
 function CalendarLayout() {
   const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const { 
+    createEvent, 
+    currentDate, 
+    clearStatus, 
+    isCreating 
+  } = useCalendar();
+
+  const { currentUser: user } = useSelector((state) => state.user);
+
+  const canModify = user && (
+    user.userType === "studio_admin" || 
+    (user.userType === "crew" && user.accessPolicy === "no_contract")
+  );
+
+  const handleCreate = async (eventData) => {
+    try {
+      const result = await createEvent(eventData);
+      if (result.meta.requestStatus === 'fulfilled') {
+        toast.success("Event scheduled!");
+        setIsCreateModalOpen(false);
+        clearStatus();
+      } else {
+        toast.error("Failed to create event.");
+      }
+    } catch (e) { toast.error("Error creating event"); }
+  };
 
   const section = (() => {
     if (location.pathname.includes("/shooting")) return "shooting";
@@ -16,20 +47,11 @@ function CalendarLayout() {
 
   const headerConfig = (() => {
     if (section === "calendar")
-      return {
-        icon: "Calendar",
-        title: "Calendar",
-      };
+      return { icon: "Calendar", title: "Calendar" };
     if (section === "shooting")
-      return {
-        icon: "Calendar",
-        title: "Shooting Calendar",
-      };
+      return { icon: "Calendar", title: "Shooting Calendar" };
     if (section === "tmo")
-      return {
-        icon: "Plane",
-        title: "Tmo",
-      };
+      return { icon: "Plane", title: "Tmo" };
     return {
       icon: "Settings",
       title: "Calendar Settings",
@@ -39,26 +61,36 @@ function CalendarLayout() {
 
   const primaryAction = (() => {
     if (section === "tmo") return null;
-    if (section !== "calendar") return null;
-
-    return {
-      label: "Create Event",
-      icon: "Plus",
-      size: "lg",
-      clickAction: () => console.log("Open Create Event"),
-    };
+    if (section === "calendar" && canModify) {
+      return {
+        label: "Create Event",
+        icon: "Plus",
+        size: "lg",
+        clickAction: () => setIsCreateModalOpen(true),
+      };
+    }
+    return null;
   })();
 
   return (
-    <>
-      <div className="space-y-6">
-        <PageHeader
-          {...headerConfig}
-          primaryAction={primaryAction} 
+    <div className="space-y-6">
+      <PageHeader
+        {...headerConfig}
+        primaryAction={primaryAction} 
+      />
+      
+      <Outlet context={{ openCreateModal: () => setIsCreateModalOpen(true) }} />
+
+      {canModify && (
+        <CreateEventModal
+          open={isCreateModalOpen}
+          selectedDate={currentDate}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSave={handleCreate}
+          isSubmitting={isCreating}
         />
-        <Outlet />
-      </div>
-    </>
+      )}
+    </div>
   );
 }
 

@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useOutletContext } from "react-router-dom";
 import CalendarToolbar from "../components/CalendarToolbar";
 import CalendarGrid from "../components/CalendarGrid";
-import CreateEventModal from "../components/CreateEventModal";
- // Import
 import UpcomingEvents from "../components/UpcommingEvents";
 import useCalendar from "../hooks/useCalendar";
-
 import { toast } from "sonner";
 import EditEventModal from "../components/EditEventModal";
 import { deleteCalendarEvent, updateCalendarEvent } from "../../store/calendar.thunks";
@@ -14,72 +12,44 @@ import EventDetailsModal from "../components/EventDetailsModal";
 
 function ProjectCalendar() {
   const dispatch = useDispatch();
-  const calendar = useSelector((state) => state.calendar); // Direct access for loading states
+  const calendar = useSelector((state) => state.calendar);
+  
+  const { openCreateModal } = useOutletContext() || {}; 
+
   const { 
-    view, 
-    currentDate, 
-    events, 
-    conflicts, 
-    analyticsData, 
-    upcomingEvents, 
-    eventsCount,
-    search, 
-    period,
-    setView,
-    setSearch,
-    setPeriod,
-    prev, 
-    next, 
-    today, 
-    createEvent,
-    clearStatus,
+    view, currentDate, events, conflicts, analyticsData, 
+    upcomingEvents, eventsCount, search, period,
+    setView, setSearch, setPeriod, prev, next, today
   } = useCalendar();
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   const { currentUser: user } = useSelector((state) => state.user);
 
-  // Permission Logic
   const canModify = user && (
     user.userType === "studio_admin" || 
     (user.userType === "crew" && user.accessPolicy === "no_contract")
   );
 
-  // --- Handlers ---
-
   const handleDayClick = () => {
     if (canModify) {
-      setIsCreateModalOpen(true);
+      if (openCreateModal) openCreateModal();
     } else {
       toast.info("View only access.");
     }
   };
 
-  // Called when clicking an event in the CalendarGrid
   const handleEventClick = (event) => {
     setSelectedEvent(event);
     setIsDetailsModalOpen(true);
   };
 
-  const handleCreate = async (eventData) => {
-    try {
-      const result = await createEvent(eventData);
-      if (result.meta.requestStatus === 'fulfilled') {
-        toast.success("Event scheduled!");
-        setIsCreateModalOpen(false);
-        clearStatus();
-      } else {
-        toast.error("Failed to create event.");
-      }
-    } catch (e) { toast.error("Error creating event"); }
-  };
 
   const handleEditRequest = (event) => {
-    setIsDetailsModalOpen(false); // Close details
-    setIsEditModalOpen(true); // Open Edit form
+    setIsDetailsModalOpen(false);
+    setIsEditModalOpen(true);
   };
 
   const handleUpdate = async (eventCode, eventData) => {
@@ -123,7 +93,7 @@ function ProjectCalendar() {
         onNext={next}
         onToday={today}
         showCreateButton={canModify}
-        onCreateClick={() => setIsCreateModalOpen(true)}
+        onCreateClick={() => openCreateModal && openCreateModal()} 
       />
 
       <div className="grid lg:grid-cols-[1fr_580px] grid-cols-1 gap-6">
@@ -134,7 +104,7 @@ function ProjectCalendar() {
           conflicts={conflicts}
           analyticsData={analyticsData}
           onDayClick={handleDayClick}
-          onEventClick={handleEventClick} // Pass this down!
+          onEventClick={handleEventClick}
         />
 
         <UpcomingEvents
@@ -143,18 +113,6 @@ function ProjectCalendar() {
         />
       </div>
 
-      {/* CREATE MODAL */}
-      {canModify && (
-        <CreateEventModal
-          open={isCreateModalOpen}
-          selectedDate={currentDate}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSave={handleCreate}
-          isSubmitting={calendar.isCreating}
-        />
-      )}
-
-      {/* EDIT MODAL */}
       {canModify && (
         <EditEventModal
           open={isEditModalOpen}
@@ -165,7 +123,6 @@ function ProjectCalendar() {
         />
       )}
 
-      {/* DETAILS / DELETE MODAL */}
       <EventDetailsModal
         isOpen={isDetailsModalOpen}
         event={selectedEvent}
