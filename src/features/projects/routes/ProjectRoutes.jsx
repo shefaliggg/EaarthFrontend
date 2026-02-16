@@ -8,7 +8,6 @@ import ProjectDetailsPage from '../pages/ProjectDetails';
 import ProjectSettings from '../pages/ProjectSettings/ProjectSettings';
 import ProjectOnboarding from '../pages/ProjectSettings/ProjectOnboarding';
 import ProjectTimesheet from '../pages/ProjectSettings/ProjectTimesheet';
-// import ProjectCalendarSettings from '../components/'; // your calendar settings page
 
 import ProjectAppsRoutes from './ProjectAppsRoutes';
 import ProjectDepartmentsRoutes from './ProjectDepartmentsRoutes';
@@ -16,6 +15,7 @@ import FuelAndMileageRoutes from './FuelAndMileageRoutes';
 import pettyCashRoutes from './PettyCashRoutes';
 import TimesheetsRoutes from './TimesheetsRoutes';
 import ProjectCalendarRoutes from './ProjectCalendarRoutes';
+import ContractRoutes from './ContractRoutes'; // 🆕 ADD THIS
 
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
@@ -63,8 +63,9 @@ const ProjectRoutes = {
     {
       path: ':projectName/settings',
       children: [
-        { index: true, element: <ProjectSettings /> },          // default page for settings
-        { path: 'details', element: <ProjectDetails /> },
+        { index: true, element: <ProjectSettings /> },
+        { path: 'detail', element: <ProjectDetails /> }, // 🔧 FIXED: was 'details', now 'detail'
+        { path: 'general', element: <ProjectSettings /> }, // 🆕 ADD THIS
         { path: 'construction', element: <ProjectConstruction /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
@@ -73,7 +74,6 @@ const ProjectRoutes = {
         { path: 'signers-recipients', element: <SignersRecipients /> },
         { path: 'approval-workflows', element: <ApprovalWorkflows /> },
         { path: 'billing', element: <Billing /> },
-        // { path: 'calendar', element: <ProjectCalendarSettings /> }, // your calendar settings
         { path: '*', element: <NotFound /> },
       ],
     },
@@ -81,13 +81,14 @@ const ProjectRoutes = {
     {
       path: ':projectName',
       children: [
-        { index: true, element: <ProjectDetailsPage /> },          // default page for settings
+        { index: true, element: <ProjectDetailsPage /> },
         TimesheetsRoutes,
         FuelAndMileageRoutes,
         pettyCashRoutes,
         ProjectAppsRoutes,
         ProjectDepartmentsRoutes,
         ProjectCalendarRoutes,
+        ContractRoutes, // 🆕 ADD THIS
         { path: '*', element: <NotFound /> },
       ],
     },
