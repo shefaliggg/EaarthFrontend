@@ -18,6 +18,7 @@ function CalendarMonthView({
   currentDate,
   setCurrentDate,
   onDayClick,
+  onEventClick, // This prop was passed down but not used
   events,
 }) {
   const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -139,8 +140,6 @@ function CalendarMonthView({
                     <div
                       key={dateString}
                       onClick={(e) => {
-                         // Only trigger if clicking the cell background or date number, not an event
-                         // But since we stopPropagation on events, we can just trigger here
                         if (setCurrentDate) setCurrentDate(date);
                         if (onDayClick) onDayClick(date);
                       }}
@@ -162,17 +161,18 @@ function CalendarMonthView({
                         {date.getDate()}
                       </div>
 
-                      {/* EVENT CARD  */}
+                      {/* EVENT CARD (VISIBLE) */}
                       {visibleEvents.map((event) => (
                         <Tooltip key={event.id || event._id}>
                           <TooltipTrigger asChild>
                             <div
                               onClick={(e) => {
-                                e.stopPropagation(); // Stop bubbling so we don't open "Create Event" modal
-                                // Add "Edit Event" logic here if needed
+                                e.stopPropagation(); // Stop bubbling to day click
+                                // FIX: Call the prop here!
+                                if (onEventClick) onEventClick(event);
                               }}
                               className={cn(
-                                "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
+                                "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer", // Added cursor-pointer
                                 getMonthEventColors(event.eventType),
                               )}
                             >
@@ -183,12 +183,9 @@ function CalendarMonthView({
                           {/* EVENT TOOLTIP  */}
                           <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
                             <div className="flex flex-col gap-2 p-1">
-                              {/* Event Title */}
                               <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
                                 {event.title}
                               </p>
-
-                              {/* Time */}
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="font-medium">
@@ -203,8 +200,6 @@ function CalendarMonthView({
                                   )}
                                 </span>
                               </div>
-
-                              {/* Location */}
                               {event.location && (
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <MapPin className="w-3.5 h-3.5" />
@@ -218,14 +213,14 @@ function CalendarMonthView({
                         </Tooltip>
                       ))}
 
-                      {/* + MORE */}
+                      {/* + MORE (POPOVER) */}
                       {hiddenEvents.length > 0 && (
                         <Popover>
                           <PopoverTrigger asChild>
                             <div
                               onClick={(e) => e.stopPropagation()} // Stop bubbling
                               className={cn(
-                                "text-[11px] font-bold rounded-lg w-full py-0.5 px-2 hover:scale-[1.02] transition-transform text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 flex-shrink-0",
+                                "text-[11px] font-bold rounded-lg w-full py-0.5 px-2 hover:scale-[1.02] transition-transform text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 flex-shrink-0 cursor-pointer",
                                 getMoreIndicatorColors(
                                   getDominantEventType(hiddenEvents),
                                 ),
@@ -235,62 +230,30 @@ function CalendarMonthView({
                             </div>
                           </PopoverTrigger>
 
-                          <PopoverContent className="border-primary/20 shadow-xl">
+                          <PopoverContent className="border-primary/20 shadow-xl w-64">
                             <div className="text-base font-black text-center text-purple-800 dark:text-purple-300 mb-3 pb-2 border-b border-primary/20">
                               {format(new Date(dateString), "MMMM dd")}
                             </div>
 
                             <div className="space-y-2 max-h-80 overflow-y-auto">
                               {dayEvents.map((event) => (
-                                <Tooltip key={event.id || event._id}>
-                                  <TooltipTrigger asChild>
-                                    <div
-                                      onClick={(e) => e.stopPropagation()}
-                                      className={cn(
-                                        "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
-                                        getMonthEventColors(event.eventType),
-                                      )}
-                                    >
-                                      {event.title}
-                                    </div>
-                                  </TooltipTrigger>
-
-                                  {/* EVENT TOOLTIP  */}
-                                  <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
-                                    <div className="flex flex-col gap-2 p-1">
-                                      {/* Event Title */}
-                                      <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
-                                        {event.title}
-                                      </p>
-
-                                      {/* Time */}
-                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        <span className="font-medium">
-                                          {format(
-                                            new Date(event.startDateTime),
-                                            "h:mm a",
-                                          )}{" "}
-                                          -{" "}
-                                          {format(
-                                            new Date(event.endDateTime),
-                                            "h:mm a",
-                                          )}
-                                        </span>
-                                      </div>
-
-                                      {/* Location */}
-                                      {event.location && (
-                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                          <MapPin className="w-3.5 h-3.5" />
-                                          <span className="font-medium">
-                                            {event.location}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
+                                <div
+                                  key={event.id || event._id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // FIX: Call the prop here too for hidden events!
+                                    if (onEventClick) onEventClick(event);
+                                  }}
+                                  className={cn(
+                                    "w-full px-1.5 py-1 text-xs font-semibold text-white text-center rounded-md whitespace-normal border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer mb-1",
+                                    getMonthEventColors(event.eventType),
+                                  )}
+                                >
+                                  {event.title}
+                                  <div className="text-[10px] font-normal opacity-90 mt-0.5">
+                                    {format(new Date(event.startDateTime), "h:mm a")}
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           </PopoverContent>

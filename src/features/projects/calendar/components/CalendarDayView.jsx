@@ -19,9 +19,13 @@ import {
   HOUR_HEIGHT
 } from "../utils/calendar.utils";
 
-export default function CalendarDayView({ currentDate, events, onDayClick }) {
+export default function CalendarDayView({ 
+  currentDate, 
+  events, 
+  onDayClick, 
+  onEventClick // <--- Added this prop
+}) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  // These utility functions now correctly separate events based on the `allDay` flag
   const dayEvents = normalizeDayEvents(events, currentDate);
   const allDayEvents = getAllDayEvents(events, currentDate);
   
@@ -75,16 +79,25 @@ export default function CalendarDayView({ currentDate, events, onDayClick }) {
         </div>
 
         <div
-          onClick={onDayClick}
+          onClick={(e) => {
+             // Only trigger create modal if clicking background
+             if(e.target === e.currentTarget && onDayClick) onDayClick();
+          }}
           className="flex cursor-pointer gap-1 p-2 flex-col items-start border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden min-h-12"
         >
           {allDayEvents.map((e) => (
             <Tooltip key={e.id || e._id}>
               <TooltipTrigger asChild>
-                <div className={cn(
-                  "w-full text-[11px] font-semibold text-center px-2 py-1 rounded-lg overflow-hidden shadow-sm whitespace-nowrap transition-all duration-200 hover:shadow-md border-l-3",
-                  getAllDayEventColors(e.eventType)
-                )}>
+                <div 
+                  onClick={(ev) => {
+                    ev.stopPropagation(); 
+                    if (onEventClick) onEventClick(e); // <--- FIXED: Call prop here
+                  }}
+                  className={cn(
+                    "w-full text-[11px] font-semibold text-center px-2 py-1 rounded-lg overflow-hidden shadow-sm whitespace-nowrap transition-all duration-200 hover:shadow-md border-l-3 cursor-pointer",
+                    getAllDayEventColors(e.eventType)
+                  )}
+                >
                   {e.title}
                 </div>
               </TooltipTrigger>
@@ -146,6 +159,10 @@ export default function CalendarDayView({ currentDate, events, onDayClick }) {
                   <Tooltip key={event.id || event._id}>
                     <TooltipTrigger asChild>
                       <div
+                        onClick={(ev) => {
+                          ev.stopPropagation(); 
+                          if (onEventClick) onEventClick(event); // <--- FIXED: Call prop here
+                        }}
                         style={getEventStyle(event, colIndex, columns.length)}
                         className={cn(
                           "cursor-pointer absolute pointer-events-auto flex items-center justify-center py-0.5 px-1 text-[10px] font-semibold text-center rounded-md overflow-hidden border-l-3 shadow-sm transition-all duration-200 hover:shadow-md",

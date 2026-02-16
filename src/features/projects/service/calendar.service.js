@@ -12,7 +12,21 @@ export const createCalendarEventAPI = async (eventData) => {
   return res.data.data;
 };
 
-// NEW: Get Crew Members
+// NEW: Update Event
+export const updateCalendarEventAPI = async (eventCode, eventData) => {
+  // Use eventCode (CAL-xxxx) in URL
+  const res = await axiosConfig.put(`/calendar/${eventCode}`, eventData);
+  return res.data.data;
+};
+
+// NEW: Delete Event
+export const deleteCalendarEventAPI = async (eventCode) => {
+  // Use eventCode (CAL-xxxx) in URL
+  const res = await axiosConfig.delete(`/calendar/${eventCode}`);
+  return res.data;
+};
+
+// Get Crew Members
 export const getCrewMembersAPI = async () => {
   const res = await axiosConfig.get("/calendar/crew");
   return res.data.data;

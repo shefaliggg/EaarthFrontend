@@ -120,28 +120,18 @@ function getEventStyle(event, colIndex, colCount) {
   };
 }
 
-function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
+function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onEventClick }) { // <--- Added onEventClick
   const week = getWeek(currentDate);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const normalized = normalizeWeekEvents(events);
   const isToday = (date) => date.toDateString() === new Date().toDateString();
 
-  // Helper to handle clicking a specific time slot
   const handleTimeSlotClick = (date, hour) => {
-    // 1. Create a new date object based on the column date
     const selectedDate = new Date(date);
-    // 2. Set the hour based on the row clicked
     selectedDate.setHours(hour, 0, 0, 0);
     
-    // 3. Update the global current date state
-    if (setCurrentDate) {
-        setCurrentDate(selectedDate);
-    }
-    
-    // 4. Trigger the modal opening logic
-    if (onDayClick) {
-        onDayClick(selectedDate);
-    }
+    if (setCurrentDate) setCurrentDate(selectedDate);
+    if (onDayClick) onDayClick(selectedDate);
   };
 
   const getEventColors = (eventType) => {
@@ -222,7 +212,6 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                 key={date.toString()}
                 className="flex flex-col items-start gap-1 p-1 border-r border-primary/20 last:border-r-0 cursor-pointer hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden"
                 onClick={(e) => {
-                  // Prevent bubbling if clicking an event, but allow cell click
                   if(e.target === e.currentTarget) {
                     if(setCurrentDate) setCurrentDate(date);
                     if(onDayClick) onDayClick(date);
@@ -234,12 +223,12 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                     <TooltipTrigger asChild>
                       <div
                         className={cn(
-                          "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md",
+                          "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer",
                           getAllDayEventColors(e.eventType),
                         )}
                         onClick={(ev) => {
-                             ev.stopPropagation(); // Don't trigger 'Create Event' when clicking an existing event
-                             // Add edit logic here if needed
+                             ev.stopPropagation(); 
+                             if(onEventClick) onEventClick(e); // <--- FIXED: Triggered here
                         }}
                       >
                         {e.title}
@@ -268,14 +257,15 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
             ))}
           </div>
         </div>
-        {/* WEEK TIME GRID (hour labels + day columns) */}
+        
+        {/* WEEK TIME GRID */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)]">
+          {/* TIME AXIS */}
           <div>
             {hours.map((h) => (
-              //  TIME AXIS — hourly labels aligned with the grid rows
               <div
                 key={h}
-                className="flex h-12 items-center justify-center bg-muted/40 border-b border-r  border-primary/20"
+                className="flex h-12 items-center justify-center bg-muted/40 border-b border-r border-primary/20"
               >
                 <span className="text-xs font-semibold text-purple-800 dark:text-purple-300">
                   {formatHour(h)}
@@ -283,6 +273,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
               </div>
             ))}
           </div>
+          
           {/* DAY COLUMNS */}
           {week.map((date) => {
             const dayEvents = getEventsForDay(normalized, date);
@@ -318,10 +309,11 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate }) {
                                 getEventColors(e.eventType),
                               )}
                               onClick={(ev) => {
-                                ev.stopPropagation(); // Stop click from bubbling to the time slot
+                                ev.stopPropagation();
+                                if(onEventClick) onEventClick(e); // <--- FIXED: Triggered here
                               }}
                             >
-                         {e.title}
+                              {e.title}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">

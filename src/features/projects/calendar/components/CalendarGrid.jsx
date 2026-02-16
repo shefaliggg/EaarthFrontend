@@ -14,8 +14,8 @@ export default function CalendarGrid({
   onDayClick,
   events,
   conflicts,
-  analyticsData, 
-  onEditEvent,
+  analyticsData,
+  onEventClick, // This is the prop we need to pass down
 }) {
   switch (view) {
     case "month":
@@ -24,6 +24,7 @@ export default function CalendarGrid({
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
           onDayClick={onDayClick}
+          onEventClick={onEventClick}
           events={events}
         />
       );
@@ -33,6 +34,7 @@ export default function CalendarGrid({
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
           onDayClick={onDayClick}
+          onEventClick={onEventClick} // Pass to Day View as well if needed
           events={events}
         />
       );
@@ -40,9 +42,10 @@ export default function CalendarGrid({
       return (
         <CalendarWeekView
           currentDate={currentDate}
-          setCurrentDate={setCurrentDate} // <--- ADDED THIS
+          setCurrentDate={setCurrentDate}
           events={events}
           onDayClick={onDayClick}
+          onEventClick={onEventClick} // <--- FIXED: Passed Prop
         />
       );
     case "gantt":
@@ -50,7 +53,7 @@ export default function CalendarGrid({
         <CalendarGanttView
           currentDate={currentDate}
           events={events}
-          onEventClick={onDayClick}
+          onEventClick={onEventClick}
         />
       );
     case "timeline":
@@ -58,7 +61,7 @@ export default function CalendarGrid({
         <CalendarTimelineView
           currentDate={currentDate}
           events={events}
-          onEventClick={onDayClick}
+          onEventClick={onEventClick}
         />
       );
     case "year":
@@ -66,7 +69,7 @@ export default function CalendarGrid({
         <CalendarYearView
           currentDate={currentDate}
           events={events}
-          onEventClick={onDayClick}
+          onEventClick={onEventClick}
         />
       );
     case "analytics":
@@ -75,7 +78,7 @@ export default function CalendarGrid({
           analyticsData={analyticsData}
           currentDate={currentDate}
         />
-      ); 
+      );
     case "conflicts":
       return (
         <CalendarConflictsView
