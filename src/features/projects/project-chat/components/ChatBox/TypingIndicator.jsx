@@ -1,5 +1,5 @@
 export default function TypingIndicator({ typingUsers = [] }) {
-  console.log("Typing users:", typingUsers);
+  // console.log("Typing users:", typingUsers);
 if (!Array.isArray(typingUsers) || typingUsers.length === 0) {
   return null;
 }

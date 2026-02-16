@@ -4,6 +4,7 @@ import { cn } from "@/shared/config/utils";
 import EmojiPicker from "emoji-picker-react";
 import useChatStore from "../../store/chat.store";
 import FileAttachmentMenu from "./FileAttachmentMenu";
+import { buildReplyPayload } from "../../utils/messageHelpers";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -16,6 +17,8 @@ const MessageInput = React.memo(
     onClearEdit,
     onStartRecording,
     messagesEndRef,
+    attachments,
+    setAttachments,
   }) => {
     const [messageInput, setMessageInput] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -130,43 +133,74 @@ const MessageInput = React.memo(
     // ═══════════════════════════════════════
     const handleSendMessage = useCallback(async () => {
       const trimmedMessage = messageInput.trim();
-      if (!trimmedMessage) return;
-      if (!selectedChat?.id) return;
+      const hasText = trimmedMessage.length > 0;
+      const hasAttachments = attachments.length > 0;
 
-      const messageData = {
-        text: trimmedMessage,
-        type: "TEXT",
-        ...(replyTo && {
-          replyTo: {
-            messageId: replyTo.messageId,
-            senderId: replyTo.senderId,
-            preview: replyTo.preview,
-            type: replyTo.type || "TEXT",
-            senderName: replyTo.senderName,
-          },
-        }),
-      };
+      if (!hasText && !hasAttachments) return;
+      if (!selectedChat?.id) return;
 
       const projectId =
         selectedChat?.projectId ||
         selectedChat?._raw?.projectId ||
         DEFAULT_PROJECT_ID;
 
+      const normalizedReply = replyTo ? buildReplyPayload(replyTo) : null;
+
       try {
-        if (selectedChat?.id) {
-          emitTypingStop(selectedChat.id);
-          if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-          }
+        emitTypingStop(selectedChat.id);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
         }
 
-        setMessageInput("");
-        onClearReply();
+        if (hasAttachments) {
+          const formData = new FormData();
+
+          attachments.forEach((att) => {
+            formData.append("attachments", att.file);
+          });
+
+          formData.append("projectId", projectId);
+          formData.append(
+            "type",
+            attachments.length > 1 ? "IMAGE" : attachments[0].type,
+          );
+
+          console.log("trimmed message", trimmedMessage);
+
+          if (hasText) {
+            formData.append("caption", trimmedMessage);
+          }
+          
+          if (normalizedReply) {
+            formData.append("replyTo[messageId]", normalizedReply.messageId);
+            formData.append("replyTo[senderId]", normalizedReply.senderId);
+            formData.append("replyTo[preview]", normalizedReply.preview || "");
+            formData.append("replyTo[type]", normalizedReply.type);
+          }
+
+          // cleanup
+          setMessageInput("");
+          onClearReply();
+
+          console.log("caption:", formData.get("caption"));
+
+          await sendMessage(selectedChat.id, projectId, { formData });
+
+          setAttachments([]);
+        } else {
+          // cleanup
+          setMessageInput("");
+          onClearReply();
+
+          await sendMessage(selectedChat.id, projectId, {
+            text: trimmedMessage,
+            type: "TEXT",
+            replyTo: normalizedReply,
+          });
+        }
         localStorage.removeItem(`chat-draft-${selectedChat.id}`);
 
-        await sendMessage(selectedChat.id, projectId, messageData);
-
-        // ✅ Force scroll to bottom after sending
+        // scroll
         if (messagesEndRef?.current) {
           setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({
@@ -176,12 +210,10 @@ const MessageInput = React.memo(
         }
       } catch (error) {
         console.error("❌ Failed to send message:", error);
-        alert(
-          `Failed to send message: ${error.response?.data?.message || error.message}`,
-        );
       }
     }, [
       messageInput,
+      attachments,
       selectedChat,
       replyTo,
       sendMessage,
@@ -247,63 +279,32 @@ const MessageInput = React.memo(
     // ═══════════════════════════════════════
     // FILE UPLOAD
     // ═══════════════════════════════════════
-    const handleFileUpload = useCallback(
-      async (e, uploadType) => {
-        if (!selectedChat?.id) return;
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleFileUpload = useCallback((e, uploadType) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
 
-        e.target.value = "";
-        setShowAttachMenu(false);
+      e.target.value = "";
+      setShowAttachMenu(false);
 
-        const projectId =
-          selectedChat?.projectId ||
-          selectedChat?._raw?.projectId ||
-          DEFAULT_PROJECT_ID;
+      const typeMap = {
+        image: "IMAGE",
+        video: "VIDEO",
+        document: "FILE",
+      };
 
-        const typeMap = {
-          image: "IMAGE",
-          video: "VIDEO",
-          document: "FILE",
-        };
-        const messageType = typeMap[uploadType] || "FILE";
+      const newAttachments = files.map((file) => ({
+        file,
+        type: typeMap[uploadType] || "FILE",
+        previewUrl: file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : null,
+      }));
 
-        const formData = new FormData();
-        formData.append("attachments", file);
-        formData.append("projectId", projectId);
-        formData.append("type", messageType);
-        formData.append("text", "");
+      setAttachments((prev) => [...prev, ...newAttachments]);
+    }, []);
 
-        if (replyTo) {
-          formData.append("replyTo[messageId]", replyTo.messageId);
-          formData.append("replyTo[senderId]", replyTo.senderId);
-          formData.append("replyTo[preview]", replyTo.preview || "");
-          formData.append("replyTo[type]", replyTo.type || "TEXT");
-        }
-
-        try {
-          await sendMessage(selectedChat.id, projectId, { formData });
-          onClearReply();
-
-          // ✅ Force scroll to bottom after file upload
-          if (messagesEndRef?.current) {
-            setTimeout(() => {
-              messagesEndRef.current?.scrollIntoView({
-                behavior: "smooth",
-              });
-            }, 50);
-          }
-        } catch (error) {
-          console.error("❌ Failed to upload file:", error);
-          alert(
-            `Failed to send file: ${error.response?.data?.message || error.message}`,
-          );
-        }
-      },
-      [selectedChat, replyTo, sendMessage, onClearReply, messagesEndRef],
-    );
-
-    const showSendButton = messageInput.trim().length > 0;
+    const showSendButton =
+      messageInput.trim().length > 0 || attachments.length > 0;
 
     return (
       <div className="flex rounded-xl items-end gap-2">
@@ -329,6 +330,7 @@ const MessageInput = React.memo(
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             hidden
             onChange={(e) => handleFileUpload(e, "image")}
           />
@@ -336,12 +338,14 @@ const MessageInput = React.memo(
             ref={videoInputRef}
             type="file"
             accept="video/*"
+            multiple
             hidden
             onChange={(e) => handleFileUpload(e, "video")}
           />
           <input
             ref={documentInputRef}
             type="file"
+            multiple
             hidden
             onChange={(e) => handleFileUpload(e, "document")}
           />
@@ -402,7 +406,9 @@ const MessageInput = React.memo(
             onClick={
               editingMessage ? () => console.log("Update") : handleSendMessage
             }
-            disabled={!messageInput.trim()}
+            disabled={
+              messageInput.trim().length === 0 && attachments.length === 0
+            }
             className={cn(
               "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
               messageInput.trim()

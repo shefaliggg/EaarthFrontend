@@ -4,6 +4,7 @@ import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
+import { transformMessage } from "../utils/messageHelpers";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -11,63 +12,6 @@ const getCurrentUserId = () => {
   const state = store.getState();
   return state.auth?.user?._id || state.user?.currentUser?._id || null;
 };
-
-function transformMessage(msg, currentUserId) {
-  const isOwn =
-    msg.senderId?._id?.toString() === currentUserId?.toString() ||
-    msg.senderId?.toString() === currentUserId?.toString();
-
-  let url = null;
-  let fileName = null;
-  let fileSize = null;
-
-  if (msg.content?.files && msg.content.files.length > 0) {
-    const file = msg.content.files[0];
-    url = file.url;
-    fileName = file.name;
-    fileSize = file.size ? `${(file.size / 1024).toFixed(2)} KB` : null;
-  }
-
-  let replyTo = null;
-  if (msg.replyTo?.messageId) {
-    replyTo = {
-      messageId: msg.replyTo.messageId,
-      sender: msg.replyTo.senderId?.displayName || "Unknown",
-      content: msg.replyTo.preview || "",
-      preview: msg.replyTo.preview || "",
-    };
-  }
-
-  return {
-    id: msg._id,
-    clientTempId: msg.clientTempId || null,
-    sender: msg.senderId?.displayName || "Unknown",
-    senderId: msg.senderId?._id || null,
-    avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "U",
-    time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    }),
-    timestamp: new Date(msg.createdAt).getTime(),
-    content: msg.content?.text || "",
-    type: msg.type?.toLowerCase(),
-    url,
-    fileName,
-    fileSize,
-    isOwn,
-    state: msg.seenBy?.length > 0 ? "seen" : "delivered",
-    readBy: msg.seenBy?.length || 0,
-    edited: msg.status?.edited || false,
-    editedAt: msg.status?.editedAt,
-    deleted: msg.status?.deletedForEveryone || false,
-    reactions: msg.reactions?.reduce((acc, r) => {
-      acc[r.emoji] = (acc[r.emoji] || 0) + 1;
-      return acc;
-    }, {}),
-    replyTo,
-    _raw: msg,
-  };
-}
 
 const useChatStore = create(
   devtools(
@@ -79,7 +23,6 @@ const useChatStore = create(
       isLoadingMessages: false,
       isSendingMessage: false,
       typingUsers: {},
-      // socketInitialized: false,
 
       attachSocketListeners: () => {
         const socket = getChatSocket();
@@ -91,6 +34,9 @@ const useChatStore = create(
           console.log("📨 New message received:", {
             conversationId,
             message,
+          });
+          socket.emit("message:delivered", {
+            messageId: message._id,
           });
           get().addMessageToConversation(conversationId, message);
           get().updateConversationLastMessage(conversationId, message);
@@ -373,8 +319,17 @@ const useChatStore = create(
           const cursor = loadMore ? existing.cursor : null;
           const result = await chatApi.getMessages(conversationId, 20, cursor);
 
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members || 2;
+
           const transformed = result.messages.map((msg) =>
-            transformMessage(msg, currentUserId),
+            transformMessage(msg, {
+              currentUserId,
+              conversationMembersCount: memberCount,
+            }),
           );
 
           const updatedMessages = loadMore
@@ -410,29 +365,63 @@ const useChatStore = create(
 
         // 🔥 deterministic temp id
         const clientTempId = `temp-${crypto.randomUUID()}`;
+        const now = new Date();
 
         const optimisticMessage = {
           id: clientTempId,
           clientTempId,
+
+          conversationId,
+          projectId,
+
           sender: "You",
           senderId: currentUserId,
           avatar: "Y",
-          time: new Date().toLocaleTimeString("en-US", {
+
+          time: now.toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
           }),
-          timestamp: Date.now(),
-          content: isFileUpload ? "" : messageData.text || "",
+
+          timestamp: now.getTime(),
+
+          content: messageData.text || "",
+          caption: isFileUpload
+            ? messageData.formData.get("caption") || ""
+            : messageData.caption || "",
+
           type: isFileUpload
             ? messageData.formData.get("type")?.toLowerCase() || "file"
             : messageData.type?.toLowerCase() || "text",
+
+          files: isFileUpload
+            ? messageData.formData.getAll("attachments").map((file) => ({
+                url: URL.createObjectURL(file),
+                name: file.name,
+                size: file.size,
+                mime: file.type,
+              }))
+            : messageData.files || [],
+
           isOwn: true,
           state: "sending",
-          fileName: isFileUpload
-            ? messageData.formData.get("attachments")?.name
-            : null,
-          replyTo: null,
+
+          readBy: 0,
+          deliveredTo: 0,
+
+          edited: false,
+          editedAt: null,
+          deleted: false,
+
           reactions: {},
+
+          replyTo: null,
+          forwardedFrom: messageData.forwardedFrom || null,
+          isForwarded: !!messageData.forwardedFrom,
+
+          isStarred: false,
+          system: null,
+
           _raw: null,
         };
 
@@ -492,24 +481,18 @@ const useChatStore = create(
               projectId,
               type: (messageData.type || "TEXT").toUpperCase(),
               text: messageData.text || "",
-              clientTempId, // 🔥 important
+              caption: messageData.caption || "",
+              files: messageData.files || [],
+              clientTempId,
             };
 
-            if (messageData.replyTo) {
-              payload.replyTo = {
-                messageId: messageData.replyTo.messageId,
-                senderId: messageData.replyTo.senderId,
-                preview: messageData.replyTo.preview,
-                type: messageData.replyTo.type,
-              };
-            }
-
-            if (messageData.forwardedFrom) {
+            if (messageData.replyTo) payload.replyTo = messageData.replyTo;
+            if (messageData.forwardedFrom)
               payload.forwardedFrom = messageData.forwardedFrom;
-            }
 
             sentMessage = await chatApi.sendMessage(conversationId, payload);
           }
+          set({ isSendingMessage: false });
 
           return sentMessage;
         } catch (error) {
@@ -572,7 +555,17 @@ const useChatStore = create(
             cursor: null,
           };
 
-          const transformed = transformMessage(message, currentUserId);
+          const conversation = state.conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members || 2;
+
+          const transformed = transformMessage(message, {
+            currentUserId,
+            conversationMembersCount: memberCount,
+          });
+
           const incomingClientTempId = message.clientTempId;
 
           let updatedMessages = [...existing.messages];
@@ -584,10 +577,27 @@ const useChatStore = create(
             );
 
             if (index !== -1) {
+              const existingMsg = updatedMessages[index];
+
               updatedMessages[index] = {
-                ...updatedMessages[index],
-                ...transformed,
-                state: "sent",
+                ...existingMsg,
+
+                id: transformed.id,
+                time: transformed.time,
+                timestamp: transformed.timestamp,
+
+                files: transformed.files,
+
+                state: transformed.state,
+                readBy: transformed.readBy,
+                deliveredTo: transformed.deliveredTo,
+
+                edited: transformed.edited,
+                editedAt: transformed.editedAt,
+                deleted: transformed.deleted,
+
+                reactions: transformed.reactions,
+                _raw: transformed._raw,
               };
 
               return {

@@ -77,13 +77,7 @@ const chatApi = {
         type: isFormData ? messageData.get("type") : messageData.type,
       });
 
-      const config = {};
-
       if (isFormData) {
-        // For FormData, let axios set the Content-Type header automatically
-        config.headers = {
-          "Content-Type": "multipart/form-data",
-        };
 
         // Debug: Log FormData contents
         console.log("📋 FormData contents:");
@@ -101,11 +95,10 @@ const chatApi = {
       const response = await axiosConfig.post(
         `/chats/${conversationId}/messages`,
         messageData,
-        config
       );
 
       console.log("✅ API: Message sent successfully:", response.data.data);
-      return response.data.data;
+      // return response.data.data;
     } catch (error) {
       console.error("❌ sendMessage failed:", {
         status: error.response?.status,

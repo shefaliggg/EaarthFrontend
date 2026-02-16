@@ -28,13 +28,18 @@ import DeleteMessageDialog from "../../Dialogs/DeleteMessageDialog";
 import ForwardMessageDialog from "../../Dialogs/ForwardMessageDialog";
 import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 import useChatStore from "../../store/chat.store";
+import ReplyPreviewContent from "./ReplyPreviewContent";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 const getFileUrl = (fileKey) => {
-  if (!fileKey) return null;
+  if (!fileKey || typeof fileKey !== "string") return null;
 
-  if (fileKey.startsWith("http://") || fileKey.startsWith("https://")) {
+  if (
+    fileKey.startsWith("http://") ||
+    fileKey.startsWith("https://") ||
+    fileKey.startsWith("blob:")
+  ) {
     return fileKey;
   }
 
@@ -69,7 +74,7 @@ export default function MessageBubble({
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
-    const retryMessage = useChatStore((state) => state.retryMessage);
+  const retryMessage = useChatStore((state) => state.retryMessage);
   const { selectedChat } = useChatStore();
 
   const videoRef = useRef(null);
@@ -78,7 +83,7 @@ export default function MessageBubble({
   const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
-  const isForwarded = !!message._raw?.forwardedFrom?.conversationId;
+  const isForwarded = message.isForwarded;
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -132,6 +137,8 @@ export default function MessageBubble({
     setPreviewImageUrl(imageUrl);
     setShowImagePreview(true);
   };
+
+  console.log("message replty data", message.replyTo);
 
   if (message.deleted) {
     return (
@@ -192,16 +199,19 @@ export default function MessageBubble({
             <span className="text-[10px] text-muted-foreground">
               {message.time}
             </span>
-            {message.readBy && (
-              <Badge variant="outline" className="text-[9px] h-4 px-1.5">
-                Read by {message.readBy}
-              </Badge>
-            )}
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5">
+              Read by {message.readBy}
+            </Badge>
           </div>
         )}
 
         <AutoHeight className="w-full">
-          <div className={cn("flex gap-3 w-fit", isOwn ? "flex-row-reverse ml-auto" : "")}>
+          <div
+            className={cn(
+              "flex gap-3 w-fit",
+              isOwn ? "flex-row-reverse ml-auto" : "",
+            )}
+          >
             <div
               className={cn(
                 "relative p-1 transition-all break-words max-w-full w-fit",
@@ -251,25 +261,17 @@ export default function MessageBubble({
                   <div
                     onClick={() => onScrollToReply(message.replyTo.messageId)}
                     className={cn(
-                      "mb-1 pl-2 pr-4 py-1 rounded-md border-l-2 cursor-pointer transition-colors max-w-full",
+                      "mb-1 pl-3 pr-4 py-1 rounded-lg border-l-2 cursor-pointer transition-all duration-150 max-w-full hover:shadow-sm",
                       isOwn
-                        ? "bg-purple-200 border-primary-foreground dark:border-primary-foreground/50 hover:bg-muted/80"
+                        ? "bg-purple-200 dark:bg-muted text-foreground  border-primary-foreground dark:border-primary-foreground/50 hover:bg-muted/80"
                         : "bg-background/60 border-primary hover:bg-background/80",
                     )}
                   >
                     <div className="text-[10px] font-semibold text-primary mb-0.5 truncate">
                       {message.replyTo.sender || "Unknown"}
                     </div>
-                    <div
-                      className={cn(
-                        "text-[11px] truncate",
-                        isOwn
-                          ? "text-muted-foreground"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {message.replyTo.content || message.replyTo.preview || ""}
-                    </div>
+
+                    <ReplyPreviewContent reply={message.replyTo} />
                   </div>
                 )}
 
@@ -282,48 +284,70 @@ export default function MessageBubble({
                   )}
 
                 {/* Image rendering */}
-                {message.type === "image" && message.url && (
+                {message.type === "image" && message.files?.length > 0 && (
                   <div
-                    className="cursor-pointer"
-                    onClick={() => handleImageClick(getFileUrl(message.url))}
+                    className={`grid ${message.files?.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1 `}
                   >
-                    <img
-                      src={getFileUrl(message.url)}
-                      alt="Shared image"
-                      className="rounded-xl max-w-[300px] max-h-[300px] object-cover hover:opacity-90 transition-opacity border border-primary/10"
-                      onError={(e) => {
-                        e.target.src =
-                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23ccc' width='300' height='300'/%3E%3Ctext fill='%23666' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage failed to load%3C/text%3E%3C/svg%3E";
-                      }}
-                    />
+                    {message.files.map((file, index) => {
+                      const imageUrl = getFileUrl(file?.url);
+
+                      return (
+                        <div className="overflow-hidden aspect-4/3 h-[150px]">
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Shared image ${index + 1}`}
+                            onClick={() => handleImageClick(imageUrl)}
+                            className="cursor-pointer rounded-xl w-full h-full object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
+                )}
+                {message.caption && (
+                  <p className="mt-2 text-sm px-2">{message.caption}</p>
                 )}
 
                 {/* Video rendering */}
-                {message.type === "video" && message.url && (
-                  <video
-                    ref={videoRef}
-                    src={getFileUrl(message.url)}
-                    controls
-                    className="rounded-xl max-w-[300px] max-h-[300px]"
-                  >
-                    Your browser does not support the video tag.
-                  </video>
+                {message.type === "video" && message.files?.length > 0 && (
+                  <div className="space-y-2">
+                    {message.files.map((file, index) => {
+                      const videoUrl = getFileUrl(file.url);
+
+                      return (
+                        <video
+                          key={index}
+                          ref={videoRef}
+                          src={videoUrl}
+                          controls
+                          className="rounded-xl max-w-[300px] max-h-[300px]"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      );
+                    })}
+
+                    {message.caption && (
+                      <p className="text-sm mt-1">{message.caption}</p>
+                    )}
+                  </div>
                 )}
 
                 {/* Audio rendering */}
-                {message.type === "audio" && message.url && (
+                {message.type === "audio" && message.files?.length === 1 && (
                   <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-xl">
                     <button
                       onClick={() => {
-                        if (audioRef.current) {
-                          if (isPlaying) {
-                            audioRef.current.pause();
-                          } else {
-                            audioRef.current.play();
-                          }
-                          setIsPlaying(!isPlaying);
+                        if (!audioRef.current) return;
+
+                        if (isPlaying) {
+                          audioRef.current.pause();
+                        } else {
+                          audioRef.current.play();
                         }
+
+                        setIsPlaying(!isPlaying);
                       }}
                       className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
                     >
@@ -333,6 +357,7 @@ export default function MessageBubble({
                         <Play className="w-5 h-5 text-primary" />
                       )}
                     </button>
+
                     <div className="flex-1">
                       <div className="h-1 bg-muted rounded-full overflow-hidden">
                         <div
@@ -341,47 +366,61 @@ export default function MessageBubble({
                         />
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Audio message
+                        Voice message
                       </p>
                     </div>
+
                     <Volume2 className="w-4 h-4 text-muted-foreground" />
+
                     <audio
                       ref={audioRef}
-                      src={getFileUrl(message.url)}
-                      onEnded={() => setIsPlaying(false)}
+                      src={getFileUrl(message.files[0].url)}
+                      onEnded={() => {
+                        setIsPlaying(false);
+                        setPlayProgress(0);
+                      }}
                     />
                   </div>
                 )}
 
                 {/* Document/File rendering */}
                 {(message.type === "file" || message.type === "document") &&
-                  message.url && (
-                    <div className="flex items-center gap-3 min-w-[200px]">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {message.fileName || "Document"}
-                        </p>
-                        {message.fileSize && (
-                          <p className="text-xs text-muted-foreground">
-                            {message.fileSize}
-                          </p>
-                        )}
-                      </div>
-                      <a
-                        href={getFileUrl(message.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                        className="p-2 hover:bg-muted rounded-xl transition-colors"
-                        aria-label="Download file"
+                  message.files?.length > 0 &&
+                  message.files.map((file, index) => {
+                    const fileUrl = getFileUrl(file.url);
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 min-w-[200px]"
                       >
-                        <Download className="w-4 h-4" />
-                      </a>
-                    </div>
-                  )}
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-primary" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {file.name || "Document"}
+                          </p>
+                          {file.size && (
+                            <p className="text-xs text-muted-foreground">
+                              {(file.size / 1024).toFixed(2)} KB
+                            </p>
+                          )}
+                        </div>
+
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="p-2 hover:bg-muted rounded-xl"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </div>
+                    );
+                  })}
 
                 {isOwn && (
                   <div className="flex items-center justify-end gap-1 mt-1 pl-3">
@@ -407,7 +446,7 @@ export default function MessageBubble({
             </div>
             {message.state === "failed" && (
               <button
-                onClick={() => retryMessage( selectedChat.id,message)}
+                onClick={() => retryMessage(selectedChat.id, message)}
                 className="text-destructive hover:scale-110"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -450,20 +489,20 @@ export default function MessageBubble({
                 }}
               />
               <ActionButton
+                icon={Forward}
+                tooltip="Forward"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleForward();
+                }}
+              />
+              <ActionButton
                 icon={Star}
                 tooltip={isFavorited ? "Unstar" : "Star"}
                 className={isFavorited ? "text-yellow-500" : ""}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(message.id, isFavorited);
-                }}
-              />
-              <ActionButton
-                icon={Forward}
-                tooltip="Forward"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleForward();
                 }}
               />
               <ActionButton

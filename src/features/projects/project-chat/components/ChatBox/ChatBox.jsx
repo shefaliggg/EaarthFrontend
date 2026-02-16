@@ -11,9 +11,10 @@ import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import ReplyPreview from "./ReplyPreview";
+import ReplyPreview from "./ReplyPreviewContent";
 import EditBanner from "./EditBanner";
 import RecordingBar from "./RecordingBar";
+import ReplyToMessagePreview from "./ReplyToMessagePreview";
 
 function ChatBox() {
   const messagesEndRef = useRef(null);
@@ -27,6 +28,7 @@ function ChatBox() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [loadError, setLoadError] = useState(null);
+  const [attachments, setAttachments] = useState([]);
 
   const messagesByConversation = useChatStore(
     (state) => state.messagesByConversation,
@@ -77,7 +79,8 @@ function ChatBox() {
     setRecordingTime(0);
 
     // Scroll to bottom on chat change (with delay to ensure render)
-    setTimeout(() => scrollToBottom(false), 100);
+    setTimeout(() => scrollToBottom(false), 300);
+    scrollToBottom();
   }, [selectedChat?.id, loadMessages, markAsRead, scrollToBottom]);
 
   // ─────────────────────────────────────────
@@ -179,7 +182,7 @@ function ChatBox() {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-1.5 relative"
+        className="flex-1 overflow-y-auto px-4 py-2 space-y-1.5 relative"
       >
         {/* ERROR */}
         {loadError && (
@@ -251,7 +254,10 @@ function ChatBox() {
       {/* INPUT AREA */}
       <div className="border-t p-4 space-y-2.5 rounded-b-3xl flex-shrink-0 relative">
         {replyTo && (
-          <ReplyPreview replyTo={replyTo} onClose={() => setReplyTo(null)} />
+          <ReplyToMessagePreview
+            replyTo={replyTo}
+            onClose={() => setReplyTo(null)}
+          />
         )}
 
         {editingMessage && (
@@ -272,6 +278,35 @@ function ChatBox() {
           />
         )}
 
+        {attachments.length > 0 && (
+          <div className="flex gap-2 p-2 overflow-x-auto">
+            {attachments.map((att, index) => (
+              <div key={index} className="relative w-20 h-20">
+                {att.previewUrl ? (
+                  <img
+                    src={att.previewUrl}
+                    alt="preview"
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-xs rounded-lg">
+                    {att.file.name}
+                  </div>
+                )}
+
+                <button
+                  onClick={() =>
+                    setAttachments((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className="absolute -top-1 -right-1 bg-black/60 text-white text-xs px-1 rounded-3xl"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {!isRecording && (
           <MessageInput
             selectedChat={selectedChat}
@@ -280,8 +315,9 @@ function ChatBox() {
             onClearReply={() => setReplyTo(null)}
             onClearEdit={() => setEditingMessage(null)}
             onStartRecording={() => setIsRecording(true)}
-            isUserAtBottom={isUserAtBottom}
-            scrollToBottom={scrollToBottom}
+            messagesEndRef={messagesEndRef}
+            attachments={attachments}
+            setAttachments={setAttachments}
           />
         )}
       </div>
