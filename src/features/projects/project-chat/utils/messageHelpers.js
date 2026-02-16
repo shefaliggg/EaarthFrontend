@@ -60,7 +60,7 @@ export const groupMessagesByDate = (messages) => {
 
   messages.forEach((msg) => {
     const msgDate = new Date(msg.timestamp).toDateString();
-    
+
     if (msgDate !== currentDate) {
       currentDate = msgDate;
       grouped.push({
@@ -69,7 +69,7 @@ export const groupMessagesByDate = (messages) => {
         date: formatDateSeparator(msg.timestamp),
       });
     }
-    
+
     grouped.push(msg);
   });
 
@@ -92,8 +92,8 @@ export const formatDateSeparator = (timestamp) => {
     return "Yesterday";
   }
 
-  return date.toLocaleDateString("en-US", { 
-    month: "short", 
+  return date.toLocaleDateString("en-US", {
+    month: "short",
     day: "numeric",
     year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
   });
@@ -113,12 +113,12 @@ export const truncateText = (text, maxLength = 50) => {
  */
 export const getFileType = (mimeType) => {
   if (!mimeType) return "file";
-  
+
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType.startsWith("video/")) return "video";
   if (mimeType.startsWith("audio/")) return "audio";
   if (mimeType === "application/pdf") return "pdf";
-  
+
   return "file";
 };
 
@@ -127,14 +127,14 @@ export const getFileType = (mimeType) => {
  */
 export const formatFileSize = (bytes) => {
   if (!bytes) return "";
-  
+
   const kb = bytes / 1024;
   const mb = kb / 1024;
-  
+
   if (mb >= 1) {
     return `${mb.toFixed(2)} MB`;
   }
-  
+
   return `${kb.toFixed(2)} KB`;
 };
 
@@ -143,7 +143,7 @@ export const formatFileSize = (bytes) => {
  */
 export const highlightText = (text, query) => {
   if (!query || !text) return text;
-  
+
   const parts = text.split(new RegExp(`(${query})`, "gi"));
   return parts;
 };
@@ -160,10 +160,160 @@ export const isUserOnline = (userId, onlineUsers) => {
  */
 export const getUnreadCount = (conversation, currentUserId) => {
   if (!conversation.messages) return 0;
-  
+
   return conversation.messages.filter(
-    (msg) => 
-      msg.senderId !== currentUserId && 
-      !msg.seenBy?.includes(currentUserId)
+    (msg) =>
+      msg.senderId !== currentUserId && !msg.seenBy?.includes(currentUserId),
   ).length;
 };
+
+export function transformMessage(
+  msg,
+  { currentUserId, conversationMembersCount },
+) {
+  if (!msg) return null;
+
+  const senderId = msg.senderId?._id?.toString() || msg.senderId?.toString();
+  const currentUser = currentUserId?.toString();
+
+  const isOwn = senderId === currentUser;
+
+  const createdAt = msg.createdAt ? new Date(msg.createdAt) : new Date();
+
+  // =========================
+  // REPLY
+  // =========================
+  let replyTo = null;
+  if (msg.replyTo?.messageId) {
+     const original = msg.replyTo.messageId; // populated message document
+  const replySender = original.senderId;
+
+  replyTo = {
+    messageId: original._id.toString(),
+    senderId: replySender?._id?.toString() || replySender?.toString(),
+    sender: replySender?.displayName || "Unknown",
+    preview: original.content?.text || original.content?.caption || "", // for text or caption
+    type: original.type?.toLowerCase() || "text",
+    caption: original.content?.caption || "",
+    files: original.content?.files || [],
+    deleted: original.status?.deletedForEveryone || false,
+  };
+  }
+
+  // =========================
+  // FORWARDED
+  // =========================
+  let forwardedFrom = null;
+  if (msg.forwardedFrom?.conversationId) {
+    forwardedFrom = {
+      conversationId: msg.forwardedFrom.conversationId.toString(),
+      senderId:
+        msg.forwardedFrom.senderId?._id?.toString() ||
+        msg.forwardedFrom.senderId?.toString(),
+    };
+  }
+
+  // =========================
+  // REACTIONS NORMALIZED
+  // =========================
+  const reactions = (msg.reactions || []).reduce((acc, r) => {
+    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+    return acc;
+  }, {});
+
+  // =========================
+  // READ / DELIVERY
+  // =========================
+  const seenBy = Array.isArray(msg.seenBy) ? msg.seenBy : [];
+  const deliveredTo = Array.isArray(msg.deliveredTo) ? msg.deliveredTo : [];
+
+  const readByCount = isOwn
+    ? seenBy.filter((s) => s.userId?.toString() !== currentUser?.toString())
+        .length
+    : seenBy.length;
+
+  const deliveredCount = isOwn
+    ? deliveredTo.filter(
+        (d) => d.userId?.toString() !== currentUser?.toString(),
+      ).length
+    : deliveredTo.length;
+
+  // =========================
+  // SYSTEM MESSAGE
+  // =========================
+  const system = msg.type === "SYSTEM" ? msg.system : null;
+
+  return {
+    id: msg._id?.toString(),
+    clientTempId: msg.clientTempId || null,
+
+    conversationId: msg.conversationId?.toString(),
+    projectId: msg.projectId?.toString(),
+
+    sender: msg.senderId?.displayName || "System",
+    senderId,
+
+    avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "S",
+
+    time: createdAt.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+
+    timestamp: createdAt.getTime(),
+
+    content: msg.content?.text || "",
+    caption: msg.content?.caption || "",
+    type: msg.type?.toLowerCase() || "text",
+
+    files: msg.content?.files || [],
+
+    isOwn,
+
+    state: computeMessageState(msg, conversationMembersCount),
+
+    readBy: readByCount,
+    deliveredTo: deliveredCount,
+
+    edited: msg.status?.edited || false,
+    editedAt: msg.status?.editedAt || null,
+    deleted: msg.status?.deletedForEveryone || false,
+
+    reactions,
+    replyTo,
+    forwardedFrom,
+    isForwarded: !!forwardedFrom,
+    isStarred:
+      msg.starredBy?.some((id) => id.toString() === currentUser) || false,
+
+    system,
+
+    _raw: msg, // keep temporarily, but UI should stop using it
+  };
+}
+
+export function computeMessageState(message, memberCount) {
+  if (!message.senderId) return null;
+
+  const deliveredCount = message.deliveredTo?.length || 0;
+  const seenCount = message.seenBy?.length || 0;
+
+  if (seenCount >= memberCount - 1) return "seen";
+  if (deliveredCount >= 1) return "delivered";
+
+  return "sent";
+}
+
+export function buildReplyPayload(message) {
+  if (!message) return null;
+
+  return {
+    messageId: message.id,
+    senderId: message.senderId,
+    preview:
+      message.content ||
+      message.caption ||
+      (message.files?.length ? "Attachment" : ""),
+    type: message.type?.toUpperCase() || "TEXT",
+  };
+}

@@ -1,10 +1,7 @@
-// src/features/chat/components/ChatBox/ReplyPreview.jsx
-// ✅ EXACT UI: Reply preview matching original design
-
 import React from "react";
 import { Reply, X } from "lucide-react";
 
-export default function ReplyPreview({ replyTo, onClose }) {
+export default function ReplyToMessagePreview({ replyTo, onClose }) {
   return (
     <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-xl border-l-4 border-primary">
       <Reply className="w-4 h-4 text-primary flex-shrink-0" />

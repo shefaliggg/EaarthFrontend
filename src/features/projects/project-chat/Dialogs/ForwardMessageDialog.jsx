@@ -14,6 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import chatApi from "../api/chat.api";
 import useChatStore from "../store/chat.store";
+import { toast } from "sonner";
 
 export default function ForwardMessageDialog({
   open,
@@ -22,37 +23,42 @@ export default function ForwardMessageDialog({
   selectedChatId,
 }) {
   const [selectedConversations, setSelectedConversations] = useState([]);
-  const { conversations } = useChatStore();
+  const { conversations, sendMessage } = useChatStore();
 
   const handleForwardMessage = async () => {
     if (selectedConversations.length === 0) {
-      alert("Please select at least one conversation");
+      toast.warning("Please select at least one conversation");
       return;
     }
 
+    console.log("message files is there", message.files);
+
     try {
-      const senderId = message._raw?.senderId?._id || message._raw?.senderId;
+      const originalSenderId = message.senderId;
 
       for (const convId of selectedConversations) {
         const messageData = {
-          projectId: message._raw?.projectId || "697c899668977a7ca2b27462",
-          text: message.content || "",
-          type: (message.type || "TEXT").toUpperCase(),
+          type: message.type.toUpperCase(),
+          text: message.type === "text" ? message.content : undefined,
+          caption: message.type !== "text" ? message.caption : undefined,
+          files: message.files || [],
           forwardedFrom: {
-            conversationId: selectedChatId,
-            senderId: senderId,
+            conversationId: message.conversationId,
+            senderId: originalSenderId,
           },
         };
 
-        await chatApi.sendMessage(convId, messageData);
+        await sendMessage(convId,message.projectId, messageData);
       }
 
       onOpenChange(false);
       setSelectedConversations([]);
-      alert(`Message forwarded to ${selectedConversations.length} conversation(s)!`);
+      toast.success(
+        `Message forwarded to ${selectedConversations.length} conversation(s)!`,
+      );
     } catch (error) {
       console.error("Failed to forward message:", error);
-      alert(`Failed to forward message: ${error.message}`);
+      toast.error("Failed to forward message");
     }
   };
 
@@ -79,14 +85,14 @@ export default function ForwardMessageDialog({
                     setSelectedConversations((prev) =>
                       isSelected
                         ? prev.filter((id) => id !== conv.id)
-                        : [...prev, conv.id]
+                        : [...prev, conv.id],
                     );
                   }}
                   className={cn(
                     "w-full p-3 rounded-lg border text-left transition-all",
                     isSelected
                       ? "bg-primary/10 border-primary"
-                      : "hover:bg-muted border-transparent"
+                      : "hover:bg-muted border-transparent",
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -95,7 +101,7 @@ export default function ForwardMessageDialog({
                         "w-4 h-4 rounded border-2 flex items-center justify-center",
                         isSelected
                           ? "bg-primary border-primary"
-                          : "border-muted-foreground"
+                          : "border-muted-foreground",
                       )}
                     >
                       {isSelected && (

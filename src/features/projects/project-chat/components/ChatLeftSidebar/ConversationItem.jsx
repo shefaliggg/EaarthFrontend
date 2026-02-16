@@ -43,7 +43,7 @@ export default function ConversationItem({
   const Icon = item.icon || DEPARTMENT_ICONS[item.departmentName] || Briefcase;
   const isGroup = type === "group" || type === "all";
   
-  console.log("NAME TYPE:", item.name, typeof item.name);
+  // console.log("NAME TYPE:", item.name, typeof item.name);
 
   return (
     <button
