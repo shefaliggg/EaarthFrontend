@@ -14,7 +14,7 @@ const ContractRoutes = {
       element: <ContractList /> 
     },
     { 
-      path: 'new', 
+      path: 'list', 
       element: <ContractForm />
     },
     { 
