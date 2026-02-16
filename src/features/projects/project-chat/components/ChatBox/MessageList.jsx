@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import MessageBubble from "./Messagebubble";
+import TypingIndicator from "./TypingIndicator";
+import useChatStore from "../../store/chat.store";
 
 export default function MessageList({
-  selectedChat,
   messages,
   messagesData,
   isLoadingMessages,
-  messagesEndRef,
   onReply,
   onEdit,
   onReaction,
@@ -17,6 +17,7 @@ export default function MessageList({
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [searchQuery] = useState("");
+  const { selectedChat, typingUsers } = useChatStore();
 
   const scrollToMessage = (messageId) => {
     const element = document.getElementById(`message-${messageId}`);
@@ -46,31 +47,18 @@ export default function MessageList({
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoadingMessages && messages.length === 0 && (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-2">
-            <div className="text-4xl">💬</div>
-            <p className="text-sm text-muted-foreground">No messages yet</p>
-            <p className="text-xs text-muted-foreground">
-              Start the conversation!
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Messages */}
       {messages.map((msg, index) => {
         const prevMsg = messages[index - 1];
         const nextMsg = messages[index + 1];
         const isGroupStart =
           !prevMsg ||
-          prevMsg.sender !== msg.sender ||
+          prevMsg.senderId !== msg.senderId ||
           prevMsg.type === "date-separator" ||
           prevMsg.type === "system";
         const isGroupEnd =
           !nextMsg ||
-          nextMsg.sender !== msg.sender ||
+          nextMsg.senderId !== msg.senderId ||
           nextMsg.type === "date-separator" ||
           nextMsg.type === "system";
 
@@ -132,7 +120,8 @@ export default function MessageList({
         );
       })}
 
-      <div ref={messagesEndRef} />
+      {/* Typing Indicator */}
+      <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
     </>
   );
 }

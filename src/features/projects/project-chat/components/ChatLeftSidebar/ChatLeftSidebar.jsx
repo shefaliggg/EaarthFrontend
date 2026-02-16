@@ -2,7 +2,7 @@
 // ✅ FIXED: Proper conversation filtering
 
 import React, { useState } from "react";
-import { Hash, Users, Mail, Search, X } from "lucide-react";
+import { Hash, Users, Mail, Search, X, MessageCirclePlus } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Input } from "@/shared/components/ui/input";
 import useChatStore from "../../store/chat.store";
@@ -10,6 +10,8 @@ import ConversationItem from "../ChatLeftSidebar/ConversationItem";
 import ContextMenu from "../ChatLeftSidebar/ContextMenu";
 import SkeletonItem from "../ChatLeftSidebar/SkeletonItem";
 import { toast } from "sonner";
+import FilterPillTabs from "../../../../../shared/components/FilterPillTabs";
+import { Button } from "../../../../../shared/components/ui/button";
 
 export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,18 +98,12 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
           >
             <Hash className="w-4 h-4" />
             <div className="flex-1">
-              <p className="text-sm font-bold">Department Chat</p>
-              <p className="text-xs opacity-80">All project members</p>
+              <p className="text-sm font-bold">Chat</p>
+              <p className="text-xs opacity-80">department and direct chats</p>
             </div>
-            {/* ✅ Show count badge */}
-            {departments.length > 0 && (
-              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
-                {departments.length}
-              </span>
-            )}
           </button>
 
-          <button
+          {/* <button
             className={cn(
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
               activeTab === "personal"
@@ -121,13 +117,13 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               <p className="text-sm font-bold">Individual Chat</p>
               <p className="text-xs opacity-80">Personal chat with members</p>
             </div>
-            {/* ✅ Show count badge */}
+
             {teamMembers.length > 0 && (
               <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
                 {teamMembers.length}
               </span>
             )}
-          </button>
+          </button> */}
 
           <button
             className={cn(
@@ -146,22 +142,19 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
       </div>
 
       {/* Conversations List */}
-      <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[818px] sticky top-5">
+      <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[640px] sticky top-5">
         {/* Header */}
         <div className="border-b bg-card px-4 py-2.5 pt-3 mb-1">
-          <div className="flex items-center justify-between mb-3 px-1.5">
+          <div className="flex items-center justify-between mb-3 pl-1.5">
             <h2 className="text-lg font-bold">
-              {activeTab === "all"
-                ? "All Departments"
-                : activeTab === "personal"
-                  ? "Direct Messages"
-                  : "Email"}
+              {activeTab === "Email" ? "Email" : "Chat Conversations"}
             </h2>
             {/* ✅ Show count */}
-            <span className="text-xs text-muted-foreground">
-              {activeTab === "all" ? departments.length : teamMembers.length}{" "}
-              chats
-            </span>
+            <Button variant="ghost" size={"icon"}>
+              {activeTab !== "departments" && (
+                <MessageCirclePlus className="text-primary" />
+              )}
+            </Button>
           </div>
 
           {/* Search Bar */}
@@ -182,6 +175,28 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               </button>
             )}
           </div>
+          <FilterPillTabs
+            options={[
+              {
+                label: "All",
+                value: "all",
+                badge: departments.length + teamMembers.length,
+              },
+              {
+                label: "Departments",
+                value: "departments",
+                badge: departments.length,
+              },
+              {
+                label: "Personal",
+                value: "personal",
+                badge: teamMembers.length,
+              },
+            ]}
+            value={activeTab}
+            onChange={onTabChange}
+            size="sm"
+          />
         </div>
 
         {/* Scrollable Content */}
@@ -194,8 +209,18 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
             </div>
           ) : (
             <div className="p-1 px-2 space-y-0.5">
-              {activeTab === "all" && (
+              {activeTab !== "personal" && (
                 <>
+                  {activeTab === "all" && (
+                    <div className="px-2 py-0.5 rounded-full grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <div className="h-0.5 w-full bg-muted rounded-3xl" />
+                      <div className="text-center text-[9px] text-muted-foreground">
+                        Department chats
+                      </div>
+                      <div className="h-0.5 w-full bg-muted rounded-3xl" />
+                    </div>
+                  )}
+
                   {departments.map((dept) => (
                     <ConversationItem
                       key={dept.id}
@@ -225,8 +250,17 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                 </>
               )}
 
-              {activeTab === "personal" && (
+              {activeTab !== "departments" && (
                 <>
+                  {activeTab === "all" && (
+                    <div className="px-2 py-0.5 rounded-full grid grid-cols-[1fr_auto_1fr] items-center gap-2 mt-1">
+                      <div className="h-0.5 w-full bg-muted rounded-3xl" />
+                      <div className="text-center text-[9px] text-muted-foreground">
+                        Personal chats
+                      </div>
+                      <div className="h-0.5 w-full bg-muted rounded-3xl" />
+                    </div>
+                  )}
                   {teamMembers.map((member) => (
                     <ConversationItem
                       key={member.id}
@@ -245,7 +279,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                       <p className="text-xs text-muted-foreground">
                         {searchQuery
                           ? `No members found for "${searchQuery}"`
-                          : "No direct messages yet"}
+                          : "No Personal messages yet"}
                       </p>
                     </div>
                   )}
