@@ -17,6 +17,29 @@ const CONTRACT_TEMPLATES = [
     category: "Transport",
     description: "Unit Driver individual services agreement"
   },
+  { 
+    id: 3, 
+    name: "Transport - Self Employed", 
+    file: "/contracts/transport-self-employed.pdf",
+    category: "Transport",
+    description: "Unit Driver individual services agreement"
+  },
+  { 
+    id: 4, 
+    name: "Daily Transport - Paye", 
+    file: "/contracts/daily-transport-paye.pdf",
+    category: "Transport",
+    description: "Daily transport paye agreement"
+
+  },
+  { 
+    id: 5, 
+    name: "Paye", 
+    file: "/contracts/paye.pdf",
+    category: "Transport",
+    description: "Daily transport paye agreement"
+
+  },
   
 ];
 
