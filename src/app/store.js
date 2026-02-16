@@ -7,5 +7,8 @@ export const store = configureStore({
     user: userReducer,
     project: projectReducer,
     calendar: calendarReducer,
+    contracts: (state = {}, action) => {
+      return state;
+    },
   },
 });
