@@ -21,6 +21,7 @@ import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
 import StudioAnalytics from '../components/StudioAnalytics';
 import MyOffer from '../../crew/pages/Myoffer';
+import ProjectConstruction from '../pages/ProjectSettings/ProjectConstruction';
 import ProjectRoles from '../pages/ProjectSettings/ProjectRoles';
 import ProjectNotifications from '../pages/ProjectSettings/ProjectNotifications';
 import SignersRecipients from '../pages/ProjectSettings/SignersRecipients';
@@ -65,7 +66,7 @@ const ProjectRoutes = {
         { index: true, element: <ProjectSettings /> },
         { path: 'detail', element: <ProjectDetails /> }, // 🔧 FIXED: was 'details', now 'detail'
         { path: 'general', element: <ProjectSettings /> }, // 🆕 ADD THIS
-        // { path: 'construction', element: <ProjectConstruction /> },
+        { path: 'construction', element: <ProjectConstruction /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
         { path: 'roles', element: <ProjectRoles /> },

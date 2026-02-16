@@ -165,7 +165,7 @@ export function useProjectMenus(allProjects = []) {
   };
 
   const projectDropdownList = isProjectSubRoute
-    ? [allProjectsDropdown, ProjectApplicationMenu]
+    ? [allProjectsDropdown, ProjectApplicationMenu, projectSettings]
     : [allProjectsDropdown];
 
   return projectDropdownList;
