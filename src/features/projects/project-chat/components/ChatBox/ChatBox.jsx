@@ -11,21 +11,16 @@ import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import TypingIndicator from "./TypingIndicator";
 import ReplyPreview from "./ReplyPreview";
 import EditBanner from "./EditBanner";
 import RecordingBar from "./RecordingBar";
 
 function ChatBox() {
-  const hasInitiallyScrolledRef = useRef(false);
-  const prevMessageCountRef = useRef(0);
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const prevMessageCountRef = useRef(0);
 
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
-  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const [newMessageCount, setNewMessagesCount] = useState(0);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
   const [replyTo, setReplyTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
@@ -50,17 +45,13 @@ function ChatBox() {
 
   const messages = messagesData.messages || [];
 
+  // Scroll to bottom function
   const scrollToBottom = useCallback((smooth = true) => {
     messagesEndRef.current?.scrollIntoView({
       behavior: smooth ? "smooth" : "auto",
     });
     setIsUserAtBottom(true);
-    setNewMessagesCount(0);
-  }, []);
-
-  // Initial scroll to bottom
-  useEffect(() => {
-    scrollToBottom(false);
+    setUnreadNewMessages(0);
   }, []);
 
   // ─────────────────────────────────────────
@@ -69,10 +60,8 @@ function ChatBox() {
   useEffect(() => {
     if (!selectedChat?.id) return;
 
-    hasInitiallyScrolledRef.current = false;
     prevMessageCountRef.current = 0;
     setLoadError(null);
-    setShowNewMessageButton(false);
     setUnreadNewMessages(0);
     setIsUserAtBottom(true);
 
@@ -86,24 +75,70 @@ function ChatBox() {
     setEditingMessage(null);
     setIsRecording(false);
     setRecordingTime(0);
-  }, [selectedChat?.id, loadMessages, markAsRead]);
 
+    // Scroll to bottom on chat change (with delay to ensure render)
+    setTimeout(() => scrollToBottom(false), 100);
+  }, [selectedChat?.id, loadMessages, markAsRead, scrollToBottom]);
+
+  // ─────────────────────────────────────────
+  // AUTO-SCROLL ON NEW MESSAGES (WhatsApp behavior)
+  // ─────────────────────────────────────────
+  useLayoutEffect(() => {
+    const currentCount = messages.length;
+    const prevCount = prevMessageCountRef.current;
+
+    // Only handle if messages increased
+    if (currentCount > prevCount) {
+      const newMessagesCount = currentCount - prevCount;
+
+      if (isUserAtBottom) {
+        // User is at bottom - auto scroll to new messages
+        setTimeout(() => scrollToBottom(true), 50);
+        markAsRead(selectedChat?.id).catch(() => {});
+      } else {
+        // User scrolled up - show notification
+        setUnreadNewMessages((prev) => prev + newMessagesCount);
+      }
+    }
+
+    prevMessageCountRef.current = currentCount;
+  }, [
+    messages.length,
+    isUserAtBottom,
+    scrollToBottom,
+    selectedChat?.id,
+    markAsRead,
+  ]);
+
+  // ─────────────────────────────────────────
+  // HANDLE SCROLL EVENTS
+  // ─────────────────────────────────────────
   const handleScroll = useCallback(
     (e) => {
       const { scrollTop, scrollHeight, clientHeight } = e.target;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+
       setIsUserAtBottom(isNearBottom);
 
-      if (isNearBottom) {
-        setNewMessagesCount(0);
+      // Clear unread when scrolling to bottom
+      if (isNearBottom && unreadNewMessages > 0) {
+        setUnreadNewMessages(0);
+        markAsRead(selectedChat?.id).catch(() => {});
       }
 
+      // Load more messages when scrolling to top
       if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
         loadMessages(selectedChat.id, true);
       }
     },
-    [messagesData.hasMore, isLoadingMessages, selectedChat, loadMessages],
+    [
+      messagesData.hasMore,
+      isLoadingMessages,
+      selectedChat?.id,
+      loadMessages,
+      unreadNewMessages,
+      markAsRead,
+    ],
   );
 
   // ─────────────────────────────────────────
@@ -111,9 +146,9 @@ function ChatBox() {
   // ─────────────────────────────────────────
   const handleScrollToNewMessages = useCallback(() => {
     scrollToBottom(true);
-    setShowNewMessageButton(false);
     setUnreadNewMessages(0);
-  }, [scrollToBottom]);
+    markAsRead(selectedChat?.id).catch(() => {});
+  }, [scrollToBottom, selectedChat?.id, markAsRead]);
 
   // ─────────────────────────────────────────
   // EMPTY CHAT STATE
@@ -158,7 +193,7 @@ function ChatBox() {
         )}
 
         {/* LOADING */}
-        {!loadError && isLoadingMessages && (
+        {!loadError && isLoadingMessages && messages.length === 0 && (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex gap-2 animate-pulse">
@@ -175,7 +210,6 @@ function ChatBox() {
         {/* MESSAGES */}
         {!loadError && messages.length > 0 && (
           <MessageList
-            // selectedChat={selectedChat}
             messages={messages}
             messagesData={messagesData}
             isLoadingMessages={isLoadingMessages}
@@ -193,40 +227,29 @@ function ChatBox() {
             </div>
           </div>
         )}
-        {/* NEW MESSAGES BUTTON (WhatsApp style) */}
-        {showNewMessageButton && (
-          <button
-            onClick={handleScrollToNewMessages}
-            className="fixed bottom-32 right-8 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-10 animate-in slide-in-from-bottom-4 hover:scale-105 active:scale-95"
-            aria-label={`Scroll to ${unreadNewMessages} new message${unreadNewMessages > 1 ? "s" : ""}`}
-          >
-            <ChevronDown className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {unreadNewMessages > 0 && `${unreadNewMessages} `}
-              New Message{unreadNewMessages > 1 ? "s" : ""}
-            </span>
-          </button>
-        )}
 
+        {/* Scroll anchor */}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* INPUT AREA */}
-      <div className="border-t p-4 space-y-2.5 rounded-b-3xl flex-shrink-0 relative">
-        {/* NEW MESSAGES BUTTON (WhatsApp style) */}
-        {showNewMessageButton && (
+      {/* NEW MESSAGES BUTTON (WhatsApp style) */}
+      {unreadNewMessages > 0 && !isUserAtBottom && (
+        <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-10">
           <button
             onClick={handleScrollToNewMessages}
-            className="absolute bottom-30 right-[42%] opacity-50 bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-10 animate-in slide-in-from-bottom-4 hover:scale-105 active:scale-95"
+            className="bg-primary text-primary-foreground rounded-full px-4 py-2.5 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 animate-in slide-in-from-bottom-4 hover:scale-105 active:scale-95"
             aria-label={`Scroll to ${unreadNewMessages} new message${unreadNewMessages > 1 ? "s" : ""}`}
           >
             <ChevronDown className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {unreadNewMessages > 0 && `${unreadNewMessages} `}
-              New Message{unreadNewMessages > 1 ? "s" : ""}
+              {unreadNewMessages} New Message{unreadNewMessages > 1 ? "s" : ""}
             </span>
           </button>
-        )}
+        </div>
+      )}
+
+      {/* INPUT AREA */}
+      <div className="border-t p-4 space-y-2.5 rounded-b-3xl flex-shrink-0 relative">
         {replyTo && (
           <ReplyPreview replyTo={replyTo} onClose={() => setReplyTo(null)} />
         )}

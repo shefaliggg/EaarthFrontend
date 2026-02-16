@@ -1,6 +1,3 @@
-// src/features/chat/components/ChatBox/MessageBubble.jsx
-// ✅ EXACT UI: Message bubble matching original design with hover actions
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Reply,

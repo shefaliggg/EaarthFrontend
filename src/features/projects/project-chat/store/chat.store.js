@@ -42,6 +42,7 @@ function transformMessage(msg, currentUserId) {
     id: msg._id,
     clientTempId: msg.clientTempId || null,
     sender: msg.senderId?.displayName || "Unknown",
+    senderId: msg.senderId?._id || null,
     avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "U",
     time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -414,6 +415,7 @@ const useChatStore = create(
           id: clientTempId,
           clientTempId,
           sender: "You",
+          senderId: currentUserId,
           avatar: "Y",
           time: new Date().toLocaleTimeString("en-US", {
             hour: "numeric",
