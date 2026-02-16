@@ -65,7 +65,7 @@ const ProjectRoutes = {
         { index: true, element: <ProjectSettings /> },
         { path: 'detail', element: <ProjectDetails /> }, // 🔧 FIXED: was 'details', now 'detail'
         { path: 'general', element: <ProjectSettings /> }, // 🆕 ADD THIS
-        { path: 'construction', element: <ProjectConstruction /> },
+        // { path: 'construction', element: <ProjectConstruction /> },
         { path: 'onboarding', element: <ProjectOnboarding /> },
         { path: 'timesheet', element: <ProjectTimesheet /> },
         { path: 'roles', element: <ProjectRoles /> },
