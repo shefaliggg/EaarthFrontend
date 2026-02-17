@@ -29,6 +29,7 @@ import ForwardMessageDialog from "../../Dialogs/ForwardMessageDialog";
 import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
+import { toast } from "sonner";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -121,7 +122,7 @@ export default function MessageBubble({
   const handleCopy = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
-      alert("Message copied to clipboard!");
+      toast.success("Message copied to clipboard!");
     }
   };
 
@@ -169,7 +170,7 @@ export default function MessageBubble({
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1",
+        isGroupStart ? "mt-4" : "mt-0",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}

@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 import MessageBubble from "./Messagebubble";
 import TypingIndicator from "./TypingIndicator";
 import useChatStore from "../../store/chat.store";
+import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 
 export default function MessageList({
   messages,
@@ -42,9 +43,7 @@ export default function MessageList({
     <>
       {/* Loading indicator at top */}
       {isLoadingMessages && messagesData.hasMore && (
-        <div className="flex justify-center py-2">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-        </div>
+        <ChatLoaderSkeleton count={2} />
       )}
 
       {/* Messages */}
