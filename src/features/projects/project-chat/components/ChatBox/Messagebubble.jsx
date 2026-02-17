@@ -19,6 +19,7 @@ import {
   CornerDownRight,
   AlertCircle,
   RotateCcw,
+  Image,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -220,9 +221,9 @@ export default function MessageBubble({
                 isOwn
                   ? "bg-primary dark:bg-primary/40 text-background"
                   : "bg-muted",
-                isOwn && "rounded-2xl rounded-tr-none",
+                isOwn && "rounded-md rounded-tr-none",
                 // isOwn && isGroupEnd && "",
-                !isOwn && "rounded-2xl rounded-tl-none",
+                !isOwn && "rounded-md rounded-tl-none",
                 // !isOwn && isGroupStart && "rounded-2xl ",
                 isSelected && "ring-2 ring-primary/50 scale-[1.02]",
               )}
@@ -232,7 +233,7 @@ export default function MessageBubble({
                 {isForwarded && (
                   <div
                     className={cn(
-                      "flex items-center gap-1.5 pb-1 pr-2",
+                      "flex items-center gap-1 pb-0.5 pr-2 pl-1 min-w-20",
                       isOwn ? "border-primary-foreground/20" : "border-border",
                     )}
                   >
@@ -287,25 +288,37 @@ export default function MessageBubble({
                 {/* Image rendering */}
                 {message.type === "image" && message.files?.length > 0 && (
                   <div
-                    className={`grid ${message.files?.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1 `}
+                    className={`grid ${message.files.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1`}
                   >
                     {message.files.map((file, index) => {
                       const imageUrl = getFileUrl(file?.url);
+                      const [loaded, setLoaded] = React.useState(false);
 
                       return (
-                        <div className="overflow-hidden aspect-4/3 h-[150px]">
+                        <div
+                          key={index}
+                          className={`overflow-hidden w-[240px] bg-purple-100 dark:bg-purple-900 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+                        >
+                          {!loaded && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
+                              <Image className="w-6 h-6 text-primary" />
+                            </div>
+                          )}
                           <img
-                            key={index}
                             src={imageUrl}
                             alt={`Shared image ${index + 1}`}
                             onClick={() => handleImageClick(imageUrl)}
-                            className="cursor-pointer rounded-xl w-full h-full object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                            onLoad={() => setLoaded(true)}
+                            className={`cursor-pointer rounded-sm w-full h-auto object-cover transition-opacity ${
+                              loaded ? "opacity-100" : "opacity-0"
+                            }`}
                           />
                         </div>
                       );
                     })}
                   </div>
                 )}
+
                 {message.caption && (
                   <p className="mt-2 text-sm px-2">{message.caption}</p>
                 )}
@@ -424,7 +437,7 @@ export default function MessageBubble({
                   })}
 
                 {isOwn && (
-                  <div className="flex items-center justify-end gap-1 mt-1 pl-3">
+                  <div className="flex items-center justify-end gap-1 mt-0 pl-3">
                     {message.edited && (
                       <span
                         className={cn(
