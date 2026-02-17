@@ -134,14 +134,10 @@ export default function ContractForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8">
       <div className="max-w-5xl mx-auto px-6">
         {/* Divider */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="flex-1 h-px bg-gray-300"></div>
-          <span className="text-gray-500 font-medium text-sm">OR</span>
-          <div className="flex-1 h-px bg-gray-300"></div>
-        </div>
+        
 
         {/* Section Title */}
         <div className="mb-6">
