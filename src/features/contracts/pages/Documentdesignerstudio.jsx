@@ -1,1057 +1,584 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Upload, 
-  FileText, 
-  Download, 
-  Palette,
-  Type,
-  Save,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  ArrowLeft,
-  Maximize2,
-  Minimize2,
-  AlertTriangle
+import {
+  Download, Palette, Type, Save,
+  ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
+  ArrowLeft, Maximize2, Minimize2, AlertTriangle, FileText
 } from 'lucide-react';
 
-// ✅ FIXED: PDF.js initialization for Vite (NO CDN worker)
+// ─── PDF.js init ───────────────────────────────────────────────────────────────
 let pdfjsLib = null;
-
 const initPdfJs = async () => {
   if (!pdfjsLib) {
-    try {
-      console.log('🔄 Initializing PDF.js...');
-      
-      // Import PDF.js library
-      const pdfjs = await import('pdfjs-dist');
-      
-      // ✅ CRITICAL FIX: Import local worker (NOT CDN)
-      // This works with Vite's bundler
-      const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-      
-      // Set worker source to local bundled file
-      pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-
-      pdfjsLib = pdfjs;
-
-      console.log('✅ PDF.js initialized successfully');
-      console.log('📦 Version:', pdfjs.version);
-      console.log('🔧 Worker:', worker.default);
-      
-      return pdfjsLib;
-    } catch (error) {
-      console.error('❌ PDF.js initialization failed:', error);
-      throw new Error('Failed to load PDF.js. Please refresh the page.');
-    }
+    const pdfjs  = await import('pdfjs-dist');
+    const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
+    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+    pdfjsLib = pdfjs;
   }
   return pdfjsLib;
 };
 
+// ─── Design themes ─────────────────────────────────────────────────────────────
 const DESIGN_TEMPLATES = [
-  {
-    id: 'ocean-blue',
-    name: 'Ocean Blue',
-    description: 'Professional blue theme',
-    colors: { primary: '#3B82F6', secondary: '#60A5FA', bg: '#EFF6FF' },
-    icon: '🌊'
-  },
-  {
-    id: 'emerald-luxury',
-    name: 'Emerald Luxury',
-    description: 'Elegant green & gold',
-    colors: { primary: '#059669', secondary: '#F59E0B', bg: '#ECFDF5' },
-    icon: '💎'
-  },
-  {
-    id: 'royal-purple',
-    name: 'Royal Purple',
-    description: 'Modern purple gradient',
-    colors: { primary: '#9333EA', secondary: '#C084FC', bg: '#FAF5FF' },
-    icon: '👑'
-  },
-  {
-    id: 'sunset-orange',
-    name: 'Sunset Orange',
-    description: 'Warm & energetic',
-    colors: { primary: '#F97316', secondary: '#FB923C', bg: '#FFF7ED' },
-    icon: '🌅'
-  },
-  {
-    id: 'midnight-dark',
-    name: 'Midnight Dark',
-    description: 'Bold dark theme',
-    colors: { primary: '#1F2937', secondary: '#374151', bg: '#F9FAFB' },
-    icon: '🌙'
-  }
+  { id: 'ocean-blue',     name: 'Ocean Blue',    colors: { primary: '#3B82F6', secondary: '#60A5FA', bg: '#EFF6FF' }, icon: '🌊' },
+  { id: 'emerald-luxury', name: 'Emerald',        colors: { primary: '#059669', secondary: '#F59E0B', bg: '#ECFDF5' }, icon: '💎' },
+  { id: 'royal-purple',   name: 'Royal Purple',   colors: { primary: '#9333EA', secondary: '#C084FC', bg: '#FAF5FF' }, icon: '👑' },
+  { id: 'sunset-orange',  name: 'Sunset Orange',  colors: { primary: '#F97316', secondary: '#FB923C', bg: '#FFF7ED' }, icon: '🌅' },
+  { id: 'midnight-dark',  name: 'Midnight Dark',  colors: { primary: '#1F2937', secondary: '#374151', bg: '#F9FAFB' }, icon: '🌙' },
 ];
 
+const guessType = (name = '') => {
+  const n = name.toLowerCase();
+  if (n.includes('date') || n.includes('dob'))                                   return 'date';
+  if (n.includes('email'))                                                         return 'email';
+  if (n.includes('phone') || n.includes('tel') || n.includes('mobile'))           return 'tel';
+  if (n.includes('address') || n.includes('street'))                              return 'textarea';
+  if (n.includes('rate') || n.includes('fee') || n.includes('salary') ||
+      n.includes('wage') || n.includes('amount') || n.includes('pay'))            return 'number';
+  return 'text';
+};
+
+// ─── Main ──────────────────────────────────────────────────────────────────────
 export default function DocumentDesignerStudio() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [uploadedFile, setUploadedFile] = useState(location.state?.file || null);
-  const [pdfData, setPdfData] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTemplate, setSelectedTemplate] = useState('ocean-blue');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [zoom, setZoom] = useState(100);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [processingStatus, setProcessingStatus] = useState('');
-  const [error, setError] = useState(null);
-  
-  // Styling options
+
+  const [fileObj,        setFileObj]        = useState(null);
+  const [pdfDocLib,      setPdfDocLib]      = useState(null);
+  const [pdfForm,        setPdfForm]        = useState(null);
+  const [fields,         setFields]         = useState([]);      // { id, label, type, rect, page, value }
+  const [formData,       setFormData]       = useState({});
+  const [isFillable,     setIsFillable]     = useState(false);
+  const [currentPage,    setCurrentPage]    = useState(1);
+  const [totalPages,     setTotalPages]     = useState(1);
+  const [canvasSize,     setCanvasSize]     = useState({ w: 0, h: 0 });
+  const [zoom,           setZoom]           = useState(100);
+  const [selectedTheme,  setSelectedTheme]  = useState('ocean-blue');
+  const [isProcessing,   setIsProcessing]   = useState(false);
+  const [processingMsg,  setProcessingMsg]  = useState('');
+  const [error,          setError]          = useState(null);
   const [stylingOptions, setStylingOptions] = useState({
-    fontSize: 14,
-    fieldHeight: 40,
-    fieldPadding: 12,
-    sectionSpacing: 24,
-    showFieldBorders: true,
-    borderRadius: 6,
-    labelFontSize: 13,
-    inputFontSize: 14
+    fieldHeight: 28, fieldPadding: 6, borderRadius: 4,
+    labelFontSize: 11, inputFontSize: 12,
+    showFieldBorders: true, showLabels: false,
   });
 
-  const formContainerRef = useRef(null);
+  const canvasRef      = useRef(null);
+  const pdfJsDocRef    = useRef(null);
+  const containerRef   = useRef(null);
+  const renderTaskRef  = useRef(null);   // cancel previous render on page change
+  const SCALE          = zoom / 100 * 1.5;   // render scale
 
-  // Process file if it was passed from navigation
+  // ── Source detection ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (uploadedFile) {
-      console.log('📄 File received:', uploadedFile.name, uploadedFile.size, 'bytes');
-      handleFileProcess(uploadedFile);
+    const stateFile = location.state?.file;
+    if (stateFile) { setFileObj(stateFile); return; }
+
+    const saved = localStorage.getItem('selectedContractPdf');
+    const name  = localStorage.getItem('selectedContractName');
+    if (saved) {
+      fetch(saved).then(r => r.blob()).then(blob =>
+        setFileObj(new File([blob], name || 'contract.pdf', { type: 'application/pdf' }))
+      ).catch(() => setError('Could not restore PDF from cache.'));
     } else {
-      console.warn('⚠️ No file received in state');
+      setError('No PDF file provided. Go back and select a contract.');
     }
-  }, [uploadedFile]);
+  }, []);
 
-  // Safety check - if page data doesn't exist, reset to page 1
-  useEffect(() => {
-    if (pdfData && pdfData.pages) {
-      const currentPageData = pdfData.pages[currentPage - 1];
-      if (!currentPageData || !currentPageData.sections) {
-        setCurrentPage(1);
-      }
-    }
-  }, [currentPage, pdfData]);
+  useEffect(() => { if (fileObj) loadFile(fileObj); }, [fileObj]);
 
-  const handleFileProcess = async (file) => {
+  // ── Load PDF ─────────────────────────────────────────────────────────────────
+  const loadFile = async (file) => {
     setIsProcessing(true);
-    setProcessingStatus('Initializing PDF parser...');
-    setError(null);
-    
+    setProcessingMsg('Reading PDF...');
+    // reset
+    setFields([]); setFormData({}); setCurrentPage(1);
+    setError(null); setPdfDocLib(null); setPdfForm(null); setIsFillable(false);
+    pdfJsDocRef.current = null;
+
     try {
-      // Validate file
-      if (!file) {
-        throw new Error('No file provided');
-      }
+      if (file.type !== 'application/pdf') throw new Error('File must be a PDF.');
 
-      if (file.type !== 'application/pdf') {
-        throw new Error('File must be a PDF');
-      }
-
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        throw new Error('File size must be less than 10MB');
-      }
-
-      console.log('🔄 Processing file:', file.name);
-
-      // ✅ CRITICAL: Initialize PDF.js with local worker
-      setProcessingStatus('Loading PDF library...');
-      const pdfjs = await initPdfJs();
-      
-      setProcessingStatus('Reading PDF file...');
-      
-      // Read the PDF file
       const arrayBuffer = await file.arrayBuffer();
-      console.log('📦 ArrayBuffer size:', arrayBuffer.byteLength, 'bytes');
-      
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error('PDF file is empty');
-      }
 
-      setProcessingStatus('Parsing PDF structure...');
-      
-      // ✅ Load the PDF document with proper config
-      console.log('🔧 Loading PDF document...');
-      const loadingTask = pdfjs.getDocument({
-        data: arrayBuffer,
-        verbosity: 0 // Reduce console noise
-      });
-      
-      const pdf = await loadingTask.promise;
-      
-      console.log('✅ PDF loaded successfully!');
-      console.log('📄 Pages:', pdf.numPages);
-      
-      setProcessingStatus(`Extracting content from ${pdf.numPages} pages...`);
-      
-      // Extract text and structure from all pages
-      const extractedData = await extractPDFContent(pdf, file.name);
-      
-      setProcessingStatus('Organizing form fields...');
-      setPdfData(extractedData);
-      
-      // Initialize form data
-      const initialData = {};
-      extractedData.pages.forEach(page => {
-        page.sections.forEach(section => {
-          if (section.fields && Array.isArray(section.fields)) {
-            section.fields.forEach(field => {
-              if (field.editable) {
-                initialData[field.id] = field.value || '';
-              }
-            });
-          }
-        });
-      });
-      setFormData(initialData);
-      
-      console.log('✅ PDF processed successfully');
-      console.log('📊 Extracted fields:', Object.keys(initialData).length);
-      
-      setProcessingStatus('Done!');
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 500);
-      
-    } catch (error) {
-      console.error('❌ Error processing PDF:', error);
-      
-      // Provide helpful error messages
-      let errorMessage = error.message;
-      
-      if (error.message.includes('worker')) {
-        errorMessage = 'PDF.js worker failed to load. Please refresh the page and try again.';
-      } else if (error.message.includes('Invalid PDF')) {
-        errorMessage = 'This PDF file appears to be corrupted or invalid.';
-      } else if (error.message.includes('password')) {
-        errorMessage = 'This PDF is password protected. Please use an unprotected version.';
-      }
-      
-      setError(errorMessage);
-      setProcessingStatus('Error: ' + errorMessage);
-      
-      // Show error for 5 seconds then go back
-      setTimeout(() => {
-        if (confirm('Failed to process PDF. Would you like to try another file?')) {
-          navigate(-1);
-        }
-      }, 3000);
-    }
-  };
+      // ── 1. pdf-lib: read real AcroForm fields ────────────────────────────────
+      setProcessingMsg('Detecting AcroForm fields...');
+      let extractedFields = [];
+      let libDoc = null, libForm = null;
 
-  // Extract actual content from PDF
-  const extractPDFContent = async (pdf, filename) => {
-    const pages = [];
-    
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      console.log(`📖 Processing page ${pageNum}/${pdf.numPages}`);
-      
       try {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        // Extract text items
-        const textItems = textContent.items.map(item => item.str);
-        const fullText = textItems.join(' ');
-        
-        console.log(`📝 Page ${pageNum} text length:`, fullText.length, 'characters');
-        
-        if (fullText.length === 0) {
-          console.warn(`⚠️ Page ${pageNum} has no text - might be scanned image`);
+        const { PDFDocument } = await import('pdf-lib');
+        libDoc  = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        libForm = libDoc.getForm();
+        const rawFields = libForm.getFields();
+        console.log('✅ pdf-lib fields:', rawFields.length);
+
+        // We'll get positions from pdf.js annotations below
+        extractedFields = rawFields.map(f => ({
+          id:       f.getName(),
+          label:    f.getName().replace(/_/g, ' ').replace(/\./g, ' › '),
+          type:     f.constructor.name === 'PDFCheckBox' ? 'checkbox'
+                  : f.constructor.name === 'PDFDropdown' ? 'select'
+                  : guessType(f.getName()),
+          pdfType:  f.constructor.name,
+          value:    f.constructor.name === 'PDFTextField' ? (f.getText() || '') : '',
+          options:  (f.constructor.name === 'PDFDropdown') ? f.getOptions() : [],
+          rect:     null,   // filled in by pdf.js annotations
+          page:     1,
+        }));
+
+        if (rawFields.length > 0) {
+          setPdfDocLib(libDoc);
+          setPdfForm(libForm);
+          setIsFillable(true);
         }
-        
-        // Create sections based on content
-        const sections = parsePageContent(fullText, pageNum, textItems);
-        
-        pages.push({
-          pageNumber: pageNum,
-          sections: sections,
-          hasText: fullText.length > 0
-        });
-      } catch (pageError) {
-        console.error(`❌ Error processing page ${pageNum}:`, pageError);
-        
-        // Add error section for this page
-        pages.push({
-          pageNumber: pageNum,
-          sections: [{
-            id: `error_${pageNum}`,
-            title: 'Page Load Error',
-            type: 'warning',
-            message: `Could not load page ${pageNum}: ${pageError.message}`
-          }],
-          hasText: false
-        });
+      } catch (e) {
+        console.warn('pdf-lib fallback:', e.message);
       }
-    }
-    
-    return {
-      title: filename.replace('.pdf', ''),
-      filename: filename,
-      totalPages: pdf.numPages,
-      pages: pages
-    };
-  };
 
-  // Parse page content and create form fields
-  const parsePageContent = (fullText, pageNum, textItems) => {
-    const sections = [];
-    const fields = [];
-    let fieldCounter = 0;
+      // ── 2. pdf.js: render + get field positions ──────────────────────────────
+      setProcessingMsg('Rendering pages...');
+      const pdfjs    = await initPdfJs();
+      const pdfJsDoc = await pdfjs.getDocument({ data: arrayBuffer.slice(0), verbosity: 0 }).promise;
+      pdfJsDocRef.current = pdfJsDoc;
+      setTotalPages(pdfJsDoc.numPages);
 
-    // Check if page has text
-    if (fullText.trim().length === 0) {
-      sections.push({
-        id: `warning_${pageNum}`,
-        title: 'No Text Detected',
-        type: 'warning',
-        message: 'This page appears to be a scanned image or has no extractable text.'
-      });
-      return sections;
-    }
+      // Store rects at scale:1 base — multiply by SCALE at render (stable on zoom)
+      const rectMap = {};
+      for (let p = 1; p <= pdfJsDoc.numPages; p++) {
+        const page        = await pdfJsDoc.getPage(p);
+        const annotations = await page.getAnnotations();
+        const viewport    = page.getViewport({ scale: 1 }); // base units
 
-    // Detect headers (all caps, short text, standalone)
-    const headers = [];
-    textItems.forEach((item, index) => {
-      const trimmed = item.trim();
-      if (trimmed.length > 5 && 
-          trimmed.length < 80 && 
-          trimmed === trimmed.toUpperCase() &&
-          !trimmed.match(/^[0-9\s:\-.,()£$€]+$/) &&
-          trimmed.split(' ').length <= 10) {
-        headers.push(trimmed);
-      }
-    });
-
-    // Add header section if found
-    if (headers.length > 0) {
-      sections.push({
-        id: `header_${pageNum}`,
-        title: headers[0],
-        type: 'header',
-        style: 'title'
-      });
-    }
-
-    // Process text items to find form fields
-    for (let i = 0; i < textItems.length; i++) {
-      const item = textItems[i].trim();
-      
-      if (!item || item.length < 2) continue;
-
-      // Check if this looks like a label
-      const isLabel = item.endsWith(':') || 
-                      item.match(/^(Name|Address|Phone|Email|Date|Department|Position|Rate|Country|Citizenship|Producer|Film|Title|Base|Weekly|Daily|Allowance|Holiday|Mobile|Production|Start|End|Value|Fee|Period|Location|Entity|Member|Crew|Lender)$/i);
-
-      if (isLabel) {
-        // This is a label, create a field
-        let fieldType = 'text';
-        const lowerLabel = item.toLowerCase();
-        
-        // Determine field type based on label
-        if (lowerLabel.includes('date')) fieldType = 'date';
-        else if (lowerLabel.includes('email')) fieldType = 'email';
-        else if (lowerLabel.includes('address')) fieldType = 'textarea';
-        else if (lowerLabel.includes('rate') || lowerLabel.includes('fee') || lowerLabel.includes('allowance') || lowerLabel.includes('value')) fieldType = 'number';
-        else if (lowerLabel.includes('phone') || lowerLabel.includes('tel')) fieldType = 'tel';
-        
-        // Check if next items contain the value
-        let value = '';
-        let nextIndex = i + 1;
-        
-        // Look ahead for potential value (skip very short items like ":")
-        while (nextIndex < textItems.length && nextIndex < i + 3) {
-          const nextItem = textItems[nextIndex].trim();
-          if (nextItem && !nextItem.endsWith(':') && nextItem.length > 1 && !nextItem.match(/^[():]$/)) {
-            value = nextItem;
-            break;
+        annotations.forEach(ann => {
+          if (ann.subtype === 'Widget' && ann.fieldName && ann.rect) {
+            const rect = viewport.convertToViewportRectangle(ann.rect);
+            // Store normalized: x,y,w,h — multiply by SCALE at render time
+            rectMap[ann.fieldName] = {
+              x: rect[0],
+              y: rect[1],
+              w: rect[2] - rect[0],
+              h: rect[3] - rect[1],
+              page: p
+            };
           }
-          nextIndex++;
-        }
-        
-        fields.push({
-          id: `field_${pageNum}_${fieldCounter++}`,
-          label: item,
-          type: fieldType,
-          editable: true,
-          value: value || '',
-          width: fieldType === 'textarea' ? '100%' : '50%',
-          rows: fieldType === 'textarea' ? 3 : undefined
-        });
-      } else if (item.length > 60 && !item.match(/^[0-9.£$€,\s]+$/)) {
-        // This looks like a paragraph of static text
-        fields.push({
-          id: `static_${pageNum}_${fieldCounter++}`,
-          label: '',
-          type: 'static',
-          editable: false,
-          value: item,
-          width: '100%',
-          style: 'paragraph'
         });
       }
-    }
 
-    // Create main content section with fields
-    if (fields.length > 0) {
-      sections.push({
-        id: `content_${pageNum}`,
-        title: pageNum === 1 ? 'Document Information' : '',
-        type: 'section',
-        fields: fields
+      // Attach rects to extractedFields; if no pdf-lib fields use annotation fallback
+      if (extractedFields.length > 0) {
+        extractedFields = extractedFields.map(f => ({
+          ...f,
+          rect: rectMap[f.id] || null,
+          page: rectMap[f.id]?.page || 1,
+        }));
+      } else {
+        // Fallback: build fields from annotations only
+        Object.entries(rectMap).forEach(([name, rect]) => {
+          extractedFields.push({
+            id:    name,
+            label: name.replace(/_/g, ' '),
+            type:  guessType(name),
+            value: '',
+            rect,
+            page:  rect.page,
+          });
+        });
+        setIsFillable(extractedFields.length > 0);
+      }
+
+      // Init form data
+      const initData = {};
+      extractedFields.forEach(f => { initData[f.id] = f.value || ''; });
+      setFormData(initData);
+      setFields(extractedFields);
+
+      setProcessingMsg('Done!');
+      setIsProcessing(false);
+
+      // ✅ Wait for DOM commit before rendering (prevents blank first page)
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (pdfJsDocRef.current && canvasRef.current) {
+            renderPage(pdfJsDocRef.current, 1);
+          }
+        }, 0);
       });
-    } else {
-      // If no fields detected, show preview of raw text
-      sections.push({
-        id: `content_${pageNum}`,
-        title: '',
-        type: 'section',
-        fields: [{
-          id: `text_${pageNum}`,
-          label: '',
-          type: 'static',
-          editable: false,
-          value: fullText.substring(0, 2000) + (fullText.length > 2000 ? '...' : ''),
-          width: '100%',
-          style: 'paragraph'
-        }]
-      });
-    }
-    
-    return sections;
-  };
 
-  const handleFieldChange = (fieldId, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
-  };
-
-  const handleStyleChange = (key, value) => {
-    setStylingOptions(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleExportPDF = () => {
-    // Create a summary of filled data
-    const filledFields = Object.entries(formData).filter(([_, value]) => value);
-    console.log('Filled fields:', filledFields);
-    
-    alert(`Ready to export PDF with ${filledFields.length} filled fields!\n\n(In production, this would generate a filled PDF using jsPDF or similar)`);
-  };
-
-  const getTemplateColors = () => {
-    const template = DESIGN_TEMPLATES.find(t => t.id === selectedTemplate);
-    return template ? template.colors : DESIGN_TEMPLATES[0].colors;
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      formContainerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setIsProcessing(false);
     }
   };
 
-  // Error screen
-  if (error && !isProcessing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6">
-        <div className="max-w-lg bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="text-red-600" size={32} />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => navigate(-1)}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Go Back
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-lavender-600 text-white rounded-lg hover:bg-lavender-700"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ── Render canvas page (cancel-safe, no black screen) ────────────────────────
+  const renderPage = async (doc, pageNum) => {
+    if (!doc || !canvasRef.current) return;
+    try {
+      // Cancel any in-progress render (prevents black/blank flicker)
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
 
-  // Processing screen
-  if (isProcessing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center max-w-lg">
-          <div className="w-20 h-20 border-4 border-lavender-200 border-t-lavender-600 rounded-full animate-spin mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Document</h2>
-          <p className="text-gray-600 mb-6">{processingStatus}</p>
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-start gap-3 text-sm text-left">
-              <div className="w-2 h-2 bg-lavender-600 rounded-full animate-pulse mt-1.5 flex-shrink-0"></div>
-              <div className="text-gray-600">
-                <p className="font-medium text-gray-900 mb-2">What's happening:</p>
-                <ul className="space-y-1 text-xs">
-                  <li>✓ Loading PDF.js library</li>
-                  <li>✓ Initializing worker thread</li>
-                  <li>✓ Reading PDF binary data</li>
-                  <li>✓ Parsing document structure</li>
-                  <li>✓ Extracting text from pages</li>
-                  <li>✓ Detecting form fields</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+      const page     = await doc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: SCALE });
+      const canvas   = canvasRef.current;
+      const ctx      = canvas.getContext('2d');
 
-  if (!pdfData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Document Loaded</h2>
-          <p className="text-gray-600 mb-4">Please select a contract to get started.</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-lavender-600 text-white rounded-lg hover:bg-lavender-700"
-          >
-            Browse Contracts
-          </button>
-        </div>
-      </div>
-    );
-  }
+      canvas.width  = viewport.width;
+      canvas.height = viewport.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);  // clear old frame
 
-  const currentPageData = pdfData.pages?.[currentPage - 1];
-  const colors = getTemplateColors();
+      setCanvasSize({ w: viewport.width, h: viewport.height });
 
-  // Don't render if no valid page data
-  if (!currentPageData || !currentPageData.sections) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Page</h2>
-          <p className="text-gray-600 mb-4">This page doesn't exist.</p>
-          <button
-            onClick={() => setCurrentPage(1)}
-            className="px-6 py-2 bg-lavender-600 text-white rounded-lg hover:bg-lavender-700"
-          >
-            Go to Page 1
-          </button>
-        </div>
-      </div>
-    );
-  }
+      const renderTask = page.render({ canvasContext: ctx, viewport });
+      renderTaskRef.current = renderTask;
+      await renderTask.promise;
+      renderTaskRef.current = null;
 
-  // Show warning if page has no text
-  const showNoTextWarning = !currentPageData.hasText;
+    } catch (err) {
+      if (err?.name !== 'RenderingCancelledException') {
+        console.error('PDF render error:', err);
+      }
+    }
+  };
 
-  // Document Designer Main View
-  return (
-    <div className="min-h-screen ">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-full px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Document Designer Studio</h1>
-                <p className="text-sm text-gray-600">
-                  {pdfData.filename} • {pdfData.totalPages} pages
-                </p>
-              </div>
-            </div>
+  // Re-render on page/zoom change — RAF ensures canvas is mounted
+  useEffect(() => {
+    if (!pdfJsDocRef.current || !canvasRef.current) return;
+    const id = requestAnimationFrame(() => {
+      renderPage(pdfJsDocRef.current, currentPage);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [currentPage, zoom]);
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2">
-                <button
-                  onClick={() => setZoom(Math.max(50, zoom - 10))}
-                  className="p-2 hover:bg-white rounded transition-colors"
-                >
-                  <ZoomOut size={18} />
-                </button>
-                <span className="text-sm font-medium text-gray-700 min-w-[60px] text-center">
-                  {zoom}%
-                </span>
-                <button
-                  onClick={() => setZoom(Math.min(150, zoom + 10))}
-                  className="p-2 hover:bg-white rounded transition-colors"
-                >
-                  <ZoomIn size={18} />
-                </button>
-              </div>
+  // Zoom just re-renders canvas — rects recalculated from scale:1 base * SCALE
+  // No full reload needed — prevents flicker
 
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-              </button>
-              
-              <button
-                onClick={handleExportPDF}
-                style={{
-                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
-                }}
-                className="px-6 py-2 text-white rounded-lg font-semibold hover:opacity-90 flex items-center gap-2 shadow-lg transition-opacity"
-              >
-                <Download size={18} />
-                Export PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  // ── Field change ──────────────────────────────────────────────────────────────
+  const handleFieldChange = useCallback((fieldId, value) => {
+    setFormData(prev => ({ ...prev, [fieldId]: value }));
+    if (pdfForm) {
+      try {
+        const f = pdfForm.getField(fieldId);
+        if (f.constructor.name === 'PDFTextField') f.setText(String(value));
+        if (f.constructor.name === 'PDFCheckBox')  value === 'true' ? f.check() : f.uncheck();
+      } catch (_) {}
+    }
+  }, [pdfForm]);
 
-      <div className="flex h-[calc(100vh-73px)]">
-        {/* Left Sidebar - Design Templates */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
-          <div className="p-6 space-y-6">
-            {/* Design Templates */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Palette size={20} className="text-lavender-600" />
-                Design Templates
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Choose a professional template
-              </p>
+  // ── Export ────────────────────────────────────────────────────────────────────
+  const handleExport = async () => {
+    if (!pdfDocLib) { alert('Export requires a fillable PDF with AcroForm fields.'); return; }
+    try {
+      const bytes = await pdfDocLib.save();
+      const url   = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      const a     = document.createElement('a');
+      a.href = url; a.download = 'filled-contract.pdf'; a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { alert('Export failed: ' + e.message); }
+  };
 
-              <div className="space-y-3">
-                {DESIGN_TEMPLATES.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
-                    className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                      selectedTemplate === template.id
-                        ? 'border-lavender-500 bg-lavender-50'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{template.icon}</span>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">
-                          {template.name}
-                        </h4>
-                        <p className="text-xs text-gray-600 mb-2">
-                          {template.description}
-                        </p>
-                        <div className="flex gap-2">
-                          <div
-                            className="w-8 h-8 rounded-lg border border-gray-200"
-                            style={{ backgroundColor: template.colors.primary }}
-                          />
-                          <div
-                            className="w-8 h-8 rounded-lg border border-gray-200"
-                            style={{ backgroundColor: template.colors.secondary }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+  const colors    = DESIGN_TEMPLATES.find(t => t.id === selectedTheme)?.colors || DESIGN_TEMPLATES[0].colors;
+  const pageFields = fields.filter(f => f.page === currentPage && f.rect);
 
-            {/* Layout Controls */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Type size={20} className="text-lavender-600" />
-                Layout Controls
-              </h3>
-
-              <div className="space-y-6">
-                {/* Label Font Size */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Label Font Size
-                    <span className="ml-2 text-lavender-600 font-normal">{stylingOptions.labelFontSize}px</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="11"
-                    max="16"
-                    value={stylingOptions.labelFontSize}
-                    onChange={(e) => handleStyleChange('labelFontSize', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-600"
-                  />
-                </div>
-
-                {/* Input Font Size */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Input Font Size
-                    <span className="ml-2 text-lavender-600 font-normal">{stylingOptions.inputFontSize}px</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="12"
-                    max="18"
-                    value={stylingOptions.inputFontSize}
-                    onChange={(e) => handleStyleChange('inputFontSize', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-600"
-                  />
-                </div>
-
-                {/* Field Height */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Field Height
-                    <span className="ml-2 text-lavender-600 font-normal">{stylingOptions.fieldHeight}px</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="36"
-                    max="56"
-                    value={stylingOptions.fieldHeight}
-                    onChange={(e) => handleStyleChange('fieldHeight', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-600"
-                  />
-                </div>
-
-                {/* Section Spacing */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Section Spacing
-                    <span className="ml-2 text-lavender-600 font-normal">{stylingOptions.sectionSpacing}px</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="16"
-                    max="40"
-                    value={stylingOptions.sectionSpacing}
-                    onChange={(e) => handleStyleChange('sectionSpacing', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-600"
-                  />
-                </div>
-
-                {/* Border Radius */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Border Radius
-                    <span className="ml-2 text-lavender-600 font-normal">{stylingOptions.borderRadius}px</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="12"
-                    value={stylingOptions.borderRadius}
-                    onChange={(e) => handleStyleChange('borderRadius', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-lavender-600"
-                  />
-                </div>
-
-                {/* Show Borders Toggle */}
-                <div>
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-sm font-medium text-gray-700">Show Field Borders</span>
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={stylingOptions.showFieldBorders}
-                        onChange={(e) => handleStyleChange('showFieldBorders', e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-lavender-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lavender-600"></div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content - Document Form */}
-        <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
-          {/* No Text Warning */}
-          {showNoTextWarning && (
-            <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
-              <div className="flex items-center gap-2 text-yellow-800">
-                <AlertTriangle size={16} />
-                <span className="text-sm font-medium">
-                  This page appears to be a scanned image or has no extractable text. 
-                  You may need OCR or manual field definition.
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Page Navigation */}
-          <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              
-              <span className="text-sm font-medium text-gray-700 min-w-[100px] text-center">
-                Page {currentPage} of {pdfData.totalPages}
-              </span>
-              
-              <button
-                onClick={() => setCurrentPage(Math.min(pdfData.totalPages, currentPage + 1))}
-                disabled={currentPage === pdfData.totalPages}
-                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-
-            <button
-              onClick={handleExportPDF}
-              className="px-4 py-2 bg-lavender-600 text-white rounded-lg font-medium hover:bg-lavender-700 flex items-center gap-2 transition-colors"
-            >
-              <Save size={16} />
-              Save Changes
-            </button>
-          </div>
-
-          {/* Scrollable Form Container */}
-          <div 
-            ref={formContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden"
-            style={{ 
-              backgroundColor: colors.bg,
-              padding: '40px 20px'
-            }}
-          >
-            <div 
-              className="mx-auto bg-white shadow-2xl"
-              style={{
-                width: `${zoom}%`,
-                maxWidth: '210mm',
-                minHeight: '297mm',
-                transform: zoom < 100 ? 'scale(1)' : 'none',
-                transformOrigin: 'top center'
-              }}
-            >
-              <div className="p-12">
-                {/* Render page sections */}
-                {currentPageData.sections.map((section, sectionIdx) => {
-                  // Handle warning sections
-                  if (section.type === 'warning') {
-                    return (
-                      <div 
-                        key={section.id}
-                        className="mb-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg"
-                      >
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
-                          <div>
-                            <h3 className="font-bold text-yellow-900 mb-1">{section.title}</h3>
-                            <p className="text-sm text-yellow-800">{section.message}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Handle header sections
-                  if (section.type === 'header') {
-                    return (
-                      <div 
-                        key={section.id}
-                        className="mb-8 pb-4 border-b-2"
-                        style={{ 
-                          borderColor: colors.primary,
-                          marginBottom: stylingOptions.sectionSpacing
-                        }}
-                      >
-                        <h1 
-                          className="font-bold text-center"
-                          style={{ 
-                            color: colors.primary,
-                            fontSize: stylingOptions.labelFontSize + 10
-                          }}
-                        >
-                          {section.title}
-                        </h1>
-                      </div>
-                    );
-                  }
-
-                  // Handle regular sections
-                  return (
-                    <div 
-                      key={section.id}
-                      style={{ marginBottom: stylingOptions.sectionSpacing }}
-                    >
-                      {/* Section Title */}
-                      {section.title && (
-                        <h2 
-                          className="font-bold mb-4"
-                          style={{ 
-                            color: colors.primary,
-                            fontSize: stylingOptions.labelFontSize + 4
-                          }}
-                        >
-                          {section.title}
-                        </h2>
-                      )}
-
-                      {/* Section Fields */}
-                      {section.fields && section.fields.length > 0 && (
-                        <div className="space-y-4">
-                          {section.fields.map((field) => (
-                            <FormField
-                              key={field.id}
-                              field={field}
-                              value={formData[field.id]}
-                              onChange={handleFieldChange}
-                              colors={colors}
-                              styling={stylingOptions}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+  // ── Error / Loading ───────────────────────────────────────────────────────────
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
+        <AlertTriangle className="text-red-500 mx-auto mb-4" size={48} />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+        <p className="text-gray-600 mb-6 text-sm">{error}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate(-1)} className="px-5 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Go Back</button>
+          <button onClick={() => { setError(null); if (fileObj) loadFile(fileObj); }} className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">Retry</button>
         </div>
       </div>
     </div>
   );
-}
 
-// Individual Form Field Component (unchanged)
-function FormField({ field, value, onChange, colors, styling }) {
-  const getFieldWidth = () => {
-    if (field.width === '100%') return 'w-full';
-    if (field.width === '50%') return 'w-1/2';
-    if (field.width === '33.33%') return 'w-1/3';
-    return 'w-full';
-  };
+  if (isProcessing) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-5" />
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Loading Document</h2>
+        <p className="text-sm text-purple-600">{processingMsg}</p>
+      </div>
+    </div>
+  );
 
-  const inputBaseStyle = {
-    height: field.type === 'textarea' ? 'auto' : `${styling.fieldHeight}px`,
-    fontSize: `${styling.inputFontSize}px`,
-    padding: `${styling.fieldPadding}px`,
-    borderRadius: `${styling.borderRadius}px`,
-    borderWidth: styling.showFieldBorders ? '1px' : '0',
-    borderColor: '#E5E7EB',
-    backgroundColor: field.editable ? '#FFFFFF' : '#F9FAFB'
-  };
-
-  if (field.type === 'static') {
-    if (field.style === 'label') {
-      return (
-        <div className={getFieldWidth()}>
-          <p 
-            className="font-medium"
-            style={{ 
-              fontSize: `${styling.labelFontSize}px`,
-              color: '#374151'
-            }}
-          >
-            {field.label} {field.value}
-          </p>
-        </div>
-      );
-    }
-
-    if (field.style === 'description' || field.style === 'paragraph') {
-      return (
-        <div className="w-full">
-          {field.label && (
-            <p 
-              className="font-medium mb-2"
-              style={{ 
-                fontSize: `${styling.labelFontSize}px`,
-                color: '#374151'
-              }}
-            >
-              {field.label}
-            </p>
-          )}
-          <p 
-            className="text-gray-700 leading-relaxed whitespace-pre-wrap"
-            style={{ fontSize: `${styling.inputFontSize - 1}px` }}
-          >
-            {field.value}
-          </p>
-        </div>
-      );
-    }
-  }
-
+  // ── Main UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className={`inline-block pr-4 ${getFieldWidth()}`}>
-      {field.label && (
-        <label 
-          className="block font-medium mb-2"
-          style={{ 
-            fontSize: `${styling.labelFontSize}px`,
-            color: '#374151'
-          }}
-        >
-          {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
+    <div className="min-h-screen  flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 px-6 py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Document Designer</h1>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{fileObj?.name}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isFillable ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                {isFillable ? `● Fillable · ${fields.length} fields` : `● Text PDF · ${fields.length} fields`}
+              </span>
+            </div>
+          </div>
+        </div>
 
-      {field.type === 'textarea' ? (
-        <textarea
-          value={value || ''}
-          onChange={(e) => onChange(field.id, e.target.value)}
-          disabled={!field.editable}
-          rows={field.rows || 3}
-          placeholder={field.placeholder || 'Enter text...'}
-          className="w-full resize-none focus:ring-2 focus:outline-none transition-all"
-          style={{
-            ...inputBaseStyle,
-            borderColor: styling.showFieldBorders ? '#E5E7EB' : 'transparent'
-          }}
-        />
-      ) : (
-        <input
-          type={field.type}
-          value={value || ''}
-          onChange={(e) => onChange(field.id, e.target.value)}
-          disabled={!field.editable}
-          placeholder={field.placeholder || ''}
-          className="w-full focus:ring-2 focus:outline-none transition-all"
-          style={{
-            ...inputBaseStyle,
-            borderColor: styling.showFieldBorders ? '#E5E7EB' : 'transparent'
-          }}
-        />
-      )}
+        <div className="flex items-center gap-2">
+          {/* Zoom */}
+          <div className="flex items-center gap-1 bg-gray-100 rounded-lg px-2 py-1">
+            <button onClick={() => setZoom(z => Math.max(50,  z - 10))} className="p-1 hover:bg-white rounded"><ZoomOut size={15} /></button>
+            <span className="text-xs font-medium text-gray-700 w-10 text-center">{zoom}%</span>
+            <button onClick={() => setZoom(z => Math.min(200, z + 10))} className="p-1 hover:bg-white rounded"><ZoomIn size={15} /></button>
+          </div>
 
-      {field.helper && (
-        <p 
-          className="mt-1 text-gray-500"
-          style={{ fontSize: `${styling.inputFontSize - 2}px` }}
-        >
-          {field.helper}
-        </p>
-      )}
+          <button
+            onClick={handleExport}
+            style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
+            className="px-4 py-2 text-white text-sm rounded-lg font-semibold flex items-center gap-2 shadow hover:opacity-90"
+          >
+            <Download size={15} /> Export PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Left Sidebar ── */}
+        <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0 p-4 space-y-5">
+          {/* Themes */}
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Theme</p>
+            <div className="space-y-1.5">
+              {DESIGN_TEMPLATES.map(t => (
+                <button key={t.id} onClick={() => setSelectedTheme(t.id)}
+                  className={`w-full p-2.5 rounded-xl border-2 text-left flex items-center gap-2.5 transition-all ${selectedTheme === t.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <span>{t.icon}</span>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-900">{t.name}</p>
+                    <div className="flex gap-1 mt-0.5">
+                      <div className="w-4 h-4 rounded" style={{ background: t.colors.primary }} />
+                      <div className="w-4 h-4 rounded" style={{ background: t.colors.secondary }} />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Field Style */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Field Style</p>
+            {[
+              { key: 'inputFontSize',  label: 'Font Size',    min: 8,  max: 18 },
+              { key: 'fieldHeight',    label: 'Field Height', min: 18, max: 56 },
+              { key: 'borderRadius',   label: 'Radius',       min: 0,  max: 12 },
+            ].map(({ key, label, min, max }) => (
+              <div key={key} className="mb-3">
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>{label}</span>
+                  <span className="text-purple-600 font-medium">{stylingOptions[key]}px</span>
+                </div>
+                <input type="range" min={min} max={max} value={stylingOptions[key]}
+                  onChange={e => setStylingOptions(p => ({ ...p, [key]: +e.target.value }))}
+                  className="w-full accent-purple-600 h-1" />
+              </div>
+            ))}
+
+            {/* Show borders toggle */}
+            <label className="flex items-center justify-between cursor-pointer mt-3">
+              <span className="text-xs text-gray-600">Show Field Borders</span>
+              <div className="relative">
+                <input type="checkbox" className="sr-only peer"
+                  checked={stylingOptions.showFieldBorders}
+                  onChange={e => setStylingOptions(p => ({ ...p, showFieldBorders: e.target.checked }))} />
+                <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-purple-600 after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+              </div>
+            </label>
+
+            {/* Show labels toggle */}
+            <label className="flex items-center justify-between cursor-pointer mt-3">
+              <span className="text-xs text-gray-600">Show Field Labels</span>
+              <div className="relative">
+                <input type="checkbox" className="sr-only peer"
+                  checked={stylingOptions.showLabels}
+                  onChange={e => setStylingOptions(p => ({ ...p, showLabels: e.target.checked }))} />
+                <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-purple-600 after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+              </div>
+            </label>
+          </div>
+
+          {/* Field list summary */}
+          {fields.length > 0 && (
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fields on this page</p>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {pageFields.length === 0
+                  ? <p className="text-xs text-gray-400">No positioned fields on page {currentPage}</p>
+                  : pageFields.map(f => (
+                    <div key={f.id} className="text-xs flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colors.primary }} />
+                      <span className="text-gray-700 truncate">{f.label}</span>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── PDF Canvas + Overlaid Inputs ── */}
+        <div ref={containerRef} className="flex-1 overflow-auto flex flex-col" style={{ background: colors.bg }}>
+          {/* Page nav */}
+          <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40"><ChevronLeft size={16} /></button>
+              <span className="text-sm text-gray-700 font-medium">Page {currentPage} / {totalPages}</span>
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40"><ChevronRight size={16} /></button>
+            </div>
+            <button onClick={handleExport}
+              className="px-4 py-1.5 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 flex items-center gap-1.5 font-medium">
+              <Save size={13} /> Save & Export
+            </button>
+          </div>
+
+          {/* ── PDF + overlay container ── */}
+          <div className="flex-1 flex justify-center items-start p-8 overflow-auto">
+            {/* Container matches canvas size — inputs overlay exactly */}
+            <div className="shadow-2xl"
+              style={{ position: 'relative', display: 'inline-block',
+                       width: canvasSize.w || 'auto', height: canvasSize.h || 'auto',
+                       background: 'white' }}>
+
+              {/* Canvas renders PDF — sets actual pixel dimensions */}
+              <canvas ref={canvasRef} className="block bg-white" />
+
+              {/* ── OVERLAID INPUT FIELDS ── */}
+              {pageFields.map(field => {
+                // Stored at scale:1 base → multiply by SCALE to match canvas
+                const x = field.rect.x * SCALE;
+                const y = field.rect.y * SCALE;
+                const w = field.rect.w * SCALE;
+                const h = field.rect.h * SCALE;
+
+                // ✅ PIXEL-PERFECT: zero padding/margin, font scales with field height
+                const isTextarea = field.type === 'textarea';
+                const fontSize   = Math.max(7, h * 0.62);  // proportional to field h
+
+                const baseStyle = {
+                  position:    'absolute',
+                  left:        x,
+                  top:         y,
+                  width:       w,
+                  height:      h,
+                  margin:      0,
+                  padding:     isTextarea ? '2px 3px' : 0,
+                  paddingLeft: '3px',
+                  border:      stylingOptions.showFieldBorders
+                                 ? `1px solid ${colors.primary}99`
+                                 : '1px solid transparent',
+                  background:  'rgba(219,234,254,0.35)',
+                  fontSize:    `${fontSize}px`,
+                  fontFamily:  'Helvetica, Arial, sans-serif',
+                  lineHeight:  isTextarea ? '1.3' : `${h}px`,
+                  boxSizing:   'border-box',
+                  outline:     'none',
+                  zIndex:      10,
+                  color:       '#111827',
+                  resize:      'none',
+                  overflow:    'hidden',
+                  borderRadius: `${stylingOptions.borderRadius}px`,
+                  verticalAlign: 'middle',
+                };
+
+                const onFocus = e => {
+                  e.target.style.background   = 'rgba(255,255,255,0.96)';
+                  e.target.style.border       = `1.5px solid ${colors.primary}`;
+                  e.target.style.boxShadow    = `0 0 0 2px ${colors.primary}22`;
+                };
+                const onBlur = e => {
+                  e.target.style.background   = baseStyle.background;
+                  e.target.style.border       = baseStyle.border;
+                  e.target.style.boxShadow    = 'none';
+                };
+
+                const value = formData[field.id] ?? field.value ?? '';
+
+                return (
+                  <React.Fragment key={field.id}>
+                    {/* Optional label tooltip above field */}
+                    {stylingOptions.showLabels && (
+                      <div style={{
+                        position:   'absolute',
+                        left:       x,
+                        top:        y - 13,
+                        fontSize:   '8px',
+                        color:      colors.primary,
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        background: 'white',
+                        padding:    '0 2px',
+                        zIndex:     12,
+                        borderRadius: 2,
+                      }}>
+                        {field.label}
+                      </div>
+                    )}
+
+                    {field.type === 'checkbox' ? (
+                      <input type="checkbox"
+                        checked={value === 'true'}
+                        onChange={e => handleFieldChange(field.id, e.target.checked ? 'true' : 'false')}
+                        style={{ ...baseStyle, width: h, padding: 0, cursor: 'pointer', accentColor: colors.primary }}
+                      />
+
+                    ) : field.type === 'select' && field.options?.length > 0 ? (
+                      <select value={value} onChange={e => handleFieldChange(field.id, e.target.value)}
+                        style={{ ...baseStyle, cursor: 'pointer' }}
+                        onFocus={onFocus} onBlur={onBlur}>
+                        <option value="">—</option>
+                        {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+
+                    ) : isTextarea ? (
+                      <textarea value={value}
+                        onChange={e => handleFieldChange(field.id, e.target.value)}
+                        style={baseStyle}
+                        onFocus={onFocus} onBlur={onBlur}
+                      />
+
+                    ) : (
+                      <input
+                        type={field.type === 'date' ? 'text' : (field.type || 'text')}
+                        value={value}
+                        onChange={e => handleFieldChange(field.id, e.target.value)}
+                        style={baseStyle}
+                        onFocus={onFocus} onBlur={onBlur}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Show message if no positioned fields on this page */}
+              {fields.length > 0 && pageFields.length === 0 && canvasSize.w > 0 && (
+                <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs px-4 py-2 rounded-full">
+                    No editable fields detected on this page
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
