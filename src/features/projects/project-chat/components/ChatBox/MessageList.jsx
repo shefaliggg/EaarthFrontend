@@ -96,7 +96,7 @@ export default function MessageList({
         // Regular message
         return (
           <MessageBubble
-            key={msg.id}
+            key={msg.clientTempId || msg.id}
             message={msg}
             isGroupStart={isGroupStart}
             isGroupEnd={isGroupEnd}

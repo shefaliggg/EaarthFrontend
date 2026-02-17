@@ -35,6 +35,7 @@ function ChatBox() {
     messagesByConversation,
     loadMessages,
     markAsRead,
+    emitConversationRead,
     isLoadingMessages,
   } = useChatStore();
 
@@ -47,18 +48,14 @@ function ChatBox() {
 
   const messages = messagesData.messages || [];
 
-  // ────────────────────────────────
-  // Scroll helpers
-  // ────────────────────────────────
+  const NEAR_BOTTOM_THRESHOLD = 0; // px from bottom considered "near"
+
   const scrollToBottom = useCallback((smooth = true) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    container.scrollTo({
-      top: container.scrollHeight - container.clientHeight,
-      behavior: smooth ? "smooth" : "auto",
-    });
-
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
     setIsUserAtBottom(true);
     setUnreadNewMessages(0);
   }, []);
@@ -67,15 +64,20 @@ function ChatBox() {
     (e) => {
       const { scrollTop } = e.target;
 
-      // user is at bottom if scrollTop + container height ~ scrollHeight
       const container = scrollContainerRef.current;
       const nearBottom =
-        container.scrollHeight - container.clientHeight - scrollTop < 50;
+        container.scrollHeight - container.clientHeight - scrollTop <
+        NEAR_BOTTOM_THRESHOLD;
+
       setIsUserAtBottom(nearBottom);
 
       if (nearBottom && unreadNewMessages > 0) {
         setUnreadNewMessages(0);
-        markAsRead(selectedChat?.id).catch(() => {});
+        try {
+          emitConversationRead && emitConversationRead(selectedChat?.id);
+        } catch (e) {
+          markAsRead(selectedChat?.id).catch(() => {});
+        }
       }
 
       // load older messages when scrollTop is near top
@@ -84,7 +86,6 @@ function ChatBox() {
 
         loadMessages(selectedChat.id, true).then(() => {
           const newScrollHeight = container.scrollHeight;
-          // maintain viewport so user doesn't jump
           container.scrollTop = newScrollHeight - prevScrollHeight + scrollTop;
         });
       }
@@ -96,6 +97,7 @@ function ChatBox() {
       loadMessages,
       unreadNewMessages,
       markAsRead,
+      emitConversationRead,
     ],
   );
 
@@ -107,38 +109,87 @@ function ChatBox() {
 
     setLoadError(null);
     setUnreadNewMessages(0);
-    setIsUserAtBottom(true);
+    setIsUserAtBottom(false);
     prevMessageCountRef.current = 0;
     setReplyTo(null);
     setEditingMessage(null);
     setIsRecording(false);
     setRecordingTime(0);
 
-    loadMessages(selectedChat.id).catch((err) => {
-      setLoadError(err.message || "Failed to load messages");
-    });
+    const conv = messagesByConversation[selectedChat.id];
 
-    markAsRead(selectedChat.id).catch(() => {});
+    if (conv && conv.messages && conv.messages.length > 0) {
+      const lastCachedId =
+        conv.messages[conv.messages.length - 1].clientTempId ||
+        conv.messages[conv.messages.length - 1].id;
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        const el = document.getElementById(`message-${lastCachedId}`);
+        if (container && el) {
+          const targetTop = Math.max(
+            0,
+            el.offsetTop - container.clientHeight + el.clientHeight,
+          );
+          container.scrollTo({ top: targetTop, behavior: "auto" });
+          setIsUserAtBottom(false);
+        }
+      }, 20);
+    }
 
-    // scroll after short delay to ensure messages rendered
-    setTimeout(() => scrollToBottom(false), 100);
-  }, [selectedChat?.id, loadMessages, markAsRead, scrollToBottom]);
+    (async () => {
+      try {
+        await loadMessages(selectedChat.id);
+      } catch (err) {
+        setLoadError(err.message || "Failed to load messages");
+      }
 
-  // ────────────────────────────────
-  // Auto scroll on new message
-  // ────────────────────────────────
+      if (!conv || !conv.messages || conv.messages.length === 0) {
+        setTimeout(() => scrollToBottom(false), 100);
+      }
+    })();
+  }, [selectedChat?.id]);
+
   useEffect(() => {
     if (!selectedChat?.id) return;
+    if (messages.length <= prevMessageCountRef.current) {
+      prevMessageCountRef.current = messages.length;
+      return;
+    }
 
-    if (messages.length > prevMessageCountRef.current) {
-      const newMessageCount = messages.length - prevMessageCountRef.current;
+    const newMessages = messages.slice(prevMessageCountRef.current);
+    const lastMessage = messages[messages.length - 1];
 
-      if (isUserAtBottom) scrollToBottom(true);
-      else setUnreadNewMessages((prev) => prev + newMessageCount);
+    // Always scroll when the current user sends a message (optimistic state)
+    if (lastMessage?.isOwn && lastMessage?.state === "sending") {
+      scrollToBottom(true);
+      try {
+        emitConversationRead && emitConversationRead(selectedChat?.id);
+      } catch (e) {
+        markAsRead(selectedChat?.id).catch(() => {});
+      }
+      prevMessageCountRef.current = messages.length;
+      return;
+    }
+
+    // For incoming messages from others
+    const newOtherMessageCount = newMessages.filter(
+      (m) => !m.isOwn && m.state !== "sending",
+    ).length;
+
+    if (newOtherMessageCount > 0) {
+      if (isUserAtBottom) {
+        scrollToBottom(true);
+        try {
+          emitConversationRead && emitConversationRead(selectedChat?.id);
+        } catch (e) {
+          markAsRead(selectedChat?.id).catch(() => {});
+        }
+      } else {
+      }
     }
 
     prevMessageCountRef.current = messages.length;
-  }, [messages, isUserAtBottom, selectedChat?.id, scrollToBottom]);
+  }, [messages, isUserAtBottom, selectedChat?.id]);
 
   // ────────────────────────────────
   // Scroll to bottom button
@@ -146,8 +197,13 @@ function ChatBox() {
   const handleScrollToNewMessages = useCallback(() => {
     scrollToBottom(true);
     setUnreadNewMessages(0);
-    markAsRead(selectedChat?.id).catch(() => {});
-  }, [scrollToBottom, selectedChat?.id, markAsRead]);
+    // User manually moved to newest messages; emit read (debounced)
+    try {
+      emitConversationRead(selectedChat?.id);
+    } catch (e) {
+      markAsRead(selectedChat?.id).catch(() => {});
+    }
+  }, [scrollToBottom, selectedChat?.id, emitConversationRead, markAsRead]);
 
   // ────────────────────────────────
   // Render
@@ -289,7 +345,6 @@ function ChatBox() {
             onClearReply={() => setReplyTo(null)}
             onClearEdit={() => setEditingMessage(null)}
             onStartRecording={() => setIsRecording(true)}
-            messagesEndRef={messagesEndRef}
             attachments={attachments}
             setAttachments={setAttachments}
           />

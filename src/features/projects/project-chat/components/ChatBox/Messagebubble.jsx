@@ -140,8 +140,6 @@ export default function MessageBubble({
     setShowImagePreview(true);
   };
 
-  console.log("message replty data", message.replyTo);
-
   if (message.deleted) {
     return (
       <div
@@ -167,7 +165,7 @@ export default function MessageBubble({
 
   return (
     <div
-      id={`message-${message.id}`}
+      id={`message-${message.clientTempId || message.id}`}
       className={cn(
         "flex gap-3 group transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",

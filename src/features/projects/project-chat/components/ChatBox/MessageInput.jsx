@@ -16,7 +16,6 @@ const MessageInput = React.memo(
     onClearReply,
     onClearEdit,
     onStartRecording,
-    messagesEndRef,
     attachments,
     setAttachments,
   }) => {
@@ -199,15 +198,6 @@ const MessageInput = React.memo(
           });
         }
         localStorage.removeItem(`chat-draft-${selectedChat.id}`);
-
-        // scroll
-        if (messagesEndRef?.current) {
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({
-              behavior: "smooth",
-            });
-          }, 50);
-        }
       } catch (error) {
         console.error("❌ Failed to send message:", error);
       }
@@ -218,8 +208,7 @@ const MessageInput = React.memo(
       replyTo,
       sendMessage,
       emitTypingStop,
-      onClearReply,
-      messagesEndRef,
+      onClearReply
     ]);
 
     // ═══════════════════════════════════════
