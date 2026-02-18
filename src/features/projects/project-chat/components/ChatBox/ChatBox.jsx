@@ -4,13 +4,13 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useLayoutEffect,
 } from "react";
 import { Sparkles, AlertCircle, ChevronDown } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import ReplyPreview from "./ReplyPreviewContent";
 import EditBanner from "./EditBanner";
 import RecordingBar from "./RecordingBar";
 import ReplyToMessagePreview from "./ReplyToMessagePreview";
@@ -19,7 +19,7 @@ import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 function ChatBox() {
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const prevMessageCountRef = useRef(0);
+  const lastMessageIdRef = useRef(null);
 
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
@@ -48,11 +48,12 @@ function ChatBox() {
 
   const messages = messagesData.messages || [];
 
-  const NEAR_BOTTOM_THRESHOLD = 0; // px from bottom considered "near"
+  const NEAR_BOTTOM_THRESHOLD = 100; // px from bottom considered "near"
 
   const scrollToBottom = useCallback((smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
         behavior: smooth ? "smooth" : "auto",
       });
     }
@@ -60,14 +61,22 @@ function ChatBox() {
     setUnreadNewMessages(0);
   }, []);
 
+  const isUserNearBottom = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return false;
+
+    return (
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      NEAR_BOTTOM_THRESHOLD
+    );
+  };
+
   const handleScroll = useCallback(
     (e) => {
       const { scrollTop } = e.target;
 
       const container = scrollContainerRef.current;
-      const nearBottom =
-        container.scrollHeight - container.clientHeight - scrollTop <
-        NEAR_BOTTOM_THRESHOLD;
+      const nearBottom = isUserNearBottom();
 
       setIsUserAtBottom(nearBottom);
 
@@ -85,8 +94,11 @@ function ChatBox() {
         const prevScrollHeight = container.scrollHeight;
 
         loadMessages(selectedChat.id, true).then(() => {
-          const newScrollHeight = container.scrollHeight;
-          container.scrollTop = newScrollHeight - prevScrollHeight + scrollTop;
+          requestAnimationFrame(() => {
+            const newScrollHeight = container.scrollHeight - 50;
+            container.scrollTop =
+              newScrollHeight - prevScrollHeight + scrollTop;
+          });
         });
       }
     },
@@ -109,87 +121,44 @@ function ChatBox() {
 
     setLoadError(null);
     setUnreadNewMessages(0);
-    setIsUserAtBottom(false);
-    prevMessageCountRef.current = 0;
+    setIsUserAtBottom(true); // important
     setReplyTo(null);
     setEditingMessage(null);
     setIsRecording(false);
     setRecordingTime(0);
 
-    const conv = messagesByConversation[selectedChat.id];
-
-    if (conv && conv.messages && conv.messages.length > 0) {
-      const lastCachedId =
-        conv.messages[conv.messages.length - 1].clientTempId ||
-        conv.messages[conv.messages.length - 1].id;
-      setTimeout(() => {
-        const container = scrollContainerRef.current;
-        const el = document.getElementById(`message-${lastCachedId}`);
-        if (container && el) {
-          const targetTop = Math.max(
-            0,
-            el.offsetTop - container.clientHeight + el.clientHeight,
-          );
-          container.scrollTo({ top: targetTop, behavior: "auto" });
-          setIsUserAtBottom(false);
-        }
-      }, 20);
-    }
-
-    (async () => {
-      try {
-        await loadMessages(selectedChat.id);
-      } catch (err) {
-        setLoadError(err.message || "Failed to load messages");
-      }
-
-      if (!conv || !conv.messages || conv.messages.length === 0) {
-        setTimeout(() => scrollToBottom(false), 100);
-      }
-    })();
+    loadMessages(selectedChat.id).catch((err) => {
+      setLoadError(err.message || "Failed to load messages");
+    });
   }, [selectedChat?.id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!selectedChat?.id) return;
-    if (messages.length <= prevMessageCountRef.current) {
-      prevMessageCountRef.current = messages.length;
-      return;
-    }
+    if (isLoadingMessages) return;
+    if (!messages.length) return;
 
-    const newMessages = messages.slice(prevMessageCountRef.current);
-    const lastMessage = messages[messages.length - 1];
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-    // Always scroll when the current user sends a message (optimistic state)
-    if (lastMessage?.isOwn && lastMessage?.state === "sending") {
+    container.scrollTop = container.scrollHeight;
+  }, [isLoadingMessages]);
+
+  useEffect(() => {
+    if (!messages.length) return;
+
+    const last = messages[messages.length - 1];
+    const id = last.clientTempId || last.id;
+
+    if (id === lastMessageIdRef.current) return;
+    lastMessageIdRef.current = id;
+
+    if (last.isOwn || isUserNearBottom()) {
+      emitConversationRead?.(selectedChat?.id);
       scrollToBottom(true);
-      try {
-        emitConversationRead && emitConversationRead(selectedChat?.id);
-      } catch (e) {
-        markAsRead(selectedChat?.id).catch(() => {});
-      }
-      prevMessageCountRef.current = messages.length;
-      return;
+    } else {
+      setUnreadNewMessages((c) => c + 1);
     }
-
-    // For incoming messages from others
-    const newOtherMessageCount = newMessages.filter(
-      (m) => !m.isOwn && m.state !== "sending",
-    ).length;
-
-    if (newOtherMessageCount > 0) {
-      if (isUserAtBottom) {
-        scrollToBottom(true);
-        try {
-          emitConversationRead && emitConversationRead(selectedChat?.id);
-        } catch (e) {
-          markAsRead(selectedChat?.id).catch(() => {});
-        }
-      } else {
-      }
-    }
-
-    prevMessageCountRef.current = messages.length;
-  }, [messages, isUserAtBottom, selectedChat?.id]);
+  }, [messages]);
 
   // ────────────────────────────────
   // Scroll to bottom button
@@ -233,7 +202,7 @@ function ChatBox() {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-2 space-y-1.5 relative flex flex-col"
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1 relative"
       >
         {loadError && (
           <div className="flex items-center justify-center h-full">
@@ -257,7 +226,17 @@ function ChatBox() {
             onReply={setReplyTo}
             onEdit={setEditingMessage}
           />
+
+          // <>
+          //   {messages.map((m) => (
+          //     <div key={m.id} className="p-4 border">
+          //       {m.content}
+          //     </div>
+          //   ))}
+          // </>
         )}
+
+        {/* <div className="bg-red-500 h-[2000px]" /> */}
 
         {!isLoadingMessages && messages.length === 0 && (
           <div className="flex items-center justify-center h-full">

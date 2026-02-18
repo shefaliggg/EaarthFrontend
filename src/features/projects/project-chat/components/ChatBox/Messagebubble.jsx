@@ -56,8 +56,6 @@ export default function MessageBubble({
   isGroupEnd,
   isSelected,
   onSelect,
-  hoveredMessageId,
-  setHoveredMessageId,
   showReactionPicker,
   setShowReactionPicker,
   onScrollToReply,
@@ -82,7 +80,6 @@ export default function MessageBubble({
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
-  const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
   const isForwarded = message.isForwarded;
@@ -167,7 +164,7 @@ export default function MessageBubble({
     <div
       id={`message-${message.clientTempId || message.id}`}
       className={cn(
-        "flex gap-3 group transition-all",
+        "flex gap-3 transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
         isGroupStart ? "mt-4" : "mt-0",
       )}
@@ -186,11 +183,7 @@ export default function MessageBubble({
         </div>
       )}
 
-      <div
-        onMouseEnter={() => setHoveredMessageId(message.id)}
-        onMouseLeave={() => setHoveredMessageId(null)}
-        className={cn("flex flex-col max-w-[60%]")}
-      >
+      <div className={cn("flex flex-col max-w-[60%]")}>
         {!isOwn && isGroupStart && (
           <div className="flex items-center gap-2 mb-1 px-1">
             <span className="font-semibold text-xs text-foreground">
@@ -205,16 +198,16 @@ export default function MessageBubble({
           </div>
         )}
 
-        <AutoHeight className="w-full">
+        <div className="w-full group">
           <div
             className={cn(
-              "flex gap-3 w-fit",
+              "flex gap-3",
               isOwn ? "flex-row-reverse ml-auto" : "",
             )}
           >
             <div
               className={cn(
-                "relative p-1 transition-all break-words max-w-full w-fit",
+                "relative p-1 transition-all break-words max-w-full",
                 isOwn ? "ml-auto" : "",
                 isOwn
                   ? "bg-primary dark:bg-primary/40 text-background"
@@ -295,7 +288,7 @@ export default function MessageBubble({
                       return (
                         <div
                           key={index}
-                          className={`overflow-hidden w-[240px] bg-purple-100 dark:bg-purple-900 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+                          className={`overflow-hidden w-full max-w-[240px] bg-purple-100 dark:bg-purple-900 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
                         >
                           {!loaded && (
                             <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -485,79 +478,80 @@ export default function MessageBubble({
             </div>
           )}
 
-          {showActions && (
-            <div
-              className={cn(
-                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
-                isOwn ? "justify-end" : "justify-start",
-              )}
-            >
+          <div
+            className={cn(
+              "flex gap-1 transition-all duration-300 ease-out",
+              isOwn ? "justify-end" : "justify-start",
+              "opacity-0 translate-y-1 scale-95",
+              "max-h-0 overflow-hidden opacity-0 scale-95",
+              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-1",
+            )}
+          >
+            <ActionButton
+              icon={Reply}
+              tooltip="Reply"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReply(message);
+              }}
+            />
+            <ActionButton
+              icon={Forward}
+              tooltip="Forward"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleForward();
+              }}
+            />
+            <ActionButton
+              icon={Star}
+              tooltip={isFavorited ? "Unstar" : "Star"}
+              className={isFavorited ? "text-yellow-500" : ""}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(message.id, isFavorited);
+              }}
+            />
+            <ActionButton
+              icon={Copy}
+              tooltip="Copy"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy();
+              }}
+            />
+            <ActionButton
+              icon={Smile}
+              tooltip="React"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReactionPicker(
+                  showReactionPicker === message.id ? null : message.id,
+                );
+              }}
+            />
+            {isOwn && canEdit && (
               <ActionButton
-                icon={Reply}
-                tooltip="Reply"
+                icon={Edit3}
+                tooltip="Edit"
+                className="text-blue-500"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onReply(message);
+                  onEdit(message);
                 }}
               />
-              <ActionButton
-                icon={Forward}
-                tooltip="Forward"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleForward();
-                }}
-              />
-              <ActionButton
-                icon={Star}
-                tooltip={isFavorited ? "Unstar" : "Star"}
-                className={isFavorited ? "text-yellow-500" : ""}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(message.id, isFavorited);
-                }}
-              />
-              <ActionButton
-                icon={Copy}
-                tooltip="Copy"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy();
-                }}
-              />
-              <ActionButton
-                icon={Smile}
-                tooltip="React"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id,
-                  );
-                }}
-              />
-              {isOwn && canEdit && (
-                <ActionButton
-                  icon={Edit3}
-                  tooltip="Edit"
-                  className="text-blue-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(message);
-                  }}
-                />
-              )}
-              <ActionButton
-                icon={Trash2}
-                tooltip="Delete"
-                className="text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              />
-            </div>
-          )}
-        </AutoHeight>
+            )}
+            <ActionButton
+              icon={Trash2}
+              tooltip="Delete"
+              className="text-red-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+            />
+          </div>
+        </div>
 
         {showReactionPicker === message.id && (
           <div
