@@ -268,43 +268,53 @@ export default function MessageBubble({
                   </div>
                 )}
 
-                {/* Message Content */}
-                {(message.type === "text" || !message.type) &&
-                  message.content && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
-                      {highlightText(message.content)}
-                    </p>
-                  )}
+                {message.type === "text" && message.content && (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
+                    {highlightText(message.content)}
+                  </p>
+                )}
 
-                {/* Image rendering */}
-                {message.type === "image" && message.files?.length > 0 && (
+                {message.files && message.files.length > 0 && (
                   <div
                     className={`grid ${message.files.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1`}
                   >
                     {message.files.map((file, index) => {
-                      const imageUrl = getFileUrl(file?.url);
-                      const [loaded, setLoaded] = React.useState(false);
-
-                      return (
-                        <div
-                          key={index}
-                          className={`overflow-hidden w-full max-w-[240px] bg-purple-100 dark:bg-purple-900 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
-                        >
-                          {!loaded && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
-                              <Image className="w-6 h-6 text-primary" />
-                            </div>
-                          )}
-                          <img
-                            src={imageUrl}
-                            alt={`Shared image ${index + 1}`}
-                            onClick={() => handleImageClick(imageUrl)}
-                            onLoad={() => setLoaded(true)}
-                            className={`cursor-pointer rounded-sm w-full h-auto object-cover transition-opacity ${
-                              loaded ? "opacity-100" : "opacity-0"
-                            }`}
+                      const url = getFileUrl(file.url);
+                      if (file.mime.startsWith("image/"))
+                        return (
+                          <MessageImage
+                            key={index}
+                            file={file}
+                            url={url}
+                            onClick={handleImageClick}
+                            single={message.files.length === 1}
                           />
-                        </div>
+                        );
+                      if (file.mime.startsWith("video/"))
+                        return (
+                          <MessageVideo
+                            key={index}
+                            file={file}
+                            url={url}
+                            single={message.files.length === 1}
+                          />
+                        );
+                      if (file.mime.startsWith("audio/"))
+                        return (
+                          <MessageAudio
+                            key={index}
+                            file={file}
+                            url={url}
+                            single={message.files.length === 1}
+                          />
+                        );
+                      return (
+                        <MessageFile
+                          key={index}
+                          file={file}
+                          url={url}
+                          single={message.files.length === 1}
+                        />
                       );
                     })}
                   </div>
@@ -313,119 +323,6 @@ export default function MessageBubble({
                 {message.caption && (
                   <p className="mt-2 text-sm px-2">{message.caption}</p>
                 )}
-
-                {/* Video rendering */}
-                {message.type === "video" && message.files?.length > 0 && (
-                  <div className="space-y-2">
-                    {message.files.map((file, index) => {
-                      const videoUrl = getFileUrl(file.url);
-
-                      return (
-                        <video
-                          key={index}
-                          ref={videoRef}
-                          src={videoUrl}
-                          controls
-                          className="rounded-xl max-w-[300px] max-h-[300px]"
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      );
-                    })}
-
-                    {message.caption && (
-                      <p className="text-sm mt-1">{message.caption}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Audio rendering */}
-                {message.type === "audio" && message.files?.length === 1 && (
-                  <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-xl">
-                    <button
-                      onClick={() => {
-                        if (!audioRef.current) return;
-
-                        if (isPlaying) {
-                          audioRef.current.pause();
-                        } else {
-                          audioRef.current.play();
-                        }
-
-                        setIsPlaying(!isPlaying);
-                      }}
-                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Play className="w-5 h-5 text-primary" />
-                      )}
-                    </button>
-
-                    <div className="flex-1">
-                      <div className="h-1 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${playProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Voice message
-                      </p>
-                    </div>
-
-                    <Volume2 className="w-4 h-4 text-muted-foreground" />
-
-                    <audio
-                      ref={audioRef}
-                      src={getFileUrl(message.files[0].url)}
-                      onEnded={() => {
-                        setIsPlaying(false);
-                        setPlayProgress(0);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Document/File rendering */}
-                {(message.type === "file" || message.type === "document") &&
-                  message.files?.length > 0 &&
-                  message.files.map((file, index) => {
-                    const fileUrl = getFileUrl(file.url);
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 min-w-[200px]"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-primary" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {file.name || "Document"}
-                          </p>
-                          {file.size && (
-                            <p className="text-xs text-muted-foreground">
-                              {(file.size / 1024).toFixed(2)} KB
-                            </p>
-                          )}
-                        </div>
-
-                        <a
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="p-2 hover:bg-muted rounded-xl"
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                      </div>
-                    );
-                  })}
 
                 {isOwn && (
                   <div className="flex items-center justify-end gap-1 mt-0 pl-3">
@@ -636,4 +533,139 @@ function MessageStateIcon({ state }) {
     default:
       return null;
   }
+}
+
+function MessageImage({ file, url, onClick, single = true }) {
+  const [loaded, setLoaded] = React.useState(false);
+
+  return (
+    <div
+      className={`overflow-hidden  w-full ${single ? " max-w-[260px] max-h-[260px]" : " max-w-[200px] max-h-[200px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+    >
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
+          <Image className="w-6 h-6 text-primary" />
+        </div>
+      )}
+      <img
+        src={url}
+        alt={file.name || "Shared image"}
+        onClick={() => onClick(url)}
+        onLoad={() => setLoaded(true)}
+        className={`cursor-pointer rounded-sm w-full h-auto ${single ? "object-cover" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
+}
+
+function MessageVideo({ file, url, single = true }) {
+  return (
+    <video
+      src={url}
+      controls
+      className={`rounded-xl  w-full  bg-muted/90 ${single ? "object-cover max-w-[260px] max-h-[260px]" : "aspect-square max-w-[200px] max-h-[200px]"}`}
+    >
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
+function MessageAudio({ file, url, single = true }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playProgress, setPlayProgress] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setPlayProgress((prev) => {
+          if (!audioRef.current) return 0;
+          const progress =
+            (audioRef.current.currentTime / audioRef.current.duration) * 100;
+          if (progress >= 100) {
+            setIsPlaying(false);
+            clearInterval(interval);
+          }
+          return progress;
+        });
+      }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying]);
+
+  return (
+    <div
+      className={`flex items-center gap-1  w-full ${single ? " min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+    >
+      <button
+        onClick={() => {
+          if (!audioRef.current) return;
+          if (isPlaying) audioRef.current.pause();
+          else audioRef.current.play();
+          setIsPlaying(!isPlaying);
+        }}
+        className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+      >
+        {isPlaying ? (
+          <Pause className="w-5 h-5 text-primary" />
+        ) : (
+          <Play className="w-5 h-5 text-primary" />
+        )}
+      </button>
+
+      <div className="flex-1">
+        <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${playProgress}%` }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">Voice message</p>
+      </div>
+
+      <Volume2 className="w-4 h-4 text-muted-foreground" />
+
+      <audio
+        ref={audioRef}
+        src={url}
+        onEnded={() => {
+          setIsPlaying(false);
+          setPlayProgress(0);
+        }}
+      />
+    </div>
+  );
+}
+
+function MessageFile({ file, url, single }) {
+  return (
+    <div
+      className={`flex items-center gap-1  w-full ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+    >
+      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <FileText className="w-5 h-5 text-primary" />
+      </div>
+
+      <div className="flex-1 min-w-0 pl-1">
+        <p className="text-sm font-medium truncate text-foreground">
+          {file.name || "Document"}
+        </p>
+        {file.size && (
+          <p className="text-xs text-muted-foreground">
+            {(file.size / 1024).toFixed(2)} KB
+          </p>
+        )}
+      </div>
+
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        download
+        className="p-2 hover:bg-muted rounded-xl"
+      >
+        <Download className="w-4 h-4 text-primary" />
+      </a>
+    </div>
+  );
 }

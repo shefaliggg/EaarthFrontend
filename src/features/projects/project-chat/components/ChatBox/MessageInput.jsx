@@ -30,44 +30,36 @@ const MessageInput = React.memo(
     const typingTimeoutRef = useRef(null);
 
     const sendMessage = useChatStore((state) => state.sendMessage);
-    const isSendingMessage = useChatStore((state) => state.isSendingMessage);
     const emitTypingStart = useChatStore((state) => state.emitTypingStart);
     const emitTypingStop = useChatStore((state) => state.emitTypingStop);
 
-    // ═══════════════════════════════════════
-    // TYPING INDICATOR (DEBOUNCED)
-    // ═══════════════════════════════════════
+    // REF to always have latest attachments
+    const attachmentsRef = useRef(attachments);
+    useEffect(() => {
+      attachmentsRef.current = attachments;
+    }, [attachments]);
+
+    // ───── TYPING INDICATOR ─────
     const handleTyping = useCallback(() => {
       if (!selectedChat?.id) return;
-
       emitTypingStart(selectedChat.id);
 
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
       typingTimeoutRef.current = setTimeout(() => {
         emitTypingStop(selectedChat.id);
       }, 1200);
     }, [selectedChat?.id, emitTypingStart, emitTypingStop]);
 
-    // ═══════════════════════════════════════
-    // CLEANUP ON UNMOUNT OR CHAT CHANGE
-    // ═══════════════════════════════════════
+    // ───── CLEANUP ON UNMOUNT ─────
     useEffect(() => {
       return () => {
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-        if (selectedChat?.id) {
-          emitTypingStop(selectedChat.id);
-        }
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (selectedChat?.id) emitTypingStop(selectedChat.id);
       };
     }, [selectedChat?.id, emitTypingStop]);
 
-    // ═══════════════════════════════════════
-    // RESET INPUT WHEN CHAT CHANGES
-    // ═══════════════════════════════════════
+    // ───── RESET INPUT ON CHAT CHANGE ─────
     useEffect(() => {
       if (selectedChat?.id) {
         const draft = localStorage.getItem(`chat-draft-${selectedChat.id}`);
@@ -75,9 +67,7 @@ const MessageInput = React.memo(
       }
     }, [selectedChat?.id]);
 
-    // ═══════════════════════════════════════
-    // AUTO-GROW TEXTAREA
-    // ═══════════════════════════════════════
+    // ───── AUTO-GROW TEXTAREA ─────
     useEffect(() => {
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
@@ -86,18 +76,18 @@ const MessageInput = React.memo(
       }
     }, [messageInput]);
 
-    // ═══════════════════════════════════════
-    // SAVE DRAFT
-    // ═══════════════════════════════════════
+    // ───── SAVE DRAFT ─────
     useEffect(() => {
-      if (selectedChat?.id && messageInput) {
-        localStorage.setItem(`chat-draft-${selectedChat.id}`, messageInput);
+      if (selectedChat?.id) {
+        if (messageInput) {
+          localStorage.setItem(`chat-draft-${selectedChat.id}`, messageInput);
+        } else {
+          localStorage.removeItem(`chat-draft-${selectedChat.id}`);
+        }
       }
     }, [messageInput, selectedChat?.id]);
 
-    // ═══════════════════════════════════════
-    // SET EDITING MESSAGE
-    // ═══════════════════════════════════════
+    // ───── SET EDITING MESSAGE ─────
     useEffect(() => {
       if (editingMessage) {
         setMessageInput(editingMessage.content);
@@ -105,35 +95,31 @@ const MessageInput = React.memo(
       }
     }, [editingMessage]);
 
-    // ═══════════════════════════════════════
-    // CLOSE PICKERS ON OUTSIDE CLICK
-    // ═══════════════════════════════════════
+    // ───── CLOSE PICKERS ON OUTSIDE CLICK ─────
     useEffect(() => {
       const handleClickOutside = (e) => {
         if (
           !e.target.closest(".emoji-picker-container") &&
           !e.target.closest(".emoji-button")
-        ) {
+        )
           setShowEmojiPicker(false);
-        }
+
         if (
           !e.target.closest(".attach-menu-container") &&
           !e.target.closest(".attach-button")
-        ) {
+        )
           setShowAttachMenu(false);
-        }
       };
       document.addEventListener("click", handleClickOutside);
       return () => document.removeEventListener("click", handleClickOutside);
     }, []);
 
-    // ═══════════════════════════════════════
-    // SEND MESSAGE
-    // ═══════════════════════════════════════
+    // ───── SEND MESSAGE ─────
     const handleSendMessage = useCallback(async () => {
       const trimmedMessage = messageInput.trim();
+      const currentAttachments = attachmentsRef.current;
       const hasText = trimmedMessage.length > 0;
-      const hasAttachments = attachments.length > 0;
+      const hasAttachments = currentAttachments.length > 0;
 
       if (!hasText && !hasAttachments) return;
       if (!selectedChat?.id) return;
@@ -147,29 +133,24 @@ const MessageInput = React.memo(
 
       try {
         emitTypingStop(selectedChat.id);
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
         if (hasAttachments) {
           const formData = new FormData();
-
-          attachments.forEach((att) => {
+          currentAttachments.forEach((att) => {
             formData.append("attachments", att.file);
           });
 
           formData.append("projectId", projectId);
           formData.append(
             "type",
-            attachments.length > 1 ? "IMAGE" : attachments[0].type,
+            currentAttachments.length > 1
+              ? "IMAGE"
+              : currentAttachments[0].type,
           );
 
-          console.log("trimmed message", trimmedMessage);
+          if (hasText) formData.append("caption", trimmedMessage);
 
-          if (hasText) {
-            formData.append("caption", trimmedMessage);
-          }
-          
           if (normalizedReply) {
             formData.append("replyTo[messageId]", normalizedReply.messageId);
             formData.append("replyTo[senderId]", normalizedReply.senderId);
@@ -177,74 +158,63 @@ const MessageInput = React.memo(
             formData.append("replyTo[type]", normalizedReply.type);
           }
 
-          // cleanup
           setMessageInput("");
           onClearReply();
-
-          console.log("caption:", formData.get("caption"));
-
           await sendMessage(selectedChat.id, projectId, { formData });
-
           setAttachments([]);
         } else {
-          // cleanup
           setMessageInput("");
           onClearReply();
-
           await sendMessage(selectedChat.id, projectId, {
             text: trimmedMessage,
             type: "TEXT",
             replyTo: normalizedReply,
           });
         }
-        localStorage.removeItem(`chat-draft-${selectedChat.id}`);
-      } catch (error) {
-        console.error("❌ Failed to send message:", error);
+      } catch (err) {
+        console.error("❌ Failed to send message:", err);
       }
     }, [
       messageInput,
-      attachments,
       selectedChat,
       replyTo,
       sendMessage,
+      onClearReply,
+      setAttachments,
       emitTypingStop,
-      onClearReply
     ]);
 
-    // ═══════════════════════════════════════
-    // KEYBOARD SHORTCUTS
-    // ═══════════════════════════════════════
-    const handleKeyDown = useCallback(
-      (e) => {
+    // ───── KEYBOARD SHORTCUTS ─────
+    useEffect(() => {
+      const handleGlobalKeyDown = (e) => {
+        // Enter to send message
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
-          if (editingMessage) {
-            console.log("Update message");
-          } else {
-            handleSendMessage();
-          }
+          handleSendMessage(); // uses latest attachments + text
         }
+
+        // Escape to cancel reply/edit
         if (e.key === "Escape") {
           onClearReply();
           onClearEdit();
-          if (selectedChat?.id) {
-            emitTypingStop(selectedChat.id);
-          }
+          if (selectedChat?.id) emitTypingStop(selectedChat.id);
         }
-      },
-      [
-        editingMessage,
-        handleSendMessage,
-        onClearReply,
-        onClearEdit,
-        selectedChat?.id,
-        emitTypingStop,
-      ],
-    );
+      };
 
-    // ═══════════════════════════════════════
-    // EMOJI PICKER
-    // ═══════════════════════════════════════
+      document.addEventListener("keydown", handleGlobalKeyDown);
+
+      return () => {
+        document.removeEventListener("keydown", handleGlobalKeyDown);
+      };
+    }, [
+      handleSendMessage, // always latest function
+      onClearReply,
+      onClearEdit,
+      selectedChat?.id,
+      emitTypingStop,
+    ]);
+
+    // ───── EMOJI PICKER ─────
     const handleEmojiClick = useCallback(
       (emojiData) => {
         const cursorPos =
@@ -252,6 +222,7 @@ const MessageInput = React.memo(
         const textBefore = messageInput.substring(0, cursorPos);
         const textAfter = messageInput.substring(cursorPos);
         setMessageInput(textBefore + emojiData.emoji + textAfter);
+        setShowEmojiPicker(false);
 
         setTimeout(() => {
           if (textareaRef.current) {
@@ -265,32 +236,44 @@ const MessageInput = React.memo(
       [messageInput],
     );
 
-    // ═══════════════════════════════════════
-    // FILE UPLOAD
-    // ═══════════════════════════════════════
-    const handleFileUpload = useCallback((e, uploadType) => {
-      const files = Array.from(e.target.files || []);
-      if (!files.length) return;
+    // ───── FILE UPLOAD ─────
+    const handleFileUpload = useCallback(
+      (e, uploadType) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        e.target.value = "";
+        setShowAttachMenu(false);
 
-      e.target.value = "";
-      setShowAttachMenu(false);
+        const MAX_SIZES = {
+          IMAGE: 15 * 1024 * 1024,
+          VIDEO: 100 * 1024 * 1024,
+          AUDIO: 20 * 1024 * 1024,
+          FILE: 25 * 1024 * 1024,
+        };
 
-      const typeMap = {
-        image: "IMAGE",
-        video: "VIDEO",
-        document: "FILE",
-      };
+        const typeMap = { image: "IMAGE", video: "VIDEO", document: "FILE" };
+        const mappedType = typeMap[uploadType] || "FILE";
 
-      const newAttachments = files.map((file) => ({
-        file,
-        type: typeMap[uploadType] || "FILE",
-        previewUrl: file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : null,
-      }));
+        const validFiles = files.filter((file) => {
+          if (file.size > (MAX_SIZES[mappedType] || MAX_SIZES.FILE)) {
+            alert(`${file.name} exceeds size limit.`);
+            return false;
+          }
+          return true;
+        });
 
-      setAttachments((prev) => [...prev, ...newAttachments]);
-    }, []);
+        const newAttachments = validFiles.map((file) => ({
+          file,
+          type: "MEDIA",
+          previewUrl: file.type.startsWith("image/")
+            ? URL.createObjectURL(file)
+            : null,
+        }));
+
+        setAttachments((prev) => [...prev, ...newAttachments]);
+      },
+      [setAttachments],
+    );
 
     const showSendButton =
       messageInput.trim().length > 0 || attachments.length > 0;
@@ -302,7 +285,6 @@ const MessageInput = React.memo(
           <button
             onClick={() => setShowAttachMenu(!showAttachMenu)}
             className="attach-button p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
-            aria-label="Attach file"
           >
             <Paperclip className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -334,6 +316,7 @@ const MessageInput = React.memo(
           <input
             ref={documentInputRef}
             type="file"
+            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv,application/zip,audio/*"
             multiple
             hidden
             onChange={(e) => handleFileUpload(e, "document")}
@@ -345,7 +328,6 @@ const MessageInput = React.memo(
           <button
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             className="emoji-button p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
-            aria-label="Add emoji"
           >
             <Smile className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -355,8 +337,6 @@ const MessageInput = React.memo(
               <EmojiPicker
                 onEmojiClick={handleEmojiClick}
                 theme="auto"
-                searchDisabled={false}
-                emojiStyle="native"
                 width={350}
                 height={400}
               />
@@ -373,38 +353,30 @@ const MessageInput = React.memo(
               setMessageInput(e.target.value);
               handleTyping();
             }}
-            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
             className="w-full px-4 py-2 rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
-            aria-label="Message input"
           />
         </div>
 
-        {/* Send Button / Voice Button */}
+        {/* Send Button / Voice */}
         {!showSendButton ? (
           <button
             onClick={onStartRecording}
             className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
-            aria-label="Record voice message"
           >
             <Mic className="w-5 h-5 text-primary" />
           </button>
         ) : (
           <button
-            onClick={
-              editingMessage ? () => console.log("Update") : handleSendMessage
-            }
-            disabled={
-              messageInput.trim().length === 0 && attachments.length === 0
-            }
+            onClick={handleSendMessage}
+            disabled={!showSendButton}
             className={cn(
               "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
-              messageInput.trim()
+              showSendButton
                 ? "bg-primary text-primary-foreground hover:opacity-90 hover:scale-105 active:scale-95"
                 : "bg-muted text-muted-foreground cursor-not-allowed",
             )}
-            aria-label={editingMessage ? "Update message" : "Send message"}
           >
             <Send className="w-4 h-4" />
             {editingMessage ? "Update" : "Send"}

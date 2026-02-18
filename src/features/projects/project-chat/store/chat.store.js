@@ -5,6 +5,7 @@ import { mapConversationType } from "../utils/Chattypemapper";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
 import { transformMessage } from "../utils/messageHelpers";
+import { toast } from "sonner";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -548,6 +549,7 @@ const useChatStore = create(
           return sentMessage;
         } catch (error) {
           console.error("❌ Failed to send message:", error);
+          toast.error("Failed to send message. Please try again.", {description: error.response?.data?.message || error.message});
 
           const updated = get().messagesByConversation[conversationId];
 
