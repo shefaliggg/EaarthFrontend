@@ -9,9 +9,9 @@ export async function exportCalendarPdf({
 }) {
   if (!ref?.current) return;
 
-  try {
-    toast.loading("Generating PDF...");
+  const toastId = toast.loading("Generating PDF...");
 
+  try {
     const dataUrl = await toPng(ref.current, {
       backgroundColor: "#ffffff",
       pixelRatio: 2,
@@ -28,10 +28,11 @@ export async function exportCalendarPdf({
 
     pdf.addImage(dataUrl, "PNG", 0, 0, width, height);
     pdf.save(fileName);
-
+    toast.dismiss(toastId);
     toast.success("PDF downloaded");
   } catch (err) {
     console.error(err);
+    toast.dismiss(toastId);
     toast.error("Failed to generate PDF");
   }
 }

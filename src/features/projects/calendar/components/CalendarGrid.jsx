@@ -15,7 +15,7 @@ export default function CalendarGrid({
   events,
   conflicts,
   analyticsData,
-  onEventClick, // This is the prop we need to pass down
+  onEventClick, 
 }) {
   switch (view) {
     case "month":
@@ -34,7 +34,7 @@ export default function CalendarGrid({
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
           onDayClick={onDayClick}
-          onEventClick={onEventClick} // Pass to Day View as well if needed
+          onEventClick={onEventClick} 
           events={events}
         />
       );
@@ -45,7 +45,7 @@ export default function CalendarGrid({
           setCurrentDate={setCurrentDate}
           events={events}
           onDayClick={onDayClick}
-          onEventClick={onEventClick} // <--- FIXED: Passed Prop
+          onEventClick={onEventClick} 
         />
       );
     case "gantt":

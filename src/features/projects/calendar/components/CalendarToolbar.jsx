@@ -179,11 +179,6 @@ function CalendarToolbar({
               <Eye className="w-4 h-4" />
             </Button>
           </InfoTooltip>
-          <InfoTooltip content="Export PDF">
-            <Button variant="default" size="icon" onClick={() => {}}>
-              <Download className="w-4 h-4" />
-            </Button>
-          </InfoTooltip>
         </div>
       </div>
     </>
