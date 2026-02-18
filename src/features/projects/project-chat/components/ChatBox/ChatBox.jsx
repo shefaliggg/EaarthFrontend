@@ -217,7 +217,7 @@ function ChatBox() {
 
   return (
     <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex flex-col mx-auto">
-      <ChatHeader selectedChat={selectedChat} />
+      <ChatHeader />
 
       <div
         ref={scrollContainerRef}

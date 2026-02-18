@@ -17,6 +17,7 @@ const useChatStore = create(
   devtools(
     (set, get) => ({
       conversations: [],
+      onlineUsers: new Set(),
       messagesByConversation: {},
       selectedChat: null,
       isLoadingConversations: false,
@@ -114,22 +115,71 @@ const useChatStore = create(
         });
 
         socket.on("user:online", (userId) => {
-          console.log("🟢 User online:", userId);
+          console.log("user online", userId);
+          const state = get();
+
+          const updated = new Set(state.onlineUsers);
+          updated.add(userId);
+
+          set({ onlineUsers: updated });
+
+          // Update DM conversations
+          set({
+            conversations: state.conversations.map((conv) =>
+              conv.type === "dm" && conv.userId === userId
+                ? { ...conv, status: "online" }
+                : conv,
+            ),
+          });
         });
 
         socket.on("user:offline", (userId) => {
-          console.log("🔴 User offline:", userId);
+          console.log("user offline", userId);
+          const state = get();
+
+          const updated = new Set(state.onlineUsers);
+          updated.delete(userId);
+
+          set({ onlineUsers: updated });
+
+          set({
+            conversations: state.conversations.map((conv) =>
+              conv.type === "dm" && conv.userId === userId
+                ? { ...conv, status: "offline" }
+                : conv,
+            ),
+          });
         });
 
-        socket.on(
-          "conversation:online-count",
-          ({ conversationId, onlineCount }) => {
-            console.log("👥 Online count:", { conversationId, onlineCount });
-            get().updateConversation(conversationId, { online: onlineCount });
-          },
-        );
+        socket.on("presence:init", (userIds) => {
+          const onlineSet = new Set(userIds);
+
+          set({
+            onlineUsers: onlineSet,
+            conversations: get().conversations.map((conv) =>
+              conv.type === "dm" && onlineSet.has(conv.userId)
+                ? { ...conv, status: "online" }
+                : { ...conv, status: "offline" },
+            ),
+          });
+        });
 
         console.log("✅ Chat socket listeners attached");
+      },
+
+      getGroupOnlineCount: (group) => {
+         if (!Array.isArray(group?.members)) return 0;
+
+        const online = get().onlineUsers;
+
+        return group.members.filter((member) => {
+          const id =
+            typeof member.userId === "string"
+              ? member.userId
+              : member.userId?._id;
+
+          return id && online.has(id.toString());
+        }).length;
       },
 
       joinConversation: (conversationId) => {
@@ -266,9 +316,7 @@ const useChatStore = create(
                 conv.department?.name?.charAt(0)?.toUpperCase() ||
                 "U",
               role: otherUser?.userId?.role || "Member",
-              status: "online",
-              members: conv.members?.length || 0,
-              online: 0,
+              members: Array.isArray(conv.members) ? conv.members : [],
               unread: unreadCount,
               mentions: 0,
               lastMessage: conv.lastMessage?.preview || "",
