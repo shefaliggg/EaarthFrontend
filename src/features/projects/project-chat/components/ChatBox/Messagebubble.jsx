@@ -19,6 +19,7 @@ import {
   CornerDownRight,
   AlertCircle,
   RotateCcw,
+  Image,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -29,6 +30,7 @@ import ForwardMessageDialog from "../../Dialogs/ForwardMessageDialog";
 import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
+import { toast } from "sonner";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -54,8 +56,6 @@ export default function MessageBubble({
   isGroupEnd,
   isSelected,
   onSelect,
-  hoveredMessageId,
-  setHoveredMessageId,
   showReactionPicker,
   setShowReactionPicker,
   onScrollToReply,
@@ -80,7 +80,6 @@ export default function MessageBubble({
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
-  const showActions = hoveredMessageId === message.id;
   const isOwn = message.isOwn;
   const isFavorited = message._raw?.starredBy?.length > 0;
   const isForwarded = message.isForwarded;
@@ -121,7 +120,7 @@ export default function MessageBubble({
   const handleCopy = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
-      alert("Message copied to clipboard!");
+      toast.success("Message copied to clipboard!");
     }
   };
 
@@ -137,8 +136,6 @@ export default function MessageBubble({
     setPreviewImageUrl(imageUrl);
     setShowImagePreview(true);
   };
-
-  console.log("message replty data", message.replyTo);
 
   if (message.deleted) {
     return (
@@ -165,11 +162,11 @@ export default function MessageBubble({
 
   return (
     <div
-      id={`message-${message.id}`}
+      id={`message-${message.clientTempId || message.id}`}
       className={cn(
-        "flex gap-3 group transition-all",
+        "flex gap-3 transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
-        isGroupStart ? "mt-4" : "mt-1",
+        isGroupStart ? "mt-4" : "mt-0",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
@@ -186,11 +183,7 @@ export default function MessageBubble({
         </div>
       )}
 
-      <div
-        onMouseEnter={() => setHoveredMessageId(message.id)}
-        onMouseLeave={() => setHoveredMessageId(null)}
-        className={cn("flex flex-col max-w-[60%]")}
-      >
+      <div className={cn("flex flex-col max-w-[60%]")}>
         {!isOwn && isGroupStart && (
           <div className="flex items-center gap-2 mb-1 px-1">
             <span className="font-semibold text-xs text-foreground">
@@ -205,23 +198,23 @@ export default function MessageBubble({
           </div>
         )}
 
-        <AutoHeight className="w-full">
+        <div className="w-full group">
           <div
             className={cn(
-              "flex gap-3 w-fit",
+              "flex gap-3",
               isOwn ? "flex-row-reverse ml-auto" : "",
             )}
           >
             <div
               className={cn(
-                "relative p-1 transition-all break-words max-w-full w-fit",
+                "relative p-1 transition-all break-words max-w-full",
                 isOwn ? "ml-auto" : "",
                 isOwn
                   ? "bg-primary dark:bg-primary/40 text-background"
                   : "bg-muted",
-                isOwn && "rounded-2xl rounded-tr-none",
+                isOwn && "rounded-md rounded-tr-none",
                 // isOwn && isGroupEnd && "",
-                !isOwn && "rounded-2xl rounded-tl-none",
+                !isOwn && "rounded-md rounded-tl-none",
                 // !isOwn && isGroupStart && "rounded-2xl ",
                 isSelected && "ring-2 ring-primary/50 scale-[1.02]",
               )}
@@ -231,7 +224,7 @@ export default function MessageBubble({
                 {isForwarded && (
                   <div
                     className={cn(
-                      "flex items-center gap-1.5 pb-1 pr-2",
+                      "flex items-center gap-1 pb-0.5 pr-2 pl-1 min-w-20",
                       isOwn ? "border-primary-foreground/20" : "border-border",
                     )}
                   >
@@ -275,155 +268,64 @@ export default function MessageBubble({
                   </div>
                 )}
 
-                {/* Message Content */}
-                {(message.type === "text" || !message.type) &&
-                  message.content && (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
-                      {highlightText(message.content)}
-                    </p>
-                  )}
+                {message.type === "text" && message.content && (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words px-2">
+                    {highlightText(message.content)}
+                  </p>
+                )}
 
-                {/* Image rendering */}
-                {message.type === "image" && message.files?.length > 0 && (
+                {message.files && message.files.length > 0 && (
                   <div
-                    className={`grid ${message.files?.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1 `}
+                    className={`grid ${message.files.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1`}
                   >
                     {message.files.map((file, index) => {
-                      const imageUrl = getFileUrl(file?.url);
-
-                      return (
-                        <div className="overflow-hidden aspect-4/3 h-[150px]">
-                          <img
+                      const url = getFileUrl(file.url);
+                      if (file.mime.startsWith("image/"))
+                        return (
+                          <MessageImage
                             key={index}
-                            src={imageUrl}
-                            alt={`Shared image ${index + 1}`}
-                            onClick={() => handleImageClick(imageUrl)}
-                            className="cursor-pointer rounded-xl w-full h-full object-cover hover:opacity-90 transition-opacity border border-primary/10"
+                            file={file}
+                            url={url}
+                            onClick={handleImageClick}
+                            single={message.files.length === 1}
                           />
-                        </div>
+                        );
+                      if (file.mime.startsWith("video/"))
+                        return (
+                          <MessageVideo
+                            key={index}
+                            file={file}
+                            url={url}
+                            single={message.files.length === 1}
+                          />
+                        );
+                      if (file.mime.startsWith("audio/"))
+                        return (
+                          <MessageAudio
+                            key={index}
+                            file={file}
+                            url={url}
+                            single={message.files.length === 1}
+                          />
+                        );
+                      return (
+                        <MessageFile
+                          key={index}
+                          file={file}
+                          url={url}
+                          single={message.files.length === 1}
+                        />
                       );
                     })}
                   </div>
                 )}
+
                 {message.caption && (
                   <p className="mt-2 text-sm px-2">{message.caption}</p>
                 )}
 
-                {/* Video rendering */}
-                {message.type === "video" && message.files?.length > 0 && (
-                  <div className="space-y-2">
-                    {message.files.map((file, index) => {
-                      const videoUrl = getFileUrl(file.url);
-
-                      return (
-                        <video
-                          key={index}
-                          ref={videoRef}
-                          src={videoUrl}
-                          controls
-                          className="rounded-xl max-w-[300px] max-h-[300px]"
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      );
-                    })}
-
-                    {message.caption && (
-                      <p className="text-sm mt-1">{message.caption}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Audio rendering */}
-                {message.type === "audio" && message.files?.length === 1 && (
-                  <div className="flex items-center gap-3 min-w-[200px] bg-muted/50 p-3 rounded-xl">
-                    <button
-                      onClick={() => {
-                        if (!audioRef.current) return;
-
-                        if (isPlaying) {
-                          audioRef.current.pause();
-                        } else {
-                          audioRef.current.play();
-                        }
-
-                        setIsPlaying(!isPlaying);
-                      }}
-                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Play className="w-5 h-5 text-primary" />
-                      )}
-                    </button>
-
-                    <div className="flex-1">
-                      <div className="h-1 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${playProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Voice message
-                      </p>
-                    </div>
-
-                    <Volume2 className="w-4 h-4 text-muted-foreground" />
-
-                    <audio
-                      ref={audioRef}
-                      src={getFileUrl(message.files[0].url)}
-                      onEnded={() => {
-                        setIsPlaying(false);
-                        setPlayProgress(0);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Document/File rendering */}
-                {(message.type === "file" || message.type === "document") &&
-                  message.files?.length > 0 &&
-                  message.files.map((file, index) => {
-                    const fileUrl = getFileUrl(file.url);
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 min-w-[200px]"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-primary" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {file.name || "Document"}
-                          </p>
-                          {file.size && (
-                            <p className="text-xs text-muted-foreground">
-                              {(file.size / 1024).toFixed(2)} KB
-                            </p>
-                          )}
-                        </div>
-
-                        <a
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="p-2 hover:bg-muted rounded-xl"
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                      </div>
-                    );
-                  })}
-
                 {isOwn && (
-                  <div className="flex items-center justify-end gap-1 mt-1 pl-3">
+                  <div className="flex items-center justify-end gap-1 mt-0 pl-3">
                     {message.edited && (
                       <span
                         className={cn(
@@ -473,79 +375,80 @@ export default function MessageBubble({
             </div>
           )}
 
-          {showActions && (
-            <div
-              className={cn(
-                "flex gap-1 mt-1.5 transition-all duration-300 ease-out",
-                isOwn ? "justify-end" : "justify-start",
-              )}
-            >
+          <div
+            className={cn(
+              "flex gap-1 transition-all duration-300 ease-out",
+              isOwn ? "justify-end" : "justify-start",
+              "opacity-0 translate-y-1 scale-95",
+              "max-h-0 overflow-hidden opacity-0 scale-95",
+              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-1",
+            )}
+          >
+            <ActionButton
+              icon={Reply}
+              tooltip="Reply"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReply(message);
+              }}
+            />
+            <ActionButton
+              icon={Forward}
+              tooltip="Forward"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleForward();
+              }}
+            />
+            <ActionButton
+              icon={Star}
+              tooltip={isFavorited ? "Unstar" : "Star"}
+              className={isFavorited ? "text-yellow-500" : ""}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(message.id, isFavorited);
+              }}
+            />
+            <ActionButton
+              icon={Copy}
+              tooltip="Copy"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy();
+              }}
+            />
+            <ActionButton
+              icon={Smile}
+              tooltip="React"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReactionPicker(
+                  showReactionPicker === message.id ? null : message.id,
+                );
+              }}
+            />
+            {isOwn && canEdit && (
               <ActionButton
-                icon={Reply}
-                tooltip="Reply"
+                icon={Edit3}
+                tooltip="Edit"
+                className="text-blue-500"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onReply(message);
+                  onEdit(message);
                 }}
               />
-              <ActionButton
-                icon={Forward}
-                tooltip="Forward"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleForward();
-                }}
-              />
-              <ActionButton
-                icon={Star}
-                tooltip={isFavorited ? "Unstar" : "Star"}
-                className={isFavorited ? "text-yellow-500" : ""}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(message.id, isFavorited);
-                }}
-              />
-              <ActionButton
-                icon={Copy}
-                tooltip="Copy"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy();
-                }}
-              />
-              <ActionButton
-                icon={Smile}
-                tooltip="React"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowReactionPicker(
-                    showReactionPicker === message.id ? null : message.id,
-                  );
-                }}
-              />
-              {isOwn && canEdit && (
-                <ActionButton
-                  icon={Edit3}
-                  tooltip="Edit"
-                  className="text-blue-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(message);
-                  }}
-                />
-              )}
-              <ActionButton
-                icon={Trash2}
-                tooltip="Delete"
-                className="text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              />
-            </div>
-          )}
-        </AutoHeight>
+            )}
+            <ActionButton
+              icon={Trash2}
+              tooltip="Delete"
+              className="text-red-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+            />
+          </div>
+        </div>
 
         {showReactionPicker === message.id && (
           <div
@@ -630,4 +533,139 @@ function MessageStateIcon({ state }) {
     default:
       return null;
   }
+}
+
+function MessageImage({ file, url, onClick, single = true }) {
+  const [loaded, setLoaded] = React.useState(false);
+
+  return (
+    <div
+      className={`overflow-hidden  w-full ${single ? " max-w-[260px] max-h-[260px]" : " max-w-[200px] max-h-[200px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+    >
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
+          <Image className="w-6 h-6 text-primary" />
+        </div>
+      )}
+      <img
+        src={url}
+        alt={file.name || "Shared image"}
+        onClick={() => onClick(url)}
+        onLoad={() => setLoaded(true)}
+        className={`cursor-pointer rounded-sm w-full h-auto ${single ? "object-cover" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
+}
+
+function MessageVideo({ file, url, single = true }) {
+  return (
+    <video
+      src={url}
+      controls
+      className={`rounded-xl  w-full  bg-muted/90 ${single ? "object-cover max-w-[260px] max-h-[260px]" : "aspect-square max-w-[200px] max-h-[200px]"}`}
+    >
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
+function MessageAudio({ file, url, single = true }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playProgress, setPlayProgress] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setPlayProgress((prev) => {
+          if (!audioRef.current) return 0;
+          const progress =
+            (audioRef.current.currentTime / audioRef.current.duration) * 100;
+          if (progress >= 100) {
+            setIsPlaying(false);
+            clearInterval(interval);
+          }
+          return progress;
+        });
+      }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying]);
+
+  return (
+    <div
+      className={`flex items-center gap-1  w-full ${single ? " min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+    >
+      <button
+        onClick={() => {
+          if (!audioRef.current) return;
+          if (isPlaying) audioRef.current.pause();
+          else audioRef.current.play();
+          setIsPlaying(!isPlaying);
+        }}
+        className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+      >
+        {isPlaying ? (
+          <Pause className="w-5 h-5 text-primary" />
+        ) : (
+          <Play className="w-5 h-5 text-primary" />
+        )}
+      </button>
+
+      <div className="flex-1">
+        <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${playProgress}%` }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">Voice message</p>
+      </div>
+
+      <Volume2 className="w-4 h-4 text-muted-foreground" />
+
+      <audio
+        ref={audioRef}
+        src={url}
+        onEnded={() => {
+          setIsPlaying(false);
+          setPlayProgress(0);
+        }}
+      />
+    </div>
+  );
+}
+
+function MessageFile({ file, url, single }) {
+  return (
+    <div
+      className={`flex items-center gap-1  w-full ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+    >
+      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <FileText className="w-5 h-5 text-primary" />
+      </div>
+
+      <div className="flex-1 min-w-0 pl-1">
+        <p className="text-sm font-medium truncate text-foreground">
+          {file.name || "Document"}
+        </p>
+        {file.size && (
+          <p className="text-xs text-muted-foreground">
+            {(file.size / 1024).toFixed(2)} KB
+          </p>
+        )}
+      </div>
+
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        download
+        className="p-2 hover:bg-muted rounded-xl"
+      >
+        <Download className="w-4 h-4 text-primary" />
+      </a>
+    </div>
+  );
 }

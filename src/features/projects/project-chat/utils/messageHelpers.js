@@ -1,6 +1,3 @@
-// src/features/chat/utils/messageHelpers.js
-// ✅ Helper functions for message operations
-
 /**
  * Format timestamp to readable time
  */

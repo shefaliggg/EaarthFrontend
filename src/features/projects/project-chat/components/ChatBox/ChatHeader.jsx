@@ -1,6 +1,3 @@
-// src/features/chat/components/ChatBox/ChatHeader.jsx
-// ✅ EXACT UI: Chat header matching original design
-
 import React, { useState } from "react";
 import {
   Search,
@@ -9,16 +6,24 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Phone,
+  Video,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Input } from "@/shared/components/ui/input";
+import { Button } from "../../../../../shared/components/ui/button";
+import useChatStore from "../../store/chat.store";
 
-export default function ChatHeader({ selectedChat }) {
+export default function ChatHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [activeResultIndex, setActiveResultIndex] = useState(0);
+
+  const { selectedChat, getGroupOnlineCount } = useChatStore();
+
+  const onlineCount = getGroupOnlineCount(selectedChat);
 
   return (
     <div className="flex items-center justify-between p-3 border-b rounded-t-3xl backdrop-blur-sm flex-shrink-0">
@@ -26,18 +31,14 @@ export default function ChatHeader({ selectedChat }) {
         <>
           {/* Chat Info */}
           <div className="flex items-center gap-2.5">
-            {selectedChat.type === "dm" ? (
-              <Avatar className="h-9 w-9 border-2 border-primary/20">
+            {selectedChat.avatar && (
+              <Avatar className="h-9! w-9! border-2 border-primary/20">
                 <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
-                  {selectedChat.avatar}
+                  {selectedChat.type === "dm"
+                    ? selectedChat.avatar
+                    : selectedChat.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-            ) : (
-              <div className="p-2 rounded-full bg-primary/10">
-                {selectedChat.icon && (
-                  <selectedChat.icon className="w-5 h-5 text-primary" />
-                )}
-              </div>
             )}
 
             <div>
@@ -51,23 +52,28 @@ export default function ChatHeader({ selectedChat }) {
                         selectedChat.status === "online" &&
                           "bg-green-500 animate-pulse",
                         selectedChat.status === "away" && "bg-yellow-500",
-                        selectedChat.status === "offline" && "bg-gray-400"
+                        selectedChat.status === "offline" && "bg-gray-400",
                       )}
                     />
                     <span>{selectedChat.role}</span>
                   </>
                 ) : (
                   <>
-                    <span>{selectedChat.members || 0} members</span>
-                    {selectedChat.online > 0 && (
-                      <>
-                        <span className="w-0.5 h-0.5 bg-muted-foreground rounded-full" />
-                        <span className="flex items-center gap-1 text-green-500 font-medium">
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                          {selectedChat.online} online
-                        </span>
-                      </>
-                    )}
+                    <span>{selectedChat.members.length || 0} members</span>
+                    <span className="w-0.5 h-0.5 bg-muted-foreground rounded-full" />
+                    <span
+                      className={cn(
+                        "flex items-center gap-1 font-medium",
+                        onlineCount > 0
+                          ? "text-green-500"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {onlineCount > 0 && (
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      )}
+                      {onlineCount} online
+                    </span>
                   </>
                 )}
               </div>
@@ -76,30 +82,53 @@ export default function ChatHeader({ selectedChat }) {
 
           {/* Header Actions */}
           <div className="flex items-center gap-1.5">
-            <button
-              className="h-8 px-2.5 rounded-md text-[10px] flex items-center gap-1.5 border bg-background hover:bg-accent transition-colors"
+            <Button
+              variant={"outline"}
+              size={"sm"}
               aria-label="Summarize conversation"
+              disabled
             >
               <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span className="hidden sm:inline">Summarize</span>
-            </button>
+            </Button>
 
-            <div className="w-px h-8 bg-border mx-0.5" />
+            <Button
+              // onClick={() => setIsSearchOpen(true)}
+              variant={"ghost"}
+              size={"icon"}
+              aria-label="Start Voice Call"
+              disabled
+            >
+              <Phone className="w-4 h-4" />
+            </Button>
+            <Button
+              // onClick={() => setIsSearchOpen(true)}
+              variant={"ghost"}
+              size={"icon"}
+              aria-label="Start Video Call"
+              disabled
+            >
+              <Video className="w-4 h-4" />
+            </Button>
 
-            <button
+            <Button
               onClick={() => setIsSearchOpen(true)}
-              className="p-1.5 rounded-md hover:bg-accent transition-colors"
+              variant={"ghost"}
+              size={"icon"}
               aria-label="Search messages"
+              disabled
             >
               <Search className="w-4 h-4" />
-            </button>
+            </Button>
 
-            <button
-              className="p-1.5 rounded-md hover:bg-accent transition-colors"
+            <Button
+              variant={"ghost"}
+              size={"icon"}
               aria-label="Settings"
+              disabled
             >
               <Settings2 className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -142,7 +171,7 @@ export default function ChatHeader({ selectedChat }) {
               <button
                 onClick={() =>
                   setActiveResultIndex(
-                    Math.min(searchResults.length - 1, activeResultIndex + 1)
+                    Math.min(searchResults.length - 1, activeResultIndex + 1),
                   )
                 }
                 disabled={activeResultIndex === searchResults.length - 1}

@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 import MessageBubble from "./Messagebubble";
 import TypingIndicator from "./TypingIndicator";
 import useChatStore from "../../store/chat.store";
+import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 
 export default function MessageList({
   messages,
@@ -17,7 +18,7 @@ export default function MessageList({
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [searchQuery] = useState("");
-  const { selectedChat, typingUsers } = useChatStore();
+  const { selectedChat } = useChatStore();
 
   const scrollToMessage = (messageId) => {
     const element = document.getElementById(`message-${messageId}`);
@@ -40,13 +41,6 @@ export default function MessageList({
 
   return (
     <>
-      {/* Loading indicator at top */}
-      {isLoadingMessages && messagesData.hasMore && (
-        <div className="flex justify-center py-2">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-        </div>
-      )}
-
       {/* Messages */}
       {messages.map((msg, index) => {
         const prevMsg = messages[index - 1];
@@ -97,7 +91,7 @@ export default function MessageList({
         // Regular message
         return (
           <MessageBubble
-            key={msg.id}
+            key={msg.clientTempId || msg.id}
             message={msg}
             isGroupStart={isGroupStart}
             isGroupEnd={isGroupEnd}
@@ -119,9 +113,6 @@ export default function MessageList({
           />
         );
       })}
-
-      {/* Typing Indicator */}
-      <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
     </>
   );
 }
