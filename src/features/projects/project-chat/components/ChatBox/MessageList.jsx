@@ -18,7 +18,7 @@ export default function MessageList({
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [searchQuery] = useState("");
-  const { selectedChat, typingUsers } = useChatStore();
+  const { selectedChat } = useChatStore();
 
   const scrollToMessage = (messageId) => {
     const element = document.getElementById(`message-${messageId}`);
@@ -41,11 +41,6 @@ export default function MessageList({
 
   return (
     <>
-      {/* Loading indicator at top */}
-      {isLoadingMessages && messagesData.hasMore && (
-        <ChatLoaderSkeleton count={2} />
-      )}
-
       {/* Messages */}
       {messages.map((msg, index) => {
         const prevMsg = messages[index - 1];
@@ -118,9 +113,6 @@ export default function MessageList({
           />
         );
       })}
-
-      {/* Typing Indicator */}
-      <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
     </>
   );
 }

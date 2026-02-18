@@ -15,11 +15,13 @@ import EditBanner from "./EditBanner";
 import RecordingBar from "./RecordingBar";
 import ReplyToMessagePreview from "./ReplyToMessagePreview";
 import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
+import TypingIndicator from "./TypingIndicator";
 
 function ChatBox() {
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastMessageIdRef = useRef(null);
+  const topLoaderRef = useRef(null);
 
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
@@ -37,6 +39,7 @@ function ChatBox() {
     markAsRead,
     emitConversationRead,
     isLoadingMessages,
+    typingUsers,
   } = useChatStore();
 
   const messagesData = useMemo(() => {
@@ -92,12 +95,17 @@ function ChatBox() {
       // load older messages when scrollTop is near top
       if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
         const prevScrollHeight = container.scrollHeight;
+        const prevScrollTop = container.scrollTop;
+
+        // measure loader height BEFORE fetch
+        const loaderHeight = topLoaderRef.current?.offsetHeight || 0;
 
         loadMessages(selectedChat.id, true).then(() => {
           requestAnimationFrame(() => {
-            const newScrollHeight = container.scrollHeight - 50;
-            container.scrollTop =
-              newScrollHeight - prevScrollHeight + scrollTop;
+            const newScrollHeight = container.scrollHeight;
+            const heightDiff = newScrollHeight - prevScrollHeight;
+
+            container.scrollTop = prevScrollTop + heightDiff - loaderHeight;
           });
         });
       }
@@ -160,6 +168,18 @@ function ChatBox() {
     }
   }, [messages]);
 
+  useLayoutEffect(() => {
+    const typing = typingUsers[selectedChat?.id] || [];
+    if (!typing.length) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    if (isUserNearBottom()) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [typingUsers, selectedChat?.id]);
+
   // ────────────────────────────────
   // Scroll to bottom button
   // ────────────────────────────────
@@ -218,6 +238,12 @@ function ChatBox() {
           <ChatLoaderSkeleton count={6} />
         )}
 
+        {isLoadingMessages && messagesData.hasMore && (
+          <div ref={topLoaderRef}>
+            <ChatLoaderSkeleton count={2} />
+          </div>
+        )}
+
         {messages.length > 0 && (
           <MessageList
             messages={messages}
@@ -226,17 +252,7 @@ function ChatBox() {
             onReply={setReplyTo}
             onEdit={setEditingMessage}
           />
-
-          // <>
-          //   {messages.map((m) => (
-          //     <div key={m.id} className="p-4 border">
-          //       {m.content}
-          //     </div>
-          //   ))}
-          // </>
         )}
-
-        {/* <div className="bg-red-500 h-[2000px]" /> */}
 
         {!isLoadingMessages && messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
@@ -246,6 +262,9 @@ function ChatBox() {
             </div>
           </div>
         )}
+
+        {/* Typing Indicator */}
+        <TypingIndicator typingUsers={typingUsers[selectedChat?.id] || []} />
 
         {/* Scroll anchor */}
         <div ref={messagesEndRef} />

@@ -66,28 +66,31 @@ const useChatStore = create(
           get().markConversationMessagesAsRead(conversationId, userId);
         });
 
-        socket.on("typing:start", ({ conversationId, userId }) => {
+        socket.on("typing:start", ({ conversationId, userId, name }) => {
           const state = get();
           const currentUserId = getCurrentUserId();
           if (userId === currentUserId) return;
 
           const currentArray = state.typingUsers[conversationId] || [];
-          if (currentArray.includes(userId)) return;
+
+          // ✅ Proper duplicate check
+          if (currentArray.some((u) => u.userId === userId)) return;
 
           set({
             typingUsers: {
               ...state.typingUsers,
-              [conversationId]: [...currentArray, userId],
+              [conversationId]: [...currentArray, { userId, name }],
             },
           });
 
           // ⏳ auto remove after 5 seconds
           setTimeout(() => {
             const latest = get().typingUsers[conversationId] || [];
+
             set({
               typingUsers: {
                 ...get().typingUsers,
-                [conversationId]: latest.filter((id) => id !== userId),
+                [conversationId]: latest.filter((u) => u.userId !== userId),
               },
             });
           }, 5000);
