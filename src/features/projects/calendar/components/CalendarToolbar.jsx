@@ -18,19 +18,19 @@ import {
   Download,
   Plane,
   Clapperboard,
-  Settings, // Added Settings icon
+  Settings,
+  Eye,
 } from "lucide-react";
 
 import SearchBar from "@/shared/components/SearchBar";
-import { SmartIcon } from "@/shared/components/SmartIcon";
-import getApiUrl from "../../../../shared/config/enviroment";
-import { useState } from "react";
+// import getApiUrl from "../../../../shared/config/enviroment";
 import CalendarFilterTabs from "./CalendarFilterTabs";
 import { useNavigate, useParams } from "react-router-dom";
 
 function CalendarToolbar({
   currentDate,
   eventsCount,
+  onPreview,
   search,
   setSearch,
   period,
@@ -43,7 +43,6 @@ function CalendarToolbar({
 }) {
   const navigate = useNavigate();
   const { projectName } = useParams();
-  // Helper to get the display title based on current view
   const getTitle = () => {
     switch (view) {
       case "year":
@@ -59,7 +58,6 @@ function CalendarToolbar({
     }
   };
 
-  // Helper to get the subtitle label
   const getSubtitle = () => {
     switch (view) {
       case "year":
@@ -79,8 +77,6 @@ function CalendarToolbar({
         return `${eventsCount} events scheduled`;
     }
   };
-
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <>
@@ -141,12 +137,14 @@ function CalendarToolbar({
               onChange={setView}
             />
           </div>
-                  {/* Shooting Calendar Button */}
+
           <InfoTooltip content="Shooting Calendar">
             <Button
               variant="default"
               size="icon"
-              onClick={() => navigate(`/projects/${projectName}/calendar/shooting`)}
+              onClick={() =>
+                navigate(`/projects/${projectName}/calendar/shooting`)
+              }
             >
               <Clapperboard className="w-4 h-4" />
             </Button>
@@ -168,35 +166,21 @@ function CalendarToolbar({
             <Button
               variant="default"
               size="icon"
-              onClick={() => navigate(`/projects/${projectName}/calendar/settings`)}
+              onClick={() =>
+                navigate(`/projects/${projectName}/calendar/settings`)
+              }
             >
               <Settings className="w-4 h-4" />
             </Button>
           </InfoTooltip>
 
-          <InfoTooltip content="Print Calendar">
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => window.print()}
-            >
-              <Printer className="w-4 h-4" />
+          <InfoTooltip content="PDF Preview">
+            <Button variant="default" size="icon" onClick={onPreview}>
+              <Eye className="w-4 h-4" />
             </Button>
           </InfoTooltip>
-
-          <InfoTooltip content="Download Calendar">
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => {
-                const apiBase = getApiUrl();
-                const projectName = window.location.pathname.split("/")[2];
-
-                const url = `${apiBase}/calendar/export-pdf?view=${view}&date=${currentDate.toISOString()}&projectName=${projectName}`;
-
-                window.open(url, "_blank");
-              }}
-            >
+          <InfoTooltip content="Export PDF">
+            <Button variant="default" size="icon" onClick={() => {}}>
               <Download className="w-4 h-4" />
             </Button>
           </InfoTooltip>

@@ -7,19 +7,36 @@ import UpcomingEvents from "../components/UpcommingEvents";
 import useCalendar from "../hooks/useCalendar";
 import { toast } from "sonner";
 import EditEventModal from "../components/EditEventModal";
-import { deleteCalendarEvent, updateCalendarEvent } from "../../store/calendar.thunks";
+import {
+  deleteCalendarEvent,
+  updateCalendarEvent,
+} from "../../store/calendar.thunks";
 import EventDetailsModal from "../components/EventDetailsModal";
+import CalendarPreviewPage from "../components/preview/CalendarPreviewPage";
 
 function ProjectCalendar() {
   const dispatch = useDispatch();
+  const [showPreview, setShowPreview] = useState(false);
   const calendar = useSelector((state) => state.calendar);
-  
-  const { openCreateModal } = useOutletContext() || {}; 
 
-  const { 
-    view, currentDate, events, conflicts, analyticsData, 
-    upcomingEvents, eventsCount, search, period,
-    setView, setSearch, setPeriod, prev, next, today
+  const { openCreateModal } = useOutletContext() || {};
+
+  const {
+    view,
+    currentDate,
+    events,
+    conflicts,
+    analyticsData,
+    upcomingEvents,
+    eventsCount,
+    search,
+    period,
+    setView,
+    setSearch,
+    setPeriod,
+    prev,
+    next,
+    today,
   } = useCalendar();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -28,10 +45,10 @@ function ProjectCalendar() {
 
   const { currentUser: user } = useSelector((state) => state.user);
 
-  const canModify = user && (
-    user.userType === "studio_admin" || 
-    (user.userType === "crew" && user.accessPolicy === "no_contract")
-  );
+  const canModify =
+    user &&
+    (user.userType === "studio_admin" ||
+      (user.userType === "crew" && user.accessPolicy === "no_contract"));
 
   const handleDayClick = () => {
     if (canModify) {
@@ -46,7 +63,6 @@ function ProjectCalendar() {
     setIsDetailsModalOpen(true);
   };
 
-
   const handleEditRequest = (event) => {
     setIsDetailsModalOpen(false);
     setIsEditModalOpen(true);
@@ -54,28 +70,34 @@ function ProjectCalendar() {
 
   const handleUpdate = async (eventCode, eventData) => {
     try {
-      const result = await dispatch(updateCalendarEvent({ eventCode, eventData }));
-      if (result.meta.requestStatus === 'fulfilled') {
+      const result = await dispatch(
+        updateCalendarEvent({ eventCode, eventData }),
+      );
+      if (result.meta.requestStatus === "fulfilled") {
         toast.success("Event updated successfully!");
         setIsEditModalOpen(false);
         setSelectedEvent(null);
       } else {
         toast.error("Failed to update event.");
       }
-    } catch (e) { toast.error("Error updating event"); }
+    } catch (e) {
+      toast.error("Error updating event");
+    }
   };
 
   const handleDelete = async (eventCode) => {
     try {
       const result = await dispatch(deleteCalendarEvent(eventCode));
-      if (result.meta.requestStatus === 'fulfilled') {
+      if (result.meta.requestStatus === "fulfilled") {
         toast.success("Event deleted.");
         setIsDetailsModalOpen(false);
         setSelectedEvent(null);
       } else {
         toast.error("Failed to delete event.");
       }
-    } catch (e) { toast.error("Error deleting event"); }
+    } catch (e) {
+      toast.error("Error deleting event");
+    }
   };
 
   return (
@@ -85,6 +107,7 @@ function ProjectCalendar() {
         view={view}
         eventsCount={eventsCount}
         search={search}
+        onPreview={() => setShowPreview(true)}
         period={period}
         setView={setView}
         setSearch={setSearch}
@@ -93,7 +116,7 @@ function ProjectCalendar() {
         onNext={next}
         onToday={today}
         showCreateButton={canModify}
-        onCreateClick={() => openCreateModal && openCreateModal()} 
+        onCreateClick={() => openCreateModal && openCreateModal()}
       />
 
       <div className="grid lg:grid-cols-[1fr_580px] grid-cols-1 gap-6">
@@ -107,10 +130,7 @@ function ProjectCalendar() {
           onEventClick={handleEventClick}
         />
 
-        <UpcomingEvents
-          upcomingEvents={upcomingEvents}
-          view={view}
-        />
+        <UpcomingEvents upcomingEvents={upcomingEvents} view={view} />
       </div>
 
       {canModify && (
@@ -132,6 +152,15 @@ function ProjectCalendar() {
         isDeleting={calendar.isDeleting}
         canModify={canModify}
       />
+
+      {showPreview && (
+        <CalendarPreviewPage
+          onClose={() => setShowPreview(false)}
+          currentDate={currentDate}
+          events={events}
+          view={view}
+        />
+      )}
     </div>
   );
 }
