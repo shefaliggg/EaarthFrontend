@@ -12,8 +12,8 @@
     "preinstall": "node scripts/only-yarn.mjs"
   },
   "engines": {
-    "npm": "please-use-yarn",
-    "yarn": ">=1.22.0"
+    "node": "20.x",
+    "yarn": "1.x"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

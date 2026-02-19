@@ -103,28 +103,6 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
             </div>
           </button>
 
-          {/* <button
-            className={cn(
-              "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-              activeTab === "personal"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted",
-            )}
-            onClick={() => onTabChange?.("personal")}
-          >
-            <Users className="w-5 h-5" />
-            <div className="flex-1">
-              <p className="text-sm font-bold">Individual Chat</p>
-              <p className="text-xs opacity-80">Personal chat with members</p>
-            </div>
-
-            {teamMembers.length > 0 && (
-              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
-                {teamMembers.length}
-              </span>
-            )}
-          </button> */}
-
           <button
             className={cn(
               "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
@@ -149,7 +127,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
             <h2 className="text-lg font-bold">
               {activeTab === "Email" ? "Email" : "Chat Conversations"}
             </h2>
-            {/* ✅ Show count */}
+
             <Button variant="ghost" size={"icon"}>
               {activeTab !== "departments" && (
                 <MessageCirclePlus className="text-primary" />

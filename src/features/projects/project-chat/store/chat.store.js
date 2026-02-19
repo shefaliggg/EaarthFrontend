@@ -4,7 +4,7 @@ import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
-import { transformMessage } from "../utils/messageHelpers";
+import { computeMessageState, transformMessage } from "../utils/messageHelpers";
 import { toast } from "sonner";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
@@ -39,6 +39,16 @@ const useChatStore = create(
           });
           socket.emit("message:delivered", {
             messageId: message._id,
+          });
+          set({
+            typingUsers: {
+              ...get().typingUsers,
+              [conversationId]: (
+                get().typingUsers[conversationId] || []
+              ).filter(
+                (u) => u.userId !== message.senderId?._id || message.senderId, // <-- use senderId here
+              ),
+            },
           });
           get().addMessageToConversation(conversationId, message);
           get().updateConversationLastMessage(conversationId, message);
@@ -95,7 +105,7 @@ const useChatStore = create(
                 [conversationId]: latest.filter((u) => u.userId !== userId),
               },
             });
-          }, 5000);
+          }, 3000);
         });
 
         socket.on("typing:stop", ({ conversationId, userId }) => {
@@ -169,7 +179,7 @@ const useChatStore = create(
       },
 
       getGroupOnlineCount: (group) => {
-         if (!Array.isArray(group?.members)) return 0;
+        if (!Array.isArray(group?.members)) return 0;
 
         const online = get().onlineUsers;
 
@@ -549,7 +559,9 @@ const useChatStore = create(
           return sentMessage;
         } catch (error) {
           console.error("❌ Failed to send message:", error);
-          toast.error("Failed to send message. Please try again.", {description: error.response?.data?.message || error.message});
+          toast.error("Failed to send message. Please try again.", {
+            description: error.response?.data?.message || error.message,
+          });
 
           const updated = get().messagesByConversation[conversationId];
 
@@ -725,25 +737,63 @@ const useChatStore = create(
       },
 
       markConversationMessagesAsRead: (conversationId, userId) => {
+        const currentUserId = getCurrentUserId();
         const existing = get().messagesByConversation[conversationId];
         if (!existing) return;
 
+        const conversation = get().conversations.find(
+          (c) => c.id === conversationId,
+        );
+        const memberCount = conversation?.members?.length || 2;
+        const now = new Date();
+
+        const updatedMessages = existing.messages.map((msg) => {
+          const seenBy = Array.isArray(msg.seenBy) ? [...msg.seenBy] : [];
+          const deliveredTo = Array.isArray(msg.deliveredTo)
+            ? [...msg.deliveredTo]
+            : [];
+          if (
+            userId &&
+            !seenBy.some((s) => s.userId?.toString() === userId.toString())
+          ) {
+            seenBy.push({ userId, seenAt: now });
+          }
+          if (
+            userId &&
+            !deliveredTo.some((s) => s.userId?.toString() === userId.toString())
+          ) {
+            deliveredTo.push({ userId, deliveredAt: now });
+          }
+
+          // recompute state using helper
+          const state = computeMessageState(
+            { ...msg, seenBy, deliveredTo },
+            memberCount,
+          );
+
+          return {
+            ...msg,
+            seenBy,
+            deliveredTo,
+            state,
+          };
+        });
+
+        // update messages in store
         set({
           messagesByConversation: {
             ...get().messagesByConversation,
             [conversationId]: {
               ...existing,
-              messages: existing.messages.map((m) => ({
-                ...m,
-                state: m.isOwn ? "seen" : m.state,
-                readBy: m.isOwn ? (m.readBy || 0) + 1 : m.readBy,
-              })),
+              messages: updatedMessages,
             },
           },
         });
       },
 
-      markAsRead: async (conversationId) => {
+      emitConversationRead: async (conversationId) => {
+        if (!conversationId) return;
+
         try {
           await chatApi.markAsRead(conversationId);
           set({

@@ -142,12 +142,7 @@ const MessageInput = React.memo(
           });
 
           formData.append("projectId", projectId);
-          formData.append(
-            "type",
-            currentAttachments.length > 1
-              ? "IMAGE"
-              : currentAttachments[0].type,
-          );
+          formData.append("type", "MEDIA");
 
           if (hasText) formData.append("caption", trimmedMessage);
 

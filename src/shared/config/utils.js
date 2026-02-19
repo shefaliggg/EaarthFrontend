@@ -1,9 +1,15 @@
 import { twMerge } from "tailwind-merge";
 import clsx from "clsx";
+import { store } from "../../app/store";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+
+export const getCurrentUserId = () => {
+  const state = store.getState();
+  return state.auth?.user?._id || state.user?.currentUser?._id || null;
+};
 
 export const convertTitleToUrl = (title) => {
   return title

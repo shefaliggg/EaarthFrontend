@@ -164,6 +164,17 @@ export const getUnreadCount = (conversation, currentUserId) => {
   ).length;
 };
 
+export function getReadByCount(message) {
+  if (!message?.seenBy?.length) return 0;
+  console.log("seen by", message.seenBy);
+
+  const senderId = message?.senderId?._id || message?.senderId;
+
+  return message.seenBy.filter(
+    (entry) => entry.userId?.toString() !== senderId.toString(),
+  ).length;
+}
+
 export function transformMessage(
   msg,
   { currentUserId, conversationMembersCount },
@@ -182,19 +193,19 @@ export function transformMessage(
   // =========================
   let replyTo = null;
   if (msg.replyTo?.messageId) {
-     const original = msg.replyTo.messageId; // populated message document
-  const replySender = original.senderId;
+    const original = msg.replyTo.messageId; // populated message document
+    const replySender = original.senderId;
 
-  replyTo = {
-    messageId: original._id.toString(),
-    senderId: replySender?._id?.toString() || replySender?.toString(),
-    sender: replySender?.displayName || "Unknown",
-    preview: original.content?.text || original.content?.caption || "", // for text or caption
-    type: original.type?.toLowerCase() || "text",
-    caption: original.content?.caption || "",
-    files: original.content?.files || [],
-    deleted: original.status?.deletedForEveryone || false,
-  };
+    replyTo = {
+      messageId: original._id.toString(),
+      senderId: replySender?._id?.toString() || replySender?.toString(),
+      sender: replySender?.displayName || "Unknown",
+      preview: original.content?.text || original.content?.caption || "", // for text or caption
+      type: original.type?.toLowerCase() || "text",
+      caption: original.content?.caption || "",
+      files: original.content?.files || [],
+      deleted: original.status?.deletedForEveryone || false,
+    };
   }
 
   // =========================
@@ -223,17 +234,6 @@ export function transformMessage(
   // =========================
   const seenBy = Array.isArray(msg.seenBy) ? msg.seenBy : [];
   const deliveredTo = Array.isArray(msg.deliveredTo) ? msg.deliveredTo : [];
-
-  const readByCount = isOwn
-    ? seenBy.filter((s) => s.userId?.toString() !== currentUser?.toString())
-        .length
-    : seenBy.length;
-
-  const deliveredCount = isOwn
-    ? deliveredTo.filter(
-        (d) => d.userId?.toString() !== currentUser?.toString(),
-      ).length
-    : deliveredTo.length;
 
   // =========================
   // SYSTEM MESSAGE
@@ -269,8 +269,8 @@ export function transformMessage(
 
     state: computeMessageState(msg, conversationMembersCount),
 
-    readBy: readByCount,
-    deliveredTo: deliveredCount,
+    seenBy, // full array, needed for real-time updates
+    deliveredTo, // full array, needed for real-time updates
 
     edited: msg.status?.edited || false,
     editedAt: msg.status?.editedAt || null,
@@ -292,11 +292,24 @@ export function transformMessage(
 export function computeMessageState(message, memberCount) {
   if (!message.senderId) return null;
 
-  const deliveredCount = message.deliveredTo?.length || 0;
-  const seenCount = message.seenBy?.length || 0;
+  // Number of recipients excluding sender
+  const recipientsCount = Math.max(memberCount - 1, 1);
 
-  if (seenCount >= memberCount - 1) return "seen";
-  if (deliveredCount >= 1) return "delivered";
+  // Count how many OTHER users have delivered / seen
+  const deliveredCount = Array.isArray(message.deliveredTo)
+    ? message.deliveredTo.filter(
+        (d) => d.userId?.toString() !== message.senderId?.toString(),
+      ).length
+    : 0;
+
+  const seenCount = Array.isArray(message.seenBy)
+    ? message.seenBy.filter(
+        (s) => s.userId?.toString() !== message.senderId?.toString(),
+      ).length
+    : 0;
+
+  if (seenCount >= recipientsCount) return "seen";
+  if (deliveredCount >= recipientsCount) return "delivered";
 
   return "sent";
 }

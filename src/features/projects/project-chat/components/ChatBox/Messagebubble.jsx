@@ -31,6 +31,8 @@ import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
 import { toast } from "sonner";
+import { getReadByCount } from "../../utils/messageHelpers";
+import { getCurrentUserId } from "../../../../../shared/config/utils";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -193,7 +195,7 @@ export default function MessageBubble({
               {message.time}
             </span>
             <Badge variant="outline" className="text-[9px] h-4 px-1.5">
-              Read by {message.readBy}
+              Read by {getReadByCount(message,getCurrentUserId())}
             </Badge>
           </div>
         )}
@@ -527,7 +529,7 @@ function MessageStateIcon({ state }) {
     case "delivered":
       return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
-      return <CheckCheck className="w-3 h-3 text-green-900" />;
+      return <CheckCheck className="w-3 h-3 text-green-400" />;
     case "failed":
       return <X className="w-3 h-3 text-red-500" />;
     default:

@@ -36,7 +36,6 @@ function ChatBox() {
     selectedChat,
     messagesByConversation,
     loadMessages,
-    markAsRead,
     emitConversationRead,
     isLoadingMessages,
     typingUsers,
@@ -85,11 +84,7 @@ function ChatBox() {
 
       if (nearBottom && unreadNewMessages > 0) {
         setUnreadNewMessages(0);
-        try {
-          emitConversationRead && emitConversationRead(selectedChat?.id);
-        } catch (e) {
-          markAsRead(selectedChat?.id).catch(() => {});
-        }
+        emitConversationRead(selectedChat?.id);
       }
 
       // load older messages when scrollTop is near top
@@ -116,7 +111,6 @@ function ChatBox() {
       selectedChat?.id,
       loadMessages,
       unreadNewMessages,
-      markAsRead,
       emitConversationRead,
     ],
   );
@@ -187,12 +181,8 @@ function ChatBox() {
     scrollToBottom(true);
     setUnreadNewMessages(0);
     // User manually moved to newest messages; emit read (debounced)
-    try {
-      emitConversationRead(selectedChat?.id);
-    } catch (e) {
-      markAsRead(selectedChat?.id).catch(() => {});
-    }
-  }, [scrollToBottom, selectedChat?.id, emitConversationRead, markAsRead]);
+    emitConversationRead(selectedChat?.id);
+  }, [scrollToBottom, selectedChat?.id, emitConversationRead]);
 
   // ────────────────────────────────
   // Render

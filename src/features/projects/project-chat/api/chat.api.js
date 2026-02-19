@@ -1,6 +1,3 @@
-// src/features/chat/api/chat.api.js
-// ✅ FIXED: Complete API layer with better error handling
-
 import { axiosConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
