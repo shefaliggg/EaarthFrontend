@@ -1,854 +1,572 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Download, Printer, ZoomIn, ZoomOut, Maximize2, 
-  FileText, Calendar, User, DollarSign, CheckCircle, Clock,
-  AlertCircle, ChevronRight, X, Menu
-} from 'lucide-react';
-import eaarthLogo from '@/assets/eaarth.webp';
+/**
+ * ContractPreview.jsx — Enhanced UI with refined card styling, Lucide icons, logo
+ */
 
-// CONTRACT DATA (same as original)
-const CONTRACT_DATA = {
-  'contract-001': {
-    filmTitle: 'WERWULF',
-    version: '1.0',
-    offerId: 'WW-2024-001',
-    updated: '13/02/2024',
-    executionDate: '13 February 2024',
-    producer: {
-      entity: 'MIRAGE PICTURES LIMITED',
-      address: '123 Production Lane, Pinewood Studios, Iver Heath, Buckinghamshire, SL0 0NH',
-      phone: '+44 (0) 1753 656 700',
-    },
-    crewMember: {
-      name: 'John Michael Smith',
-      address: '45 Chelsea Harbour Drive, London, SW10 0XD',
-      phone: '+44 7700 900 123',
-      email: 'john.smith@example.com',
-      citizenship: 'British',
-      residence: 'United Kingdom',
-    },
-    dealTerms: {
-      department: 'Transport',
-      position: 'Unit Driver',
-      startDate: '01/03/2024',
-      endDate: '30/06/2024',
-    },
-    fees: {
-      baseWeeklyRate: '£800.00',
-      weeklyHolidayRate: '£96.56',
-      weeklyRate: '£896.56',
-      baseDailyRate: '£160.00',
-      dailyHolidayRate: '£19.31',
-      dailyRate: '£179.31',
-      base6thDayRate: '£240.00',
-      sixthDayHolidayRate: '£28.97',
-      sixthDayRate: '£268.97',
-      base7thDayRate: '£320.00',
-      seventhDayHolidayRate: '£38.62',
-      seventhDayRate: '£358.62',
-    },
-    allowances: {
-      mobileRate: '£50.00',
-      mobileTerms: 'per week',
-    },
-    productionBase: 'Pinewood Studios, Iver Heath, Buckinghamshire, SL0 0NH',
-    workingTerms: {
-      dailyRate: '£179.31',
-      overtimeRate: '£25.00',
-    },
-    specialStipulations: [
-      'Unit Driver agrees to maintain the vehicle in excellent condition at all times.',
-      'Vehicle must be available for production use within 30 minutes of call time.',
-      'Driver must hold a valid PCO licence and comprehensive insurance.',
-    ],
-    signatures: [
-      { role: 'crew_member', signedBy: 'John Michael Smith', signedAt: '13/02/2024', verified: true },
-      { role: 'upm', signedBy: 'Sarah Johnson', signedAt: '13/02/2024', verified: true },
-      { role: 'financial_controller', signedBy: 'Robert Williams', signedAt: '14/02/2024', verified: true },
-      { role: 'production_executive', signedBy: 'Emma Thompson', signedAt: '14/02/2024', verified: true },
-    ],
-    status: 'fully_executed',
-  },
+import eaarthLogo from '../../../../src/assets/eaarth.webp';
+import {
+  User, Mail, Phone, UserCheck, FileText,
+  Briefcase, Building2, MapPin, Calendar,
+  Clock, Globe, CreditCard, TrendingUp,
+  Package, StickyNote, PenLine, Shield,
+  CheckCircle2, AlertCircle, Box, Monitor,
+  AppWindow, Camera, Smartphone, Car, Truck,
+  Coffee, DollarSign, Home, Zap,
+} from 'lucide-react';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const SPECIAL_DAY_LABELS = {
+  SIXTH_DAY:      '6th Day',
+  SEVENTH_DAY:    '7th Day',
+  PUBLIC_HOLIDAY: 'Public Holiday',
+  TRAVEL_DAY:     'Travel Day',
+  TURNAROUND:     'Turnaround',
 };
 
-export default function ContractPreview() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [contract, setContract] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [zoom, setZoom] = useState(100);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [showMetadata, setShowMetadata] = useState(true);
+const getBundle = (eng = '', rate = '') => {
+  const e = eng.toUpperCase();
+  const r = rate.toUpperCase();
+  if (e === 'LOAN_OUT' && r === 'DAILY')  return { name: 'Daily Loan Out Agreement',  tag: 'LOAN-OUT · DAILY',  color: 'lavender' };
+  if (e === 'LOAN_OUT' && r === 'WEEKLY') return { name: 'Weekly Loan Out Agreement', tag: 'LOAN-OUT · WEEKLY', color: 'lavender' };
+  if (e === 'PAYE'     && r === 'DAILY')  return { name: 'Daily PAYE Agreement',      tag: 'PAYE · DAILY',     color: 'sky'      };
+  if (e === 'PAYE'     && r === 'WEEKLY') return { name: 'Weekly PAYE Agreement',     tag: 'PAYE · WEEKLY',    color: 'sky'      };
+  if (e === 'SCHD')                       return { name: 'SCHD Agreement',            tag: 'SCHD',             color: 'peach'    };
+  if (e === 'LONG_FORM')                  return { name: 'Long Form Agreement',       tag: 'LONG FORM',        color: 'mint'     };
+  return { name: 'Standard Agreement', tag: 'STANDARD', color: 'lavender' };
+};
 
-  useEffect(() => {
-    setContract(CONTRACT_DATA[id] || CONTRACT_DATA['contract-001']);
-  }, [id]);
+const ALLOWANCE_ICONS = {
+  boxRental: Box,
+  computerAllowance: Monitor,
+  softwareAllowance: AppWindow,
+  equipmentRental: Camera,
+  mobilePhoneAllowance: Smartphone,
+  vehicleAllowance: Car,
+  vehicleHire: Truck,
+  perDiem1: Coffee,
+  perDiem2: DollarSign,
+  livingAllowance: Home,
+};
 
-  if (!contract) return null;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const currSym  = (c = 'GBP') => ({ GBP: '£', USD: '$', EUR: '€' }[c] ?? '£');
+const fmtDate  = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+const fmtMoney = (v, c = 'GBP') => {
+  if (!v) return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : `${currSym(c)}${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+const stableHash = (s = '') => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
+const cn = (...c) => c.filter(Boolean).join(' ');
 
-  const pages = [
-    { id: 0, title: 'Deal Terms', icon: DollarSign },
-    { id: 1, title: 'Special Stipulations', icon: FileText },
-    { id: 2, title: 'Execution & Signatures', icon: CheckCircle },
-  ];
+// ── Section header ────────────────────────────────────────────────────────────
+function SectionHeader({ icon: Icon, label, accent }) {
+  return (
+    <div className={cn(
+      'flex items-center gap-2.5 px-5 py-3 border-b border-border',
+      accent ? 'bg-primary/5' : 'bg-muted/40'
+    )}>
+      <div className={cn(
+        'w-6 h-6 rounded-lg flex items-center justify-center shrink-0',
+        accent ? 'bg-primary/15' : 'bg-border'
+      )}>
+        <Icon className={cn('w-3.5 h-3.5', accent ? 'text-primary' : 'text-muted-foreground')} strokeWidth={1.75} />
+      </div>
+      <span className={cn(
+        'text-[10px] font-bold uppercase tracking-[0.15em]',
+        accent ? 'text-primary' : 'text-muted-foreground'
+      )}>{label}</span>
+    </div>
+  );
+}
 
-  const handleZoomChange = (newZoom) => {
-    setZoom(Math.max(50, Math.min(150, newZoom)));
+// ── Field ─────────────────────────────────────────────────────────────────────
+function Field({ label, value, icon: Icon, wide, mono }) {
+  return (
+    <div className={cn('space-y-1', wide && 'col-span-2')}>
+      <div className="flex items-center gap-1.5">
+        {Icon && <Icon className="w-3 h-3 text-muted-foreground/60" strokeWidth={1.75} />}
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      </div>
+      <p className={cn('leading-snug', mono ? 'text-[11px] font-mono' : 'text-[12px] font-semibold text-foreground')}>
+        {value || <span className="text-muted-foreground/30 italic font-normal text-[11px]">—</span>}
+      </p>
+    </div>
+  );
+}
+
+// ── Info grid ─────────────────────────────────────────────────────────────────
+function Grid2({ children, className }) {
+  return (
+    <div className={cn('grid grid-cols-2 gap-x-6 gap-y-4 p-5', className)}>
+      {children}
+    </div>
+  );
+}
+
+function Grid3({ children, className }) {
+  return (
+    <div className={cn('grid grid-cols-3 gap-x-5 gap-y-4 p-5', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ── Card wrapper ──────────────────────────────────────────────────────────────
+function Card({ children, className }) {
+  return (
+    <div className={cn('rounded-2xl border border-border bg-card overflow-hidden', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ── Status badge ──────────────────────────────────────────────────────────────
+function Badge({ label, variant = 'default' }) {
+  const styles = {
+    default:  'bg-border/60 text-muted-foreground border-border',
+    primary:  'bg-primary/10 text-primary border-primary/20',
+    success:  'bg-mint-100 text-mint-700 border-mint-200 dark:bg-mint-900/30 dark:text-mint-300 dark:border-mint-800',
+    warning:  'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+    sky:      'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
+    peach:    'bg-peach-100 text-peach-700 border-peach-200 dark:bg-peach-900/30 dark:text-peach-300 dark:border-peach-800',
+    lavender: 'bg-lavender-100 text-lavender-700 border-lavender-200 dark:bg-lavender-900/30 dark:text-lavender-300 dark:border-lavender-800',
   };
+  return (
+    <span className={cn('text-[9px] font-bold px-2.5 py-1 rounded-full border tracking-wide', styles[variant] || styles.default)}>
+      {label}
+    </span>
+  );
+}
 
-  const statusConfig = {
-    fully_executed: { 
-      label: 'Fully Executed', 
-      color: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-      icon: CheckCircle,
-      dot: 'bg-emerald-500'
-    },
-    pending_signatures: { 
-      label: 'Pending Signature', 
-      color: 'bg-amber-100 text-amber-700 border-amber-300',
-      icon: Clock,
-      dot: 'bg-amber-500'
-    },
-    draft: { 
-      label: 'Draft', 
-      color: 'bg-slate-100 text-slate-700 border-slate-300',
-      icon: AlertCircle,
-      dot: 'bg-slate-500'
-    },
-  };
+// ── Main ──────────────────────────────────────────────────────────────────────
+export default function ContractPreview({ offer = {}, role = {} }) {
+  const al     = role.allowances || {};
+  const bundle = getBundle(role.engagementType, role.rateType);
+  const today  = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const sym    = currSym(role.currency || 'GBP');
+  const refNum = `AGR-${new Date().getFullYear()}-${String(stableHash((offer.fullName || '') + (role.jobTitle || ''))).slice(0, 4).padStart(4, '0')}`;
 
-  const status = statusConfig[contract.status] || statusConfig.draft;
-  const StatusIcon = status.icon;
+  // Active allowances
+  const allowanceList = [
+    al.boxRental && {
+      key: 'boxRental', label: 'Box Rental',
+      value: fmtMoney(al.boxRentalFeePerWeek, role.currency),
+      detail: al.boxRentalDescription,
+      extra: al.boxRentalCap ? `Cap: ${fmtMoney(al.boxRentalCap, role.currency)}` : null,
+      budgetCode: al.boxRentalBudgetCode,
+    },
+    al.computerAllowance && {
+      key: 'computerAllowance', label: 'Computer',
+      value: fmtMoney(al.computerAllowanceFeePerWeek, role.currency),
+      budgetCode: al.computerAllowanceBudgetCode,
+    },
+    al.softwareAllowance && {
+      key: 'softwareAllowance', label: 'Software',
+      value: fmtMoney(al.softwareAllowanceFeePerWeek, role.currency),
+      detail: al.softwareAllowanceDescription,
+      budgetCode: al.softwareAllowanceBudgetCode,
+    },
+    al.equipmentRental && {
+      key: 'equipmentRental', label: 'Equipment',
+      value: fmtMoney(al.equipmentRentalFeePerWeek, role.currency),
+      detail: al.equipmentRentalDescription,
+      budgetCode: al.equipmentRentalBudgetCode,
+    },
+    al.mobilePhoneAllowance && {
+      key: 'mobilePhoneAllowance', label: 'Mobile Phone',
+      value: fmtMoney(al.mobilePhoneAllowanceFeePerWeek, role.currency),
+      budgetCode: al.mobilePhoneAllowanceBudgetCode,
+    },
+    al.vehicleAllowance && {
+      key: 'vehicleAllowance', label: 'Vehicle',
+      value: fmtMoney(al.vehicleAllowanceFeePerWeek, role.currency),
+      budgetCode: al.vehicleAllowanceBudgetCode,
+    },
+    al.vehicleHire && {
+      key: 'vehicleHire', label: 'Vehicle Hire',
+      value: fmtMoney(al.vehicleHireRate, role.currency),
+      budgetCode: al.vehicleHireBudgetCode,
+    },
+    al.perDiem1 && {
+      key: 'perDiem1', label: `Per Diem (${al.perDiem1Currency || 'GBP'})`,
+      value: `${currSym(al.perDiem1Currency)}${al.perDiem1ShootDayRate || '—'}/day`,
+      detail: `Non-shoot: ${currSym(al.perDiem1Currency)}${al.perDiem1NonShootDayRate || '—'}`,
+      budgetCode: al.perDiem1BudgetCode,
+    },
+    al.perDiem2 && {
+      key: 'perDiem2', label: `Per Diem (${al.perDiem2Currency || 'USD'})`,
+      value: `${currSym(al.perDiem2Currency)}${al.perDiem2ShootDayRate || '—'}/day`,
+      detail: `Non-shoot: ${currSym(al.perDiem2Currency)}${al.perDiem2NonShootDayRate || '—'}`,
+      budgetCode: al.perDiem2BudgetCode,
+    },
+    al.livingAllowance && {
+      key: 'livingAllowance', label: 'Living',
+      value: fmtMoney(al.livingAllowanceWeeklyRate, al.livingAllowanceCurrency),
+      budgetCode: al.livingAllowanceBudgetCode,
+    },
+  ].filter(Boolean);
+
+  const specials = (role.specialDayRates || []).filter(d => d.amount);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* PREMIUM GLASS TOOLBAR */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/50 dark:border-slate-700/50 shadow-sm print:hidden">
-        <div className="max-w-[1920px] mx-auto px-6 py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left - Navigation */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors font-medium group"
-              >
-                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                <span>Back</span>
-              </button>
-              <div className="h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
-                  <FileText size={16} className="text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{contract.filmTitle}</span>
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${status.color} flex items-center gap-1`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${status.dot} animate-pulse`}></span>
-                      {status.label}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{contract.crewMember.name} • {contract.dealTerms.position}</p>
-                </div>
-              </div>
-            </div>
+    <article
+      id="contract-preview-doc"
+      className="bg-background text-foreground"
+      style={{ fontFamily: '"Outfit", system-ui, sans-serif' }}
+    >
 
-            {/* Center - Zoom Controls */}
-            <div className="flex items-center gap-3 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl px-3 py-2 backdrop-blur-sm">
-              <button
-                onClick={() => handleZoomChange(zoom - 10)}
-                className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-40"
-                disabled={zoom <= 50}
-              >
-                <ZoomOut size={16} />
-              </button>
-              <input
-                type="range"
-                min="50"
-                max="150"
-                step="10"
-                value={zoom}
-                onChange={(e) => handleZoomChange(Number(e.target.value))}
-                className="w-24 h-1 bg-slate-300 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
-              />
-              <button
-                onClick={() => handleZoomChange(100)}
-                className="text-xs font-semibold min-w-[45px] text-center text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-              >
-                {zoom}%
-              </button>
-              <button
-                onClick={() => handleZoomChange(zoom + 10)}
-                className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-40"
-                disabled={zoom >= 150}
-              >
-                <ZoomIn size={16} />
-              </button>
-            </div>
+      {/* ══════════════════════════════════════════════
+          HEADER — Dark branded block
+      ══════════════════════════════════════════════ */}
+      <div className="bg-primary relative overflow-hidden">
 
-            {/* Right - Actions */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title="Toggle Pages"
-              >
-                <Menu size={18} />
-              </button>
-              <button
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title="Fullscreen"
-              >
-                <Maximize2 size={18} />
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
-              >
-                <Printer size={16} />
-                <span className="hidden md:inline">Print</span>
-              </button>
-              <button
-                onClick={() => alert('Download PDF')}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 hover:shadow-xl"
-              >
-                <Download size={16} />
-                <span className="hidden md:inline">Download</span>
-              </button>
+        {/* Subtle grid overlay */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }} />
+
+        {/* Top strip with logo + ref */}
+        <div className="relative flex items-center justify-between px-7 pt-6 pb-0">
+          <div className="flex items-center gap-3.5">
+            <img
+              src={eaarthLogo}
+              alt="Eaarth Productions"
+              className="h-9 w-auto object-contain select-none"
+              style={{ filter: 'brightness(0) invert(1)' }}
+              draggable={false}
+            />
+            <div className="w-px h-9 opacity-20" style={{ background: 'white' }} />
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.22em] opacity-70 text-white leading-none">
+                EAARTH PRODUCTIONS
+              </p>
+              <p className="text-[9px] opacity-60 text-white mt-0.5 leading-none">Crew Engagement</p>
             </div>
           </div>
+
+          <div className="text-right">
+            <p className="text-[8px] font-mono uppercase tracking-widest opacity-70 text-white">Reference</p>
+            <p className="text-[11px] font-mono text-white font-bold mt-0.5">
+              {refNum}
+            </p>
+            <p className="text-[9px] opacity-75 text-white mt-0.5">{today}</p>
+          </div>
         </div>
+
+        {/* Contract title block */}
+        <div className="relative px-7 pt-5 pb-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-80 text-white mb-1.5">
+                Agreement Type
+              </p>
+              <h1 className="text-[22px] font-bold text-white leading-tight tracking-tight">
+                {bundle.name}
+              </h1>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-1.5 h-1.5 rounded-full opacity-70" style={{ backgroundColor: 'white' }} />
+                <p className="text-[11px] opacity-90 text-white truncate">
+                  {offer.fullName || '—'} &nbsp;·&nbsp; {role.jobTitle || '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Status badges */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            <span className={cn(
+              'text-[9px] font-bold px-2.5 py-1 rounded-full border tracking-wide',
+              bundle.color === 'lavender' ? 'bg-lavender-400/15 text-lavender-300 border-lavender-400/20' :
+              bundle.color === 'sky'      ? 'bg-sky-400/15 text-sky-300 border-sky-400/20' :
+              bundle.color === 'peach'    ? 'bg-peach-400/15 text-peach-300 border-peach-400/20' :
+                                           'bg-mint-400/15 text-mint-300 border-mint-400/20'
+            )}>
+              {bundle.tag}
+            </span>
+            <span className="text-[9px] font-bold px-2.5 py-1 rounded-full border bg-amber-400/15 text-amber-300 border-amber-400/20 tracking-wide">
+              DRAFT
+            </span>
+            {offer.allowAsSelfEmployedOrLoanOut === 'YES' && (
+              <span className="text-[9px] font-bold px-2.5 py-1 rounded-full border bg-mint-400/15 text-mint-300 border-mint-400/20 tracking-wide flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" strokeWidth={2} />
+                SELF-EMPLOYED APPROVED
+              </span>
+            )}
+            {offer.statusDeterminationReason && offer.statusDeterminationReason !== 'OTHER' && (
+              <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-white/8 text-white/40 border border-white/10 tracking-wide">
+                {offer.statusDeterminationReason.replace(/_/g, ' ')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom accent line */}
+        <div className="h-px w-full opacity-40" style={{ background: 'linear-gradient(90deg, transparent, white, transparent)' }} />
       </div>
 
-      {/* THREE-PANEL LAYOUT */}
-      <div className="flex max-w-[1920px] mx-auto">
-        {/* LEFT SIDEBAR - Page Thumbnails */}
-        {showSidebar && (
-          <div className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm print:hidden sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-            <div className="p-4 space-y-2">
-              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 px-2">
-                Pages
+      {/* ══════════════════════════════════════════════
+          BODY
+      ══════════════════════════════════════════════ */}
+      <div className="bg-background px-6 py-5 space-y-4">
+
+        {/* ── 1. Artist Details ─────────────────────────────────────────────── */}
+        <Card>
+          <SectionHeader icon={User} label="Artist Details" />
+          <Grid2>
+            <Field label="Full Name"  value={offer.fullName}       icon={User} />
+            <Field label="Email"      value={offer.emailAddress}   icon={Mail} />
+            <Field label="Mobile"     value={offer.mobileNumber}   icon={Phone} />
+            <Field label="Tax Status" value={
+              offer.allowAsSelfEmployedOrLoanOut === 'YES' ? 'Self-Employed / Loan Out' :
+              offer.allowAsSelfEmployedOrLoanOut === 'NO'  ? 'PAYE Employee' : null
+            } icon={Shield} />
+            {offer.alternativeContractType && (
+              <Field label="Contract Type" value={offer.alternativeContractType.replace(/_/g, ' ')} icon={FileText} wide />
+            )}
+          </Grid2>
+
+          {offer.isViaAgent && (
+            <>
+              <div className="h-px bg-border mx-5" />
+              <div className="px-5 py-3 bg-muted/30 flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <UserCheck className="w-3 h-3" strokeWidth={1.75} />
+                  Via Agent
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-4 pl-2">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Agency</p>
+                    <p className="text-[11px] font-semibold text-foreground">{offer.agentName || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Contact</p>
+                    <p className="text-[11px] font-semibold text-foreground">{offer.agentEmailAddress || '—'}</p>
+                  </div>
+                </div>
               </div>
-              {pages.map((page) => {
-                const PageIcon = page.icon;
+            </>
+          )}
+        </Card>
+
+        {/* ── 2. Role & Engagement ─────────────────────────────────────────── */}
+        <Card>
+          <SectionHeader icon={Briefcase} label="Role & Engagement" />
+          <Grid3>
+            <Field label="Job Title"    value={[role.jobTitle, role.jobTitleSuffix].filter(Boolean).join(' ')} icon={Briefcase} wide />
+            <Field label="Unit"         value={role.unit}                    icon={Building2} />
+            <Field label="Department"   value={role.department}              icon={Building2} />
+            <Field label="Sub-Dept"     value={role.subDepartment}           icon={Building2} />
+            <Field label="Site of Work" value={role.regularSiteOfWork}       icon={MapPin} />
+            <Field label="Engagement"   value={role.engagementType?.replace(/_/g, ' ')} icon={FileText} />
+            <Field label="Working Week" value={role.workingWeek?.replace(/_/g, ' ')}    icon={Calendar} />
+            <Field label="Std Hrs/Day"  value={role.standardWorkingHours ? `${role.standardWorkingHours} hours` : null} icon={Clock} />
+            <Field label="Start Date"   value={fmtDate(role.startDate)}      icon={Calendar} />
+            <Field label="End Date"     value={fmtDate(role.endDate)}        icon={Calendar} />
+            <Field label="Working in UK" value={role.workingInUnitedKingdom} icon={Globe} />
+          </Grid3>
+        </Card>
+
+        {/* ── 3. Fees & Compensation ────────────────────────────────────────── */}
+        <Card>
+          <SectionHeader icon={CreditCard} label="Fees & Compensation" accent />
+
+          {/* Rate hero */}
+          <div className="px-5 py-5 flex items-start gap-6 border-b border-border">
+            <div className="flex-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary mb-2">
+                {role.rateType === 'DAILY' ? 'Daily' : 'Weekly'} Rate
+              </p>
+              <p className="text-[32px] font-bold text-foreground leading-none tracking-tight">
+                {fmtMoney(role.rateAmount, role.currency) ?? (
+                  <span className="text-muted-foreground text-2xl font-normal italic">Not set</span>
+                )}
+              </p>
+              {role.holidayPayInclusive && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <CheckCircle2 className="w-3 h-3 text-primary" strokeWidth={2} />
+                  <span className="text-[10px] text-primary font-semibold">Holiday pay inclusive</span>
+                </div>
+              )}
+            </div>
+
+            <div className="shrink-0 text-right border-l border-border pl-6">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Fee Per Day</p>
+              <p className="text-xl font-bold text-foreground">
+                {fmtMoney(role.feePerDay, role.currency) ?? '—'}
+              </p>
+              <p className="text-[9px] text-muted-foreground mt-1 font-mono">{role.currency || 'GBP'}</p>
+            </div>
+          </div>
+
+          {/* Special day rates */}
+          {specials.length > 0 && (
+            <div className="border-b border-border">
+              <div className="px-5 pt-4 pb-2">
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3 flex items-center gap-1.5">
+                  <Zap className="w-3 h-3" strokeWidth={1.75} />
+                  Special Day Rates
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {specials.map(d => (
+                    <div key={d.type} className="rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+                      <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground mb-1">
+                        {SPECIAL_DAY_LABELS[d.type] || d.type}
+                      </p>
+                      <p className="text-[13px] font-bold text-foreground">
+                        {sym}{parseFloat(d.amount).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="h-3" />
+            </div>
+          )}
+
+          {/* Overtime */}
+          <div className="px-5 py-3.5 flex items-center justify-between bg-muted/20">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.75} />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Overtime</p>
+            </div>
+            <p className="text-[11px] font-semibold text-foreground">
+              {role.overtimeType === 'CALCULATED' || !role.overtimeType
+                ? 'Calculated per agreement'
+                : `${(role.overtime?.rules || []).length} custom rule(s) applied`}
+            </p>
+          </div>
+        </Card>
+
+        {/* ── 4. Allowances ─────────────────────────────────────────────────── */}
+        {allowanceList.length > 0 && (
+          <Card>
+            <SectionHeader icon={Package} label={`Allowances — ${allowanceList.length} active`} accent />
+            <div className="p-4 grid grid-cols-2 gap-2.5">
+              {allowanceList.map(a => {
+                const Icon = ALLOWANCE_ICONS[a.key] || Package;
                 return (
-                  <button
-                    key={page.id}
-                    onClick={() => setCurrentPage(page.id)}
-                    className={`w-full text-left p-3 rounded-lg transition-all group ${
-                      currentPage === page.id
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-200 dark:border-indigo-700 shadow-sm'
-                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 border-2 border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        currentPage === page.id
-                          ? 'bg-indigo-100 dark:bg-indigo-800'
-                          : 'bg-slate-100 dark:bg-slate-800'
-                      }`}>
-                        <PageIcon size={16} className={currentPage === page.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500'} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className={`text-xs font-semibold ${
-                            currentPage === page.id 
-                              ? 'text-indigo-700 dark:text-indigo-300' 
-                              : 'text-slate-600 dark:text-slate-400'
-                          }`}>
-                            Page {page.id + 1}
-                          </span>
-                          {currentPage === page.id && (
-                            <ChevronRight size={14} className="text-indigo-600 dark:text-indigo-400" />
-                          )}
+                  <div key={a.key}
+                    className="rounded-xl border border-primary/15 bg-primary/5 overflow-hidden">
+                    {/* Card header */}
+                    <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-primary/10">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+                          <Icon className="w-3.5 h-3.5 text-primary" strokeWidth={1.75} />
                         </div>
-                        <p className={`text-xs leading-tight ${
-                          currentPage === page.id 
-                            ? 'text-slate-700 dark:text-slate-300' 
-                            : 'text-slate-500 dark:text-slate-500'
-                        }`}>
-                          {page.title}
-                        </p>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">{a.label}</span>
                       </div>
+                      {a.value && (
+                        <span className="text-[13px] font-bold text-foreground">
+                          {a.value}<span className="text-[9px] font-normal text-muted-foreground">/wk</span>
+                        </span>
+                      )}
                     </div>
-                    
-                    {/* Mini Thumbnail Preview */}
-                    <div className={`mt-3 w-full h-24 rounded border-2 ${
-                      currentPage === page.id
-                        ? 'border-indigo-300 dark:border-indigo-600'
-                        : 'border-slate-200 dark:border-slate-700'
-                    } bg-white dark:bg-slate-800 p-2 overflow-hidden`}>
-                      <div className="w-full h-full bg-slate-50 dark:bg-slate-900 rounded flex items-center justify-center">
-                        <PageIcon size={24} className="text-slate-300 dark:text-slate-600" />
+                    {/* Card details */}
+                    {(a.detail || a.extra || a.budgetCode) && (
+                      <div className="px-3.5 py-2 space-y-0.5">
+                        {a.detail && <p className="text-[10px] text-muted-foreground leading-snug">{a.detail}</p>}
+                        {a.extra  && <p className="text-[10px] text-primary font-semibold">{a.extra}</p>}
+                        {a.budgetCode && (
+                          <p className="text-[9px] font-mono text-muted-foreground/60">{a.budgetCode}</p>
+                        )}
                       </div>
-                    </div>
-                  </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
-          </div>
+          </Card>
         )}
 
-        {/* CENTER - Document Viewer */}
-        <div className="flex-1 overflow-y-auto py-8 px-6 print:p-0">
-          <div className="max-w-[850px] mx-auto">
-            {/* A4 PAPER CONTAINER */}
-            <div
-              className="bg-white dark:bg-slate-900 mx-auto transition-all duration-300 print:shadow-none"
-              style={{
-                width: '794px',
-                minHeight: '1123px',
-                maxWidth: '100%',
-                transform: `scale(${zoom / 100})`,
-                transformOrigin: 'top center',
-                boxShadow: `
-                  0 1px 2px rgba(0,0,0,0.05),
-                  0 10px 30px rgba(0,0,0,0.08),
-                  0 30px 80px rgba(0,0,0,0.06)
-                `,
-                border: '1px solid rgba(0,0,0,0.06)'
-              }}
-            >
-              {/* Document Header */}
-              <DocumentHeader contract={contract} status={status} />
-
-              {/* Document Content */}
-              <div className="p-12" style={{ fontFamily: '"Source Serif Pro", "Georgia", serif' }}>
-                {currentPage === 0 && <Page1 contract={contract} />}
-                {currentPage === 1 && <Page2 contract={contract} />}
-                {currentPage === 2 && <Page3 contract={contract} />}
-
-                {/* Document Footer */}
-                <DocumentFooter currentPage={currentPage} />
-              </div>
+        {/* ── 5. Notes & Provisions ─────────────────────────────────────────── */}
+        {(offer.otherDealProvisions || offer.additionalNotes) && (
+          <Card>
+            <SectionHeader icon={StickyNote} label="Notes & Provisions" />
+            <div className="p-5 space-y-3.5">
+              {offer.otherDealProvisions && (
+                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <FileText className="w-3 h-3 text-muted-foreground" strokeWidth={1.75} />
+                    <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                      Other Deal Provisions
+                    </p>
+                  </div>
+                  <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-line">
+                    {offer.otherDealProvisions}
+                  </p>
+                </div>
+              )}
+              {offer.additionalNotes && (
+                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <AlertCircle className="w-3 h-3 text-muted-foreground" strokeWidth={1.75} />
+                    <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                      Internal Notes
+                    </p>
+                  </div>
+                  <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-line">
+                    {offer.additionalNotes}
+                  </p>
+                </div>
+              )}
             </div>
-
-            {/* Page Navigation */}
-            <div className="mt-6 flex items-center justify-center gap-3 print:hidden">
-              <button
-                onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                disabled={currentPage === 0}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                Page {currentPage + 1} of {pages.length}
-              </span>
-              <button
-                onClick={() => setCurrentPage(Math.min(pages.length - 1, currentPage + 1))}
-                disabled={currentPage === pages.length - 1}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT SIDEBAR - Contract Metadata */}
-        {showMetadata && (
-          <div className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm print:hidden sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-            <ContractMetadata contract={contract} status={status} />
-          </div>
+          </Card>
         )}
-      </div>
-    </div>
-  );
-}
 
-// DOCUMENT HEADER COMPONENT
-function DocumentHeader({ contract, status }) {
-  const StatusIcon = status.icon;
-  
-  return (
-    <div className="relative border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
-      {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.02] dark:opacity-[0.05] pointer-events-none overflow-hidden">
-        <span className="text-9xl font-bold text-slate-900 dark:text-white rotate-[-15deg]" style={{ fontFamily: '"Playfair Display", serif' }}>
-          {status.label.toUpperCase()}
-        </span>
-      </div>
-      
-      <div className="relative p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <img 
-              src={eaarthLogo} 
-              alt="EAARTH" 
-              className="h-12 object-contain mb-2"
-            />
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
-              Production Management Platform
+        {/* ── 6. Signature Block ────────────────────────────────────────────── */}
+        <Card>
+          <SectionHeader icon={PenLine} label="Signatures" />
+          <div className="p-5">
+            <p className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-[0.18em] text-center mb-6">
+              In Witness Whereof the parties have executed this Agreement
             </p>
-          </div>
-          <div className="text-right">
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${status.color} mb-3`}>
-              <StatusIcon size={12} />
-              {status.label}
+            <div className="grid grid-cols-2 gap-8">
+              {[
+                { party: 'EAARTH PRODUCTIONS', name: 'Authorised Signatory', sub: 'On behalf of the Company' },
+                { party: 'ARTIST / REPRESENTATIVE', name: offer.fullName || 'Artist Name', sub: 'The Contractor or their Lender' },
+              ].map(p => (
+                <div key={p.party}>
+                  <p className="text-[8px] font-mono font-bold text-muted-foreground uppercase tracking-[0.16em] mb-3">
+                    {p.party}
+                  </p>
+
+                  {/* Signature line */}
+                  <div className="relative mb-3">
+                    <div className="h-10 border-b-2 border-border" />
+                    <p className="absolute bottom-1 left-0 text-[8px] text-muted-foreground/40 uppercase tracking-wide">
+                      Signature
+                    </p>
+                  </div>
+
+                  <p className="text-[11px] font-semibold text-foreground mb-3">{p.name}</p>
+                  <p className="text-[9px] text-muted-foreground/60 mb-3">{p.sub}</p>
+
+                  {/* Date line */}
+                  <div className="relative">
+                    <div className="h-7 border-b border-border/60" />
+                    <p className="absolute bottom-1 left-0 text-[8px] text-muted-foreground/40 uppercase tracking-wide">
+                      Date
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="space-y-1">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contract ID</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white" style={{ fontFamily: '"Courier New", monospace' }}>
-                {contract.offerId}
-              </p>
-            </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Issued</p>
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{contract.updated}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Version</p>
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{contract.version}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Pages</p>
-            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">3</p>
-          </div>
+        {/* Footer */}
+        <div className="text-center pt-1 pb-2">
+          <p className="text-[8px] font-mono text-muted-foreground/30 uppercase tracking-widest">
+            Confidential · {bundle.name.toUpperCase()} · {refNum} · Eaarth Productions
+          </p>
         </div>
       </div>
-    </div>
-  );
-}
-
-// DOCUMENT FOOTER COMPONENT
-function DocumentFooter({ currentPage }) {
-  return (
-    <div className="mt-16 pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
-        <p>Page {currentPage + 1} of 3</p>
-        <p className="text-indigo-600 dark:text-indigo-400 font-semibold">EAARTH Production Management</p>
-      </div>
-      <div className="text-right text-[10px] text-slate-500 dark:text-slate-400">
-        <p>This is a legally binding document</p>
-        <p>Generated on {new Date().toLocaleDateString('en-GB')}</p>
-      </div>
-    </div>
-  );
-}
-
-// CONTRACT METADATA SIDEBAR
-function ContractMetadata({ contract, status }) {
-  const StatusIcon = status.icon;
-  
-  return (
-    <div className="p-6 space-y-6">
-      {/* Contract Summary */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-          Contract Summary
-        </h3>
-        <div className="space-y-3">
-          <InfoItem icon={FileText} label="Film Title" value={contract.filmTitle} />
-          <InfoItem icon={User} label="Contractor" value={contract.crewMember.name} />
-          <InfoItem icon={DollarSign} label="Weekly Rate" value={contract.fees.weeklyRate} highlight />
-          <InfoItem icon={Calendar} label="Duration" value={`${contract.dealTerms.startDate} - ${contract.dealTerms.endDate}`} />
-        </div>
-      </div>
-
-      {/* Status Timeline */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-          Signature Progress
-        </h3>
-        <div className="space-y-2">
-          {contract.signatures.map((sig, idx) => (
-            <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                sig.verified 
-                  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-400'
-              }`}>
-                {sig.verified ? <CheckCircle size={14} /> : <Clock size={14} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">{sig.signedBy}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{sig.role.replace('_', ' ')}</p>
-                {sig.verified && (
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">✓ Signed {sig.signedAt}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Document Actions */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-          Quick Actions
-        </h3>
-        <div className="space-y-2">
-          <button className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-            <Download size={14} />
-            Download PDF
-          </button>
-          <button className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-            <Printer size={14} />
-            Print Contract
-          </button>
-        </div>
-      </div>
-
-      {/* Audit Log */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-          Audit Log
-        </h3>
-        <div className="space-y-3 text-xs">
-          <AuditItem date="14/02/2024" action="Contract fully executed" user="System" />
-          <AuditItem date="14/02/2024" action="Signed by Production Executive" user="Emma Thompson" />
-          <AuditItem date="13/02/2024" action="Signed by Contractor" user="John Smith" />
-          <AuditItem date="13/02/2024" action="Contract created" user="System" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InfoItem({ icon: Icon, label, value, highlight }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
-        <Icon size={14} className="text-slate-500 dark:text-slate-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</p>
-        <p className={`text-sm font-semibold truncate ${
-          highlight 
-            ? 'text-indigo-600 dark:text-indigo-400' 
-            : 'text-slate-700 dark:text-slate-300'
-        }`}>
-          {value}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function AuditItem({ date, action, user }) {
-  return (
-    <div className="flex gap-3">
-      <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0"></div>
-      <div className="flex-1">
-        <p className="text-slate-700 dark:text-slate-300 font-medium">{action}</p>
-        <p className="text-slate-500 dark:text-slate-400">{user} • {date}</p>
-      </div>
-    </div>
-  );
-}
-
-// PAGE COMPONENTS (Refined Typography)
-function Page1({ contract }) {
-  return (
-    <div className="space-y-8">
-      {/* Title */}
-      <div className="text-center space-y-4 pb-6 border-b-2 border-slate-900 dark:border-slate-100">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white uppercase" style={{ fontFamily: '"Playfair Display", serif', letterSpacing: '0.05em' }}>
-          Independent Contractor Agreement
-        </h1>
-        <h2 className="text-xl font-semibold text-indigo-700 dark:text-indigo-400">
-          Film Production: "{contract.filmTitle}"
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">Unit Driver – Individual Services</p>
-      </div>
-
-      {/* Execution Date */}
-      <div className="bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-600 dark:border-indigo-400 rounded-r-lg p-4">
-        <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-          This Agreement is made and entered into on <strong className="text-indigo-700 dark:text-indigo-400">{contract.executionDate}</strong>, 
-          with effect from the date first written above.
-        </p>
-      </div>
-
-      {/* Parties */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b-2 pb-2 border-slate-200 dark:border-slate-700" style={{ fontFamily: '"Playfair Display", serif' }}>
-          1. Parties to the Agreement
-        </h3>
-
-        <PartyCard
-          label="Producer"
-          entity={contract.producer.entity}
-          address={contract.producer.address}
-          phone={contract.producer.phone}
-          color="indigo"
-        />
-
-        <PartyCard
-          label="Contractor"
-          entity={contract.crewMember.name}
-          address={contract.crewMember.address}
-          phone={contract.crewMember.phone}
-          email={contract.crewMember.email}
-          citizenship={contract.crewMember.citizenship}
-          residence={contract.crewMember.residence}
-          color="blue"
-        />
-      </section>
-
-      {/* Engagement Terms */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b-2 pb-2 border-slate-200 dark:border-slate-700" style={{ fontFamily: '"Playfair Display", serif' }}>
-          2. Engagement Terms
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          <TermCard label="Department" value={contract.dealTerms.department} />
-          <TermCard label="Position" value={contract.dealTerms.position} />
-          <TermCard label="Start Date" value={contract.dealTerms.startDate} />
-          <TermCard label="End Date" value={contract.dealTerms.endDate} />
-        </div>
-      </section>
-
-      {/* Compensation */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b-2 pb-2 border-slate-200 dark:border-slate-700" style={{ fontFamily: '"Playfair Display", serif' }}>
-          3. Compensation & Benefits
-        </h3>
-        
-        <CompensationCard
-          title="Weekly Compensation"
-          baseRate={contract.fees.baseWeeklyRate}
-          holidayRate={contract.fees.weeklyHolidayRate}
-          totalRate={contract.fees.weeklyRate}
-          color="emerald"
-        />
-
-        <CompensationCard
-          title="Daily Compensation"
-          baseRate={contract.fees.baseDailyRate}
-          holidayRate={contract.fees.dailyHolidayRate}
-          totalRate={contract.fees.dailyRate}
-          color="blue"
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <PremiumRateCard
-            title="6th Consecutive Day"
-            rate={contract.fees.sixthDayRate}
-            multiplier="1.5× Daily Rate"
-            color="amber"
-          />
-          <PremiumRateCard
-            title="7th Consecutive Day"
-            rate={contract.fees.seventhDayRate}
-            multiplier="2× Daily Rate"
-            color="orange"
-          />
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function Page2({ contract }) {
-  return (
-    <div className="space-y-8">
-      <div className="text-center space-y-4 pb-6 border-b-2 border-slate-900 dark:border-slate-100">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white uppercase" style={{ fontFamily: '"Playfair Display", serif', letterSpacing: '0.05em' }}>
-          Special Stipulations
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">Additional Terms & Conditions Specific to this Engagement</p>
-      </div>
-
-      {contract.specialStipulations && contract.specialStipulations.length > 0 ? (
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b-2 pb-2 border-slate-200 dark:border-slate-700" style={{ fontFamily: '"Playfair Display", serif' }}>
-            5. Special Conditions
-          </h3>
-          {contract.specialStipulations.map((stipulation, index) => (
-            <div key={index} className="flex gap-4 p-5 border-l-4 border-indigo-500 dark:border-indigo-400 bg-slate-50 dark:bg-slate-800/50 rounded-r-lg">
-              <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg flex items-center justify-center font-bold text-lg">
-                {index + 1}
-              </div>
-              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 pt-2">
-                {stipulation}
-              </p>
-            </div>
-          ))}
-        </section>
-      ) : (
-        <div className="bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-12 text-center">
-          <p className="text-slate-500 dark:text-slate-400 italic">No special stipulations apply to this agreement.</p>
-        </div>
-      )}
-
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-5">
-        <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-          Conflict Resolution
-        </h4>
-        <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-          In the event of any conflict between the Standard Terms and Conditions and these Special Stipulations, 
-          the provisions of the Special Stipulations shall take precedence.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function Page3({ contract }) {
-  return (
-    <div className="space-y-8">
-      <div className="text-center space-y-4 pb-6 border-b-2 border-slate-900 dark:border-slate-100">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white uppercase" style={{ fontFamily: '"Playfair Display", serif', letterSpacing: '0.05em' }}>
-          Execution & Agreement
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">Authorized Signatures & Verification</p>
-      </div>
-
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-white border-b-2 pb-2 border-slate-200 dark:border-slate-700" style={{ fontFamily: '"Playfair Display", serif' }}>
-          7. Authorized Signatures
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { role: 'crew_member', label: 'Contractor', color: 'blue' },
-            { role: 'financial_controller', label: 'Financial Controller', color: 'emerald' },
-            { role: 'upm', label: 'Unit Production Manager', color: 'amber' },
-            { role: 'production_executive', label: 'Production Executive', color: 'indigo' },
-          ].map((sig) => {
-            const signature = contract.signatures?.find(s => s.role === sig.role);
-            return (
-              <SignatureBlock
-                key={sig.role}
-                label={sig.label}
-                signature={signature}
-                color={sig.color}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <div className="flex justify-center pt-8">
-        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-emerald-500 border-2 border-emerald-400 rounded-full px-8 py-4 shadow-lg">
-          <CheckCircle size={20} className="text-white" />
-          <span className="font-bold text-white uppercase text-sm tracking-wider">
-            Fully Executed & Verified
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// HELPER COMPONENTS
-function PartyCard({ label, entity, address, phone, email, citizenship, residence, color }) {
-  const colors = {
-    indigo: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700',
-    blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',
-  };
-
-  return (
-    <div className={`border-2 ${colors[color]} rounded-lg p-6`}>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-3">{label}</p>
-      <p className="text-lg font-bold text-slate-900 dark:text-white mb-4">{entity}</p>
-      <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1.5">
-        <p><span className="font-semibold text-slate-900 dark:text-white">Address:</span> {address}</p>
-        <p><span className="font-semibold text-slate-900 dark:text-white">Phone:</span> {phone}</p>
-        {email && <p><span className="font-semibold text-slate-900 dark:text-white">Email:</span> {email}</p>}
-        {citizenship && residence && (
-          <div className="flex gap-4 pt-2 border-t border-slate-200 dark:border-slate-700">
-            <p><span className="font-semibold text-slate-900 dark:text-white">Citizenship:</span> {citizenship}</p>
-            <p><span className="font-semibold text-slate-900 dark:text-white">Residence:</span> {residence}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TermCard({ label, value }) {
-  return (
-    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-base font-bold text-slate-900 dark:text-white">{value}</p>
-    </div>
-  );
-}
-
-function CompensationCard({ title, baseRate, holidayRate, totalRate, color }) {
-  const colors = {
-    emerald: 'from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-700',
-    blue: 'from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-700',
-  };
-
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} border-2 rounded-lg p-5`}>
-      <h4 className="font-bold text-slate-900 dark:text-white mb-4">{title}</h4>
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Base Rate</p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{baseRate}</p>
-        </div>
-        <div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Holiday (12.07%)</p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{holidayRate}</p>
-        </div>
-        <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3">
-          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 font-semibold">Total</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalRate}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PremiumRateCard({ title, rate, multiplier, color }) {
-  const colors = {
-    amber: 'from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-700',
-    orange: 'from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-900/10 border-orange-200 dark:border-orange-700',
-  };
-
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} border-2 rounded-lg p-4`}>
-      <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 font-semibold">{title}</p>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white">{rate}</p>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{multiplier}</p>
-    </div>
-  );
-}
-
-function SignatureBlock({ label, signature, color }) {
-  const colors = {
-    blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',
-    emerald: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700',
-    amber: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700',
-    indigo: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700',
-  };
-
-  return (
-    <div className={`border-2 ${colors[color]} rounded-lg p-5`}>
-      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-3">{label}</p>
-      {signature ? (
-        <div className="space-y-3">
-          <div className="border-t-2 border-slate-900 dark:border-white pt-3">
-            <p className="font-bold text-slate-900 dark:text-white text-lg" style={{ fontFamily: '"Brush Script MT", cursive' }}>
-              {signature.signedBy}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Executed on {signature.signedAt}</p>
-          </div>
-          {signature.verified && (
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-              <CheckCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Digitally Verified</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="h-16 border-b-2 border-dashed border-slate-300 dark:border-slate-600"></div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 italic">Awaiting signature</p>
-        </div>
-      )}
-    </div>
+    </article>
   );
 }
