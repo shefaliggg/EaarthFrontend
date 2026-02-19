@@ -52,6 +52,20 @@ const chatApi = {
     }
   },
 
+  downloadMessageAttachments: async (
+    conversationId,
+    messageId,
+    attachementId,
+  ) => {
+    const response = await axiosConfig.get(
+      `/chats/${conversationId}/messages/${messageId}/attachments/${attachementId}/download`,
+      {
+        responseType: "blob", // VERY IMPORTANT
+      },
+    );
+    return response;
+  },
+
   // Get messages for a conversation
   getMessages: async (conversationId, limit = 20, cursor = null) => {
     try {

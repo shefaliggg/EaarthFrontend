@@ -75,7 +75,7 @@ export default function MessageBubble({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [previewImageFile, setPreviewImageFile] = useState(null);
   const retryMessage = useChatStore((state) => state.retryMessage);
   const { selectedChat } = useChatStore();
 
@@ -134,8 +134,8 @@ export default function MessageBubble({
     setShowForwardDialog(true);
   };
 
-  const handleImageClick = (imageUrl) => {
-    setPreviewImageUrl(imageUrl);
+  const handleImageClick = (imageFIle) => {
+    setPreviewImageFile(imageFIle);
     setShowImagePreview(true);
   };
 
@@ -195,7 +195,7 @@ export default function MessageBubble({
               {message.time}
             </span>
             <Badge variant="outline" className="text-[9px] h-4 px-1.5">
-              Read by {getReadByCount(message,getCurrentUserId())}
+              Read by {getReadByCount(message, getCurrentUserId())}
             </Badge>
           </div>
         )}
@@ -496,7 +496,8 @@ export default function MessageBubble({
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
-        imageUrl={previewImageUrl}
+        message={message}
+        imageFile={previewImageFile}
       />
     </div>
   );
@@ -542,7 +543,7 @@ function MessageImage({ file, url, onClick, single = true }) {
 
   return (
     <div
-      className={`overflow-hidden  w-full ${single ? " max-w-[260px] max-h-[260px]" : " max-w-[200px] max-h-[200px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+      className={`overflow-hidden  w-full ${single ? " max-w-[240px] max-h-[240px]" : " max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
     >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -552,9 +553,9 @@ function MessageImage({ file, url, onClick, single = true }) {
       <img
         src={url}
         alt={file.name || "Shared image"}
-        onClick={() => onClick(url)}
+        onClick={() => onClick(file)}
         onLoad={() => setLoaded(true)}
-        className={`cursor-pointer rounded-sm w-full h-auto ${single ? "object-cover" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`cursor-pointer rounded-sm w-full h-auto object-cover ${single ? "" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
       />
     </div>
   );
@@ -565,7 +566,7 @@ function MessageVideo({ file, url, single = true }) {
     <video
       src={url}
       controls
-      className={`rounded-xl  w-full  bg-muted/90 ${single ? "object-cover max-w-[260px] max-h-[260px]" : "aspect-square max-w-[200px] max-h-[200px]"}`}
+      className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[240px] max-h-[240px]" : "aspect-square max-w-[160px] max-h-[160px]"}`}
     >
       Your browser does not support the video tag.
     </video>
@@ -597,7 +598,7 @@ function MessageAudio({ file, url, single = true }) {
 
   return (
     <div
-      className={`flex items-center gap-1  w-full ${single ? " min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-1  w-full col-span-2 ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
     >
       <button
         onClick={() => {
@@ -642,7 +643,7 @@ function MessageAudio({ file, url, single = true }) {
 function MessageFile({ file, url, single }) {
   return (
     <div
-      className={`flex items-center gap-1  w-full ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
         <FileText className="w-5 h-5 text-primary" />

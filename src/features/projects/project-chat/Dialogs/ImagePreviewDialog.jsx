@@ -1,45 +1,140 @@
-// src/features/chat/components/Dialogs/ImagePreviewDialog.jsx
-// ✅ Full-screen image preview with zoom and download
-
-import React from "react";
 import { X, Download, ZoomIn, ZoomOut } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/shared/components/ui/dialog";
+import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import getApiUrl from "../../../../shared/config/enviroment";
+import chatApi from "../api/chat.api";
 
-export default function ImagePreviewDialog({ open, onOpenChange, imageUrl }) {
+export default function ImagePreviewDialog({
+  open,
+  onOpenChange,
+  message,
+  imageFile,
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const zoomPercentage = Math.round(zoom * 100);
 
-  const handleDownload = () => {
-    if (!imageUrl) return;
-    
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = 'image.jpg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  console.log("message in preview", message);
+  console.log("message image in preview", imageFile);
+
+  const baseUrl = getApiUrl();
+
+  const handleDownload = async () => {
+    if (!message?.id || !imageFile?._id) return;
+
+    const downloadPromise = chatApi.downloadMessageAttachments(
+      message.conversationId,
+      message.id,
+      imageFile._id,
+    );
+
+    toast.promise(downloadPromise, {
+      loading: "Downloading file...",
+      success: async (response) => {
+        const blob = new Blob([response.data]);
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = imageFile.name || "file";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(blobUrl);
+
+        return "Download complete";
+      },
+      error: (err) => {
+        console.error("Download failed:", err);
+        return err?.response?.data?.message || "Download failed";
+      },
+    });
   };
 
-  // const handleZoomIn = () => {
-  //   setZoom(prev => Math.min(prev + 0.25, 3));
-  // };
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(prev + 0.25, 5));
+  };
 
-  // const handleZoomOut = () => {
-  //   setZoom(prev => Math.max(prev - 0.25, 0.5));
-  // };
+  const handleZoomOut = () => {
+    setZoom((prev) => {
+      const newZoom = Math.max(prev - 0.25, 1);
+      if (newZoom === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  };
 
-  // Reset zoom when dialog closes
-  // React.useEffect(() => {
-  //   if (!open) {
-  //     setZoom(1);
-  //   }
-  // }, [open]);
+  const handleMouseDown = (e) => {
+    if (zoom === 1) return;
+    setIsDragging(true);
+    dragStart.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  useEffect(() => {
+    if (!open) {
+      handleReset();
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-screen max-h-screen p-0 bg-transparent border-0 shadow-none overflow-hidden rounded-2xl">
-        <div className="relative w-full h-full flex items-center justify-center">
+      <DialogContent className="w-screen max-w-screen! h-screen p-0 bg-transparent border-0 shadow-none overflow-hidden rounded-none">
+        <div className="relative w-full h-full flex items-center justify-center bg-black/75">
+          <div className="absolute top-4 left-6 flex items-center gap-3 z-50 bg-black/40 backdrop-blur-md rounded-3xl px-3 py-1.5 text-white">
+            <button
+              onClick={handleZoomOut}
+              className="p-2 rounded-full hover:bg-white/10 transition"
+            >
+              <ZoomOut className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={handleZoomIn}
+              className="p-2 rounded-full hover:bg-white/10 transition"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
+
+            {/* Zoom % */}
+            <span className="text-sm font-medium w-12 text-center select-none">
+              {zoomPercentage}%
+            </span>
+
+            {/* Reset */}
+            <button
+              onClick={handleReset}
+              disabled={zoom === 1}
+              className="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-40 transition"
+            >
+              Reset
+            </button>
+          </div>
+
           {/* Close button */}
           <button
             onClick={() => onOpenChange(false)}
@@ -59,21 +154,34 @@ export default function ImagePreviewDialog({ open, onOpenChange, imageUrl }) {
           </button>
 
           {/* Image */}
-          {imageUrl && (
-            <div className="overflow-auto">
+          {imageFile?.url && (
+            <div
+              className="w-full h-full flex items-center justify-center overflow-hidden"
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
               <img
-                src={imageUrl}
+                src={imageFile?.url}
                 alt="Preview"
-                className="w-auto h-auto transition-transform duration-200 rounded-xs scale-75"
-                onError={(e) => {
-                  console.error("Failed to load image:", imageUrl);
-                  e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23333' width='400' height='400'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em' style='font-family:sans-serif;font-size:16px'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                onMouseDown={handleMouseDown}
+                draggable={false}
+                className={`select-none transition-transform duration-200 rounded-sm ${
+                  zoom > 1
+                    ? "cursor-grab active:cursor-grabbing"
+                    : "cursor-default"
+                }`}
+                style={{
+                  maxWidth: zoom === 1 ? "95vw" : "none",
+                  maxHeight: zoom === 1 ? "90vh" : "none",
+                  transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+                  transformOrigin: "center center",
                 }}
               />
             </div>
           )}
 
-          {!imageUrl && (
+          {!imageFile?.url && (
             <div className="text-center text-white p-8">
               <p className="text-lg">No image to display</p>
             </div>
