@@ -805,6 +805,34 @@ const useChatStore = create(
           console.error("❌ Failed to mark as read:", error);
         }
       },
+
+      downloadAttachment: async (conversationId, messageId, attachment) => {
+        const downloadPromise = chatApi.downloadMessageAttachments(
+          conversationId,
+          messageId,
+          attachment._id,
+        );
+
+        return toast.promise(downloadPromise, {
+          loading: "Downloading file...",
+          success: async (response) => {
+            const blob = new Blob([response.data]);
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = attachment.name || "file";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.URL.revokeObjectURL(blobUrl);
+
+            return "Download complete";
+          },
+          error: (err) => err?.response?.data?.message || "Download failed",
+        });
+      },
     }),
     { name: "ChatStore" },
   ),

@@ -166,7 +166,6 @@ export const getUnreadCount = (conversation, currentUserId) => {
 
 export function getReadByCount(message) {
   if (!message?.seenBy?.length) return 0;
-  console.log("seen by", message.seenBy);
 
   const senderId = message?.senderId?._id || message?.senderId;
 
@@ -174,6 +173,21 @@ export function getReadByCount(message) {
     (entry) => entry.userId?.toString() !== senderId.toString(),
   ).length;
 }
+
+export const formatDuration = (seconds = 0) => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  const padded = (n) => String(n).padStart(2, "0");
+
+  if (hrs > 0) {
+    return `${padded(hrs)}:${padded(mins)}:${padded(secs)}`;
+  }
+
+  return `${padded(mins)}:${padded(secs)}`;
+};
+
 
 export function transformMessage(
   msg,

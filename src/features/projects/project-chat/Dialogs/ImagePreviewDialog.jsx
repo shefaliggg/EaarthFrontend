@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import getApiUrl from "../../../../shared/config/enviroment";
 import chatApi from "../api/chat.api";
+import useChatStore from "../store/chat.store";
 
 export default function ImagePreviewDialog({
   open,
@@ -17,42 +18,12 @@ export default function ImagePreviewDialog({
   const dragStart = useRef({ x: 0, y: 0 });
   const zoomPercentage = Math.round(zoom * 100);
 
-  console.log("message in preview", message);
-  console.log("message image in preview", imageFile);
+  const { downloadAttachment } = useChatStore();
 
-  const baseUrl = getApiUrl();
 
   const handleDownload = async () => {
     if (!message?.id || !imageFile?._id) return;
-
-    const downloadPromise = chatApi.downloadMessageAttachments(
-      message.conversationId,
-      message.id,
-      imageFile._id,
-    );
-
-    toast.promise(downloadPromise, {
-      loading: "Downloading file...",
-      success: async (response) => {
-        const blob = new Blob([response.data]);
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = imageFile.name || "file";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        window.URL.revokeObjectURL(blobUrl);
-
-        return "Download complete";
-      },
-      error: (err) => {
-        console.error("Download failed:", err);
-        return err?.response?.data?.message || "Download failed";
-      },
-    });
+    downloadAttachment(message.conversationId, message.id, imageFile);
   };
 
   const handleZoomIn = () => {
