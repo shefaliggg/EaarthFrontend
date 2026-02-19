@@ -38,10 +38,12 @@ function CalendarLayout() {
     } catch (e) { toast.error("Error creating event"); }
   };
 
+  // 1. Add check for "preview"
   const section = (() => {
     if (location.pathname.includes("/shooting")) return "shooting";
     if (location.pathname.includes("/settings")) return "settings";
     if (location.pathname.includes("/tmo")) return "tmo"; 
+    if (location.pathname.includes("/preview")) return "preview"; // Added this check
     return "calendar";
   })();
 
@@ -52,6 +54,10 @@ function CalendarLayout() {
       return { icon: "Calendar", title: "Shooting Calendar" };
     if (section === "tmo")
       return { icon: "Plane", title: "Tmo" };
+    // 2. Add header config for preview (Optional, but good for consistency)
+    if (section === "preview")
+        return { icon: "Calendar", title: "Calendar" };
+
     return {
       icon: "Settings",
       title: "Calendar Settings",
@@ -59,8 +65,10 @@ function CalendarLayout() {
     };
   })();
 
+  // 3. Ensure preview returns null for the action button
   const primaryAction = (() => {
-    if (section === "tmo") return null;
+    if (section === "tmo" || section === "preview") return null; // Added preview here
+    
     if (section === "calendar" && canModify) {
       return {
         label: "Create Event",
