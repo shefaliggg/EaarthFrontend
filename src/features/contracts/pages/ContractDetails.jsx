@@ -1,1063 +1,1048 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+/**
+ * CreateOffer.jsx — Enhanced with mock data + Lucide icons
+ */
 
-// ── PDF.js init ────────────────────────────────────────────────────────────────
-let pdfjsLib = null;
-const initPdfJs = async () => {
-  if (!pdfjsLib) {
-    const pdfjs  = await import('pdfjs-dist');
-    const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-    pdfjsLib = pdfjs;
-  }
-  return pdfjsLib;
-};
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import ContractPreview from './ContractPreview';
+import {
+  ChevronLeft, Moon, Sun, FileDown, Save, Send,
+  ChevronDown, Check, Plus, X, User, Building2,
+  Briefcase, Package, StickyNote, Paperclip,
+  Box, Monitor, AppWindow, Camera, Smartphone,
+  Car, Truck, Coffee, DollarSign, Home,
+  Trash2,
+} from 'lucide-react';
 
-const guessType = (name = '') => {
-  const n = name.toLowerCase();
-  if (n.includes('date') || n.includes('dob'))                               return 'date';
-  if (n.includes('email'))                                                    return 'email';
-  if (n.includes('phone') || n.includes('tel') || n.includes('mobile'))      return 'tel';
-  if (n.includes('address') || n.includes('street'))                         return 'textarea';
-  if (n.includes('rate') || n.includes('fee') || n.includes('salary') ||
-      n.includes('wage') || n.includes('amount') || n.includes('pay'))       return 'number';
-  return 'text';
-};
-
-const CURRENCIES = [
-  { value: '£', label: 'GBP (£)' },
-  { value: '$', label: 'USD ($)' },
-  { value: '€', label: 'EUR (€)' },
+// ── Constants ─────────────────────────────────────────────────────────────────
+const DEPARTMENTS = [
+  'ACCOUNTS','ACTION VEHICLES','AERIAL','ANIMALS','ANIMATION','ARMOURY','ART',
+  'ASSETS','ASSISTANT DIRECTORS','CAMERA','CAST','CHAPERONES','CHOREOGRAPHY',
+  'CLEARANCES','COMPUTER GRAPHICS','CONSTRUCTION','CONTINUITY','COSTUME',
+  'COSTUME FX','COVID SAFETY','CREATURE EFFECTS','DIT','DIGITAL ASSETS',
+  'DIGITAL PLAYBACK','DIRECTOR','DOCUMENTARY','DRAPES','EPK','EDITORIAL',
+  'ELECTRICAL','ELECTRICAL RIGGING','FRANCHISE','GREENS','GREENSCREENS','GRIP',
+  'HAIR AND MAKEUP','HEALTH AND SAFETY','IT','LOCATIONS','MARINE','MEDICAL',
+  'MILITARY','MUSIC','PHOTOGRAPHY','PICTURE VEHICLES','POST PRODUCTION',
+  'PRODUCTION','PROP MAKING','PROPS','PROSTHETICS','PUBLICITY','PUPPETEER',
+  'RIGGING','SFX','SCRIPT','SCRIPT EDITING','SECURITY','SET DEC','SOUND',
+  'STANDBY','STORYBOARD','STUDIO UNIT','STUNTS','SUPPORTING ARTIST',
+  'SUSTAINABILITY','TRANSPORT','TUTORS','UNDERWATER','VFX','VIDEO','VOICE',
 ];
 
-const TEMPLATE_TYPES = [
-  { id: 'service',   label: 'Service Agreement' },
-  { id: 'loanout',   label: 'Crew – Loanout Services' },
-  { id: 'transport', label: 'Transport – Self Employed' },
-  { id: 'daily',     label: 'Daily Transport – PAYE' },
-  { id: 'paye',      label: 'PAYE Agreement' },
+const CONTRACT_OPTIONS = [
+  { value: '',               label: 'SELECT AN OPTION' },
+  { value: 'HOD',            label: 'HOD' },
+  { value: 'NO_CONTRACT',    label: 'NO CONTRACT (ALL OTHER DOCUMENTS TO BE PROCESSED)' },
+  { value: 'SENIOR_AGREEMENT', label: 'SENIOR AGREEMENT' },
 ];
 
-const DEFAULT = {
-  templateType: 'service',
-  contractTitle: 'Service Agreement',
-  clientName: '', clientAddress: '', clientCompany: '',
-  providerName: '', providerAddress: '', providerCompany: '',
-  startDate: '', endDate: '',
-  currency: '£', feeAmount: '',
-  paymentTerms: 'Net 30 days from invoice',
-  scopeOfWork: '', deliverables: '',
-  governingLaw: 'England and Wales',
-  terminationDays: '30',
-  confidentiality: true, ipAssignment: true, limitation: true,
-  dispute: 'arbitration',
+const STATUS_REASONS = [
+  { value: '',                  label: 'SELECT AN OPTION' },
+  { value: 'HMRC_LIST',         label: "JOB TITLE APPEARS ON HMRC LIST OF 'ROLES NORMALLY TREATED AS SELF-EMPLOYED'" },
+  { value: 'CEST_ASSESSMENT',   label: "OUR CEST ASSESSMENT HAS CONFIRMED 'OFF-PAYROLL WORKING RULES (IR35) DO NOT APPLY'" },
+  { value: 'LORIMER_LETTER',    label: 'YOU HAVE SUPPLIED A VALID LORIMER LETTER' },
+  { value: 'OTHER',             label: 'OTHER' },
+];
+
+const ENGAGEMENT_TYPES = [
+  { value: '',          label: 'SELECT ENGAGEMENT TYPE' },
+  { value: 'LOAN_OUT',  label: 'LOAN OUT' },
+  { value: 'PAYE',      label: 'PAYE' },
+  { value: 'SCHD',      label: 'SCHD (DAILY/WEEKLY)' },
+  { value: 'LONG_FORM', label: 'LONG FORM' },
+];
+
+const RATE_TYPES  = [{ value: 'DAILY', label: 'DAILY' }, { value: 'WEEKLY', label: 'WEEKLY' }];
+const CURRENCIES  = [{ value: 'GBP', label: 'GBP (£)' }, { value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }];
+
+const CAP_TYPES = [
+  { value: '',           label: 'SELECT CAP TYPE' },
+  { value: 'FLAT',       label: 'FLAT FIGURE' },
+  { value: 'PERCENTAGE', label: 'PERCENTAGE OF INVENTORY' },
+  { value: 'NO_CAP',     label: 'NO CAP' },
+];
+
+const WORKING_WEEKS = [
+  { value: '',         label: 'SELECT...'  },
+  { value: '5_DAYS',   label: '5 DAYS'    },
+  { value: '5.5_DAYS', label: '5.5 DAYS'  },
+  { value: '5_6_DAYS', label: '5/6 DAYS'  },
+  { value: '6_DAYS',   label: '6 DAYS'    },
+];
+
+const OVERTIME_RULE_OPTIONS = [
+  { label: 'After Standard Hours', value: 'AFTER_STANDARD_HOURS' },
+  { label: 'Enhanced O/T',         value: 'ENHANCED_OT'          },
+  { label: 'Camera O/T',           value: 'CAMERA_OT'            },
+  { label: 'Post O/T',             value: 'POST_OT'              },
+  { label: 'Pre O/T',              value: 'PRE_OT'               },
+  { label: 'Night Penalty',        value: 'NIGHT_PENALTY'        },
+  { label: 'BTA',                  value: 'BTA'                  },
+  { label: 'Late Meal',            value: 'LATE_MEAL'            },
+  { label: 'Broken Meal',          value: 'BROKEN_MEAL'          },
+  { label: 'Travel',               value: 'TRAVEL'               },
+  { label: 'Dawn',                 value: 'DAWN'                 },
+  { label: 'Night',                value: 'NIGHT'                },
+];
+
+const SPECIAL_DAY_TYPES = [
+  { key: 'SIXTH_DAY',     label: '6th Day'        },
+  { key: 'SEVENTH_DAY',   label: '7th Day'        },
+  { key: 'PUBLIC_HOLIDAY',label: 'Public Holiday' },
+  { key: 'TRAVEL_DAY',    label: 'Travel Day'     },
+  { key: 'TURNAROUND',    label: 'Turnaround'     },
+];
+
+const getDefaultAllowances = () => ({
+  boxRental: false, boxRentalDescription: '', boxRentalFeePerWeek: '',
+  boxRentalCapCalculatedAs: '', boxRentalCap: '', boxRentalCapPercentage: '',
+  boxRentalTerms: '', boxRentalBudgetCode: '',
+  boxRentalPayableInPrep: false, boxRentalPayableInShoot: true, boxRentalPayableInWrap: false,
+
+  computerAllowance: false, computerAllowanceFeePerWeek: '',
+  computerAllowanceCapCalculatedAs: '', computerAllowanceCap: '',
+  computerAllowanceTerms: '', computerAllowanceBudgetCode: '',
+  computerAllowancePayableInPrep: false, computerAllowancePayableInShoot: true, computerAllowancePayableInWrap: false,
+
+  softwareAllowance: false, softwareAllowanceDescription: '', softwareAllowanceFeePerWeek: '',
+  softwareAllowanceTerms: '', softwareAllowanceBudgetCode: '',
+  softwareAllowancePayableInPrep: false, softwareAllowancePayableInShoot: true, softwareAllowancePayableInWrap: false,
+
+  equipmentRental: false, equipmentRentalDescription: '', equipmentRentalFeePerWeek: '',
+  equipmentRentalCapCalculatedAs: '', equipmentRentalCap: '',
+  equipmentRentalTerms: '', equipmentRentalBudgetCode: '',
+  equipmentRentalPayableInPrep: false, equipmentRentalPayableInShoot: true, equipmentRentalPayableInWrap: false,
+
+  mobilePhoneAllowance: false, mobilePhoneAllowanceFeePerWeek: '',
+  mobilePhoneAllowanceTerms: '', mobilePhoneAllowanceBudgetCode: '',
+  mobilePhoneAllowancePayableInPrep: false, mobilePhoneAllowancePayableInShoot: true, mobilePhoneAllowancePayableInWrap: false,
+
+  vehicleAllowance: false, vehicleAllowanceFeePerWeek: '',
+  vehicleAllowanceTerms: '', vehicleAllowanceBudgetCode: '',
+  vehicleAllowancePayableInPrep: false, vehicleAllowancePayableInShoot: true, vehicleAllowancePayableInWrap: false,
+
+  vehicleHire: false, vehicleHireRate: '', vehicleHireTerms: '', vehicleHireBudgetCode: '',
+  vehicleHirePayableInPrep: false, vehicleHirePayableInShoot: true, vehicleHirePayableInWrap: false,
+
+  perDiem1: false, perDiem1Currency: 'GBP', perDiem1ShootDayRate: '', perDiem1NonShootDayRate: '',
+  perDiem1Terms: '', perDiem1BudgetCode: '',
+  perDiem1PayableInPrep: false, perDiem1PayableInShoot: true, perDiem1PayableInWrap: false,
+
+  perDiem2: false, perDiem2Currency: 'USD', perDiem2ShootDayRate: '', perDiem2NonShootDayRate: '',
+  perDiem2Terms: '', perDiem2BudgetCode: '',
+  perDiem2PayableInPrep: false, perDiem2PayableInShoot: true, perDiem2PayableInWrap: false,
+
+  livingAllowance: false, livingAllowanceCurrency: 'GBP',
+  livingAllowanceDailyRate: '', livingAllowanceWeeklyRate: '',
+  livingAllowanceTerms: '', livingAllowanceBudgetCode: '',
+  livingAllowancePayableInPrep: false, livingAllowancePayableInShoot: true, livingAllowancePayableInWrap: false,
+});
+
+// ── MOCK DATA ─────────────────────────────────────────────────────────────────
+const MOCK_FORM_DATA = {
+  fullName: 'JESSICA HARTLEY',
+  emailAddress: 'jessica.hartley@example.com',
+  mobileNumber: '+44 7700 900142',
+  isViaAgent: true,
+  agentName: 'CREATIVE ARTISTS AGENCY',
+  agentEmailAddress: 'bookings@caa-london.com',
+  alternativeContractType: '',
+  allowAsSelfEmployedOrLoanOut: 'YES',
+  statusDeterminationReason: 'CEST_ASSESSMENT',
+  otherStatusDeterminationReason: '',
+  isLivingInUk: 'YES',
+  otherDealProvisions: 'Credit: First position above the title. Approval of key personnel including director of photography and production designer.',
+  additionalNotes: 'Talent has confirmed availability for all principal photography dates. Wardrobe fittings scheduled for week prior to shoot commencement.',
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-const fmt = (d) => d
-  ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-  : null;
+const createMockRole = (index) => ({
+  id: Date.now().toString() + index,
+  isPrimaryRole: index === 0,
+  roleName: index === 0 ? 'PRIMARY ROLE' : `ROLE ${index + 1}`,
+  jobTitle: index === 0 ? 'DIRECTOR OF PHOTOGRAPHY' : 'CAMERA OPERATOR',
+  jobTitleSuffix: index === 0 ? '' : 'B CAMERA',
+  searchAllDepartments: false,
+  createOwnJobTitle: false,
+  unit: 'MAIN UNIT',
+  department: index === 0 ? 'CAMERA' : 'CAMERA',
+  subDepartment: '',
+  regularSiteOfWork: 'PINEWOOD STUDIOS & VARIOUS UK LOCATIONS',
+  engagementType: 'LOAN_OUT',
+  productionPhase: '',
+  startDate: '2025-03-10',
+  endDate: '2025-09-30',
+  workingWeek: '5_6_DAYS',
+  workingInUnitedKingdom: 'YES',
+  rateType: 'DAILY',
+  currency: 'GBP',
+  rateAmount: index === 0 ? '2500' : '950',
+  feePerDay: index === 0 ? '2692.31' : '1023.08',
+  standardWorkingHours: '10',
+  holidayPayInclusive: true,
+  rateDescription: '',
+  overtimeType: 'CALCULATED',
+  overtime: {
+    enabled: true,
+    rules: [
+      { name: 'AFTER_STANDARD_HOURS', startsAfterHours: 10, rateMultiplier: 1.5, maxHours: 2, budgetCode: '', terms: '', payableInPrep: false, payableInShoot: true, payableInWrap: false },
+      { name: 'ENHANCED_OT', startsAfterHours: 12, rateMultiplier: 2, maxHours: null, budgetCode: '', terms: '', payableInPrep: false, payableInShoot: true, payableInWrap: false },
+    ],
+  },
+  specialDayRates: [
+    { type: 'SIXTH_DAY',      amount: index === 0 ? '3125' : '1187.50', unit: 'DAILY' },
+    { type: 'SEVENTH_DAY',    amount: index === 0 ? '5000' : '1900',    unit: 'DAILY' },
+    { type: 'PUBLIC_HOLIDAY', amount: index === 0 ? '5000' : '1900',    unit: 'DAILY' },
+    { type: 'TRAVEL_DAY',     amount: index === 0 ? '1250' : '475',     unit: 'DAILY' },
+    { type: 'TURNAROUND',     amount: '',                               unit: 'DAILY' },
+  ],
+  budgetCode: index === 0 ? '401-10-001' : '401-10-002',
+  allowances: {
+    ...getDefaultAllowances(),
+    ...(index === 0 ? {
+      boxRental: true,
+      boxRentalDescription: 'CAMERA DEPARTMENT EQUIPMENT, LENSES, ACCESSORIES AND ASSOCIATED PERIPHERALS',
+      boxRentalFeePerWeek: '750',
+      boxRentalCapCalculatedAs: 'FLAT',
+      boxRentalCap: '26250',
+      boxRentalTerms: 'PAYABLE ON INVOICE SUBMISSION',
+      boxRentalBudgetCode: '401-65-001',
+      boxRentalPayableInPrep: true,
+      boxRentalPayableInShoot: true,
+      boxRentalPayableInWrap: false,
 
-const formatFee = (amount, currency) => {
-  if (!amount) return null;
-  const n = parseFloat(amount);
-  if (isNaN(n)) return null;
-  return `${currency}${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+      computerAllowance: true,
+      computerAllowanceFeePerWeek: '75',
+      computerAllowanceBudgetCode: '401-65-010',
+      computerAllowancePayableInPrep: true,
+      computerAllowancePayableInShoot: true,
+      computerAllowancePayableInWrap: false,
 
-function getCompletion(form) {
-  const fields = [form.clientName, form.clientAddress, form.providerName, form.providerAddress,
-    form.startDate, form.endDate, form.feeAmount, form.scopeOfWork];
-  return Math.round(fields.filter(f => f && String(f).trim().length > 0).length / fields.length * 100);
-}
+      perDiem1: true,
+      perDiem1Currency: 'GBP',
+      perDiem1ShootDayRate: '75',
+      perDiem1NonShootDayRate: '40',
+      perDiem1BudgetCode: '401-80-001',
+      perDiem1PayableInPrep: true,
+      perDiem1PayableInShoot: true,
+      perDiem1PayableInWrap: false,
 
-function hashStr(str = '') {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+      vehicleAllowance: true,
+      vehicleAllowanceFeePerWeek: '200',
+      vehicleAllowanceBudgetCode: '401-70-001',
+      vehicleAllowancePayableInPrep: true,
+      vehicleAllowancePayableInShoot: true,
+      vehicleAllowancePayableInWrap: false,
+    } : {}),
+  },
+});
 
-// ── Primitive UI ───────────────────────────────────────────────────────────────
-const fieldCls = `w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-input
-  text-foreground placeholder:text-muted-foreground
-  focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10
-  transition-all duration-150`;
+const MOCK_ROLES = [createMockRole(0), createMockRole(1)];
 
-function FieldRow({ label, required, hint, children }) {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const currSym = (c = 'GBP') => ({ GBP: '£', USD: '$', EUR: '€' }[c] ?? '£');
+const cn = (...c) => c.filter(Boolean).join(' ');
+
+const IC  = 'w-full px-3 py-2 text-sm rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all duration-150';
+const ICsm = 'px-2.5 py-1.5 text-[11px] rounded-lg border border-border bg-input text-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all duration-150';
+
+// ── Primitive form components ─────────────────────────────────────────────────
+function FL({ label, required, children, className }) {
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-1.5">
-        <label className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-          {label}{required && <span className="text-destructive ml-0.5">*</span>}
-        </label>
-        {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
-      </div>
+    <div className={cn('space-y-1.5', className)}>
+      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-0.5">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+      </label>
       {children}
     </div>
   );
 }
 
-function Input({ label, required, hint, ...props }) {
+function FInput({ label, required, className, inputClass, ...p }) {
   return (
-    <FieldRow label={label} required={required} hint={hint}>
-      <input className={fieldCls} {...props} />
-    </FieldRow>
+    <FL label={label} required={required} className={className}>
+      <input className={cn(IC, inputClass)} {...p} />
+    </FL>
   );
 }
 
-function Textarea({ label, hint, rows = 3, ...props }) {
+function FSelect({ label, required, options, value, onChange, className }) {
   return (
-    <FieldRow label={label} hint={hint}>
-      <textarea rows={rows} className={`${fieldCls} resize-none leading-relaxed`} {...props} />
-    </FieldRow>
-  );
-}
-
-function Select({ label, options, value, onChange, hint }) {
-  return (
-    <FieldRow label={label} hint={hint}>
+    <FL label={label} required={required} className={className}>
       <div className="relative">
-        <select value={value} onChange={onChange}
-          className={`${fieldCls} appearance-none pr-8 cursor-pointer`}>
-          {options.map(o => (
+        <select value={value} onChange={e => onChange(e.target.value)}
+          className={`${IC} appearance-none pr-7 cursor-pointer`}>
+          {options.map(o =>
             typeof o === 'string'
               ? <option key={o} value={o}>{o}</option>
-              : <option key={o.value ?? o.id} value={o.value ?? o.id}>{o.label}</option>
-          ))}
+              : <option key={o.value} value={o.value}>{o.label}</option>
+          )}
         </select>
-        <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
-          viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/>
-        </svg>
+        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
       </div>
-    </FieldRow>
+    </FL>
   );
 }
 
-function Toggle({ checked, onChange, label, description }) {
+function FMoney({ label, required, currency, value, onChange, className }) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer">
-      <div className="relative flex-shrink-0 mt-0.5">
-        <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
-        <div className={`w-9 h-5 rounded-full transition-colors duration-200 ${checked ? 'bg-primary' : 'bg-border'}`}>
-          <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-card shadow-sm transition-transform duration-200
-            ${checked ? 'translate-x-4' : 'translate-x-0.5'}`} />
+    <FL label={label} required={required} className={className}>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-semibold text-muted-foreground w-4 shrink-0">{currSym(currency)}</span>
+        <input type="number" step="0.01" value={value} onChange={e => onChange(e.target.value)}
+          placeholder="0.00" className={`${IC} flex-1`} />
+      </div>
+    </FL>
+  );
+}
+
+function FCheck({ id, checked, onChange, label, small }) {
+  return (
+    <label htmlFor={id} className="flex items-center gap-2 cursor-pointer select-none">
+      <div className="relative shrink-0">
+        <input type="checkbox" id={id} checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div className={cn(
+          'rounded border-2 flex items-center justify-center transition-all duration-150',
+          small ? 'w-3.5 h-3.5' : 'w-4 h-4',
+          checked ? 'bg-primary border-primary' : 'bg-input border-border'
+        )}>
+          {checked && (
+            <Check className={cn('text-primary-foreground', small ? 'w-2 h-2' : 'w-2.5 h-2.5')} strokeWidth={3} />
+          )}
         </div>
       </div>
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground leading-tight">{label}</p>
-        {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
-      </div>
+      <span className={cn('font-medium text-foreground', small ? 'text-[11px]' : 'text-sm')}>{label}</span>
     </label>
   );
 }
 
-function SectionDivider({ label }) {
+function FRadio({ name, options, value, onChange }) {
+  return (
+    <div className="flex gap-5 pt-0.5">
+      {options.map(opt => (
+        <label key={opt} className="flex items-center gap-2 cursor-pointer select-none">
+          <div className="relative shrink-0">
+            <input type="radio" name={name} value={opt} checked={value === opt}
+              onChange={e => onChange(e.target.value)} className="sr-only" />
+            <div className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all', value === opt ? 'border-primary' : 'border-border')}>
+              {value === opt && <div className="w-2 h-2 rounded-full bg-primary" />}
+            </div>
+          </div>
+          <span className="text-sm font-medium text-foreground">{opt}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange, label }) {
+  return (
+    <label className="flex items-center gap-3 cursor-pointer select-none">
+      <div className="relative shrink-0">
+        <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="sr-only" />
+        <div className={cn('w-9 h-5 rounded-full transition-colors duration-200', checked ? 'bg-primary' : 'bg-border')}>
+          <div className={cn('absolute top-0.5 w-4 h-4 rounded-full bg-card shadow-sm transition-transform duration-200', checked ? 'translate-x-4' : 'translate-x-0.5')} />
+        </div>
+      </div>
+      <span className="text-sm font-medium text-foreground">{label}</span>
+    </label>
+  );
+}
+
+function PayableIn({ prefix, allowances, onChange }) {
+  return (
+    <FL label="Payable In">
+      <div className="flex gap-4 pt-0.5">
+        {['Prep', 'Shoot', 'Wrap'].map(p => {
+          const key = `${prefix}PayableIn${p}`;
+          return (
+            <FCheck key={p} id={`${prefix}-${p}`} small checked={allowances[key]} onChange={v => onChange({ [key]: v })} label={p.toUpperCase()} />
+          );
+        })}
+      </div>
+    </FL>
+  );
+}
+
+function Divider({ label }) {
   return (
     <div className="flex items-center gap-3 py-1">
       <div className="flex-1 h-px bg-border" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
       <div className="flex-1 h-px bg-border" />
     </div>
   );
 }
 
-// ── Contract Data Form ─────────────────────────────────────────────────────────
-function ContractDataTab({ form, set }) {
-  const pct = getCompletion(form);
-
+function Section({ title, icon: Icon, open, onToggle, badge, children }) {
   return (
-    <div className="space-y-5">
-      {/* Progress */}
-      <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/20">
-        <div className="flex-1">
-          <div className="flex justify-between text-[11px] font-semibold text-primary mb-1.5">
-            <span>Form completion</span><span>{pct}%</span>
+    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+      <button onClick={onToggle}
+        className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors text-left">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Icon className="w-3.5 h-3.5 text-primary" strokeWidth={2} />
           </div>
-          <div className="h-1.5 bg-primary/10 rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-500"
-              style={{ width: `${pct}%` }} />
-          </div>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">{title}</span>
+          {badge && (
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              {badge}
+            </span>
+          )}
         </div>
-        {pct === 100 && (
-          <div className="flex-shrink-0 w-7 h-7 bg-mint-500 rounded-full flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        )}
-      </div>
-
-      <SectionDivider label="Template" />
-
-      <Select label="Agreement Type" value={form.templateType}
-        onChange={e => { set('templateType')(e); set('contractTitle')({ target: { value: TEMPLATE_TYPES.find(t=>t.id===e.target.value)?.label||'' } }); }}
-        options={TEMPLATE_TYPES} />
-
-      <Input label="Contract Title" value={form.contractTitle} onChange={set('contractTitle')} placeholder="e.g. Service Agreement" />
-
-      <SectionDivider label="Client — Party A" />
-      <Input label="Full Name" required value={form.clientName} onChange={set('clientName')} placeholder="Jane Smith" />
-      <Input label="Company" value={form.clientCompany} onChange={set('clientCompany')} placeholder="Acme Ltd" />
-      <Textarea label="Address" rows={2} value={form.clientAddress} onChange={set('clientAddress')} placeholder="123 High Street, London" />
-
-      <SectionDivider label="Service Provider — Party B" />
-      <Input label="Full Name" required value={form.providerName} onChange={set('providerName')} placeholder="John Doe" />
-      <Input label="Company" value={form.providerCompany} onChange={set('providerCompany')} placeholder="Freelance Ltd" />
-      <Textarea label="Address" rows={2} value={form.providerAddress} onChange={set('providerAddress')} placeholder="456 Main Road, Manchester" />
-
-      <SectionDivider label="Term" />
-      <div className="grid grid-cols-2 gap-3">
-        <Input label="Start Date" required type="date" value={form.startDate} onChange={set('startDate')} />
-        <Input label="End Date" required type="date" value={form.endDate} onChange={set('endDate')} />
-      </div>
-
-      <SectionDivider label="Fees" />
-      <div className="grid grid-cols-3 gap-3">
-        <Select label="Currency" value={form.currency} onChange={set('currency')} options={CURRENCIES} />
-        <div className="col-span-2">
-          <Input label="Fee Amount" required type="number" value={form.feeAmount} onChange={set('feeAmount')} placeholder="50,000" />
+        <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 pt-1 border-t border-border space-y-3">
+          {children}
         </div>
-      </div>
-      <Input label="Payment Terms" value={form.paymentTerms} onChange={set('paymentTerms')} placeholder="Net 30 days from invoice" />
-
-      <SectionDivider label="Scope of Work" />
-      <Textarea label="Description" rows={4} value={form.scopeOfWork} onChange={set('scopeOfWork')}
-        placeholder="Describe the services to be provided in detail..." />
-      <Textarea label="Deliverables" hint="one per line" rows={3} value={form.deliverables} onChange={set('deliverables')}
-        placeholder="Final screenplay&#10;Two rounds of revisions" />
-
-      <SectionDivider label="Legal" />
-      <div className="space-y-4">
-        <Toggle checked={form.confidentiality} onChange={set('confidentiality')}
-          label="Confidentiality Clause" description="Mutual NDA for the term + 5 years" />
-        <Toggle checked={form.ipAssignment} onChange={set('ipAssignment')}
-          label="IP Assignment" description="All work product transfers to client on payment" />
-        <Toggle checked={form.limitation} onChange={set('limitation')}
-          label="Limitation of Liability" description="Cap liability to 3 months' fees" />
-      </div>
-
-      <Input label="Governing Law" value={form.governingLaw} onChange={set('governingLaw')} placeholder="England and Wales" />
-      <Input label="Termination Notice (days)" type="number" value={form.terminationDays} onChange={set('terminationDays')} placeholder="30" />
-
-      <Select label="Dispute Resolution" value={form.dispute} onChange={set('dispute')}
-        options={[{ value: 'arbitration', label: 'LCIA Arbitration' }, { value: 'courts', label: 'Courts' }]} />
-
-      <div className="h-4" />
+      )}
     </div>
   );
 }
 
-// ── Live Contract Preview ──────────────────────────────────────────────────────
-function Section({ num, title, children }) {
+function AllowCard({ id, icon: Icon, label, enabled, onToggle, children }) {
   return (
-    <div>
-      <div className="flex items-baseline gap-2 mb-2">
-        <span className="text-[9px] font-mono text-muted-foreground/50">{num}.</span>
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">{title}</h3>
+    <div className={cn('rounded-xl border transition-all duration-150', enabled ? 'border-primary/30 bg-primary/5' : 'border-border bg-card')}>
+      <div className="flex items-center gap-3 p-3">
+        <label htmlFor={id} className="cursor-pointer shrink-0">
+          <div className="relative">
+            <input type="checkbox" id={id} checked={enabled} onChange={e => onToggle(e.target.checked)} className="sr-only" />
+            <div className={cn('w-4 h-4 rounded border-2 flex items-center justify-center transition-all', enabled ? 'bg-primary border-primary' : 'bg-input border-border')}>
+              {enabled && <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />}
+            </div>
+          </div>
+        </label>
+        <Icon className={cn('w-4 h-4 shrink-0', enabled ? 'text-primary' : 'text-muted-foreground')} strokeWidth={1.75} />
+        <span className={cn('text-xs font-bold uppercase tracking-wide flex-1', enabled ? 'text-primary' : 'text-muted-foreground')}>{label}</span>
+        {enabled && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">ON</span>}
       </div>
-      {children}
+      {enabled && children && (
+        <div className="px-3 pb-3 pt-1 border-t border-primary/10 space-y-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
 
-function LivePreview({ form }) {
-  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const start = fmt(form.startDate);
-  const end   = fmt(form.endDate);
-  const fee   = formatFee(form.feeAmount, form.currency);
-  const deliverables = form.deliverables.split('\n').filter(d => d.trim());
-  const template = TEMPLATE_TYPES.find(t => t.id === form.templateType);
-
-  const Blank = ({ w = '120px' }) => (
-    <span className="inline-block border-b-2 border-dashed border-border text-transparent select-none"
-      style={{ minWidth: w }}>——</span>
-  );
-
+function RoleTab({ role, active, onClick, onRemove, canRemove }) {
   return (
-    <div style={{ fontFamily: '"Georgia", "Times New Roman", serif' }}
-      className="bg-card text-foreground min-h-full text-[13px]">
-
-      {/* Document header — dark band */}
-      <div className="bg-foreground px-10 py-8">
-        <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-2">{template?.label}</div>
-        <h1 className="text-[20px] font-bold text-white leading-tight mb-1">
-          {form.contractTitle || 'Contract Agreement'}
-        </h1>
-        {(form.clientName || form.providerName) && (
-          <p className="text-xs text-white/50">
-            Between {form.clientName || '—'} and {form.providerName || '—'}
-          </p>
-        )}
-        <p className="text-xs text-white/50 mt-1">Date: {today}</p>
-      </div>
-
-      <div className="px-10 py-8 space-y-6">
-
-        {/* Reference */}
-        <div className="flex items-center justify-between pb-4 border-b border-border">
-          <div>
-            <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Reference</div>
-            <div className="text-xs font-mono text-primary mt-0.5">
-              AGR-{new Date().getFullYear()}-{String(hashStr(form.clientName + form.providerName)).slice(0, 4).padStart(4, '0')}
-            </div>
-          </div>
-          <span className="text-[10px] font-semibold px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full">
-            Draft
-          </span>
-        </div>
-
-        {/* 1. Parties */}
-        <Section num="1" title="Parties">
-          <p className="text-[12px] text-muted-foreground mb-3">
-            This Agreement is entered into on <strong className="text-foreground">{start ?? <Blank />}</strong>, between:
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { role: 'Client', tag: 'Party A', name: form.clientName, company: form.clientCompany, address: form.clientAddress, color: 'var(--primary)' },
-              { role: 'Service Provider', tag: 'Party B', name: form.providerName, company: form.providerCompany, address: form.providerAddress, color: 'var(--sky-600)' },
-            ].map(p => (
-              <div key={p.role} className="rounded-lg border border-border p-3" style={{ borderLeftColor: p.color, borderLeftWidth: 3 }}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{p.role}</span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded"
-                    style={{ background: `color-mix(in srgb, ${p.color} 10%, transparent)`, color: p.color }}>{p.tag}</span>
-                </div>
-                {(p.name || p.company || p.address) ? (
-                  <>
-                    {p.name    && <p className="text-[12px] font-semibold text-foreground">{p.name}</p>}
-                    {p.company && <p className="text-[11px] text-muted-foreground">{p.company}</p>}
-                    {p.address && <p className="text-[11px] text-muted-foreground mt-0.5">{p.address}</p>}
-                  </>
-                ) : <p className="text-[11px] text-muted-foreground/50 italic">Not specified</p>}
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* 2. Term */}
-        <Section num="2" title="Term of Agreement">
-          <p className="text-[12px] text-muted-foreground leading-relaxed">
-            This Agreement commences on <strong className="text-foreground">{start ?? <Blank w="90px" />}</strong> and
-            continues until <strong className="text-foreground">{end ?? <Blank w="90px" />}</strong>, unless terminated
-            earlier per Section 8. Time is of the essence.
-          </p>
-        </Section>
-
-        {/* 3. Scope */}
-        <Section num="3" title="Scope of Work">
-          {form.scopeOfWork
-            ? <p className="text-[12px] text-muted-foreground leading-relaxed whitespace-pre-line">{form.scopeOfWork}</p>
-            : <p className="text-[12px] text-muted-foreground/50 italic">Scope of services not yet defined…</p>
-          }
-        </Section>
-
-        {/* 4. Deliverables */}
-        {deliverables.length > 0 && (
-          <Section num="4" title="Deliverables">
-            <div className="space-y-1.5">
-              {deliverables.map((d, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-[8px] font-bold text-primary mt-0.5">{i + 1}</span>
-                  <span className="text-[12px] text-muted-foreground">{d}</span>
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* 5. Fees */}
-        <Section num="5" title="Fees & Payment">
-          <div className="bg-background border border-border rounded-xl p-4 mb-3 flex items-end justify-between">
-            <div>
-              <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest mb-1">Total Contract Value</div>
-              <div className="text-2xl font-bold text-foreground">{fee ?? <span className="text-muted-foreground/50 text-xl">Not set</span>}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest mb-1">Payment Terms</div>
-              <div className="text-xs font-semibold text-primary">{form.paymentTerms || 'Net 30'}</div>
-            </div>
-          </div>
-          <p className="text-[12px] text-muted-foreground leading-relaxed">
-            The Client shall pay <strong className="text-foreground">{fee ?? <Blank w="70px" />}</strong>.
-            Late payments incur 8% p.a. above Bank of England base rate.
-          </p>
-        </Section>
-
-        {form.confidentiality && (
-          <Section num="6" title="Confidentiality">
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              Each party shall hold in strict confidence all Confidential Information received from the other party
-              for the term of this Agreement and five (5) years thereafter.
-            </p>
-          </Section>
-        )}
-
-        {form.ipAssignment && (
-          <Section num="7" title="Intellectual Property">
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              All work product created hereunder shall, upon full payment, be the sole property of the Client.
-              The Service Provider assigns all rights, title, and interest therein.
-            </p>
-          </Section>
-        )}
-
-        <Section num="8" title="Termination">
-          <p className="text-[12px] text-muted-foreground leading-relaxed">
-            Either party may terminate with <strong className="text-foreground">{form.terminationDays || '30'} days'</strong> written notice.
-            Immediate termination permitted upon material breach. Client pays for all work performed to date.
-          </p>
-        </Section>
-
-        {form.limitation && (
-          <Section num="9" title="Limitation of Liability">
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              Neither party shall be liable for indirect or consequential damages. Total liability shall not
-              exceed fees paid in the three (3) months preceding the claim.
-            </p>
-          </Section>
-        )}
-
-        <Section num="10" title="Governing Law">
-          <p className="text-[12px] text-muted-foreground leading-relaxed">
-            This Agreement is governed by the laws of <strong className="text-foreground">{form.governingLaw || 'England and Wales'}</strong>.
-            {form.dispute === 'arbitration'
-              ? ' Disputes shall be resolved by binding LCIA arbitration.'
-              : ' Disputes shall be subject to the exclusive jurisdiction of the courts.'}
-          </p>
-        </Section>
-
-        {/* Execution */}
-        <div className="pt-6 border-t-2 border-border">
-          <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest text-center mb-6">In Witness Whereof</p>
-          <div className="grid grid-cols-2 gap-8">
-            {[
-              { role: 'Client', name: form.clientName, company: form.clientCompany },
-              { role: 'Service Provider', name: form.providerName, company: form.providerCompany },
-            ].map(p => (
-              <div key={p.role}>
-                <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest mb-3">{p.role}</div>
-                <div className="border-b border-border h-10 mb-2" />
-                <p className="text-[11px] font-semibold text-muted-foreground">{p.name || 'Name'}</p>
-                {p.company && <p className="text-[10px] text-muted-foreground">{p.company}</p>}
-                <div className="border-b border-border h-8 mt-3 mb-1" />
-                <p className="text-[10px] text-muted-foreground/50">Date</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-border text-center">
-          <p className="text-[9px] font-mono text-muted-foreground/50">
-            CONFIDENTIAL — {form.contractTitle || 'Draft'} — REF AGR-{new Date().getFullYear()}
-          </p>
-        </div>
-      </div>
-    </div>
+    <button onClick={onClick}
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all border',
+        active
+          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+          : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground'
+      )}>
+      {role.isPrimaryRole && (
+        <span className={cn('text-[8px] font-bold px-1.5 py-0.5 rounded-full border',
+          active ? 'bg-white/20 text-white border-white/30' : 'bg-primary/10 text-primary border-primary/20')}>
+          PRIMARY
+        </span>
+      )}
+      {role.roleName}
+      {canRemove && (
+        <span onClick={e => { e.stopPropagation(); onRemove(); }}
+          className={cn('ml-0.5 rounded-full w-4 h-4 flex items-center justify-center transition-colors',
+            active ? 'hover:bg-white/20 text-white/70' : 'hover:bg-destructive/10 text-muted-foreground hover:text-destructive')}>
+          <X className="w-2.5 h-2.5" strokeWidth={2.5} />
+        </span>
+      )}
+    </button>
   );
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
-export default function ContractBuilder() {
-  const navigate = useNavigate();
+const createDefaultRole = (index) => ({
+  id: Date.now().toString() + index,
+  isPrimaryRole: index === 0,
+  roleName: `ROLE ${index + 1}`,
+  jobTitle: '', jobTitleSuffix: '',
+  searchAllDepartments: false, createOwnJobTitle: false,
+  unit: '', department: '', subDepartment: '',
+  regularSiteOfWork: '', engagementType: '', productionPhase: '',
+  startDate: '', endDate: '',
+  workingWeek: '', workingInUnitedKingdom: 'YES',
+  rateType: 'DAILY', currency: 'GBP',
+  rateAmount: '', feePerDay: '', standardWorkingHours: '10',
+  holidayPayInclusive: false, rateDescription: '',
+  overtimeType: 'CALCULATED',
+  overtime: { enabled: true, rules: [] },
+  specialDayRates: SPECIAL_DAY_TYPES.map(d => ({ type: d.key, amount: '', unit: 'DAILY' })),
+  budgetCode: '',
+  allowances: getDefaultAllowances(),
+});
 
-  const [form, setForm] = useState(DEFAULT);
-  const [tab, setTab]   = useState('upload');
+// ── Main ──────────────────────────────────────────────────────────────────────
+export default function CreateOffer() {
+  const navigate    = useNavigate?.() ?? (() => {});
+  const { projectName } = useParams?.() ?? {};
 
-  const canvasRef     = useRef(null);
-  const renderTaskRef = useRef(null);
-  const pdfJsDocRef   = useRef(null);
-  const fieldRefs     = useRef({});
+  const [isDark, setIsDark] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [uploadFile,     setUploadFile]     = useState(null);
-  const [uploadFields,   setUploadFields]   = useState([]);
-  const [uploadFormData, setUploadFormData] = useState({});
-  const [uploadPdfForm,  setUploadPdfForm]  = useState(null);
-  const [uploadFillable, setUploadFillable] = useState(false);
-  const [currentPage,    setCurrentPage]    = useState(1);
-  const [totalPages,     setTotalPages]     = useState(1);
-  const [canvasSize,     setCanvasSize]     = useState({ w: 0, h: 0 });
-  const [zoom,           setZoom]           = useState(100);
-  const [uploadLoading,  setUploadLoading]  = useState(false);
-  const [uploadLoadMsg,  setUploadLoadMsg]  = useState('');
-  const [uploadError,    setUploadError]    = useState(null);
-  const [activeField,    setActiveField]    = useState(null);
-  const [isDragging,     setIsDragging]     = useState(false);
+  // ── Pre-populate with MOCK DATA ──────────────────────────────────────────
+  const [formData, setFormData] = useState(MOCK_FORM_DATA);
+  const [roles, setRoles]       = useState(MOCK_ROLES);
+  const [activeRoleId, setActiveRoleId] = useState(MOCK_ROLES[0].id);
 
-  const SCALE = zoom / 100 * 1.5;
+  const [open, setOpen] = useState({
+    recipient: true, taxStatus: true, roles: true, allowances: true, notes: false, attachments: false,
+  });
 
-  const set = useCallback((key) => (e) => {
-    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setForm(prev => ({ ...prev, [key]: val }));
-  }, []);
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    if (isDark) { html.classList.add('dark'); body.classList.add('dark'); }
+    else        { html.classList.remove('dark'); body.classList.remove('dark'); }
+    return () => { html.classList.remove('dark'); body.classList.remove('dark'); };
+  }, [isDark]);
 
-  const handlePrint = () => {
+  useEffect(() => {
+    if (!roles.find(r => r.id === activeRoleId) && roles.length > 0) {
+      setActiveRoleId(roles[0].id);
+    }
+  }, [roles, activeRoleId]);
+
+  const toggleSection = k => setOpen(p => ({ ...p, [k]: !p[k] }));
+  const setFD  = k => v => setFormData(p => ({ ...p, [k]: v }));
+  const addRole = () => {
+    const r = createDefaultRole(roles.length);
+    setRoles(p => [...p, r]);
+    setActiveRoleId(r.id);
+  };
+  const removeRole = id => {
+    if (roles.length <= 1) return;
+    const next = roles.filter(r => r.id !== id);
+    setRoles(next);
+    if (activeRoleId === id) setActiveRoleId(next[0].id);
+  };
+  const updateRole = (id, upd) => setRoles(p => p.map(r => r.id === id ? { ...r, ...upd } : r));
+  const updateAL   = (id, upd) => setRoles(p => p.map(r => r.id === id ? { ...r, allowances: { ...r.allowances, ...upd } } : r));
+  const updateSD   = (id, type, amount) =>
+    setRoles(p => p.map(r => r.id === id ? { ...r, specialDayRates: r.specialDayRates.map(d => d.type === type ? { ...d, amount } : d) } : r));
+  const addOTRule  = id => setRoles(p => p.map(r => r.id === id ? {
+    ...r, overtime: { ...r.overtime, rules: [...r.overtime.rules, { name: 'AFTER_STANDARD_HOURS', startsAfterHours: 10, rateMultiplier: 1.5, maxHours: null, budgetCode: '', terms: '', payableInPrep: false, payableInShoot: true, payableInWrap: false }] }
+  } : r));
+  const updateOT   = (id, idx, upd) => setRoles(p => p.map(r => r.id === id ? {
+    ...r, overtime: { ...r.overtime, rules: r.overtime.rules.map((ru, i) => i === idx ? { ...ru, ...upd } : ru) }
+  } : r));
+  const removeOT   = (id, idx) => setRoles(p => p.map(r => r.id === id ? {
+    ...r, overtime: { ...r.overtime, rules: r.overtime.rules.filter((_, i) => i !== idx) }
+  } : r));
+
+  const activeRole = roles.find(r => r.id === activeRoleId) || roles[0];
+  const primaryRole = roles.find(r => r.isPrimaryRole) || roles[0];
+
+  const activeAllowCount = ['boxRental','computerAllowance','softwareAllowance','equipmentRental','mobilePhoneAllowance','vehicleAllowance','vehicleHire','perDiem1','perDiem2','livingAllowance']
+    .filter(k => activeRole?.allowances?.[k]).length;
+
+  const handleSave = async () => { setIsSaving(true); await new Promise(r => setTimeout(r, 800)); setIsSaving(false); };
+  const handleSend = async () => { setIsSaving(true); await new Promise(r => setTimeout(r, 800)); setIsSaving(false); };
+
+  const handleExport = () => {
     const el = document.getElementById('contract-preview-doc');
     if (!el) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${form.contractTitle}</title>
-      <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;}@media print{@page{margin:0;}}</style>
-      </head><body>${el.outerHTML}</body></html>`);
+    w.document.write(`<html><head><title>Contract — ${formData.fullName}</title></head><body>${el.outerHTML}</body></html>`);
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 400);
   };
 
-  const loadUploadPdf = async (f) => {
-    setUploadLoading(true); setUploadError(null); setUploadFile(f);
-    setUploadFields([]); setUploadFormData({}); setCurrentPage(1);
-    setActiveField(null); pdfJsDocRef.current = null;
-
-    try {
-      const ab = await f.arrayBuffer();
-      setUploadLoadMsg('Reading form fields…');
-      let extracted = []; let libForm = null;
-
-      try {
-        const { PDFDocument } = await import('pdf-lib');
-        const libDoc = await PDFDocument.load(ab, { ignoreEncryption: true });
-        libForm = libDoc.getForm();
-        const raw = libForm.getFields();
-        extracted = raw.map(fld => ({
-          id:      fld.getName(),
-          label:   fld.getName().replace(/_/g, ' ').replace(/\./g, ' › '),
-          type:    fld.constructor.name === 'PDFCheckBox' ? 'checkbox'
-                 : fld.constructor.name === 'PDFDropdown' ? 'select'
-                 : guessType(fld.getName()),
-          value:   fld.constructor.name === 'PDFTextField' ? (fld.getText() || '') : '',
-          options: fld.constructor.name === 'PDFDropdown' ? fld.getOptions() : [],
-          rect: null, page: 1,
-        }));
-        if (raw.length > 0) { setUploadPdfForm(libForm); setUploadFillable(true); }
-      } catch (e) { console.warn(e.message); }
-
-      setUploadLoadMsg('Rendering…');
-      const pdfjs    = await initPdfJs();
-      const pdfJsDoc = await pdfjs.getDocument({ data: ab.slice(0), verbosity: 0 }).promise;
-      pdfJsDocRef.current = pdfJsDoc;
-      setTotalPages(pdfJsDoc.numPages);
-
-      const rectMap = {};
-      for (let p = 1; p <= pdfJsDoc.numPages; p++) {
-        const page = await pdfJsDoc.getPage(p);
-        const anns = await page.getAnnotations();
-        const vp   = page.getViewport({ scale: 1 });
-        anns.forEach(ann => {
-          if (ann.subtype === 'Widget' && ann.fieldName && ann.rect) {
-            const r = vp.convertToViewportRectangle(ann.rect);
-            rectMap[ann.fieldName] = { x: r[0], y: r[1], w: r[2]-r[0], h: r[3]-r[1], page: p };
-          }
-        });
-      }
-
-      if (extracted.length > 0) {
-        extracted = extracted.map(f => ({ ...f, rect: rectMap[f.id] || null, page: rectMap[f.id]?.page || 1 }));
-      } else {
-        Object.entries(rectMap).forEach(([name, rect]) => {
-          extracted.push({ id: name, label: name.replace(/_/g, ' '), type: guessType(name), value: '', rect, page: rect.page });
-        });
-        setUploadFillable(extracted.length > 0);
-      }
-
-      const init = {};
-      extracted.forEach(f => { init[f.id] = f.value || ''; });
-      setUploadFormData(init);
-      setUploadFields(extracted);
-      setUploadLoading(false);
-
-      requestAnimationFrame(() => setTimeout(() => {
-        if (pdfJsDocRef.current && canvasRef.current) renderUploadPage(pdfJsDocRef.current, 1);
-      }, 0));
-
-    } catch (err) { setUploadError(err.message); setUploadLoading(false); }
+  const getBundle = (eng = '', rate = '') => {
+    if (eng==='LOAN_OUT' && rate==='DAILY')  return 'LOAN-OUT · DAILY';
+    if (eng==='LOAN_OUT' && rate==='WEEKLY') return 'LOAN-OUT · WEEKLY';
+    if (eng==='PAYE'     && rate==='DAILY')  return 'PAYE · DAILY';
+    if (eng==='PAYE'     && rate==='WEEKLY') return 'PAYE · WEEKLY';
+    if (eng==='SCHD')    return 'SCHD';
+    if (eng==='LONG_FORM') return 'LONG FORM';
+    return '';
   };
-
-  const renderUploadPage = async (doc, pageNum) => {
-    if (!doc || !canvasRef.current) return;
-    try {
-      if (renderTaskRef.current) { renderTaskRef.current.cancel(); renderTaskRef.current = null; }
-      const page   = await doc.getPage(pageNum);
-      const vp     = page.getViewport({ scale: SCALE });
-      const canvas = canvasRef.current;
-      const ctx    = canvas.getContext('2d');
-      canvas.width = vp.width; canvas.height = vp.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      setCanvasSize({ w: vp.width, h: vp.height });
-      const task = page.render({ canvasContext: ctx, viewport: vp });
-      renderTaskRef.current = task;
-      await task.promise;
-      renderTaskRef.current = null;
-    } catch (err) { if (err?.name !== 'RenderingCancelledException') console.error(err); }
-  };
-
-  useEffect(() => {
-    if (!pdfJsDocRef.current || !canvasRef.current) return;
-    const id = requestAnimationFrame(() => renderUploadPage(pdfJsDocRef.current, currentPage));
-    return () => cancelAnimationFrame(id);
-  }, [currentPage, zoom, uploadFile]);
-
-  const handleUploadFieldChange = useCallback((id, value) => {
-    setUploadFormData(prev => ({ ...prev, [id]: value }));
-    if (uploadPdfForm) {
-      try {
-        const fld = uploadPdfForm.getField(id);
-        if (fld.constructor.name === 'PDFTextField') fld.setText(String(value));
-        if (fld.constructor.name === 'PDFCheckBox')  value === 'true' ? fld.check() : fld.uncheck();
-      } catch (_) {}
-    }
-  }, [uploadPdfForm]);
-
-  const pageFields   = uploadFields.filter(f => f.page === currentPage && f.rect);
-  const fieldsByPage = uploadFields.reduce((acc, f) => { (acc[f.page || 1] ??= []).push(f); return acc; }, {});
-  const pct          = getCompletion(form);
-
-  const TABS = [
-    { id: 'data', label: 'Contract Data', icon: (
-      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>
-    )},
-    { id: 'upload', label: 'Upload Template', icon: (
-      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-      </svg>
-    )},
-  ];
-
-  // ── Shared input classes for upload field inputs ───────────────────────────
-  const uploadFieldCls = (isActive) =>
-    `w-full text-sm px-3 py-2 rounded-lg border outline-none transition-all bg-input text-foreground
-     ${isActive
-       ? 'border-primary ring-2 ring-primary/10'
-       : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/10'}`;
+  const bundleTag = getBundle(primaryRole?.engagementType, primaryRole?.rateType);
 
   return (
-    <div className="flex flex-col bg-background text-foreground"
+    <div className="flex flex-col bg-background text-foreground transition-colors duration-300"
       style={{ height: '100vh', fontFamily: '"Outfit", system-ui, sans-serif' }}>
 
-      {/* ── Top bar ── */}
-      <header className="flex-shrink-0 bg-card border-b border-border px-6 h-14 flex items-center justify-between z-20 shadow-sm">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
-              <svg className="w-4 h-4 text-card" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-foreground leading-none">Contract Template Engine</h1>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Professional agreement builder</p>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex items-center bg-muted rounded-xl p-1 gap-0.5">
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all
-                  ${tab === t.id
-                    ? 'bg-card text-foreground shadow-sm border border-border'
-                    : 'text-muted-foreground hover:text-foreground'}`}>
-                {t.icon}
-                {t.label}
-                {t.id === 'data' && (
-                  <span className={`ml-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-bold
-                    ${pct === 100 ? 'bg-mint-100 text-mint-600' : 'bg-muted text-muted-foreground'}`}>
-                    {pct}%
-                  </span>
-                )}
-                {t.id === 'upload' && uploadFile && (
-                  <span className="ml-0.5 w-1.5 h-1.5 rounded-full bg-mint-500" />
-                )}
-              </button>
-            ))}
+      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
+      <header className="flex-shrink-0 h-14 bg-card border-b border-border px-6 flex items-center justify-between z-20 shadow-sm">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(`/projects/${projectName}/onboarding`)}
+            className="w-8 h-8 rounded-xl border border-border bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors">
+            <ChevronLeft className="w-4 h-4 text-foreground" />
+          </button>
+          <div>
+            <h1 className="text-sm font-bold text-foreground leading-none">Contract Perview</h1>
+            <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+              {formData.fullName || 'New Recipient'}
+              {primaryRole?.jobTitle && (
+                <><span className="text-border">·</span><span>{primaryRole.jobTitle}</span></>
+              )}
+              {bundleTag && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  {bundleTag}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 border border-border text-xs font-semibold
-              text-muted-foreground rounded-xl hover:bg-muted transition-colors">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+          <button onClick={handleExport}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-border bg-card text-xs font-semibold text-muted-foreground rounded-xl hover:bg-muted hover:text-foreground transition-all">
+            <FileDown className="w-3.5 h-3.5" />
             Export PDF
           </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground
-            text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-            Finalise Contract
+
+          <button onClick={handleSave} disabled={isSaving}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-border bg-card text-xs font-semibold text-muted-foreground rounded-xl hover:bg-muted transition-colors disabled:opacity-50">
+            <Save className="w-3.5 h-3.5" />
+            Save Draft
           </button>
         </div>
       </header>
 
-      {/* ── Body ── */}
+      {/* ── Split body ───────────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden min-h-0">
 
-        {/* LEFT PANEL */}
-        <div className="w-[440px] flex-shrink-0 flex flex-col overflow-hidden bg-card border-r border-border">
-
-          {/* Panel header */}
-          <div className="flex-shrink-0 px-5 py-4 border-b border-border">
-            {tab === 'data' && (
-              <div>
-                <h2 className="text-sm font-bold text-foreground">Contract Details</h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Fill in the contract information below</p>
-              </div>
-            )}
-            {tab === 'upload' && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-bold text-foreground">Upload Template</h2>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {uploadFile ? `${uploadFields.length} fields detected` : 'Inspect PDF form fields'}
-                  </p>
-                </div>
-                {uploadFile && !uploadLoading && (
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full
-                    ${uploadFillable ? 'bg-mint-100 text-mint-600' : 'bg-amber-50 text-amber-600'}`}>
-                    {uploadFillable ? '● Fillable PDF' : '● Text PDF'}
-                  </span>
-                )}
-              </div>
-            )}
+        {/* ════ LEFT — FORM ════ */}
+        <div className="w-[480px] flex-shrink-0 flex flex-col bg-background border-r border-border overflow-hidden">
+          <div className="flex-shrink-0 px-5 py-3.5 bg-card border-b border-border">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-foreground">Offer Details</h2>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Edit fields → contract preview updates live</p>
           </div>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-none">
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 py-4 space-y-3 scrollbar-none">
 
-            {/* ── Contract Data tab ── */}
-            {tab === 'data' && (
-              !uploadFile ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground/50">
-                  <div className="text-center px-6">
-                    <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p className="text-sm font-semibold">No contract loaded</p>
-                    <p className="text-xs mt-1 opacity-70">Upload a PDF template first</p>
-                  </div>
+            {/* ─ Recipient ─ */}
+            <Section title="Recipient" icon={User} open={open.recipient} onToggle={() => toggleSection('recipient')}>
+              <div className="space-y-3 pt-2">
+                <FInput label="Full Name" required value={formData.fullName}
+                  onChange={e => setFD('fullName')(e.target.value.toUpperCase())} placeholder="ENTER FULL NAME" />
+                <div className="grid grid-cols-2 gap-3">
+                  <FInput label="Email" required type="email" value={formData.emailAddress}
+                    onChange={e => setFD('emailAddress')(e.target.value.toLowerCase())} placeholder="email@example.com" />
+                  <FInput label="Mobile" type="tel" value={formData.mobileNumber}
+                    onChange={e => setFD('mobileNumber')(e.target.value)} placeholder="+44 7XXX XXXXXX" />
                 </div>
-              ) : (
-                <div className="px-5 py-4">
-                  <ContractDataTab form={form} set={set} />
-                </div>
-              )
-            )}
-
-            {/* ── Upload tab ── */}
-            {tab === 'upload' && (
-              <>
-                {/* Empty state */}
-                {!uploadFile && !uploadLoading && (
-                  <div className="flex items-center justify-center h-full p-6">
-                    <div
-                      onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={e => {
-                        e.preventDefault(); setIsDragging(false);
-                        const f = e.dataTransfer.files[0];
-                        if (f?.type === 'application/pdf') loadUploadPdf(f);
-                        else setUploadError('Please drop a valid PDF file.');
-                      }}
-                      className={`w-full rounded-2xl border-2 border-dashed p-10 text-center transition-all
-                        ${isDragging
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40 hover:bg-primary/5'}`}
-                    >
-                      <div className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-colors
-                        ${isDragging ? 'bg-primary/10' : 'bg-muted'}`}>
-                        <svg className={`w-7 h-7 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round"
-                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-bold text-foreground mb-1.5">Drop PDF contract here</h3>
-                      <p className="text-xs text-muted-foreground mb-5">or click to browse files</p>
-                      <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground
-                        text-xs font-semibold rounded-xl cursor-pointer hover:bg-primary/90 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        Choose PDF File
-                        <input type="file" accept=".pdf" className="sr-only"
-                          onChange={e => { const f = e.target.files[0]; if (f) loadUploadPdf(f); }} />
-                      </label>
-                      {uploadError && <p className="text-xs text-destructive mt-3">{uploadError}</p>}
-                    </div>
+                <FL label="Via Agent?">
+                  <Toggle checked={formData.isViaAgent} onChange={setFD('isViaAgent')} label="Represented via an agent" />
+                </FL>
+                {formData.isViaAgent && (
+                  <div className="grid grid-cols-2 gap-3 pl-3 border-l-2 border-primary/20">
+                    <FInput label="Agent Name" value={formData.agentName}
+                      onChange={e => setFD('agentName')(e.target.value.toUpperCase())} placeholder="AGENT NAME" />
+                    <FInput label="Agent Email" type="email" value={formData.agentEmailAddress}
+                      onChange={e => setFD('agentEmailAddress')(e.target.value.toLowerCase())} placeholder="agent@email.com" />
                   </div>
                 )}
+                <FSelect label="Alternative Contract Type"
+                  value={formData.alternativeContractType} onChange={setFD('alternativeContractType')}
+                  options={CONTRACT_OPTIONS} />
+              </div>
+            </Section>
 
-                {/* Loading */}
-                {uploadLoading && (
-                  <div className="flex flex-col items-center justify-center h-full gap-3">
-                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-xs text-muted-foreground">{uploadLoadMsg}</p>
-                  </div>
+            {/* ─ Tax Status ─ */}
+            <Section title="Tax Status" icon={Building2} open={open.taxStatus} onToggle={() => toggleSection('taxStatus')}>
+              <div className="space-y-3 pt-2">
+                <FL label="Allow as Self-Employed / Loan Out?">
+                  <FRadio name="selfEmp" options={['YES', 'NO']}
+                    value={formData.allowAsSelfEmployedOrLoanOut}
+                    onChange={setFD('allowAsSelfEmployedOrLoanOut')} />
+                </FL>
+                {formData.allowAsSelfEmployedOrLoanOut === 'YES' && (
+                  <FSelect label="Status Determination Reason"
+                    value={formData.statusDeterminationReason}
+                    onChange={setFD('statusDeterminationReason')}
+                    options={STATUS_REASONS} />
                 )}
+                {formData.statusDeterminationReason === 'OTHER' && (
+                  <FInput label="Specify Other Reason" value={formData.otherStatusDeterminationReason}
+                    onChange={e => setFD('otherStatusDeterminationReason')(e.target.value.toUpperCase())}
+                    placeholder="ENTER REASON" />
+                )}
+                <FL label="Working in the UK?">
+                  <FRadio name="ukWork" options={['YES', 'NEVER']}
+                    value={formData.isLivingInUk}
+                    onChange={setFD('isLivingInUk')} />
+                </FL>
+              </div>
+            </Section>
 
-                {/* File loaded */}
-                {uploadFile && !uploadLoading && (
-                  <div className="px-4 py-3">
-                    {/* File info bar */}
-                    <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-background rounded-xl border border-border">
-                      <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
-                      <span className="text-xs font-medium text-foreground truncate flex-1">{uploadFile.name}</span>
-                      <button
-                        onClick={() => { setUploadFile(null); setUploadFields([]); setUploadFormData({}); pdfJsDocRef.current = null; setUploadError(null); setActiveField(null); }}
-                        className="p-1 hover:bg-muted rounded-lg text-muted-foreground transition-colors flex-shrink-0">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                      </button>
+            {/* ─ Roles & Rates ─ */}
+            <Section title="Roles & Rates" icon={Briefcase} open={open.roles} onToggle={() => toggleSection('roles')}>
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {roles.map(r => (
+                    <RoleTab key={r.id} role={r} active={r.id === activeRoleId}
+                      onClick={() => setActiveRoleId(r.id)}
+                      onRemove={() => removeRole(r.id)}
+                      canRemove={roles.length > 1 && !r.isPrimaryRole} />
+                  ))}
+                  <button onClick={addRole}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-dashed border-border text-[11px] font-bold text-muted-foreground hover:border-primary/50 hover:text-primary transition-all">
+                    <Plus className="w-3 h-3" strokeWidth={2.5} />
+                    Add Role
+                  </button>
+                </div>
+
+                {activeRole && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <FInput label="Unit" required value={activeRole.unit}
+                        onChange={e => updateRole(activeRole.id, { unit: e.target.value.toUpperCase() })}
+                        placeholder="E.G., MAIN UNIT" />
+                      <FSelect label="Department" required value={activeRole.department}
+                        onChange={v => updateRole(activeRole.id, { department: v })}
+                        options={[{ value: '', label: 'SELECT DEPARTMENT...' }, ...DEPARTMENTS.map(d => ({ value: d, label: d }))]} />
+                    </div>
+                    <FInput label="Sub-Department" value={activeRole.subDepartment}
+                      onChange={e => updateRole(activeRole.id, { subDepartment: e.target.value.toUpperCase() })}
+                      placeholder="OPTIONAL" />
+                    <FInput label="Job Title" required value={activeRole.jobTitle}
+                      onChange={e => updateRole(activeRole.id, { jobTitle: e.target.value.toUpperCase() })}
+                      placeholder="TYPE JOB TITLE..." />
+                    <div className="space-y-1.5 text-[10px] text-muted-foreground">
+                      <FCheck id={`searchAll-${activeRole.id}`} checked={activeRole.searchAllDepartments} small
+                        onChange={v => updateRole(activeRole.id, { searchAllDepartments: v })}
+                        label="Search job titles from all departments" />
+                      <FCheck id={`ownTitle-${activeRole.id}`} checked={activeRole.createOwnJobTitle} small
+                        onChange={v => updateRole(activeRole.id, { createOwnJobTitle: v })}
+                        label="Create your own job title (project-specific)" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FInput label="Job Title Suffix" value={activeRole.jobTitleSuffix}
+                        onChange={e => updateRole(activeRole.id, { jobTitleSuffix: e.target.value.toUpperCase() })}
+                        placeholder="E.G., TO CAST #1" />
+                      <FInput label="Regular Site of Work" required value={activeRole.regularSiteOfWork}
+                        onChange={e => updateRole(activeRole.id, { regularSiteOfWork: e.target.value.toUpperCase() })}
+                        placeholder="E.G., VARIOUS LOCATIONS" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FSelect label="Engagement Type" required value={activeRole.engagementType}
+                        onChange={v => updateRole(activeRole.id, { engagementType: v })} options={ENGAGEMENT_TYPES} />
+                      <FSelect label="Rate Type" value={activeRole.rateType}
+                        onChange={v => updateRole(activeRole.id, { rateType: v })} options={RATE_TYPES} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <FInput label="Start Date" required type="date" value={activeRole.startDate}
+                        onChange={e => updateRole(activeRole.id, { startDate: e.target.value })} />
+                      <FInput label="End Date" type="date" value={activeRole.endDate}
+                        onChange={e => updateRole(activeRole.id, { endDate: e.target.value })} />
+                      <FSelect label="Working Week" value={activeRole.workingWeek}
+                        onChange={v => updateRole(activeRole.id, { workingWeek: v })} options={WORKING_WEEKS} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FL label="Working in UK?">
+                        <FRadio name={`ukRole-${activeRole.id}`} options={['YES', 'NEVER']}
+                          value={activeRole.workingInUnitedKingdom}
+                          onChange={v => updateRole(activeRole.id, { workingInUnitedKingdom: v })} />
+                      </FL>
+                      <FSelect label="Currency" value={activeRole.currency}
+                        onChange={v => updateRole(activeRole.id, { currency: v })} options={CURRENCIES} />
                     </div>
 
-                    {uploadFields.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p className="text-sm font-medium">No form fields detected</p>
-                        <p className="text-xs mt-1">This PDF has no AcroForm fields</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-0.5">
-                        {Object.entries(fieldsByPage).map(([page, pfList]) => (
-                          <div key={page}>
-                            <div className="flex items-center gap-2 py-2 sticky top-0 bg-card z-10">
-                              <div className="flex-1 h-px bg-border" />
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Page {page}</span>
-                              <div className="flex-1 h-px bg-border" />
+                    <Divider label="Rates" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FMoney label={`${activeRole.rateType === 'DAILY' ? 'Daily' : 'Weekly'} Rate`} required
+                        currency={activeRole.currency} value={activeRole.rateAmount}
+                        onChange={v => updateRole(activeRole.id, { rateAmount: v })} />
+                      <FMoney label="Fee Per Day (incl. holiday)" currency={activeRole.currency}
+                        value={activeRole.feePerDay}
+                        onChange={v => updateRole(activeRole.id, { feePerDay: v })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FInput label="Standard Working Hours" type="number" value={activeRole.standardWorkingHours}
+                        onChange={e => updateRole(activeRole.id, { standardWorkingHours: e.target.value })}
+                        placeholder="10" />
+                      <FL label="Holiday Pay">
+                        <div className="pt-1">
+                          <FCheck id={`hol-${activeRole.id}`} checked={activeRole.holidayPayInclusive}
+                            onChange={v => updateRole(activeRole.id, { holidayPayInclusive: v })}
+                            label="Inclusive in rate" />
+                        </div>
+                      </FL>
+                    </div>
+
+                    <Divider label="Special Day Rates" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {SPECIAL_DAY_TYPES.map(day => {
+                        const dr = activeRole.specialDayRates.find(d => d.type === day.key);
+                        return (
+                          <FMoney key={day.key} label={day.label} currency={activeRole.currency}
+                            value={dr?.amount || ''} onChange={v => updateSD(activeRole.id, day.key, v)} />
+                        );
+                      })}
+                    </div>
+
+                    <Divider label="Overtime" />
+                    <FL label="Overtime Type">
+                      <div className="flex gap-5 pt-0.5">
+                        {[{ v: 'CALCULATED', l: 'Calculated per Agreement' }, { v: 'CUSTOM', l: 'Custom Rates' }].map(opt => (
+                          <label key={opt.v} className="flex items-center gap-2 cursor-pointer select-none">
+                            <div className="relative shrink-0">
+                              <input type="radio" name={`ot-${activeRole.id}`} value={opt.v}
+                                checked={activeRole.overtimeType === opt.v}
+                                onChange={() => updateRole(activeRole.id, { overtimeType: opt.v })}
+                                className="sr-only" />
+                              <div className={cn('w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all', activeRole.overtimeType === opt.v ? 'border-primary' : 'border-border')}>
+                                {activeRole.overtimeType === opt.v && <div className="w-2 h-2 rounded-full bg-primary" />}
+                              </div>
                             </div>
-                            {pfList.map(field => {
-                              const isActive = activeField === field.id;
-                              const value    = uploadFormData[field.id] ?? '';
+                            <span className="text-sm font-medium text-foreground">{opt.l}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </FL>
 
-                              return (
-                                <div key={field.id}
-                                  ref={el => fieldRefs.current[field.id] = el}
-                                  onClick={() => { setActiveField(field.id); if (field.page !== currentPage) setCurrentPage(field.page); }}
-                                  className={`rounded-xl border p-3 mb-2 cursor-pointer transition-all
-                                    ${isActive
-                                      ? 'border-primary bg-primary/5 shadow-sm'
-                                      : 'border-transparent hover:border-border hover:bg-background'}`}
-                                >
-                                  <div className="flex items-center gap-1.5 mb-2">
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors
-                                      ${isActive ? 'bg-primary' : 'bg-border'}`} />
-                                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide truncate flex-1">
-                                      {field.label}
-                                    </span>
-                                    <span className="text-[9px] font-mono text-muted-foreground/50">{field.type}</span>
-                                  </div>
-                                  <div onClick={e => e.stopPropagation()}>
-                                    {field.type === 'checkbox' ? (
-                                      <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={value === 'true'}
-                                          onChange={e => handleUploadFieldChange(field.id, e.target.checked ? 'true' : 'false')}
-                                          onFocus={() => { setActiveField(field.id); if (field.page !== currentPage) setCurrentPage(field.page); }}
-                                          className="w-4 h-4 accent-primary" />
-                                        <span className="text-xs text-muted-foreground">{value === 'true' ? 'Checked' : 'Unchecked'}</span>
-                                      </label>
-                                    ) : field.type === 'select' && field.options?.length > 0 ? (
-                                      <div className="relative">
-                                        <select value={value}
-                                          onChange={e => handleUploadFieldChange(field.id, e.target.value)}
-                                          onFocus={() => { setActiveField(field.id); if (field.page !== currentPage) setCurrentPage(field.page); }}
-                                          className={`${uploadFieldCls(isActive)} appearance-none cursor-pointer`}>
-                                          <option value="">— Select —</option>
-                                          {field.options.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                        <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-                                          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/>
-                                        </svg>
-                                      </div>
-                                    ) : field.type === 'textarea' ? (
-                                      <textarea rows={2} value={value}
-                                        onChange={e => handleUploadFieldChange(field.id, e.target.value)}
-                                        onFocus={() => { setActiveField(field.id); if (field.page !== currentPage) setCurrentPage(field.page); }}
-                                        placeholder={field.label}
-                                        className={`${uploadFieldCls(isActive)} resize-none`} />
-                                    ) : (
-                                      <input type={field.type === 'date' ? 'text' : (field.type || 'text')} value={value}
-                                        onChange={e => handleUploadFieldChange(field.id, e.target.value)}
-                                        onFocus={() => { setActiveField(field.id); if (field.page !== currentPage) setCurrentPage(field.page); }}
-                                        placeholder={field.label}
-                                        className={uploadFieldCls(isActive)} />
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                    {activeRole.overtimeType === 'CUSTOM' && (
+                      <div className="space-y-2">
+                        {activeRole.overtime.rules.map((rule, ri) => (
+                          <div key={ri} className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-primary uppercase">Rule {ri + 1}</span>
+                              <button onClick={() => removeOT(activeRole.id, ri)}
+                                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors">
+                                <Trash2 className="w-3 h-3" />
+                                Remove
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <FSelect label="Rule Type" value={rule.name}
+                                onChange={v => updateOT(activeRole.id, ri, { name: v })}
+                                options={[{ value: '', label: 'SELECT...' }, ...OVERTIME_RULE_OPTIONS]} />
+                              <FL label="Rate Multiplier">
+                                <input type="number" step="0.1" value={rule.rateMultiplier}
+                                  onChange={e => updateOT(activeRole.id, ri, { rateMultiplier: Number(e.target.value) })}
+                                  placeholder="1.5" className={IC} />
+                              </FL>
+                              <FL label="Starts After Hrs">
+                                <input type="number" value={rule.startsAfterHours ?? ''}
+                                  onChange={e => updateOT(activeRole.id, ri, { startsAfterHours: Number(e.target.value) })}
+                                  placeholder="10" className={IC} />
+                              </FL>
+                              <FL label="Max Hours">
+                                <input type="number" value={rule.maxHours ?? ''}
+                                  onChange={e => updateOT(activeRole.id, ri, { maxHours: e.target.value ? Number(e.target.value) : null })}
+                                  placeholder="No cap" className={IC} />
+                              </FL>
+                            </div>
+                            <PayableIn prefix={`rule${ri}`} allowances={{
+                              [`rule${ri}PayableInPrep`]: rule.payableInPrep,
+                              [`rule${ri}PayableInShoot`]: rule.payableInShoot,
+                              [`rule${ri}PayableInWrap`]: rule.payableInWrap,
+                            }} onChange={upd => {
+                              const k = Object.keys(upd)[0];
+                              const phase = k.includes('Prep') ? 'payableInPrep' : k.includes('Shoot') ? 'payableInShoot' : 'payableInWrap';
+                              updateOT(activeRole.id, ri, { [phase]: upd[k] });
+                            }} />
                           </div>
                         ))}
+                        <button onClick={() => addOTRule(activeRole.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-border text-[11px] font-bold text-muted-foreground hover:border-primary/50 hover:text-primary transition-all">
+                          <Plus className="w-3 h-3" strokeWidth={2.5} />
+                          Add Overtime Rule
+                        </button>
                       </div>
                     )}
                   </div>
                 )}
-              </>
-            )}
+              </div>
+            </Section>
+
+            {/* ─ Allowances ─ */}
+            <Section title="Allowances" icon={Package} open={open.allowances} onToggle={() => toggleSection('allowances')}
+              badge={activeAllowCount > 0 ? `${activeAllowCount} active` : null}>
+              <div className="space-y-2 pt-2">
+
+                <AllowCard id="boxRental" icon={Box} label="Box Rental"
+                  enabled={activeRole?.allowances.boxRental} onToggle={v => updateAL(activeRole.id, { boxRental: v })}>
+                  <FL label="Description">
+                    <textarea value={activeRole.allowances.boxRentalDescription}
+                      onChange={e => updateAL(activeRole.id, { boxRentalDescription: e.target.value.toUpperCase() })}
+                      className={`${IC} resize-none h-12 text-xs`} placeholder="DESCRIPTION OF BOX RENTAL ITEMS" />
+                  </FL>
+                  <div className="grid grid-cols-2 gap-2">
+                    <FMoney label="Fee Per Week" currency={activeRole.currency}
+                      value={activeRole.allowances.boxRentalFeePerWeek} onChange={v => updateAL(activeRole.id, { boxRentalFeePerWeek: v })} />
+                    <FSelect label="Cap Type" value={activeRole.allowances.boxRentalCapCalculatedAs}
+                      onChange={v => updateAL(activeRole.id, { boxRentalCapCalculatedAs: v })} options={CAP_TYPES} />
+                  </div>
+                  {activeRole.allowances.boxRentalCapCalculatedAs === 'FLAT' && (
+                    <FMoney label="Cap Amount" currency={activeRole.currency}
+                      value={activeRole.allowances.boxRentalCap} onChange={v => updateAL(activeRole.id, { boxRentalCap: v })} />
+                  )}
+                  {activeRole.allowances.boxRentalCapCalculatedAs === 'PERCENTAGE' && (
+                    <FL label="Cap % of Inventory">
+                      <input type="number" step="0.01" value={activeRole.allowances.boxRentalCapPercentage}
+                        onChange={e => updateAL(activeRole.id, { boxRentalCapPercentage: e.target.value })}
+                        placeholder="0.00" className={IC} />
+                    </FL>
+                  )}
+                  <FInput label="Terms" value={activeRole.allowances.boxRentalTerms}
+                    onChange={e => updateAL(activeRole.id, { boxRentalTerms: e.target.value.toUpperCase() })} placeholder="TERMS" />
+                  <FInput label="Budget Code" value={activeRole.allowances.boxRentalBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { boxRentalBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="boxRental" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="computerAllowance" icon={Monitor} label="Computer Allowance"
+                  enabled={activeRole.allowances.computerAllowance} onToggle={v => updateAL(activeRole.id, { computerAllowance: v })}>
+                  <FMoney label="Fee Per Week" currency={activeRole.currency}
+                    value={activeRole.allowances.computerAllowanceFeePerWeek} onChange={v => updateAL(activeRole.id, { computerAllowanceFeePerWeek: v })} />
+                  <FInput label="Terms" value={activeRole.allowances.computerAllowanceTerms}
+                    onChange={e => updateAL(activeRole.id, { computerAllowanceTerms: e.target.value.toUpperCase() })} placeholder="TERMS" />
+                  <FInput label="Budget Code" value={activeRole.allowances.computerAllowanceBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { computerAllowanceBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="computerAllowance" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="softwareAllowance" icon={AppWindow} label="Software Allowance"
+                  enabled={activeRole.allowances.softwareAllowance} onToggle={v => updateAL(activeRole.id, { softwareAllowance: v })}>
+                  <FInput label="Software Description" value={activeRole.allowances.softwareAllowanceDescription}
+                    onChange={e => updateAL(activeRole.id, { softwareAllowanceDescription: e.target.value.toUpperCase() })} placeholder="SOFTWARE NAME" />
+                  <FMoney label="Fee Per Week" currency={activeRole.currency}
+                    value={activeRole.allowances.softwareAllowanceFeePerWeek} onChange={v => updateAL(activeRole.id, { softwareAllowanceFeePerWeek: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.softwareAllowanceBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { softwareAllowanceBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="softwareAllowance" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="equipmentRental" icon={Camera} label="Equipment Rental"
+                  enabled={activeRole.allowances.equipmentRental} onToggle={v => updateAL(activeRole.id, { equipmentRental: v })}>
+                  <FInput label="Equipment Description" value={activeRole.allowances.equipmentRentalDescription}
+                    onChange={e => updateAL(activeRole.id, { equipmentRentalDescription: e.target.value.toUpperCase() })} placeholder="EQUIPMENT" />
+                  <FMoney label="Fee Per Week" currency={activeRole.currency}
+                    value={activeRole.allowances.equipmentRentalFeePerWeek} onChange={v => updateAL(activeRole.id, { equipmentRentalFeePerWeek: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.equipmentRentalBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { equipmentRentalBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="equipmentRental" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="mobilePhoneAllowance" icon={Smartphone} label="Mobile Phone Allowance"
+                  enabled={activeRole.allowances.mobilePhoneAllowance} onToggle={v => updateAL(activeRole.id, { mobilePhoneAllowance: v })}>
+                  <FMoney label="Fee Per Week" currency={activeRole.currency}
+                    value={activeRole.allowances.mobilePhoneAllowanceFeePerWeek} onChange={v => updateAL(activeRole.id, { mobilePhoneAllowanceFeePerWeek: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.mobilePhoneAllowanceBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { mobilePhoneAllowanceBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="mobilePhoneAllowance" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="vehicleAllowance" icon={Car} label="Vehicle Allowance"
+                  enabled={activeRole.allowances.vehicleAllowance} onToggle={v => updateAL(activeRole.id, { vehicleAllowance: v })}>
+                  <FMoney label="Fee Per Week" currency={activeRole.currency}
+                    value={activeRole.allowances.vehicleAllowanceFeePerWeek} onChange={v => updateAL(activeRole.id, { vehicleAllowanceFeePerWeek: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.vehicleAllowanceBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { vehicleAllowanceBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="vehicleAllowance" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="vehicleHire" icon={Truck} label="Vehicle Hire"
+                  enabled={activeRole.allowances.vehicleHire} onToggle={v => updateAL(activeRole.id, { vehicleHire: v })}>
+                  <FMoney label="Weekly Rate" currency={activeRole.currency}
+                    value={activeRole.allowances.vehicleHireRate} onChange={v => updateAL(activeRole.id, { vehicleHireRate: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.vehicleHireBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { vehicleHireBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="vehicleHire" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="perDiem1" icon={Coffee} label="Per Diem 1"
+                  enabled={activeRole.allowances.perDiem1} onToggle={v => updateAL(activeRole.id, { perDiem1: v })}>
+                  <FSelect label="Currency" value={activeRole.allowances.perDiem1Currency}
+                    onChange={v => updateAL(activeRole.id, { perDiem1Currency: v })} options={CURRENCIES} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <FMoney label="Shoot Day" currency={activeRole.allowances.perDiem1Currency}
+                      value={activeRole.allowances.perDiem1ShootDayRate} onChange={v => updateAL(activeRole.id, { perDiem1ShootDayRate: v })} />
+                    <FMoney label="Non-Shoot Day" currency={activeRole.allowances.perDiem1Currency}
+                      value={activeRole.allowances.perDiem1NonShootDayRate} onChange={v => updateAL(activeRole.id, { perDiem1NonShootDayRate: v })} />
+                  </div>
+                  <FInput label="Budget Code" value={activeRole.allowances.perDiem1BudgetCode}
+                    onChange={e => updateAL(activeRole.id, { perDiem1BudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="perDiem1" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="perDiem2" icon={DollarSign} label="Per Diem 2"
+                  enabled={activeRole.allowances.perDiem2} onToggle={v => updateAL(activeRole.id, { perDiem2: v })}>
+                  <FSelect label="Currency" value={activeRole.allowances.perDiem2Currency}
+                    onChange={v => updateAL(activeRole.id, { perDiem2Currency: v })} options={CURRENCIES} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <FMoney label="Shoot Day" currency={activeRole.allowances.perDiem2Currency}
+                      value={activeRole.allowances.perDiem2ShootDayRate} onChange={v => updateAL(activeRole.id, { perDiem2ShootDayRate: v })} />
+                    <FMoney label="Non-Shoot Day" currency={activeRole.allowances.perDiem2Currency}
+                      value={activeRole.allowances.perDiem2NonShootDayRate} onChange={v => updateAL(activeRole.id, { perDiem2NonShootDayRate: v })} />
+                  </div>
+                  <FInput label="Budget Code" value={activeRole.allowances.perDiem2BudgetCode}
+                    onChange={e => updateAL(activeRole.id, { perDiem2BudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="perDiem2" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+
+                <AllowCard id="livingAllowance" icon={Home} label="Living Allowance"
+                  enabled={activeRole.allowances.livingAllowance} onToggle={v => updateAL(activeRole.id, { livingAllowance: v })}>
+                  <FSelect label="Currency" value={activeRole.allowances.livingAllowanceCurrency}
+                    onChange={v => updateAL(activeRole.id, { livingAllowanceCurrency: v })} options={CURRENCIES} />
+                  <FMoney label="Weekly Rate" currency={activeRole.allowances.livingAllowanceCurrency}
+                    value={activeRole.allowances.livingAllowanceWeeklyRate} onChange={v => updateAL(activeRole.id, { livingAllowanceWeeklyRate: v })} />
+                  <FInput label="Budget Code" value={activeRole.allowances.livingAllowanceBudgetCode}
+                    onChange={e => updateAL(activeRole.id, { livingAllowanceBudgetCode: e.target.value.toUpperCase() })} placeholder="E.G. 847-13-001" />
+                  <PayableIn prefix="livingAllowance" allowances={activeRole.allowances} onChange={upd => updateAL(activeRole.id, upd)} />
+                </AllowCard>
+              </div>
+            </Section>
+
+            {/* ─ Attachments ─ */}
+            <Section title="Template Bundle" icon={Paperclip} open={open.attachments} onToggle={() => toggleSection('attachments')}>
+              <div className="pt-2 grid grid-cols-2 gap-2">
+                {['Daily Loan Out Agreement', 'Box Rental Form', 'Policy Acknowledgement', 'Crew Information Form'].map(doc => (
+                  <div key={doc} className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-card hover:border-primary/40 transition-colors">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Paperclip className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase leading-tight text-foreground">{doc}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            {/* ─ Notes ─ */}
+            <Section title="Additional Notes" icon={StickyNote} open={open.notes} onToggle={() => toggleSection('notes')}>
+              <div className="space-y-3 pt-2">
+                <FL label="Other Deal Provisions">
+                  <textarea value={formData.otherDealProvisions}
+                    onChange={e => setFD('otherDealProvisions')(e.target.value)}
+                    className={`${IC} resize-none h-20`} placeholder="Enter any additional provisions..." />
+                </FL>
+                <FL label="Internal Notes">
+                  <textarea value={formData.additionalNotes}
+                    onChange={e => setFD('additionalNotes')(e.target.value)}
+                    className={`${IC} resize-none h-20`} placeholder="Notes for internal reference only..." />
+                </FL>
+              </div>
+            </Section>
+
+            <div className="h-4" />
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
+        {/* ════ RIGHT — CONTRACT PREVIEW ════ */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-          {/* Preview header */}
           <div className="flex-shrink-0 bg-card border-b border-border px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full transition-colors
-                ${tab === 'data' && uploadFile ? 'bg-mint-500 animate-pulse' : 'bg-border'}`} />
-              <span className="text-xs font-bold text-foreground">
-                {tab === 'upload' ? 'PDF Preview' : 'Live Preview'}
-              </span>
-              {tab === 'upload' && uploadFile && (
-                <span className="text-[10px] text-muted-foreground">— click fields to highlight</span>
-              )}
+              <div className="w-2 h-2 rounded-full bg-mint-500 animate-pulse" style={{ backgroundColor: 'var(--mint-500)' }} />
+              <span className="text-xs font-bold text-foreground">Contract Preview</span>
+              <span className="text-[10px] text-muted-foreground">— read-only · updates live</span>
             </div>
-            {tab === 'data' && (
-              <span className="text-[11px] font-mono text-muted-foreground/50">
-                {form.contractTitle || 'Draft'} · A4
+            {bundleTag && (
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {bundleTag}
               </span>
-            )}
-            {tab === 'upload' && uploadFile && (
-              <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
-                <button onClick={() => setZoom(z => Math.max(50, z - 10))}
-                  className="p-1 hover:bg-card rounded transition-colors">
-                  <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4"/>
-                  </svg>
-                </button>
-                <span className="text-xs font-medium text-muted-foreground w-9 text-center">{zoom}%</span>
-                <button onClick={() => setZoom(z => Math.min(200, z + 10))}
-                  className="p-1 hover:bg-card rounded transition-colors">
-                  <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </button>
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                      className="p-1 hover:bg-card rounded disabled:opacity-40">
-                      <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-                      </svg>
-                    </button>
-                    <span className="text-xs text-muted-foreground font-medium">{currentPage}/{totalPages}</span>
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                      className="p-1 hover:bg-card rounded disabled:opacity-40">
-                      <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
             )}
           </div>
 
-          {/* Preview area */}
-          <div className="flex-1 overflow-auto min-h-0 bg-muted">
-
-            {/* Contract Data preview */}
-            {tab === 'data' && (
-              !uploadFile ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground/50">
-                  <div className="text-center">
-                    <svg className="w-20 h-20 mx-auto mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p className="text-sm font-semibold">Preview will appear here</p>
-                    <p className="text-xs mt-1 opacity-70">Upload a PDF template to begin</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 flex justify-center items-start min-h-full">
-                  <div className="w-full max-w-[680px] shadow-xl rounded-xl overflow-hidden">
-                    <div id="contract-preview-doc">
-                      <LivePreview form={form} />
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-
-            {/* Upload PDF preview */}
-            {tab === 'upload' && (
-              <>
-                {!uploadFile && !uploadLoading && (
-                  <div className="flex items-center justify-center h-full text-muted-foreground/50">
-                    <div className="text-center">
-                      <svg className="w-20 h-20 mx-auto mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
-                      <p className="text-sm font-medium">PDF preview appears here</p>
-                    </div>
-                  </div>
-                )}
-
-                {uploadLoading && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-                      <p className="text-xs text-muted-foreground">{uploadLoadMsg}</p>
-                    </div>
-                  </div>
-                )}
-
-                {uploadFile && !uploadLoading && (
-                  <div className="p-6 flex justify-center items-start">
-                    <div className="shadow-xl"
-                      style={{ position: 'relative', display: 'inline-block',
-                               width: canvasSize.w || 'auto', height: canvasSize.h || 'auto',
-                               background: 'var(--card)', borderRadius: 4 }}>
-                      <canvas ref={canvasRef} className="block" />
-
-                      {pageFields.map(field => {
-                        const x = field.rect.x * SCALE, y = field.rect.y * SCALE;
-                        const w = field.rect.w * SCALE, h = field.rect.h * SCALE;
-                        const isActive = activeField === field.id;
-                        return (
-                          <div key={field.id}
-                            onClick={() => { setActiveField(field.id); fieldRefs.current[field.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
-                            title={field.label}
-                            style={{
-                              position: 'absolute', left: x, top: y, width: w, height: h,
-                              boxSizing: 'border-box',
-                              border: isActive ? '2px solid var(--primary)' : '1.5px solid color-mix(in srgb, var(--primary) 50%, transparent)',
-                              background: isActive ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'color-mix(in srgb, var(--primary) 6%, transparent)',
-                              borderRadius: 3, cursor: 'pointer', zIndex: 10,
-                              transition: 'all 0.15s ease',
-                              boxShadow: isActive ? '0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent)' : 'none',
-                            }}
-                          />
-                        );
-                      })}
-
-                      {activeField && (() => {
-                        const f = pageFields.find(f => f.id === activeField);
-                        if (!f) return null;
-                        return (
-                          <div style={{
-                            position: 'absolute', left: f.rect.x * SCALE, top: Math.max(0, f.rect.y * SCALE - 22),
-                            background: 'var(--primary)', color: 'var(--primary-foreground)',
-                            fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4,
-                            whiteSpace: 'nowrap', zIndex: 20, pointerEvents: 'none',
-                          }}>
-                            {f.label}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+          <div className="flex-1 overflow-auto min-h-0 bg-muted/40 p-6">
+            <div className="max-w-[680px] mx-auto shadow-2xl rounded-2xl overflow-hidden ring-1 ring-border">
+              <ContractPreview offer={formData} role={primaryRole} />
+            </div>
           </div>
         </div>
       </div>
