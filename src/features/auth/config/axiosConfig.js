@@ -31,7 +31,7 @@ function showDebouncedToast(type, title, description, duration = 6000) {
 export const axiosConfig = axios.create({
   baseURL,
   withCredentials: true,
-  timeout: 20000,
+  timeout: 120000,
 });
 
 const AUTH_EXCLUDED_ROUTES = [

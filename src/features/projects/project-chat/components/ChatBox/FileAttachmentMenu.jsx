@@ -1,8 +1,5 @@
-// src/features/chat/components/ChatBox/FileAttachmentMenu.jsx
-// ✅ EXACT UI: File attachment menu matching original design
-
-import React from "react";
 import { Image as ImageIcon, Video as VideoIcon, FileText, MapPin } from "lucide-react";
+import { toast } from "sonner";
 
 function AttachmentButton({ icon: Icon, label, onClick }) {
   return (
@@ -24,11 +21,11 @@ export default function FileAttachmentMenu({ onImageClick, onVideoClick, onFileC
     <div className="absolute bottom-14 left-0 bg-card border rounded-xl shadow-xl p-2 flex gap-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
       <AttachmentButton icon={ImageIcon} label="Photo" onClick={onImageClick} />
       <AttachmentButton icon={VideoIcon} label="Video" onClick={onVideoClick} />
-      <AttachmentButton icon={FileText} label="File" onClick={onFileClick} />
+      <AttachmentButton icon={FileText} label="Documents" onClick={onFileClick} />
       <AttachmentButton
         icon={MapPin}
         label="Location"
-        onClick={() => alert("Location sharing coming soon!")}
+        onClick={() => toast.warning("Location sharing coming soon!")}
       />
     </div>
   );

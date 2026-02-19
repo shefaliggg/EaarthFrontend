@@ -20,6 +20,8 @@ import {
   AlertCircle,
   RotateCcw,
   Image,
+  Mic2,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -31,6 +33,9 @@ import ImagePreviewDialog from "../../Dialogs/ImagePreviewDialog";
 import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
 import { toast } from "sonner";
+import { formatDuration, getReadByCount } from "../../utils/messageHelpers";
+import { getCurrentUserId } from "../../../../../shared/config/utils";
+import { Button } from "../../../../../shared/components/ui/button";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -73,7 +78,7 @@ export default function MessageBubble({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [previewImageFile, setPreviewImageFile] = useState(null);
   const retryMessage = useChatStore((state) => state.retryMessage);
   const { selectedChat } = useChatStore();
 
@@ -132,8 +137,8 @@ export default function MessageBubble({
     setShowForwardDialog(true);
   };
 
-  const handleImageClick = (imageUrl) => {
-    setPreviewImageUrl(imageUrl);
+  const handleImageClick = (imageFIle) => {
+    setPreviewImageFile(imageFIle);
     setShowImagePreview(true);
   };
 
@@ -193,7 +198,7 @@ export default function MessageBubble({
               {message.time}
             </span>
             <Badge variant="outline" className="text-[9px] h-4 px-1.5">
-              Read by {message.readBy}
+              Read by {getReadByCount(message, getCurrentUserId())}
             </Badge>
           </div>
         )}
@@ -283,6 +288,7 @@ export default function MessageBubble({
                       if (file.mime.startsWith("image/"))
                         return (
                           <MessageImage
+                            message={message}
                             key={index}
                             file={file}
                             url={url}
@@ -293,6 +299,7 @@ export default function MessageBubble({
                       if (file.mime.startsWith("video/"))
                         return (
                           <MessageVideo
+                            message={message}
                             key={index}
                             file={file}
                             url={url}
@@ -302,6 +309,7 @@ export default function MessageBubble({
                       if (file.mime.startsWith("audio/"))
                         return (
                           <MessageAudio
+                            message={message}
                             key={index}
                             file={file}
                             url={url}
@@ -310,6 +318,7 @@ export default function MessageBubble({
                         );
                       return (
                         <MessageFile
+                          message={message}
                           key={index}
                           file={file}
                           url={url}
@@ -494,7 +503,8 @@ export default function MessageBubble({
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
-        imageUrl={previewImageUrl}
+        message={message}
+        imageFile={previewImageFile}
       />
     </div>
   );
@@ -527,7 +537,7 @@ function MessageStateIcon({ state }) {
     case "delivered":
       return <CheckCheck className="w-3 h-3 text-primary-foreground/70" />;
     case "seen":
-      return <CheckCheck className="w-3 h-3 text-green-900" />;
+      return <CheckCheck className="w-3 h-3 text-green-400" />;
     case "failed":
       return <X className="w-3 h-3 text-red-500" />;
     default:
@@ -540,7 +550,7 @@ function MessageImage({ file, url, onClick, single = true }) {
 
   return (
     <div
-      className={`overflow-hidden  w-full ${single ? " max-w-[260px] max-h-[260px]" : " max-w-[200px] max-h-[200px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+      className={`overflow-hidden relative  w-full ${single ? " max-w-[240px] max-h-[240px]" : " max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
     >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -550,30 +560,61 @@ function MessageImage({ file, url, onClick, single = true }) {
       <img
         src={url}
         alt={file.name || "Shared image"}
-        onClick={() => onClick(url)}
+        onClick={() => onClick(file)}
         onLoad={() => setLoaded(true)}
-        className={`cursor-pointer rounded-sm w-full h-auto ${single ? "object-cover" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`cursor-pointer rounded-sm w-full h-auto object-cover ${single ? "" : "aspect-square"} transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
       />
+
+      <a
+        href={url}
+        rel="noopener noreferrer"
+        download
+        onClick={() => toast.info("Downloading Image..")}
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition"
+      >
+        <Download className="w-4 h-4" />
+      </a>
     </div>
   );
 }
 
 function MessageVideo({ file, url, single = true }) {
   return (
-    <video
-      src={url}
-      controls
-      className={`rounded-xl  w-full  bg-muted/90 ${single ? "object-cover max-w-[260px] max-h-[260px]" : "aspect-square max-w-[200px] max-h-[200px]"}`}
-    >
-      Your browser does not support the video tag.
-    </video>
+    <div className="relative group">
+      <video
+        src={url}
+        controls
+        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[240px] max-h-[240px]" : "aspect-square max-w-[160px] max-h-[160px]"}`}
+      >
+        Your browser does not support the video tag.
+      </video>
+      <a
+        href={url}
+        rel="noopener noreferrer"
+        download
+        onClick={() => toast.info("Downloading Video..")}
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition"
+      >
+        <Download className="w-4 h-4" />
+      </a>
+    </div>
   );
 }
 
-function MessageAudio({ file, url, single = true }) {
+function MessageAudio({ message, file, url, single = true }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
+  const [duration, setDuration] = useState(file?.duration || 0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+
   const audioRef = useRef(null);
+
+  console.log("file", file);
+
+  // const isAudioFile = false;
+  // const isVoiceMessage = true
+  const isAudioFile = message.type.toLowerCase() === "media";
+  const isVoiceMessage = message.type.toLowerCase() === "audio";
 
   useEffect(() => {
     if (isPlaying) {
@@ -593,41 +634,132 @@ function MessageAudio({ file, url, single = true }) {
     }
   }, [isPlaying]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
+
   return (
     <div
-      className={`flex items-center gap-1  w-full ${single ? " min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-2 w-full col-span-2 
+        ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} 
+        ${isAudioFile ? "bg-muted/90" : "bg-primary"} 
+        p-3 px-2 rounded-md`}
     >
       <button
         onClick={() => {
           if (!audioRef.current) return;
+          audioRef.current.playbackRate = playbackRate;
           if (isPlaying) audioRef.current.pause();
           else audioRef.current.play();
           setIsPlaying(!isPlaying);
         }}
-        className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
+      ${
+        isVoiceMessage
+          ? "bg-white/20 hover:bg-white/30"
+          : "bg-primary/10 hover:bg-primary/20"
+      }`}
       >
         {isPlaying ? (
-          <Pause className="w-5 h-5 text-primary" />
+          <Pause
+            className={`w-5 h-5 ${
+              isVoiceMessage ? "text-white" : "text-primary"
+            }`}
+          />
         ) : (
-          <Play className="w-5 h-5 text-primary" />
+          <Play
+            className={`w-5 h-5 ${
+              isVoiceMessage ? "text-white" : "text-primary"
+            }`}
+          />
         )}
       </button>
 
-      <div className="flex-1">
-        <div className="h-1 bg-muted rounded-full overflow-hidden">
+      <div className="flex-1 mt-3">
+        <div
+          className={`h-1 rounded-full overflow-hidden ${
+            isVoiceMessage ? "bg-white/20" : "bg-muted"
+          }`}
+        >
           <div
-            className="h-full bg-primary transition-all"
+            className={`h-full transition-all ${
+              isVoiceMessage ? "bg-white" : "bg-primary"
+            }`}
             style={{ width: `${playProgress}%` }}
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Voice message</p>
+        <div className="flex justify-between items-center  mt-1">
+          <p
+            className={`text-xs flex items-center gap-1 ${
+              isVoiceMessage ? "text-white/90" : "text-muted-foreground"
+            }`}
+          >
+            {isVoiceMessage ? (
+              <>
+                <Mic className="w-4 h-4 text-white/80" />
+                Voice message
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-4 h-4 text-muted-foreground" />
+                Audio File
+              </>
+            )}
+          </p>
+          <span
+            className={`text-[11px] ${isVoiceMessage ? "text-white/90" : "text-muted-foreground"}`}
+          >
+            {formatDuration(duration)}
+          </span>
+        </div>
       </div>
 
-      <Volume2 className="w-4 h-4 text-muted-foreground" />
+      {isVoiceMessage && (
+        <button
+          onClick={() => {
+            const nextRate =
+              playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1;
+
+            setPlaybackRate(nextRate);
+          }}
+          className="text-[11px] px-2 py-1 rounded-full bg-white/20 text-white hover:bg-white/30 transition"
+        >
+          {playbackRate}x
+        </button>
+      )}
+
+      {isAudioFile && (
+        <Button
+          onClick={() =>
+            downloadAttachment(message.conversationId, message._id, file)
+          }
+          variant={"ghost"}
+          size={"icon"}
+        >
+          <Download className="w-4 h-4" />
+        </Button>
+      )}
 
       <audio
         ref={audioRef}
         src={url}
+        onLoadedMetadata={() => {
+          if (!audioRef.current) return;
+
+          if (!file?.duration) {
+            setDuration(audioRef.current.duration);
+          }
+        }}
+        onTimeUpdate={() => {
+          if (!audioRef.current) return;
+
+          const progress =
+            (audioRef.current.currentTime / audioRef.current.duration) * 100;
+
+          setPlayProgress(progress);
+        }}
         onEnded={() => {
           setIsPlaying(false);
           setPlayProgress(0);
@@ -640,7 +772,7 @@ function MessageAudio({ file, url, single = true }) {
 function MessageFile({ file, url, single }) {
   return (
     <div
-      className={`flex items-center gap-1  w-full ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[200px] max-w-[200px]"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
         <FileText className="w-5 h-5 text-primary" />
@@ -659,9 +791,9 @@ function MessageFile({ file, url, single }) {
 
       <a
         href={url}
-        target="_blank"
         rel="noopener noreferrer"
         download
+        onClick={() => toast.info("Downloading Document")}
         className="p-2 hover:bg-muted rounded-xl"
       >
         <Download className="w-4 h-4 text-primary" />

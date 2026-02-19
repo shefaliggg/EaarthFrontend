@@ -27,15 +27,6 @@ export default function getApiUrl() {
     );
     return "http://localhost:5000/api/v1";
   }
-  if (currentEnv === "development") {
-    console.log(
-      `%c🌍 EAARTH Environment: %c${currentEnv}%c → API: %c${apiUrl}`,
-      "color: cyan; font-weight: bold;",
-      "color: yellow; font-weight: bold;",
-      "color: white;",
-      "color: lightgreen; font-weight: bold;"
-    );
-  }
 
   return apiUrl;
 }

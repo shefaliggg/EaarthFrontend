@@ -1,6 +1,3 @@
-// src/features/chat/api/chat.api.js
-// ✅ FIXED: Complete API layer with better error handling
-
 import { axiosConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
@@ -53,6 +50,20 @@ const chatApi = {
       );
       throw error;
     }
+  },
+
+  downloadMessageAttachments: async (
+    conversationId,
+    messageId,
+    attachementId,
+  ) => {
+    const response = await axiosConfig.get(
+      `/chats/${conversationId}/messages/${messageId}/attachments/${attachementId}/download`,
+      {
+        responseType: "blob", // VERY IMPORTANT
+      },
+    );
+    return response;
   },
 
   // Get messages for a conversation
