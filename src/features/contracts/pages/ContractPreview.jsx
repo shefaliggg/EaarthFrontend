@@ -1,8 +1,14 @@
 /**
- * ContractPreview.jsx — Enhanced UI with refined card styling, Lucide icons, logo
+ * ContractPreview.jsx
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The doc4 contract layout (Tailwind + Lucide, zero styling changes)
+ * wrapped in an A4 PDF viewer shell — auto-scales to fit the panel width,
+ * paper shadow, hatched bg, skeleton loading.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import eaarthLogo from '../../../../src/assets/eaarth.webp';
+import { useState, useEffect, useRef } from 'react';
+import eaarthLogo from '@/assets/eaarth.webp';
 import {
   User, Mail, Phone, UserCheck, FileText,
   Briefcase, Building2, MapPin, Calendar,
@@ -35,16 +41,16 @@ const getBundle = (eng = '', rate = '') => {
 };
 
 const ALLOWANCE_ICONS = {
-  boxRental: Box,
-  computerAllowance: Monitor,
-  softwareAllowance: AppWindow,
-  equipmentRental: Camera,
+  boxRental:            Box,
+  computerAllowance:    Monitor,
+  softwareAllowance:    AppWindow,
+  equipmentRental:      Camera,
   mobilePhoneAllowance: Smartphone,
-  vehicleAllowance: Car,
-  vehicleHire: Truck,
-  perDiem1: Coffee,
-  perDiem2: DollarSign,
-  livingAllowance: Home,
+  vehicleAllowance:     Car,
+  vehicleHire:          Truck,
+  perDiem1:             Coffee,
+  perDiem2:             DollarSign,
+  livingAllowance:      Home,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,6 +68,61 @@ const stableHash = (s = '') => {
 };
 const cn = (...c) => c.filter(Boolean).join(' ');
 
+// ── Skeleton loader ───────────────────────────────────────────────────────────
+function Skeleton() {
+  return (
+    <div className="animate-pulse bg-card">
+      {/* Header */}
+      <div className="bg-primary h-52 px-7 py-6 space-y-3">
+        <div className="flex justify-between">
+          <div className="flex gap-3 items-center">
+            <div className="h-8 w-24 rounded bg-white/20" />
+            <div className="h-8 w-px bg-white/20" />
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-28 rounded bg-white/20" />
+              <div className="h-2 w-20 rounded bg-white/10" />
+            </div>
+          </div>
+          <div className="space-y-1.5 text-right">
+            <div className="h-2 w-16 rounded bg-white/15 ml-auto" />
+            <div className="h-3 w-28 rounded bg-white/20 ml-auto" />
+            <div className="h-2 w-20 rounded bg-white/10 ml-auto" />
+          </div>
+        </div>
+        <div className="pt-2 space-y-2">
+          <div className="h-2 w-24 rounded bg-white/15" />
+          <div className="h-6 w-64 rounded bg-white/25" />
+          <div className="h-3 w-48 rounded bg-white/15" />
+        </div>
+        <div className="flex gap-2 pt-1">
+          <div className="h-5 w-28 rounded-full bg-white/15" />
+          <div className="h-5 w-16 rounded-full bg-white/10" />
+          <div className="h-5 w-40 rounded-full bg-white/10" />
+        </div>
+      </div>
+      {/* Body sections */}
+      <div className="bg-background px-6 py-5 space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="rounded-2xl border border-border overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-3 bg-muted/40 border-b border-border">
+              <div className="w-6 h-6 rounded-lg bg-border" />
+              <div className="h-2.5 w-32 rounded bg-border" />
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-5">
+              {[1, 2, 3, 4].map(j => (
+                <div key={j} className="space-y-1.5">
+                  <div className="h-2 w-16 rounded bg-muted" />
+                  <div className="h-3.5 w-full rounded bg-muted/70" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Section header ────────────────────────────────────────────────────────────
 function SectionHeader({ icon: Icon, label, accent }) {
   return (
@@ -78,7 +139,9 @@ function SectionHeader({ icon: Icon, label, accent }) {
       <span className={cn(
         'text-[10px] font-bold uppercase tracking-[0.15em]',
         accent ? 'text-primary' : 'text-muted-foreground'
-      )}>{label}</span>
+      )}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -98,7 +161,7 @@ function Field({ label, value, icon: Icon, wide, mono }) {
   );
 }
 
-// ── Info grid ─────────────────────────────────────────────────────────────────
+// ── Info grids ────────────────────────────────────────────────────────────────
 function Grid2({ children, className }) {
   return (
     <div className={cn('grid grid-cols-2 gap-x-6 gap-y-4 p-5', className)}>
@@ -124,33 +187,14 @@ function Card({ children, className }) {
   );
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-function Badge({ label, variant = 'default' }) {
-  const styles = {
-    default:  'bg-border/60 text-muted-foreground border-border',
-    primary:  'bg-primary/10 text-primary border-primary/20',
-    success:  'bg-mint-100 text-mint-700 border-mint-200 dark:bg-mint-900/30 dark:text-mint-300 dark:border-mint-800',
-    warning:  'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
-    sky:      'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
-    peach:    'bg-peach-100 text-peach-700 border-peach-200 dark:bg-peach-900/30 dark:text-peach-300 dark:border-peach-800',
-    lavender: 'bg-lavender-100 text-lavender-700 border-lavender-200 dark:bg-lavender-900/30 dark:text-lavender-300 dark:border-lavender-800',
-  };
-  return (
-    <span className={cn('text-[9px] font-bold px-2.5 py-1 rounded-full border tracking-wide', styles[variant] || styles.default)}>
-      {label}
-    </span>
-  );
-}
-
-// ── Main ──────────────────────────────────────────────────────────────────────
-export default function ContractPreview({ offer = {}, role = {} }) {
+// ── Inner document (exact doc4 markup, zero changes) ─────────────────────────
+function ContractDocument({ offer, role }) {
   const al     = role.allowances || {};
   const bundle = getBundle(role.engagementType, role.rateType);
   const today  = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const sym    = currSym(role.currency || 'GBP');
   const refNum = `AGR-${new Date().getFullYear()}-${String(stableHash((offer.fullName || '') + (role.jobTitle || ''))).slice(0, 4).padStart(4, '0')}`;
 
-  // Active allowances
   const allowanceList = [
     al.boxRental && {
       key: 'boxRental', label: 'Box Rental',
@@ -218,20 +262,15 @@ export default function ContractPreview({ offer = {}, role = {} }) {
       className="bg-background text-foreground"
       style={{ fontFamily: '"Outfit", system-ui, sans-serif' }}
     >
-
-      {/* ══════════════════════════════════════════════
-          HEADER — Dark branded block
-      ══════════════════════════════════════════════ */}
+      {/* ══ HEADER ══ */}
       <div className="bg-primary relative overflow-hidden">
-
-        {/* Subtle grid overlay */}
         <div className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
             backgroundSize: '24px 24px',
           }} />
 
-        {/* Top strip with logo + ref */}
+        {/* Logo + ref */}
         <div className="relative flex items-center justify-between px-7 pt-6 pb-0">
           <div className="flex items-center gap-3.5">
             <img
@@ -249,36 +288,29 @@ export default function ContractPreview({ offer = {}, role = {} }) {
               <p className="text-[9px] opacity-60 text-white mt-0.5 leading-none">Crew Engagement</p>
             </div>
           </div>
-
           <div className="text-right">
             <p className="text-[8px] font-mono uppercase tracking-widest opacity-70 text-white">Reference</p>
-            <p className="text-[11px] font-mono text-white font-bold mt-0.5">
-              {refNum}
-            </p>
+            <p className="text-[11px] font-mono text-white font-bold mt-0.5">{refNum}</p>
             <p className="text-[9px] opacity-75 text-white mt-0.5">{today}</p>
           </div>
         </div>
 
-        {/* Contract title block */}
+        {/* Title */}
         <div className="relative px-7 pt-5 pb-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-80 text-white mb-1.5">
-                Agreement Type
-              </p>
-              <h1 className="text-[22px] font-bold text-white leading-tight tracking-tight">
-                {bundle.name}
-              </h1>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="w-1.5 h-1.5 rounded-full opacity-70" style={{ backgroundColor: 'white' }} />
-                <p className="text-[11px] opacity-90 text-white truncate">
-                  {offer.fullName || '—'} &nbsp;·&nbsp; {role.jobTitle || '—'}
-                </p>
-              </div>
-            </div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-80 text-white mb-1.5">
+            Agreement Type
+          </p>
+          <h1 className="text-[22px] font-bold text-white leading-tight tracking-tight">
+            {bundle.name}
+          </h1>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="w-1.5 h-1.5 rounded-full opacity-70" style={{ backgroundColor: 'white' }} />
+            <p className="text-[11px] opacity-90 text-white truncate">
+              {offer.fullName || '—'} &nbsp;·&nbsp; {role.jobTitle || '—'}
+            </p>
           </div>
 
-          {/* Status badges */}
+          {/* Badges */}
           <div className="flex flex-wrap gap-2 mt-4">
             <span className={cn(
               'text-[9px] font-bold px-2.5 py-1 rounded-full border tracking-wide',
@@ -306,31 +338,27 @@ export default function ContractPreview({ offer = {}, role = {} }) {
           </div>
         </div>
 
-        {/* Bottom accent line */}
         <div className="h-px w-full opacity-40" style={{ background: 'linear-gradient(90deg, transparent, white, transparent)' }} />
       </div>
 
-      {/* ══════════════════════════════════════════════
-          BODY
-      ══════════════════════════════════════════════ */}
+      {/* ══ BODY ══ */}
       <div className="bg-background px-6 py-5 space-y-4">
 
-        {/* ── 1. Artist Details ─────────────────────────────────────────────── */}
+        {/* 1 · Artist Details */}
         <Card>
           <SectionHeader icon={User} label="Artist Details" />
           <Grid2>
-            <Field label="Full Name"  value={offer.fullName}       icon={User} />
-            <Field label="Email"      value={offer.emailAddress}   icon={Mail} />
-            <Field label="Mobile"     value={offer.mobileNumber}   icon={Phone} />
-            <Field label="Tax Status" value={
+            <Field label="Full Name"  value={offer.fullName}     icon={User} />
+            <Field label="Email"      value={offer.emailAddress} icon={Mail} />
+            <Field label="Mobile"     value={offer.mobileNumber} icon={Phone} />
+            <Field label="Tax Status" icon={Shield} value={
               offer.allowAsSelfEmployedOrLoanOut === 'YES' ? 'Self-Employed / Loan Out' :
               offer.allowAsSelfEmployedOrLoanOut === 'NO'  ? 'PAYE Employee' : null
-            } icon={Shield} />
+            } />
             {offer.alternativeContractType && (
               <Field label="Contract Type" value={offer.alternativeContractType.replace(/_/g, ' ')} icon={FileText} wide />
             )}
           </Grid2>
-
           {offer.isViaAgent && (
             <>
               <div className="h-px bg-border mx-5" />
@@ -354,29 +382,27 @@ export default function ContractPreview({ offer = {}, role = {} }) {
           )}
         </Card>
 
-        {/* ── 2. Role & Engagement ─────────────────────────────────────────── */}
+        {/* 2 · Role & Engagement */}
         <Card>
           <SectionHeader icon={Briefcase} label="Role & Engagement" />
           <Grid3>
             <Field label="Job Title"    value={[role.jobTitle, role.jobTitleSuffix].filter(Boolean).join(' ')} icon={Briefcase} wide />
-            <Field label="Unit"         value={role.unit}                    icon={Building2} />
-            <Field label="Department"   value={role.department}              icon={Building2} />
-            <Field label="Sub-Dept"     value={role.subDepartment}           icon={Building2} />
-            <Field label="Site of Work" value={role.regularSiteOfWork}       icon={MapPin} />
+            <Field label="Unit"         value={role.unit}                     icon={Building2} />
+            <Field label="Department"   value={role.department}               icon={Building2} />
+            <Field label="Sub-Dept"     value={role.subDepartment}            icon={Building2} />
+            <Field label="Site of Work" value={role.regularSiteOfWork}        icon={MapPin} />
             <Field label="Engagement"   value={role.engagementType?.replace(/_/g, ' ')} icon={FileText} />
             <Field label="Working Week" value={role.workingWeek?.replace(/_/g, ' ')}    icon={Calendar} />
             <Field label="Std Hrs/Day"  value={role.standardWorkingHours ? `${role.standardWorkingHours} hours` : null} icon={Clock} />
-            <Field label="Start Date"   value={fmtDate(role.startDate)}      icon={Calendar} />
-            <Field label="End Date"     value={fmtDate(role.endDate)}        icon={Calendar} />
-            <Field label="Working in UK" value={role.workingInUnitedKingdom} icon={Globe} />
+            <Field label="Start Date"   value={fmtDate(role.startDate)}       icon={Calendar} />
+            <Field label="End Date"     value={fmtDate(role.endDate)}         icon={Calendar} />
+            <Field label="Working in UK" value={role.workingInUnitedKingdom}  icon={Globe} />
           </Grid3>
         </Card>
 
-        {/* ── 3. Fees & Compensation ────────────────────────────────────────── */}
+        {/* 3 · Fees & Compensation */}
         <Card>
           <SectionHeader icon={CreditCard} label="Fees & Compensation" accent />
-
-          {/* Rate hero */}
           <div className="px-5 py-5 flex items-start gap-6 border-b border-border">
             <div className="flex-1">
               <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary mb-2">
@@ -394,7 +420,6 @@ export default function ContractPreview({ offer = {}, role = {} }) {
                 </div>
               )}
             </div>
-
             <div className="shrink-0 text-right border-l border-border pl-6">
               <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Fee Per Day</p>
               <p className="text-xl font-bold text-foreground">
@@ -404,7 +429,6 @@ export default function ContractPreview({ offer = {}, role = {} }) {
             </div>
           </div>
 
-          {/* Special day rates */}
           {specials.length > 0 && (
             <div className="border-b border-border">
               <div className="px-5 pt-4 pb-2">
@@ -412,7 +436,7 @@ export default function ContractPreview({ offer = {}, role = {} }) {
                   <Zap className="w-3 h-3" strokeWidth={1.75} />
                   Special Day Rates
                 </p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {specials.map(d => (
                     <div key={d.type} className="rounded-xl border border-border bg-muted/30 px-3 py-2.5">
                       <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground mb-1">
@@ -429,7 +453,6 @@ export default function ContractPreview({ offer = {}, role = {} }) {
             </div>
           )}
 
-          {/* Overtime */}
           <div className="px-5 py-3.5 flex items-center justify-between bg-muted/20">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.75} />
@@ -443,7 +466,7 @@ export default function ContractPreview({ offer = {}, role = {} }) {
           </div>
         </Card>
 
-        {/* ── 4. Allowances ─────────────────────────────────────────────────── */}
+        {/* 4 · Allowances */}
         {allowanceList.length > 0 && (
           <Card>
             <SectionHeader icon={Package} label={`Allowances — ${allowanceList.length} active`} accent />
@@ -451,9 +474,7 @@ export default function ContractPreview({ offer = {}, role = {} }) {
               {allowanceList.map(a => {
                 const Icon = ALLOWANCE_ICONS[a.key] || Package;
                 return (
-                  <div key={a.key}
-                    className="rounded-xl border border-primary/15 bg-primary/5 overflow-hidden">
-                    {/* Card header */}
+                  <div key={a.key} className="rounded-xl border border-primary/15 bg-primary/5 overflow-hidden">
                     <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-primary/10">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
@@ -467,14 +488,11 @@ export default function ContractPreview({ offer = {}, role = {} }) {
                         </span>
                       )}
                     </div>
-                    {/* Card details */}
                     {(a.detail || a.extra || a.budgetCode) && (
                       <div className="px-3.5 py-2 space-y-0.5">
-                        {a.detail && <p className="text-[10px] text-muted-foreground leading-snug">{a.detail}</p>}
-                        {a.extra  && <p className="text-[10px] text-primary font-semibold">{a.extra}</p>}
-                        {a.budgetCode && (
-                          <p className="text-[9px] font-mono text-muted-foreground/60">{a.budgetCode}</p>
-                        )}
+                        {a.detail    && <p className="text-[10px] text-muted-foreground leading-snug">{a.detail}</p>}
+                        {a.extra     && <p className="text-[10px] text-primary font-semibold">{a.extra}</p>}
+                        {a.budgetCode && <p className="text-[9px] font-mono text-muted-foreground/60">{a.budgetCode}</p>}
                       </div>
                     )}
                   </div>
@@ -484,7 +502,7 @@ export default function ContractPreview({ offer = {}, role = {} }) {
           </Card>
         )}
 
-        {/* ── 5. Notes & Provisions ─────────────────────────────────────────── */}
+        {/* 5 · Notes */}
         {(offer.otherDealProvisions || offer.additionalNotes) && (
           <Card>
             <SectionHeader icon={StickyNote} label="Notes & Provisions" />
@@ -519,7 +537,7 @@ export default function ContractPreview({ offer = {}, role = {} }) {
           </Card>
         )}
 
-        {/* ── 6. Signature Block ────────────────────────────────────────────── */}
+        {/* 6 · Signatures */}
         <Card>
           <SectionHeader icon={PenLine} label="Signatures" />
           <div className="p-5">
@@ -528,26 +546,21 @@ export default function ContractPreview({ offer = {}, role = {} }) {
             </p>
             <div className="grid grid-cols-2 gap-8">
               {[
-                { party: 'EAARTH PRODUCTIONS', name: 'Authorised Signatory', sub: 'On behalf of the Company' },
+                { party: 'EAARTH PRODUCTIONS',     name: 'Authorised Signatory',     sub: 'On behalf of the Company' },
                 { party: 'ARTIST / REPRESENTATIVE', name: offer.fullName || 'Artist Name', sub: 'The Contractor or their Lender' },
               ].map(p => (
                 <div key={p.party}>
                   <p className="text-[8px] font-mono font-bold text-muted-foreground uppercase tracking-[0.16em] mb-3">
                     {p.party}
                   </p>
-
-                  {/* Signature line */}
                   <div className="relative mb-3">
                     <div className="h-10 border-b-2 border-border" />
                     <p className="absolute bottom-1 left-0 text-[8px] text-muted-foreground/40 uppercase tracking-wide">
                       Signature
                     </p>
                   </div>
-
                   <p className="text-[11px] font-semibold text-foreground mb-3">{p.name}</p>
                   <p className="text-[9px] text-muted-foreground/60 mb-3">{p.sub}</p>
-
-                  {/* Date line */}
                   <div className="relative">
                     <div className="h-7 border-b border-border/60" />
                     <p className="absolute bottom-1 left-0 text-[8px] text-muted-foreground/40 uppercase tracking-wide">
@@ -566,7 +579,72 @@ export default function ContractPreview({ offer = {}, role = {} }) {
             Confidential · {bundle.name.toUpperCase()} · {refNum} · Eaarth Productions
           </p>
         </div>
+
       </div>
     </article>
+  );
+}
+
+// ── A4 PDF viewer shell ───────────────────────────────────────────────────────
+export default function ContractPreview({ offer = {}, role = {} }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [scale, setScale]         = useState(1);
+  const canvasRef                 = useRef(null);
+
+  // Skeleton on first mount + when key data changes
+  useEffect(() => {
+    setIsLoading(true);
+    const t = setTimeout(() => setIsLoading(false), 480);
+    return () => clearTimeout(t);
+  }, [offer.fullName, role.engagementType, role.rateType]);
+
+  // Auto-fit A4 (794px) to available panel width
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const calc = () => setScale(Math.min(1, (el.clientWidth - 40) / 794));
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const A4_W = 794;
+
+  return (
+    <div
+      ref={canvasRef}
+      className="flex-1 overflow-auto w-full h-full"
+      style={{
+        background: '#e4e4ea',
+        backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.022) 0, rgba(0,0,0,0.022) 1px, transparent 0, transparent 50%)',
+        backgroundSize: '10px 10px',
+        padding: '24px 20px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      {/* A4 page */}
+      <div
+        style={{
+          width: `${A4_W}px`,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+          marginBottom: `${A4_W * (scale - 1)}px`,
+          boxShadow: [
+            '0 1px 3px rgba(0,0,0,0.07)',
+            '0 4px 14px rgba(0,0,0,0.10)',
+            '0 18px 44px rgba(0,0,0,0.09)',
+            '0 0 0 1px rgba(0,0,0,0.05)',
+          ].join(', '),
+          borderRadius: '3px',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}
+      >
+        {isLoading ? <Skeleton /> : <ContractDocument offer={offer} role={role} />}
+      </div>
+    </div>
   );
 }

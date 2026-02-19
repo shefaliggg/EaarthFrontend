@@ -573,7 +573,7 @@ export default function CreateOffer() {
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
           <div>
-            <h1 className="text-sm font-bold text-foreground leading-none">Contract Perview</h1>
+            <h1 className="text-sm font-bold text-foreground leading-none">Create New Offer</h1>
             <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
               {formData.fullName || 'New Recipient'}
               {primaryRole?.jobTitle && (
