@@ -16,7 +16,6 @@ import CalendarPreviewPage from "../components/preview/CalendarPreviewPage";
 
 function ProjectCalendar() {
   const dispatch = useDispatch();
-  const [showPreview, setShowPreview] = useState(false);
   const calendar = useSelector((state) => state.calendar);
 
   const { openCreateModal } = useOutletContext() || {};
@@ -107,7 +106,6 @@ function ProjectCalendar() {
         view={view}
         eventsCount={eventsCount}
         search={search}
-        onPreview={() => setShowPreview(true)}
         period={period}
         setView={setView}
         setSearch={setSearch}
@@ -153,14 +151,7 @@ function ProjectCalendar() {
         canModify={canModify}
       />
 
-      {showPreview && (
-        <CalendarPreviewPage
-          onClose={() => setShowPreview(false)}
-          currentDate={currentDate}
-          events={events}
-          view={view}
-        />
-      )}
+
     </div>
   );
 }

@@ -1,6 +1,5 @@
-import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { InfoTooltip } from "../../../../shared/components/InfoTooltip";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
 import { format } from "date-fns";
 import {
   Select,
@@ -14,8 +13,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Printer,
-  Download,
   Plane,
   Clapperboard,
   Settings,
@@ -23,14 +20,12 @@ import {
 } from "lucide-react";
 
 import SearchBar from "@/shared/components/SearchBar";
-// import getApiUrl from "../../../../shared/config/enviroment";
 import CalendarFilterTabs from "./CalendarFilterTabs";
 import { useNavigate, useParams } from "react-router-dom";
 
 function CalendarToolbar({
   currentDate,
   eventsCount,
-  onPreview,
   search,
   setSearch,
   period,
@@ -43,6 +38,7 @@ function CalendarToolbar({
 }) {
   const navigate = useNavigate();
   const { projectName } = useParams();
+
   const getTitle = () => {
     switch (view) {
       case "year":
@@ -59,23 +55,7 @@ function CalendarToolbar({
   };
 
   const getSubtitle = () => {
-    switch (view) {
-      case "year":
-        return `${eventsCount} events scheduled`;
-      case "gantt":
-        return `${eventsCount} events scheduled`;
-      case "month":
-      case "timeline":
-        return `${eventsCount} events scheduled`;
-      case "conflicts":
-        return `${eventsCount} events scheduled`;
-      case "week":
-        return `${eventsCount} events scheduled`;
-      case "day":
-        return `${eventsCount} events scheduled`;
-      default:
-        return `${eventsCount} events scheduled`;
-    }
+    return `${eventsCount} events scheduled`;
   };
 
   return (
@@ -150,7 +130,6 @@ function CalendarToolbar({
             </Button>
           </InfoTooltip>
 
-          {/* TMO Button */}
           <InfoTooltip content="TMO">
             <Button
               variant="default"
@@ -161,7 +140,6 @@ function CalendarToolbar({
             </Button>
           </InfoTooltip>
 
-          {/* Settings Button */}
           <InfoTooltip content="Settings">
             <Button
               variant="default"
@@ -175,7 +153,11 @@ function CalendarToolbar({
           </InfoTooltip>
 
           <InfoTooltip content="PDF Preview">
-            <Button variant="default" size="icon" onClick={onPreview}>
+            <Button 
+              variant="default" 
+              size="icon" 
+              onClick={() => navigate(`/projects/${projectName}/calendar/preview`)}
+            >
               <Eye className="w-4 h-4" />
             </Button>
           </InfoTooltip>

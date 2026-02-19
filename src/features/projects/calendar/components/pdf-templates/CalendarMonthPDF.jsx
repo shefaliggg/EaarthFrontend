@@ -27,10 +27,10 @@ const colors = {
   purple800: "#6b21a8",
   purple900: "#581c87",
 
-  shoot: { bg: "#FFEDD5", text: "#9A3412", border: "#FB923C", label: "SHOOT" },
-  prep: { bg: "#E0F2FE", text: "#075985", border: "#38BDF8", label: "PREP" },
-  wrap: { bg: "#A7F3D0", text: "#064E3B", border: "#34D399", label: "WRAP" },
-  other: { bg: "#e9d5ff", text: "#581c87", border: "#c084fc", label: "OTHER" },
+  shoot: { bg: "#FFEDD5", text: "#9A3412", border: "#FB923C", label: "SHOOT EVENTS" },
+  prep: { bg: "#E0F2FE", text: "#075985", border: "#38BDF8", label: "PREP EVENTS" },
+  wrap: { bg: "#A7F3D0", text: "#064E3B", border: "#34D399", label: "WRAP EVENTS" },
+  total: { bg: "#f3e8ff", text: "#581c87", border: "#c084fc", label: "TOTAL EVENTS" },
 };
 
 function CalendarMonthPDF({ currentDate, events }) {
@@ -44,10 +44,11 @@ function CalendarMonthPDF({ currentDate, events }) {
     calendarWeeks.push(calendarDays.slice(i, i + 7));
   }
 
-  const shootDays = events.filter((e) => e.eventType === "shoot").length;
-  const prepDays = events.filter((e) => e.eventType === "prep").length;
-  const wrapDays = events.filter((e) => e.eventType === "wrap").length;
-  const otherDays = events.length - shootDays - prepDays - wrapDays;
+  // UPDATED STATS CALCULATION (Matching Year View)
+  const totalEvents = events.length;
+  const shootEvents = events.filter((e) => e.eventType === "shoot").length;
+  const prepEvents = events.filter((e) => e.eventType === "prep").length;
+  const wrapEvents = events.filter((e) => e.eventType === "wrap").length;
 
   const getEventsForDate = (date) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -71,7 +72,7 @@ function CalendarMonthPDF({ currentDate, events }) {
       case "wrap":
         return colors.wrap;
       default:
-        return colors.other;
+        return colors.total; // Default fallback styling
     }
   };
 
@@ -169,7 +170,8 @@ function CalendarMonthPDF({ currentDate, events }) {
             </div>
           </div>
         </div>
-        {/* --- STATS BAR --- */}
+
+        {/* --- STATS BAR (UPDATED) --- */}
         <div
           style={{
             display: "grid",
@@ -179,10 +181,10 @@ function CalendarMonthPDF({ currentDate, events }) {
           }}
         >
           {[
-            { label: "Shoot Days", value: shootDays, ...colors.shoot },
-            { label: "Prep Days", value: prepDays, ...colors.prep },
-            { label: "Wrap Days", value: wrapDays, ...colors.wrap },
-            { label: "Other Events", value: otherDays, ...colors.other },
+            { label: "Total Events", value: totalEvents, ...colors.total },
+            { label: "Prep Events", value: prepEvents, ...colors.prep },
+            { label: "Shoot Events", value: shootEvents, ...colors.shoot },
+            { label: "Wrap Events", value: wrapEvents, ...colors.wrap },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -218,6 +220,7 @@ function CalendarMonthPDF({ currentDate, events }) {
             </div>
           ))}
         </div>
+
         {/* --- CALENDAR GRID CONTAINER --- */}
         <div
           style={{
@@ -267,6 +270,7 @@ function CalendarMonthPDF({ currentDate, events }) {
               </div>
             ))}
           </div>
+
           {/* CALENDAR BODY */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             {calendarWeeks.map((week, wIdx) => {
@@ -307,6 +311,7 @@ function CalendarMonthPDF({ currentDate, events }) {
                       {weekLabel}
                     </div>
                   </div>
+
                   {/* DAYS */}
                   {week.map((day, dIdx) => {
                     const isCurrentMonth = isSameMonth(day, currentDate);
@@ -398,7 +403,7 @@ function CalendarMonthPDF({ currentDate, events }) {
                           </div>
                         </div>
 
-                        {/* Events List - SHOW ALL (No Slice) */}
+                        {/* Events List */}
                         <div
                           style={{
                             display: "flex",
@@ -462,6 +467,7 @@ function CalendarMonthPDF({ currentDate, events }) {
             })}
           </div>
         </div>
+
         {/* --- FOOTER --- */}
         <div
           style={{

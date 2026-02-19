@@ -1,7 +1,7 @@
 function CalendarDayPDF() {
   return (
     <>
-      
+      Under development – Calendar Day PDF Template
     </>
   )
 }
