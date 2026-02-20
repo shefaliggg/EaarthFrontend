@@ -24,9 +24,7 @@ const PREVIEW_VIEWS = [
   { value: "day", label: "Day" },
   { value: "week", label: "Week" },
   { value: "month", label: "Month" },
-  { value: "gantt", label: "Gantt" },
   { value: "timeline", label: "Timeline" },
-  { value: "conflicts", label: "", icon: "AlertTriangle" },
 ];
 
 function Sep() {
@@ -46,7 +44,6 @@ function CalendarPreviewPage() {
   const getHeaderTitle = () => {
     switch (safeView) {
       case "week":
-        return format(currentDate, "dd EEE MMM yyyy");
       case "day":
         return format(currentDate, "dd EEE MMM yyyy");
       default:
