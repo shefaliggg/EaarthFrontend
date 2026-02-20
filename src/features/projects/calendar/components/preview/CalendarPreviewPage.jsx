@@ -1,5 +1,12 @@
-import { useRef } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/shared/components/ui/select";
 import {
   Download,
   ChevronLeft,
@@ -39,6 +46,15 @@ function CalendarPreviewPage() {
   const { currentDate, events, view, setView, prev, next, today } =
     useCalendar();
 
+  // Local state to manage the selected period
+  const [period, setPeriod] = useState("all");
+
+  // Filter events based on the selected period
+  const filteredEvents = useMemo(() => {
+    if (period === "all") return events;
+    return events.filter((e) => e.eventType === period);
+  }, [events, period]);
+
   const safeView = PREVIEW_VIEWS.some((v) => v.value === view) ? view : "month";
 
   const getHeaderTitle = () => {
@@ -54,13 +70,13 @@ function CalendarPreviewPage() {
   const renderTemplate = () => {
     switch (safeView) {
       case "week":
-        return <CalendarWeekPDF currentDate={currentDate} events={events} />;
+        return <CalendarWeekPDF currentDate={currentDate} events={filteredEvents} />;
       case "day":
-        return <CalendarDayPDF currentDate={currentDate} events={events} />;
+        return <CalendarDayPDF currentDate={currentDate} events={filteredEvents} />;
       case "gantt":
-        return <CalendarGanttPDF currentDate={currentDate} events={events} />;
+        return <CalendarGanttPDF currentDate={currentDate} events={filteredEvents} />;
       default:
-        return <CalendarMonthPDF currentDate={currentDate} events={events} />;
+        return <CalendarMonthPDF currentDate={currentDate} events={filteredEvents} />;
     }
   };
 
@@ -134,6 +150,22 @@ function CalendarPreviewPage() {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-3">
+          
+          {/* Period Filter Dropdown */}
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="All Periods" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Periods</SelectItem>
+              <SelectItem value="prep">Prep</SelectItem>
+              <SelectItem value="shoot">Shoot</SelectItem>
+              <SelectItem value="wrap">Wrap</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Sep />
+
           {/* View switcher */}
           <CalendarFilterTabs
             options={PREVIEW_VIEWS}
