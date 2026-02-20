@@ -5,6 +5,7 @@ import EmojiPicker from "emoji-picker-react";
 import useChatStore from "../../store/chat.store";
 import FileAttachmentMenu from "./FileAttachmentMenu";
 import { buildReplyPayload } from "../../utils/messageHelpers";
+import { Button } from "../../../../../shared/components/ui/button";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -155,8 +156,9 @@ const MessageInput = React.memo(
 
           setMessageInput("");
           onClearReply();
-          await sendMessage(selectedChat.id, projectId, { formData });
           setAttachments([]);
+
+          await sendMessage(selectedChat.id, projectId, { formData });
         } else {
           setMessageInput("");
           onClearReply();
@@ -357,10 +359,15 @@ const MessageInput = React.memo(
         {/* Send Button / Voice */}
         {!showSendButton ? (
           <button
-            onClick={onStartRecording}
-            className="p-2.5 rounded-xl hover:bg-accent transition-colors flex-shrink-0 h-11 flex items-center justify-center"
+            onClick={() => {
+              setMessageInput("");
+              onClearReply();
+              setAttachments([]);
+              onStartRecording();
+            }}
+            className="p-2.5 rounded-xl group hover:bg-accent  transition-colors flex-shrink-0 h-11 flex items-center justify-center"
           >
-            <Mic className="w-5 h-5 text-primary" />
+            <Mic className="w-5 h-5 text-primary group-hover:text-background" />
           </button>
         ) : (
           <button

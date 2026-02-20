@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
-import { X, Pause, Play, Square } from "lucide-react";
+import { X, Pause, Play, Square, Send, SendHorizonal } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import { toast } from "sonner";
+import { Button } from "../../../../../shared/components/ui/button";
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
@@ -13,7 +14,11 @@ export default function RecordingBar({ selectedChat, onClose }) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
+  const audioRef = useRef(null);
 
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [recordingState, setRecordingState] = useState("recording");
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
@@ -22,7 +27,26 @@ export default function RecordingBar({ selectedChat, onClose }) {
   const { sendMessage } = useChatStore();
 
   useEffect(() => {
-     if (mediaRecorderRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const setMeta = () => setDuration(audio.duration);
+    const onEnd = () => setIsPlaying(false);
+
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("loadedmetadata", setMeta);
+    audio.addEventListener("ended", onEnd);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", setMeta);
+      audio.removeEventListener("ended", onEnd);
+    };
+  }, [previewUrl]);
+
+  useEffect(() => {
+    if (mediaRecorderRef.current) return;
     startRecording();
     return cleanupRecording;
   }, []);
@@ -138,6 +162,19 @@ export default function RecordingBar({ selectedChat, onClose }) {
     });
   };
 
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+
+    setIsPlaying(!isPlaying);
+  };
+
   // ⏱ Timer
   useEffect(() => {
     if (recordingState !== "recording") return;
@@ -154,7 +191,7 @@ export default function RecordingBar({ selectedChat, onClose }) {
   const isPreview = recordingState === "preview";
 
   return (
-    <div className="flex items-center gap-3 bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+    <div className="flex items-center gap-3 bg-red-500/10 p-3 py-1.5 rounded-3xl border border-red-500/20">
       {!isPreview && (
         <>
           <div className="flex items-center gap-2 flex-1">
@@ -207,8 +244,30 @@ export default function RecordingBar({ selectedChat, onClose }) {
 
       {isPreview && (
         <>
-          <div className="flex-1">
-            <audio controls src={previewUrl} className="w-full" />
+          <div className="flex-1 flex items-center gap-3 rounded-3xl px-4 py-1">
+            <audio ref={audioRef} src={previewUrl} />
+
+            <button
+              onClick={togglePlay}
+              className="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-full"
+            >
+              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+            </button>
+
+            <div className="flex-1 mt-3">
+              <div className="h-1 bg-gray-300 rounded-full relative">
+                <div
+                  className="h-1 bg-red-500 rounded-full"
+                  style={{
+                    width: `${(currentTime / duration) * 100 || 0}%`,
+                  }}
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {formatTime(Math.floor(currentTime))} /{" "}
+                {formatTime(Math.floor(duration))}
+              </div>
+            </div>
           </div>
 
           <button
@@ -221,12 +280,14 @@ export default function RecordingBar({ selectedChat, onClose }) {
             <X className="w-4 h-4 text-red-500" />
           </button>
 
-          <button
+          <Button
             onClick={handleSendVoice}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
+            variant={"destructive"}
+            className="rounded-full"
           >
+            <SendHorizonal/>
             Send
-          </button>
+          </Button>
         </>
       )}
     </div>
