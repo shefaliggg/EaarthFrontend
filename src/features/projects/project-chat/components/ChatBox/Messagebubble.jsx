@@ -142,6 +142,10 @@ export default function MessageBubble({
     setShowImagePreview(true);
   };
 
+  if (message.replyTo) {
+    console.log("reply fron backend", message);
+  }
+
   if (message.deleted) {
     return (
       <div
@@ -257,9 +261,13 @@ export default function MessageBubble({
                 {/* Reply preview */}
                 {message.replyTo && (
                   <div
-                    onClick={() => onScrollToReply(message.replyTo.messageId)}
+                    onClick={() =>
+                      onScrollToReply(
+                        message.replyTo.clientId || message.replyTo.messageId,
+                      )
+                    }
                     className={cn(
-                      "mb-1 pl-3 pr-4 py-1 rounded-lg border-l-2 cursor-pointer transition-all duration-150 max-w-full hover:shadow-sm",
+                      "mb-1 pl-3 pr-4 py-1 rounded-md border-l-2 cursor-pointer transition-all duration-150 max-w-full hover:shadow-sm",
                       isOwn
                         ? "bg-purple-200 dark:bg-muted text-foreground  border-primary-foreground dark:border-primary-foreground/50 hover:bg-muted/80"
                         : "bg-background/60 border-primary hover:bg-background/80",
@@ -677,12 +685,10 @@ function MessageAudio({ message, file, url, single = true }) {
 
       <div className="flex-1 flex flex-col">
         {isAudioFile && (
-            <span
-              className={`text-[12px] text-muted-foreground mb-0.5`}
-            >
-              {file.name}
-            </span>
-          )}
+          <span className={`text-[12px] text-muted-foreground mb-0.5`}>
+            {file.name}
+          </span>
+        )}
         <div
           className={`h-1 rounded-full overflow-hidden ${
             isVoiceMessage ? "bg-white/20" : "bg-muted"
@@ -698,7 +704,9 @@ function MessageAudio({ message, file, url, single = true }) {
         <div className="flex justify-between items-center  mt-1">
           <p
             className={`text-xs flex items-center gap-1 ${
-              isVoiceMessage ? "text-white/90" : "text-muted-foreground text-[11px]"
+              isVoiceMessage
+                ? "text-white/90"
+                : "text-muted-foreground text-[11px]"
             }`}
           >
             {isVoiceMessage ? (

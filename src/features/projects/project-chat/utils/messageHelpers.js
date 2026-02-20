@@ -188,7 +188,6 @@ export const formatDuration = (seconds = 0) => {
   return `${padded(mins)}:${padded(secs)}`;
 };
 
-
 export function transformMessage(
   msg,
   { currentUserId, conversationMembersCount },
@@ -212,6 +211,7 @@ export function transformMessage(
 
     replyTo = {
       messageId: original._id.toString(),
+      clientId: original.clientTempId,
       senderId: replySender?._id?.toString() || replySender?.toString(),
       sender: replySender?.displayName || "Unknown",
       preview: original.content?.text || original.content?.caption || "", // for text or caption

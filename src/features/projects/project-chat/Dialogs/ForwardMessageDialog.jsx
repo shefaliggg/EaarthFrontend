@@ -1,6 +1,3 @@
-// src/features/chat/components/Dialogs/ForwardMessageDialog.jsx
-// ✅ Forward message to other conversations
-
 import React, { useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/shared/config/utils";
@@ -12,7 +9,6 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
-import chatApi from "../api/chat.api";
 import useChatStore from "../store/chat.store";
 import { toast } from "sonner";
 
@@ -47,6 +43,8 @@ export default function ForwardMessageDialog({
             senderId: originalSenderId,
           },
         };
+
+        console.log("message files in reply", messageData)
 
         await sendMessage(convId,message.projectId, messageData);
       }

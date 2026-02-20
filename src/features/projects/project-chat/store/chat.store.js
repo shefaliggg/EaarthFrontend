@@ -462,28 +462,27 @@ const useChatStore = create(
         };
 
         // Reply handling
-        if (isFileUpload) {
-          const replyToMessageId =
-            messageData.formData.get("replyTo[messageId]");
-          if (replyToMessageId) {
-            optimisticMessage.replyTo = {
-              messageId: replyToMessageId,
-              sender:
-                messageData.formData.get("replyTo[senderName]") || "Unknown",
-              preview: messageData.formData.get("replyTo[preview]") || "",
-            };
-          }
+        if (messageData.replyFull) {
+          const original = messageData.replyFull;
 
+          optimisticMessage.replyTo = {
+            messageId: original.id,
+            sender: original.sender,
+            senderId: original.senderId,
+            preview:
+              original.content ||
+              original.caption ||
+              (original.files?.length ? "Attachment" : ""),
+            type: original.type?.toLowerCase(),
+            files: original.files || [],
+            caption: original.caption || "",
+            deleted: original.deleted || false,
+          };
+        }
+
+        if (isFileUpload) {
           // 🔥 attach temp id to formData
           messageData.formData.append("clientTempId", clientTempId);
-        } else {
-          if (messageData.replyTo) {
-            optimisticMessage.replyTo = {
-              messageId: messageData.replyTo.messageId,
-              sender: messageData.replyTo.senderName || "Unknown",
-              preview: messageData.replyTo.preview || "",
-            };
-          }
         }
 
         const existing = get().messagesByConversation[conversationId] || {

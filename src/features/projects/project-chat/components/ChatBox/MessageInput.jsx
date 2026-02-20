@@ -158,7 +158,10 @@ const MessageInput = React.memo(
           onClearReply();
           setAttachments([]);
 
-          await sendMessage(selectedChat.id, projectId, { formData });
+          await sendMessage(selectedChat.id, projectId, {
+            formData,
+            replyFull: replyTo ? replyTo : null,
+          });
         } else {
           setMessageInput("");
           onClearReply();
@@ -166,6 +169,7 @@ const MessageInput = React.memo(
             text: trimmedMessage,
             type: "TEXT",
             replyTo: normalizedReply,
+            replyFull: replyTo ? replyTo : null,
           });
         }
       } catch (err) {
