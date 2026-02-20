@@ -112,17 +112,18 @@ const useChatStore = create(
           const state = get();
           const currentArray = state.typingUsers[conversationId] || [];
 
-          // ✅ Create NEW object with NEW filtered array (immutable)
           set(
             {
               typingUsers: {
                 ...state.typingUsers,
-                [conversationId]: currentArray.filter((id) => id !== userId),
+                [conversationId]: currentArray.filter(
+                  (u) => u.userId !== userId,
+                ),
               },
             },
             false,
             "typing:stop",
-          ); // ✅ Add action name for debugging
+          ); // Add action name for debugging
         });
 
         socket.on("user:online", (userId) => {
@@ -133,15 +134,6 @@ const useChatStore = create(
           updated.add(userId);
 
           set({ onlineUsers: updated });
-
-          // Update DM conversations
-          set({
-            conversations: state.conversations.map((conv) =>
-              conv.type === "dm" && conv.userId === userId
-                ? { ...conv, status: "online" }
-                : conv,
-            ),
-          });
         });
 
         socket.on("user:offline", (userId) => {
@@ -152,27 +144,12 @@ const useChatStore = create(
           updated.delete(userId);
 
           set({ onlineUsers: updated });
-
-          set({
-            conversations: state.conversations.map((conv) =>
-              conv.type === "dm" && conv.userId === userId
-                ? { ...conv, status: "offline" }
-                : conv,
-            ),
-          });
         });
 
         socket.on("presence:init", (userIds) => {
           const onlineSet = new Set(userIds);
 
-          set({
-            onlineUsers: onlineSet,
-            conversations: get().conversations.map((conv) =>
-              conv.type === "dm" && onlineSet.has(conv.userId)
-                ? { ...conv, status: "online" }
-                : { ...conv, status: "offline" },
-            ),
-          });
+          set({ onlineUsers: onlineSet });
         });
 
         console.log("✅ Chat socket listeners attached");
@@ -184,10 +161,7 @@ const useChatStore = create(
         const online = get().onlineUsers;
 
         return group.members.filter((member) => {
-          const id =
-            typeof member.userId === "string"
-              ? member.userId
-              : member.userId?._id;
+          const id = member.userId;
 
           return id && online.has(id.toString());
         }).length;

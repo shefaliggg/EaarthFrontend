@@ -675,7 +675,14 @@ function MessageAudio({ message, file, url, single = true }) {
         )}
       </button>
 
-      <div className="flex-1 mt-3">
+      <div className="flex-1 flex flex-col">
+        {isAudioFile && (
+            <span
+              className={`text-[12px] text-muted-foreground mb-0.5`}
+            >
+              {file.name}
+            </span>
+          )}
         <div
           className={`h-1 rounded-full overflow-hidden ${
             isVoiceMessage ? "bg-white/20" : "bg-muted"
@@ -691,7 +698,7 @@ function MessageAudio({ message, file, url, single = true }) {
         <div className="flex justify-between items-center  mt-1">
           <p
             className={`text-xs flex items-center gap-1 ${
-              isVoiceMessage ? "text-white/90" : "text-muted-foreground"
+              isVoiceMessage ? "text-white/90" : "text-muted-foreground text-[11px]"
             }`}
           >
             {isVoiceMessage ? (
@@ -701,7 +708,7 @@ function MessageAudio({ message, file, url, single = true }) {
               </>
             ) : (
               <>
-                <Volume2 className="w-4 h-4 text-muted-foreground" />
+                <Volume2 className="w-3 h-3 text-muted-foreground" />
                 Audio File
               </>
             )}

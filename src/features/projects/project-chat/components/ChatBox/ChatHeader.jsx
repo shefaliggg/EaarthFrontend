@@ -21,7 +21,9 @@ export default function ChatHeader() {
   const [searchResults, setSearchResults] = useState([]);
   const [activeResultIndex, setActiveResultIndex] = useState(0);
 
-  const { selectedChat, getGroupOnlineCount } = useChatStore();
+  const { selectedChat, getGroupOnlineCount, onlineUsers } = useChatStore();
+
+  const isOnline = selectedChat?.userId && onlineUsers.has(selectedChat.userId);
 
   const onlineCount = getGroupOnlineCount(selectedChat);
 
@@ -49,10 +51,7 @@ export default function ChatHeader() {
                     <span
                       className={cn(
                         "w-1.5 h-1.5 rounded-full",
-                        selectedChat.status === "online" &&
-                          "bg-green-500 animate-pulse",
-                        selectedChat.status === "away" && "bg-yellow-500",
-                        selectedChat.status === "offline" && "bg-gray-400",
+                        isOnline ? "bg-green-500 animate-pulse" : "bg-gray-400",
                       )}
                     />
                     <span>{selectedChat.role}</span>

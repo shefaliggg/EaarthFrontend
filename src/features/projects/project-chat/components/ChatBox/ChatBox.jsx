@@ -35,10 +35,7 @@ function ChatBox() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [loadError, setLoadError] = useState(null);
   const [attachments, setAttachments] = useState([]);
-  const [isPaused, setIsPaused] = useState(false);
 
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [audioBlob, setAudioBlob] = useState(null);
   const [recordingState, setRecordingState] = useState("idle"); // "idle" | "recording" | "preview"
 
   const {
@@ -47,8 +44,7 @@ function ChatBox() {
     loadMessages,
     emitConversationRead,
     isLoadingMessages,
-    typingUsers,
-    sendMessage,
+    typingUsers
   } = useChatStore();
 
   const messagesData = useMemo(() => {
@@ -194,98 +190,6 @@ function ChatBox() {
     emitConversationRead(selectedChat?.id);
   }, [scrollToBottom, selectedChat?.id, emitConversationRead]);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioStreamRef.current = stream;
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-
-        setAudioBlob(blob);
-        setPreviewUrl(URL.createObjectURL(blob));
-        setRecordingState("preview");
-        stopMicrophone();
-      };
-
-      mediaRecorder.start();
-      setRecordingTime(0);
-      setRecordingState("recording");
-    } catch (err) {
-      console.error("Mic permission denied", err);
-    }
-  };
-
-  const stopRecording = () => {
-  mediaRecorderRef.current?.stop();
-};
-
-
-  const stopMicrophone = () => {
-    audioStreamRef.current?.getTracks().forEach((track) => track.stop());
-    audioStreamRef.current = null;
-  };
-
-  const handleSendVoice = async () => {
-    if (!audioBlob) return;
-
-    const file = new File([audioBlob], `voice-${Date.now()}.webm`, {
-      type: "audio/webm",
-    });
-
-    const formData = new FormData();
-    formData.append("attachments", file);
-    formData.append("projectId", selectedChat.projectId);
-    formData.append("type", "AUDIO");
-
-    await sendMessage(selectedChat.id, selectedChat.projectId, {
-      formData,
-    });
-
-    cleanupRecording();
-  };
-
-  const cleanupRecording = () => {
-    stopMicrophone();
-    setRecordingState("idle");
-    setRecordingTime(0);
-    setAudioBlob(null);
-    setPreviewUrl(null);
-    audioChunksRef.current = [];
-  };
-
-  const pauseRecording = () => {
-    mediaRecorderRef.current?.pause();
-    setRecordingState("paused");
-  };
-
-  const resumeRecording = () => {
-    mediaRecorderRef.current?.resume();
-    setRecordingState("recording");
-  };
-
-  useEffect(() => {
-    if (recordingState !== "recording") return;
-
-    const interval = setInterval(() => {
-      setRecordingTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [recordingState]);
-
   // ────────────────────────────────
   // Render
   // ────────────────────────────────
@@ -386,18 +290,6 @@ function ChatBox() {
         {editingMessage && (
           <EditBanner onClose={() => setEditingMessage(null)} />
         )}
-        {recordingState !== "idle" && (
-          <RecordingBar
-            recordingTime={recordingTime}
-            recordingState={recordingState}
-            previewUrl={previewUrl}
-            onCancel={cleanupRecording}
-            onPause={pauseRecording}
-            onResume={resumeRecording}
-            onStop={stopRecording}
-            onSend={handleSendVoice}
-          />
-        )}
         {attachments.length > 0 && (
           <div className="flex gap-2 p-2 overflow-x-auto">
             {attachments.map((att, index) => (
@@ -426,14 +318,21 @@ function ChatBox() {
           </div>
         )}
 
-        {!isRecording && (
+        {recordingState !== "idle" && (
+          <RecordingBar
+            selectedChat={selectedChat}
+            onClose={() => setRecordingState("idle")}
+          />
+        )}
+
+        {recordingState === "idle" && (
           <MessageInput
             selectedChat={selectedChat}
             replyTo={replyTo}
             editingMessage={editingMessage}
             onClearReply={() => setReplyTo(null)}
             onClearEdit={() => setEditingMessage(null)}
-            onStartRecording={startRecording}
+            onStartRecording={() => setRecordingState("recording")}
             attachments={attachments}
             setAttachments={setAttachments}
           />
