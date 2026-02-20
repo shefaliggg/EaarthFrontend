@@ -609,8 +609,6 @@ function MessageAudio({ message, file, url, single = true }) {
 
   const audioRef = useRef(null);
 
-  console.log("file", file);
-
   // const isAudioFile = false;
   // const isVoiceMessage = true
   const isAudioFile = message.type.toLowerCase() === "media";
@@ -643,7 +641,7 @@ function MessageAudio({ message, file, url, single = true }) {
   return (
     <div
       className={`flex items-center gap-2 w-full col-span-2 
-        ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} 
+        ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[160px] max-w-full"} 
         ${isAudioFile ? "bg-muted/90" : "bg-primary"} 
         p-3 px-2 rounded-md`}
     >
@@ -772,7 +770,7 @@ function MessageAudio({ message, file, url, single = true }) {
 function MessageFile({ file, url, single }) {
   return (
     <div
-      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[240px] max-w-[240px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
         <FileText className="w-5 h-5 text-primary" />
