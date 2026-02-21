@@ -3,7 +3,10 @@ import { authService } from "../services/auth.service";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { initPublicSocket } from "../../../shared/config/socketConfig";
+import {
+  initPublicSocket,
+  isPublicSocketManualDisconnect,
+} from "../../../shared/config/socketConfig";
 
 export function useQrLogin({ type = "web" }) {
   const [qrData, setQrData] = useState(null);
@@ -13,7 +16,21 @@ export function useQrLogin({ type = "web" }) {
   const pollRef = useRef(null);
 
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { updateUser, user } = useAuth();
+
+  const authRef = useRef(false);
+
+  useEffect(() => {
+    if (user && pollRef.current) {
+      console.log("user authenticated clearing Qr Poll");
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, [user]);
+
+  useEffect(() => {
+    authRef.current = !!user;
+  }, [user]);
 
   const qrGenerateMethod =
     type === "web" ? authService.generateWebQr : authService.generateMobileQr;
@@ -23,11 +40,14 @@ export function useQrLogin({ type = "web" }) {
    */
   const handleQrApproval = useCallback(
     async (tokenData) => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
       try {
         // tokenData must include accessToken, refreshToken, userId
         const newUser = await authService.getUserAndSetCookies(tokenData);
         updateUser(newUser);
-        initSocket(newUser._id); // upgrades same system to auth mode
 
         setQrData((prev) => ({ ...prev, status: "approved" }));
         toast.success("Login Successful", {
@@ -49,7 +69,12 @@ export function useQrLogin({ type = "web" }) {
    */
   const startPolling = useCallback(
     (qrId) => {
-      if (pollRef.current) return;
+      if (
+        pollRef.current ||
+        authRef.current ||
+        isPublicSocketManualDisconnect()
+      )
+        return;
 
       console.log("⚠️ Starting fallback polling for QR:", qrId);
 
@@ -110,15 +135,27 @@ export function useQrLogin({ type = "web" }) {
       // Initialize socket
       const socket = initPublicSocket();
       socket.emit("join-qr", data.socketRoom);
+      console.log("joined qr room:", data.socketRoom);
+
+      socket.off("qr:approved");
+      socket.off("qr:mobile-approved");
+      socket.off("disconnect");
+      socket.off("connect_error");
 
       socket.on("connect_error", (err) => {
-        console.warn("❌ Socket connection error:", err.message);
-        startPolling(data.qrId);
+        if (!authRef.current) {
+          console.warn("❌ Socket connection error:", err.message);
+          startPolling(data.qrId);
+        }
       });
 
       socket.on("disconnect", () => {
-        console.warn("⚠️ Socket disconnected, fallback to polling");
-        startPolling(data.qrId);
+        if (isPublicSocketManualDisconnect()) return;
+
+        if (!authRef.current) {
+          console.warn("⚠️ Socket disconnected, fallback to polling", user);
+          startPolling(data.qrId);
+        }
       });
 
       // Web QR approval event

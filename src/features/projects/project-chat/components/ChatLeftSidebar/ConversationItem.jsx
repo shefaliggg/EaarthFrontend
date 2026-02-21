@@ -45,6 +45,8 @@ export default function ConversationItem({
   
   // console.log("NAME TYPE:", item.name, typeof item.name);
 
+  console.log("last message in conversaiton ", item.lastMessage)
+
   return (
     <button
       onClick={onClick}

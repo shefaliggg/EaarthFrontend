@@ -81,7 +81,7 @@ export default function ChatHeader() {
 
           {/* Header Actions */}
           <div className="flex items-center gap-1.5">
-            <Button
+            {/* <Button
               variant={"outline"}
               size={"sm"}
               aria-label="Summarize conversation"
@@ -89,7 +89,7 @@ export default function ChatHeader() {
             >
               <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span className="hidden sm:inline">Summarize</span>
-            </Button>
+            </Button> */}
 
             <Button
               // onClick={() => setIsSearchOpen(true)}

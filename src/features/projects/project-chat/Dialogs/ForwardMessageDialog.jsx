@@ -11,6 +11,10 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import useChatStore from "../store/chat.store";
 import { toast } from "sonner";
+import {
+  Avatar,
+  AvatarFallback,
+} from "../../../../shared/components/ui/avatar";
 
 export default function ForwardMessageDialog({
   open,
@@ -27,12 +31,14 @@ export default function ForwardMessageDialog({
       return;
     }
 
-    console.log("message files is there", message.files);
+    const conversations = [...selectedConversations];
+    const originalSenderId = message.senderId;
 
-    try {
-      const originalSenderId = message.senderId;
+    onOpenChange(false);
+    setSelectedConversations([]);
 
-      for (const convId of selectedConversations) {
+    const forwardPromise = Promise.all(
+      conversations.map((convId) => {
         const messageData = {
           type: message.type.toUpperCase(),
           text: message.type === "text" ? message.content : undefined,
@@ -44,19 +50,20 @@ export default function ForwardMessageDialog({
           },
         };
 
-        console.log("message files in reply", messageData)
+        return sendMessage(convId, message.projectId, messageData);
+      }),
+    );
 
-        await sendMessage(convId,message.projectId, messageData);
-      }
+    toast.promise(forwardPromise, {
+      loading: "Forwarding message...",
+      success: `Message forwarded to ${conversations.length} conversation(s)!`,
+      error: "Failed to forward message",
+    });
 
-      onOpenChange(false);
-      setSelectedConversations([]);
-      toast.success(
-        `Message forwarded to ${selectedConversations.length} conversation(s)!`,
-      );
+    try {
+      await forwardPromise;
     } catch (error) {
       console.error("Failed to forward message:", error);
-      toast.error("Failed to forward message");
     }
   };
 
@@ -94,9 +101,20 @@ export default function ForwardMessageDialog({
                   )}
                 >
                   <div className="flex items-center gap-3">
+                    <Avatar className="h-9! w-9! border-2 border-primary/20">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
+                        {conv.type === "dm" ? conv.avatar : conv.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{conv.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {conv.type === "dm" ? "Direct Message" : "Group Chat"}
+                      </p>
+                    </div>
                     <div
                       className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center",
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center",
                         isSelected
                           ? "bg-primary border-primary"
                           : "border-muted-foreground",
@@ -105,12 +123,6 @@ export default function ForwardMessageDialog({
                       {isSelected && (
                         <Check className="w-3 h-3 text-primary-foreground" />
                       )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{conv.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {conv.type === "dm" ? "Direct Message" : "Group Chat"}
-                      </p>
                     </div>
                   </div>
                 </button>

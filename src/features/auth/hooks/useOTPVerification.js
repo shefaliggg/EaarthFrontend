@@ -5,6 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { verifyLoginOtpThunk, loginUserThunk } from "../store/user.thunks";
 import { clearUserError } from "../store/user.slice";
 import { toast } from "sonner";
+import { disconnectPublicSocket, markPublicSocketManualDisconnect } from "../../../shared/config/socketConfig";
+import { useQrLogin } from "./useQrLogin";
 
 export const useOTPVerification = ({ setDevOtp }) => {
   const dispatch = useDispatch();
@@ -59,7 +61,7 @@ export const useOTPVerification = ({ setDevOtp }) => {
       setOtp(newOtp);
       if (value && index < 5) inputRefs.current[index + 1]?.focus();
     },
-    [otp]
+    [otp],
   );
 
   const handleBackspace = useCallback(
@@ -68,7 +70,7 @@ export const useOTPVerification = ({ setDevOtp }) => {
         inputRefs.current[index - 1]?.focus();
       }
     },
-    [otp]
+    [otp],
   );
 
   const handlePaste = useCallback((e) => {
@@ -92,11 +94,13 @@ export const useOTPVerification = ({ setDevOtp }) => {
 
     try {
       const resultAction = await dispatch(
-        verifyLoginOtpThunk({ email, otp: otpValue })
+        verifyLoginOtpThunk({ email, otp: otpValue }),
       );
 
       if (verifyLoginOtpThunk.fulfilled.match(resultAction)) {
         toast.success("Login successful!");
+        markPublicSocketManualDisconnect();
+        disconnectPublicSocket();
         navigate("/home", { replace: true });
       } else {
         toast.error(resultAction.payload || "Invalid OTP");
@@ -126,7 +130,7 @@ export const useOTPVerification = ({ setDevOtp }) => {
 
     try {
       const resultAction = await dispatch(
-        loginUserThunk({ email, password, rememberMe })
+        loginUserThunk({ email, password, rememberMe }),
       );
 
       if (loginUserThunk.fulfilled.match(resultAction)) {

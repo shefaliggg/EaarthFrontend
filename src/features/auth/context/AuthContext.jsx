@@ -17,6 +17,7 @@ import {
   initChatSocket,
   initNotificationSocket,
 } from "../../../shared/config/socketConfig";
+import useChatStore from "../../projects/project-chat/store/chat.store";
 
 const AuthContext = createContext(null);
 
@@ -49,6 +50,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (currentUser?._id) {
       initChatSocket(currentUser._id);
+      useChatStore.getState().attachSocketListeners();
+
       initNotificationSocket(currentUser._id);
     }
   }, [currentUser?._id]);

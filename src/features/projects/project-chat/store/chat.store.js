@@ -147,6 +147,7 @@ const useChatStore = create(
         });
 
         socket.on("presence:init", (userIds) => {
+          console.log("users presence update", userIds);
           const onlineSet = new Set(userIds);
 
           set({ onlineUsers: onlineSet });
@@ -503,6 +504,13 @@ const useChatStore = create(
           isSendingMessage: true,
         });
 
+        // 🔥 Update sidebar last message immediately
+        get().updateConversationLastMessage(conversationId, {
+          content: { text: optimisticMessage.content },
+          createdAt: now,
+          senderId: { _id: currentUserId },
+        });
+
         try {
           let sentMessage;
 
@@ -667,6 +675,13 @@ const useChatStore = create(
               },
             },
           };
+        });
+
+        // 🔥 Update sidebar last message immediately
+        get().updateConversationLastMessage(conversationId, {
+          content: { text: optimisticMessage.content },
+          createdAt: now,
+          senderId: { _id: currentUserId },
         });
       },
 
