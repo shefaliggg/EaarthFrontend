@@ -120,7 +120,13 @@ function getEventStyle(event, colIndex, colCount) {
   };
 }
 
-function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onEventClick }) { // <--- Added onEventClick
+function CalendarWeekView({
+  currentDate,
+  events,
+  onDayClick,
+  setCurrentDate,
+  onEventClick,
+}) {
   const week = getWeek(currentDate);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const normalized = normalizeWeekEvents(events);
@@ -129,7 +135,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
   const handleTimeSlotClick = (date, hour) => {
     const selectedDate = new Date(date);
     selectedDate.setHours(hour, 0, 0, 0);
-    
+
     if (setCurrentDate) setCurrentDate(selectedDate);
     if (onDayClick) onDayClick(selectedDate);
   };
@@ -160,16 +166,89 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
     }
   };
 
+  // ── SUMMARY COUNTS (like Gantt) ───────────────────────────────
+  const summaryCounts = (() => {
+    const counts = { prep: 0, shoot: 0, wrap: 0 };
+    for (const e of events || []) {
+      if (e?.eventType && counts[e.eventType] !== undefined) {
+        counts[e.eventType] += 1;
+      }
+    }
+    const total = Object.values(counts).reduce((s, n) => s + n, 0);
+    return { ...counts, total };
+  })();
+
+  const summaryItems = [
+    {
+      key: "total",
+      label: "Total",
+      dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
+      badgeClass:
+        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      count: summaryCounts.total,
+    },
+    {
+      key: "prep",
+      label: "Prep",
+      dotClass: "bg-sky-300 dark:bg-sky-800/80",
+      badgeClass:
+        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      count: summaryCounts.prep,
+    },
+    {
+      key: "shoot",
+      label: "Shoot",
+      dotClass: "bg-peach-300 dark:bg-peach-800/80",
+      badgeClass:
+        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      count: summaryCounts.shoot,
+    },
+    {
+      key: "wrap",
+      label: "Wrap",
+      dotClass: "bg-mint-300 dark:bg-mint-800/80",
+      badgeClass:
+        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      count: summaryCounts.wrap,
+    },
+  ];
+
   return (
     <>
       <div className="min-h-[calc(100vh-500px)] rounded-xl border border-primary/20 shadow-lg bg-card overflow-hidden">
-        {/* WEEK PHASE BANNER */}
+        {/* WEEK PHASE BANNER  */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)]">
-          <div className="bg-card border-r border-primary/20"></div>
-          <div className="col-start-2 col-span-7 py-3 text-center text-xs font-bold uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
-            {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
+          <div className="bg-card border-r border-primary/20" />
+          <div className="col-start-2 col-span-7 py-3 bg-purple-50/80 dark:bg-purple-900/20 border-b border-primary/20">
+            <div className="flex items-center justify-between gap-4 px-3">
+              {/* Left: phase banner text */}
+              <div className="text-center text-xs font-bold uppercase  text-purple-800 dark:text-purple-300">
+                {getProductionWeekLabel(format(week[0], "yyyy-MM-dd"))}
+              </div>
+
+            
+              <div className="flex items-center gap-6">
+                {summaryItems.map((item) => (
+                  <div key={item.key} className="flex items-center gap-1 text-xs">
+                    <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+                    <span className="font-semibold text-muted-foreground">
+                      {item.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                        item.badgeClass,
+                      )}
+                    >
+                      {item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+
         {/* WEEK HEADER ROW (Time column + day labels) */}
         <div className="grid grid-cols-[80px_1fr] text-[11px] font-black uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300">
           <div className="flex justify-end py-2 pr-3 text-[10px] text-muted-foreground bg-card border-r border-b border-primary/20">
@@ -200,11 +279,13 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
             ))}
           </div>
         </div>
+
         {/* ALL DAY EVENTS ROW */}
         <div className="grid grid-cols-[80px_1fr]">
           <div className="flex items-center justify-center min-h-12 text-xs font-bold text-purple-800 dark:text-purple-300 bg-muted/40 border-r border-b border-primary/20">
             ALL DAY
           </div>
+
           {/* ALL-DAY EVENTS DAY COLUMNS */}
           <div className="grid grid-cols-7 border-b border-primary/20">
             {week.map((date) => (
@@ -212,9 +293,9 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
                 key={date.toString()}
                 className="flex flex-col items-start gap-1 p-1 border-r border-primary/20 last:border-r-0 cursor-pointer hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden"
                 onClick={(e) => {
-                  if(e.target === e.currentTarget) {
-                    if(setCurrentDate) setCurrentDate(date);
-                    if(onDayClick) onDayClick(date);
+                  if (e.target === e.currentTarget) {
+                    if (setCurrentDate) setCurrentDate(date);
+                    if (onDayClick) onDayClick(date);
                   }
                 }}
               >
@@ -227,8 +308,8 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
                           getAllDayEventColors(e.eventType),
                         )}
                         onClick={(ev) => {
-                             ev.stopPropagation(); 
-                             if(onEventClick) onEventClick(e); // <--- FIXED: Triggered here
+                          ev.stopPropagation();
+                          if (onEventClick) onEventClick(e);
                         }}
                       >
                         {e.title}
@@ -257,7 +338,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
             ))}
           </div>
         </div>
-        
+
         {/* WEEK TIME GRID */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)]">
           {/* TIME AXIS */}
@@ -273,7 +354,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
               </div>
             ))}
           </div>
-          
+
           {/* DAY COLUMNS */}
           {week.map((date) => {
             const dayEvents = getEventsForDay(normalized, date);
@@ -291,8 +372,8 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
                     onClick={() => handleTimeSlotClick(date, h)}
                   />
                 ))}
-                
-                {/* Events Overlay  */}
+
+                {/* Events Overlay */}
                 <div className="absolute left-1 inset-0 pointer-events-none">
                   {columns.map((col, colIndex) =>
                     col.map((e) => {
@@ -310,7 +391,7 @@ function CalendarWeekView({ currentDate, events, onDayClick, setCurrentDate, onE
                               )}
                               onClick={(ev) => {
                                 ev.stopPropagation();
-                                if(onEventClick) onEventClick(e); // <--- FIXED: Triggered here
+                                if (onEventClick) onEventClick(e);
                               }}
                             >
                               {e.title}

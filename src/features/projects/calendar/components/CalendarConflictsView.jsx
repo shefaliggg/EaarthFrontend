@@ -53,7 +53,7 @@ function ConflictEventCard({ event }) {
           className={cn(
             "rounded-lg border-l-4 transition-all duration-200 hover:shadow-md cursor-default",
             colors.bg,
-            colors.border
+            colors.border,
           )}
         >
           <div className="flex items-center justify-between gap-3 px-4 py-3">
@@ -73,13 +73,20 @@ function ConflictEventCard({ event }) {
                 {event.location && (
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="font-medium truncate">{event.location}</span>
+                    <span className="font-medium truncate">
+                      {event.location}
+                    </span>
                   </div>
                 )}
               </div>
             </div>
             {event.eventType && (
-              <span className={cn("text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 text-white", colors.badge)}>
+              <span
+                className={cn(
+                  "text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 text-white",
+                  colors.badge,
+                )}
+              >
                 {event.eventType}
               </span>
             )}
@@ -89,9 +96,16 @@ function ConflictEventCard({ event }) {
       <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
         <div className="flex flex-col gap-2 p-1 max-w-xs">
           <div className="flex items-start justify-between gap-3">
-            <p className="font-bold text-sm text-purple-800 dark:text-purple-300">{event.title}</p>
+            <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+              {event.title}
+            </p>
             {event.eventType && (
-              <span className={cn("text-[9px] font-black px-2 py-0.5 rounded uppercase text-white", colors.badge)}>
+              <span
+                className={cn(
+                  "text-[9px] font-black px-2 py-0.5 rounded uppercase text-white",
+                  colors.badge,
+                )}
+              >
                 {event.eventType}
               </span>
             )}
@@ -99,7 +113,8 @@ function ConflictEventCard({ event }) {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="w-3.5 h-3.5" />
             <span className="font-medium">
-              {format(start, "MMM dd, h:mm a")} – {format(end, "MMM dd, h:mm a")}
+              {format(start, "MMM dd, h:mm a")} –{" "}
+              {format(end, "MMM dd, h:mm a")}
             </span>
           </div>
           {event.location && (
@@ -122,10 +137,13 @@ function CalendarConflictsView({ conflicts, currentDate }) {
   const visibleConflicts = conflicts.filter((c) => {
     // The overlap window is: max(start1, start2) to min(end1, end2)
     const overlapStart = new Date(
-      Math.max(new Date(c.event1.startDateTime), new Date(c.event2.startDateTime))
+      Math.max(
+        new Date(c.event1.startDateTime),
+        new Date(c.event2.startDateTime),
+      ),
     );
     const overlapEnd = new Date(
-      Math.min(new Date(c.event1.endDateTime), new Date(c.event2.endDateTime))
+      Math.min(new Date(c.event1.endDateTime), new Date(c.event2.endDateTime)),
     );
     // Show conflict if overlap window touches the current month at all
     return overlapStart <= monthEnd && overlapEnd >= monthStart;
@@ -136,18 +154,76 @@ function CalendarConflictsView({ conflicts, currentDate }) {
 
   // Count conflicts by phase combinations
   const prepConflicts = visibleConflicts.filter(
-    c => c.event1.eventType === "prep" || c.event2.eventType === "prep"
+    (c) => c.event1.eventType === "prep" || c.event2.eventType === "prep",
   ).length;
   const shootConflicts = visibleConflicts.filter(
-    c => c.event1.eventType === "shoot" || c.event2.eventType === "shoot"
+    (c) => c.event1.eventType === "shoot" || c.event2.eventType === "shoot",
   ).length;
   const wrapConflicts = visibleConflicts.filter(
-    c => c.event1.eventType === "wrap" || c.event2.eventType === "wrap"
+    (c) => c.event1.eventType === "wrap" || c.event2.eventType === "wrap",
   ).length;
+
+  // ── SUMMARY (weekview style) ──────────────────────────────────
+  const summaryItems = [
+    {
+      key: "total",
+      label: "Total",
+      dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
+      badgeClass:
+        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      count: visibleConflicts.length,
+    },
+    {
+      key: "prep",
+      label: "Prep",
+      dotClass: "bg-sky-300 dark:bg-sky-800/80",
+      badgeClass:
+        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      count: prepConflicts,
+    },
+    {
+      key: "shoot",
+      label: "Shoot",
+      dotClass: "bg-peach-300 dark:bg-peach-800/80",
+      badgeClass:
+        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      count: shootConflicts,
+    },
+    {
+      key: "wrap",
+      label: "Wrap",
+      dotClass: "bg-mint-300 dark:bg-mint-800/80",
+      badgeClass:
+        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      count: wrapConflicts,
+    },
+  ];
 
   if (visibleConflicts.length === 0) {
     return (
       <div className="min-h-[calc(100vh-500px)] rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card flex flex-col">
+        {/* Summary bar */}
+        <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
+          <div className="flex items-center gap-6">
+            {summaryItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-1 text-xs">
+                <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+                <span className="font-semibold text-muted-foreground">
+                  {item.label}
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                    item.badgeClass,
+                  )}
+                >
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Header */}
         <div className="bg-purple-50/80 dark:bg-purple-900/20 border-b border-primary/20 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -180,7 +256,8 @@ function CalendarConflictsView({ conflicts, currentDate }) {
             </p>
             {totalAllTime > 0 && (
               <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-2">
-                {totalAllTime} conflict{totalAllTime !== 1 ? "s" : ""} exist in other months — use chevrons to navigate
+                {totalAllTime} conflict{totalAllTime !== 1 ? "s" : ""} exist in
+                other months — use chevrons to navigate
               </p>
             )}
           </div>
@@ -191,41 +268,25 @@ function CalendarConflictsView({ conflicts, currentDate }) {
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* Stats Header */}
-      <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4">
-        <div className="grid grid-cols-4 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-black text-red-600 dark:text-red-400">
-              {visibleConflicts.length}
-            </p>
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              This Month
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-sky-600 dark:text-sky-400">
-              {prepConflicts}
-            </p>
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Prep Conflicts
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-peach-600 dark:text-peach-400">
-              {shootConflicts}
-            </p>
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Shoot Conflicts
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-mint-600 dark:text-mint-400">
-              {wrapConflicts}
-            </p>
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Wrap Conflicts
-            </p>
-          </div>
+      {/* SUMMARY BAR (weekview style) */}
+      <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
+        <div className="flex items-center gap-6">
+          {summaryItems.map((item) => (
+            <div key={item.key} className="flex items-center gap-1 text-xs">
+              <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+              <span className="font-semibold text-muted-foreground">
+                {item.label}
+              </span>
+              <span
+                className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                  item.badgeClass,
+                )}
+              >
+                {item.count}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -243,7 +304,8 @@ function CalendarConflictsView({ conflicts, currentDate }) {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-[11px] font-bold text-red-700 dark:text-red-300">
-              {visibleConflicts.length} {visibleConflicts.length === 1 ? "Conflict" : "Conflicts"}
+              {visibleConflicts.length}{" "}
+              {visibleConflicts.length === 1 ? "Conflict" : "Conflicts"}
             </span>
           </div>
         </div>
@@ -254,15 +316,25 @@ function CalendarConflictsView({ conflicts, currentDate }) {
         <div className="flex flex-col gap-5">
           {visibleConflicts.map((conflict, idx) => {
             const overlapStart = new Date(
-              Math.max(new Date(conflict.event1.startDateTime), new Date(conflict.event2.startDateTime))
+              Math.max(
+                new Date(conflict.event1.startDateTime),
+                new Date(conflict.event2.startDateTime),
+              ),
             );
             const overlapEnd = new Date(
-              Math.min(new Date(conflict.event1.endDateTime), new Date(conflict.event2.endDateTime))
+              Math.min(
+                new Date(conflict.event1.endDateTime),
+                new Date(conflict.event2.endDateTime),
+              ),
             );
-            const isMultiDayOverlap = overlapStart.toDateString() !== overlapEnd.toDateString();
+            const isMultiDayOverlap =
+              overlapStart.toDateString() !== overlapEnd.toDateString();
 
             return (
-              <div key={idx} className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 overflow-hidden">
+              <div
+                key={idx}
+                className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 overflow-hidden"
+              >
                 {/* Conflict label strip */}
                 <div className="flex items-center justify-between px-4 py-2 bg-red-100/60 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40">
                   <div className="flex items-center gap-2">
@@ -274,8 +346,14 @@ function CalendarConflictsView({ conflicts, currentDate }) {
                   <span className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-200/60 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
                     Overlap:{" "}
                     {isMultiDayOverlap
-                      ? `${format(overlapStart, "MMM d")} – ${format(overlapEnd, "MMM d")}`
-                      : `${format(overlapStart, "h:mm a")} – ${format(overlapEnd, "h:mm a")}`}
+                      ? `${format(overlapStart, "MMM d")} – ${format(
+                          overlapEnd,
+                          "MMM d",
+                        )}`
+                      : `${format(overlapStart, "h:mm a")} – ${format(
+                          overlapEnd,
+                          "h:mm a",
+                        )}`}
                   </span>
                 </div>
 

@@ -27,7 +27,7 @@ function getWeeksForMonth(days, size = 7) {
   return weeks;
 }
 
-function CalendarYearView({ currentDate,events }) {
+function CalendarYearView({ currentDate, events }) {
   const yearStart = startOfYear(currentDate);
   const months = Array.from({ length: 12 }, (_, i) => addMonths(yearStart, i));
 
@@ -64,46 +64,78 @@ function CalendarYearView({ currentDate,events }) {
     }
   };
 
+  // ── SUMMARY COUNTS (same style as WeekView summary) ───────────
+  const summaryCounts = (() => {
+    const counts = { prep: 0, shoot: 0, wrap: 0 };
+    for (const e of events || []) {
+      if (e?.eventType && counts[e.eventType] !== undefined) {
+        counts[e.eventType] += 1;
+      }
+    }
+    const total = Object.values(counts).reduce((s, n) => s + n, 0);
+    return { ...counts, total };
+  })();
+
+  const summaryItems = [
+    {
+      key: "total",
+      label: "Total",
+      dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
+      badgeClass:
+        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      count: summaryCounts.total,
+    },
+    {
+      key: "prep",
+      label: "Prep",
+      dotClass: "bg-sky-300 dark:bg-sky-800/80",
+      badgeClass:
+        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      count: summaryCounts.prep,
+    },
+    {
+      key: "shoot",
+      label: "Shoot",
+      dotClass: "bg-peach-300 dark:bg-peach-800/80",
+      badgeClass:
+        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      count: summaryCounts.shoot,
+    },
+    {
+      key: "wrap",
+      label: "Wrap",
+      dotClass: "bg-mint-300 dark:bg-mint-800/80",
+      badgeClass:
+        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      count: summaryCounts.wrap,
+    },
+  ];
+
   return (
     <>
       <div className="min-h-[calc(100vh-500px)] rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-        {/* YEAR HEADER */}
-        <div className="border-primary/20 border-b bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4">
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-black text-purple-800 dark:text-purple-300">
-                {events.length}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Total Events
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-sky-600 dark:text-sky-400">
-                {events.filter((e) => e.eventType === "prep").length}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Prep Events
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-peach-600 dark:text-peach-400">
-                {events.filter((e) => e.eventType === "shoot").length}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Shoot Events
-              </p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-mint-600 dark:text-mint-400">
-                {events.filter((e) => e.eventType === "wrap").length}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                Wrap Events
-              </p>
-            </div>
+        {/* SUMMARY BAR*/}
+        <div className="border-primary/20  border-b bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
+          <div className="flex items-center gap-6">
+            {summaryItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-1 text-xs">
+                <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+                <span className="font-semibold text-muted-foreground">
+                  {item.label}
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                    item.badgeClass,
+                  )}
+                >
+                  {item.count}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
+
         {/* MONTH GRID */}
         <div className="grid grid-cols-3 gap-4 p-6">
           {months.map((monthDate) => {
@@ -134,6 +166,7 @@ function CalendarYearView({ currentDate,events }) {
                     </span>
                   )}
                 </div>
+
                 {/* MONTH BODY */}
                 <div className="p-4">
                   <div className="grid grid-cols-7 mb-2 text-[10px] font-black text-center text-muted-foreground">
@@ -143,6 +176,7 @@ function CalendarYearView({ currentDate,events }) {
                       </div>
                     ))}
                   </div>
+
                   {/* DAYS GRID */}
                   {getWeeksForMonth(monthGrid).map((week, weekIndex) => (
                     <div
@@ -164,9 +198,7 @@ function CalendarYearView({ currentDate,events }) {
                                   !isCurrentMonth && "opacity-30",
                                   isToday(date) &&
                                     "bg-purple-200 dark:bg-purple-800/60 ring-2 ring-purple-400/30",
-                                  hasDayEvents &&
-                                    !isToday(date) &&
-                                    "font-semibold",
+                                  hasDayEvents && !isToday(date) && "font-semibold",
                                 )}
                               >
                                 {/* Date Number */}
@@ -179,6 +211,7 @@ function CalendarYearView({ currentDate,events }) {
                                 >
                                   {date.getDate()}
                                 </span>
+
                                 {/* Event Indicators */}
                                 {hasDayEvents && (
                                   <div className="flex justify-center gap-0.5 mt-0.5">
@@ -195,6 +228,7 @@ function CalendarYearView({ currentDate,events }) {
                                 )}
                               </div>
                             </TooltipTrigger>
+
                             {/* Tooltip for days with events */}
                             {dayEvents.length > 0 && (
                               <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg max-w-xs">

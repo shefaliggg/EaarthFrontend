@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isAfter, isBefore, startOfDay } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isBefore,
+  startOfDay,
+} from "date-fns";
 import { Clock, MapPin, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import {
@@ -30,7 +38,7 @@ function groupEventsByDate(events) {
 
       const id = e.id || e._id;
       const alreadyAdded = map[dateKey].some(
-        (evt) => (evt.id || evt._id) === id
+        (evt) => (evt.id || evt._id) === id,
       );
       if (!alreadyAdded) {
         map[dateKey].push(e);
@@ -38,9 +46,7 @@ function groupEventsByDate(events) {
     });
   });
 
-  return Object.entries(map).sort(
-    ([a], [b]) => new Date(a) - new Date(b)
-  );
+  return Object.entries(map).sort(([a], [b]) => new Date(a) - new Date(b));
 }
 
 /* ================= COMPONENT ================= */
@@ -73,7 +79,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
     const eventDate = new Date(dateStr + "T12:00:00");
     return isBefore(eventDate, today);
   });
-  
+
   const currentAndFutureEvents = grouped.filter(([dateStr]) => {
     const eventDate = new Date(dateStr + "T12:00:00");
     return !isBefore(eventDate, today);
@@ -87,24 +93,40 @@ export default function CalendarTimelineView({ events, currentDate }) {
   const shootCount = relevantEvents.filter((e) => e.eventType === "shoot").length;
   const wrapCount = relevantEvents.filter((e) => e.eventType === "wrap").length;
 
-  // Determine which event types exist
-  // MODIFIED: Removed the checks for > 0 so that 0 counts are always displayed
-  const eventTypes = [
-    { 
-      label: "Prep Events", 
-      count: prepCount, 
-      color: "text-sky-600 dark:text-sky-400" 
+  // ── SUMMARY BAR (WeekView-style) ──────────────────────────────
+  const summaryItems = [
+    {
+      key: "total",
+      label: "Total",
+      dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
+      badgeClass:
+        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      count: uniqueEventIds.size,
     },
-    { 
-      label: "Shoot Events", 
-      count: shootCount, 
-      color: "text-peach-600 dark:text-peach-400" 
+    {
+      key: "prep",
+      label: "Prep",
+      dotClass: "bg-sky-300 dark:bg-sky-800/80",
+      badgeClass:
+        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      count: prepCount,
     },
-    { 
-      label: "Wrap Events", 
-      count: wrapCount, 
-      color: "text-mint-600 dark:text-mint-400" 
-    }
+    {
+      key: "shoot",
+      label: "Shoot",
+      dotClass: "bg-peach-300 dark:bg-peach-800/80",
+      badgeClass:
+        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      count: shootCount,
+    },
+    {
+      key: "wrap",
+      label: "Wrap",
+      dotClass: "bg-mint-300 dark:bg-mint-800/80",
+      badgeClass:
+        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      count: wrapCount,
+    },
   ];
 
   const getEventColors = (eventType) => {
@@ -140,7 +162,8 @@ export default function CalendarTimelineView({ events, currentDate }) {
     }
   };
 
-  const isToday = (dateStr) => isSameDay(new Date(dateStr + "T12:00:00"), new Date());
+  const isToday = (dateStr) =>
+    isSameDay(new Date(dateStr + "T12:00:00"), new Date());
 
   const renderEventGroup = ([date, dayEvents]) => {
     const todayFlag = isToday(date);
@@ -154,7 +177,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
               "w-12 h-12 rounded-full flex flex-col items-center justify-center font-black border-4 border-card shadow-lg transition-all duration-200",
               todayFlag
                 ? "bg-purple-500 text-white scale-110 ring-4 ring-purple-200 dark:ring-purple-800/40"
-                : "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300"
+                : "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300",
             )}
           >
             <span className="text-[9px] leading-none uppercase">
@@ -179,8 +202,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
               </span>
             )}
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
-              {dayEvents.length}{" "}
-              {dayEvents.length === 1 ? "event" : "events"}
+              {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
             </span>
           </div>
 
@@ -194,8 +216,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
               const eEnd = event.endDateTime
                 ? new Date(event.endDateTime)
                 : new Date(eStart);
-              const isMultiDay =
-                eStart.toDateString() !== eEnd.toDateString();
+              const isMultiDay = eStart.toDateString() !== eEnd.toDateString();
 
               return (
                 <Tooltip key={event.id || event._id}>
@@ -204,13 +225,18 @@ export default function CalendarTimelineView({ events, currentDate }) {
                       className={cn(
                         "relative cursor-pointer rounded-lg border-l-4 transition-all duration-200 hover:shadow-md hover:scale-[1.01]",
                         colors.bg,
-                        colors.border
+                        colors.border,
                       )}
                     >
                       <div className="flex items-center justify-between gap-3 px-4 py-2.5">
                         {/* Left: title + meta */}
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <h4 className={cn("font-bold text-sm truncate", colors.text)}>
+                          <h4
+                            className={cn(
+                              "font-bold text-sm truncate",
+                              colors.text,
+                            )}
+                          >
                             {event.title}
                           </h4>
                           <div className="flex items-center gap-3 flex-wrap">
@@ -220,8 +246,14 @@ export default function CalendarTimelineView({ events, currentDate }) {
                                 {isAllDay
                                   ? "All Day Event"
                                   : isMultiDay
-                                  ? `${format(eStart, "MMM d")} – ${format(eEnd, "MMM d")}`
-                                  : `${format(eStart, "h:mm a")} – ${format(eEnd, "h:mm a")}`}
+                                    ? `${format(eStart, "MMM d")} – ${format(
+                                        eEnd,
+                                        "MMM d",
+                                      )}`
+                                    : `${format(eStart, "h:mm a")} – ${format(
+                                        eEnd,
+                                        "h:mm a",
+                                      )}`}
                               </span>
                             </div>
                             {event.location && (
@@ -240,7 +272,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
                           <span
                             className={cn(
                               "text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 text-white",
-                              colors.accent
+                              colors.accent,
                             )}
                           >
                             {event.eventType}
@@ -257,7 +289,12 @@ export default function CalendarTimelineView({ events, currentDate }) {
                           {event.title}
                         </p>
                         {event.eventType && (
-                          <span className={cn("text-[9px] font-black px-2 py-0.5 rounded uppercase text-white", colors.accent)}>
+                          <span
+                            className={cn(
+                              "text-[9px] font-black px-2 py-0.5 rounded uppercase text-white",
+                              colors.accent,
+                            )}
+                          >
                             {event.eventType}
                           </span>
                         )}
@@ -267,7 +304,10 @@ export default function CalendarTimelineView({ events, currentDate }) {
                         <span className="font-medium">
                           {isAllDay
                             ? "All Day Event"
-                            : `${format(eStart, "MMM dd, h:mm a")} – ${format(eEnd, "MMM dd, h:mm a")}`}
+                            : `${format(eStart, "MMM dd, h:mm a")} – ${format(
+                                eEnd,
+                                "MMM dd, h:mm a",
+                              )}`}
                         </span>
                       </div>
                       {event.location && (
@@ -289,32 +329,23 @@ export default function CalendarTimelineView({ events, currentDate }) {
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* STATS HEADER - Shows all event types regardless of count */}
-      <div className="border-primary/20 border-b bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4">
-        <div 
-          className={cn(
-            "grid gap-4 text-center grid-cols-4",
-          )}
-        >
-          {/* Total Events - Always shown */}
-          <div>
-            <p className="text-2xl font-black text-purple-800 dark:text-purple-300">
-              {uniqueEventIds.size}
-            </p>
-            <p className="text-xs font-semibold text-muted-foreground uppercase">
-              Total Events
-            </p>
-          </div>
-          
-          {/* Dynamic Event Type Columns */}
-          {eventTypes.map((type, index) => (
-            <div key={index}>
-              <p className={cn("text-2xl font-black", type.color)}>
-                {type.count}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">
-                {type.label}
-              </p>
+      {/* SUMMARY BAR (replace current stats header) */}
+      <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
+        <div className="flex items-center gap-6">
+          {summaryItems.map((item) => (
+            <div key={item.key} className="flex items-center gap-1 text-xs">
+              <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+              <span className="font-semibold text-muted-foreground">
+                {item.label}
+              </span>
+              <span
+                className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                  item.badgeClass,
+                )}
+              >
+                {item.count}
+              </span>
             </div>
           ))}
         </div>
@@ -382,7 +413,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
                 </>
               )}
 
-              {/* CURRENT AND FUTURE EVENTS  */}
+              {/* CURRENT AND FUTURE EVENTS */}
               {currentAndFutureEvents.map(renderEventGroup)}
             </div>
           </div>

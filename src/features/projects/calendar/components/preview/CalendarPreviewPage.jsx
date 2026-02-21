@@ -151,7 +151,6 @@ function CalendarPreviewPage() {
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-3">
           
-          {/* Period Filter Dropdown */}
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="All Periods" />

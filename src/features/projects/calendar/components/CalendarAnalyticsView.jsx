@@ -134,6 +134,14 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
       iconColor: "text-sky-700 dark:text-sky-300",
     },
     {
+      label: "Wrap Days",
+      subLabel: "Post-shoot wrap tasks",
+      value: stats.wrap || 0,
+      icon: ClipboardList,
+      iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
+      iconColor: "text-emerald-700 dark:text-emerald-300",
+    },
+    {
       label: "Travel",
       subLabel: "Logistics movements",
       value: stats.travel || 0,
@@ -146,129 +154,130 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
   return (
     <>
       <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 space-y-6 duration-500 ease-out">
-        <PrimaryStats stats={statsConfig} gridColumns={4} gridGap={4} />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Weekly Volume Chart */}
-        <Card className="flex flex-col shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">
-              Weekly Activity
-            </CardTitle>
-            <CardDescription>
-              Event density per week in {monthLabel}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px] flex-1 pb-4">
-            {barData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={barData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="var(--border)"
-                    opacity={0.4}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    dy={10}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "var(--muted)", opacity: 0.2 }}
-                    content={<CustomTooltip />}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="var(--primary)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={50}
-                    animationDuration={1000}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState icon={BarChart2} label="No activity scheduled" />
-            )}
-          </CardContent>
-        </Card>
+        <PrimaryStats stats={statsConfig} gridColumns={5} gridGap={4} />
 
-        {/* Event Type Distribution */}
-        <Card className="flex flex-col shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">
-              Event Distribution
-            </CardTitle>
-            <CardDescription>
-              Breakdown by type for {monthLabel}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col justify-center pb-6">
-            {pieData.length > 0 ? (
-              <div className="flex h-full flex-col items-center">
-                <div className="h-[943px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={90}
-                        paddingAngle={3}
-                        dataKey="value"
-                        stroke="var(--card)"
-                        strokeWidth={2}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Weekly Volume Chart */}
+          <Card className="flex flex-col shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">
+                Weekly Activity
+              </CardTitle>
+              <CardDescription>
+                Event density per week in {monthLabel}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] flex-1 pb-4">
+              {barData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={barData}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--border)"
+                      opacity={0.4}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                      dy={10}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "var(--muted)", opacity: 0.2 }}
+                      content={<CustomTooltip />}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="var(--primary)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={50}
+                      animationDuration={1000}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState icon={BarChart2} label="No activity scheduled" />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Event Type Distribution */}
+          <Card className="flex flex-col shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">
+                Event Distribution
+              </CardTitle>
+              <CardDescription>
+                Breakdown by type for {monthLabel}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-center pb-6">
+              {pieData.length > 0 ? (
+                <div className="flex h-full flex-col items-center">
+                  <div className="h-[943px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={70}
+                          outerRadius={90}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="var(--card)"
+                          strokeWidth={2}
+                        >
+                          {pieData.map((entry, idx) => (
+                            <Cell key={`cell-${idx}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-4 grid w-full grid-cols-2 gap-x-4 gap-y-2 px-4">
+                    {pieData.map((item) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between text-xs"
                       >
-                        {pieData.map((entry, idx) => (
-                          <Cell key={`cell-${idx}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="mt-4 grid w-full grid-cols-2 gap-x-4 gap-y-2 px-4">
-                  {pieData.map((item) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="size-2.5 rounded-full ring-1 ring-border/20"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="capitalize text-muted-foreground">
-                          {item.name}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="size-2.5 rounded-full ring-1 ring-border/20"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="capitalize text-muted-foreground">
+                            {item.name}
+                          </span>
+                        </div>
+                        <span className="font-mono font-medium">
+                          {item.value}
                         </span>
                       </div>
-                      <span className="font-mono font-medium">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="h-[1032px]">
-                <EmptyState icon={PieChartIcon} label="No data available" />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              ) : (
+                <div className="h-[1032px]">
+                  <EmptyState icon={PieChartIcon} label="No data available" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </>
   );

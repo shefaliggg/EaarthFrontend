@@ -86,9 +86,78 @@ function CalendarMonthView({
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   };
 
+  // ── SUMMARY COUNTS (like WeekView/Gantt) ──────────────────────
+  const summaryCounts = (() => {
+    const counts = { prep: 0, shoot: 0, wrap: 0 };
+    for (const e of events || []) {
+      if (e?.eventType && counts[e.eventType] !== undefined) {
+        counts[e.eventType] += 1;
+      }
+    }
+    const total = Object.values(counts).reduce((s, n) => s + n, 0);
+    return { ...counts, total };
+  })();
+
+  const summaryItems = [
+    {
+      key: "total",
+      label: "Total",
+      dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
+      badgeClass:
+        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      count: summaryCounts.total,
+    },
+    {
+      key: "prep",
+      label: "Prep",
+      dotClass: "bg-sky-300 dark:bg-sky-800/80",
+      badgeClass:
+        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      count: summaryCounts.prep,
+    },
+    {
+      key: "shoot",
+      label: "Shoot",
+      dotClass: "bg-peach-300 dark:bg-peach-800/80",
+      badgeClass:
+        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      count: summaryCounts.shoot,
+    },
+    {
+      key: "wrap",
+      label: "Wrap",
+      dotClass: "bg-mint-300 dark:bg-mint-800/80",
+      badgeClass:
+        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      count: summaryCounts.wrap,
+    },
+  ];
+
   return (
     <>
       <div className="min-h-[calc(100vh-500px)] rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
+        {/* SUMMARY BAR (like Week/Gantt) */}
+        <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
+          <div className="flex items-center gap-6">
+            {summaryItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-1 text-xs">
+                <span className={cn("w-3 h-3 rounded-sm", item.dotClass)} />
+                <span className="font-semibold text-muted-foreground">
+                  {item.label}
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                    item.badgeClass,
+                  )}
+                >
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Month View Header (WEEK + DAYS) */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)] text-center text-[11px] font-black uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
           <div className="py-4 border-r border-primary/20 bg-card">
@@ -104,30 +173,24 @@ function CalendarMonthView({
           ))}
         </div>
 
-        {/* Month View BODY  */}
+        {/* Month View BODY */}
         <div className="grid grid-rows-5">
           {calendarWeeks.map((weekDays, weekIndex) => {
             const weekStartDate = format(weekDays[0], "yyyy-MM-dd");
             const weekLabel = getProductionWeekLabel(weekStartDate);
             return (
-              <div
-                key={weekIndex}
-                className="grid grid-cols-[80px_repeat(7,1fr)]"
-              >
-                {/* WEEK LABEL  */}
-                <div className="flex h-[250px] justify-center items-center bg-muted/40 border-r border-b border-primary/20">
+              <div key={weekIndex} className="grid grid-cols-[80px_repeat(7,1fr)]">
+                {/* WEEK LABEL */}
+                <div className="flex h-[240px] justify-center items-center bg-muted/40 border-r border-b border-primary/20">
                   <span className="text-xs font-bold text-purple-800 dark:text-purple-300 rotate-270 whitespace-nowrap">
                     {weekLabel || ""}
                   </span>
                 </div>
+
                 {/* DAY CELLS */}
                 {weekDays.map((date) => {
-                  const isToday =
-                    date.toDateString() === new Date().toDateString();
-
-                  const isCurrentMonth =
-                    date.getMonth() === currentDate.getMonth();
-
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  const isCurrentMonth = date.getMonth() === currentDate.getMonth();
                   const dateString = format(date, "yyyy-MM-dd");
 
                   const dayEvents = getEventsForDate(events, dateString);
@@ -139,18 +202,18 @@ function CalendarMonthView({
                   return (
                     <div
                       key={dateString}
-                      onClick={(e) => {
+                      onClick={() => {
                         if (setCurrentDate) setCurrentDate(date);
                         if (onDayClick) onDayClick(date);
                       }}
                       className={cn(
-                        "flex gap-1 p-2 h-[250px] flex-col items-end cursor-pointer transition-all duration-200 border-r border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 overflow-hidden",
+                        "flex gap-1 p-2 h-[240px] flex-col items-end cursor-pointer transition-all duration-200 border-r border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 overflow-hidden",
                         !isCurrentMonth && "opacity-50",
                         isToday &&
                           "ring-2 ring-inset ring-purple-400 dark:ring-purple-500 bg-purple-50/40 dark:bg-purple-900/10",
                       )}
                     >
-                      {/* Date NUMBER  */}
+                      {/* Date NUMBER */}
                       <div
                         className={cn(
                           "text-sm w-7 h-7 flex items-center justify-center font-bold text-purple-800 dark:text-purple-300 rounded-full mb-0.5 transition-colors flex-shrink-0",
@@ -168,11 +231,10 @@ function CalendarMonthView({
                             <div
                               onClick={(e) => {
                                 e.stopPropagation(); // Stop bubbling to day click
-                                // FIX: Call the prop here!
                                 if (onEventClick) onEventClick(event);
                               }}
                               className={cn(
-                                "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer", // Added cursor-pointer
+                                "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer",
                                 getMonthEventColors(event.eventType),
                               )}
                             >
@@ -180,7 +242,7 @@ function CalendarMonthView({
                             </div>
                           </TooltipTrigger>
 
-                          {/* EVENT TOOLTIP  */}
+                          {/* EVENT TOOLTIP */}
                           <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
                             <div className="flex flex-col gap-2 p-1">
                               <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
@@ -189,15 +251,9 @@ function CalendarMonthView({
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="font-medium">
-                                  {format(
-                                    new Date(event.startDateTime),
-                                    "h:mm a",
-                                  )}{" "}
+                                  {format(new Date(event.startDateTime), "h:mm a")}{" "}
                                   -{" "}
-                                  {format(
-                                    new Date(event.endDateTime),
-                                    "h:mm a",
-                                  )}
+                                  {format(new Date(event.endDateTime), "h:mm a")}
                                 </span>
                               </div>
                               {event.location && (
@@ -241,7 +297,6 @@ function CalendarMonthView({
                                   key={event.id || event._id}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // FIX: Call the prop here too for hidden events!
                                     if (onEventClick) onEventClick(event);
                                   }}
                                   className={cn(

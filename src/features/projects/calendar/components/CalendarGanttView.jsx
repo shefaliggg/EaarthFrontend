@@ -86,16 +86,16 @@ function calculatePhaseOverall(phaseEvents) {
 function filterEventsByYear(events, year) {
   const yearStart = new Date(year, 0, 1);
   yearStart.setHours(0, 0, 0, 0);
-  
+
   const yearEnd = new Date(year, 11, 31);
   yearEnd.setHours(23, 59, 59, 999);
 
   return events.filter((event) => {
     if (!event.startDateTime || !event.endDateTime) return false;
-    
+
     const eventStart = new Date(event.startDateTime);
     const eventEnd = new Date(event.endDateTime);
-    
+
     // Include event if it overlaps with the year at all
     return eventStart <= yearEnd && eventEnd >= yearStart;
   });
@@ -161,7 +161,7 @@ function CalendarGanttView({ currentDate, events }) {
   // ── Filter events by current year ──
   const yearFilteredEvents = useMemo(
     () => filterEventsByYear(events, year),
-    [events, year]
+    [events, year],
   );
 
   // ── Auto-scroll to current week on mount ──
@@ -206,6 +206,11 @@ function CalendarGanttView({ currentDate, events }) {
       };
     });
   }, [yearFilteredEvents]);
+
+  // NEW: Total events across all phases (after filtering by year)
+  const totalEvents = useMemo(() => {
+    return ganttRows.reduce((sum, row) => sum + row.events.length, 0);
+  }, [ganttRows]);
 
   // ── Bar position calculator ──
   const getBarStyle = (event) => {
@@ -265,6 +270,15 @@ function CalendarGanttView({ currentDate, events }) {
         {/* SUMMARY BAR */}
         <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
           <div className="flex items-center gap-6">
+            {/* NEW: TOTAL EVENTS */}
+            <div className="flex items-center gap-1 text-xs">
+              <span className="w-3 h-3 rounded-sm bg-purple-400/70 dark:bg-purple-500/60" />
+              <span className="font-semibold text-muted-foreground">Total</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                {totalEvents}
+              </span>
+            </div>
+
             {ganttRows.map((row) => (
               <div key={row.key} className="flex items-center gap-1 text-xs">
                 <span className={cn("w-3 h-3 rounded-sm", row.barFilled)} />
