@@ -623,6 +623,84 @@ const useChatStore = create(
         }
       },
 
+      deleteMessageForMe: async (conversationId, messageId) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const oldMessages = conv.messages;
+
+        // optimistic remove
+        set({
+          messagesByConversation: {
+            ...state.messagesByConversation,
+            [conversationId]: {
+              ...conv,
+              messages: conv.messages.filter((m) => m.id !== messageId),
+            },
+          },
+        });
+
+        const promise = chatApi.deleteMessageForMe(conversationId, messageId);
+
+        return toast.promise(promise, {
+          loading: "Deleting message...",
+          success: "Message deleted",
+          error: (err) => {
+            // rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: oldMessages,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to delete message";
+          },
+        });
+      },
+
+      deleteMessageForEveryone: async (conversationId, messageId) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const oldMessages = conv.messages;
+
+        // optimistic soft delete
+        get().updateMessageInConversation(messageId, {
+          deleted: true,
+          content: "",
+        });
+
+        const promise = chatApi.deleteMessageForEveryone(
+          conversationId,
+          messageId,
+        );
+
+        return toast.promise(promise, {
+          loading: "Deleting for everyone...",
+          success: "Message deleted for everyone",
+          error: (err) => {
+            // rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: oldMessages,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Delete failed";
+          },
+        });
+      },
+
       addMessageToConversation: (conversationId, message) => {
         const currentUserId = getCurrentUserId();
 

@@ -27,14 +27,14 @@ export default function MessageList({
 
   const canEditMessage = (message) => {
     if (!message.isOwn) return false;
-    const fifteenMinutes = 15 * 60 * 1000;
-    return Date.now() - message.timestamp < fifteenMinutes;
+    const EDIT_WINDOW = 15 * 60 * 1000;
+    return Date.now() - message.timestamp < EDIT_WINDOW;
   };
 
   const canDeleteForEveryone = (message) => {
     if (!message.isOwn) return false;
-    const fifteenMinutes = 15 * 60 * 1000;
-    return Date.now() - message.timestamp < fifteenMinutes;
+    const EDIT_WINDOW = 60 * 60 * 1000;
+    return Date.now() - message.timestamp < EDIT_WINDOW;
   };
 
   return (

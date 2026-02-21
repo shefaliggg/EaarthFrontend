@@ -22,6 +22,7 @@ import {
   Image,
   Mic2,
   Mic,
+  Edit2,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -416,7 +417,7 @@ export default function MessageBubble({
               isOwn ? "justify-end" : "justify-start",
               "opacity-0 translate-y-1 scale-95",
               "max-h-0 overflow-hidden opacity-0 scale-95",
-              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-1",
+              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-2",
             )}
           >
             <ActionButton
@@ -464,9 +465,9 @@ export default function MessageBubble({
             />
             {isOwn && canEdit && (
               <ActionButton
-                icon={Edit3}
+                icon={Edit2}
                 tooltip="Edit"
-                className="text-blue-500"
+                className="text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(message);
@@ -576,7 +577,7 @@ function MessageImage({ file, url, onClick, single = true }) {
 
   return (
     <div
-      className={`overflow-hidden relative  w-full ${single ? " max-w-[260px] max-h-[280px]" : " max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+      className={`overflow-hidden relative  w-full ${single ? " max-w-[260px] max-h-[280px]" : "min-w-[160px] max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
     >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -610,7 +611,7 @@ function MessageVideo({ file, url, single = true }) {
       <video
         src={url}
         controls
-        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px] max-h-[280px]" : "aspect-square max-w-[160px] max-h-[160px]"}`}
+        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px] max-h-[280px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
       >
         Your browser does not support the video tag.
       </video>
