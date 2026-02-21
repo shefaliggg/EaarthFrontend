@@ -68,9 +68,19 @@ const useChatStore = create(
           get().markMessageAsDeleted(messageId);
         });
 
-        socket.on("message:reaction", ({ messageId, userId, emoji }) => {
-          console.log("❤️ Message reaction:", { messageId, emoji });
-          get().updateMessageReaction(messageId, userId, emoji);
+        socket.on("message:reaction", ({ messageId, reactions }) => {
+          console.log("❤️ Message reaction:", { messageId, reactions });
+          const updatedReactions = (reactions || []).reduce((acc, r) => {
+            const emoji = r.emoji;
+            const userId = r.userId?._id?.toString() || r.userId?.toString();
+
+            if (!acc[emoji]) acc[emoji] = [];
+
+            acc[emoji].push(userId);
+
+            return acc;
+          }, {});
+          get().updateMessageReaction(messageId, updatedReactions);
         });
 
         socket.on("conversation:read", ({ conversationId, userId }) => {
@@ -306,6 +316,7 @@ const useChatStore = create(
               unread: unreadCount,
               mentions: 0,
               lastMessage: conv.lastMessage?.preview || "",
+              pinnedMessage: conv.pinnedMessage,
               timestamp: conv.lastMessage?.createdAt
                 ? new Date(conv.lastMessage.createdAt).getTime()
                 : Date.now(),
@@ -623,6 +634,119 @@ const useChatStore = create(
         }
       },
 
+      toggleFavoriteMessage: async (conversationId, messageId, isFavorited) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const previous = conv.messages;
+
+        // ⭐ OPTIMISTIC UPDATE
+        get().updateMessageInConversation(messageId, {
+          isStarred: !isFavorited,
+        });
+
+        const promise = chatApi.toggleFavorite(
+          conversationId,
+          messageId,
+          !isFavorited,
+        );
+
+        return toast.promise(promise, {
+          loading: isFavorited
+            ? "Removing from favorites..."
+            : "Adding to favorites...",
+          success: isFavorited
+            ? "Removed from favorites"
+            : "Added to favorites",
+          error: (err) => {
+            // 🔁 rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: previous,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to update favorite";
+          },
+        });
+      },
+
+      reactToMessage: async (conversationId, message, emoji) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        const currentUserId = getCurrentUserId();
+
+        if (!conv) return;
+
+        const previous = conv.messages;
+
+        const promise = chatApi.toggleReaction(
+          conversationId,
+          message.id,
+          emoji,
+        );
+
+        const reacted = message.reactions[emoji]?.includes(currentUserId);
+
+        return toast.promise(promise, {
+          loading: reacted ? "Removing reaction..." : "Adding reaction...",
+          success: reacted ? "Reaction removed" : "Reaction added",
+          error: (err) => {
+            // 🔁 rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: previous,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to react";
+          },
+        });
+      },
+
+      togglePinMessage: async (conversationId, messageId) => {
+        const state = get();
+
+        const previous = state.conversations;
+
+        // 📌 optimistic update
+        set({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  pinnedMessage:
+                    c.pinnedMessage?.id === messageId
+                      ? null
+                      : { id: messageId },
+                }
+              : c,
+          ),
+        });
+
+        const promise = chatApi.pinMessage(conversationId, messageId);
+
+        return toast.promise(promise, {
+          loading: "Pinning Message...",
+          success: "Message Pinned",
+          error: (err) => {
+            // rollback
+            set({ conversations: previous });
+
+            return err?.response?.data?.message || "Failed to Pin Message";
+          },
+        });
+      },
+
       deleteMessageForMe: async (conversationId, messageId) => {
         const state = get();
         const conv = state.messagesByConversation[conversationId];
@@ -829,9 +953,8 @@ const useChatStore = create(
         get().updateMessageInConversation(messageId, { deleted: true });
       },
 
-      updateMessageReaction: (messageId, userId, emoji) => {
-        const selectedChat = get().selectedChat;
-        if (selectedChat?.id) get().loadMessages(selectedChat.id);
+      updateMessageReaction: (messageId, reactions) => {
+        get().updateMessageInConversation(messageId, { reactions : reactions });
       },
 
       markConversationMessagesAsRead: (conversationId, userId) => {

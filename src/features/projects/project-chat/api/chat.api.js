@@ -182,6 +182,7 @@ const chatApi = {
 
   // Add/remove reaction
   toggleReaction: async (conversationId, messageId, emoji) => {
+    console.log("reaction emoji", emoji)
     try {
       const response = await axiosConfig.patch(
         `/chats/${conversationId}/messages/${messageId}/react`,

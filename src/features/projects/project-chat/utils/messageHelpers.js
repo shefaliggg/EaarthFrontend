@@ -239,7 +239,13 @@ export function transformMessage(
   // REACTIONS NORMALIZED
   // =========================
   const reactions = (msg.reactions || []).reduce((acc, r) => {
-    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+    const emoji = r.emoji;
+    const userId = r.userId?._id?.toString() || r.userId?.toString();
+
+    if (!acc[emoji]) acc[emoji] = [];
+
+    acc[emoji].push(userId);
+
     return acc;
   }, {});
 
@@ -296,7 +302,6 @@ export function transformMessage(
     isForwarded: !!forwardedFrom,
     isStarred:
       msg.starredBy?.some((id) => id.toString() === currentUser) || false,
-
     system,
 
     _raw: msg, // keep temporarily, but UI should stop using it

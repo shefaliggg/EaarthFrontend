@@ -23,6 +23,7 @@ import {
   Mic2,
   Mic,
   Edit2,
+  Pin,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -69,25 +70,30 @@ export default function MessageBubble({
   selectedChatId,
   onReply,
   onEdit,
-  onReaction,
-  onToggleFavorite,
   canEdit,
   canDeleteForEveryone,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
+  const [isReacting, setIsReacting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageFile, setPreviewImageFile] = useState(null);
   const retryMessage = useChatStore((state) => state.retryMessage);
-  const { selectedChat } = useChatStore();
+  const {
+    selectedChat,
+    reactToMessage,
+    togglePinMessage,
+    toggleFavoriteMessage,
+  } = useChatStore();
 
   const videoRef = useRef(null);
   const audioRef = useRef(null);
+  const reactionPickerRef = useRef(null);
 
   const isOwn = message.isOwn;
-  const isFavorited = message._raw?.starredBy?.length > 0;
+  const isFavorited = message.isStarred;
   const isForwarded = message.isForwarded;
 
   useEffect(() => {
@@ -107,6 +113,25 @@ export default function MessageBubble({
     }
   }, [isPlaying, message.type, message.totalDuration]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        reactionPickerRef.current &&
+        !reactionPickerRef.current.contains(event.target)
+      ) {
+        setShowReactionPicker(null);
+      }
+    };
+
+    if (showReactionPicker === message.id) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showReactionPicker, message.id]);
+
   const highlightText = (text) => {
     if (!searchQuery || !text) return text;
 
@@ -122,7 +147,6 @@ export default function MessageBubble({
     );
   };
 
-  // ✅ Message action handlers
   const handleCopy = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
@@ -136,6 +160,21 @@ export default function MessageBubble({
 
   const handleForward = () => {
     setShowForwardDialog(true);
+  };
+
+  const handleReaction = async (emoji) => {
+    setIsReacting(true);
+    await reactToMessage(selectedChatId, message, emoji);
+    setShowReactionPicker(null);
+    setIsReacting(false);
+  };
+
+  const handleToggleFavorite = async () => {
+    await toggleFavoriteMessage(selectedChatId, message.id, isFavorited);
+  };
+
+  const handlePin = async () => {
+    await togglePinMessage(selectedChatId, message.id);
   };
 
   const handleImageClick = (imageFIle) => {
@@ -398,14 +437,17 @@ export default function MessageBubble({
                 isOwn ? "flex-row-reverse" : "flex-row",
               )}
             >
-              {Object.entries(message.reactions).map(([emoji, count]) => (
+              {Object.entries(message.reactions).map(([emoji, users]) => (
                 <button
                   key={emoji}
-                  onClick={() => onReaction(message.id, emoji)}
+                  onClick={() => handleReaction(emoji)}
+                  disabled={isReacting}
                   className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
                 >
                   <span>{emoji}</span>
-                  <span className="text-[10px] font-medium">{count}</span>
+                  <span className="text-[10px] font-medium">
+                    {users.length}
+                  </span>
                 </button>
               ))}
             </div>
@@ -437,12 +479,30 @@ export default function MessageBubble({
               }}
             />
             <ActionButton
+              icon={Smile}
+              tooltip="React"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReactionPicker(
+                  showReactionPicker === message.id ? null : message.id,
+                );
+              }}
+            />
+            <ActionButton
               icon={Star}
               tooltip={isFavorited ? "Unstar" : "Star"}
               className={isFavorited ? "text-yellow-500" : ""}
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleFavorite(message.id, isFavorited);
+                handleToggleFavorite();
+              }}
+            />
+            <ActionButton
+              icon={Pin}
+              tooltip="Pin"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePin();
               }}
             />
             <ActionButton
@@ -451,16 +511,6 @@ export default function MessageBubble({
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopy();
-              }}
-            />
-            <ActionButton
-              icon={Smile}
-              tooltip="React"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowReactionPicker(
-                  showReactionPicker === message.id ? null : message.id,
-                );
               }}
             />
             {isOwn && canEdit && (
@@ -497,9 +547,10 @@ export default function MessageBubble({
             {REACTIONS.map((emoji) => (
               <button
                 key={emoji}
+                disabled={isReacting}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onReaction(message.id, emoji);
+                  handleReaction(emoji);
                 }}
                 className="text-xl hover:scale-125 transition-transform p-1"
                 aria-label={`React with ${emoji}`}
