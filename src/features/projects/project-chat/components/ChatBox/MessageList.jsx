@@ -7,8 +7,6 @@ import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 
 export default function MessageList({
   messages,
-  messagesData,
-  isLoadingMessages,
   onReply,
   onEdit,
   onReaction,

@@ -572,7 +572,6 @@ function MessageStateIcon({ state }) {
 }
 
 function MessageImage({ file, url, onClick, single = true }) {
-  console.log("is sinlge image", single);
   const [loaded, setLoaded] = React.useState(false);
 
   return (

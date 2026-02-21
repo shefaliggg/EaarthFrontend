@@ -591,8 +591,51 @@ const useChatStore = create(
         });
       },
 
+      editMessage: async (conversationId, messageId, newText) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+
+        if (!conv) return;
+
+        const messageIndex = conv.messages.findIndex((m) => m.id === messageId);
+        if (messageIndex === -1) return;
+
+        const oldMessage = conv.messages[messageIndex];
+
+        // 🔥 OPTIMISTIC UPDATE
+        get().updateMessageInConversation(messageId, {
+          content: newText,
+          edited: true,
+          editedAt: new Date().toISOString(),
+        });
+
+        try {
+          await chatApi.editMessage(conversationId, messageId, newText);
+        } catch (error) {
+          console.error("❌ editMessage failed:", error);
+
+          // ROLLBACK if API fails
+          get().updateMessageInConversation(messageId, {
+            content: oldMessage.content,
+            edited: oldMessage.edited,
+            editedAt: oldMessage.editedAt,
+          });
+        }
+      },
+
       addMessageToConversation: (conversationId, message) => {
         const currentUserId = getCurrentUserId();
+
+        const conversation = get().conversations.find(
+          (c) => c.id === conversationId,
+        );
+
+        const memberCount = conversation?.members?.length || 2;
+
+        const transformed = transformMessage(message, {
+          currentUserId,
+          conversationMembersCount: memberCount,
+        });
 
         set((state) => {
           const existing = state.messagesByConversation[conversationId] || {
@@ -601,22 +644,11 @@ const useChatStore = create(
             cursor: null,
           };
 
-          const conversation = state.conversations.find(
-            (c) => c.id === conversationId,
-          );
-
-          const memberCount = conversation?.members || 2;
-
-          const transformed = transformMessage(message, {
-            currentUserId,
-            conversationMembersCount: memberCount,
-          });
-
           const incomingClientTempId = message.clientTempId;
 
           let updatedMessages = [...existing.messages];
 
-          // 🔥 Replace optimistic message
+          // Replace optimistic message
           if (incomingClientTempId) {
             const index = updatedMessages.findIndex(
               (m) => m.clientTempId === incomingClientTempId,
@@ -627,21 +659,16 @@ const useChatStore = create(
 
               updatedMessages[index] = {
                 ...existingMsg,
-
                 id: transformed.id,
                 time: transformed.time,
                 timestamp: transformed.timestamp,
-
                 files: transformed.files,
-
                 state: transformed.state,
                 readBy: transformed.readBy,
                 deliveredTo: transformed.deliveredTo,
-
                 edited: transformed.edited,
                 editedAt: transformed.editedAt,
                 deleted: transformed.deleted,
-
                 reactions: transformed.reactions,
                 _raw: transformed._raw,
               };
@@ -658,12 +685,12 @@ const useChatStore = create(
             }
           }
 
-          // 🔥 Prevent duplicate by real ID
+          // Prevent duplicate
           if (updatedMessages.some((m) => m.id === transformed.id)) {
             return state;
           }
 
-          // 🔥 Append if new
+          // Append new message
           updatedMessages.push(transformed);
 
           return {
@@ -677,11 +704,16 @@ const useChatStore = create(
           };
         });
 
-        // 🔥 Update sidebar last message immediately
+        // Update conversation preview
+        const preview =
+          transformed.content ||
+          transformed.caption ||
+          (transformed.files?.length ? "Attachment" : "");
+
         get().updateConversationLastMessage(conversationId, {
-          content: { text: optimisticMessage.content },
-          createdAt: now,
-          senderId: { _id: currentUserId },
+          content: { text: preview },
+          createdAt: message.createdAt || new Date(),
+          senderId: { _id: message.senderId?._id || message.senderId },
         });
       },
 

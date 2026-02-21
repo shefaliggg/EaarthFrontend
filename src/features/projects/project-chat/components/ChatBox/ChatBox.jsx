@@ -288,7 +288,7 @@ function ChatBox() {
           />
         )}
         {editingMessage && (
-          <EditBanner onClose={() => setEditingMessage(null)} />
+          <EditBanner message={editingMessage} onClose={() => setEditingMessage(null)} />
         )}
         {attachments.length > 0 && (
           <div className="flex gap-2 p-2 overflow-x-auto">

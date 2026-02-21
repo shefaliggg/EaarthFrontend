@@ -6,6 +6,7 @@ import useChatStore from "../../store/chat.store";
 import FileAttachmentMenu from "./FileAttachmentMenu";
 import { buildReplyPayload } from "../../utils/messageHelpers";
 import { Button } from "../../../../../shared/components/ui/button";
+import { toast } from "sonner";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -30,9 +31,8 @@ const MessageInput = React.memo(
     const documentInputRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
-    const sendMessage = useChatStore((state) => state.sendMessage);
-    const emitTypingStart = useChatStore((state) => state.emitTypingStart);
-    const emitTypingStop = useChatStore((state) => state.emitTypingStop);
+    const { sendMessage, editMessage, emitTypingStart, emitTypingStop } =
+      useChatStore();
 
     // REF to always have latest attachments
     const attachmentsRef = useRef(attachments);
@@ -93,6 +93,8 @@ const MessageInput = React.memo(
       if (editingMessage) {
         setMessageInput(editingMessage.content);
         textareaRef.current?.focus();
+      } else {
+        setMessageInput("");
       }
     }, [editingMessage]);
 
@@ -173,7 +175,7 @@ const MessageInput = React.memo(
           });
         }
       } catch (err) {
-        console.error("❌ Failed to send message:", err);
+        toast.error("❌ Failed to send message:", err);
       }
     }, [
       messageInput,
@@ -185,13 +187,43 @@ const MessageInput = React.memo(
       emitTypingStop,
     ]);
 
+    const handleEditMessage = async () => {
+      console.log("triggered edit message api");
+      console.log(
+        "message",
+        messageInput,
+        "conversation id",
+        selectedChat.id,
+        "message id",
+        editingMessage.id,
+      );
+      const trimmedMessage = messageInput.trim();
+      const messageId = editingMessage.id;
+
+      if (!trimmedMessage) return;
+      if (!selectedChat?.id && messageId) return;
+
+      setMessageInput("");
+      onClearEdit();
+
+      try {
+        await editMessage(selectedChat.id, messageId, trimmedMessage);
+      } catch {
+        toast.error("Failed to edit message");
+      }
+    };
+
     // ───── KEYBOARD SHORTCUTS ─────
     useEffect(() => {
       const handleGlobalKeyDown = (e) => {
         // Enter to send message
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
-          handleSendMessage(); // uses latest attachments + text
+          if (editingMessage) {
+            handleEditMessage();
+          } else {
+            handleSendMessage(); // uses latest attachments + text
+          }
         }
 
         // Escape to cancel reply/edit
@@ -375,7 +407,7 @@ const MessageInput = React.memo(
           </button>
         ) : (
           <button
-            onClick={handleSendMessage}
+            onClick={editingMessage ? handleEditMessage : handleSendMessage}
             disabled={!showSendButton}
             className={cn(
               "h-11 px-5 rounded-xl text-sm flex items-center gap-2 transition-all flex-shrink-0",
