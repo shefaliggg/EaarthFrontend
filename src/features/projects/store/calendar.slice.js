@@ -5,21 +5,26 @@ import {
   updateCalendarEvent,
   deleteCalendarEvent,
   fetchCrewMembers,
+  fetchDepartments,
 } from "./calendar.thunks";
 
 const initialState = {
   events: [],
   crewMembers: [],
+  departments: [],
   view: "month",
   currentDate: new Date().toISOString(),
   filters: {
     search: "",
-    eventType: "all",
+    eventTypes: [],
+    departments: [],
+    crewMembers: [],
+    location: "",
   },
   isLoading: false,
   isCreating: false,
-  isUpdating: false, // New state
-  isDeleting: false, // New state
+  isUpdating: false, 
+  isDeleting: false, 
   error: null,
   createError: null,
   successMessage: null,
@@ -35,11 +40,19 @@ const calendarSlice = createSlice({
     setCurrentDate(state, action) {
       state.currentDate = action.payload;
     },
-    setSearch(state, action) {
-      state.filters.search = action.payload;
+
+    updateFilter(state, action) {
+      const { key, value } = action.payload;
+      state.filters[key] = value;
     },
-    setEventType(state, action) {
-      state.filters.eventType = action.payload;
+    resetFilters(state) {
+      state.filters = {
+        search: state.filters.search, 
+        eventTypes: [],
+        departments: [],
+        crewMembers: [],
+        location: "",
+      };
     },
     clearMessages(state) {
       state.successMessage = null;
@@ -49,18 +62,15 @@ const calendarSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch
       .addCase(fetchCalendarEvents.fulfilled, (state, action) => {
         state.isLoading = false;
         state.events = action.payload;
       })
-      // Create
       .addCase(createCalendarEvent.fulfilled, (state, action) => {
         state.isCreating = false;
         state.events.push(action.payload);
         state.successMessage = "Event created successfully!";
       })
-      // Update
       .addCase(updateCalendarEvent.pending, (state) => {
         state.isUpdating = true;
       })
@@ -69,16 +79,13 @@ const calendarSlice = createSlice({
         const index = state.events.findIndex(
           (e) => (e.eventCode || e._id) === (action.payload.eventCode || action.payload._id)
         );
-        if (index !== -1) {
-          state.events[index] = action.payload;
-        }
+        if (index !== -1) state.events[index] = action.payload;
         state.successMessage = "Event updated successfully!";
       })
       .addCase(updateCalendarEvent.rejected, (state, action) => {
         state.isUpdating = false;
         state.error = action.payload;
       })
-      // Delete
       .addCase(deleteCalendarEvent.pending, (state) => {
         state.isDeleting = true;
       })
@@ -93,9 +100,11 @@ const calendarSlice = createSlice({
         state.isDeleting = false;
         state.error = action.payload;
       })
-      // Crew
       .addCase(fetchCrewMembers.fulfilled, (state, action) => {
         state.crewMembers = action.payload;
+      })
+      .addCase(fetchDepartments.fulfilled, (state, action) => {
+        state.departments = action.payload;
       });
   },
 });
@@ -103,8 +112,8 @@ const calendarSlice = createSlice({
 export const {
   setView,
   setCurrentDate,
-  setSearch,
-  setEventType,
+  updateFilter, 
+  resetFilters, 
   clearMessages,
 } = calendarSlice.actions;
 

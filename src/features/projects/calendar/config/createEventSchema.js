@@ -11,18 +11,25 @@ export const createEventSchema = z.object({
   isAllDay: z.boolean().optional(),
   
   eventType: z.string().min(1, "Event Type is required"),
-  location: z.string().optional(),
+  
+  location: z.string().min(1, "Location is required"),
+  
   notes: z.string().optional(),
   
-  // New Array for Crew IDs
-  attendees: z.array(z.string()).optional(), 
+  audienceType: z.enum(["ALL", "DEPARTMENT", "USERS"]),
+  selectedDepartments: z.array(z.string()).optional(),
+  selectedUsers: z.array(z.string()).optional(), 
 
 }).refine((data) => {
-  if (!data.isAllDay) {
-    return !!data.startTime && !!data.endTime;
+
+  if (data.audienceType === "DEPARTMENT") {
+    return data.selectedDepartments && data.selectedDepartments.length > 0;
+  }
+  if (data.audienceType === "USERS") {
+    return data.selectedUsers && data.selectedUsers.length > 0;
   }
   return true;
 }, {
-  message: "Start and end time are required for non-all-day events",
-  path: ["endTime"],
+  message: "Please select at least one item for your chosen audience",
+  path: ["audienceType"]
 });

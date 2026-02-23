@@ -2,14 +2,13 @@ export const createEventFormConfig = {
   title: "Add New Event",
   subtitle: "Add a new event to the production schedule.",
 
-  steps: [
+  sections: [
     {
       id: "basic",
-      value: "basic",
-      label: "Basic",
+      title: "Basic Details",
       fields: [
-        { name: "title", label: "Event Title" },
-        { name: "location", label: "Location" },
+        { name: "title", label: "Event Title", type: "text" },
+        { name: "location", label: "Location", type: "text" },
         {
           name: "eventType",
           label: "Event Type",
@@ -19,45 +18,34 @@ export const createEventFormConfig = {
             { label: "Shoot", value: "shoot" },
             { label: "Wrap", value: "wrap" },
             { label: "Meeting", value: "meeting" },
-            { label: "Travel", value: "travel" },
-            { label: "Other", value: "other" },
           ],
         },
       ],
     },
-
     {
-      id: "date",
-      value: "date",
-      label: "Date",
+      id: "datetime",
+      title: "Date & Time",
       fields: [
         { name: "startDate", label: "Start Date", type: "date" },
         { name: "endDate", label: "End Date", type: "date" },
-      ],
-    },
-
-    {
-      id: "time",
-      value: "time",
-      label: "Time",
-      fields: [
+        { name: "isAllDay", label: "All-Day Event", type: "checkbox" },
         { name: "startTime", label: "Start Time", type: "time" },
         { name: "endTime", label: "End Time", type: "time" },
-        { name: "isAllDay", label: "All-Day Event", type: "checkbox" },
       ],
     },
-
     {
-      id: "details",
-      value: "details",
-      label: "Notify & Details",
+      id: "notify", 
+      title: "Notify",
       fields: [
-        // Changed here: Removed Color, Added Crew Select
-        { 
-          name: "attendees", 
-          label: "Notify Crew Members", 
-          type: "crew-select" // Custom type we will handle in renderer
-        },
+        { name: "audienceType", label: "Who should be notified?", type: "audience-selector" },
+        { name: "selectedDepartments", label: "Select Departments", type: "department-select" },
+        { name: "selectedUsers", label: "Select Crew Members", type: "crew-select" },
+      ],
+    },
+    {
+      id: "details", 
+      title: "Details",
+      fields: [
         { name: "notes", label: "Description / Notes", type: "textarea" },
       ],
     },

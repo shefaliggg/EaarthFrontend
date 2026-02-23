@@ -8,20 +8,29 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 import { format, parse } from "date-fns";
-import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import { useDispatch } from "react-redux";
+import { fetchCrewMembers, fetchDepartments } from "../../store/calendar.thunks";
 import CreateEventStepsRenderer from "./CreateEventStepsRenderer";
 import { createEventFormConfig } from "../config/createEventFormConfig";
 import { createEventSchema } from "../config/createEventSchema";
+
+const generateRoomId = () => {
+  return `ROOM-${Math.random().toString(36).substring(7).toUpperCase()}`;
+};
 
 export default function CreateEventModal({
   open,
   onClose,
   selectedDate,
   onSave,
-  isSubmitting,
+  isSubmitting: externalIsSubmitting, 
 }) {
+  const dispatch = useDispatch();
+  
+  const [isSaving, setIsSaving] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -30,62 +39,21 @@ export default function CreateEventModal({
       endDate: "",
       startTime: "",
       endTime: "",
-      isMultiDay: false,
       isAllDay: false,
       eventType: "prep",
       location: "",
-      attendees: [],
+      audienceType: "ALL",
+      selectedDepartments: [],
+      selectedUsers: [],
       notes: "",
     },
-    mode: "onTouched",
+    mode: "onChange",
   });
 
-  const [currentStepValue, setCurrentStepValue] = useState(
-    createEventFormConfig.steps[0].value
-  );
+  const { isValid } = form.formState;
 
-  const currentStepIndex = createEventFormConfig.steps.findIndex(
-    (step) => step.value === currentStepValue
-  );
-  const currentStep = createEventFormConfig.steps.find(
-    (step) => step.value === currentStepValue
-  );
-  const currentFields =
-    createEventFormConfig.steps[currentStepIndex]?.fields?.map(
-      (field) => field.name
-    ) || [];
-
-  const canProceed = currentFields.every((fieldName) => {
-    const value = form.watch(fieldName);
-    if (fieldName === "isAllDay") return true;
-    if (
-      form.watch("isAllDay") &&
-      ["startTime", "endTime"].includes(fieldName)
-    ) {
-      return true;
-    }
-    if (["attendees", "notes", "location"].includes(fieldName)) return true;
-    return Boolean(value);
-  });
-
-  const goToNextStep = async () => {
-    const isValid = await form.trigger(currentFields);
-    if (isValid && currentStepIndex < createEventFormConfig.steps.length - 1) {
-      setCurrentStepValue(
-        createEventFormConfig.steps[currentStepIndex + 1].value
-      );
-    }
-  };
-
-  const goToPreviousStep = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepValue(
-        createEventFormConfig.steps[currentStepIndex - 1].value
-      );
-    }
-  };
-
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
+    setIsSaving(true);
     try {
       let finalStartDateTime;
       let finalEndDateTime;
@@ -100,34 +68,72 @@ export default function CreateEventModal({
         finalEndDateTime.setHours(23, 59, 59, 999);
       } else {
         const baseStart = new Date(data.startDate);
-        finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
+        
+        if (data.startTime) {
+          finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
+        } else {
+          finalStartDateTime = new Date(baseStart);
+          finalStartDateTime.setHours(0, 0, 0, 0);
+        }
 
         const baseEnd = data.endDate
           ? new Date(data.endDate)
           : new Date(data.startDate);
-        finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
+          
+        if (data.endTime) {
+          finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
+        } else {
+          finalEndDateTime = new Date(baseEnd);
+          finalEndDateTime.setHours(23, 59, 59, 999);
+        }
       }
 
       const payload = {
+        projectId: "697c899668977a7ca2b27462", 
         title: data.title,
-        description: data.notes,
+        description: data.notes || "",
         eventType: data.eventType,
-        location: data.location,
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),
-        allDay: data.isAllDay, // Must be sent here
-        visibility: "all",
-        attendees: data.attendees || [],
+        allDay: !!data.isAllDay,
+        location: data.location || "",
+        audience: {
+          type: data.eventType === "meeting" ? data.audienceType : "ALL",
+        }
       };
 
-      onSave(payload);
+      if (data.eventType === "meeting") {
+        if (data.audienceType === "DEPARTMENT") {
+          payload.audience.departments = data.selectedDepartments;
+        } else if (data.audienceType === "USERS") {
+          payload.audience.users = data.selectedUsers;
+        }
+
+        payload.meeting = {
+          enabled: true,
+          meetingType: "VIDEO",
+          roomId: generateRoomId(), 
+        };
+      }
+
+      await onSave(payload);
     } catch (error) {
       console.error("Date parsing error", error);
+    } finally {
+      setIsSaving(false); 
     }
   };
 
   useEffect(() => {
     if (open) {
+      dispatch(fetchCrewMembers());
+      dispatch(fetchDepartments());
+    }
+  }, [open, dispatch]);
+
+  useEffect(() => {
+    if (open) {
+      setIsSaving(false); 
       form.reset({
         title: "",
         startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
@@ -137,12 +143,15 @@ export default function CreateEventModal({
         isAllDay: false,
         eventType: "prep",
         location: "",
-        attendees: [],
+        audienceType: "ALL",
+        selectedDepartments: [],
+        selectedUsers: [],
         notes: "",
       });
-      setCurrentStepValue(createEventFormConfig.steps[0].value);
     }
   }, [open, selectedDate, form]);
+
+  const isSubmitting = externalIsSubmitting || isSaving;
 
   return (
     <Dialog
@@ -151,59 +160,29 @@ export default function CreateEventModal({
         if (!v) onClose();
       }}
     >
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-8">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-4">
+        <DialogHeader className="border-b pb-4">
           <DialogTitle>{createEventFormConfig.title}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             {createEventFormConfig.subtitle}
           </DialogDescription>
         </DialogHeader>
 
-        <FilterPillTabs
-          options={createEventFormConfig.steps}
-          value={currentStepValue}
-          onChange={setCurrentStepValue}
-          readOnly
-        />
-
-        <div className="flex-1 overflow-y-auto pr-1">
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            <CreateEventStepsRenderer step={currentStep} form={form} />
-
-            <div className="pt-4 flex justify-between bg-background sticky bottom-0">
-              <div>
-                {currentStepIndex > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={goToPreviousStep}
-                    type="button"
-                  >
-                    Previous
-                  </Button>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                {currentStepIndex < createEventFormConfig.steps.length - 1 ? (
-                  <Button
-                    type="button"
-                    onClick={goToNextStep}
-                    disabled={!canProceed}
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={form.handleSubmit(handleFormSubmit)}
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save Event"}
-                  </Button>
-                )}
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto pr-2">
+          <form id="create-event-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            <CreateEventStepsRenderer sections={createEventFormConfig.sections} form={form} />
           </form>
+        </div>
+
+        <div className="pt-4 flex justify-end border-t bg-background">
+          <Button
+            type="submit"
+            form="create-event-form"
+            disabled={!isValid || isSubmitting}
+            className="w-full md:w-auto"
+          >
+            {isSubmitting ? "Saving Event..." : "Save Event"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

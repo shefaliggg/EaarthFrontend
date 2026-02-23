@@ -8,12 +8,17 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { format, parse } from "date-fns";
-import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import { useDispatch } from "react-redux";
+import { fetchCrewMembers, fetchDepartments } from "../../store/calendar.thunks";
 import CreateEventStepsRenderer from "./CreateEventStepsRenderer";
 import { createEventFormConfig } from "../config/createEventFormConfig";
 import { createEventSchema } from "../config/createEventSchema";
+
+const generateRoomId = () => {
+  return `ROOM-${Math.random().toString(36).substring(7).toUpperCase()}`;
+};
 
 export default function EditEventModal({
   open,
@@ -22,7 +27,8 @@ export default function EditEventModal({
   onSave,
   isSubmitting,
 }) {
-  // Initialize form with safe defaults
+  const dispatch = useDispatch();
+
   const form = useForm({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -34,80 +40,44 @@ export default function EditEventModal({
       isAllDay: false,
       eventType: "prep",
       location: "",
-      attendees: [],
+      audienceType: "ALL",
+      selectedDepartments: [],
+      selectedUsers: [],
       notes: "",
     },
-    mode: "onTouched",
+    mode: "onChange",
   });
 
-  const [currentStepValue, setCurrentStepValue] = useState(
-    createEventFormConfig.steps[0].value
-  );
+  const { isValid } = form.formState;
 
-  const currentStepIndex = createEventFormConfig.steps.findIndex(
-    (step) => step.value === currentStepValue
-  );
-  const currentStep = createEventFormConfig.steps.find(
-    (step) => step.value === currentStepValue
-  );
-  const currentFields =
-    createEventFormConfig.steps[currentStepIndex]?.fields?.map(
-      (field) => field.name
-    ) || [];
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchCrewMembers());
+      dispatch(fetchDepartments());
+    }
+  }, [open, dispatch]);
 
-  // Populate Form when Event Data changes
   useEffect(() => {
     if (open && eventToEdit) {
       const start = new Date(eventToEdit.startDateTime);
       const end = new Date(eventToEdit.endDateTime);
 
       form.reset({
-        title: eventToEdit.title,
+        title: eventToEdit.title || "",
         startDate: format(start, "yyyy-MM-dd"),
         endDate: format(end, "yyyy-MM-dd"),
         startTime: eventToEdit.allDay ? "" : format(start, "h:mm a"),
         endTime: eventToEdit.allDay ? "" : format(end, "h:mm a"),
         isAllDay: eventToEdit.allDay || false,
-        eventType: eventToEdit.eventType,
+        eventType: eventToEdit.eventType || "prep",
         location: eventToEdit.location || "",
-        attendees: eventToEdit.attendees 
-          ? eventToEdit.attendees.map(a => (typeof a === 'string' ? a : a._id || a.id)) 
-          : [],
+        audienceType: eventToEdit.audience?.type || "ALL",
+        selectedDepartments: eventToEdit.audience?.departments?.map(d => d._id || d) || [],
+        selectedUsers: eventToEdit.audience?.users?.map(u => u._id || u) || [],
         notes: eventToEdit.description || "",
       });
-      setCurrentStepValue(createEventFormConfig.steps[0].value);
     }
   }, [open, eventToEdit, form]);
-
-  const canProceed = currentFields.every((fieldName) => {
-    const value = form.watch(fieldName);
-    if (fieldName === "isAllDay") return true;
-    if (
-      form.watch("isAllDay") &&
-      ["startTime", "endTime"].includes(fieldName)
-    ) {
-      return true;
-    }
-    if (["attendees", "notes", "location"].includes(fieldName)) return true;
-    return Boolean(value);
-  });
-
-  const goToNextStep = async () => {
-    const isValid = await form.trigger(currentFields);
-    if (isValid && currentStepIndex < createEventFormConfig.steps.length - 1) {
-      setCurrentStepValue(
-        createEventFormConfig.steps[currentStepIndex + 1].value
-      );
-    }
-  };
-
-  const goToPreviousStep = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepValue(
-        createEventFormConfig.steps[currentStepIndex - 1].value
-      );
-    }
-  };
 
   const handleFormSubmit = (data) => {
     try {
@@ -124,25 +94,51 @@ export default function EditEventModal({
         finalEndDateTime.setHours(23, 59, 59, 999);
       } else {
         const baseStart = new Date(data.startDate);
-        finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
+        if (data.startTime) {
+          finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
+        } else {
+          finalStartDateTime = new Date(baseStart);
+          finalStartDateTime.setHours(0, 0, 0, 0);
+        }
 
         const baseEnd = data.endDate
           ? new Date(data.endDate)
           : new Date(data.startDate);
-        finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
+        if (data.endTime) {
+          finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
+        } else {
+          finalEndDateTime = new Date(baseEnd);
+          finalEndDateTime.setHours(23, 59, 59, 999);
+        }
       }
 
       const payload = {
+        projectId: eventToEdit.projectId || "697c899668977a7ca2b27462", 
         title: data.title,
-        description: data.notes,
+        description: data.notes || "",
         eventType: data.eventType,
-        location: data.location,
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),
-        allDay: data.isAllDay,
-        visibility: "all",
-        attendees: data.attendees || [],
+        allDay: !!data.isAllDay,
+        location: data.location || "",
+        audience: {
+          type: data.eventType === "meeting" ? data.audienceType : "ALL",
+        }
       };
+
+      if (data.eventType === "meeting") {
+        if (data.audienceType === "DEPARTMENT") {
+          payload.audience.departments = data.selectedDepartments;
+        } else if (data.audienceType === "USERS") {
+          payload.audience.users = data.selectedUsers;
+        }
+
+        payload.meeting = {
+          enabled: true,
+          meetingType: "VIDEO",
+          roomId: eventToEdit.meeting?.roomId || generateRoomId(), 
+        };
+      }
 
       onSave(eventToEdit.eventCode, payload);
     } catch (error) {
@@ -151,50 +147,35 @@ export default function EditEventModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-8">
-        <DialogHeader>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-4">
+        <DialogHeader className="border-b pb-4">
           <DialogTitle>Edit Event</DialogTitle>
-          <DialogDescription>Update the details for this event.</DialogDescription>
+          <DialogDescription>
+            Update the details for this scheduled event.
+          </DialogDescription>
         </DialogHeader>
 
-        <FilterPillTabs
-          options={createEventFormConfig.steps}
-          value={currentStepValue}
-          onChange={setCurrentStepValue}
-          readOnly
-        />
-
-        <div className="flex-1 overflow-y-auto pr-1">
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            <CreateEventStepsRenderer step={currentStep} form={form} />
-
-            <div className="pt-4 flex justify-between bg-background sticky bottom-0">
-              <div>
-                {currentStepIndex > 0 && (
-                  <Button variant="outline" onClick={goToPreviousStep} type="button">
-                    Previous
-                  </Button>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                {currentStepIndex < createEventFormConfig.steps.length - 1 ? (
-                  <Button type="button" onClick={goToNextStep} disabled={!canProceed}>
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={form.handleSubmit(handleFormSubmit)}
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Updating..." : "Update Event"}
-                  </Button>
-                )}
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto pr-2 pb-8">
+          <form id="edit-event-form" onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            <CreateEventStepsRenderer sections={createEventFormConfig.sections} form={form} />
           </form>
+        </div>
+
+        <div className="pt-4 flex justify-end border-t bg-background">
+          <Button
+            type="submit"
+            form="edit-event-form"
+            disabled={!isValid || isSubmitting}
+            className="w-full md:w-auto"
+          >
+            {isSubmitting ? "Updating Event..." : "Update Event"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

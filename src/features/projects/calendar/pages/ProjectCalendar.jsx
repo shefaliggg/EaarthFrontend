@@ -12,12 +12,10 @@ import {
   updateCalendarEvent,
 } from "../../store/calendar.thunks";
 import EventDetailsModal from "../components/EventDetailsModal";
-import CalendarPreviewPage from "../components/preview/CalendarPreviewPage";
 
 function ProjectCalendar() {
   const dispatch = useDispatch();
   const calendar = useSelector((state) => state.calendar);
-
   const { openCreateModal } = useOutletContext() || {};
 
   const {
@@ -28,11 +26,12 @@ function ProjectCalendar() {
     analyticsData,
     upcomingEvents,
     eventsCount,
-    search,
-    period,
+    filters,
+    updateFilter,
+    resetFilters,
+    departments,
+    crewMembers,
     setView,
-    setSearch,
-    setPeriod,
     prev,
     next,
     today,
@@ -69,9 +68,7 @@ function ProjectCalendar() {
 
   const handleUpdate = async (eventCode, eventData) => {
     try {
-      const result = await dispatch(
-        updateCalendarEvent({ eventCode, eventData }),
-      );
+      const result = await dispatch(updateCalendarEvent({ eventCode, eventData }));
       if (result.meta.requestStatus === "fulfilled") {
         toast.success("Event updated successfully!");
         setIsEditModalOpen(false);
@@ -105,11 +102,12 @@ function ProjectCalendar() {
         currentDate={currentDate}
         view={view}
         eventsCount={eventsCount}
-        search={search}
-        period={period}
+        filters={filters}
+        updateFilter={updateFilter}
+        resetFilters={resetFilters}
+        departments={departments}
+        crewMembers={crewMembers}
         setView={setView}
-        setSearch={setSearch}
-        setPeriod={setPeriod}
         onPrev={prev}
         onNext={next}
         onToday={today}
@@ -127,7 +125,6 @@ function ProjectCalendar() {
           onDayClick={handleDayClick}
           onEventClick={handleEventClick}
         />
-
         <UpcomingEvents upcomingEvents={upcomingEvents} view={view} />
       </div>
 
@@ -150,8 +147,6 @@ function ProjectCalendar() {
         isDeleting={calendar.isDeleting}
         canModify={canModify}
       />
-
-
     </div>
   );
 }

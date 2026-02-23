@@ -5,9 +5,9 @@ import {
   updateCalendarEventAPI,
   deleteCalendarEventAPI,
   getCrewMembersAPI,
+  getDepartmentsAPI,
 } from "../service/calendar.service";
 
-// Fetch Events
 export const fetchCalendarEvents = createAsyncThunk(
   "calendar/fetchEvents",
   async (_, { rejectWithValue }) => {
@@ -21,7 +21,6 @@ export const fetchCalendarEvents = createAsyncThunk(
   },
 );
 
-// Create Event
 export const createCalendarEvent = createAsyncThunk(
   "calendar/createEvent",
   async (eventData, { rejectWithValue }) => {
@@ -36,7 +35,6 @@ export const createCalendarEvent = createAsyncThunk(
   },
 );
 
-// NEW: Update Event
 export const updateCalendarEvent = createAsyncThunk(
   "calendar/updateEvent",
   async ({ eventCode, eventData }, { rejectWithValue }) => {
@@ -51,13 +49,12 @@ export const updateCalendarEvent = createAsyncThunk(
   },
 );
 
-// NEW: Delete Event
 export const deleteCalendarEvent = createAsyncThunk(
   "calendar/deleteEvent",
   async (eventCode, { rejectWithValue }) => {
     try {
       await deleteCalendarEventAPI(eventCode);
-      return eventCode; // Return the ID so we can remove it from state
+      return eventCode; 
     } catch (err) {
       return rejectWithValue(
         err?.response?.data?.message || "Failed to delete event",
@@ -66,12 +63,22 @@ export const deleteCalendarEvent = createAsyncThunk(
   },
 );
 
-// Fetch Crew
 export const fetchCrewMembers = createAsyncThunk(
   "calendar/fetchCrew",
   async (_, { rejectWithValue }) => {
     try {
       return await getCrewMembersAPI();
+    } catch (err) {
+      return rejectWithValue([]);
+    }
+  },
+);
+
+export const fetchDepartments = createAsyncThunk(
+  "calendar/fetchDepartments",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getDepartmentsAPI();
     } catch (err) {
       return rejectWithValue([]);
     }

@@ -14,12 +14,14 @@ import {
   Edit2,
   Trash2,
   AlertTriangle,
+  Video,
+  Building2
 } from "lucide-react";
-import { useState, useEffect } from "react"; // Added useEffect
+import { useState, useEffect } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
+import { useSelector } from "react-redux";
 
-// Helper for type colors
 const getEventTypeColor = (type) => {
   switch (type) {
     case "shoot": return "bg-peach-100 text-peach-800 border-peach-200 dark:bg-peach-900/30 dark:text-peach-200";
@@ -37,11 +39,12 @@ export default function EventDetailsModal({
   onEdit,
   onDelete,
   isDeleting,
-  canModify 
+  canModify = true
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  
+  const { departments } = useSelector((state) => state.calendar);
 
-  // RESET state whenever the modal opens or the event changes
   useEffect(() => {
     if (isOpen) {
       setConfirmDelete(false);
@@ -54,15 +57,21 @@ export default function EventDetailsModal({
     <Dialog open={isOpen} onOpenChange={(v) => { if(!v) onClose(); }}>
       <DialogContent className="max-w-lg p-0 overflow-hidden border-0 gap-0">
         
-        {/* Header Section with Color Band */}
         <div className={`h-3 w-full ${getEventTypeColor(event.eventType).split(" ")[0]}`} />
         
         <div className="p-6 pb-2">
            <div className="flex justify-between items-start mb-4">
-              <div className="space-y-1">
-                 <Badge variant="outline" className={`capitalize font-bold border ${getEventTypeColor(event.eventType)}`}>
-                    {event.eventType}
-                 </Badge>
+              <div className="space-y-1 w-full">
+                 <div className="flex justify-between items-center w-full">
+                   <Badge variant="outline" className={`capitalize font-bold border ${getEventTypeColor(event.eventType)}`}>
+                      {event.eventType}
+                   </Badge>
+                   {event.eventType === "meeting" && event.meeting?.roomId && (
+                     <Badge variant="secondary" className="flex gap-1 items-center bg-blue-100 text-blue-700 hover:bg-blue-100">
+                       <Video className="w-3 h-3" /> Meeting Link
+                     </Badge>
+                   )}
+                 </div>
                  <DialogTitle className="text-2xl font-bold leading-tight mt-2">
                     {event.title}
                  </DialogTitle>
@@ -100,7 +109,7 @@ export default function EventDetailsModal({
                     <MapPin className="w-5 h-5 text-muted-foreground" />
                  </div>
                  <div>
-                    <p className="font-semibold text-sm">Location</p>
+                     <p className="font-semibold text-sm">Location</p>
                     <p className="text-sm text-muted-foreground">{event.location}</p>
                  </div>
               </div>
@@ -113,28 +122,63 @@ export default function EventDetailsModal({
               </div>
            )}
 
-           {/* Attendees */}
-           {event.attendees && event.attendees.length > 0 && (
-              <div className="space-y-2">
-                 <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Users className="w-4 h-4" />
-                    <span>Attendees ({event.attendees.length})</span>
+           {event.eventType === "meeting" && (
+              <div className="space-y-4 pt-2">
+
+                 <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                       <Building2 className="w-4 h-4 text-muted-foreground" />
+                       <span>Department</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pl-6">
+                       {event.audience?.type === "ALL" && (
+                          <Badge variant="secondary" className="font-normal bg-purple-100 text-purple-800">
+                             Everyone (All Crew)
+                          </Badge>
+                       )}
+                       
+                       {event.audience?.type === "DEPARTMENT" && event.audience.departments?.map(deptId => {
+                          const dept = departments?.find(d => d._id === deptId);
+                          return (
+                             <Badge key={deptId} variant="secondary" className="font-normal bg-indigo-100 text-indigo-800">
+                                {dept ? dept.name : "Department"}
+                             </Badge>
+                          )
+                       })}
+
+                       {event.audience?.type === "USERS" && (
+                          <Badge variant="secondary" className="font-normal bg-sky-100 text-sky-800">
+                             Specific Crew Members
+                          </Badge>
+                       )}
+                    </div>
                  </div>
-                 <div className="flex flex-wrap gap-2">
-                    {event.attendees.map((attendee) => (
-                       <Badge key={attendee._id || attendee} variant="secondary" className="text-xs">
-                          {attendee.displayName || attendee.email || "Unknown"}
-                       </Badge>
-                    ))}
-                 </div>
+
+                 {event.attendees && event.attendees.length > 0 && (
+                    <div className="space-y-2">
+                       <div className="flex items-center gap-2 text-sm font-semibold">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span>Included Members ({event.attendees.length})</span>
+                       </div>
+                       <div className="flex flex-wrap gap-2 pl-6">
+                          {event.attendees.map((attendee) => {
+                             const userObj = attendee.userId || attendee;
+                             return (
+                               <Badge key={userObj._id || Math.random()} variant="outline" className="text-xs font-normal text-muted-foreground">
+                                  {userObj.displayName || userObj.email || "Crew Member"}
+                               </Badge>
+                             );
+                          })}
+                       </div>
+                    </div>
+                 )}
               </div>
            )}
         </div>
 
         <Separator className="mt-6" />
 
-        {/* Footer Actions */}
-        <DialogFooter className="p-6 bg-muted/10">
+        <DialogFooter className="p-6 bg-muted/10 border-t">
            {confirmDelete ? (
               <div className="w-full flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
                  <div className="flex items-center gap-2 text-destructive text-sm font-medium justify-center bg-destructive/10 p-2 rounded-md border border-destructive/20">

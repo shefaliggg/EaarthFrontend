@@ -18,6 +18,26 @@ import {
 
 /* ================= HELPERS ================= */
 
+function getAttendeesInitials(event) {
+
+  if (!event.audience || event.audience.type === "ALL") return "";
+  
+  if (!event.attendees || event.attendees.length === 0) return "";
+
+  const initials = event.attendees.map(att => {
+   
+    const userObj = att.userId || att;
+    const name = userObj.displayName || userObj.name || "";
+    if (!name) return "";
+    
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }).filter(Boolean);
+
+  return [...new Set(initials)].join(", ");
+}
+
 function groupEventsByDate(events) {
   const map = {};
 
@@ -54,7 +74,7 @@ function groupEventsByDate(events) {
 export default function CalendarTimelineView({ events, currentDate }) {
   const [isPastCollapsed, setIsPastCollapsed] = useState(true);
 
-  // Single month boundaries — driven by currentDate from toolbar chevrons
+  // Single month boundaries
   const rangeStart = startOfMonth(currentDate);
   const rangeEnd = endOfMonth(currentDate);
 
@@ -85,46 +105,39 @@ export default function CalendarTimelineView({ events, currentDate }) {
     return !isBefore(eventDate, today);
   });
 
-  // Unique event count (not expanded duplicates)
   const uniqueEventIds = new Set(relevantEvents.map((e) => e.id || e._id));
 
-  // Count events by type for current month only
   const prepCount = relevantEvents.filter((e) => e.eventType === "prep").length;
   const shootCount = relevantEvents.filter((e) => e.eventType === "shoot").length;
   const wrapCount = relevantEvents.filter((e) => e.eventType === "wrap").length;
 
-  // ── SUMMARY BAR (WeekView-style) ──────────────────────────────
   const summaryItems = [
     {
       key: "total",
       label: "Total",
       dotClass: "bg-purple-400/70 dark:bg-purple-500/60",
-      badgeClass:
-        "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
+      badgeClass: "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300",
       count: uniqueEventIds.size,
     },
     {
       key: "prep",
       label: "Prep",
       dotClass: "bg-sky-300 dark:bg-sky-800/80",
-      badgeClass:
-        "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
+      badgeClass: "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300",
       count: prepCount,
     },
     {
       key: "shoot",
       label: "Shoot",
       dotClass: "bg-peach-300 dark:bg-peach-800/80",
-      badgeClass:
-        "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
+      badgeClass: "bg-peach-100 dark:bg-peach-900/50 text-peach-700 dark:text-peach-300",
       count: shootCount,
     },
     {
       key: "wrap",
       label: "Wrap",
       dotClass: "bg-mint-300 dark:bg-mint-800/80",
-      badgeClass:
-        "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
+      badgeClass: "bg-mint-100 dark:bg-mint-900/50 text-mint-700 dark:text-mint-300",
       count: wrapCount,
     },
   ];
@@ -218,6 +231,8 @@ export default function CalendarTimelineView({ events, currentDate }) {
                 : new Date(eStart);
               const isMultiDay = eStart.toDateString() !== eEnd.toDateString();
 
+              const attendeesInitials = getAttendeesInitials(event);
+
               return (
                 <Tooltip key={event.id || event._id}>
                   <TooltipTrigger asChild>
@@ -229,31 +244,29 @@ export default function CalendarTimelineView({ events, currentDate }) {
                       )}
                     >
                       <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                        {/* Left: title + meta */}
+                        
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <h4
-                            className={cn(
-                              "font-bold text-sm truncate",
-                              colors.text,
-                            )}
-                          >
-                            {event.title}
-                          </h4>
-                          <div className="flex items-center gap-3 flex-wrap">
+                          
+                          <div className="flex items-baseline gap-1 truncate">
+                             <h4 className={cn("font-bold text-sm truncate", colors.text)}>
+                               {event.title}
+                             </h4>
+                             {attendeesInitials && (
+                               <span className={cn("text-xs font-medium opacity-80 truncate", colors.text)}>
+                                  - {attendeesInitials}
+                               </span>
+                             )}
+                          </div>
+
+                          <div className="flex items-center gap-3 flex-wrap mt-0.5">
                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                               <Clock className="w-3 h-3 flex-shrink-0" />
                               <span className="font-medium">
                                 {isAllDay
                                   ? "All Day Event"
                                   : isMultiDay
-                                    ? `${format(eStart, "MMM d")} – ${format(
-                                        eEnd,
-                                        "MMM d",
-                                      )}`
-                                    : `${format(eStart, "h:mm a")} – ${format(
-                                        eEnd,
-                                        "h:mm a",
-                                      )}`}
+                                    ? `${format(eStart, "MMM d")} – ${format(eEnd,"MMM d")}`
+                                    : `${format(eStart, "h:mm a")} – ${format(eEnd,"h:mm a")}`}
                               </span>
                             </div>
                             {event.location && (
@@ -286,7 +299,7 @@ export default function CalendarTimelineView({ events, currentDate }) {
                     <div className="flex flex-col gap-2 p-1 max-w-xs">
                       <div className="flex items-start justify-between gap-3">
                         <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
-                          {event.title}
+                          {event.title} {attendeesInitials && `- ${attendeesInitials}`}
                         </p>
                         {event.eventType && (
                           <span
@@ -329,7 +342,6 @@ export default function CalendarTimelineView({ events, currentDate }) {
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* SUMMARY BAR (replace current stats header) */}
       <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
         <div className="flex items-center gap-6">
           {summaryItems.map((item) => (
@@ -351,7 +363,6 @@ export default function CalendarTimelineView({ events, currentDate }) {
         </div>
       </div>
 
-      {/* TIMELINE HEADER */}
       <div className="bg-purple-50/80 dark:bg-purple-900/20 border-b border-primary/20 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -368,7 +379,6 @@ export default function CalendarTimelineView({ events, currentDate }) {
         </div>
       </div>
 
-      {/* TIMELINE BODY */}
       <div className="p-6 overflow-y-auto h-[1150px]">
         {grouped.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
@@ -379,11 +389,9 @@ export default function CalendarTimelineView({ events, currentDate }) {
           </div>
         ) : (
           <div className="relative">
-            {/* Vertical Timeline Line */}
             <div className="absolute left-6 top-0 bottom-0 w-[3px] bg-gradient-to-b from-purple-300 via-purple-400 to-purple-300 dark:from-purple-800/50 dark:via-purple-700/50 dark:to-purple-800/50 rounded-full" />
 
             <div className="space-y-5">
-              {/* PAST EVENTS (COLLAPSIBLE - ON TOP) */}
               {pastEvents.length > 0 && (
                 <>
                   <div className="relative flex items-center gap-4">
@@ -404,7 +412,6 @@ export default function CalendarTimelineView({ events, currentDate }) {
                     </div>
                   </div>
 
-                  {/* COLLAPSIBLE PAST EVENTS CONTAINER */}
                   {!isPastCollapsed && (
                     <div className="space-y-5 opacity-60">
                       {pastEvents.map(renderEventGroup)}
@@ -413,7 +420,6 @@ export default function CalendarTimelineView({ events, currentDate }) {
                 </>
               )}
 
-              {/* CURRENT AND FUTURE EVENTS */}
               {currentAndFutureEvents.map(renderEventGroup)}
             </div>
           </div>
