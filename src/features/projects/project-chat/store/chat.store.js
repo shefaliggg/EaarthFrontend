@@ -4,7 +4,11 @@ import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
-import { computeMessageState, transformMessage } from "../utils/messageHelpers";
+import {
+  computeMessageState,
+  transformConversation,
+  transformMessage,
+} from "../utils/messageHelpers";
 import { toast } from "sonner";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
@@ -31,6 +35,25 @@ const useChatStore = create(
         if (!socket) return;
 
         socket.removeAllListeners();
+
+        socket.on("conversation:new", (conversation) => {
+          console.log("📥 New conversation received:", conversation);
+
+          const currentUserId = getCurrentUserId();
+
+          const formatted = transformConversation(conversation, currentUserId);
+
+          set((state) => {
+            // Prevent duplicates
+            if (state.conversations.some((c) => c.id === formatted.id)) {
+              return state;
+            }
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
+        });
 
         socket.on("message:new", ({ conversationId, message }) => {
           console.log("📨 New message received:", {
@@ -141,8 +164,7 @@ const useChatStore = create(
           const state = get();
 
           const updated = new Set(state.onlineUsers);
-          updated.add(userId);
-
+          updated.add(userId.toString()); // normalize
           set({ onlineUsers: updated });
         });
 
@@ -158,8 +180,8 @@ const useChatStore = create(
 
         socket.on("presence:init", (userIds) => {
           console.log("users presence update", userIds);
-          const onlineSet = new Set(userIds);
 
+          const onlineSet = new Set(userIds.map((id) => id.toString()));
           set({ onlineUsers: onlineSet });
         });
 
@@ -172,9 +194,8 @@ const useChatStore = create(
         const online = get().onlineUsers;
 
         return group.members.filter((member) => {
-          const id = member.userId;
-
-          return id && online.has(id.toString());
+          const id = member.userId?._id?.toString();
+          return id && online.has(id);
         }).length;
       },
 
@@ -247,7 +268,7 @@ const useChatStore = create(
         }));
       },
 
-      loadConversations: async (projectId, type) => {
+      loadConversations: async (projectId, type, search) => {
         if (!projectId) {
           console.error("❌ No projectId provided");
           return;
@@ -262,15 +283,19 @@ const useChatStore = create(
 
         console.log("🔄 Loading conversations...", {
           projectId,
+          search,
           type,
           currentUserId,
         });
         set({ isLoadingConversations: true });
 
         try {
-          const conversations = await chatApi.getConversations(projectId);
+          const conversations = await chatApi.getConversations(
+            projectId,
+            search,
+          );
 
-          console.log("✅ Conversations received:", conversations.length);
+          console.log("✅ Conversations received:", conversations);
 
           if (!conversations || conversations.length === 0) {
             console.warn("⚠️ No conversations returned from API");
@@ -278,58 +303,9 @@ const useChatStore = create(
             return;
           }
 
-          const transformed = conversations.map((conv) => {
-            const frontendType = mapConversationType(conv.type);
-            const unreadCount = conv.unreadCount || 0;
-
-            let otherUser = null;
-            if (conv.type === "DIRECT" && conv.members) {
-              otherUser = conv.members.find(
-                (m) => m.userId?._id?.toString() !== currentUserId.toString(),
-              );
-            }
-
-            const currentMember = conv.members?.find(
-              (m) => m.userId?._id?.toString() === currentUserId.toString(),
-            );
-            const canSendMessage = currentMember?.canSendMessage !== false;
-
-            return {
-              id: conv._id,
-              type: frontendType,
-              projectId: conv.projectId,
-              name:
-                conv.type === "PROJECT_ALL"
-                  ? "General"
-                  : conv.type === "DEPARTMENT"
-                    ? conv.department?.name || "Department"
-                    : otherUser?.userId?.name || "Unknown User",
-              department: conv.department?._id,
-              departmentName: conv.department?.name,
-              userId: otherUser?.userId?._id,
-              avatar:
-                otherUser?.userId?.name?.charAt(0)?.toUpperCase() ||
-                conv.department?.name?.charAt(0)?.toUpperCase() ||
-                "U",
-              role: otherUser?.userId?.role || "Member",
-              members: Array.isArray(conv.members) ? conv.members : [],
-              unread: unreadCount,
-              mentions: 0,
-              lastMessage: conv.lastMessage?.preview || "",
-              pinnedMessage: conv.pinnedMessage,
-              timestamp: conv.lastMessage?.createdAt
-                ? new Date(conv.lastMessage.createdAt).getTime()
-                : Date.now(),
-              isPinned:
-                conv.pinnedFor?.some(
-                  (id) => id.toString() === currentUserId.toString(),
-                ) || false,
-              isMuted: false,
-              isFavorite: false,
-              canSendMessage,
-              _raw: conv,
-            };
-          });
+          const transformed = conversations.map((conv) =>
+            transformConversation(conv, currentUserId),
+          );
 
           // console.log("✅ Transformed conversations:", transformed.length);
           set({ conversations: transformed, isLoadingConversations: false });
@@ -340,6 +316,41 @@ const useChatStore = create(
             error.response?.data || error.message,
           );
           set({ isLoadingConversations: false, conversations: [] });
+        }
+      },
+
+      createDirectConversation: async (projectId, targetUserId) => {
+        try {
+          const existing = get().conversations.find(
+            (c) =>
+              c.type === "dm" &&
+              c.userId?.toString() === targetUserId.toString(),
+          );
+
+          if (existing) {
+            return existing;
+          }
+
+          const response = await chatApi.createDirectConversation(
+            projectId,
+            targetUserId,
+          );
+
+          const conv = response;
+
+          const currentUserId = getCurrentUserId();
+
+          const formatted = transformConversation(conv, currentUserId);
+
+          // 🔥 Add to conversation list immediately
+          set((state) => ({
+            conversations: [formatted, ...state.conversations],
+          }));
+
+          return formatted;
+        } catch (error) {
+          console.error("❌ Failed to create direct conversation:", error);
+          throw error;
         }
       },
 
@@ -926,11 +937,13 @@ const useChatStore = create(
           const isOwn =
             message.senderId?._id?.toString() ===
             getCurrentUserId()?.toString();
+
+          const isSelected = get().selectedChat?.id === conversationId;
           return {
             ...conv,
             lastMessage: message.content?.text || "",
             timestamp: new Date(message.createdAt).getTime(),
-            unread: isOwn ? conv.unread : conv.unread + 1,
+            unread: isOwn || isSelected ? conv.unread : conv.unread + 1,
           };
         });
         set({ conversations });
@@ -954,7 +967,7 @@ const useChatStore = create(
       },
 
       updateMessageReaction: (messageId, reactions) => {
-        get().updateMessageInConversation(messageId, { reactions : reactions });
+        get().updateMessageInConversation(messageId, { reactions: reactions });
       },
 
       markConversationMessagesAsRead: (conversationId, userId) => {

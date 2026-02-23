@@ -1,3 +1,6 @@
+import { getAvatarFallback } from "../../../../shared/config/utils";
+import { mapConversationType } from "./Chattypemapper";
+
 /**
  * Format timestamp to readable time
  */
@@ -346,3 +349,58 @@ export function buildReplyPayload(message) {
     type: message.type?.toUpperCase() || "TEXT",
   };
 }
+
+export const transformConversation = (conv, currentUserId) => {
+  const frontendType = mapConversationType(conv.type);
+  const unreadCount = conv.unreadCount || 0;
+
+  let otherUser = null;
+
+  if (conv.type === "DIRECT" && conv.members) {
+    otherUser = conv.members.find(
+      (m) => m.userId?._id?.toString() !== currentUserId.toString(),
+    );
+  }
+
+  const currentMember = conv.members?.find(
+    (m) => m.userId?._id?.toString() === currentUserId.toString(),
+  );
+
+  const canSendMessage = currentMember?.canSendMessage !== false;
+
+  return {
+    id: conv._id,
+    type: frontendType,
+    projectId: conv.projectId,
+    name:
+      conv.type === "PROJECT_ALL"
+        ? "General"
+        : conv.type === "DEPARTMENT"
+          ? conv.department?.name || "Department"
+          : otherUser?.userId?.displayName || "Unknown User",
+    department: conv.department?._id,
+    departmentName:
+      conv.type === "DIRECT" ? otherUser?.userId?.departmentName : conv.departmentName,
+    userId: otherUser?.userId?._id,
+    avatar: otherUser
+      ? getAvatarFallback(otherUser?.userId?.displayName) || "U"
+      : conv.department?.name?.charAt(0)?.toUpperCase() || "U",
+    role: otherUser?.userId?.roleName || "Member",
+    members: Array.isArray(conv.members) ? conv.members : [],
+    unread: unreadCount,
+    mentions: 0,
+    lastMessage: conv.lastMessage?.preview || "",
+    pinnedMessage: conv.pinnedMessage,
+    timestamp: conv.lastMessage?.createdAt
+      ? new Date(conv.lastMessage.createdAt).getTime()
+      : Date.now(),
+    isPinned:
+      conv.pinnedFor?.some(
+        (id) => id.toString() === currentUserId.toString(),
+      ) || false,
+    isMuted: false,
+    isFavorite: false,
+    canSendMessage,
+    _raw: conv,
+  };
+};

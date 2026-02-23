@@ -413,6 +413,9 @@ export default function MessageBubble({
                         (edited)
                       </span>
                     )}
+                    {isFavorited && (
+                      <Star fill="yellow" className="w-3 h-3"/>
+                    )}
                     <span className="text-[10px] text-primary-foreground/70">
                       {message.time}
                     </span>

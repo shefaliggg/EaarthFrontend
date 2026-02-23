@@ -53,3 +53,23 @@ export function capitalizeFirstLetter(text = "", mode = "first") {
 
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+export function getAvatarFallback(name) {
+  if (!name || typeof name !== "string") {
+    return "??";
+  }
+
+  const cleaned = name.trim().replace(/\s+/g, " ");
+
+  if (!cleaned) return "??";
+
+  const parts = cleaned.split(" ");
+
+  if (parts.length === 1) {
+    // Single name → first 2 letters
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  // Multiple words → first letter of first two words
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}

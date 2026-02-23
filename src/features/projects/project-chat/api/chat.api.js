@@ -2,11 +2,11 @@ import { axiosConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
   // Get conversations for a project
-  getConversations: async (projectId, type) => {
+  getConversations: async (projectId,search, type) => {
     try {
       console.log("📡 API: Fetching conversations", { projectId, type });
 
-      const params = { projectId };
+      const params = { projectId, search };
       if (type) params.type = type;
 
       const response = await axiosConfig.get("/chats", { params });
@@ -182,7 +182,7 @@ const chatApi = {
 
   // Add/remove reaction
   toggleReaction: async (conversationId, messageId, emoji) => {
-    console.log("reaction emoji", emoji)
+    console.log("reaction emoji", emoji);
     try {
       const response = await axiosConfig.patch(
         `/chats/${conversationId}/messages/${messageId}/react`,
@@ -257,6 +257,23 @@ const chatApi = {
     } catch (error) {
       console.error(
         "❌ pinMessage failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
+  createDirectConversation: async (projectId, targetUserId) => {
+    try {
+      const response = await axiosConfig.post("/chats/direct", {
+        projectId,
+        targetUserId,
+      });
+
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ createDirectConversation failed:",
         error.response?.data || error.message,
       );
       throw error;

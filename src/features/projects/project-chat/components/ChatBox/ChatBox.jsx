@@ -6,7 +6,14 @@ import React, {
   useCallback,
   useLayoutEffect,
 } from "react";
-import { Sparkles, AlertCircle, ChevronDown } from "lucide-react";
+import {
+  Sparkles,
+  AlertCircle,
+  ChevronDown,
+  X,
+  Pin,
+  Paperclip,
+} from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
@@ -44,7 +51,7 @@ function ChatBox() {
     loadMessages,
     emitConversationRead,
     isLoadingMessages,
-    typingUsers
+    typingUsers,
   } = useChatStore();
 
   const messagesData = useMemo(() => {
@@ -190,6 +197,15 @@ function ChatBox() {
     emitConversationRead(selectedChat?.id);
   }, [scrollToBottom, selectedChat?.id, emitConversationRead]);
 
+  const scrollToMessage = (messageClientId) => {
+    const element = document.getElementById(`message-${messageClientId}`);
+    if (element && scrollContainerRef.current) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const pinnedMessage = selectedChat?.pinnedMessage;
+
   // ────────────────────────────────
   // Render
   // ────────────────────────────────
@@ -214,6 +230,39 @@ function ChatBox() {
   return (
     <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex flex-col mx-auto">
       <ChatHeader />
+
+      {pinnedMessage?.messageId && (
+        <div className="px-4 border-b bg-muted/40 backdrop-blur-sm">
+          <button
+            onClick={() => scrollToMessage(pinnedMessage.messageId)}
+            className="w-full flex items-center gap-3 text-left cursor-pointer p-2 rounded-lg transition-all"
+          >
+            <Pin className="text-primary w-5 h-5" />
+
+            <div className="flex-1">
+              <p className="text-[10px] font-medium text-primary uppercase tracking-wide">
+                Pinned Message
+              </p>
+              <p className="text-sm text-foreground line-clamp-1">
+                {pinnedMessage.text}
+              </p>
+            </div>
+            
+            {pinnedMessage.containsAttachments && (
+              <div className="w-9 h-9 flex items-center justify-center text-primary rounded-[7px] bg-primary/10">
+                <Paperclip className="w-4 h-4" />
+              </div>
+            )}
+            <X
+              onClick={(e) => {
+                e.stopPropagation();
+                // handleUnpin();
+              }}
+              className="w-4 h-4 text-muted-foreground hover:text-destructive"
+            />
+          </button>
+        </div>
+      )}
 
       <div
         ref={scrollContainerRef}
@@ -288,7 +337,10 @@ function ChatBox() {
           />
         )}
         {editingMessage && (
-          <EditBanner message={editingMessage} onClose={() => setEditingMessage(null)} />
+          <EditBanner
+            message={editingMessage}
+            onClose={() => setEditingMessage(null)}
+          />
         )}
         {attachments.length > 0 && (
           <div className="flex gap-2 p-2 overflow-x-auto">

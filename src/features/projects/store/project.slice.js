@@ -7,11 +7,14 @@ import {
   getProjectByIdThunk,
   updateProjectThunk,
   deleteProjectThunk,
+  getProjectMembersThunk,
 } from "./project.thunks";
 
 const initialState = {
   projects: [],
   currentProject: null,
+  projectMembers: [],
+  isFetchingMembers: false,
   isCreating: false,
   isSubmitting: false,
   isFetching: false,
@@ -111,7 +114,8 @@ const projectSlice = createSlice({
         state.isCreating = false;
         state.projects.unshift(action.payload);
         state.total += 1;
-        state.successMessage = "Project created as draft. Submit for approval to activate.";
+        state.successMessage =
+          "Project created as draft. Submit for approval to activate.";
       })
       .addCase(createProjectThunk.rejected, (state, action) => {
         state.isCreating = false;
@@ -126,7 +130,9 @@ const projectSlice = createSlice({
       .addCase(submitProjectForApprovalThunk.fulfilled, (state, action) => {
         state.isSubmitting = false;
         // Update project in list
-        const index = state.projects.findIndex(p => p._id === action.payload._id);
+        const index = state.projects.findIndex(
+          (p) => p._id === action.payload._id,
+        );
         if (index !== -1) {
           state.projects[index] = action.payload;
         }
@@ -182,7 +188,9 @@ const projectSlice = createSlice({
       .addCase(updateProjectThunk.fulfilled, (state, action) => {
         state.isUpdating = false;
         state.currentProject = action.payload;
-        const index = state.projects.findIndex(p => p._id === action.payload._id);
+        const index = state.projects.findIndex(
+          (p) => p._id === action.payload._id,
+        );
         if (index !== -1) {
           state.projects[index] = action.payload;
         }
@@ -201,12 +209,26 @@ const projectSlice = createSlice({
       })
       .addCase(deleteProjectThunk.fulfilled, (state, action) => {
         state.isDeleting = false;
-        state.projects = state.projects.filter(p => p._id !== action.payload);
+        state.projects = state.projects.filter((p) => p._id !== action.payload);
         state.total -= 1;
         state.successMessage = "Project deleted successfully";
       })
       .addCase(deleteProjectThunk.rejected, (state, action) => {
         state.isDeleting = false;
+        state.error = action.payload;
+      })
+
+      //get all project members
+      .addCase(getProjectMembersThunk.pending, (state) => {
+        state.isFetchingMembers = true;
+        state.error = null;
+      })
+      .addCase(getProjectMembersThunk.fulfilled, (state, action) => {
+        state.isFetchingMembers = false;
+        state.projectMembers = action.payload || [];
+      })
+      .addCase(getProjectMembersThunk.rejected, (state, action) => {
+        state.isFetchingMembers = false;
         state.error = action.payload;
       });
   },

@@ -32,7 +32,7 @@ function ProjectChat() {
   // Load conversations when project changes
   useEffect(() => {
     if (currentProject?._id && currentUser?._id) {
-      loadConversations(currentProject._id, activeTab);
+      loadConversations(currentProject._id,activeTab);
     }
   }, [currentProject?._id, activeTab, currentUser?._id]);
 
