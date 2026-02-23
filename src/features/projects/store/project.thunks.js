@@ -7,6 +7,7 @@ import {
   getProjectByIdAPI,
   updateProjectAPI,
   deleteProjectAPI,
+  getProjectMembers,
 } from "../service/Project.service";
 
 /**
@@ -33,10 +34,10 @@ export const createProjectThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to create project"
+        err?.response?.data?.message || "Failed to create project",
       );
     }
-  }
+  },
 );
 
 /**
@@ -50,10 +51,10 @@ export const submitProjectForApprovalThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to submit project for approval"
+        err?.response?.data?.message || "Failed to submit project for approval",
       );
     }
-  }
+  },
 );
 
 /**
@@ -73,10 +74,10 @@ export const getAllProjectsThunk = createAsyncThunk(
       };
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to fetch projects"
+        err?.response?.data?.message || "Failed to fetch projects",
       );
     }
-  }
+  },
 );
 
 /**
@@ -90,10 +91,10 @@ export const getProjectByIdThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to fetch project details"
+        err?.response?.data?.message || "Failed to fetch project details",
       );
     }
-  }
+  },
 );
 
 /**
@@ -117,7 +118,7 @@ export const updateProjectThunk = createAsyncThunk(
       };
 
       // Remove undefined values
-      Object.keys(payload).forEach(key => {
+      Object.keys(payload).forEach((key) => {
         if (payload[key] === undefined) {
           delete payload[key];
         }
@@ -127,10 +128,10 @@ export const updateProjectThunk = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to update project"
+        err?.response?.data?.message || "Failed to update project",
       );
     }
-  }
+  },
 );
 
 /**
@@ -144,8 +145,26 @@ export const deleteProjectThunk = createAsyncThunk(
       return id;
     } catch (err) {
       return rejectWithValue(
-        err?.response?.data?.message || "Failed to delete project"
+        err?.response?.data?.message || "Failed to delete project",
       );
     }
-  }
+  },
+);
+
+export const getProjectMembersThunk = createAsyncThunk(
+  "project/getMembers",
+  async ({ projectId, search }, { rejectWithValue }) => {
+    try {
+      const response = await getProjectMembers(projectId, search);
+      return response;
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to fetch project members",
+        console.error(
+          "falied to fetch proejct members:",
+          err?.response?.data?.message || err,
+        ),
+      );
+    }
+  },
 );

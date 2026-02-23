@@ -22,6 +22,8 @@ import {
   Image,
   Mic2,
   Mic,
+  Edit2,
+  Pin,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -68,25 +70,30 @@ export default function MessageBubble({
   selectedChatId,
   onReply,
   onEdit,
-  onReaction,
-  onToggleFavorite,
   canEdit,
   canDeleteForEveryone,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
+  const [isReacting, setIsReacting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageFile, setPreviewImageFile] = useState(null);
   const retryMessage = useChatStore((state) => state.retryMessage);
-  const { selectedChat } = useChatStore();
+  const {
+    selectedChat,
+    reactToMessage,
+    togglePinMessage,
+    toggleFavoriteMessage,
+  } = useChatStore();
 
   const videoRef = useRef(null);
   const audioRef = useRef(null);
+  const reactionPickerRef = useRef(null);
 
   const isOwn = message.isOwn;
-  const isFavorited = message._raw?.starredBy?.length > 0;
+  const isFavorited = message.isStarred;
   const isForwarded = message.isForwarded;
 
   useEffect(() => {
@@ -106,6 +113,25 @@ export default function MessageBubble({
     }
   }, [isPlaying, message.type, message.totalDuration]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        reactionPickerRef.current &&
+        !reactionPickerRef.current.contains(event.target)
+      ) {
+        setShowReactionPicker(null);
+      }
+    };
+
+    if (showReactionPicker === message.id) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showReactionPicker, message.id]);
+
   const highlightText = (text) => {
     if (!searchQuery || !text) return text;
 
@@ -121,7 +147,6 @@ export default function MessageBubble({
     );
   };
 
-  // ✅ Message action handlers
   const handleCopy = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
@@ -137,14 +162,40 @@ export default function MessageBubble({
     setShowForwardDialog(true);
   };
 
+  const handleReaction = async (emoji) => {
+    setIsReacting(true);
+    await reactToMessage(selectedChatId, message, emoji);
+    setShowReactionPicker(null);
+    setIsReacting(false);
+  };
+
+  const handleToggleFavorite = async () => {
+    await toggleFavoriteMessage(selectedChatId, message.id, isFavorited);
+  };
+
+  const handlePin = async () => {
+    await togglePinMessage(selectedChatId, message.id);
+  };
+
   const handleImageClick = (imageFIle) => {
     setPreviewImageFile(imageFIle);
     setShowImagePreview(true);
   };
 
-  if (message.replyTo) {
-    console.log("reply fron backend", message);
-  }
+  const attachments = message.files || [];
+
+  const isMedia = (mime) =>
+    mime?.startsWith("image/") || mime?.startsWith("video/");
+
+  const hasNonMedia = attachments.some((f) => !isMedia(f.mime));
+
+  const isSingleAttachment = attachments.length === 1;
+
+  const isMediaGrid = attachments.length > 1 && !hasNonMedia;
+
+  const attachmentLayoutClass = isMediaGrid
+    ? "grid grid-cols-2 gap-1.5"
+    : "flex flex-col gap-2";
 
   if (message.deleted) {
     return (
@@ -287,11 +338,9 @@ export default function MessageBubble({
                   </p>
                 )}
 
-                {message.files && message.files.length > 0 && (
-                  <div
-                    className={`grid ${message.files.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1`}
-                  >
-                    {message.files.map((file, index) => {
+                {attachments.length > 0 && (
+                  <div className={cn(attachmentLayoutClass, "gap-1.5")}>
+                    {attachments.map((file, index) => {
                       const url = getFileUrl(file.url);
                       if (file.mime.startsWith("image/"))
                         return (
@@ -301,7 +350,7 @@ export default function MessageBubble({
                             file={file}
                             url={url}
                             onClick={handleImageClick}
-                            single={message.files.length === 1}
+                            single={!isMediaGrid}
                           />
                         );
                       if (file.mime.startsWith("video/"))
@@ -311,7 +360,7 @@ export default function MessageBubble({
                             key={index}
                             file={file}
                             url={url}
-                            single={message.files.length === 1}
+                            single={!isMediaGrid}
                           />
                         );
                       if (file.mime.startsWith("audio/"))
@@ -321,7 +370,8 @@ export default function MessageBubble({
                             key={index}
                             file={file}
                             url={url}
-                            single={message.files.length === 1}
+                            single={!isMediaGrid}
+                            isOwn={isOwn}
                           />
                         );
                       return (
@@ -330,7 +380,8 @@ export default function MessageBubble({
                           key={index}
                           file={file}
                           url={url}
-                          single={message.files.length === 1}
+                          single={!isMediaGrid}
+                          isOwn={isOwn}
                         />
                       );
                     })}
@@ -338,7 +389,14 @@ export default function MessageBubble({
                 )}
 
                 {message.caption && (
-                  <p className="mt-2 text-sm px-2">{message.caption}</p>
+                  <p
+                    className={cn(
+                      "mt-2 text-sm px-2",
+                      isMediaGrid ? "max-w-[330px]" : "max-w-[260px]",
+                    )}
+                  >
+                    {message.caption}
+                  </p>
                 )}
 
                 {isOwn && (
@@ -354,6 +412,9 @@ export default function MessageBubble({
                       >
                         (edited)
                       </span>
+                    )}
+                    {isFavorited && (
+                      <Star fill="yellow" className="w-3 h-3"/>
                     )}
                     <span className="text-[10px] text-primary-foreground/70">
                       {message.time}
@@ -379,14 +440,17 @@ export default function MessageBubble({
                 isOwn ? "flex-row-reverse" : "flex-row",
               )}
             >
-              {Object.entries(message.reactions).map(([emoji, count]) => (
+              {Object.entries(message.reactions).map(([emoji, users]) => (
                 <button
                   key={emoji}
-                  onClick={() => onReaction(message.id, emoji)}
+                  onClick={() => handleReaction(emoji)}
+                  disabled={isReacting}
                   className="bg-primary/20 hover:bg-muted px-2 py-1 rounded-full text-xs flex items-center gap-1 transition-all hover:scale-110"
                 >
                   <span>{emoji}</span>
-                  <span className="text-[10px] font-medium">{count}</span>
+                  <span className="text-[10px] font-medium">
+                    {users.length}
+                  </span>
                 </button>
               ))}
             </div>
@@ -398,7 +462,7 @@ export default function MessageBubble({
               isOwn ? "justify-end" : "justify-start",
               "opacity-0 translate-y-1 scale-95",
               "max-h-0 overflow-hidden opacity-0 scale-95",
-              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-1",
+              "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-2",
             )}
           >
             <ActionButton
@@ -418,12 +482,30 @@ export default function MessageBubble({
               }}
             />
             <ActionButton
+              icon={Smile}
+              tooltip="React"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReactionPicker(
+                  showReactionPicker === message.id ? null : message.id,
+                );
+              }}
+            />
+            <ActionButton
               icon={Star}
               tooltip={isFavorited ? "Unstar" : "Star"}
               className={isFavorited ? "text-yellow-500" : ""}
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleFavorite(message.id, isFavorited);
+                handleToggleFavorite();
+              }}
+            />
+            <ActionButton
+              icon={Pin}
+              tooltip="Pin"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePin();
               }}
             />
             <ActionButton
@@ -434,21 +516,11 @@ export default function MessageBubble({
                 handleCopy();
               }}
             />
-            <ActionButton
-              icon={Smile}
-              tooltip="React"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowReactionPicker(
-                  showReactionPicker === message.id ? null : message.id,
-                );
-              }}
-            />
             {isOwn && canEdit && (
               <ActionButton
-                icon={Edit3}
+                icon={Edit2}
                 tooltip="Edit"
-                className="text-blue-500"
+                className="text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(message);
@@ -478,9 +550,10 @@ export default function MessageBubble({
             {REACTIONS.map((emoji) => (
               <button
                 key={emoji}
+                disabled={isReacting}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onReaction(message.id, emoji);
+                  handleReaction(emoji);
                 }}
                 className="text-xl hover:scale-125 transition-transform p-1"
                 aria-label={`React with ${emoji}`}
@@ -558,7 +631,7 @@ function MessageImage({ file, url, onClick, single = true }) {
 
   return (
     <div
-      className={`overflow-hidden relative  w-full ${single ? " max-w-[240px] max-h-[240px]" : " max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+      className={`overflow-hidden relative  w-full ${single ? " max-w-[260px] max-h-[280px]" : "min-w-[160px] max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
     >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -592,7 +665,7 @@ function MessageVideo({ file, url, single = true }) {
       <video
         src={url}
         controls
-        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[240px] max-h-[240px]" : "aspect-square max-w-[160px] max-h-[160px]"}`}
+        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px] max-h-[280px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
       >
         Your browser does not support the video tag.
       </video>
@@ -609,7 +682,7 @@ function MessageVideo({ file, url, single = true }) {
   );
 }
 
-function MessageAudio({ message, file, url, single = true }) {
+function MessageAudio({ message, file, url, single = true, isOwn }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playProgress, setPlayProgress] = useState(0);
   const [duration, setDuration] = useState(file?.duration || 0);
@@ -617,25 +690,25 @@ function MessageAudio({ message, file, url, single = true }) {
 
   const audioRef = useRef(null);
 
-  // const isAudioFile = false;
-  // const isVoiceMessage = true
   const isAudioFile = message.type.toLowerCase() === "media";
   const isVoiceMessage = message.type.toLowerCase() === "audio";
 
   useEffect(() => {
     if (isPlaying) {
       const interval = setInterval(() => {
-        setPlayProgress((prev) => {
-          if (!audioRef.current) return 0;
-          const progress =
-            (audioRef.current.currentTime / audioRef.current.duration) * 100;
-          if (progress >= 100) {
-            setIsPlaying(false);
-            clearInterval(interval);
-          }
-          return progress;
-        });
+        if (!audioRef.current) return;
+
+        const progress =
+          (audioRef.current.currentTime / audioRef.current.duration) * 100;
+
+        setPlayProgress(progress);
+
+        if (progress >= 100) {
+          setIsPlaying(false);
+          clearInterval(interval);
+        }
       }, 200);
+
       return () => clearInterval(interval);
     }
   }, [isPlaying]);
@@ -646,132 +719,152 @@ function MessageAudio({ message, file, url, single = true }) {
     }
   }, [playbackRate]);
 
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+
+    audioRef.current.playbackRate = playbackRate;
+
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
+
+    setIsPlaying(!isPlaying);
+  };
+
   return (
     <div
-      className={`flex items-center gap-2 w-full col-span-2 
-        ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[160px] max-w-full"} 
-        ${isAudioFile ? "bg-muted/90" : "bg-primary"} 
-        p-3 px-2 rounded-md`}
+      className={`
+        flex items-center gap-3 col-span-2
+        ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[260px] max-w-[260px]"}
+        ${isVoiceMessage ? "rounded-full px-3 py-2" : `${isOwn ? "bg-muted/90" : "bg-primary/10"} rounded-md px-3 py-2`}
+        ${isAudioFile && !single && isOwn ? "ml-auto" : ""}
+      `}
     >
+      {/* Play Button */}
       <button
-        onClick={() => {
-          if (!audioRef.current) return;
-          audioRef.current.playbackRate = playbackRate;
-          if (isPlaying) audioRef.current.pause();
-          else audioRef.current.play();
-          setIsPlaying(!isPlaying);
-        }}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
-      ${
-        isVoiceMessage
-          ? "bg-white/20 hover:bg-white/30"
-          : "bg-primary/10 hover:bg-primary/20"
-      }`}
+        onClick={togglePlay}
+        className={`
+          w-9 h-9 flex shrink-0 items-center justify-center rounded-full transition
+          ${
+            isVoiceMessage
+              ? "bg-white/20 hover:bg-white/30"
+              : "bg-primary/10 hover:bg-primary/20"
+          }
+        `}
       >
         {isPlaying ? (
           <Pause
-            className={`w-5 h-5 ${
+            className={`w-4 h-4 ${
               isVoiceMessage ? "text-white" : "text-primary"
             }`}
           />
         ) : (
           <Play
-            className={`w-5 h-5 ${
+            className={`w-4 h-4 ${
               isVoiceMessage ? "text-white" : "text-primary"
             }`}
           />
         )}
       </button>
 
-      <div className="flex-1 flex flex-col">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col gap-1">
+        {/* File name for audio file */}
         {isAudioFile && (
-          <span className={`text-[12px] text-muted-foreground mb-0.5`}>
+          <span className="text-[11px] text-muted-foreground truncate">
             {file.name}
           </span>
         )}
-        <div
-          className={`h-1 rounded-full overflow-hidden ${
-            isVoiceMessage ? "bg-white/20" : "bg-muted"
-          }`}
-        >
-          <div
-            className={`h-full transition-all ${
-              isVoiceMessage ? "bg-white" : "bg-primary"
-            }`}
-            style={{ width: `${playProgress}%` }}
-          />
-        </div>
-        <div className="flex justify-between items-center  mt-1">
-          <p
-            className={`text-xs flex items-center gap-1 ${
-              isVoiceMessage
-                ? "text-white/90"
-                : "text-muted-foreground text-[11px]"
+
+        {/* Waveform for voice */}
+        {isVoiceMessage && (
+          <div className="flex items-end gap-[2px] h-4 pl-1">
+            {Array.from({ length: 36 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-[2px] rounded-full bg-white/70"
+                style={{
+                  height: `${4 + Math.random() * 14}px`,
+                  opacity: i / 22 < playProgress / 100 ? 1 : 0.35,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Progress bar for audio file */}
+        {isAudioFile && (
+          <div className="h-1 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${playProgress}%` }}
+            />
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex justify-between items-center">
+          <span
+            className={`text-[11px] flex items-center gap-1 ${
+              isVoiceMessage ? "text-white/90" : "text-muted-foreground"
             }`}
           >
             {isVoiceMessage ? (
               <>
-                <Mic className="w-4 h-4 text-white/80" />
-                Voice message
+                <Mic className="w-3 h-3" />
+                Voice
               </>
             ) : (
               <>
-                <Volume2 className="w-3 h-3 text-muted-foreground" />
-                Audio File
+                <Volume2 className="w-3 h-3" />
+                Audio
               </>
             )}
-          </p>
+          </span>
+
           <span
-            className={`text-[11px] ${isVoiceMessage ? "text-white/90" : "text-muted-foreground"}`}
+            className={`text-[11px] ${
+              isVoiceMessage ? "text-white/90" : "text-muted-foreground"
+            }`}
           >
             {formatDuration(duration)}
           </span>
         </div>
       </div>
 
+      {/* Playback speed (voice only) */}
       {isVoiceMessage && (
         <button
           onClick={() => {
             const nextRate =
               playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1;
-
             setPlaybackRate(nextRate);
           }}
-          className="text-[11px] px-2 py-1 rounded-full bg-white/20 text-white hover:bg-white/30 transition"
+          className="text-[11px] px-2 py-1 rounded-full bg-white/20 hover:bg-white/30 transition"
         >
           {playbackRate}x
         </button>
       )}
 
+      {/* Download button for audio file */}
       {isAudioFile && (
         <Button
+          variant="ghost"
+          size="icon"
           onClick={() =>
             downloadAttachment(message.conversationId, message._id, file)
           }
-          variant={"ghost"}
-          size={"icon"}
         >
           <Download className="w-4 h-4" />
         </Button>
       )}
 
+      {/* Hidden audio element */}
       <audio
         ref={audioRef}
         src={url}
         onLoadedMetadata={() => {
           if (!audioRef.current) return;
-
-          if (!file?.duration) {
-            setDuration(audioRef.current.duration);
-          }
-        }}
-        onTimeUpdate={() => {
-          if (!audioRef.current) return;
-
-          const progress =
-            (audioRef.current.currentTime / audioRef.current.duration) * 100;
-
-          setPlayProgress(progress);
+          if (!file?.duration) setDuration(audioRef.current.duration);
         }}
         onEnded={() => {
           setIsPlaying(false);
@@ -782,17 +875,17 @@ function MessageAudio({ message, file, url, single = true }) {
   );
 }
 
-function MessageFile({ file, url, single }) {
+function MessageFile({ file, url, single, isOwn }) {
   return (
     <div
-      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[160px] max-w-full"} bg-muted/90 p-3 px-2 rounded-md`}
+      className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[260px] max-w-[260px]"} ${isOwn ? "bg-muted/90 ml-auto" : "bg-primary/10"} p-3 px-2 rounded-md`}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
         <FileText className="w-5 h-5 text-primary" />
       </div>
 
       <div className="flex-1 min-w-0 pl-1">
-        <p className="text-sm font-medium truncate text-foreground">
+        <p className="text-xs font-medium truncate text-foreground">
           {file.name || "Document"}
         </p>
         {file.size && (

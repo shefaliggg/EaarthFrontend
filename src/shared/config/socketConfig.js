@@ -23,9 +23,11 @@ let publicSocket = null;
 let chatSocket = null;
 let notificationSocket = null;
 
+let publicSocketManualDisconnect = false;
+
 // ===== PUBLIC SOCKET =====
 export const initPublicSocket = () => {
-  if (publicSocket?.connected) return publicSocket;
+  if (publicSocket) return publicSocket;
 
   publicSocket = io(`${socketBaseURL}/public`, baseConfig);
 
@@ -57,7 +59,7 @@ export const initPublicSocket = () => {
 
 // ===== CHAT SOCKET =====
 export const initChatSocket = (userId) => {
-  if (chatSocket?.connected) return chatSocket;
+  if (chatSocket) return chatSocket;
 
   chatSocket = io(`${socketBaseURL}/chat`, {
     ...baseConfig,
@@ -85,7 +87,7 @@ export const initChatSocket = (userId) => {
 
 // ===== NOTIFICATION SOCKET =====
 export const initNotificationSocket = (userId) => {
-  if (notificationSocket?.connected) return notificationSocket;
+  if (notificationSocket) return notificationSocket;
 
   notificationSocket = io(`${socketBaseURL}/notifications`, {
     ...baseConfig,
@@ -123,3 +125,14 @@ export const disconnectAllSockets = () => {
   chatSocket = null;
   notificationSocket = null;
 };
+
+export const disconnectPublicSocket = () => {
+  publicSocket?.disconnect();
+  publicSocket = null;
+};
+
+export const markPublicSocketManualDisconnect = () => {
+  publicSocketManualDisconnect = true;
+};
+
+export const isPublicSocketManualDisconnect = () => publicSocketManualDisconnect;

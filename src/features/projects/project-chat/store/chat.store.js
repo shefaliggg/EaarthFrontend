@@ -4,7 +4,11 @@ import chatApi from "../api/chat.api";
 import { mapConversationType } from "../utils/Chattypemapper";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
-import { computeMessageState, transformMessage } from "../utils/messageHelpers";
+import {
+  computeMessageState,
+  transformConversation,
+  transformMessage,
+} from "../utils/messageHelpers";
 import { toast } from "sonner";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
@@ -31,6 +35,25 @@ const useChatStore = create(
         if (!socket) return;
 
         socket.removeAllListeners();
+
+        socket.on("conversation:new", (conversation) => {
+          console.log("📥 New conversation received:", conversation);
+
+          const currentUserId = getCurrentUserId();
+
+          const formatted = transformConversation(conversation, currentUserId);
+
+          set((state) => {
+            // Prevent duplicates
+            if (state.conversations.some((c) => c.id === formatted.id)) {
+              return state;
+            }
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
+        });
 
         socket.on("message:new", ({ conversationId, message }) => {
           console.log("📨 New message received:", {
@@ -68,9 +91,19 @@ const useChatStore = create(
           get().markMessageAsDeleted(messageId);
         });
 
-        socket.on("message:reaction", ({ messageId, userId, emoji }) => {
-          console.log("❤️ Message reaction:", { messageId, emoji });
-          get().updateMessageReaction(messageId, userId, emoji);
+        socket.on("message:reaction", ({ messageId, reactions }) => {
+          console.log("❤️ Message reaction:", { messageId, reactions });
+          const updatedReactions = (reactions || []).reduce((acc, r) => {
+            const emoji = r.emoji;
+            const userId = r.userId?._id?.toString() || r.userId?.toString();
+
+            if (!acc[emoji]) acc[emoji] = [];
+
+            acc[emoji].push(userId);
+
+            return acc;
+          }, {});
+          get().updateMessageReaction(messageId, updatedReactions);
         });
 
         socket.on("conversation:read", ({ conversationId, userId }) => {
@@ -131,8 +164,7 @@ const useChatStore = create(
           const state = get();
 
           const updated = new Set(state.onlineUsers);
-          updated.add(userId);
-
+          updated.add(userId.toString()); // normalize
           set({ onlineUsers: updated });
         });
 
@@ -147,8 +179,9 @@ const useChatStore = create(
         });
 
         socket.on("presence:init", (userIds) => {
-          const onlineSet = new Set(userIds);
+          console.log("users presence update", userIds);
 
+          const onlineSet = new Set(userIds.map((id) => id.toString()));
           set({ onlineUsers: onlineSet });
         });
 
@@ -161,9 +194,8 @@ const useChatStore = create(
         const online = get().onlineUsers;
 
         return group.members.filter((member) => {
-          const id = member.userId;
-
-          return id && online.has(id.toString());
+          const id = member.userId?._id?.toString();
+          return id && online.has(id);
         }).length;
       },
 
@@ -236,7 +268,7 @@ const useChatStore = create(
         }));
       },
 
-      loadConversations: async (projectId, type) => {
+      loadConversations: async (projectId, type, search) => {
         if (!projectId) {
           console.error("❌ No projectId provided");
           return;
@@ -251,15 +283,19 @@ const useChatStore = create(
 
         console.log("🔄 Loading conversations...", {
           projectId,
+          search,
           type,
           currentUserId,
         });
         set({ isLoadingConversations: true });
 
         try {
-          const conversations = await chatApi.getConversations(projectId);
+          const conversations = await chatApi.getConversations(
+            projectId,
+            search,
+          );
 
-          console.log("✅ Conversations received:", conversations.length);
+          console.log("✅ Conversations received:", conversations);
 
           if (!conversations || conversations.length === 0) {
             console.warn("⚠️ No conversations returned from API");
@@ -267,57 +303,9 @@ const useChatStore = create(
             return;
           }
 
-          const transformed = conversations.map((conv) => {
-            const frontendType = mapConversationType(conv.type);
-            const unreadCount = conv.unreadCount || 0;
-
-            let otherUser = null;
-            if (conv.type === "DIRECT" && conv.members) {
-              otherUser = conv.members.find(
-                (m) => m.userId?._id?.toString() !== currentUserId.toString(),
-              );
-            }
-
-            const currentMember = conv.members?.find(
-              (m) => m.userId?._id?.toString() === currentUserId.toString(),
-            );
-            const canSendMessage = currentMember?.canSendMessage !== false;
-
-            return {
-              id: conv._id,
-              type: frontendType,
-              projectId: conv.projectId,
-              name:
-                conv.type === "PROJECT_ALL"
-                  ? "General"
-                  : conv.type === "DEPARTMENT"
-                    ? conv.department?.name || "Department"
-                    : otherUser?.userId?.name || "Unknown User",
-              department: conv.department?._id,
-              departmentName: conv.department?.name,
-              userId: otherUser?.userId?._id,
-              avatar:
-                otherUser?.userId?.name?.charAt(0)?.toUpperCase() ||
-                conv.department?.name?.charAt(0)?.toUpperCase() ||
-                "U",
-              role: otherUser?.userId?.role || "Member",
-              members: Array.isArray(conv.members) ? conv.members : [],
-              unread: unreadCount,
-              mentions: 0,
-              lastMessage: conv.lastMessage?.preview || "",
-              timestamp: conv.lastMessage?.createdAt
-                ? new Date(conv.lastMessage.createdAt).getTime()
-                : Date.now(),
-              isPinned:
-                conv.pinnedFor?.some(
-                  (id) => id.toString() === currentUserId.toString(),
-                ) || false,
-              isMuted: false,
-              isFavorite: false,
-              canSendMessage,
-              _raw: conv,
-            };
-          });
+          const transformed = conversations.map((conv) =>
+            transformConversation(conv, currentUserId),
+          );
 
           // console.log("✅ Transformed conversations:", transformed.length);
           set({ conversations: transformed, isLoadingConversations: false });
@@ -328,6 +316,41 @@ const useChatStore = create(
             error.response?.data || error.message,
           );
           set({ isLoadingConversations: false, conversations: [] });
+        }
+      },
+
+      createDirectConversation: async (projectId, targetUserId) => {
+        try {
+          const existing = get().conversations.find(
+            (c) =>
+              c.type === "dm" &&
+              c.userId?.toString() === targetUserId.toString(),
+          );
+
+          if (existing) {
+            return existing;
+          }
+
+          const response = await chatApi.createDirectConversation(
+            projectId,
+            targetUserId,
+          );
+
+          const conv = response;
+
+          const currentUserId = getCurrentUserId();
+
+          const formatted = transformConversation(conv, currentUserId);
+
+          // 🔥 Add to conversation list immediately
+          set((state) => ({
+            conversations: [formatted, ...state.conversations],
+          }));
+
+          return formatted;
+        } catch (error) {
+          console.error("❌ Failed to create direct conversation:", error);
+          throw error;
         }
       },
 
@@ -503,6 +526,13 @@ const useChatStore = create(
           isSendingMessage: true,
         });
 
+        // 🔥 Update sidebar last message immediately
+        get().updateConversationLastMessage(conversationId, {
+          content: { text: optimisticMessage.content },
+          createdAt: now,
+          senderId: { _id: currentUserId },
+        });
+
         try {
           let sentMessage;
 
@@ -583,8 +613,242 @@ const useChatStore = create(
         });
       },
 
+      editMessage: async (conversationId, messageId, newText) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+
+        if (!conv) return;
+
+        const messageIndex = conv.messages.findIndex((m) => m.id === messageId);
+        if (messageIndex === -1) return;
+
+        const oldMessage = conv.messages[messageIndex];
+
+        // 🔥 OPTIMISTIC UPDATE
+        get().updateMessageInConversation(messageId, {
+          content: newText,
+          edited: true,
+          editedAt: new Date().toISOString(),
+        });
+
+        try {
+          await chatApi.editMessage(conversationId, messageId, newText);
+        } catch (error) {
+          console.error("❌ editMessage failed:", error);
+
+          // ROLLBACK if API fails
+          get().updateMessageInConversation(messageId, {
+            content: oldMessage.content,
+            edited: oldMessage.edited,
+            editedAt: oldMessage.editedAt,
+          });
+        }
+      },
+
+      toggleFavoriteMessage: async (conversationId, messageId, isFavorited) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const previous = conv.messages;
+
+        // ⭐ OPTIMISTIC UPDATE
+        get().updateMessageInConversation(messageId, {
+          isStarred: !isFavorited,
+        });
+
+        const promise = chatApi.toggleFavorite(
+          conversationId,
+          messageId,
+          !isFavorited,
+        );
+
+        return toast.promise(promise, {
+          loading: isFavorited
+            ? "Removing from favorites..."
+            : "Adding to favorites...",
+          success: isFavorited
+            ? "Removed from favorites"
+            : "Added to favorites",
+          error: (err) => {
+            // 🔁 rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: previous,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to update favorite";
+          },
+        });
+      },
+
+      reactToMessage: async (conversationId, message, emoji) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        const currentUserId = getCurrentUserId();
+
+        if (!conv) return;
+
+        const previous = conv.messages;
+
+        const promise = chatApi.toggleReaction(
+          conversationId,
+          message.id,
+          emoji,
+        );
+
+        const reacted = message.reactions[emoji]?.includes(currentUserId);
+
+        return toast.promise(promise, {
+          loading: reacted ? "Removing reaction..." : "Adding reaction...",
+          success: reacted ? "Reaction removed" : "Reaction added",
+          error: (err) => {
+            // 🔁 rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: previous,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to react";
+          },
+        });
+      },
+
+      togglePinMessage: async (conversationId, messageId) => {
+        const state = get();
+
+        const previous = state.conversations;
+
+        // 📌 optimistic update
+        set({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  pinnedMessage:
+                    c.pinnedMessage?.id === messageId
+                      ? null
+                      : { id: messageId },
+                }
+              : c,
+          ),
+        });
+
+        const promise = chatApi.pinMessage(conversationId, messageId);
+
+        return toast.promise(promise, {
+          loading: "Pinning Message...",
+          success: "Message Pinned",
+          error: (err) => {
+            // rollback
+            set({ conversations: previous });
+
+            return err?.response?.data?.message || "Failed to Pin Message";
+          },
+        });
+      },
+
+      deleteMessageForMe: async (conversationId, messageId) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const oldMessages = conv.messages;
+
+        // optimistic remove
+        set({
+          messagesByConversation: {
+            ...state.messagesByConversation,
+            [conversationId]: {
+              ...conv,
+              messages: conv.messages.filter((m) => m.id !== messageId),
+            },
+          },
+        });
+
+        const promise = chatApi.deleteMessageForMe(conversationId, messageId);
+
+        return toast.promise(promise, {
+          loading: "Deleting message...",
+          success: "Message deleted",
+          error: (err) => {
+            // rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: oldMessages,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Failed to delete message";
+          },
+        });
+      },
+
+      deleteMessageForEveryone: async (conversationId, messageId) => {
+        const state = get();
+        const conv = state.messagesByConversation[conversationId];
+        if (!conv) return;
+
+        const oldMessages = conv.messages;
+
+        // optimistic soft delete
+        get().updateMessageInConversation(messageId, {
+          deleted: true,
+          content: "",
+        });
+
+        const promise = chatApi.deleteMessageForEveryone(
+          conversationId,
+          messageId,
+        );
+
+        return toast.promise(promise, {
+          loading: "Deleting for everyone...",
+          success: "Message deleted for everyone",
+          error: (err) => {
+            // rollback
+            set({
+              messagesByConversation: {
+                ...get().messagesByConversation,
+                [conversationId]: {
+                  ...conv,
+                  messages: oldMessages,
+                },
+              },
+            });
+
+            return err?.response?.data?.message || "Delete failed";
+          },
+        });
+      },
+
       addMessageToConversation: (conversationId, message) => {
         const currentUserId = getCurrentUserId();
+
+        const conversation = get().conversations.find(
+          (c) => c.id === conversationId,
+        );
+
+        const memberCount = conversation?.members?.length || 2;
+
+        const transformed = transformMessage(message, {
+          currentUserId,
+          conversationMembersCount: memberCount,
+        });
 
         set((state) => {
           const existing = state.messagesByConversation[conversationId] || {
@@ -593,22 +857,11 @@ const useChatStore = create(
             cursor: null,
           };
 
-          const conversation = state.conversations.find(
-            (c) => c.id === conversationId,
-          );
-
-          const memberCount = conversation?.members || 2;
-
-          const transformed = transformMessage(message, {
-            currentUserId,
-            conversationMembersCount: memberCount,
-          });
-
           const incomingClientTempId = message.clientTempId;
 
           let updatedMessages = [...existing.messages];
 
-          // 🔥 Replace optimistic message
+          // Replace optimistic message
           if (incomingClientTempId) {
             const index = updatedMessages.findIndex(
               (m) => m.clientTempId === incomingClientTempId,
@@ -619,21 +872,16 @@ const useChatStore = create(
 
               updatedMessages[index] = {
                 ...existingMsg,
-
                 id: transformed.id,
                 time: transformed.time,
                 timestamp: transformed.timestamp,
-
                 files: transformed.files,
-
                 state: transformed.state,
                 readBy: transformed.readBy,
                 deliveredTo: transformed.deliveredTo,
-
                 edited: transformed.edited,
                 editedAt: transformed.editedAt,
                 deleted: transformed.deleted,
-
                 reactions: transformed.reactions,
                 _raw: transformed._raw,
               };
@@ -650,12 +898,12 @@ const useChatStore = create(
             }
           }
 
-          // 🔥 Prevent duplicate by real ID
+          // Prevent duplicate
           if (updatedMessages.some((m) => m.id === transformed.id)) {
             return state;
           }
 
-          // 🔥 Append if new
+          // Append new message
           updatedMessages.push(transformed);
 
           return {
@@ -668,6 +916,18 @@ const useChatStore = create(
             },
           };
         });
+
+        // Update conversation preview
+        const preview =
+          transformed.content ||
+          transformed.caption ||
+          (transformed.files?.length ? "Attachment" : "");
+
+        get().updateConversationLastMessage(conversationId, {
+          content: { text: preview },
+          createdAt: message.createdAt || new Date(),
+          senderId: { _id: message.senderId?._id || message.senderId },
+        });
       },
 
       updateConversationLastMessage: (conversationId, message) => {
@@ -677,11 +937,13 @@ const useChatStore = create(
           const isOwn =
             message.senderId?._id?.toString() ===
             getCurrentUserId()?.toString();
+
+          const isSelected = get().selectedChat?.id === conversationId;
           return {
             ...conv,
             lastMessage: message.content?.text || "",
             timestamp: new Date(message.createdAt).getTime(),
-            unread: isOwn ? conv.unread : conv.unread + 1,
+            unread: isOwn || isSelected ? conv.unread : conv.unread + 1,
           };
         });
         set({ conversations });
@@ -704,9 +966,8 @@ const useChatStore = create(
         get().updateMessageInConversation(messageId, { deleted: true });
       },
 
-      updateMessageReaction: (messageId, userId, emoji) => {
-        const selectedChat = get().selectedChat;
-        if (selectedChat?.id) get().loadMessages(selectedChat.id);
+      updateMessageReaction: (messageId, reactions) => {
+        get().updateMessageInConversation(messageId, { reactions: reactions });
       },
 
       markConversationMessagesAsRead: (conversationId, userId) => {

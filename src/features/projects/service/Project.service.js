@@ -50,3 +50,14 @@ export const deleteProjectAPI = async (id) => {
   const res = await axiosConfig.delete(`/projects/${id}`);
   return res.data;
 };
+
+export const getProjectMembers = async (projectId, search = "") => {
+  const res = await axiosConfig.get(
+    `/projects/${projectId}/members`,
+    {
+      params: { search },
+    }
+  );
+
+  return res.data?.data;
+};

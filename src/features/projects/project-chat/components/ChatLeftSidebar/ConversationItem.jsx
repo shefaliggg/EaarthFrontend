@@ -1,7 +1,8 @@
-import { Pin, Star, VolumeX, Briefcase } from "lucide-react";
+import { Pin, Star, VolumeX, Briefcase, Minus } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { convertToPrettyText } from "../../../../../shared/config/utils";
+import useChatStore from "../../store/chat.store";
 
 // Icon mapping for departments
 const DEPARTMENT_ICONS = {
@@ -40,9 +41,12 @@ export default function ConversationItem({
   onClick,
   onContextMenu,
 }) {
+  const { onlineUsers } = useChatStore();
   const Icon = item.icon || DEPARTMENT_ICONS[item.departmentName] || Briefcase;
   const isGroup = type === "group" || type === "all";
-  
+
+  const isOnline = item?.userId && onlineUsers.has(item.userId);
+
   // console.log("NAME TYPE:", item.name, typeof item.name);
 
   return (
@@ -62,17 +66,17 @@ export default function ConversationItem({
           </div>
         ) : (
           <div className="relative flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
               {item.avatar}
             </div>
-            <span
-              className={cn(
-                "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
-                item.status === "online" && "bg-green-500",
-                item.status === "away" && "bg-yellow-500",
-                item.status === "offline" && "bg-gray-400",
-              )}
-            />
+            {isOnline && (
+              <span
+                className={cn(
+                  "absolute top-0 right-0 w-3 h-3 rounded-full border-1 border-card",
+                  "bg-green-500",
+                )}
+              />
+            )}
           </div>
         )}
 
@@ -80,9 +84,17 @@ export default function ConversationItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-0.5">
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">
-                {convertToPrettyText(item.name)}
-              </p>
+              <div className="flex flex-col min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {convertToPrettyText(item.name)}
+                </p>
+
+                {!isGroup && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {convertToPrettyText(item.role)}
+                  </p>
+                )}
+              </div>
               {item.isFavorite && (
                 <Star className="w-3 h-3 fill-yellow-500 text-yellow-500 flex-shrink-0" />
               )}
