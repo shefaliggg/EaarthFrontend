@@ -38,7 +38,9 @@ export default function EditEventModal({
       startTime: "",
       endTime: "",
       isAllDay: false,
+      isMeeting: false,
       eventType: "prep",
+      status: "confirmed",
       location: "",
       audienceType: "ALL",
       selectedDepartments: [],
@@ -69,7 +71,9 @@ export default function EditEventModal({
         startTime: eventToEdit.allDay ? "" : format(start, "h:mm a"),
         endTime: eventToEdit.allDay ? "" : format(end, "h:mm a"),
         isAllDay: eventToEdit.allDay || false,
+        isMeeting: !!eventToEdit.meeting?.enabled,
         eventType: eventToEdit.eventType || "prep",
+        status: eventToEdit.status || "confirmed",
         location: eventToEdit.location || "",
         audienceType: eventToEdit.audience?.type || "ALL",
         selectedDepartments: eventToEdit.audience?.departments?.map(d => d._id || d) || [],
@@ -116,28 +120,28 @@ export default function EditEventModal({
         projectId: eventToEdit.projectId || "697c899668977a7ca2b27462", 
         title: data.title,
         description: data.notes || "",
-        eventType: data.eventType,
+        eventType: data.eventType, 
+        status: data.status || "confirmed",
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),
         allDay: !!data.isAllDay,
         location: data.location || "",
         audience: {
-          type: data.eventType === "meeting" ? data.audienceType : "ALL",
+          type: data.audienceType, 
+        },
+        meeting: {
+          enabled: !!data.isMeeting,
+          ...(data.isMeeting && {
+            meetingType: "VIDEO",
+            roomId: eventToEdit.meeting?.roomId || generateRoomId(),
+          })
         }
       };
 
-      if (data.eventType === "meeting") {
-        if (data.audienceType === "DEPARTMENT") {
-          payload.audience.departments = data.selectedDepartments;
-        } else if (data.audienceType === "USERS") {
-          payload.audience.users = data.selectedUsers;
-        }
-
-        payload.meeting = {
-          enabled: true,
-          meetingType: "VIDEO",
-          roomId: eventToEdit.meeting?.roomId || generateRoomId(), 
-        };
+      if (data.audienceType === "DEPARTMENT") {
+        payload.audience.departments = data.selectedDepartments;
+      } else if (data.audienceType === "USERS") {
+        payload.audience.users = data.selectedUsers;
       }
 
       onSave(eventToEdit.eventCode, payload);

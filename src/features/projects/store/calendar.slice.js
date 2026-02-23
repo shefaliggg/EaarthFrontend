@@ -17,6 +17,7 @@ const initialState = {
   filters: {
     search: "",
     eventTypes: [],
+    statuses: [],
     departments: [],
     crewMembers: [],
     location: "",
@@ -40,7 +41,6 @@ const calendarSlice = createSlice({
     setCurrentDate(state, action) {
       state.currentDate = action.payload;
     },
-
     updateFilter(state, action) {
       const { key, value } = action.payload;
       state.filters[key] = value;
@@ -49,6 +49,7 @@ const calendarSlice = createSlice({
       state.filters = {
         search: state.filters.search, 
         eventTypes: [],
+        statuses: [], 
         departments: [],
         crewMembers: [],
         location: "",

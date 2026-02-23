@@ -72,7 +72,12 @@ function CalendarToolbar({
     }
   };
 
-  const activeFilterCount = filters.eventTypes.length + filters.departments.length + filters.crewMembers.length + (filters.location ? 1 : 0);
+  const activeFilterCount = 
+    (filters.eventTypes?.length || 0) + 
+    (filters.statuses?.length || 0) + 
+    (filters.departments?.length || 0) + 
+    (filters.crewMembers?.length || 0) + 
+    (filters.location ? 1 : 0);
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card p-4">
@@ -107,7 +112,7 @@ function CalendarToolbar({
 
         <Popover>
           <PopoverTrigger asChild>
-             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-muted/50">
+             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/90">
                 <Filter className="w-4 h-4" />
                 Filters
                 {activeFilterCount > 0 && (
@@ -117,7 +122,6 @@ function CalendarToolbar({
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0 border-primary/20 shadow-xl" align="start">
             
-            {/* Header */}
             <div className="p-4 border-b border-primary/20 flex justify-between items-center bg-muted/30">
                <h4 className="font-semibold text-sm">Filter Events</h4>
                {activeFilterCount > 0 && (
@@ -127,18 +131,16 @@ function CalendarToolbar({
                )}
             </div>
 
-            {/* Scrollable Checkbox Area */}
             <div className="p-4 space-y-6 max-h-[50vh] overflow-y-auto custom-scrollbar">
                
-               {/* Event Types */}
                <div className="space-y-3">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Types</Label>
                   <div className="grid grid-cols-2 gap-3">
-                     {["prep", "shoot", "wrap", "meeting"].map(type => (
+                     {["prep", "shoot", "wrap"].map(type => (
                         <div key={type} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
                            <Checkbox
                               id={`type-${type}`}
-                              checked={filters.eventTypes.includes(type)}
+                              checked={filters.eventTypes?.includes(type)}
                               onCheckedChange={() => handleArrayFilter("eventTypes", type)}
                            />
                            <Label htmlFor={`type-${type}`} className="text-sm capitalize font-medium cursor-pointer">{type}</Label>
@@ -147,7 +149,22 @@ function CalendarToolbar({
                   </div>
                </div>
 
-               {/* Location */}
+               <div className="space-y-3">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                     {["confirmed", "tentative", "cancelled", "completed"].map(status => (
+                        <div key={status} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
+                           <Checkbox
+                              id={`status-${status}`}
+                              checked={filters.statuses?.includes(status)}
+                              onCheckedChange={() => handleArrayFilter("statuses", status)}
+                           />
+                           <Label htmlFor={`status-${status}`} className="text-sm capitalize font-medium cursor-pointer">{status}</Label>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
                <div className="space-y-3">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</Label>
                   <Input
@@ -158,16 +175,15 @@ function CalendarToolbar({
                   />
                </div>
 
-               {/* Departments */}
                {departments?.length > 0 && (
                    <div className="space-y-3">
                       <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Departments</Label>
-                      <div className="space-y-2 border rounded-md p-2 bg-card">
+                      <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
                          {departments.map(dept => (
                             <div key={dept._id} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded">
                                <Checkbox
                                   id={`dept-${dept._id}`}
-                                  checked={filters.departments.includes(dept._id)}
+                                  checked={filters.departments?.includes(dept._id)}
                                   onCheckedChange={() => handleArrayFilter("departments", dept._id)}
                                />
                                <Label htmlFor={`dept-${dept._id}`} className="text-sm font-medium leading-none cursor-pointer">
@@ -179,18 +195,17 @@ function CalendarToolbar({
                    </div>
                )}
 
-               {/* Crew Members */}
                {crewMembers?.length > 0 && (
                    <div className="space-y-3">
                       <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Crew Members</Label>
-                      <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto">
+                      <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
                          {crewMembers.map(crew => {
                             const crewId = crew._id || crew.id;
                             return (
                             <div key={crewId} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded">
                                <Checkbox
                                   id={`crew-${crewId}`}
-                                  checked={filters.crewMembers.includes(crewId)}
+                                  checked={filters.crewMembers?.includes(crewId)}
                                   onCheckedChange={() => handleArrayFilter("crewMembers", crewId)}
                                />
                                <Label htmlFor={`crew-${crewId}`} className="text-sm font-medium leading-none cursor-pointer">
@@ -205,7 +220,6 @@ function CalendarToolbar({
           </PopoverContent>
         </Popover>
 
-        {/* View Selection Tabs */}
         <div>
           <CalendarFilterTabs
             options={[
@@ -223,7 +237,6 @@ function CalendarToolbar({
           />
         </div>
 
-        {/* Action Buttons */}
         <InfoTooltip content="Shooting Calendar">
           <Button variant="default" size="icon" onClick={() => navigate(`/projects/${projectName}/calendar/shooting`)}>
             <Clapperboard className="w-4 h-4" />

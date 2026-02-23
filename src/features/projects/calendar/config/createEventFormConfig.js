@@ -17,7 +17,17 @@ export const createEventFormConfig = {
             { label: "Prep", value: "prep" },
             { label: "Shoot", value: "shoot" },
             { label: "Wrap", value: "wrap" },
-            { label: "Meeting", value: "meeting" },
+          ],
+        },
+        {
+          name: "status",
+          label: "Status",
+          isSelect: true,
+          items: [
+            { label: "Confirmed", value: "confirmed" },
+            { label: "Tentative", value: "tentative" },
+            { label: "Completed", value: "completed" },
+            { label: "Cancelled", value: "cancelled" },
           ],
         },
       ],
@@ -34,18 +44,29 @@ export const createEventFormConfig = {
       ],
     },
     {
-      id: "notify", 
-      title: "Notify",
+      id: "notify_and_details",
+      title: "Notify and Details",
       fields: [
-        { name: "audienceType", label: "Who should be notified?", type: "audience-selector" },
-        { name: "selectedDepartments", label: "Select Departments", type: "department-select" },
-        { name: "selectedUsers", label: "Select Crew Members", type: "crew-select" },
-      ],
-    },
-    {
-      id: "details", 
-      title: "Details",
-      fields: [
+        {
+          name: "audienceType",
+          label: "Who should be involved?",
+          type: "audience-selector",
+        },
+        {
+          name: "selectedDepartments",
+          label: "Select Departments",
+          type: "department-select",
+        },
+        {
+          name: "selectedUsers",
+          label: "Select Crew Members",
+          type: "crew-select",
+        },
+        {
+          name: "isMeeting",
+          label: "Generate an Online Video Call Link for this event",
+          type: "checkbox",
+        },
         { name: "notes", label: "Description / Notes", type: "textarea" },
       ],
     },

@@ -40,7 +40,9 @@ export default function CreateEventModal({
       startTime: "",
       endTime: "",
       isAllDay: false,
+      isMeeting: false, 
       eventType: "prep",
+      status: "confirmed",
       location: "",
       audienceType: "ALL",
       selectedDepartments: [],
@@ -62,13 +64,10 @@ export default function CreateEventModal({
         finalStartDateTime = new Date(data.startDate);
         finalStartDateTime.setHours(0, 0, 0, 0);
 
-        finalEndDateTime = data.endDate
-          ? new Date(data.endDate)
-          : new Date(data.startDate);
+        finalEndDateTime = data.endDate ? new Date(data.endDate) : new Date(data.startDate);
         finalEndDateTime.setHours(23, 59, 59, 999);
       } else {
         const baseStart = new Date(data.startDate);
-        
         if (data.startTime) {
           finalStartDateTime = parse(data.startTime, "h:mm a", baseStart);
         } else {
@@ -76,10 +75,7 @@ export default function CreateEventModal({
           finalStartDateTime.setHours(0, 0, 0, 0);
         }
 
-        const baseEnd = data.endDate
-          ? new Date(data.endDate)
-          : new Date(data.startDate);
-          
+        const baseEnd = data.endDate ? new Date(data.endDate) : new Date(data.startDate);
         if (data.endTime) {
           finalEndDateTime = parse(data.endTime, "h:mm a", baseEnd);
         } else {
@@ -88,32 +84,33 @@ export default function CreateEventModal({
         }
       }
 
+
       const payload = {
         projectId: "697c899668977a7ca2b27462", 
         title: data.title,
         description: data.notes || "",
         eventType: data.eventType,
+        status: data.status || "confirmed", 
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),
         allDay: !!data.isAllDay,
         location: data.location || "",
         audience: {
-          type: data.eventType === "meeting" ? data.audienceType : "ALL",
+          type: data.audienceType, 
+        },
+        meeting: {
+          enabled: !!data.isMeeting,
+          ...(data.isMeeting && {
+            meetingType: "VIDEO",
+            roomId: generateRoomId(),
+          })
         }
       };
 
-      if (data.eventType === "meeting") {
-        if (data.audienceType === "DEPARTMENT") {
-          payload.audience.departments = data.selectedDepartments;
-        } else if (data.audienceType === "USERS") {
-          payload.audience.users = data.selectedUsers;
-        }
-
-        payload.meeting = {
-          enabled: true,
-          meetingType: "VIDEO",
-          roomId: generateRoomId(), 
-        };
+      if (data.audienceType === "DEPARTMENT") {
+        payload.audience.departments = data.selectedDepartments;
+      } else if (data.audienceType === "USERS") {
+        payload.audience.users = data.selectedUsers;
       }
 
       await onSave(payload);
@@ -141,7 +138,9 @@ export default function CreateEventModal({
         startTime: "",
         endTime: "",
         isAllDay: false,
+        isMeeting: false,
         eventType: "prep",
+        status: "confirmed",
         location: "",
         audienceType: "ALL",
         selectedDepartments: [],
@@ -154,12 +153,7 @@ export default function CreateEventModal({
   const isSubmitting = externalIsSubmitting || isSaving;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose();
-      }}
-    >
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-4">
         <DialogHeader className="border-b pb-4">
           <DialogTitle>{createEventFormConfig.title}</DialogTitle>

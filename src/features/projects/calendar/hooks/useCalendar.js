@@ -77,20 +77,19 @@ function useCalendar() {
       const matchesType = filters.eventTypes.length === 0 || filters.eventTypes.includes(event.eventType);
       const matchesLocation = !filters.location || event.location?.toLowerCase().includes(filters.location.toLowerCase());
       
-      // <-- FIX: STRICT DEPARTMENT FILTER -->
-      // Only match if the event was explicitly assigned to this specific department
+      const eventStatus = (event.status || "confirmed").toLowerCase();
+      const matchesStatus = !filters.statuses || filters.statuses.length === 0 || filters.statuses.includes(eventStatus);
+
       const matchesDept = filters.departments.length === 0 || 
         (event.audience?.type === "DEPARTMENT" && event.audience.departments?.some(d => filters.departments.includes(d._id || d)));
 
-      // <-- FIX: STRICT CREW FILTER -->
-      // Only match if the event is NOT an "ALL" event, and the crew member is in the attendees list
       const matchesCrew = filters.crewMembers.length === 0 ||
         (event.audience?.type !== "ALL" && event.attendees?.some(a => {
             const uid = a.userId?._id || a.userId || a;
             return filters.crewMembers.includes(uid.toString());
         }));
 
-      return matchesSearch && matchesType && matchesLocation && matchesDept && matchesCrew;
+      return matchesSearch && matchesType && matchesStatus && matchesLocation && matchesDept && matchesCrew;
     });
   }, [calendar.events, filters]);
 

@@ -62,103 +62,56 @@ function DateField({ label, value, onChange, minDate }) {
 
 function CrewSelector({ value = [], onChange }) {
   const { crewMembers } = useSelector((state) => state.calendar);
-
   const handleToggle = (id) => {
-    if (value.includes(id)) {
-      onChange(value.filter((item) => item !== id));
-    } else {
-      onChange([...value, id]);
-    }
+    if (value.includes(id)) onChange(value.filter((item) => item !== id));
+    else onChange([...value, id]);
   };
-
   return (
     <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto bg-card">
       {crewMembers && crewMembers.length > 0 ? (
         crewMembers.map((crew) => {
           const crewId = crew._id || crew.id;
           const isSelected = value.includes(crewId);
-
           return (
-            <div
-              key={crewId}
-              className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded"
-            >
-              <Checkbox
-                id={`crew-${crewId}`}
-                checked={isSelected}
-                onCheckedChange={() => handleToggle(crewId)}
-              />
-              <div
-                className="grid gap-0.5 leading-none cursor-pointer flex-1"
-                onClick={() => handleToggle(crewId)}
-              >
-                <label
-                  htmlFor={`crew-${crewId}`}
-                  className="text-sm font-medium leading-none cursor-pointer pointer-events-none"
-                >
+            <div key={crewId} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+              <Checkbox id={`crew-${crewId}`} checked={isSelected} onCheckedChange={() => handleToggle(crewId)} />
+              <div className="grid gap-0.5 leading-none cursor-pointer flex-1" onClick={() => handleToggle(crewId)}>
+                <label htmlFor={`crew-${crewId}`} className="text-sm font-medium leading-none cursor-pointer pointer-events-none">
                   {crew.displayName || crew.name || "Unknown"}
                 </label>
-                <span className="text-xs text-muted-foreground pointer-events-none">
-                  {crew.email}
-                </span>
+                <span className="text-xs text-muted-foreground pointer-events-none">{crew.email}</span>
               </div>
             </div>
           );
         })
-      ) : (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          No crew members found.
-        </p>
-      )}
+      ) : (<p className="text-xs text-muted-foreground text-center py-2">No crew members found.</p>)}
     </div>
   );
 }
 
 function DepartmentSelector({ value = [], onChange }) {
   const { departments } = useSelector((state) => state.calendar);
-
   const handleToggle = (id) => {
-    if (value.includes(id)) {
-      onChange(value.filter((item) => item !== id));
-    } else {
-      onChange([...value, id]);
-    }
+    if (value.includes(id)) onChange(value.filter((item) => item !== id));
+    else onChange([...value, id]);
   };
-
   return (
     <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto bg-card">
       {departments && departments.length > 0 ? (
         departments.map((dept) => {
           const isSelected = value.includes(dept._id);
           return (
-            <div
-              key={dept._id}
-              className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded"
-            >
-              <Checkbox
-                id={`dept-${dept._id}`}
-                checked={isSelected}
-                onCheckedChange={() => handleToggle(dept._id)}
-              />
-              <div
-                className="grid gap-0.5 leading-none cursor-pointer flex-1"
-                onClick={() => handleToggle(dept._id)}
-              >
-                <label
-                  htmlFor={`dept-${dept._id}`}
-                  className="text-sm font-medium leading-none cursor-pointer pointer-events-none"
-                >
+            <div key={dept._id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+              <Checkbox id={`dept-${dept._id}`} checked={isSelected} onCheckedChange={() => handleToggle(dept._id)} />
+              <div className="grid gap-0.5 leading-none cursor-pointer flex-1" onClick={() => handleToggle(dept._id)}>
+                <label htmlFor={`dept-${dept._id}`} className="text-sm font-medium leading-none cursor-pointer pointer-events-none">
                   {dept.name}
                 </label>
               </div>
             </div>
           );
         })
-      ) : (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          No departments found.
-        </p>
-      )}
+      ) : (<p className="text-xs text-muted-foreground text-center py-2">No departments found.</p>)}
     </div>
   );
 }
@@ -169,7 +122,6 @@ export default function CreateEventStepsRenderer({ sections, form }) {
   const startDate = form.watch("startDate");
   const endDate = form.watch("endDate");
   const audienceType = form.watch("audienceType");
-  const eventType = form.watch("eventType"); 
 
   if (!endDate && startDate) {
     if (form.getValues("endDate") !== startDate) {
@@ -182,10 +134,6 @@ export default function CreateEventStepsRenderer({ sections, form }) {
   return (
     <div className="space-y-8">
       {sections.map((section) => {
-        if (section.id === "notify" && eventType !== "meeting") {
-          return null; 
-        }
-
         return (
           <div key={section.id} className="space-y-4">
             <div className="border-b pb-2">
@@ -195,18 +143,12 @@ export default function CreateEventStepsRenderer({ sections, form }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {section.fields.map((field) => {
                 if ((field.name === "startTime" || field.name === "endTime") && isAllDay) return null;
-
                 if (field.name === "selectedDepartments" && audienceType !== "DEPARTMENT") return null;
                 if (field.name === "selectedUsers" && audienceType !== "USERS") return null;
 
                 const isFullWidth = [
-                  "title", 
-                  "notes", 
-                  "location", 
-                  "audienceType", 
-                  "selectedDepartments", 
-                  "selectedUsers",
-                  "isAllDay"
+                  "title", "notes", "location", "audienceType", 
+                  "selectedDepartments", "selectedUsers", "isAllDay", "isMeeting"
                 ].includes(field.name);
                 
                 const containerClass = `flex flex-col gap-2 ${isFullWidth ? "md:col-span-2" : ""}`;
@@ -215,24 +157,10 @@ export default function CreateEventStepsRenderer({ sections, form }) {
                   return (
                     <div key={field.name} className={containerClass}>
                       <Label>{field.label}</Label>
-                      <Select
-                        value={form.watch(field.name)}
-                        onValueChange={(value) =>
-                          form.setValue(field.name, value, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-full rounded-3xl bg-background">
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
+                      <Select value={form.watch(field.name)} onValueChange={(value) => form.setValue(field.name, value, { shouldDirty: true, shouldValidate: true })}>
+                        <SelectTrigger className="w-full rounded-3xl bg-background"><SelectValue placeholder="Select time" /></SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
-                          {TIME_OPTIONS.map((time) => (
-                            <SelectItem key={time} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
+                          {TIME_OPTIONS.map((time) => (<SelectItem key={time} value={time}>{time}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -243,24 +171,10 @@ export default function CreateEventStepsRenderer({ sections, form }) {
                   return (
                     <div key={field.name} className={containerClass}>
                       <Label>{field.label}</Label>
-                      <Select
-                        value={form.watch(field.name) || "prep"}
-                        onValueChange={(value) =>
-                          form.setValue(field.name, value, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-full rounded-3xl bg-background">
-                          <SelectValue placeholder={`Select ${field.label}`} />
-                        </SelectTrigger>
+                      <Select value={form.watch(field.name)} onValueChange={(value) => form.setValue(field.name, value, { shouldDirty: true, shouldValidate: true })}>
+                        <SelectTrigger className="w-full rounded-3xl bg-background"><SelectValue placeholder={`Select ${field.label}`} /></SelectTrigger>
                         <SelectContent>
-                          {field.items.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
-                            </SelectItem>
-                          ))}
+                          {field.items.map((item) => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -288,26 +202,14 @@ export default function CreateEventStepsRenderer({ sections, form }) {
                   );
                 }
 
-                if (field.name === "startDate") {
+                if (field.name === "startDate" || field.name === "endDate") {
                   return (
                     <div key={field.name} className={containerClass}>
                       <DateField
                         label={field.label}
-                        value={startDate}
-                        onChange={(val) => form.setValue("startDate", val, { shouldValidate: true })}
-                      />
-                    </div>
-                  );
-                }
-
-                if (field.name === "endDate") {
-                  return (
-                    <div key={field.name} className={containerClass}>
-                      <DateField
-                        label={field.label}
-                        value={endDate}
-                        minDate={startDate ? new Date(startDate) : undefined}
-                        onChange={(val) => form.setValue("endDate", val, { shouldValidate: true })}
+                        value={field.name === "startDate" ? startDate : endDate}
+                        minDate={field.name === "endDate" && startDate ? new Date(startDate) : undefined}
+                        onChange={(val) => form.setValue(field.name, val, { shouldValidate: true })}
                       />
                     </div>
                   );
@@ -323,68 +225,21 @@ export default function CreateEventStepsRenderer({ sections, form }) {
                           { label: "Specific Departments", value: "DEPARTMENT" },
                           { label: "Individual Users", value: "USERS" },
                         ].map((opt) => (
-                          <Button
-                            key={opt.value}
-                            type="button"
-                            variant={audienceType === opt.value ? "default" : "outline"}
-                            className="rounded-full"
-                            onClick={() => form.setValue("audienceType", opt.value, { shouldValidate: true })}
-                          >
+                          <Button key={opt.value} type="button" variant={audienceType === opt.value ? "default" : "outline"} className="rounded-full" onClick={() => form.setValue("audienceType", opt.value, { shouldValidate: true })}>
                             {opt.label}
                           </Button>
                         ))}
                       </div>
-                      {form.formState.errors.audienceType && (
-                        <span className="text-destructive text-sm mt-1">
-                          {form.formState.errors.audienceType.message}
-                        </span>
-                      )}
+                      {form.formState.errors.audienceType && (<span className="text-destructive text-sm mt-1">{form.formState.errors.audienceType.message}</span>)}
                     </div>
                   );
                 }
 
-                if (field.type === "department-select") {
-                  return (
-                    <div key={field.name} className={containerClass}>
-                      <Label>{field.label}</Label>
-                      <DepartmentSelector
-                        value={form.watch("selectedDepartments") || []}
-                        onChange={(newVal) => form.setValue("selectedDepartments", newVal, { shouldValidate: true })}
-                      />
-                    </div>
-                  );
-                }
+                if (field.type === "department-select") return (<div key={field.name} className={containerClass}><Label>{field.label}</Label><DepartmentSelector value={form.watch("selectedDepartments") || []} onChange={(newVal) => form.setValue("selectedDepartments", newVal, { shouldValidate: true })}/></div>);
+                if (field.type === "crew-select") return (<div key={field.name} className={containerClass}><Label>{field.label}</Label><CrewSelector value={form.watch("selectedUsers") || []} onChange={(newVal) => form.setValue("selectedUsers", newVal, { shouldValidate: true })}/></div>);
+                if (field.type === "textarea") return (<div key={field.name} className={containerClass}><Label>{field.label}</Label><Textarea {...form.register(field.name)} className="min-h-[100px]"/></div>);
 
-                if (field.type === "crew-select") {
-                  return (
-                    <div key={field.name} className={containerClass}>
-                      <Label>{field.label}</Label>
-                      <CrewSelector
-                        value={form.watch("selectedUsers") || []}
-                        onChange={(newVal) => form.setValue("selectedUsers", newVal, { shouldValidate: true })}
-                      />
-                    </div>
-                  );
-                }
-
-                if (field.type === "textarea") {
-                  return (
-                    <div key={field.name} className={containerClass}>
-                      <Label>{field.label}</Label>
-                      <Textarea
-                        {...form.register(field.name)}
-                        className="min-h-[100px]"
-                      />
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={field.name} className={containerClass}>
-                    <Label>{field.label}</Label>
-                    <Input type={field.type || "text"} {...form.register(field.name)} />
-                  </div>
-                );
+                return (<div key={field.name} className={containerClass}><Label>{field.label}</Label><Input type={field.type || "text"} {...form.register(field.name)} /></div>);
               })}
             </div>
           </div>
