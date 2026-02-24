@@ -24,11 +24,6 @@ function ProjectChat() {
     attachSocketListeners,
   } = useChatStore();
 
-  // Attach socket listeners once
-  useEffect(() => {
-    attachSocketListeners();
-  }, []);
-
   // Load conversations when project changes
   useEffect(() => {
     if (currentProject?._id && currentUser?._id) {

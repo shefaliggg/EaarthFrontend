@@ -74,7 +74,6 @@ const useChatStore = create(
             },
           });
           get().addMessageToConversation(conversationId, message);
-          get().updateConversationLastMessage(conversationId, message);
         });
 
         socket.on("message:edited", ({ messageId, text, editedAt }) => {
@@ -899,7 +898,14 @@ const useChatStore = create(
           }
 
           // Prevent duplicate
-          if (updatedMessages.some((m) => m.id === transformed.id)) {
+          if (
+            updatedMessages.some(
+              (m) =>
+                m.id === transformed.id ||
+                (transformed.clientTempId &&
+                  m.clientTempId === transformed.clientTempId),
+            )
+          ) {
             return state;
           }
 
