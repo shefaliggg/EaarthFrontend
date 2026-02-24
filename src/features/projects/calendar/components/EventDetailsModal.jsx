@@ -2,6 +2,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription, // <-- Added this
   DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -72,7 +73,8 @@ export default function EventDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => { if(!v) handleClose(); }}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden border-0 gap-0">
+      {/* Set aria-describedby to undefined in case Radix is extra stubborn, though DialogDescription usually fixes it */}
+      <DialogContent aria-describedby={undefined} className="max-w-lg p-0 overflow-hidden border-0 gap-0">
         
         <div className={`h-3 w-full ${getEventTypeColor(event.eventType).split(" ")[0]}`} />
         
@@ -99,6 +101,10 @@ export default function EventDetailsModal({
                  <DialogTitle className={`text-2xl font-bold leading-tight mt-3 ${currentStatus === 'cancelled' ? 'line-through opacity-70' : ''}`}>
                     {event.title}
                  </DialogTitle>
+                 
+                 <DialogDescription className="sr-only">
+                    Details for event {event.title}
+                 </DialogDescription>
               </div>
            </div>
         </div>
