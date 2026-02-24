@@ -16,6 +16,8 @@ import EventDetailsModal from "../components/EventDetailsModal";
 function ProjectCalendar() {
   const dispatch = useDispatch();
   const calendar = useSelector((state) => state.calendar);
+  
+  // This layout context gives us the function to open the modal
   const { openCreateModal } = useOutletContext() || {};
 
   const {
@@ -35,6 +37,7 @@ function ProjectCalendar() {
     prev,
     next,
     today,
+    setCurrentDate, // <-- FIX 1: We extract setCurrentDate from the hook!
   } = useCalendar();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -48,9 +51,10 @@ function ProjectCalendar() {
     (user.userType === "studio_admin" ||
       (user.userType === "crew" && user.accessPolicy === "no_contract"));
 
-  const handleDayClick = () => {
+  const handleDayClick = (date) => {
     if (canModify) {
-      if (openCreateModal) openCreateModal();
+      setCurrentDate(date); // <-- FIX 2: We update the global Redux state to the clicked date!
+      if (openCreateModal) openCreateModal(date); 
     } else {
       toast.info("View only access.");
     }
@@ -119,6 +123,7 @@ function ProjectCalendar() {
         <CalendarGrid
           view={view}
           currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
           events={events}
           conflicts={conflicts}
           analyticsData={analyticsData}

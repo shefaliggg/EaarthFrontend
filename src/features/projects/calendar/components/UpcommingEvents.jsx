@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { Calendar } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 
@@ -6,7 +6,6 @@ export default function UpcomingEvents({
   upcomingEvents,
   setSelectedEvent,
   setShowEventModal,
-  view, // Add this prop
 }) {
   const getEventTypeColor = (type) => {
     switch (type) {
@@ -21,27 +20,18 @@ export default function UpcomingEvents({
     }
   };
 
-  // Dynamic event limit based on view
-  const getEventLimit = () => {
-    switch (view) {
-      case "day":
-        return 28;
-      case "week":
-        return 28;
-      case "month":
-        return 28;
-      case "year":
-        return 20;
-      case "gantt":
-        return 28;
-      case "timeline":
-        return 28;
-      default:
-        return 28;
-    }
-  };
-
-  const eventLimit = getEventLimit();
+  const today = startOfDay(new Date());
+  
+  const futureEvents = (upcomingEvents || [])
+    .filter((event) => {
+      if (!event.startDateTime) return false;
+      
+      const endDate = new Date(event.endDateTime || event.startDateTime);
+      endDate.setHours(0, 0, 0, 0); 
+      
+      return endDate >= today;
+    })
+    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
 
   return (
     <>
@@ -50,12 +40,13 @@ export default function UpcomingEvents({
         <div className="flex justify-between px-4 py-5 border-b border-primary/20">
           <h3 className="font-bold text-lg text-foreground">Upcoming Events</h3>
           <span className="flex items-center px-2 justify-center rounded-full bg-primary/10 dark:bg-primary/20 text-xs font-semibold text-primary">
-            {upcomingEvents?.length || 0}
+            {futureEvents.length}
           </span>
         </div>
+        
         {/* BODY */}
         <div className="p-4 space-y-3 overflow-y-auto h-[1230px]">
-          {(!upcomingEvents || upcomingEvents.length === 0) && (
+          {futureEvents.length === 0 && (
             <div className="flex flex-col items-center py-12 gap-1">
               <Calendar className="w-8 h-8 text-muted-foreground/40 mb-1" />
               <p className="text-sm text-muted-foreground">
@@ -66,7 +57,8 @@ export default function UpcomingEvents({
               </p>
             </div>
           )}
-          {upcomingEvents?.slice(0, eventLimit).map((event) => {
+          
+          {futureEvents.map((event) => {
             const start = event.startDateTime
               ? new Date(event.startDateTime)
               : null;
@@ -77,12 +69,12 @@ export default function UpcomingEvents({
 
             return (
               <div
-                key={event._id}
+                key={event._id || event.id}
                 onClick={() => {
                   setSelectedEvent?.(event);
                   setShowEventModal?.(true);
                 }}
-                className="cursor-pointer rounded-lg border border-primary/20  transition-all duration-200 hover:bg-muted/60 hover:border-primary/20"
+                className="cursor-pointer rounded-lg border border-primary/20 transition-all duration-200 hover:bg-muted/60 hover:border-primary/20"
               >
                 <div className="flex gap-4 p-3.5">
                   {/* DATE BADGE */}
@@ -105,8 +97,8 @@ export default function UpcomingEvents({
                       {event.eventType && (
                         <span
                           className={cn(
-                            "text-[10px] font-semibold uppercase px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
-                            getEventTypeColor(event.eventType),
+                            "text-[10px] font-semibold uppercase px-2.5 py-1 rounded-full",
+                            getEventTypeColor(event.eventType)
                           )}
                         >
                           {event.eventType}
@@ -115,7 +107,7 @@ export default function UpcomingEvents({
                     </div>
                     {/* ----------------------------------------------------- */}
                     <div className="space-y-1.5">
-                      {/* Multi-day: Date range + Duration on same line */}
+                      {/* Multi-day: Date range + Duration */}
                       {isMultiDay ? (
                         <div className="flex items-center gap-2 px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/50">
                           <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">

@@ -23,7 +23,7 @@ export default function CalendarDayView({
   currentDate,
   events,
   onDayClick,
-  onEventClick, // <--- Added this prop
+  onEventClick, 
 }) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayEvents = normalizeDayEvents(events, currentDate);
@@ -42,7 +42,7 @@ export default function CalendarDayView({
         : "bg-mint-100 text-mint-800 dark:bg-mint-900/40 dark:text-mint-300"
     : "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300";
 
-  // ── SUMMARY COUNTS (like WeekView/Gantt) ──────────────────────
+  // ── SUMMARY COUNTS ──────────────────────
   const summaryCounts = (() => {
     const counts = { prep: 0, shoot: 0, wrap: 0 };
     for (const e of events || []) {
@@ -99,7 +99,6 @@ export default function CalendarDayView({
           </span>
         </div>
 
-       
         <div className="py-2 px-3">
           <div className="flex items-center gap-4">
             <div
@@ -157,8 +156,10 @@ export default function CalendarDayView({
 
         <div
           onClick={(e) => {
-            // Only trigger create modal if clicking background
-            if (e.target === e.currentTarget && onDayClick) onDayClick();
+            // <-- FIX: Pass the currentDate up instead of empty brackets
+            if (e.target === e.currentTarget && onDayClick) {
+              onDayClick(currentDate);
+            }
           }}
           className="flex cursor-pointer gap-1 p-2 flex-col items-start border-b border-primary/20 hover:bg-purple-50/60 dark:hover:bg-purple-900/20 transition-all duration-200 overflow-hidden min-h-12"
         >
@@ -217,13 +218,22 @@ export default function CalendarDayView({
         {/* DAY COLUMN */}
         <div className="relative bg-card">
           {/* Hour Grid */}
-          {hours.map((h) => (
-            <div
-              key={h}
-              onClick={onDayClick}
-              className="h-12 border-primary/20 border-b last:border-b-0 hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-all duration-200"
-            />
-          ))}
+          {hours.map((h) => {
+            // <-- FIX: Creates the exact date and hour slot clicked
+            const handleHourClick = () => {
+              const slotDate = new Date(currentDate);
+              slotDate.setHours(h, 0, 0, 0);
+              if (onDayClick) onDayClick(slotDate);
+            };
+
+            return (
+              <div
+                key={h}
+                onClick={handleHourClick}
+                className="h-12 border-primary/20 border-b last:border-b-0 hover:bg-purple-50/40 dark:hover:bg-purple-900/10 cursor-pointer transition-all duration-200"
+              />
+            );
+          })}
 
           {/* EVENTS */}
           <div className="absolute left-1 inset-0 pointer-events-none">
@@ -238,7 +248,7 @@ export default function CalendarDayView({
                       <div
                         onClick={(ev) => {
                           ev.stopPropagation();
-                          if (onEventClick) onEventClick(event); // <--- FIXED: Call prop here
+                          if (onEventClick) onEventClick(event); 
                         }}
                         style={getEventStyle(event, colIndex, columns.length)}
                         className={cn(
