@@ -1,7 +1,7 @@
-import { Card, CardContent } from "../../../shared/components/ui/card";
-import { Input } from "../../../shared/components/ui/input";
-import { Checkbox } from "../../../shared/components/ui/checkbox";
-import { Label } from "../../../shared/components/ui/label";
+import { Card, CardContent } from "../../../../shared/components/ui/card";
+import { Input } from "../../../../shared/components/ui/input";
+import { Checkbox } from "../../../../shared/components/ui/checkbox";
+import { Label } from "../../../../shared/components/ui/label";
 import { User, Building2, Briefcase, FileText, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 

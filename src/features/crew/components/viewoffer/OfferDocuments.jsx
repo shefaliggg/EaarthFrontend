@@ -1,6 +1,6 @@
 import { FileText, Download, ChevronUp, ChevronDown } from "lucide-react";
-import { Card, CardContent } from "../../../shared/components/ui/card";
-import { Button } from "../../../shared/components/ui/button";
+import { Card, CardContent } from "../../../../shared/components/ui/card";
+import { Button } from "../../../../shared/components/ui/button";
 import { useState } from "react";
 
 const DOCUMENT_TYPES = [

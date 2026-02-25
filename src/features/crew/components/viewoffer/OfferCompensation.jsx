@@ -1,6 +1,6 @@
-import { Card, CardContent } from "../../../shared/components/ui/card";
-import { Input } from "../../../shared/components/ui/input";
-import { Badge } from "../../../shared/components/ui/badge";
+import { Card, CardContent } from "../../../../shared/components/ui/card";
+import { Input } from "../../../../shared/components/ui/input";
+import { Badge } from "../../../../shared/components/ui/badge";
 
 const formatCurrency = (amount) => {
   if (!amount) return "£0.00";
