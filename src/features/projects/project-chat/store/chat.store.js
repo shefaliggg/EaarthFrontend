@@ -60,20 +60,32 @@ const useChatStore = create(
             conversationId,
             message,
           });
-          socket.emit("message:delivered", {
-            messageId: message._id,
-          });
-          set({
-            typingUsers: {
-              ...get().typingUsers,
-              [conversationId]: (
-                get().typingUsers[conversationId] || []
-              ).filter(
-                (u) => u.userId !== message.senderId?._id || message.senderId, // <-- use senderId here
-              ),
-            },
-          });
-          get().addMessageToConversation(conversationId, message);
+          if (selectedChat.id === conversationId) {
+            socket.emit("message:delivered", {
+              messageId: message._id,
+            });
+            set({
+              typingUsers: {
+                ...get().typingUsers,
+                [conversationId]: (
+                  get().typingUsers[conversationId] || []
+                ).filter(
+                  (u) => u.userId !== message.senderId?._id || message.senderId, // <-- use senderId here
+                ),
+              },
+            });
+            get().addMessageToConversation(conversationId, message);
+          } else {
+            // dispatch(
+            //   addNotification({
+            //     id: message._id,
+            //     type: "CHAT",
+            //     title: message.senderName,
+            //     message: message.text,
+            //     conversationId,
+            //   }),
+            // );
+          }
         });
 
         socket.on("message:edited", ({ messageId, text, editedAt }) => {
