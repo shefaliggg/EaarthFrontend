@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent } from "../../../shared/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "../../../shared/components/ui/label";
 import { Checkbox } from "../../../shared/components/ui/checkbox";
 import { Badge } from "../../../shared/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../shared/components/ui/tabs";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../../shared/components/ui/dialog";
 import { ScrollArea } from "../../../shared/components/ui/scroll-area";
 import {
@@ -17,7 +18,6 @@ import {
   Settings, FileCheck, AlertCircle,
 } from "lucide-react";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEPARTMENTS = [
   "ACCOUNTS","ACTION VEHICLES","AERIAL","ANIMALS","ANIMATION","ARMOURY","ART",
@@ -70,9 +70,9 @@ const CAP_TYPES = [
 ];
 
 const CURRENCIES = [
-  { value: "GBP", label: "GBP (£)" },
+  { value: "GBP", label: "GBP (\u00A3)" },
   { value: "USD", label: "USD ($)" },
-  { value: "EUR", label: "EUR (€)" },
+  { value: "EUR", label: "EUR (\u20AC)" },
 ];
 
 const SPECIAL_DAY_TYPES = [
@@ -83,7 +83,49 @@ const SPECIAL_DAY_TYPES = [
   { key: "TURNAROUND", label: "Turnaround" },
 ];
 
-// Bundle config: rate + engagement → template list
+// Bundle config: rate + engagement -> template list
+const SALARY_TABLE_ROWS = [
+  { item: "Salary Weekly", budgetCode: "", rate: "1784.60", hol: "\u00A3215.40", gross: "\u00A32000.00" },
+  { item: "Salary Daily", budgetCode: "", rate: "356.92", hol: "\u00A343.08", gross: "\u00A3400.00" },
+  { item: "Salary Hourly", budgetCode: "", rate: "32.44", hol: "\u00A33.92", gross: "\u00A336.36" },
+  { item: "6th Day", budgetCode: "10-001", rate: "48.67", hol: "\u00A35.87", gross: "\u00A354.54" },
+  { item: "7th Day", budgetCode: "10-002", rate: "64.89", hol: "\u00A37.83", gross: "\u00A372.72" },
+  { item: "Public Holiday", budgetCode: "10-003", rate: "64.89", hol: "\u00A37.83", gross: "\u00A372.72" },
+  { item: "Travel Day", budgetCode: "10-004", rate: "356.92", hol: "\u00A343.08", gross: "\u00A3400.00" },
+  { item: "Turnaround", budgetCode: "10-005", rate: "43.26", hol: "\u00A35.22", gross: "\u00A348.48" },
+  { item: "6th day hourly (MIN 6 HOURS)", budgetCode: "10-006", rate: "48.67", hol: "\u00A35.88", gross: "\u00A354.55" },
+  { item: "7th day hourly (MIN 6 HOURS)", budgetCode: "10-007", rate: "64.90", hol: "\u00A37.83", gross: "\u00A372.73" },
+];
+const OVERTIME_TABLE_ROWS = [
+  { item: "Add Hour", budgetCode: "15-002", rate: "32.44", hol: "\u00A33.92", gross: "\u00A336.36" },
+  { item: "Enhanced O/T", budgetCode: "15-003", rate: "48.67", hol: "\u00A35.87", gross: "\u00A354.54" },
+  { item: "Camera O/T", budgetCode: "15-004", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Post O/T", budgetCode: "15-005", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Pre O/T", budgetCode: "15-006", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "BTA", budgetCode: "15-007", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Late Meal", budgetCode: "15-008", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Broken Meal", budgetCode: "15-009", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Travel", budgetCode: "15-010", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Dawn / Early", budgetCode: "15-011", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+  { item: "Night Pen", budgetCode: "15-012", rate: "0.00", hol: "\u00A30.00", gross: "\u00A30.00" },
+];
+const ALLOWANCES_TABLE_ROWS = [
+  { item: "Computer", budgetCode: "20-002", value: "\u00A30.00 / \u00A3500" },
+  { item: "Software", budgetCode: "20-003", value: "\u00A30.00 / \u00A3300" },
+  { item: "Box Rental", budgetCode: "20-004", value: "\u00A3150.00 / \u00A3500" },
+  { item: "Equipment", budgetCode: "20-005", value: "\u00A30.00 / \u00A3750" },
+  { item: "Vehicle", budgetCode: "20-006", value: "\u00A30.00 / \u00A31000" },
+  { item: "Mobile", budgetCode: "20-007", value: "\u00A35.00 / \u00A345.00" },
+  { item: "Living", budgetCode: "20-008", value: "\u00A30.00 / \u00A3800" },
+  { item: "Per Diem Shoot Rate", budgetCode: "20-009", value: "\u00A350.00 / \u00A3350.00" },
+  { item: "Per Diem Non Shoot Rate", budgetCode: "20-010", value: "\u00A325.00 / \u00A3150.00" },
+  { item: "Breakfast", budgetCode: "20-011", value: "\u00A315.00 / \u00A385.00" },
+  { item: "Lunch", budgetCode: "20-012", value: "\u00A320.00 / \u00A3120.00" },
+  { item: "Dinner", budgetCode: "20-013", value: "\u00A330.00 / \u00A3180.00" },
+  { item: "Fuel", budgetCode: "20-014", value: "\u00A31.50 / \u00A3250.00" },
+  { item: "Mileage", budgetCode: "20-015", value: "\u00A30.45p / \u00A3125.00" },
+];
+
 const BUNDLE_CONFIG = {
   "DAILY_PAYE":      ["Daily PAYE Contract", "Box Rental Form", "Policy Acknowledgement", "Crew Information Form"],
   "DAILY_LOAN_OUT":  ["Daily Loan Out Agreement", "Box Rental Form", "Loan Out Declaration"],
@@ -95,7 +137,6 @@ const BUNDLE_CONFIG = {
   "WEEKLY_LONG_FORM":["Long Form Weekly Agreement", "Policy Acknowledgement"],
 };
 
-// ─── Default Helpers ──────────────────────────────────────────────────────────
 
 const getDefaultAllowances = () => ({
   boxRental: false, boxRentalTag: "", boxRentalDescription: "", boxRentalFeePerWeek: "",
@@ -157,24 +198,22 @@ const createDefaultRole = (index) => ({
   specialDayRates: SPECIAL_DAY_TYPES.map((d) => ({ type: d.key, amount: "", unit: "DAILY" })),
 });
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
 
 const cn = (...cls) => cls.filter(Boolean).join(" ");
 
-const getCurrencySymbol = (c) => ({ GBP: "£", USD: "$", EUR: "€" }[c] || "£");
+const getCurrencySymbol = (c) => ({ GBP: "\u00A3", USD: "$", EUR: "\u20AC" }[c] || "\u00A3");
 
 const getBundleForms = (rateType, engagementType) => {
   if (!rateType || !engagementType) return null;
   return BUNDLE_CONFIG[`${rateType}_${engagementType}`] ?? null;
 };
 
-// ─── Reusable UI ──────────────────────────────────────────────────────────────
 
 const FormField = ({ label, required, tooltip, children, className }) => (
   <div className={cn("space-y-1.5", className)}>
-    <Label className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
+    <Label className="text-sm font-medium text-foreground">
       {label} {required && <span className="text-destructive">*</span>}
-      {tooltip && <span className="font-normal text-muted-foreground ml-1 text-[10px] normal-case">({tooltip})</span>}
+      {tooltip && <span className="font-normal text-muted-foreground ml-1 text-xs">({tooltip})</span>}
     </Label>
     {children}
   </div>
@@ -185,7 +224,7 @@ const SelectField = ({ value, onChange, options, className, ...props }) => (
     value={value}
     onChange={(e) => onChange(e.target.value)}
     className={cn(
-      "flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      "flex h-8 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       className
     )}
     {...props}
@@ -196,122 +235,34 @@ const SelectField = ({ value, onChange, options, className, ...props }) => (
 
 const PayableInCheckboxes = ({ label, prep, shoot, wrap, onPrepChange, onShootChange, onWrapChange }) => (
   <FormField label={label || "Payable In"}>
-    <div className="flex gap-4 pt-1">
+    <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
       {[["PREP", prep, onPrepChange], ["SHOOT", shoot, onShootChange], ["WRAP", wrap, onWrapChange]].map(([name, checked, onChange]) => (
-        <label key={name} className="flex items-center gap-2 cursor-pointer">
-          <Checkbox checked={checked} onCheckedChange={onChange} />
-          <span className="text-xs font-medium">{name}</span>
+        <label key={name} className="flex items-center gap-1.5 cursor-pointer min-w-0">
+          <Checkbox checked={checked} onCheckedChange={onChange} className="h-4 w-4" />
+          <span className="text-[11px] leading-none font-medium whitespace-nowrap">{name}</span>
         </label>
       ))}
     </div>
   </FormField>
 );
 
-const SliderCurrencyInput = ({ label, value, onChange, currency = "GBP", required, min = 0, max = 5000, step = 50 }) => {
-  const sym = getCurrencySymbol(currency);
-  const num = parseFloat(value) || 0;
-  const pct = Math.min((num / max) * 100, 100);
-  return (
-    <FormField label={label} required={required}>
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-muted-foreground">{sym}</span>
-          <Input
-            type="number" step="0.01" value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="0.00" className="w-28"
-          />
-          <span className="text-xs text-muted-foreground">
-            {sym}{num.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">{sym}0</span>
-          <input
-            type="range" min={min} max={max} step={step} value={num}
-            onChange={(e) => onChange(e.target.value)}
-            className="flex-1 h-1.5 rounded-full cursor-pointer accent-primary"
-            style={{
-              background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${pct}%, hsl(var(--muted)) ${pct}%, hsl(var(--muted)) 100%)`,
-            }}
-          />
-          <span className="text-[10px] text-muted-foreground">{sym}{max.toLocaleString()}</span>
-        </div>
-      </div>
-    </FormField>
-  );
-};
-
-const SectionHeader = ({ title, icon: Icon, section, isOpen, onToggle }) => (
-  <button
-    onClick={() => onToggle(section)}
-    className="flex items-center justify-between w-full p-4 bg-primary/5 rounded-t-lg border-b border-primary/10 hover:bg-primary/10 transition-colors"
-  >
-    <div className="flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-        <Icon className="w-4 h-4 text-primary" />
-      </div>
-      <span className="text-sm font-bold text-primary uppercase tracking-wide">{title}</span>
-    </div>
-    {isOpen ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-primary" />}
-  </button>
-);
-
 // Allowance row with table summary + editable budget code & tag (both hidden in print)
 const AllowanceTableSection = ({
-  title, icon: Icon, isEnabled, onToggle,
-  tag, onTagChange, budgetCode, onBudgetCodeChange,
-  rateValue, grossValue, currency, children,
+  title, icon, isEnabled, onToggle, children,
 }) => {
-  const sym = getCurrencySymbol(currency);
+  const IconComponent = icon;
   return (
-    <div className={cn("rounded-lg border transition-all", isEnabled ? "border-primary/30 bg-primary/5" : "border-border bg-card")}>
+    <div className={cn("rounded-lg border transition-all bg-white", isEnabled ? "border-primary/30" : "border-border")}>
       <div className="flex items-center gap-3 p-3">
         <Checkbox checked={isEnabled} onCheckedChange={onToggle} className="w-5 h-5" />
-        <Icon className={cn("w-4 h-4", isEnabled ? "text-primary" : "text-muted-foreground")} />
+        <IconComponent className={cn("w-4 h-4", isEnabled ? "text-primary" : "text-muted-foreground")} />
         <span className={cn("text-sm font-bold uppercase", isEnabled ? "text-primary" : "text-muted-foreground")}>{title}</span>
         {isEnabled && <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary text-[10px]">ENABLED</Badge>}
       </div>
       {isEnabled && (
         <div className="border-t border-primary/10">
-          {/* Summary table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-primary/10 bg-primary/5">
-                  <th className="text-left p-2 font-bold uppercase text-primary/70">Item</th>
-                  <th className="text-left p-2 font-bold uppercase text-primary/70">Rate</th>
-                  <th className="text-left p-2 font-bold uppercase text-primary/70">Hol.</th>
-                  <th className="text-left p-2 font-bold uppercase text-primary/70">Gross</th>
-                  <th className="text-left p-2 font-bold uppercase text-primary/70 print-hide">Budget Code</th>
-                  <th className="text-left p-2 font-bold uppercase text-primary/70 print-hide">Tag</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="p-2 font-medium uppercase">{title}</td>
-                  <td className="p-2 text-muted-foreground">{rateValue ? `${sym}${parseFloat(rateValue).toFixed(2)}` : "—"}</td>
-                  <td className="p-2 text-muted-foreground">—</td>
-                  <td className="p-2 font-semibold">{grossValue ? `${sym}${parseFloat(grossValue).toFixed(2)}` : "—"}</td>
-                  <td className="p-2 print-hide">
-                    <Input
-                      value={budgetCode} onChange={(e) => onBudgetCodeChange(e.target.value.toUpperCase())}
-                      placeholder="847-13-001" className="h-7 text-xs uppercase w-32"
-                    />
-                  </td>
-                  <td className="p-2 print-hide">
-                    <Input
-                      value={tag} onChange={(e) => onTagChange(e.target.value.toUpperCase())}
-                      placeholder="E.G. TRANSPORT" className="h-7 text-xs uppercase w-28"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          {/* Detail fields */}
           <div className="p-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">{children}</div>
           </div>
         </div>
       )}
@@ -319,7 +270,6 @@ const AllowanceTableSection = ({
   );
 };
 
-// ─── Contracts Inner Tab ──────────────────────────────────────────────────────
 
 const ContractsTab = ({ role, updateRole, formData, setFormData }) => {
   const bundleForms = getBundleForms(role.rateType, role.engagementType);
@@ -328,96 +278,67 @@ const ContractsTab = ({ role, updateRole, formData, setFormData }) => {
     : null;
 
   return (
-    <div className="space-y-5">
-      {/* 3-field row */}
-      <Card className="border shadow-none">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FileCheck className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-primary uppercase">Contract Configuration</span>
-            <Badge variant="outline" className="ml-auto text-[10px] text-muted-foreground border-muted-foreground/30">
-              Decides bundle
-            </Badge>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField label="Rate Type" required>
-              <SelectField
-                value={role.rateType}
-                onChange={(v) => updateRole(role.id, { rateType: v })}
-                options={RATE_TYPES}
-              />
-            </FormField>
-            <FormField label="Engagement Type" required>
-              <SelectField
-                value={role.engagementType}
-                onChange={(v) => updateRole(role.id, { engagementType: v })}
-                options={ENGAGEMENT_TYPES}
-              />
-            </FormField>
-            <FormField label="Alternate Contract Type">
-              <SelectField
-                value={formData.alternativeContractType}
-                onChange={(v) => setFormData({ ...formData, alternativeContractType: v })}
-                options={CONTRACT_OPTIONS}
-              />
-            </FormField>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Template Bundle */}
-      <Card className="border shadow-none overflow-hidden">
-        <div className="flex items-center gap-3 p-4 bg-primary/5 border-b border-primary/10">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-primary" />
-          </div>
-          <span className="text-sm font-bold text-primary uppercase tracking-wide">Attached Template Bundle</span>
+    <div>
+      <div className="contracts-config-section">
+        <div className="flex items-center gap-2 mb-2">
+          <FileCheck className="w-5 h-5 text-primary" />
+          <span className="text-base font-semibold text-muted-foreground">Contract Configuration</span>
+          <Badge variant="outline" className="ml-auto text-[10px] text-muted-foreground border-muted-foreground/30">Decides bundle</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <FormField label="Rate Type" required>
+            <SelectField value={role.rateType} onChange={(v) => updateRole(role.id, { rateType: v })} options={RATE_TYPES} />
+          </FormField>
+          <FormField label="Engagement Type" required>
+            <SelectField value={role.engagementType} onChange={(v) => updateRole(role.id, { engagementType: v })} options={ENGAGEMENT_TYPES} />
+          </FormField>
+          <FormField label="Alternate Contract Type" className="md:col-span-2">
+            <SelectField value={formData.alternativeContractType} onChange={(v) => setFormData({ ...formData, alternativeContractType: v })} options={CONTRACT_OPTIONS} />
+          </FormField>
+        </div>
+      </div>
+      <div className="contracts-template-section mt-6">
+        <div className="flex items-center gap-2 mb-2">
+          <FileText className="w-5 h-5 text-primary" />
+          <span className="text-base font-semibold text-muted-foreground">Attached Template Bundle</span>
           {bundleLabel && bundleForms && (
             <Badge className="ml-auto bg-primary/10 text-primary border-primary/20 text-[10px]">{bundleLabel}</Badge>
           )}
         </div>
-        <CardContent className="p-4">
+        <div>
           {!role.rateType || !role.engagementType ? (
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+            <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
               <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-              <p className="text-sm font-medium">
-                Select a <strong>Rate Type</strong> and <strong>Engagement Type</strong> above to load the template bundle.
-              </p>
+              <span className="text-xs font-medium">Select a <strong>Rate Type</strong> and <strong>Engagement Type</strong> above to load the template bundle.</span>
             </div>
           ) : bundleForms ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-wrap gap-2">
               {bundleForms.map((doc, i) => (
-                <div key={i} className="flex flex-col items-center justify-center p-5 rounded-lg border bg-card hover:border-primary/50 transition-colors cursor-pointer group">
-                  <div className="w-11 h-11 rounded-lg bg-purple-100 flex items-center justify-center mb-3 group-hover:bg-purple-200 transition-colors">
-                    <FileText className="w-5 h-5 text-purple-600" />
+                <div key={i} className="flex flex-col items-center justify-center p-2 rounded-lg border bg-transparent hover:border-primary/50 transition-colors cursor-pointer group flex-1 min-w-[80px] max-w-[120px]">
+                  <div className="w-6 h-6 rounded-lg bg-primary/5 flex items-center justify-center mb-1 group-hover:bg-primary/10 transition-colors">
+                    <FileText className="w-4 h-4 text-primary" />
                   </div>
-                  <p className="text-xs font-bold uppercase text-center leading-tight">{doc}</p>
+                  <span className="text-[10px] font-bold uppercase text-center leading-tight">{doc}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+            <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 border border-border">
               <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
               <div>
-                <p className="text-sm font-semibold">
-                  No template bundle configured for{" "}
-                  <span className="text-primary">{bundleLabel}</span>.
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  <Settings className="w-3 h-3" />
-                  Configure in{" "}
-                  <span className="text-primary font-medium cursor-pointer hover:underline">Settings</span>
-                </p>
+                <span className="text-xs font-semibold">No template bundle configured for <span className="text-primary">{bundleLabel}</span>.</span>
+                <span className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                  <Settings className="w-3 h-3" /> Configure in <span className="text-primary font-medium cursor-pointer hover:underline">Settings</span>
+                </span>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function CreateOffer() {
   const navigate = useNavigate();
@@ -425,10 +346,6 @@ export default function CreateOffer() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const [expandedSections, setExpandedSections] = useState({
-    recipient: true, taxStatus: true, roles: true, notes: true,
-  });
 
   const [formData, setFormData] = useState({
     fullName: "", emailAddress: "", mobileNumber: "",
@@ -441,12 +358,11 @@ export default function CreateOffer() {
 
   const [roles, setRoles] = useState([createDefaultRole(0)]);
   const [activeRoleTab, setActiveRoleTab] = useState(roles[0].id);
-  const [roleInnerTab, setRoleInnerTab] = useState({});
+  const [feeModeByRole, setFeeModeByRole] = useState({});
+  const [activePreviewField, setActivePreviewField] = useState("");
 
-  const getInnerTab = (id) => roleInnerTab[id] || "details";
-  const setInnerTab = (id, tab) => setRoleInnerTab((p) => ({ ...p, [id]: tab }));
-
-  const toggleSection = (s) => setExpandedSections((p) => ({ ...p, [s]: !p[s] }));
+  const getFeeMode = (id) => feeModeByRole[id] || "DAY";
+  const setFeeMode = (id, mode) => setFeeModeByRole((p) => ({ ...p, [id]: mode }));
 
   const addRole = () => {
     const r = createDefaultRole(roles.length);
@@ -467,13 +383,6 @@ export default function CreateOffer() {
   const updateRoleAllowances = (id, updates) =>
     setRoles(roles.map((r) =>
       r.id === id ? { ...r, allowances: { ...r.allowances, ...updates } } : r
-    ));
-
-  const updateSpecialDayRate = (roleId, type, amount) =>
-    setRoles(roles.map((r) =>
-      r.id === roleId
-        ? { ...r, specialDayRates: r.specialDayRates.map((d) => d.type === type ? { ...d, amount } : d) }
-        : r
     ));
 
   const handleSave = async () => {
@@ -509,63 +418,237 @@ export default function CreateOffer() {
     finally { setIsSaving(false); }
   };
 
-  const primaryRole = roles.find((r) => r.isPrimaryRole);
-
-  const PDFPreview = () => (
-    <div className="bg-white text-black p-8 min-h-[800px]" style={{ fontFamily: "Georgia, serif" }}>
-      <div className="border-b-4 border-primary pb-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary tracking-wider">EAARTH PRODUCTIONS</h1>
-            <p className="text-sm text-gray-600 mt-1">CREW OFFER LETTER</p>
-          </div>
-          <div className="text-right text-sm text-gray-600">
-            <p>Date: {new Date().toLocaleDateString("en-GB")}</p>
-            <p>Reference: OFFER-{Date.now().toString().slice(-6)}</p>
-          </div>
-        </div>
-      </div>
-      <section className="mb-6">
-        <h2 className="text-lg font-bold border-b pb-2 mb-4">RECIPIENT DETAILS</h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><b>Full Name:</b> {formData.fullName || "—"}</div>
-          <div><b>Email:</b> {formData.emailAddress || "—"}</div>
-          <div><b>Mobile:</b> {formData.mobileNumber || "—"}</div>
-          <div><b>Contract Type:</b> {formData.alternativeContractType || "Standard"}</div>
-        </div>
-      </section>
-      {roles.map((role, idx) => (
-        <section key={role.id} className="mb-6">
-          <h2 className="text-lg font-bold border-b pb-2 mb-4">
-            ROLE {idx + 1}{role.isPrimaryRole ? " (PRIMARY)" : ""}: {role.jobTitle || "UNTITLED"}
-          </h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><b>Department:</b> {role.department || "—"}</div>
-            <div><b>Engagement:</b> {role.engagementType || "—"}</div>
-            <div><b>Rate Type:</b> {role.rateType || "—"}</div>
-            <div><b>Start:</b> {role.startDate || "TBC"}</div>
-            <div><b>End:</b> {role.endDate || "TBC"}</div>
-            <div><b>Fee Per Day:</b> {getCurrencySymbol(role.currency)}{role.feePerDay || "0.00"}</div>
-          </div>
-        </section>
-      ))}
+  const primaryRole = roles.find((r) => r.isPrimaryRole) || roles[0];
+  const previewRole = roles.find((r) => r.id === activeRoleTab) || primaryRole;
+  const formatMoney = (value, currency = "GBP") => {
+    if (value === "" || value === null || value === undefined) return "0.00";
+    const n = Number(value);
+    return Number.isFinite(n) ? `${getCurrencySymbol(currency)}${n.toFixed(2)}` : `${getCurrencySymbol(currency)}0.00`;
+  };
+  const cleanLabel = (text = "") =>
+    text
+      .replace(/\*/g, "")
+      .replace(/\(.*?\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const normalizeText = (v = "") => v.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const isFieldActive = (label) => {
+    const a = normalizeText(activePreviewField);
+    const b = normalizeText(label);
+    return Boolean(a) && Boolean(b) && (a.includes(b) || b.includes(a));
+  };
+  const formatPreviewValue = (value) => {
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (value === null || value === undefined || value === "") return "-";
+    return String(value);
+  };
+  const getEnabledAllowanceGroups = (allowances = {}) => {
+    const groups = [
+      { enabledKey: "boxRental", heading: "Box Rental", fields: [{ label: "Fee Per Week", key: "boxRentalFeePerWeek" }, { label: "Terms", key: "boxRentalTerms" }, { label: "Tag", key: "boxRentalTag" }] },
+      { enabledKey: "computerAllowance", heading: "Computer Allowance", fields: [{ label: "Fee Per Week", key: "computerAllowanceFeePerWeek" }, { label: "Terms", key: "computerAllowanceTerms" }, { label: "Tag", key: "computerAllowanceTag" }] },
+      { enabledKey: "softwareAllowance", heading: "Software Allowance", fields: [{ label: "Fee Per Week", key: "softwareAllowanceFeePerWeek" }, { label: "Terms", key: "softwareAllowanceTerms" }, { label: "Tag", key: "softwareAllowanceTag" }] },
+      { enabledKey: "equipmentRental", heading: "Equipment Rental", fields: [{ label: "Fee Per Week", key: "equipmentRentalFeePerWeek" }, { label: "Terms", key: "equipmentRentalTerms" }, { label: "Tag", key: "equipmentRentalTag" }] },
+      { enabledKey: "mobilePhoneAllowance", heading: "Mobile Phone Allowance", fields: [{ label: "Fee Per Week", key: "mobilePhoneAllowanceFeePerWeek" }, { label: "Terms", key: "mobilePhoneAllowanceTerms" }, { label: "Tag", key: "mobilePhoneAllowanceTag" }] },
+      { enabledKey: "vehicleAllowance", heading: "Vehicle Allowance", fields: [{ label: "Fee Per Week", key: "vehicleAllowanceFeePerWeek" }, { label: "Terms", key: "vehicleAllowanceTerms" }, { label: "Tag", key: "vehicleAllowanceTag" }] },
+      { enabledKey: "perDiem1", heading: "Per Diem 1", fields: [{ label: "Shoot Day Rate", key: "perDiem1ShootDayRate" }, { label: "Non-Shoot Day Rate", key: "perDiem1NonShootDayRate" }, { label: "Terms", key: "perDiem1Terms" }] },
+      { enabledKey: "perDiem2", heading: "Per Diem 2", fields: [{ label: "Shoot Day Rate", key: "perDiem2ShootDayRate" }, { label: "Non-Shoot Day Rate", key: "perDiem2NonShootDayRate" }, { label: "Terms", key: "perDiem2Terms" }] },
+      { enabledKey: "livingAllowance", heading: "Living Allowance", fields: [{ label: "Weekly Rate", key: "livingAllowanceWeeklyRate" }, { label: "Terms", key: "livingAllowanceTerms" }, { label: "Tag", key: "livingAllowanceTag" }] },
+    ];
+    return groups
+      .filter((group) => allowances[group.enabledKey])
+      .map((group) => ({
+        heading: group.heading,
+        entries: group.fields.map((f) => ({ label: f.label, value: allowances[f.key] })),
+      }));
+  };
+  const getEnabledAllowanceRows = (role) => {
+    const allowances = role?.allowances || {};
+    const rows = [
+      { enabledKey: "computerAllowance", label: "Computer", valueKey: "computerAllowanceFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "softwareAllowance", label: "Software", valueKey: "softwareAllowanceFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "boxRental", label: "Box Rental", valueKey: "boxRentalFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "equipmentRental", label: "Equipment", valueKey: "equipmentRentalFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "vehicleAllowance", label: "Vehicle", valueKey: "vehicleAllowanceFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "mobilePhoneAllowance", label: "Mobile", valueKey: "mobilePhoneAllowanceFeePerWeek", currencyKey: "currency" },
+      { enabledKey: "livingAllowance", label: "Living", valueKey: "livingAllowanceWeeklyRate", currencyKey: "livingAllowanceCurrency" },
+      { enabledKey: "perDiem1", label: "Per Diem 1", valueKey: "perDiem1ShootDayRate", currencyKey: "perDiem1Currency" },
+      { enabledKey: "perDiem2", label: "Per Diem 2", valueKey: "perDiem2ShootDayRate", currencyKey: "perDiem2Currency" },
+    ];
+    return rows
+      .filter((r) => allowances[r.enabledKey])
+      .map((r) => ({
+        label: r.label,
+        value: allowances[r.valueKey],
+        currency: r.currencyKey === "currency" ? role?.currency : allowances[r.currencyKey],
+      }));
+  };
+  const handleSidebarFieldActivity = (event) => {
+    const target = event.target;
+    if (!target || !["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName)) return;
+    const formField = target.closest(".space-y-1\\.5");
+    const labelNode = formField?.querySelector("label") || target.closest("label");
+    const labelText = cleanLabel(labelNode?.textContent || target.getAttribute("placeholder") || target.getAttribute("name") || "");
+    if (labelText) setActivePreviewField(labelText);
+  };
+  const PreviewField = ({ label, value, className = "" }) => (
+    <div className={cn("rounded p-1.5 bg-white", isFieldActive(label) ? "ring-1 ring-amber-300 bg-amber-50" : "", className)}>
+      <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-semibold break-words leading-tight">{formatPreviewValue(value)}</p>
     </div>
   );
 
-  const INNER_TABS = [
-    { key: "details", label: "Role Details" },
-    { key: "contracts", label: "Contracts" },
-    { key: "allowances", label: "Allowances" },
-  ];
+  const PDFPreview = () => (
+    <div className="rounded-2xl border border-border bg-muted/20 p-3">
+      <div className="rounded-xl border border-slate-300 bg-[#fffefb] p-4 text-[11px] leading-tight text-slate-900 shadow-sm">
+        <div className="relative border-b border-slate-200 bg-slate-200/70 px-2 py-2 rounded-md mb-3">
+          <p className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-800 whitespace-nowrap">
+            {previewRole?.rateType || "N/A"} | {previewRole?.engagementType || "N/A"} | {formData.alternativeContractType || "STANDARD"}
+          </p>
+          <h2 className="text-left text-lg font-semibold tracking-wide">
+            CREW OFFER SUMMARY
+          </h2>
+        </div>
 
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="rounded border p-2">
+            <p className="font-semibold text-primary mb-1">Recipient</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <PreviewField label="Full Name" value={formData.fullName} className="col-span-3" />
+              <PreviewField label="Email" value={formData.emailAddress} />
+              <PreviewField label="Mobile Number" value={formData.mobileNumber} />
+              <PreviewField label="Via Agent" value={formData.isViaAgent} />
+            </div>
+            <div className="mt-2">
+              <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">Agent Info</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <PreviewField label="Agent Name" value={formData.agentName} />
+                <PreviewField label="Agent Email Address" value={formData.agentEmailAddress} className="col-span-2" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded border p-2">
+            <p className="font-semibold text-primary mb-1">Contracts</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <PreviewField label="Rate Type" value={previewRole?.rateType} />
+              <PreviewField label="Engagement Type" value={previewRole?.engagementType} />
+              <PreviewField label="Alternate Contract Type" value={formData.alternativeContractType} />
+              <PreviewField label="Self Employed/Loan Out" value={formData.allowAsSelfEmployedOrLoanOut} />
+              <PreviewField label="Status Reason" value={formData.statusDeterminationReason} />
+              <PreviewField label="Other Status Reason" value={formData.otherStatusDeterminationReason} />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded border p-2 mb-2">
+          <p className="font-semibold text-primary mb-1">Roles ({roles.length})</p>
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-2">
+            {roles.map((role) => (
+              <div key={role.id} className="rounded border border-slate-200 p-2">
+                <p className="text-[10px] font-semibold uppercase text-slate-700 mb-1">{role.roleName}</p>
+                <p className="text-[9px] font-semibold uppercase text-primary/80 mb-1">Role Details</p>
+                <div className="grid grid-cols-6 gap-1.5 mb-1.5">
+                  <PreviewField label="Unit" value={role.unit} />
+                  <PreviewField label="Department" value={role.department} />
+                  <PreviewField label="Sub-Department" value={role.subDepartment} />
+                  <PreviewField label="Job Title" value={role.jobTitle} className="col-span-2" />
+                  <PreviewField label="Job Title Suffix" value={role.jobTitleSuffix} />
+                  <PreviewField label="Site of Work" value={role.regularSiteOfWork} className="col-span-3" />
+                  <PreviewField label="Start Date" value={role.startDate} />
+                  <PreviewField label="End Date" value={role.endDate} />
+                  <PreviewField label="Working Week" value={role.workingWeek} />
+                </div>
+                <div className="border-t border-slate-200 mt-2 pt-2">
+                  <p className="text-[9px] font-semibold uppercase text-primary/80 mb-1">Rate & Compensation</p>
+                  <div className="grid grid-cols-6 gap-1.5 mb-1.5">
+                    <PreviewField label="Rate Type" value={role.rateType} />
+                    <PreviewField label="Currency" value={role.currency} />
+                    <PreviewField label="Fee Mode" value={getFeeMode(role.id)} />
+                    <PreviewField label="Fee Per Day" value={role.feePerDay} />
+                    <PreviewField label="Fee Per Week" value={role.feePerWeek} />
+                    <PreviewField label="Engagement Type" value={role.engagementType} />
+                  </div>
+                </div>
+                <div className="border-t border-slate-200 mt-2 pt-2">
+                  <p className="text-[9px] font-semibold uppercase text-primary/80 mb-1">Allowances</p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                  {getEnabledAllowanceGroups(role.allowances).length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground">No allowances enabled</p>
+                  ) : (
+                    getEnabledAllowanceGroups(role.allowances).map((group) => (
+                      <div key={`${role.id}-${group.heading}`} className="rounded border border-slate-200 p-1.5">
+                        <p className="text-[9px] font-semibold uppercase text-slate-700 mb-1">{group.heading}</p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {group.entries.map((entry) => (
+                            <PreviewField key={`${role.id}-${group.heading}-${entry.label}`} label={entry.label} value={entry.value} />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded border overflow-hidden">
+            <div className="px-2 py-1.5 bg-slate-200 text-slate-800 text-[11px] font-bold">Salary</div>
+            <table className="w-full text-[10px]"><tbody>{SALARY_TABLE_ROWS.slice(0, 5).map((row) => <tr key={row.item} className="border-b last:border-b-0"><td className="px-2 py-1">{row.item}</td><td className="px-2 py-1 font-semibold text-right">{row.gross}</td></tr>)}</tbody></table>
+          </div>
+          <div className="rounded border overflow-hidden">
+            <div className="px-2 py-1.5 bg-slate-200 text-slate-800 text-[11px] font-bold">Overtime</div>
+            <table className="w-full text-[10px]"><tbody>{OVERTIME_TABLE_ROWS.slice(0, 5).map((row) => <tr key={row.item} className="border-b last:border-b-0"><td className="px-2 py-1">{row.item}</td><td className="px-2 py-1 font-semibold text-right">{row.gross}</td></tr>)}</tbody></table>
+          </div>
+          <div className="rounded border overflow-hidden">
+            <div className="px-2 py-1.5 bg-slate-200 text-slate-800 text-[11px] font-bold">Allowances</div>
+            <table className="w-full text-[10px]"><tbody>
+              {getEnabledAllowanceRows(previewRole).length === 0 ? (
+                <tr><td className="px-2 py-1 text-muted-foreground" colSpan={2}>No allowances enabled</td></tr>
+              ) : (
+                getEnabledAllowanceRows(previewRole).map((row, idx) => (
+                  <tr key={row.label} className={idx === getEnabledAllowanceRows(previewRole).length - 1 ? "" : "border-b"}>
+                    <td className="px-2 py-1">{row.label}</td>
+                    <td className="px-2 py-1 font-semibold text-right">{formatMoney(row.value, row.currency)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody></table>
+          </div>
+        </div>
+
+        <div className="rounded border border-amber-300 bg-amber-50 p-2 mt-2">
+          <p className="text-[10px] font-semibold text-amber-700 uppercase">Additional Notes</p>
+          <p className={cn("text-[10px] rounded px-1 py-0.5", isFieldActive("Other Deal Provisions") ? "bg-amber-100 ring-1 ring-amber-300" : "")}>
+            <span className="text-amber-800/80">Other Deal Provisions:</span> {formatPreviewValue(formData.otherDealProvisions)}
+          </p>
+          <p className={cn("text-[10px] rounded px-1 py-0.5 mt-1", isFieldActive("Additional Notes") ? "bg-amber-100 ring-1 ring-amber-300" : "")}>
+            <span className="text-amber-800/80">Additional Notes:</span> {formatPreviewValue(formData.additionalNotes)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <>
-      <style>{`@media print { .print-hide { display: none !important; } }`}</style>
+      <style>{`
+        @media print { .print-hide { display: none !important; } }
+        .project-settings-form input:not([type="checkbox"]),
+        .project-settings-form select {
+          height: 1.9rem;
+          font-size: 0.8125rem;
+        }
+        .project-settings-form textarea {
+          font-size: 0.8125rem;
+          line-height: 1.35;
+        }
+      `}</style>
 
-      <div className="container mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="sticky py-3">
-          <div className="flex items-center justify-between container mx-auto">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${projectName}/onboarding`)}>
                 <ArrowLeft className="w-4 h-4" />
@@ -573,7 +656,7 @@ export default function CreateOffer() {
               <div>
                 <h1 className="text-lg font-bold">CREATE NEW OFFER</h1>
                 <p className="text-xs text-muted-foreground">
-                  {formData.fullName || "New Recipient"}{primaryRole?.jobTitle && ` — ${primaryRole.jobTitle}`}
+                  {formData.fullName || "New Recipient"}{primaryRole?.jobTitle && ` - ${primaryRole.jobTitle}`}
                 </p>
               </div>
             </div>
@@ -591,15 +674,21 @@ export default function CreateOffer() {
           </div>
         </div>
 
-        <div className="container mx-auto space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+          <div
+            className="project-settings-form xl:col-span-4 space-y-4 xl:h-[calc(100vh-9rem)] xl:overflow-y-auto xl:pr-1"
+            onFocusCapture={handleSidebarFieldActivity}
+            onInputCapture={handleSidebarFieldActivity}
+          >
 
-          {/* ── Recipient ── */}
-          <Card className="border-0 shadow-sm py-0 overflow-hidden">
-            <SectionHeader title="Recipient" icon={User} section="recipient" isOpen={expandedSections.recipient} onToggle={toggleSection} />
-            {expandedSections.recipient && (
+          <Card className="border shadow-sm py-0 overflow-hidden">
               <CardContent className="p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <FormField label="Full Name" required>
+                <div className="pb-2 border-b">
+                  <h3 className="text-sm font-semibold">Recipient</h3>
+                  <p className="text-xs text-muted-foreground">Basic recipient details</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Full Name" required className="md:col-span-2">
                     <Input value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value.toUpperCase() })} placeholder="ENTER FULL NAME" className="uppercase" />
                   </FormField>
                   <FormField label="Email" required tooltip="Preferred email for engine account">
@@ -626,77 +715,46 @@ export default function CreateOffer() {
                   </div>
                 )}
               </CardContent>
-            )}
           </Card>
 
-          {/* ── Tax Status ── */}
-          <Card className="border-0 py-0 shadow-sm overflow-hidden">
-            <SectionHeader title="Tax Status" icon={Briefcase} section="taxStatus" isOpen={expandedSections.taxStatus} onToggle={toggleSection} />
-            {expandedSections.taxStatus && (
-              <CardContent className="p-4 space-y-4">
-                <FormField label="Allow as Self-Employed or Loan Out?">
-                  <div className="flex gap-6 pt-2">
-                    {["YES", "NO"].map((opt) => (
-                      <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="selfEmployed" value={opt}
-                          checked={formData.allowAsSelfEmployedOrLoanOut === opt}
-                          onChange={(e) => setFormData({ ...formData, allowAsSelfEmployedOrLoanOut: e.target.value })}
-                          className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                </FormField>
-
-                {formData.allowAsSelfEmployedOrLoanOut === "YES" && (
-                  <FormField label="Status Determination Reason">
-                    <SelectField value={formData.statusDeterminationReason}
-                      onChange={(v) => setFormData({ ...formData, statusDeterminationReason: v })}
-                      options={STATUS_REASONS} />
-                  </FormField>
-                )}
-
-                {formData.statusDeterminationReason === "OTHER" && (
-                  <FormField label="Please Specify Other Reason">
-                    <Input value={formData.otherStatusDeterminationReason}
-                      onChange={(e) => setFormData({ ...formData, otherStatusDeterminationReason: e.target.value.toUpperCase() })}
-                      placeholder="ENTER REASON" className="uppercase" />
-                  </FormField>
-                )}
-
-                <FormField label="Working in the UK?" required>
-                  <div className="flex gap-6 pt-2">
-                    {["YES", "NEVER"].map((opt) => (
-                      <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="workingInUK" value={opt}
-                          checked={formData.isLivingInUk === (opt === "YES")}
-                          onChange={() => setFormData({ ...formData, isLivingInUk: opt === "YES" })}
-                          className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                </FormField>
-              </CardContent>
-            )}
-          </Card>
-
-          {/* ── Roles & Rates ── */}
-          <Card className="border-0 py-0 shadow-sm overflow-hidden">
-            <SectionHeader title="Roles & Rates" icon={DollarSign} section="roles" isOpen={expandedSections.roles} onToggle={toggleSection} />
-            {expandedSections.roles && (
+          <Card className="border shadow-sm py-0 overflow-hidden">
               <CardContent className="p-4">
+                <div className="pb-2 border-b mb-4">
+                  <h3 className="text-sm font-semibold">Contracts</h3>
+                  <p className="text-xs text-muted-foreground">Contract configuration and templates</p>
+                </div>
+                <ContractsTab
+                  role={roles[0]}
+                  updateRole={updateRole}
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </CardContent>
+          </Card>
+
+
+
+          <Card className="border py-0 shadow-sm overflow-hidden">
+              <CardContent className="p-4">
+                <div className="pb-2 border-b mb-4">
+                  <h3 className="text-sm font-semibold">Roles & Rates</h3>
+                  <p className="text-xs text-muted-foreground">Role details, compensation, and allowances</p>
+                </div>
                 <p className="text-sm text-muted-foreground mb-4">Configure one or more roles for this offer</p>
 
-                <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <TabsList className="h-auto p-0 bg-transparent gap-1">
+                <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab} className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TabsList className="h-auto p-1 bg-muted/40 gap-1">
                       {roles.map((role) => (
-                        <TabsTrigger key={role.id} value={role.id} className="gap-2 data-[state=active]:bg-muted">
-                          {role.isPrimaryRole && (
-                            <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary px-2 py-0">PRIMARY</Badge>
+                        <TabsTrigger
+                          key={role.id}
+                          value={role.id}
+                          className={cn(
+                            "text-xs px-3 py-1.5",
+                            role.isPrimaryRole ? "font-semibold" : ""
                           )}
-                          <span className="text-sm">{role.roleName}</span>
+                        >
+                          {role.roleName}
                         </TabsTrigger>
                       ))}
                     </TabsList>
@@ -707,6 +765,15 @@ export default function CreateOffer() {
 
                   {roles.map((role) => (
                     <TabsContent key={role.id} value={role.id} className="space-y-4">
+                    <div className="space-y-4 rounded-lg border border-border p-3">
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold">{role.roleName}</h4>
+                          {role.isPrimaryRole && (
+                            <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary px-2 py-0">PRIMARY</Badge>
+                          )}
+                        </div>
+                      </div>
                       {roles.length > 1 && !role.isPrimaryRole && (
                         <div className="flex justify-end">
                           <Button variant="ghost" size="sm" className="text-destructive gap-2" onClick={() => removeRole(role.id)}>
@@ -715,28 +782,12 @@ export default function CreateOffer() {
                         </div>
                       )}
 
-                      {/* Inner tabs: Role Details | Contracts | Allowances */}
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="flex border-b bg-muted/30">
-                          {INNER_TABS.map(({ key, label }) => (
-                            <button key={key} onClick={() => setInnerTab(role.id, key)}
-                              className={cn(
-                                "px-5 py-2.5 text-xs font-bold uppercase tracking-wide border-b-2 transition-colors",
-                                getInnerTab(role.id) === key
-                                  ? "border-primary text-primary bg-primary/5"
-                                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                              )}>
-                              {label}
-                            </button>
-                          ))}
-                        </div>
+                      <div className="space-y-6">
 
-                        <div className="p-4">
-
-                          {/* ── DETAILS TAB ── */}
-                          {getInnerTab(role.id) === "details" && (
+                          <section className="space-y-4">
+                            <h4 className="text-sm font-semibold">Role Details</h4>
                             <div className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                                 <FormField label="Unit" required>
                                   <Input value={role.unit} onChange={(e) => updateRole(role.id, { unit: e.target.value.toUpperCase() })} placeholder="E.G., MAIN, SECOND UNIT" className="uppercase" />
                                 </FormField>
@@ -779,7 +830,7 @@ export default function CreateOffer() {
                                 </FormField>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField label="Start Date" required>
                                   <Input type="date" value={role.startDate} onChange={(e) => updateRole(role.id, { startDate: e.target.value })} />
                                 </FormField>
@@ -797,350 +848,429 @@ export default function CreateOffer() {
                                     ]} />
                                 </FormField>
                               </div>
-
-                              {/* Fee section — sliders only, no Rate & Compensation block */}
-                              <div className="border rounded-lg p-4 bg-primary/5 space-y-5">
-                                <div className="flex items-center gap-2">
-                                  <DollarSign className="w-5 h-5 text-primary" />
-                                  <h4 className="text-sm font-bold text-primary uppercase">Fee</h4>
+                            </div>
+                          </section>
+                          <section className="space-y-4 border-t pt-4">
+                            <h4 className="text-sm font-semibold">Rate & Compensation</h4>
+                            <div className="space-y-4">
+                              <div className="border rounded-lg p-3 bg-primary/5">
+                                <div className="flex flex-wrap items-center gap-3 mb-3">
+                                  <span className={cn("text-[11px] font-medium", getFeeMode(role.id) === "DAY" ? "text-primary" : "text-muted-foreground")}>
+                                    Fee Per Day Including Holiday
+                                  </span>
+                                  <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={getFeeMode(role.id) === "WEEK"}
+                                    aria-label="Toggle fee mode"
+                                    onClick={() => setFeeMode(role.id, getFeeMode(role.id) === "WEEK" ? "DAY" : "WEEK")}
+                                    className={cn(
+                                      "relative h-6 w-11 rounded-full transition-colors",
+                                      getFeeMode(role.id) === "WEEK" ? "bg-primary" : "bg-muted-foreground/40"
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+                                        getFeeMode(role.id) === "WEEK" ? "translate-x-5" : "translate-x-0.5"
+                                      )}
+                                    />
+                                  </button>
+                                  <span className={cn("text-[11px] font-medium", getFeeMode(role.id) === "WEEK" ? "text-primary" : "text-muted-foreground")}>
+                                    Fee Per Week Including Holiday
+                                  </span>
                                 </div>
-                                <FormField label="Currency" required>
-                                  <SelectField value={role.currency} onChange={(v) => updateRole(role.id, { currency: v })} options={CURRENCIES} className="w-48" />
-                                </FormField>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <SliderCurrencyInput
-                                    label="Fee Per Day Including Holiday"
-                                    value={role.feePerDay} onChange={(v) => updateRole(role.id, { feePerDay: v })}
-                                    currency={role.currency} min={0} max={5000} step={50} required
-                                  />
-                                  <SliderCurrencyInput
-                                    label="Fee Per Week Including Holiday"
-                                    value={role.feePerWeek} onChange={(v) => updateRole(role.id, { feePerWeek: v })}
-                                    currency={role.currency} min={0} max={25000} step={250}
-                                  />
-                                </div>
+                              </div>
 
-                                {/* Special Day Rates */}
-                                <div className="pt-4 border-t space-y-3">
-                                  <h5 className="text-xs font-bold text-primary uppercase">Special Day Rates</h5>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {SPECIAL_DAY_TYPES.map((day) => {
-                                      const dr = role.specialDayRates.find((d) => d.type === day.key);
-                                      return (
-                                        <SliderCurrencyInput key={day.key} label={day.label}
-                                          value={dr?.amount || ""} onChange={(v) => updateSpecialDayRate(role.id, day.key, v)}
-                                          currency={role.currency} min={0} max={5000} step={50} />
-                                      );
-                                    })}
+                              <div className="grid grid-cols-1 gap-3">
+                                <div className="border rounded-lg overflow-hidden">
+                                  <div className="px-4 py-2 bg-primary/5 border-b">
+                                    <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">Salary</h4>
                                   </div>
+                                  <div>
+                                  <table className="w-full text-[11px]">
+                                    <thead>
+                                      <tr className="border-b bg-muted/40">
+                                        <th className="text-left p-1.5 font-semibold uppercase">Item</th>
+                                        <th className="text-left p-1.5 font-semibold uppercase">Rate / Hol</th>
+                                        <th className="text-left p-1.5 font-semibold uppercase">Gross</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {SALARY_TABLE_ROWS.map((row) => (
+                                        <tr key={row.item} className="border-b last:border-b-0">
+                                          <td className="p-1.5 font-medium">
+                                            {row.item}
+                                            <span className="text-muted-foreground font-normal ml-1">({row.budgetCode || "-"})</span>
+                                          </td>
+                                          <td className="p-1.5">{row.rate} <span className="text-muted-foreground">/ {row.hol}</span></td>
+                                          <td className="p-1.5">{row.gross}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                              <div className="border rounded-lg overflow-hidden">
+                                <div className="px-4 py-2 bg-primary/5 border-b">
+                                  <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">Overtime</h4>
+                                </div>
+                                <div>
+                                  <table className="w-full text-[11px]">
+                                    <thead>
+                                      <tr className="border-b bg-muted/40">
+                                        <th className="text-left p-1.5 font-semibold uppercase">Item</th>
+                                        <th className="text-left p-1.5 font-semibold uppercase">Rate / Hol</th>
+                                        <th className="text-left p-1.5 font-semibold uppercase">Gross</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {OVERTIME_TABLE_ROWS.map((row) => (
+                                        <tr key={row.item} className="border-b last:border-b-0">
+                                          <td className="p-1.5 font-medium">
+                                            {row.item}
+                                            <span className="text-muted-foreground font-normal ml-1">({row.budgetCode || "-"})</span>
+                                          </td>
+                                          <td className="p-1.5">{row.rate} <span className="text-muted-foreground">/ {row.hol}</span></td>
+                                          <td className="p-1.5">{row.gross}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                              <div className="border rounded-lg overflow-hidden">
+                                <div className="px-4 py-2 bg-primary/5 border-b">
+                                  <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">Allowances</h4>
+                                </div>
+                                <div>
+                                  <table className="w-full text-[11px]">
+                                    <thead>
+                                      <tr className="border-b bg-muted/40">
+                                        <th className="text-left p-1.5 font-semibold uppercase">Item</th>
+                                        <th className="text-left p-1.5 font-semibold uppercase">Rate/Cap - Paid Till Date</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {ALLOWANCES_TABLE_ROWS.map((row) => (
+                                        <tr key={row.item} className="border-b last:border-b-0">
+                                          <td className="p-1.5 font-medium">
+                                            {row.item}
+                                            <span className="text-muted-foreground font-normal ml-1">({row.budgetCode || "-"})</span>
+                                          </td>
+                                          <td className="p-1.5">{row.value}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                                 </div>
                               </div>
                             </div>
-                          )}
+                          </section>
 
-                          {/* ── CONTRACTS TAB ── */}
-                          {getInnerTab(role.id) === "contracts" && (
-                            <ContractsTab role={role} updateRole={updateRole} formData={formData} setFormData={setFormData} />
-                          )}
+                          <section className="space-y-3 border-t pt-4">
+                            <h4 className="text-sm font-semibold">Allowances</h4>
+                            <div>
+                              <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Enable allowances below. <strong>Budget Code</strong> and <strong>Tag</strong> are editable and hidden from print. All other financial data is read-only in the table.
+                  </p>
+                  {/* Box Rental */}
+                  <AllowanceTableSection title="Box Rental" icon={Package}
+                    isEnabled={role.allowances.boxRental} onToggle={(v) => updateRoleAllowances(role.id, { boxRental: v })}
+                    tag={role.allowances.boxRentalTag} onTagChange={(v) => updateRoleAllowances(role.id, { boxRentalTag: v })}
+                    budgetCode={role.allowances.boxRentalBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { boxRentalBudgetCode: v })}
+                    rateValue={role.allowances.boxRentalFeePerWeek} grossValue={role.allowances.boxRentalFeePerWeek} currency={role.currency}>
+                    <FormField label="Description" className="lg:col-span-2">
+                      <Input value={role.allowances.boxRentalDescription}
+                        onChange={(e) => updateRoleAllowances(role.id, { boxRentalDescription: e.target.value.toUpperCase() })}
+                        placeholder="DESCRIPTION OF BOX RENTAL ITEMS" className="uppercase" />
+                    </FormField>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.boxRentalFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { boxRentalFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Cap Calculated As">
+                      <SelectField value={role.allowances.boxRentalCapCalculatedAs}
+                        onChange={(v) => updateRoleAllowances(role.id, { boxRentalCapCalculatedAs: v })} options={CAP_TYPES} />
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.boxRentalTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { boxRentalTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.boxRentalPayableInPrep} shoot={role.allowances.boxRentalPayableInShoot} wrap={role.allowances.boxRentalPayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                          {/* ── ALLOWANCES TAB ── */}
-                          {getInnerTab(role.id) === "allowances" && (
-                            <div className="space-y-3">
-                              <p className="text-xs text-muted-foreground">
-                                Enable allowances below. <strong>Budget Code</strong> and <strong>Tag</strong> are editable and hidden from print. All other financial data is read-only in the table.
-                              </p>
+                  {/* Computer Allowance */}
+                  <AllowanceTableSection title="Computer Allowance" icon={Laptop}
+                    isEnabled={role.allowances.computerAllowance} onToggle={(v) => updateRoleAllowances(role.id, { computerAllowance: v })}
+                    tag={role.allowances.computerAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { computerAllowanceTag: v })}
+                    budgetCode={role.allowances.computerAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { computerAllowanceBudgetCode: v })}
+                    rateValue={role.allowances.computerAllowanceFeePerWeek} grossValue={role.allowances.computerAllowanceFeePerWeek} currency={role.currency}>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.computerAllowanceFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { computerAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Cap Calculated As">
+                      <SelectField value={role.allowances.computerAllowanceCapCalculatedAs}
+                        onChange={(v) => updateRoleAllowances(role.id, { computerAllowanceCapCalculatedAs: v })} options={CAP_TYPES} />
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.computerAllowanceTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { computerAllowanceTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.computerAllowancePayableInPrep} shoot={role.allowances.computerAllowancePayableInShoot} wrap={role.allowances.computerAllowancePayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Box Rental */}
-                              <AllowanceTableSection title="Box Rental" icon={Package}
-                                isEnabled={role.allowances.boxRental} onToggle={(v) => updateRoleAllowances(role.id, { boxRental: v })}
-                                tag={role.allowances.boxRentalTag} onTagChange={(v) => updateRoleAllowances(role.id, { boxRentalTag: v })}
-                                budgetCode={role.allowances.boxRentalBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { boxRentalBudgetCode: v })}
-                                rateValue={role.allowances.boxRentalFeePerWeek} grossValue={role.allowances.boxRentalFeePerWeek} currency={role.currency}>
-                                <FormField label="Description" className="lg:col-span-2">
-                                  <Input value={role.allowances.boxRentalDescription}
-                                    onChange={(e) => updateRoleAllowances(role.id, { boxRentalDescription: e.target.value.toUpperCase() })}
-                                    placeholder="DESCRIPTION OF BOX RENTAL ITEMS" className="uppercase" />
-                                </FormField>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.boxRentalFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { boxRentalFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Cap Calculated As">
-                                  <SelectField value={role.allowances.boxRentalCapCalculatedAs}
-                                    onChange={(v) => updateRoleAllowances(role.id, { boxRentalCapCalculatedAs: v })} options={CAP_TYPES} />
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.boxRentalTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { boxRentalTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.boxRentalPayableInPrep} shoot={role.allowances.boxRentalPayableInShoot} wrap={role.allowances.boxRentalPayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { boxRentalPayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Software Allowance */}
+                  <AllowanceTableSection title="Software Allowance" icon={Code}
+                    isEnabled={role.allowances.softwareAllowance} onToggle={(v) => updateRoleAllowances(role.id, { softwareAllowance: v })}
+                    tag={role.allowances.softwareAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { softwareAllowanceTag: v })}
+                    budgetCode={role.allowances.softwareAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { softwareAllowanceBudgetCode: v })}
+                    rateValue={role.allowances.softwareAllowanceFeePerWeek} grossValue={role.allowances.softwareAllowanceFeePerWeek} currency={role.currency}>
+                    <FormField label="Software Description">
+                      <Input value={role.allowances.softwareAllowanceDescription}
+                        onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceDescription: e.target.value.toUpperCase() })}
+                        placeholder="SOFTWARE DESCRIPTION" className="uppercase" />
+                    </FormField>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.softwareAllowanceFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.softwareAllowanceTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.softwareAllowancePayableInPrep} shoot={role.allowances.softwareAllowancePayableInShoot} wrap={role.allowances.softwareAllowancePayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Computer Allowance */}
-                              <AllowanceTableSection title="Computer Allowance" icon={Laptop}
-                                isEnabled={role.allowances.computerAllowance} onToggle={(v) => updateRoleAllowances(role.id, { computerAllowance: v })}
-                                tag={role.allowances.computerAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { computerAllowanceTag: v })}
-                                budgetCode={role.allowances.computerAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { computerAllowanceBudgetCode: v })}
-                                rateValue={role.allowances.computerAllowanceFeePerWeek} grossValue={role.allowances.computerAllowanceFeePerWeek} currency={role.currency}>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.computerAllowanceFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { computerAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Cap Calculated As">
-                                  <SelectField value={role.allowances.computerAllowanceCapCalculatedAs}
-                                    onChange={(v) => updateRoleAllowances(role.id, { computerAllowanceCapCalculatedAs: v })} options={CAP_TYPES} />
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.computerAllowanceTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { computerAllowanceTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.computerAllowancePayableInPrep} shoot={role.allowances.computerAllowancePayableInShoot} wrap={role.allowances.computerAllowancePayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { computerAllowancePayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Equipment Rental */}
+                  <AllowanceTableSection title="Equipment Rental" icon={Camera}
+                    isEnabled={role.allowances.equipmentRental} onToggle={(v) => updateRoleAllowances(role.id, { equipmentRental: v })}
+                    tag={role.allowances.equipmentRentalTag} onTagChange={(v) => updateRoleAllowances(role.id, { equipmentRentalTag: v })}
+                    budgetCode={role.allowances.equipmentRentalBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { equipmentRentalBudgetCode: v })}
+                    rateValue={role.allowances.equipmentRentalFeePerWeek} grossValue={role.allowances.equipmentRentalFeePerWeek} currency={role.currency}>
+                    <FormField label="Equipment Description">
+                      <Input value={role.allowances.equipmentRentalDescription}
+                        onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalDescription: e.target.value.toUpperCase() })}
+                        placeholder="EQUIPMENT DESCRIPTION" className="uppercase" />
+                    </FormField>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.equipmentRentalFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.equipmentRentalTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.equipmentRentalPayableInPrep} shoot={role.allowances.equipmentRentalPayableInShoot} wrap={role.allowances.equipmentRentalPayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Software Allowance */}
-                              <AllowanceTableSection title="Software Allowance" icon={Code}
-                                isEnabled={role.allowances.softwareAllowance} onToggle={(v) => updateRoleAllowances(role.id, { softwareAllowance: v })}
-                                tag={role.allowances.softwareAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { softwareAllowanceTag: v })}
-                                budgetCode={role.allowances.softwareAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { softwareAllowanceBudgetCode: v })}
-                                rateValue={role.allowances.softwareAllowanceFeePerWeek} grossValue={role.allowances.softwareAllowanceFeePerWeek} currency={role.currency}>
-                                <FormField label="Software Description">
-                                  <Input value={role.allowances.softwareAllowanceDescription}
-                                    onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceDescription: e.target.value.toUpperCase() })}
-                                    placeholder="SOFTWARE DESCRIPTION" className="uppercase" />
-                                </FormField>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.softwareAllowanceFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.softwareAllowanceTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { softwareAllowanceTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.softwareAllowancePayableInPrep} shoot={role.allowances.softwareAllowancePayableInShoot} wrap={role.allowances.softwareAllowancePayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { softwareAllowancePayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Mobile Phone Allowance */}
+                  <AllowanceTableSection title="Mobile Phone Allowance" icon={Smartphone}
+                    isEnabled={role.allowances.mobilePhoneAllowance} onToggle={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowance: v })}
+                    tag={role.allowances.mobilePhoneAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowanceTag: v })}
+                    budgetCode={role.allowances.mobilePhoneAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowanceBudgetCode: v })}
+                    rateValue={role.allowances.mobilePhoneAllowanceFeePerWeek} grossValue={role.allowances.mobilePhoneAllowanceFeePerWeek} currency={role.currency}>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.mobilePhoneAllowanceFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { mobilePhoneAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.mobilePhoneAllowanceTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { mobilePhoneAllowanceTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.mobilePhoneAllowancePayableInPrep} shoot={role.allowances.mobilePhoneAllowancePayableInShoot} wrap={role.allowances.mobilePhoneAllowancePayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Equipment Rental */}
-                              <AllowanceTableSection title="Equipment Rental" icon={Camera}
-                                isEnabled={role.allowances.equipmentRental} onToggle={(v) => updateRoleAllowances(role.id, { equipmentRental: v })}
-                                tag={role.allowances.equipmentRentalTag} onTagChange={(v) => updateRoleAllowances(role.id, { equipmentRentalTag: v })}
-                                budgetCode={role.allowances.equipmentRentalBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { equipmentRentalBudgetCode: v })}
-                                rateValue={role.allowances.equipmentRentalFeePerWeek} grossValue={role.allowances.equipmentRentalFeePerWeek} currency={role.currency}>
-                                <FormField label="Equipment Description">
-                                  <Input value={role.allowances.equipmentRentalDescription}
-                                    onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalDescription: e.target.value.toUpperCase() })}
-                                    placeholder="EQUIPMENT DESCRIPTION" className="uppercase" />
-                                </FormField>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.equipmentRentalFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.equipmentRentalTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { equipmentRentalTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.equipmentRentalPayableInPrep} shoot={role.allowances.equipmentRentalPayableInShoot} wrap={role.allowances.equipmentRentalPayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { equipmentRentalPayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Vehicle Allowance */}
+                  <AllowanceTableSection title="Vehicle Allowance" icon={Car}
+                    isEnabled={role.allowances.vehicleAllowance} onToggle={(v) => updateRoleAllowances(role.id, { vehicleAllowance: v })}
+                    tag={role.allowances.vehicleAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { vehicleAllowanceTag: v })}
+                    budgetCode={role.allowances.vehicleAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { vehicleAllowanceBudgetCode: v })}
+                    rateValue={role.allowances.vehicleAllowanceFeePerWeek} grossValue={role.allowances.vehicleAllowanceFeePerWeek} currency={role.currency}>
+                    <FormField label="Fee Per Week">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.vehicleAllowanceFeePerWeek}
+                          onChange={(e) => updateRoleAllowances(role.id, { vehicleAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.vehicleAllowanceTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { vehicleAllowanceTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.vehicleAllowancePayableInPrep} shoot={role.allowances.vehicleAllowancePayableInShoot} wrap={role.allowances.vehicleAllowancePayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Mobile Phone */}
-                              <AllowanceTableSection title="Mobile Phone Allowance" icon={Smartphone}
-                                isEnabled={role.allowances.mobilePhoneAllowance} onToggle={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowance: v })}
-                                tag={role.allowances.mobilePhoneAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowanceTag: v })}
-                                budgetCode={role.allowances.mobilePhoneAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowanceBudgetCode: v })}
-                                rateValue={role.allowances.mobilePhoneAllowanceFeePerWeek} grossValue={role.allowances.mobilePhoneAllowanceFeePerWeek} currency={role.currency}>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.mobilePhoneAllowanceFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { mobilePhoneAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.mobilePhoneAllowanceTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { mobilePhoneAllowanceTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.mobilePhoneAllowancePayableInPrep} shoot={role.allowances.mobilePhoneAllowancePayableInShoot} wrap={role.allowances.mobilePhoneAllowancePayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { mobilePhoneAllowancePayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Per Diem 1 */}
+                  <AllowanceTableSection title="Per Diem 1" icon={Coffee}
+                    isEnabled={role.allowances.perDiem1} onToggle={(v) => updateRoleAllowances(role.id, { perDiem1: v })}
+                    tag={role.allowances.perDiem1Tag} onTagChange={(v) => updateRoleAllowances(role.id, { perDiem1Tag: v })}
+                    budgetCode={role.allowances.perDiem1BudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { perDiem1BudgetCode: v })}
+                    rateValue={role.allowances.perDiem1ShootDayRate} grossValue={role.allowances.perDiem1ShootDayRate} currency={role.allowances.perDiem1Currency}>
+                    <FormField label="Currency">
+                      <SelectField value={role.allowances.perDiem1Currency}
+                        onChange={(v) => updateRoleAllowances(role.id, { perDiem1Currency: v })} options={CURRENCIES} />
+                    </FormField>
+                    <FormField label="Shoot Day Rate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem1Currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.perDiem1ShootDayRate}
+                          onChange={(e) => updateRoleAllowances(role.id, { perDiem1ShootDayRate: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Non-Shoot Day Rate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem1Currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.perDiem1NonShootDayRate}
+                          onChange={(e) => updateRoleAllowances(role.id, { perDiem1NonShootDayRate: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.perDiem1Terms}
+                        onChange={(e) => updateRoleAllowances(role.id, { perDiem1Terms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.perDiem1PayableInPrep} shoot={role.allowances.perDiem1PayableInShoot} wrap={role.allowances.perDiem1PayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Vehicle Allowance */}
-                              <AllowanceTableSection title="Vehicle Allowance" icon={Car}
-                                isEnabled={role.allowances.vehicleAllowance} onToggle={(v) => updateRoleAllowances(role.id, { vehicleAllowance: v })}
-                                tag={role.allowances.vehicleAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { vehicleAllowanceTag: v })}
-                                budgetCode={role.allowances.vehicleAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { vehicleAllowanceBudgetCode: v })}
-                                rateValue={role.allowances.vehicleAllowanceFeePerWeek} grossValue={role.allowances.vehicleAllowanceFeePerWeek} currency={role.currency}>
-                                <FormField label="Fee Per Week">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.vehicleAllowanceFeePerWeek}
-                                      onChange={(e) => updateRoleAllowances(role.id, { vehicleAllowanceFeePerWeek: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.vehicleAllowanceTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { vehicleAllowanceTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.vehicleAllowancePayableInPrep} shoot={role.allowances.vehicleAllowancePayableInShoot} wrap={role.allowances.vehicleAllowancePayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { vehicleAllowancePayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Per Diem 2 */}
+                  <AllowanceTableSection title="Per Diem 2" icon={Coffee}
+                    isEnabled={role.allowances.perDiem2} onToggle={(v) => updateRoleAllowances(role.id, { perDiem2: v })}
+                    tag={role.allowances.perDiem2Tag} onTagChange={(v) => updateRoleAllowances(role.id, { perDiem2Tag: v })}
+                    budgetCode={role.allowances.perDiem2BudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { perDiem2BudgetCode: v })}
+                    rateValue={role.allowances.perDiem2ShootDayRate} grossValue={role.allowances.perDiem2ShootDayRate} currency={role.allowances.perDiem2Currency}>
+                    <FormField label="Currency">
+                      <SelectField value={role.allowances.perDiem2Currency}
+                        onChange={(v) => updateRoleAllowances(role.id, { perDiem2Currency: v })} options={CURRENCIES} />
+                    </FormField>
+                    <FormField label="Shoot Day Rate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem2Currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.perDiem2ShootDayRate}
+                          onChange={(e) => updateRoleAllowances(role.id, { perDiem2ShootDayRate: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Non-Shoot Day Rate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem2Currency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.perDiem2NonShootDayRate}
+                          onChange={(e) => updateRoleAllowances(role.id, { perDiem2NonShootDayRate: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.perDiem2Terms}
+                        onChange={(e) => updateRoleAllowances(role.id, { perDiem2Terms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.perDiem2PayableInPrep} shoot={role.allowances.perDiem2PayableInShoot} wrap={role.allowances.perDiem2PayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInWrap: v })} />
+                  </AllowanceTableSection>
 
-                              {/* Per Diem 1 */}
-                              <AllowanceTableSection title="Per Diem 1" icon={Coffee}
-                                isEnabled={role.allowances.perDiem1} onToggle={(v) => updateRoleAllowances(role.id, { perDiem1: v })}
-                                tag={role.allowances.perDiem1Tag} onTagChange={(v) => updateRoleAllowances(role.id, { perDiem1Tag: v })}
-                                budgetCode={role.allowances.perDiem1BudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { perDiem1BudgetCode: v })}
-                                rateValue={role.allowances.perDiem1ShootDayRate} grossValue={role.allowances.perDiem1ShootDayRate} currency={role.allowances.perDiem1Currency}>
-                                <FormField label="Currency">
-                                  <SelectField value={role.allowances.perDiem1Currency}
-                                    onChange={(v) => updateRoleAllowances(role.id, { perDiem1Currency: v })} options={CURRENCIES} />
-                                </FormField>
-                                <FormField label="Shoot Day Rate">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem1Currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.perDiem1ShootDayRate}
-                                      onChange={(e) => updateRoleAllowances(role.id, { perDiem1ShootDayRate: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Non-Shoot Day Rate">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem1Currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.perDiem1NonShootDayRate}
-                                      onChange={(e) => updateRoleAllowances(role.id, { perDiem1NonShootDayRate: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.perDiem1Terms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { perDiem1Terms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.perDiem1PayableInPrep} shoot={role.allowances.perDiem1PayableInShoot} wrap={role.allowances.perDiem1PayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { perDiem1PayableInWrap: v })} />
-                              </AllowanceTableSection>
+                  {/* Living Allowance */}
+                  <AllowanceTableSection title="Living Allowance" icon={Home}
+                    isEnabled={role.allowances.livingAllowance} onToggle={(v) => updateRoleAllowances(role.id, { livingAllowance: v })}
+                    tag={role.allowances.livingAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { livingAllowanceTag: v })}
+                    budgetCode={role.allowances.livingAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { livingAllowanceBudgetCode: v })}
+                    rateValue={role.allowances.livingAllowanceWeeklyRate} grossValue={role.allowances.livingAllowanceWeeklyRate} currency={role.allowances.livingAllowanceCurrency}>
+                    <FormField label="Currency">
+                      <SelectField value={role.allowances.livingAllowanceCurrency}
+                        onChange={(v) => updateRoleAllowances(role.id, { livingAllowanceCurrency: v })} options={CURRENCIES} />
+                    </FormField>
+                    <FormField label="Weekly Rate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.livingAllowanceCurrency)}</span>
+                        <Input type="number" step="0.01" value={role.allowances.livingAllowanceWeeklyRate}
+                          onChange={(e) => updateRoleAllowances(role.id, { livingAllowanceWeeklyRate: e.target.value })} placeholder="0.00" />
+                      </div>
+                    </FormField>
+                    <FormField label="Terms">
+                      <Input value={role.allowances.livingAllowanceTerms}
+                        onChange={(e) => updateRoleAllowances(role.id, { livingAllowanceTerms: e.target.value.toUpperCase() })}
+                        placeholder="TERMS" className="uppercase" />
+                    </FormField>
+                    <PayableInCheckboxes
+                      prep={role.allowances.livingAllowancePayableInPrep} shoot={role.allowances.livingAllowancePayableInShoot} wrap={role.allowances.livingAllowancePayableInWrap}
+                      onPrepChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInPrep: v })}
+                      onShootChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInShoot: v })}
+                      onWrapChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInWrap: v })} />
+                  </AllowanceTableSection>
+                </div>
+              </div>
+                          </section>
 
-                              {/* Per Diem 2 */}
-                              <AllowanceTableSection title="Per Diem 2" icon={Coffee}
-                                isEnabled={role.allowances.perDiem2} onToggle={(v) => updateRoleAllowances(role.id, { perDiem2: v })}
-                                tag={role.allowances.perDiem2Tag} onTagChange={(v) => updateRoleAllowances(role.id, { perDiem2Tag: v })}
-                                budgetCode={role.allowances.perDiem2BudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { perDiem2BudgetCode: v })}
-                                rateValue={role.allowances.perDiem2ShootDayRate} grossValue={role.allowances.perDiem2ShootDayRate} currency={role.allowances.perDiem2Currency}>
-                                <FormField label="Currency">
-                                  <SelectField value={role.allowances.perDiem2Currency}
-                                    onChange={(v) => updateRoleAllowances(role.id, { perDiem2Currency: v })} options={CURRENCIES} />
-                                </FormField>
-                                <FormField label="Shoot Day Rate">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem2Currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.perDiem2ShootDayRate}
-                                      onChange={(e) => updateRoleAllowances(role.id, { perDiem2ShootDayRate: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Non-Shoot Day Rate">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.perDiem2Currency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.perDiem2NonShootDayRate}
-                                      onChange={(e) => updateRoleAllowances(role.id, { perDiem2NonShootDayRate: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.perDiem2Terms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { perDiem2Terms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.perDiem2PayableInPrep} shoot={role.allowances.perDiem2PayableInShoot} wrap={role.allowances.perDiem2PayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { perDiem2PayableInWrap: v })} />
-                              </AllowanceTableSection>
+                          
 
-                              {/* Living Allowance */}
-                              <AllowanceTableSection title="Living Allowance" icon={Home}
-                                isEnabled={role.allowances.livingAllowance} onToggle={(v) => updateRoleAllowances(role.id, { livingAllowance: v })}
-                                tag={role.allowances.livingAllowanceTag} onTagChange={(v) => updateRoleAllowances(role.id, { livingAllowanceTag: v })}
-                                budgetCode={role.allowances.livingAllowanceBudgetCode} onBudgetCodeChange={(v) => updateRoleAllowances(role.id, { livingAllowanceBudgetCode: v })}
-                                rateValue={role.allowances.livingAllowanceWeeklyRate} grossValue={role.allowances.livingAllowanceWeeklyRate} currency={role.allowances.livingAllowanceCurrency}>
-                                <FormField label="Currency">
-                                  <SelectField value={role.allowances.livingAllowanceCurrency}
-                                    onChange={(v) => updateRoleAllowances(role.id, { livingAllowanceCurrency: v })} options={CURRENCIES} />
-                                </FormField>
-                                <FormField label="Weekly Rate">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">{getCurrencySymbol(role.allowances.livingAllowanceCurrency)}</span>
-                                    <Input type="number" step="0.01" value={role.allowances.livingAllowanceWeeklyRate}
-                                      onChange={(e) => updateRoleAllowances(role.id, { livingAllowanceWeeklyRate: e.target.value })} placeholder="0.00" />
-                                  </div>
-                                </FormField>
-                                <FormField label="Terms">
-                                  <Input value={role.allowances.livingAllowanceTerms}
-                                    onChange={(e) => updateRoleAllowances(role.id, { livingAllowanceTerms: e.target.value.toUpperCase() })}
-                                    placeholder="TERMS" className="uppercase" />
-                                </FormField>
-                                <PayableInCheckboxes
-                                  prep={role.allowances.livingAllowancePayableInPrep} shoot={role.allowances.livingAllowancePayableInShoot} wrap={role.allowances.livingAllowancePayableInWrap}
-                                  onPrepChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInPrep: v })}
-                                  onShootChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInShoot: v })}
-                                  onWrapChange={(v) => updateRoleAllowances(role.id, { livingAllowancePayableInWrap: v })} />
-                              </AllowanceTableSection>
-                            </div>
-                          )}
+                          
 
                         </div>
-                      </div>
+                    </div>
                     </TabsContent>
                   ))}
                 </Tabs>
               </CardContent>
-            )}
           </Card>
-
-          {/* ── Additional Notes ── */}
-          <Card className="border-0 py-0 shadow-sm overflow-hidden">
-            <SectionHeader title="Additional Notes" icon={Bell} section="notes" isOpen={expandedSections.notes} onToggle={toggleSection} />
-            {expandedSections.notes && (
+          <Card className="border py-0 shadow-sm overflow-hidden">
               <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="pb-2 border-b mb-4">
+                  <h3 className="text-sm font-semibold">Additional Notes</h3>
+                  <p className="text-xs text-muted-foreground">Internal and deal-specific notes</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
                   <FormField label="Other Deal Provisions">
                     <textarea value={formData.otherDealProvisions}
                       onChange={(e) => setFormData({ ...formData, otherDealProvisions: e.target.value })}
@@ -1155,8 +1285,14 @@ export default function CreateOffer() {
                   </FormField>
                 </div>
               </CardContent>
-            )}
           </Card>
+          </div>
+
+          <div className="xl:col-span-8">
+            <div className="xl:sticky xl:top-4">
+              <PDFPreview />
+            </div>
+          </div>
         </div>
 
         {/* Preview Dialog */}
@@ -1191,3 +1327,4 @@ export default function CreateOffer() {
     </>
   );
 }
+

@@ -21,18 +21,31 @@ import { cn } from "../../../shared/config/utils";
 export default function CreateOfferDialog({ open, onOpenChange }) {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState("company");
+  const [step, setStep] = useState("country");
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [showNewCompanyInput, setShowNewCompanyInput] = useState(false);
 
-  // ✅ DEFAULT UI DATA
-  const [companies, setCompanies] = useState([
-    { id: 1, name: "Eaarth" },
-  ]);
+  const countries = [
+    { code: "US", name: "United States" },
+    { code: "UK", name: "United Kingdom" },
+    { code: "IN", name: "India" },
+  ];
+
+  const [companiesByCountry, setCompaniesByCountry] = useState({
+    US: [{ id: 1, name: "Eaarth US" }],
+    UK: [{ id: 2, name: "Eaarth UK" }],
+    IN: [{ id: 3, name: "Eaarth India" }],
+  });
+
+  const companies = selectedCountry
+    ? companiesByCountry[selectedCountry.code] || []
+    : [];
 
   const resetDialog = () => {
-    setStep("company");
+    setStep("country");
+    setSelectedCountry(null);
     setSelectedCompany(null);
     setNewCompanyName("");
     setShowNewCompanyInput(false);
@@ -43,15 +56,24 @@ export default function CreateOfferDialog({ open, onOpenChange }) {
     onOpenChange(false);
   };
 
+  const handleSelectCountry = (country) => {
+    setSelectedCountry(country);
+    setStep("company");
+  };
+
   const handleSelectCompany = (company) => {
     setSelectedCompany(company);
     setStep("type");
   };
 
-  // ✅ UI-only add company
   const handleCreateNewCompany = () => {
     if (!newCompanyName.trim()) {
       toast.error("Please enter company name");
+      return;
+    }
+
+    if (!selectedCountry) {
+      toast.error("Please select a country first");
       return;
     }
 
@@ -60,7 +82,10 @@ export default function CreateOfferDialog({ open, onOpenChange }) {
       name: newCompanyName.trim(),
     };
 
-    setCompanies((prev) => [...prev, newCompany]);
+    setCompaniesByCountry((prev) => ({
+      ...prev,
+      [selectedCountry.code]: [...(prev[selectedCountry.code] || []), newCompany],
+    }));
     setSelectedCompany(newCompany);
     setNewCompanyName("");
     setShowNewCompanyInput(false);
@@ -69,26 +94,29 @@ export default function CreateOfferDialog({ open, onOpenChange }) {
     toast.success(`Company "${newCompany.name}" added`);
   };
 
-  // ✅ Navigation only
   const handleSelectType = (type) => {
-  onOpenChange(false);
+    onOpenChange(false);
 
-  if (type === "individual") {
-    navigate("../offers/create");
-  } else {
-    navigate("../offers/create/bulk");
-  }
+    if (type === "individual") {
+      navigate("../offers/create");
+    } else {
+      navigate("../offers/create/bulk");
+    }
 
-  resetDialog();
-};
-
+    resetDialog();
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            {step === "company" ? (
+            {step === "country" ? (
+              <>
+                <Building2 className="w-5 h-5 text-primary" />
+                Select Country
+              </>
+            ) : step === "company" ? (
               <>
                 <Building2 className="w-5 h-5 text-primary" />
                 Select Company
@@ -102,15 +130,52 @@ export default function CreateOfferDialog({ open, onOpenChange }) {
           </DialogTitle>
 
           <DialogDescription>
-            {step === "company"
-              ? "Choose which company this offer is for"
+            {step === "country"
+              ? "Choose the country first"
+              : step === "company"
+              ? `Choose a company in ${selectedCountry?.name}`
               : `Creating offer for ${selectedCompany?.name}`}
           </DialogDescription>
         </DialogHeader>
 
-        {/* ---------------- COMPANY STEP ---------------- */}
+        {step === "country" && (
+          <div className="space-y-3 mt-2">
+            {countries.map((country) => (
+              <button
+                key={country.code}
+                onClick={() => handleSelectCountry(country)}
+                className={cn(
+                  "w-full p-3 rounded-lg border text-left transition-all",
+                  "hover-elevate flex items-center justify-between gap-3"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-medium">{country.name}</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        )}
+
         {step === "company" && (
           <div className="space-y-3 mt-2">
+            <button
+              onClick={() => setStep("country")}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronRight className="w-3 h-3 rotate-180" />
+              Back to country selection
+            </button>
+
+            <div className="p-2 rounded-lg bg-muted/50 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">{selectedCountry?.name}</span>
+            </div>
+
             {companies.map((company) => (
               <button
                 key={company.id}
@@ -174,7 +239,6 @@ export default function CreateOfferDialog({ open, onOpenChange }) {
           </div>
         )}
 
-        {/* ---------------- TYPE STEP ---------------- */}
         {step === "type" && (
           <div className="space-y-3 mt-2">
             <button

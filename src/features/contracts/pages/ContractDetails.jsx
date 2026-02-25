@@ -54,7 +54,7 @@ const ENGAGEMENT_TYPES = [
 ];
 
 const RATE_TYPES  = [{ value: 'DAILY', label: 'DAILY' }, { value: 'WEEKLY', label: 'WEEKLY' }];
-const CURRENCIES  = [{ value: 'GBP', label: 'GBP (£)' }, { value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }];
+const CURRENCIES  = [{ value: 'GBP', label: 'GBP (\u00A3)' }, { value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (\u20AC)' }];
 
 const CAP_TYPES = [
   { value: '',           label: 'SELECT CAP TYPE' },
@@ -240,7 +240,7 @@ const createMockRole = (index) => ({
 const MOCK_ROLES = [createMockRole(0), createMockRole(1)];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const currSym = (c = 'GBP') => ({ GBP: '£', USD: '$', EUR: '€' }[c] ?? '£');
+const currSym = (c = 'GBP') => ({ GBP: '\u00A3', USD: '$', EUR: '\u20AC' }[c] ?? '\u00A3');
 const cn = (...c) => c.filter(Boolean).join(' ');
 
 const IC  = 'w-full px-3 py-2 text-sm rounded-xl border border-border bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all duration-150';

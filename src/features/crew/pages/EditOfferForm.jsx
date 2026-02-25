@@ -89,9 +89,9 @@ const OVERTIME_TYPES = [
 ];
 
 const CURRENCIES = [
-  { value: "GBP", label: "GBP (£)" },
+  { value: "GBP", label: "GBP (\u00A3)" },
   { value: "USD", label: "USD ($)" },
-  { value: "EUR", label: "EUR (€)" },
+  { value: "EUR", label: "EUR (\u20AC)" },
 ];
 
 const getDefaultAllowances = () => ({
