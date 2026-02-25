@@ -93,12 +93,13 @@ const buildPayload = (formData, roles, studioId, projectId) => {
     unit:                 role.unit || undefined,
     subDepartment:        role.subDepartment || undefined,
     regularSiteOfWork:    role.regularSiteOfWork || undefined,
-    salary: {
-      base: {
-        amount:   parseFloat(role.rateType === "WEEKLY" ? role.feePerWeek : role.feePerDay) || 0,
-        currency: role.currency || "GBP",
-        isHolidayPayInclusive: false,
-      },
+  salary: {
+  base: {
+    amount:   parseFloat(role.rateType === "WEEKLY" ? role.feePerWeek : role.feePerDay) || 0,
+    currency: role.currency || "GBP",
+    unit:     role.rateType || "DAILY",   // ← add this line
+    isHolidayPayInclusive: false,
+  },
       specialDays: (role.specialDayRates || [])
         .filter((d) => d.amount)
         .map((d) => ({ type: d.type, amount: parseFloat(d.amount), unit: d.unit || "DAILY" })),
@@ -108,8 +109,8 @@ const buildPayload = (formData, roles, studioId, projectId) => {
   }));
 
   return {
-    studioId:   studioId  || "REPLACE_WITH_REAL_STUDIO_ID",
-    projectId:  projectId || "REPLACE_WITH_REAL_PROJECT_ID",
+    studioId:  studioId  || "69494aa6df29472c2c6b5d8f",
+    projectId: projectId || "697c899668977a7ca2b27462",
     recipient: {
       fullName:     formData.fullName,
       email:        formData.emailAddress,
