@@ -1,12 +1,9 @@
 /**
- * CrewActions.jsx
+ * CrewActions.jsx  (UPDATED)
  *
- * Action buttons shown to CREW on the ViewOffer page.
- *
- * Status → allowed actions:
- *   SENT_TO_CREW          → Accept, Request Changes
- *   PENDING_CREW_SIGNATURE → Sign Contract
- *   Others                → read-only (null)
+ * Changes:
+ *  - "Sign Contract" now opens a SignDialog (canvas signature pad)
+ *  - crewSignThunk receives { offerId, signature } instead of just offerId
  *
  * Place at:
  *   src/features/crew/components/roleActions/CrewActions/CrewActions.jsx
@@ -28,20 +25,19 @@ import {
   selectSubmitting,
 } from "../../../store/offer.slice";
 
+import SignDialog from "../../SignaturePad/SignDialog";
+
 export default function CrewActions({ offer }) {
-  const dispatch = useDispatch();
+  const dispatch     = useDispatch();
   const isSubmitting = useSelector(selectSubmitting);
 
   const [showChangeDialog, setShowChangeDialog] = useState(false);
+  const [showSignDialog,   setShowSignDialog]   = useState(false);
   const [changeForm, setChangeForm] = useState({
-    reason: "",
-    fieldName: "",
-    currentValue: "",
-    requestedValue: "",
+    reason: "", fieldName: "", currentValue: "", requestedValue: "",
   });
 
   if (!offer) return null;
-
   const { _id: offerId, status } = offer;
 
   // ── Accept ────────────────────────────────────────────────────────────────
@@ -62,9 +58,7 @@ export default function CrewActions({ offer }) {
       toast.error("Please provide a reason for the change request");
       return;
     }
-    const result = await dispatch(
-      crewRequestChangesThunk({ offerId, ...changeForm })
-    );
+    const result = await dispatch(crewRequestChangesThunk({ offerId, ...changeForm }));
     if (crewRequestChangesThunk.fulfilled.match(result)) {
       toast.success("Change request submitted. Production Admin will review.");
       setShowChangeDialog(false);
@@ -76,16 +70,16 @@ export default function CrewActions({ offer }) {
 
   // ── Sign ──────────────────────────────────────────────────────────────────
 
-  const handleSign = async () => {
-    const result = await dispatch(crewSignThunk(offerId));
+  const handleSign = async (signatureDataUrl) => {
+    const result = await dispatch(crewSignThunk({ offerId, signature: signatureDataUrl }));
     if (crewSignThunk.fulfilled.match(result)) {
-      toast.success("Contract signed successfully!");
+      toast.success("Contract signed! Awaiting UPM signature.");
     } else {
       toast.error(result.payload?.message || "Failed to sign contract");
     }
   };
 
-  // ── Render by status ──────────────────────────────────────────────────────
+  // ── SENT_TO_CREW: Accept / Request Changes ────────────────────────────────
 
   if (status === "SENT_TO_CREW") {
     return (
@@ -97,11 +91,9 @@ export default function CrewActions({ offer }) {
             disabled={isSubmitting}
             className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            {isSubmitting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            )}
+            {isSubmitting
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <CheckCircle2 className="w-3.5 h-3.5" />}
             Accept Offer
           </Button>
           <Button
@@ -122,7 +114,7 @@ export default function CrewActions({ offer }) {
             <DialogHeader>
               <DialogTitle>Request Changes</DialogTitle>
               <DialogDescription>
-                Tell the production team what you'd like changed. They will review and re-send the offer.
+                Tell production what you'd like changed. They will review and re-send the offer.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-2">
@@ -177,12 +169,8 @@ export default function CrewActions({ offer }) {
               <Button variant="outline" size="sm" onClick={() => setShowChangeDialog(false)}>
                 Cancel
               </Button>
-              <Button
-                size="sm"
-                onClick={handleRequestChanges}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              <Button size="sm" onClick={handleRequestChanges} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
                 Submit Request
               </Button>
             </div>
@@ -192,21 +180,32 @@ export default function CrewActions({ offer }) {
     );
   }
 
+  // ── PENDING_CREW_SIGNATURE: Sign Contract ─────────────────────────────────
+
   if (status === "PENDING_CREW_SIGNATURE") {
     return (
-      <Button
-        size="sm"
-        onClick={handleSign}
-        disabled={isSubmitting}
-        className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-      >
-        {isSubmitting ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <PenTool className="w-3.5 h-3.5" />
-        )}
-        Sign Contract
-      </Button>
+      <>
+        <Button
+          size="sm"
+          onClick={() => setShowSignDialog(true)}
+          disabled={isSubmitting}
+          className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          {isSubmitting
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <PenTool className="w-3.5 h-3.5" />}
+          Sign Contract
+        </Button>
+
+        <SignDialog
+          open={showSignDialog}
+          onOpenChange={setShowSignDialog}
+          roleName="Crew"
+          offerCode={offer.offerCode}
+          onSign={handleSign}
+          isSubmitting={isSubmitting}
+        />
+      </>
     );
   }
 

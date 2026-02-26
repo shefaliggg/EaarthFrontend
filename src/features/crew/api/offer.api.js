@@ -8,24 +8,17 @@
  * Place at: src/features/offers/api/offer.api.js
  */
 
-import axiosConfig from "../../auth/config/axiosConfig"; // Adjust this import path to your actual axiosConfig location
-// ↑ Adjust this import path to wherever your axios instance lives.
-//   Common paths: "@/lib/axios", "@/config/axios", "@/shared/config/axiosConfig"
+import axiosConfig from "../../auth/config/axiosConfig";
 
-const BASE = "/offers"; // axiosConfig.baseURL is already "http://localhost:5000/api/v1"
+const BASE     = "/offers";
+const SIG_BASE = "/signatures"; // ← separate base for signature routes
 
 // ─── Role header injector ─────────────────────────────────────────────────────
-// Injects x-view-as-role on every request for demo role switching.
-// In production, remove this and rely on the real JWT claims instead.
-
 const roleHeaders = () => ({
   "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN",
 });
 
 // ─── Response unwrapper ───────────────────────────────────────────────────────
-// Your backend always returns { success, data } — unwrap to just data.
-// Errors are thrown by axios automatically (non-2xx), caught in the slice.
-
 const unwrap = (res) => res.data.data;
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
@@ -65,7 +58,6 @@ export const crewRequestChanges = (id, payload) =>
 export const cancelOffer = (id, reason) =>
   axiosConfig.patch(`${BASE}/${id}/cancel`, { reason }, { headers: roleHeaders() }).then(unwrap);
 
-// Phase 2 — add backend routes when ready
 export const moveToProductionCheck = (id) =>
   axiosConfig.patch(`${BASE}/${id}/production-check`, {}, { headers: roleHeaders() }).then(unwrap);
 
@@ -75,17 +67,26 @@ export const moveToAccountsCheck = (id) =>
 export const moveToPendingCrewSignature = (id) =>
   axiosConfig.patch(`${BASE}/${id}/pending-crew-signature`, {}, { headers: roleHeaders() }).then(unwrap);
 
-export const crewSign = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/crew-sign`, {}, { headers: roleHeaders() }).then(unwrap);
+// ─── SIGNING ─────────────────────────────────────────────────────────────────
+// All four roles hit the SAME endpoint: POST /signatures/:offerId/sign
+// The backend reads the role from x-view-as-role header (demo)
+// or the real JWT (production) to determine which signing step this is.
+// The canvas data URL is required in the body as { signature }.
 
-export const upmSign = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/upm-sign`, {}, { headers: roleHeaders() }).then(unwrap);
+export const crewSign = (offerId, signature) =>
+  axiosConfig.post(`${SIG_BASE}/${offerId}/sign`, { signature }, { headers: roleHeaders() }).then(unwrap);
 
-export const fcSign = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/fc-sign`, {}, { headers: roleHeaders() }).then(unwrap);
+export const upmSign = (offerId, signature) =>
+  axiosConfig.post(`${SIG_BASE}/${offerId}/sign`, { signature }, { headers: roleHeaders() }).then(unwrap);
 
-export const studioSign = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/studio-sign`, {}, { headers: roleHeaders() }).then(unwrap);
+export const fcSign = (offerId, signature) =>
+  axiosConfig.post(`${SIG_BASE}/${offerId}/sign`, { signature }, { headers: roleHeaders() }).then(unwrap);
+
+export const studioSign = (offerId, signature) =>
+  axiosConfig.post(`${SIG_BASE}/${offerId}/sign`, { signature }, { headers: roleHeaders() }).then(unwrap);
+
+export const getSigningStatus = (offerId) =>
+  axiosConfig.get(`${SIG_BASE}/${offerId}/status`, { headers: roleHeaders() }).then(unwrap);
 
 // ─── Change requests ──────────────────────────────────────────────────────────
 
