@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useSelector } from "react-redux";
 import { Button } from "@/shared/components/ui/button";
 import { InfoTooltip } from "@/shared/components/InfoTooltip";
 import { format } from "date-fns";
@@ -43,6 +45,19 @@ function CalendarToolbar({
 }) {
   const navigate = useNavigate();
   const { projectName } = useParams();
+  
+  const calendarState = useSelector((state) => state.calendar);
+  const rawEvents = calendarState?.events || [];
+
+  const uniqueCategories = useMemo(() => {
+    const coreCategories = ["general", "travel", "meeting", "hod meeting", "rehearsal"];
+    const dynamicCategories = rawEvents
+      .map((e) => (e.eventCategory || "general").toLowerCase().trim())
+      .filter(Boolean);
+
+    // Set automatically removes duplicates!
+    return Array.from(new Set([...coreCategories, ...dynamicCategories])).sort();
+  }, [rawEvents]);
 
   const getTitle = () => {
     switch (view) {
@@ -74,6 +89,7 @@ function CalendarToolbar({
 
   const activeFilterCount = 
     (filters.eventTypes?.length || 0) + 
+    (filters.eventCategories?.length || 0) + 
     (filters.statuses?.length || 0) + 
     (filters.departments?.length || 0) + 
     (filters.crewMembers?.length || 0) + 
@@ -144,6 +160,22 @@ function CalendarToolbar({
                               onCheckedChange={() => handleArrayFilter("eventTypes", type)}
                            />
                            <Label htmlFor={`type-${type}`} className="text-sm capitalize font-medium cursor-pointer">{type}</Label>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
+               <div className="space-y-3">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Category</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                     {uniqueCategories.map(category => (
+                        <div key={category} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
+                           <Checkbox
+                              id={`cat-${category}`}
+                              checked={filters.eventCategories?.includes(category)}
+                              onCheckedChange={() => handleArrayFilter("eventCategories", category)}
+                           />
+                           <Label htmlFor={`cat-${category}`} className="text-sm capitalize font-medium cursor-pointer line-clamp-1" title={category}>{category}</Label>
                         </div>
                      ))}
                   </div>

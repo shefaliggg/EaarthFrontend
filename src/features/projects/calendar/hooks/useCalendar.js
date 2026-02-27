@@ -77,6 +77,9 @@ function useCalendar() {
       const matchesType = filters.eventTypes.length === 0 || filters.eventTypes.includes(event.productionPhase);
       const matchesLocation = !filters.location || event.location?.toLowerCase().includes(filters.location.toLowerCase());
       
+      const cat = (event.eventCategory || "general").toLowerCase();
+      const matchesCategory = !filters.eventCategories || filters.eventCategories.length === 0 || filters.eventCategories.includes(cat);
+
       const eventStatus = (event.status || "confirmed").toLowerCase();
       const matchesStatus = !filters.statuses || filters.statuses.length === 0 || filters.statuses.includes(eventStatus);
 
@@ -89,7 +92,7 @@ function useCalendar() {
             return filters.crewMembers.includes(uid.toString());
         }));
 
-      return matchesSearch && matchesType && matchesStatus && matchesLocation && matchesDept && matchesCrew;
+      return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesLocation && matchesDept && matchesCrew;
     });
   }, [calendar.events, filters]);
 

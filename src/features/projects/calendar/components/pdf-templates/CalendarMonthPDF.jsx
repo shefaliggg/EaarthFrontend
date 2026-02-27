@@ -5,12 +5,11 @@ import {
   isSameMonth,
   startOfMonth,
   differenceInCalendarDays,
-  isAfter,
 } from "date-fns";
-import { getProductionWeekLabel } from "../productionPhases";
+import { getProductionWeekLabel, getPhaseForDate, PHASES } from "../productionPhases";
 
-const SHOOT_START_DATE = new Date("2026-02-22");
-const WRAP_END_DATE = new Date("2026-03-07");
+const shootPhase = PHASES.find((p) => p.name === "Shoot");
+const SHOOT_START_DATE = new Date(shootPhase.start + "T12:00:00");
 
 const colors = {
   white: "#ffffff",
@@ -44,11 +43,10 @@ function CalendarMonthPDF({ currentDate, events }) {
     calendarWeeks.push(calendarDays.slice(i, i + 7));
   }
 
-  // UPDATED STATS CALCULATION (Matching Year View)
   const totalEvents = events.length;
-  const shootEvents = events.filter((e) => e.eventType === "shoot").length;
-  const prepEvents = events.filter((e) => e.eventType === "prep").length;
-  const wrapEvents = events.filter((e) => e.eventType === "wrap").length;
+  const shootEvents = events.filter((e) => e.productionPhase === "shoot").length;
+  const prepEvents = events.filter((e) => e.productionPhase === "prep").length;
+  const wrapEvents = events.filter((e) => e.productionPhase === "wrap").length;
 
   const getEventsForDate = (date) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -63,8 +61,8 @@ function CalendarMonthPDF({ currentDate, events }) {
     });
   };
 
-  const getEventStyle = (eventType) => {
-    switch (eventType) {
+  const getEventStyle = (productionPhase) => {
+    switch (productionPhase) {
       case "shoot":
         return colors.shoot;
       case "prep":
@@ -72,7 +70,7 @@ function CalendarMonthPDF({ currentDate, events }) {
       case "wrap":
         return colors.wrap;
       default:
-        return colors.total; // Default fallback styling
+        return colors.total; 
     }
   };
 
@@ -171,7 +169,7 @@ function CalendarMonthPDF({ currentDate, events }) {
           </div>
         </div>
 
-        {/* --- STATS BAR (UPDATED) --- */}
+        {/* --- STATS BAR --- */}
         <div
           style={{
             display: "grid",
@@ -319,25 +317,26 @@ function CalendarMonthPDF({ currentDate, events }) {
                     const isToday =
                       format(day, "yyyy-MM-dd") ===
                       format(new Date(), "yyyy-MM-dd");
+                    const dateStr = format(day, "yyyy-MM-dd");
+
+                    const phaseForDay = getPhaseForDate(dateStr);
 
                     let productionDayNumber = null;
                     let dayNumColor = "transparent";
 
-                    if (!isAfter(day, WRAP_END_DATE)) {
+                    if (phaseForDay) {
+                      const currentDayMid = new Date(dateStr + "T12:00:00");
                       const rawDiff = differenceInCalendarDays(
-                        day,
-                        SHOOT_START_DATE,
+                        currentDayMid,
+                        SHOOT_START_DATE
                       );
-                      productionDayNumber =
-                        rawDiff >= 0 ? rawDiff + 1 : rawDiff;
+                      
+                      productionDayNumber = rawDiff >= 0 ? rawDiff + 1 : rawDiff;
 
-                      if (rawDiff >= 0) {
-                        const dateStr = format(day, "yyyy-MM-dd");
-                        if (dateStr >= "2026-03-01") {
-                          dayNumColor = colors.wrap.text;
-                        } else {
-                          dayNumColor = colors.shoot.text;
-                        }
+                      if (phaseForDay.name === "Wrap") {
+                        dayNumColor = colors.wrap.text;
+                      } else if (phaseForDay.name === "Shoot") {
+                        dayNumColor = colors.shoot.text;
                       } else {
                         dayNumColor = colors.prep.text;
                       }
@@ -412,7 +411,7 @@ function CalendarMonthPDF({ currentDate, events }) {
                           }}
                         >
                           {dayEvents.map((event, i) => {
-                            const style = getEventStyle(event.eventType);
+                            const style = getEventStyle(event.productionPhase);
                             return (
                               <div
                                 key={i}

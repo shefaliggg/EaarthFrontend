@@ -6,7 +6,7 @@ import {
 import { getProductionWeekLabel } from "../productionPhases";
 
 /* ─── CONFIG ─── */
-const HOUR_HEIGHT = 32; // px per hour (scaled for PDF)
+const HOUR_HEIGHT = 32;
 const DAY_MINUTES = 1440;
 const MIN_EVENT_HEIGHT = 14;
 
@@ -46,8 +46,8 @@ function getWeek(date) {
   return Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(date), i));
 }
 
-function getEventColor(eventType) {
-  switch (eventType) {
+function getEventColor(productionPhase) {
+  switch (productionPhase) {
     case "shoot": return colors.shoot;
     case "prep":  return colors.prep;
     case "wrap":  return colors.wrap;
@@ -104,11 +104,10 @@ function CalendarWeekPDF({ currentDate, events }) {
   const isToday = (date) =>
     format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
-  /* Stats */
   const totalEvents = events.length;
-  const shootEvents = events.filter((e) => e.eventType === "shoot").length;
-  const prepEvents  = events.filter((e) => e.eventType === "prep").length;
-  const wrapEvents  = events.filter((e) => e.eventType === "wrap").length;
+  const shootEvents = events.filter((e) => e.productionPhase === "shoot").length;
+  const prepEvents  = events.filter((e) => e.productionPhase === "prep").length;
+  const wrapEvents  = events.filter((e) => e.productionPhase === "wrap").length;
 
   const allDayForDay = (date) =>
     normalized.filter(
@@ -347,7 +346,7 @@ function CalendarWeekPDF({ currentDate, events }) {
               }}
             >
               {allDayEvts.map((e, i) => {
-                const c = getEventColor(e.eventType);
+                const c = getEventColor(e.productionPhase);
                 return (
                   <div
                     key={i}
@@ -440,7 +439,7 @@ function CalendarWeekPDF({ currentDate, events }) {
               {/* events overlay */}
               {columns.map((col, colIndex) =>
                 col.map((e, i) => {
-                  const c         = getEventColor(e.eventType);
+                  const c         = getEventColor(e.productionPhase);
                   const rawH      = ((e._end - e._start) / 60) * HOUR_HEIGHT;
                   const evtHeight = Math.max(rawH, MIN_EVENT_HEIGHT);
                   const colW      = 100 / columns.length;
@@ -465,7 +464,6 @@ function CalendarWeekPDF({ currentDate, events }) {
                         boxSizing: "border-box",
                         display: "flex",
                         justifyContent: "center",
-                        // alignItems: "center",
                         flexDirection: "column",
                         gap: "1px",
                         zIndex: 1,

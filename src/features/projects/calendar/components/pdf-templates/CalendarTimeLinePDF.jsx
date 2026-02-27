@@ -24,8 +24,9 @@ const colors = {
 };
 
 /* ─── HELPERS ─── */
-function getEventColor(eventType) {
-  switch (eventType?.toLowerCase()) {
+// 🚀 FIXED: Swapped eventType to productionPhase
+function getEventColor(productionPhase) {
+  switch (productionPhase?.toLowerCase()) {
     case "shoot": return colors.shoot;
     case "prep": return colors.prep;
     case "wrap": return colors.wrap;
@@ -84,11 +85,11 @@ function groupEventsByDate(events) {
 
 /* ─── COMPONENT ─── */
 function CalendarTimeLinePDF({ currentDate, events = [] }) {
-  // Stats calculations
+
   const uniqueEventIds = new Set(events.map((e) => e.id || e._id));
-  const prepCount = events.filter((e) => e.eventType === "prep").length;
-  const shootCount = events.filter((e) => e.eventType === "shoot").length;
-  const wrapCount = events.filter((e) => e.eventType === "wrap").length;
+  const prepCount = events.filter((e) => e.productionPhase === "prep").length;
+  const shootCount = events.filter((e) => e.productionPhase === "shoot").length;
+  const wrapCount = events.filter((e) => e.productionPhase === "wrap").length;
 
   const grouped = groupEventsByDate(events);
   const isToday = (dateStr) => isSameDay(new Date(dateStr + "T12:00:00"), new Date());
@@ -96,7 +97,7 @@ function CalendarTimeLinePDF({ currentDate, events = [] }) {
   return (
     <div
       style={{
-        width: "1122px", // Matches PDF landscape width
+        width: "1122px", 
         padding: "30px",
         backgroundColor: colors.white,
         boxSizing: "border-box",
@@ -218,7 +219,6 @@ function CalendarTimeLinePDF({ currentDate, events = [] }) {
         </div>
       </div>
 
-      {/* ── TIMELINE CONTENT (Mimicking Web View) ── */}
       <div style={{ position: "relative", paddingLeft: "12px" }}>
         
         {/* Background Vertical Line */}
@@ -295,7 +295,7 @@ function CalendarTimeLinePDF({ currentDate, events = [] }) {
                     {/* EVENT CARDS */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {dayEvents.map((event, idx) => {
-                        const eventColor = getEventColor(event.eventType);
+                        const eventColor = getEventColor(event.productionPhase);
                         const isAllDay = event.isAllDay || event.allDay;
                         const initials = getAttendeesInitials(event);
 
@@ -351,7 +351,7 @@ function CalendarTimeLinePDF({ currentDate, events = [] }) {
                             </div>
 
                             {/* Right Side: Badge */}
-                            {event.eventType && (
+                            {event.productionPhase && (
                               <div style={{
                                 backgroundColor: eventColor.accent,
                                 color: colors.white,
@@ -362,7 +362,7 @@ function CalendarTimeLinePDF({ currentDate, events = [] }) {
                                 textTransform: "uppercase",
                                 letterSpacing: "0.05em"
                               }}>
-                                {event.eventType}
+                                {event.productionPhase}
                               </div>
                             )}
 

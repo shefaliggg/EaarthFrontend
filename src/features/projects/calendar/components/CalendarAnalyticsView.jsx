@@ -247,7 +247,7 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
             <CardContent className="flex flex-1 flex-col justify-center pb-6">
               {pieData.length > 0 ? (
                 <div className="flex h-full flex-col items-center">
-                  <div className="h-[240px] w-full"> 
+                  <div className="h-[943px] w-full"> 
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -293,7 +293,7 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
                   </div>
                 </div>
               ) : (
-                <div className="h-[240px]">
+                <div className="h-[1032px]">
                   <EmptyState icon={PieChartIcon} label="No data available" />
                 </div>
               )}

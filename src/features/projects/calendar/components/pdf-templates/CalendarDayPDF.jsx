@@ -38,8 +38,8 @@ function timeToMinutes(time) {
 
 const formatHour = (h) => `${h % 12 || 12}${h < 12 ? "am" : "pm"}`;
 
-function getEventColor(eventType) {
-  switch (eventType) {
+function getEventColor(productionPhase) {
+  switch (productionPhase) {
     case "shoot": return colors.shoot;
     case "prep":  return colors.prep;
     case "wrap":  return colors.wrap;
@@ -126,11 +126,10 @@ function CalendarDayPDF({ currentDate, events }) {
 
   const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
 
-  /* Stats — scoped to events passed in (already day-filtered by useCalendar) */
   const totalEvents = events.length;
-  const shootEvents = events.filter((e) => e.eventType === "shoot").length;
-  const prepEvents  = events.filter((e) => e.eventType === "prep").length;
-  const wrapEvents  = events.filter((e) => e.eventType === "wrap").length;
+  const shootEvents = events.filter((e) => e.productionPhase === "shoot").length;
+  const prepEvents  = events.filter((e) => e.productionPhase === "prep").length;
+  const wrapEvents  = events.filter((e) => e.productionPhase === "wrap").length;
 
   const cellBorder   = `1px solid ${colors.purple200}`;
   const gridTemplate = `44px 1fr`;
@@ -358,7 +357,7 @@ function CalendarDayPDF({ currentDate, events }) {
             </div>
           ) : (
             allDayEvts.map((e, i) => {
-              const c = getEventColor(e.eventType);
+              const c = getEventColor(e.productionPhase);
               return (
                 <div
                   key={i}
@@ -437,12 +436,10 @@ function CalendarDayPDF({ currentDate, events }) {
             />
           ))}
 
-
-
           {/* Events */}
           {columns.map((col, colIndex) =>
             col.map((e, i) => {
-              const c         = getEventColor(e.eventType);
+              const c         = getEventColor(e.productionPhase);
               const rawH      = ((e._end - e._start) / 60) * HOUR_HEIGHT;
               const evtHeight = Math.max(rawH, MIN_EVENT_HEIGHT);
               const colW      = 100 / columns.length;
