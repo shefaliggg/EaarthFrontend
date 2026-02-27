@@ -74,7 +74,7 @@ function useCalendar() {
   const allFilteredEvents = useMemo(() => {
     return calendar.events.filter((event) => {
       const matchesSearch = !filters.search || event.title?.toLowerCase().includes(filters.search.toLowerCase());
-      const matchesType = filters.eventTypes.length === 0 || filters.eventTypes.includes(event.eventType);
+      const matchesType = filters.eventTypes.length === 0 || filters.eventTypes.includes(event.productionPhase);
       const matchesLocation = !filters.location || event.location?.toLowerCase().includes(filters.location.toLowerCase());
       
       const eventStatus = (event.status || "confirmed").toLowerCase();
@@ -113,10 +113,22 @@ function useCalendar() {
     const weekCounts = {};
     let filteredCount = 0;
 
+    let shootCount = 0;
+    let prepCount = 0;
+    let wrapCount = 0;
+    let travelCount = 0;
+
     currentViewEvents.forEach((event) => {
       filteredCount++;
-      const type = (event.eventType || event.type || "other").toLowerCase();
-      typeCounts[type] = (typeCounts[type] || 0) + 1;
+      
+      const category = (event.eventCategory || "General").toLowerCase();
+      typeCounts[category] = (typeCounts[category] || 0) + 1;
+      
+      if (event.productionPhase === "shoot") shootCount++;
+      if (event.productionPhase === "prep") prepCount++;
+      if (event.productionPhase === "wrap") wrapCount++;
+      if (category === "travel") travelCount++;
+
       if(event.startDateTime) {
          const date = parseISO(event.startDateTime);
          if(isValid(date)) {
@@ -132,10 +144,10 @@ function useCalendar() {
       weekCounts,
       stats: {
         total: filteredCount,
-        shoot: typeCounts["shoot"] || 0,
-        prep: typeCounts["prep"] || 0,
-        wrap: typeCounts["wrap"] || 0,
-        travel: typeCounts["travel"] || 0,
+        shoot: shootCount,
+        prep: prepCount,
+        wrap: wrapCount,
+        travel: travelCount,
       },
     };
 

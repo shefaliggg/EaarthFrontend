@@ -1,9 +1,9 @@
 import { differenceInCalendarWeeks } from "date-fns";
 
 export const PHASES = [
-  { name: "Prep",  start: "2026-02-01", end: "2026-02-21" }, 
-  { name: "Shoot", start: "2026-02-22", end: "2026-02-28" },  
-  { name: "Wrap",  start: "2026-03-01", end: "2026-03-07" },  
+  { name: "Prep",  start: "2026-03-01", end: "2026-03-21" }, 
+  { name: "Shoot", start: "2026-03-22", end: "2026-03-28" },  
+  { name: "Wrap",  start: "2026-03-29", end: "2026-04-04" },  
 ];
 
 export function getPhaseForDate(dateStr) {
@@ -14,21 +14,27 @@ export function getProductionWeekLabel(dateStr) {
   const phase = getPhaseForDate(dateStr);
   if (!phase) return "";
 
-  const shootWeek1Start = new Date("2026-02-22");
   const current = new Date(dateStr + "T12:00:00"); 
 
-  const diff = differenceInCalendarWeeks(current, shootWeek1Start, { weekStartsOn: 0 });
-
   if (phase.name === "Prep") {
-    return `PREP WEEK ${diff}`;
+
+    const shootPhase = PHASES.find(p => p.name === "Shoot");
+    const shootStart = new Date(shootPhase.start + "T12:00:00");
+    
+    const diff = differenceInCalendarWeeks(current, shootStart, { weekStartsOn: 0 });
+    return `PREP WEEK ${diff}`; 
   }
 
   if (phase.name === "Shoot") {
-    return `SHOOT WEEK ${diff + 1}`;
+    const shootStart = new Date(phase.start + "T12:00:00");
+    const diff = differenceInCalendarWeeks(current, shootStart, { weekStartsOn: 0 });
+    return `SHOOT WEEK ${diff + 1}`; 
   }
 
   if (phase.name === "Wrap") {
-    return `WRAP WEEK ${diff}`;
+    const wrapStart = new Date(phase.start + "T12:00:00");
+    const diff = differenceInCalendarWeeks(current, wrapStart, { weekStartsOn: 0 });
+    return `WRAP WEEK ${diff + 1}`; 
   }
 
   return "";

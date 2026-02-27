@@ -10,7 +10,7 @@ import CalendarPreviewPage from "../calendar/components/preview/CalendarPreviewP
 
 const ProjectCalendar = lazy(() => import("../calendar/pages/ProjectCalendar"));
 const ShootingCalendar = lazy(() => import("../calendar/pages/ShootingCalendar"));
-const TravelManagement = lazy(() => import("../calendar/pages/TravelManagement"));
+const TravelManagementOrder = lazy(() => import("../calendar/pages/TravelManagementOrder"));
 const CalendarSettingsTabsLayout = lazy(() => import("../calendar/layouts/CalendarSettingsTabsLayout"));
 
 const ProjectCalendarRoutes = {
@@ -19,7 +19,7 @@ const ProjectCalendarRoutes = {
   children: [
     { index: true, element: <ProjectCalendar /> },
     { path: "shooting", element: <ShootingCalendar /> },
-    { path: "tmo", element: <TravelManagement /> },
+    { path: "tmo", element: <TravelManagementOrder /> },
     { path: "preview", element: <CalendarPreviewPage /> }, 
     {
       path: "settings",

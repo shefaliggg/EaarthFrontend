@@ -24,7 +24,7 @@ export const dateKey = (date) => format(date, "yyyy-MM-dd");
 
 export const formatHour = (h) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
 
-/* ================= DAY VIEW LOGIC ================= */
+/* ================= DAY VIEW  ================= */
 
 export function normalizeDayEvents(events, date) {
   const key = dateKey(date);
@@ -33,7 +33,6 @@ export function normalizeDayEvents(events, date) {
   for (const e of events) {
     if (!e.startDateTime) continue;
 
-    // SKIP allDay events here so they don't appear in the hour grid
     if (e.allDay === true) continue;
 
     const start = new Date(e.startDateTime);
@@ -81,7 +80,6 @@ export function getAllDayEvents(events, date) {
   return events.filter((e) => {
     if (!e.startDateTime) return false;
     
-    // ONLY include events marked explicitly as allDay
     if (e.allDay !== true) return false;
 
     const start = new Date(e.startDateTime);
@@ -102,7 +100,6 @@ export function getAllDayEvents(events, date) {
   });
 }
 
-/* ================= LAYOUT ENGINE ================= */
 
 export function layoutEvents(events) {
   const columns = [];
@@ -133,8 +130,8 @@ export function getEventStyle(event, colIndex, colCount) {
 
 /* ================= COLORS & STYLES ================= */
 
-export const getEventColors = (eventType) => {
-  switch (eventType) {
+export const getEventColors = (productionPhase) => {
+  switch (productionPhase) {
     case "shoot":
       return "bg-peach-100 dark:bg-peach-800 text-peach-800 dark:text-peach-100 border-peach-400 dark:border-peach-600";
     case "prep":
@@ -146,8 +143,8 @@ export const getEventColors = (eventType) => {
   }
 };
 
-export const getAllDayEventColors = (eventType) => {
-  switch (eventType) {
+export const getAllDayEventColors = (productionPhase) => {
+  switch (productionPhase) {
     case "shoot":
       return "bg-peach-100 dark:bg-peach-800 text-peach-800 dark:text-peach-100 border-peach-400 dark:border-peach-600";
     case "prep":

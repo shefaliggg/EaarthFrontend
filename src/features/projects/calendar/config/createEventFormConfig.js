@@ -10,13 +10,25 @@ export const createEventFormConfig = {
         { name: "title", label: "Event Title", type: "text" },
         { name: "location", label: "Location", type: "text" },
         {
-          name: "eventType",
-          label: "Event Type",
+          name: "productionPhase",
+          label: "Production Phase",
           isSelect: true,
           items: [
             { label: "Prep", value: "prep" },
             { label: "Shoot", value: "shoot" },
             { label: "Wrap", value: "wrap" },
+          ],
+        },
+        {
+          name: "eventCategory",
+          label: "Event Category",
+          type: "creatable-select",
+          items: [
+            { label: "General", value: "General" },
+            { label: "Travel", value: "Travel" },
+            { label: "Meeting", value: "Meeting" },
+            { label: "HOD Meeting", value: "HOD Meeting" },
+            { label: "Rehearsal", value: "Rehearsal" },
           ],
         },
         {

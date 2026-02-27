@@ -18,7 +18,7 @@ function CalendarMonthView({
   currentDate,
   setCurrentDate,
   onDayClick,
-  onEventClick, // This prop was passed down but not used
+  onEventClick, 
   events,
 }) {
   const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -49,8 +49,8 @@ function CalendarMonthView({
     });
   };
 
-  const getMonthEventColors = (eventType) => {
-    switch (eventType) {
+  const getMonthEventColors = (phase) => {
+    switch (phase) {
       case "shoot":
         return "bg-peach-100 dark:bg-peach-800 text-peach-800 dark:text-peach-100 border-peach-400 dark:border-peach-600";
       case "prep":
@@ -62,8 +62,8 @@ function CalendarMonthView({
     }
   };
 
-  const getMoreIndicatorColors = (eventType) => {
-    switch (eventType) {
+  const getMoreIndicatorColors = (phase) => {
+    switch (phase) {
       case "shoot":
         return "text-peach-700 dark:text-peach-300 hover:bg-peach-100 dark:hover:bg-peach-900/30";
       case "prep":
@@ -75,23 +75,22 @@ function CalendarMonthView({
     }
   };
 
-  const getDominantEventType = (events) => {
+  const getDominantPhase = (events) => {
     if (!events.length) return undefined;
 
     const counts = events.reduce((acc, e) => {
-      acc[e.eventType] = (acc[e.eventType] || 0) + 1;
+      acc[e.productionPhase] = (acc[e.productionPhase] || 0) + 1;
       return acc;
     }, {});
 
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   };
 
-  // ── SUMMARY COUNTS (like WeekView/Gantt) ──────────────────────
   const summaryCounts = (() => {
     const counts = { prep: 0, shoot: 0, wrap: 0 };
     for (const e of events || []) {
-      if (e?.eventType && counts[e.eventType] !== undefined) {
-        counts[e.eventType] += 1;
+      if (e?.productionPhase && counts[e.productionPhase] !== undefined) {
+        counts[e.productionPhase] += 1;
       }
     }
     const total = Object.values(counts).reduce((s, n) => s + n, 0);
@@ -136,7 +135,7 @@ function CalendarMonthView({
   return (
     <>
       <div className="min-h-[calc(100vh-500px)] rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-        {/* SUMMARY BAR (like Week/Gantt) */}
+        {/* SUMMARY BAR */}
         <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
           <div className="flex items-center gap-6">
             {summaryItems.map((item) => (
@@ -158,7 +157,7 @@ function CalendarMonthView({
           </div>
         </div>
 
-        {/* Month View Header (WEEK + DAYS) */}
+        {/* Month View Header */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)] text-center text-[11px] font-black uppercase bg-purple-50/80 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border-b border-primary/20">
           <div className="py-4 border-r border-primary/20 bg-card">
             <span className="text-muted-foreground">WEEK</span>
@@ -224,18 +223,18 @@ function CalendarMonthView({
                         {date.getDate()}
                       </div>
 
-                      {/* EVENT CARD (VISIBLE) */}
+                      {/* EVENT CARD */}
                       {visibleEvents.map((event) => (
                         <Tooltip key={event.id || event._id}>
                           <TooltipTrigger asChild>
                             <div
                               onClick={(e) => {
-                                e.stopPropagation(); // Stop bubbling to day click
+                                e.stopPropagation(); 
                                 if (onEventClick) onEventClick(event);
                               }}
                               className={cn(
                                 "w-full px-1.5 py-0.5 text-[11px] font-semibold text-white text-center rounded-md whitespace-nowrap overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer",
-                                getMonthEventColors(event.eventType),
+                                getMonthEventColors(event.productionPhase),
                               )}
                             >
                               {event.title}
@@ -243,11 +242,16 @@ function CalendarMonthView({
                           </TooltipTrigger>
 
                           {/* EVENT TOOLTIP */}
-                          <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                          <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
                             <div className="flex flex-col gap-2 p-1">
                               <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
                                 {event.title}
                               </p>
+                              
+                              <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80">
+                                {event.productionPhase} • {event.eventCategory}
+                              </div>
+
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="font-medium">
@@ -274,11 +278,11 @@ function CalendarMonthView({
                         <Popover>
                           <PopoverTrigger asChild>
                             <div
-                              onClick={(e) => e.stopPropagation()} // Stop bubbling
+                              onClick={(e) => e.stopPropagation()} 
                               className={cn(
                                 "text-[11px] font-bold rounded-lg w-full py-0.5 px-2 hover:scale-[1.02] transition-transform text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 flex-shrink-0 cursor-pointer",
                                 getMoreIndicatorColors(
-                                  getDominantEventType(hiddenEvents),
+                                  getDominantPhase(hiddenEvents),
                                 ),
                               )}
                             >
@@ -301,7 +305,7 @@ function CalendarMonthView({
                                   }}
                                   className={cn(
                                     "w-full px-1.5 py-1 text-xs font-semibold text-white text-center rounded-md whitespace-normal border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer mb-1",
-                                    getMonthEventColors(event.eventType),
+                                    getMonthEventColors(event.productionPhase),
                                   )}
                                 >
                                   {event.title}

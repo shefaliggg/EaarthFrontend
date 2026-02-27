@@ -7,8 +7,8 @@ import {
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
 
-function getEventColors(eventType) {
-  switch (eventType) {
+function getEventColors(productionPhase) {
+  switch (productionPhase) {
     case "prep":
       return {
         bg: "bg-sky-100 dark:bg-sky-900/30",
@@ -41,7 +41,8 @@ function getEventColors(eventType) {
 }
 
 function ConflictEventCard({ event }) {
-  const colors = getEventColors(event.eventType);
+
+  const colors = getEventColors(event.productionPhase);
   const start = new Date(event.startDateTime);
   const end = new Date(event.endDateTime);
   const isMultiDay = start.toDateString() !== end.toDateString();
@@ -80,37 +81,33 @@ function ConflictEventCard({ event }) {
                 )}
               </div>
             </div>
-            {event.eventType && (
+
+            {event.productionPhase && (
               <span
                 className={cn(
                   "text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 text-white",
                   colors.badge,
                 )}
               >
-                {event.eventType}
+                {event.productionPhase}
               </span>
             )}
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+      <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
         <div className="flex flex-col gap-2 p-1 max-w-xs">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 border-b border-primary/20 pb-2">
             <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
               {event.title}
             </p>
-            {event.eventType && (
-              <span
-                className={cn(
-                  "text-[9px] font-black px-2 py-0.5 rounded uppercase text-white",
-                  colors.badge,
-                )}
-              >
-                {event.eventType}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          
+          <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80 mt-1">
+            {event.productionPhase} • {event.eventCategory}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
             <Clock className="w-3.5 h-3.5" />
             <span className="font-medium">
               {format(start, "MMM dd, h:mm a")} –{" "}
@@ -152,18 +149,16 @@ function CalendarConflictsView({ conflicts, currentDate }) {
   // Total conflicts across ALL time (for the badge)
   const totalAllTime = conflicts.length;
 
-  // Count conflicts by phase combinations
   const prepConflicts = visibleConflicts.filter(
-    (c) => c.event1.eventType === "prep" || c.event2.eventType === "prep",
+    (c) => c.event1.productionPhase === "prep" || c.event2.productionPhase === "prep",
   ).length;
   const shootConflicts = visibleConflicts.filter(
-    (c) => c.event1.eventType === "shoot" || c.event2.eventType === "shoot",
+    (c) => c.event1.productionPhase === "shoot" || c.event2.productionPhase === "shoot",
   ).length;
   const wrapConflicts = visibleConflicts.filter(
-    (c) => c.event1.eventType === "wrap" || c.event2.eventType === "wrap",
+    (c) => c.event1.productionPhase === "wrap" || c.event2.productionPhase === "wrap",
   ).length;
 
-  // ── SUMMARY (weekview style) ──────────────────────────────────
   const summaryItems = [
     {
       key: "total",
@@ -268,7 +263,7 @@ function CalendarConflictsView({ conflicts, currentDate }) {
 
   return (
     <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg bg-card">
-      {/* SUMMARY BAR (weekview style) */}
+      {/* SUMMARY BAR */}
       <div className="border-b border-primary/20 bg-purple-50/80 dark:bg-purple-900/20 px-6 py-4 flex justify-end">
         <div className="flex items-center gap-6">
           {summaryItems.map((item) => (

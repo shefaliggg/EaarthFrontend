@@ -134,7 +134,7 @@ function CalendarToolbar({
             <div className="p-4 space-y-6 max-h-[50vh] overflow-y-auto custom-scrollbar">
                
                <div className="space-y-3">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Types</Label>
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Production Phase</Label>
                   <div className="grid grid-cols-2 gap-3">
                      {["prep", "shoot", "wrap"].map(type => (
                         <div key={type} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">

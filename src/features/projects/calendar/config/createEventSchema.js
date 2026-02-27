@@ -10,15 +10,13 @@ export const createEventSchema = z
     endTime: z.string().optional(),
 
     isAllDay: z.boolean().optional(),
-
     isMeeting: z.boolean().optional(),
 
-    eventType: z.string().min(1, "Event Type is required"),
+    productionPhase: z.string().min(1, "Production Phase is required"),
+    eventCategory: z.string().optional().default("general"),
 
     status: z.string().min(1, "Status is required"),
-
     location: z.string().min(1, "Location is required"),
-
     notes: z.string().optional(),
 
     audienceType: z.enum(["ALL", "DEPARTMENT", "USERS"]),
@@ -38,5 +36,5 @@ export const createEventSchema = z
     {
       message: "Please select at least one item for your chosen audience",
       path: ["audienceType"],
-    },
+    }
   );

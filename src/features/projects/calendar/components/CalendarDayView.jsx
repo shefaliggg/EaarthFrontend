@@ -42,12 +42,13 @@ export default function CalendarDayView({
         : "bg-mint-100 text-mint-800 dark:bg-mint-900/40 dark:text-mint-300"
     : "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300";
 
-  // ── SUMMARY COUNTS ──────────────────────
+  // SUMMARY COUNTS
   const summaryCounts = (() => {
     const counts = { prep: 0, shoot: 0, wrap: 0 };
     for (const e of events || []) {
-      if (e?.eventType && counts[e.eventType] !== undefined) {
-        counts[e.eventType] += 1;
+
+      if (e?.productionPhase && counts[e.productionPhase] !== undefined) {
+        counts[e.productionPhase] += 1;
       }
     }
     const total = Object.values(counts).reduce((s, n) => s + n, 0);
@@ -156,7 +157,7 @@ export default function CalendarDayView({
 
         <div
           onClick={(e) => {
-            // <-- FIX: Pass the currentDate up instead of empty brackets
+
             if (e.target === e.currentTarget && onDayClick) {
               onDayClick(currentDate);
             }
@@ -173,18 +174,21 @@ export default function CalendarDayView({
                   }}
                   className={cn(
                     "w-full text-[11px] font-semibold text-center px-2 py-1 rounded-lg overflow-hidden shadow-sm whitespace-nowrap transition-all duration-200 hover:shadow-md border-l-3 cursor-pointer",
-                    getAllDayEventColors(e.eventType),
+                    getAllDayEventColors(e.productionPhase),
                   )}
                 >
                   {e.title}
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+              <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
                 <div className="flex flex-col gap-2 p-1">
-                  <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+                  <p className="font-bold text-sm text-purple-800 dark:text-purple-300 pb-1 border-b border-primary/20">
                     {e.title}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80 pt-1">
+                    {e.productionPhase} • {e.eventCategory}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="font-medium">All Day Event</span>
                   </div>
@@ -219,7 +223,6 @@ export default function CalendarDayView({
         <div className="relative bg-card">
           {/* Hour Grid */}
           {hours.map((h) => {
-            // <-- FIX: Creates the exact date and hour slot clicked
             const handleHourClick = () => {
               const slotDate = new Date(currentDate);
               slotDate.setHours(h, 0, 0, 0);
@@ -253,7 +256,7 @@ export default function CalendarDayView({
                         style={getEventStyle(event, colIndex, columns.length)}
                         className={cn(
                           "cursor-pointer absolute pointer-events-auto flex items-center justify-center py-0.5 px-1 text-[10px] font-semibold text-center rounded-md overflow-hidden border-l-3 shadow-sm transition-all duration-200 hover:shadow-md",
-                          getEventColors(event.eventType),
+                          getEventColors(event.productionPhase),
                         )}
                       >
                         <div className="w-full overflow-hidden">
@@ -268,12 +271,15 @@ export default function CalendarDayView({
                       </div>
                     </TooltipTrigger>
 
-                    <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                    <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
                       <div className="flex flex-col gap-2 p-1">
-                        <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
+                        <p className="font-bold text-sm text-purple-800 dark:text-purple-300 pb-1 border-b border-primary/20">
                           {event.title}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80 pt-1">
+                          {event.productionPhase} • {event.eventCategory}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                           <Clock className="w-3.5 h-3.5" />
                           <span className="font-medium">
                             {format(startTime, "h:mm a")} -{" "}

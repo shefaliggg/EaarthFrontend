@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/shared/components/ui/tooltip";
-import { Clock, MapPin, CalendarDays, TrendingUp } from "lucide-react";
+import { Clock, MapPin, TrendingUp } from "lucide-react";
 import { useRef, useEffect, useMemo } from "react";
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function calculateProgress(startDateTime, endDateTime) {
 
 function getYearWeeks(year) {
   const janFirst = startOfYear(new Date(year, 0, 1));
-  const weekStart = startOfWeek(janFirst, { weekStartsOn: 1 }); // Monday start
+  const weekStart = startOfWeek(janFirst, { weekStartsOn: 1 }); 
   const yearEnd = endOfYear(new Date(year, 0, 1));
   const weeks = [];
   let current = weekStart;
@@ -39,7 +39,7 @@ function getYearWeeks(year) {
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(current, i));
     weeks.push(weekDays);
     current = addDays(current, 7);
-    if (weeks.length >= 53) break; // safety
+    if (weeks.length >= 53) break; 
   }
   return weeks;
 }
@@ -48,7 +48,6 @@ function getAllDays(weeks) {
   return weeks.flat();
 }
 
-// NEW: Calculate phase overall dates and progress
 function calculatePhaseOverall(phaseEvents) {
   if (!phaseEvents || phaseEvents.length === 0) {
     return {
@@ -82,7 +81,6 @@ function calculatePhaseOverall(phaseEvents) {
   };
 }
 
-// NEW: Filter events by year
 function filterEventsByYear(events, year) {
   const yearStart = new Date(year, 0, 1);
   yearStart.setHours(0, 0, 0, 0);
@@ -96,7 +94,6 @@ function filterEventsByYear(events, year) {
     const eventStart = new Date(event.startDateTime);
     const eventEnd = new Date(event.endDateTime);
 
-    // Include event if it overlaps with the year at all
     return eventStart <= yearEnd && eventEnd >= yearStart;
   });
 }
@@ -183,7 +180,7 @@ function CalendarGanttView({ currentDate, events }) {
     return PHASES.map((phase) => {
       const phaseEvents = yearFilteredEvents
         .filter(
-          (e) => e.eventType === phase.key && e.startDateTime && e.endDateTime,
+          (e) => e.productionPhase === phase.key && e.startDateTime && e.endDateTime,
         )
         .map((e) => ({
           ...e,
@@ -193,7 +190,6 @@ function CalendarGanttView({ currentDate, events }) {
         }))
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-      // Calculate phase overall stats
       const phaseOverall = calculatePhaseOverall(phaseEvents);
 
       return {
@@ -207,12 +203,10 @@ function CalendarGanttView({ currentDate, events }) {
     });
   }, [yearFilteredEvents]);
 
-  // NEW: Total events across all phases (after filtering by year)
   const totalEvents = useMemo(() => {
     return ganttRows.reduce((sum, row) => sum + row.events.length, 0);
   }, [ganttRows]);
 
-  // ── Bar position calculator ──
   const getBarStyle = (event) => {
     const rangeStart = new Date(allDays[0]);
     rangeStart.setHours(0, 0, 0, 0);
@@ -243,7 +237,6 @@ function CalendarGanttView({ currentDate, events }) {
     };
   };
 
-  // ── Get month labels for the timeline header ──
   const monthMarkers = useMemo(() => {
     const markers = [];
     let lastMonth = -1;
@@ -257,7 +250,6 @@ function CalendarGanttView({ currentDate, events }) {
     return markers;
   }, [allDays]);
 
-  // ── Today line position ──
   const todayIndex = allDays.findIndex(
     (d) => format(d, "yyyy-MM-dd") === todayStr,
   );
@@ -697,21 +689,17 @@ function CalendarGanttView({ currentDate, events }) {
 
                                   <TooltipContent
                                     side="top"
-                                    className="bg-card text-card-foreground border border-primary/20 shadow-xl rounded-lg max-w-xs"
+                                    className="bg-card text-card-foreground border border-primary/20 shadow-xl rounded-lg max-w-xs z-50"
                                   >
                                     <div className="flex flex-col gap-2.5 p-2">
-                                      <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start justify-between gap-3 border-b border-primary/20 pb-2">
                                         <p className="font-bold text-sm text-purple-800 dark:text-purple-300 leading-tight">
                                           {event.title}
                                         </p>
-                                        <span
-                                          className={cn(
-                                            "text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap",
-                                            row.badge,
-                                          )}
-                                        >
-                                          {row.name.replace(" Phase", "")}
-                                        </span>
+                                      </div>
+
+                                      <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80">
+                                        {event.productionPhase} • {event.eventCategory}
                                       </div>
 
                                       <div className="flex items-center gap-2 text-xs text-muted-foreground">

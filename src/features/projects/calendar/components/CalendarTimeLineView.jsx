@@ -19,13 +19,10 @@ import {
 /* ================= HELPERS ================= */
 
 function getAttendeesInitials(event) {
-
   if (!event.audience || event.audience.type === "ALL") return "";
-  
   if (!event.attendees || event.attendees.length === 0) return "";
 
   const initials = event.attendees.map(att => {
-   
     const userObj = att.userId || att;
     const name = userObj.displayName || userObj.name || "";
     if (!name) return "";
@@ -107,9 +104,9 @@ export default function CalendarTimelineView({ events, currentDate }) {
 
   const uniqueEventIds = new Set(relevantEvents.map((e) => e.id || e._id));
 
-  const prepCount = relevantEvents.filter((e) => e.eventType === "prep").length;
-  const shootCount = relevantEvents.filter((e) => e.eventType === "shoot").length;
-  const wrapCount = relevantEvents.filter((e) => e.eventType === "wrap").length;
+  const prepCount = relevantEvents.filter((e) => e.productionPhase === "prep").length;
+  const shootCount = relevantEvents.filter((e) => e.productionPhase === "shoot").length;
+  const wrapCount = relevantEvents.filter((e) => e.productionPhase === "wrap").length;
 
   const summaryItems = [
     {
@@ -142,8 +139,8 @@ export default function CalendarTimelineView({ events, currentDate }) {
     },
   ];
 
-  const getEventColors = (eventType) => {
-    switch (eventType) {
+  const getEventColors = (productionPhase) => {
+    switch (productionPhase) {
       case "shoot":
         return {
           bg: "bg-peach-100 dark:bg-peach-900/30",
@@ -222,7 +219,8 @@ export default function CalendarTimelineView({ events, currentDate }) {
           {/* Event Cards */}
           <div className="flex flex-col gap-2">
             {dayEvents.map((event) => {
-              const colors = getEventColors(event.eventType);
+
+              const colors = getEventColors(event.productionPhase);
               const isAllDay = event.isAllDay || event.allDay;
 
               const eStart = new Date(event.startDateTime);
@@ -281,38 +279,34 @@ export default function CalendarTimelineView({ events, currentDate }) {
                         </div>
 
                         {/* Right: type badge */}
-                        {event.eventType && (
+
+                        {event.productionPhase && (
                           <span
                             className={cn(
                               "text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 text-white",
                               colors.accent,
                             )}
                           >
-                            {event.eventType}
+                            {event.productionPhase}
                           </span>
                         )}
                       </div>
                     </div>
                   </TooltipTrigger>
 
-                  <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                  <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
                     <div className="flex flex-col gap-2 p-1 max-w-xs">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3 border-b border-primary/20 pb-2">
                         <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
                           {event.title} {attendeesInitials && `- ${attendeesInitials}`}
                         </p>
-                        {event.eventType && (
-                          <span
-                            className={cn(
-                              "text-[9px] font-black px-2 py-0.5 rounded uppercase text-white",
-                              colors.accent,
-                            )}
-                          >
-                            {event.eventType}
-                          </span>
-                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+
+                      <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80 mt-1">
+                        {event.productionPhase} • {event.eventCategory}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                         <Clock className="w-3.5 h-3.5" />
                         <span className="font-medium">
                           {isAllDay

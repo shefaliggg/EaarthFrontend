@@ -2,7 +2,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription, // <-- Added this
+  DialogDescription, 
   DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -23,8 +23,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
 import { useSelector } from "react-redux";
 
-const getEventTypeColor = (type) => {
-  switch (type) {
+const getPhaseColor = (phase) => {
+  switch (phase) {
     case "shoot": return "bg-peach-100 text-peach-800 border-peach-200 dark:bg-peach-900/30 dark:text-peach-200";
     case "prep": return "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/30 dark:text-sky-200";
     case "wrap": return "bg-mint-100 text-mint-800 border-mint-200 dark:bg-mint-900/30 dark:text-mint-200";
@@ -73,19 +73,24 @@ export default function EventDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => { if(!v) handleClose(); }}>
-      {/* Set aria-describedby to undefined in case Radix is extra stubborn, though DialogDescription usually fixes it */}
       <DialogContent aria-describedby={undefined} className="max-w-lg p-0 overflow-hidden border-0 gap-0">
         
-        <div className={`h-3 w-full ${getEventTypeColor(event.eventType).split(" ")[0]}`} />
+        <div className={`h-3 w-full ${getPhaseColor(event.productionPhase).split(" ")[0]}`} />
         
         <div className="p-6 pb-2">
            <div className="flex justify-between items-start mb-4">
               <div className="space-y-1 w-full">
                  <div className="flex flex-wrap gap-2 items-center w-full">
                    
-                   <Badge variant="outline" className={`capitalize font-bold border ${getEventTypeColor(event.eventType)}`}>
-                      {event.eventType}
+                   <Badge variant="outline" className={`capitalize font-bold border ${getPhaseColor(event.productionPhase)}`}>
+                      {event.productionPhase}
                    </Badge>
+
+                   {event.eventCategory && event.eventCategory !== "general" && (
+                     <Badge variant="outline" className="capitalize font-bold border bg-muted/60 text-muted-foreground border-primary/20">
+                       {event.eventCategory.replace("_", " ")}
+                     </Badge>
+                   )}
 
                    <Badge variant="outline" className={`capitalize font-bold border ${getStatusColor(currentStatus)}`}>
                       {currentStatus}

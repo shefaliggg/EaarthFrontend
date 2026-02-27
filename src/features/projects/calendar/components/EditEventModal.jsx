@@ -39,7 +39,8 @@ export default function EditEventModal({
       endTime: "",
       isAllDay: false,
       isMeeting: false,
-      eventType: "prep",
+      productionPhase: "prep", // UPDATED TO MATCH BACKEND
+      eventCategory: "general", // UPDATED TO MATCH BACKEND
       status: "confirmed",
       location: "",
       audienceType: "ALL",
@@ -72,7 +73,11 @@ export default function EditEventModal({
         endTime: eventToEdit.allDay ? "" : format(end, "h:mm a"),
         isAllDay: eventToEdit.allDay || false,
         isMeeting: !!eventToEdit.meeting?.enabled,
-        eventType: eventToEdit.eventType || "prep",
+        
+        // NOW LOADS THE CORRECT PHASE & CATEGORY FROM DB
+        productionPhase: eventToEdit.productionPhase || "prep",
+        eventCategory: eventToEdit.eventCategory || "general",
+        
         status: eventToEdit.status || "confirmed",
         location: eventToEdit.location || "",
         audienceType: eventToEdit.audience?.type || "ALL",
@@ -120,7 +125,11 @@ export default function EditEventModal({
         projectId: eventToEdit.projectId || "697c899668977a7ca2b27462", 
         title: data.title,
         description: data.notes || "",
-        eventType: data.eventType, 
+        
+        // NOW SENDS CORRECT DATA TO BACKEND
+        productionPhase: data.productionPhase, 
+        eventCategory: data.eventCategory,
+        
         status: data.status || "confirmed",
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),

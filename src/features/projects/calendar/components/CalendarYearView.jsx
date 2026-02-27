@@ -51,8 +51,8 @@ function CalendarYearView({ currentDate, events }) {
 
   const isToday = (date) => date.toDateString() === new Date().toDateString();
 
-  const getEventDotColor = (eventType) => {
-    switch (eventType) {
+  const getEventDotColor = (productionPhase) => {
+    switch (productionPhase) {
       case "shoot":
         return "bg-peach-600 dark:bg-peach-400";
       case "prep":
@@ -64,12 +64,12 @@ function CalendarYearView({ currentDate, events }) {
     }
   };
 
-  // ── SUMMARY COUNTS (same style as WeekView summary) ───────────
+  // ── SUMMARY COUNTS ───────────
   const summaryCounts = (() => {
     const counts = { prep: 0, shoot: 0, wrap: 0 };
     for (const e of events || []) {
-      if (e?.eventType && counts[e.eventType] !== undefined) {
-        counts[e.eventType] += 1;
+      if (e?.productionPhase && counts[e.productionPhase] !== undefined) {
+        counts[e.productionPhase] += 1;
       }
     }
     const total = Object.values(counts).reduce((s, n) => s + n, 0);
@@ -220,7 +220,7 @@ function CalendarYearView({ currentDate, events }) {
                                         key={idx}
                                         className={cn(
                                           "block w-1 h-1 rounded-full",
-                                          getEventDotColor(event.eventType),
+                                          getEventDotColor(event.productionPhase),
                                         )}
                                       />
                                     ))}
@@ -231,7 +231,7 @@ function CalendarYearView({ currentDate, events }) {
 
                             {/* Tooltip for days with events */}
                             {dayEvents.length > 0 && (
-                              <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg max-w-xs">
+                              <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg max-w-xs z-50">
                                 <div className="flex flex-col gap-2 p-1">
                                   <p className="font-bold text-sm text-purple-800 dark:text-purple-300 border-b border-primary/20 pb-1">
                                     {format(date, "MMMM dd, yyyy")}

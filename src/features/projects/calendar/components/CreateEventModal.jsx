@@ -28,7 +28,6 @@ export default function CreateEventModal({
   isSubmitting: externalIsSubmitting, 
 }) {
   const dispatch = useDispatch();
-  
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm({
@@ -41,7 +40,8 @@ export default function CreateEventModal({
       endTime: "",
       isAllDay: false,
       isMeeting: false, 
-      eventType: "prep",
+      productionPhase: "prep", 
+      eventCategory: "general",
       status: "confirmed",
       location: "",
       audienceType: "ALL",
@@ -84,12 +84,12 @@ export default function CreateEventModal({
         }
       }
 
-
       const payload = {
         projectId: "697c899668977a7ca2b27462", 
         title: data.title,
         description: data.notes || "",
-        eventType: data.eventType,
+        productionPhase: data.productionPhase, 
+        eventCategory: data.eventCategory,    
         status: data.status || "confirmed", 
         startDateTime: finalStartDateTime.toISOString(),
         endDateTime: finalEndDateTime.toISOString(),
@@ -139,7 +139,8 @@ export default function CreateEventModal({
         endTime: "",
         isAllDay: false,
         isMeeting: false,
-        eventType: "prep",
+        productionPhase: "prep", 
+        eventCategory: "general", 
         status: "confirmed",
         location: "",
         audienceType: "ALL",

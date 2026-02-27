@@ -26,7 +26,7 @@ function timeToMinutes(time) {
 const dateKey = (date) => format(date, "yyyy-MM-dd");
 const formatHour = (h) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
 
-// EVENT NORMALIZATION FOR WEEK VIEW
+// EVENT NORMALIZATION 
 function normalizeWeekEvents(events) {
   const output = [];
 
@@ -140,8 +140,8 @@ function CalendarWeekView({
     if (onDayClick) onDayClick(selectedDate);
   };
 
-  const getEventColors = (eventType) => {
-    switch (eventType) {
+  const getEventColors = (productionPhase) => {
+    switch (productionPhase) {
       case "shoot":
         return "bg-peach-100 dark:bg-peach-800 text-peach-800 dark:text-peach-100 border-peach-400 dark:border-peach-600";
       case "prep":
@@ -153,8 +153,8 @@ function CalendarWeekView({
     }
   };
 
-  const getAllDayEventColors = (eventType) => {
-    switch (eventType) {
+  const getAllDayEventColors = (productionPhase) => {
+    switch (productionPhase) {
       case "shoot":
         return "bg-peach-100 dark:bg-peach-800 text-peach-800 dark:text-peach-100 border-peach-400 dark:border-peach-600";
       case "prep":
@@ -166,12 +166,12 @@ function CalendarWeekView({
     }
   };
 
-  // ── SUMMARY COUNTS (like Gantt) ───────────────────────────────
+  // ── SUMMARY COUNTS 
   const summaryCounts = (() => {
     const counts = { prep: 0, shoot: 0, wrap: 0 };
     for (const e of events || []) {
-      if (e?.eventType && counts[e.eventType] !== undefined) {
-        counts[e.eventType] += 1;
+      if (e?.productionPhase && counts[e.productionPhase] !== undefined) {
+        counts[e.productionPhase] += 1;
       }
     }
     const total = Object.values(counts).reduce((s, n) => s + n, 0);
@@ -305,7 +305,7 @@ function CalendarWeekView({
                       <div
                         className={cn(
                           "w-full px-1.5 py-0.5 text-[10px] font-semibold text-center whitespace-nowrap rounded-md overflow-hidden border-l-3 transition-all duration-200 hover:shadow-md cursor-pointer",
-                          getAllDayEventColors(e.eventType),
+                          getAllDayEventColors(e.productionPhase),
                         )}
                         onClick={(ev) => {
                           ev.stopPropagation();
@@ -320,6 +320,9 @@ function CalendarWeekView({
                         <p className="font-bold text-sm text-purple-800 dark:text-purple-300 border-b border-primary/20 pb-1">
                           {e.title}
                         </p>
+                        <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80">
+                          {e.productionPhase} • {e.eventCategory}
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="w-3.5 h-3.5" />
                           <span className="font-medium">All Day Event</span>
@@ -387,7 +390,7 @@ function CalendarWeekView({
                               style={getEventStyle(e, colIndex, columns.length)}
                               className={cn(
                                 "cursor-pointer absolute pointer-events-auto flex items-center justify-center truncate py-0.5 text-[10px] font-semibold text-center rounded-md overflow-hidden border-l-3 shadow-sm transition-all duration-200 hover:shadow-md",
-                                getEventColors(e.eventType),
+                                getEventColors(e.productionPhase),
                               )}
                               onClick={(ev) => {
                                 ev.stopPropagation();
@@ -397,11 +400,14 @@ function CalendarWeekView({
                               {e.title}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg">
+                          <TooltipContent className="bg-card text-card-foreground border-primary/20 shadow-lg z-50">
                             <div className="flex flex-col gap-2 p-1">
                               <p className="font-bold text-sm text-purple-800 dark:text-purple-300">
                                 {e.title}
                               </p>
+                              <div className="uppercase text-[9px] font-bold tracking-widest text-muted-foreground/80">
+                                {e.productionPhase} • {e.eventCategory}
+                              </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="font-medium">

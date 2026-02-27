@@ -553,7 +553,7 @@ const TravelForm = ({ isOpen, onClose, onSave, initialData }) => {
    2. MAIN VIEW COMPONENT (Export Default)
    ================================================================================== */
 
-export default function TravelManagement({ tmos = MOCK_TMOS, onTmoChange }) {
+export default function TravelManagementOrder({ tmos = MOCK_TMOS, onTmoChange }) {
   // Use passed in TMOs or fallback to state initialized with MOCK data if empty
   const [localTmos, setLocalTmos] = useState(tmos && tmos.length > 0 ? tmos : MOCK_TMOS);
   const [searchQuery, setSearchQuery] = useState('');

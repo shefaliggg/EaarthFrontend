@@ -30,17 +30,42 @@ import {
 import PrimaryStats from "../../../../shared/components/wrappers/PrimaryStats";
 
 // --- Constants ---
-const COLORS = {
-  prep: "#0ea5e9",
-  shoot: "#f97316",
-  wrap: "#10b981",
-  scout: "#64748b",
-  tech: "#475569",
-  travel: "#8b5cf6",
-  meeting: "#eab308",
-  other: "#94a3b8",
+const CORE_COLORS = {
+  general: "#0ea5e9", // Sky Blue
+  travel: "#8b5cf6",  // Purple
+  meeting: "#eab308", // Yellow
+  "hod meeting": "#f97316", // Orange
+  rehearsal: "#10b981", // Emerald Green
 };
-const DEFAULT_COLORS = ["#8b5cf6", "#ec4899", "#eab308", "#3b82f6", "#10b981"];
+
+const EXTENDED_PALETTE = [
+  "#ef4444", // red
+  "#ec4899", // pink
+  "#d946ef", // fuchsia
+  "#6366f1", // indigo
+  "#3b82f6", // blue
+  "#06b6d4", // cyan
+  "#14b8a6", // teal
+  "#22c55e", // green
+  "#84cc16", // lime
+  "#f59e0b", // amber
+  "#f43f5e", // rose
+  "#64748b", // slate
+  "#737373", // neutral
+];
+
+const getCategoryColor = (categoryName) => {
+  const normalized = categoryName.toLowerCase().trim();
+  
+  if (CORE_COLORS[normalized]) return CORE_COLORS[normalized];
+
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = normalized.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % EXTENDED_PALETTE.length;
+  return EXTENDED_PALETTE[index];
+};
 
 // --- Helper Components ---
 const EmptyState = ({ icon: Icon, label }) => (
@@ -55,15 +80,15 @@ const EmptyState = ({ icon: Icon, label }) => (
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-sm">
-      <p className="font-semibold text-popover-foreground mb-1">{label}</p>
+    <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-sm z-50">
+      <p className="font-semibold text-popover-foreground mb-1 capitalize">{payload[0].name}</p>
       <div className="flex items-center gap-2">
         <span
           className="h-2 w-2 rounded-full"
           style={{ backgroundColor: payload[0].color || payload[0].fill }}
         />
         <span className="text-muted-foreground">
-          {payload[0].name}:{" "}
+          Count:{" "}
           <span className="font-medium text-foreground">
             {payload[0].value}
           </span>
@@ -74,7 +99,6 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 function CalendarAnalyticsView({ analyticsData, currentDate }) {
-  // If no data is passed (e.g. initial load), provide fallback
   const { typeCounts = {}, weekCounts = {}, stats = {} } = analyticsData || {};
 
   const monthLabel = useMemo(
@@ -82,20 +106,18 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
     [currentDate],
   );
 
-  // 1. Format Pie Data for Chart
   const pieData = useMemo(
     () =>
       Object.entries(typeCounts)
-        .map(([name, value], idx) => ({
+        .map(([name, value]) => ({
           name,
           value,
-          color: COLORS[name] || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
+          color: getCategoryColor(name),
         }))
         .sort((a, b) => b.value - a.value),
     [typeCounts],
   );
 
-  // 2. Format Bar Data for Chart
   const barData = useMemo(
     () =>
       Object.entries(weekCounts)
@@ -212,20 +234,20 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
             </CardContent>
           </Card>
 
-          {/* Event Type Distribution */}
+          {/* Event Category Distribution */}
           <Card className="flex flex-col shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">
-                Event Distribution
+                Event Categories
               </CardTitle>
               <CardDescription>
-                Breakdown by type for {monthLabel}
+                Breakdown by category for {monthLabel}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-1 flex-col justify-center pb-6">
               {pieData.length > 0 ? (
                 <div className="flex h-full flex-col items-center">
-                  <div className="h-[943px] w-full">
+                  <div className="h-[240px] w-full"> 
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -254,16 +276,16 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
                         key={item.name}
                         className="flex items-center justify-between text-xs"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 truncate pr-2">
                           <span
-                            className="size-2.5 rounded-full ring-1 ring-border/20"
+                            className="size-2.5 rounded-full ring-1 ring-border/20 shrink-0"
                             style={{ backgroundColor: item.color }}
                           />
-                          <span className="capitalize text-muted-foreground">
+                          <span className="capitalize text-muted-foreground truncate">
                             {item.name}
                           </span>
                         </div>
-                        <span className="font-mono font-medium">
+                        <span className="font-mono font-medium shrink-0">
                           {item.value}
                         </span>
                       </div>
@@ -271,7 +293,7 @@ function CalendarAnalyticsView({ analyticsData, currentDate }) {
                   </div>
                 </div>
               ) : (
-                <div className="h-[1032px]">
+                <div className="h-[240px]">
                   <EmptyState icon={PieChartIcon} label="No data available" />
                 </div>
               )}

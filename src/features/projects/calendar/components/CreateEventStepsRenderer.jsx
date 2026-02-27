@@ -1,7 +1,7 @@
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Calendar } from "@/shared/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown, PlusCircle } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -18,8 +18,9 @@ import {
 } from "@/shared/components/ui/select";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { cn } from "@/shared/config/utils";
 
 function generateTimeOptions(step = 15) {
   const times = [];
@@ -116,6 +117,104 @@ function DepartmentSelector({ value = [], onChange }) {
   );
 }
 
+// 🚀 NEW COMPONENT: A beautiful dropdown that lets you type a custom value!
+function CreatableSelect({ field, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  
+  // Combine default items with the current value if it's a custom one
+  const options = useMemo(() => {
+    const defaultOptions = field.items.map(i => i.value.toLowerCase());
+    const combined = [...field.items];
+    
+    if (value && value !== "general" && !defaultOptions.includes(value.toLowerCase())) {
+      combined.push({ label: value, value: value });
+    }
+    return combined;
+  }, [field.items, value]);
+
+  const handleSelect = (currentValue) => {
+    onChange(currentValue);
+    setOpen(false);
+    setInputValue("");
+  };
+
+  const handleCreateNew = () => {
+    if (inputValue.trim()) {
+      onChange(inputValue.trim());
+      setOpen(false);
+      setInputValue("");
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between bg-background rounded-3xl capitalize font-normal"
+        >
+          {value ? value.replace("_", " ") : `Select ${field.label}...`}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0 border-primary/20 shadow-xl" align="start">
+        <div className="flex flex-col">
+          <div className="px-3 py-2 border-b border-primary/10">
+            <input
+              className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Type to search or create new..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleCreateNew();
+                }
+              }}
+            />
+          </div>
+          <div className="max-h-[200px] overflow-y-auto p-1">
+            {options
+              .filter(opt => opt.label.toLowerCase().includes(inputValue.toLowerCase()))
+              .map((option) => (
+              <div
+                key={option.value}
+                onClick={() => handleSelect(option.value)}
+                className={cn(
+                  "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground capitalize",
+                  value === option.value ? "bg-accent/50 font-bold text-primary" : ""
+                )}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === option.value ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {option.label}
+              </div>
+            ))}
+            
+            {/* Show "Create New" option if typing something unique */}
+            {inputValue.trim() && !options.some(opt => opt.label.toLowerCase() === inputValue.toLowerCase()) && (
+              <div
+                onClick={handleCreateNew}
+                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-primary/10 text-primary font-medium mt-1 border-t border-primary/10 pt-2"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create "{inputValue}"
+              </div>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function CreateEventStepsRenderer({ sections, form }) {
   const TIME_OPTIONS = useMemo(() => generateTimeOptions(15), []);
   const isAllDay = form.watch("isAllDay");
@@ -152,6 +251,20 @@ export default function CreateEventStepsRenderer({ sections, form }) {
                 ].includes(field.name);
                 
                 const containerClass = `flex flex-col gap-2 ${isFullWidth ? "md:col-span-2" : ""}`;
+
+                // 🚀 CALLING THE NEW CREATABLE COMPONENT
+                if (field.type === "creatable-select") {
+                  return (
+                    <div key={field.name} className={containerClass}>
+                      <Label>{field.label}</Label>
+                      <CreatableSelect 
+                        field={field} 
+                        value={form.watch(field.name)} 
+                        onChange={(val) => form.setValue(field.name, val, { shouldDirty: true, shouldValidate: true })} 
+                      />
+                    </div>
+                  );
+                }
 
                 if (field.name === "startTime" || field.name === "endTime") {
                   return (
