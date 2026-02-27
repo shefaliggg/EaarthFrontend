@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "../../../../../shared/components/ui/button";
 import useChatStore from "../../store/chat.store";
+import useCallStore from "../../store/call.store";
 
 export default function ChatHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -22,6 +23,7 @@ export default function ChatHeader() {
   const [activeResultIndex, setActiveResultIndex] = useState(0);
 
   const { selectedChat, getGroupOnlineCount, onlineUsers } = useChatStore();
+  const { initiateCall } = useCallStore();
 
   const isOnline = selectedChat?.userId && onlineUsers.has(selectedChat.userId);
 
@@ -92,20 +94,18 @@ export default function ChatHeader() {
             </Button> */}
 
             <Button
-              // onClick={() => setIsSearchOpen(true)}
               variant={"ghost"}
               size={"icon"}
               aria-label="Start Voice Call"
-              disabled
+              onClick={() => initiateCall(selectedChat.id, "AUDIO")}
             >
               <Phone className="w-4 h-4" />
             </Button>
             <Button
-              // onClick={() => setIsSearchOpen(true)}
               variant={"ghost"}
               size={"icon"}
               aria-label="Start Video Call"
-              disabled
+              onClick={() => initiateCall(selectedChat.id, "VIDEO")}
             >
               <Video className="w-4 h-4" />
             </Button>

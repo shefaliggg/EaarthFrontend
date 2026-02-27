@@ -1,8 +1,9 @@
+import { toast } from "sonner";
 import { axiosConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
   // Get conversations for a project
-  getConversations: async (projectId,search, type) => {
+  getConversations: async (projectId, search, type) => {
     try {
       console.log("📡 API: Fetching conversations", { projectId, type });
 
@@ -274,6 +275,93 @@ const chatApi = {
     } catch (error) {
       console.error(
         "❌ createDirectConversation failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
+  // Initiate call
+  initiateCall: async (conversationId, callType) => {
+    try {
+      console.log("📡 API: Intiating Call", {
+        conversationId,
+        callType,
+      });
+
+      const response = await axiosConfig.post(
+        `/chats/${conversationId}/call/initiate`,
+        { callType },
+      );
+
+      console.log("✅ API: Call Initiated:", response.data);
+      return response.data.data;
+    } catch (error) {
+      toast.error("Failed to Initiate the Call.")
+      console.error(
+        "❌ Initiate Call failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
+  joinCall: async (conversationId) => {
+    try {
+      console.log("📡 API: join Call", {
+        conversationId,
+      });
+
+      const response = await axiosConfig.post(
+        `/chats/${conversationId}/call/join`,
+      );
+
+      console.log("✅ API: Call Joined:", response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ join Call failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
+  leaveCall: async (conversationId) => {
+    try {
+      console.log("📡 API: Leave Call", {
+        conversationId,
+      });
+
+      const response = await axiosConfig.post(
+        `/chats/${conversationId}/call/leave`,
+      );
+
+      console.log("✅ API: leave Call:", response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ leave Call failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+  endCall: async (conversationId) => {
+    try {
+      console.log("📡 API: Leave Call", {
+        conversationId,
+      });
+
+      const response = await axiosConfig.post(
+        `/chats/${conversationId}/call/end`,
+      );
+
+      console.log("✅ API: end Call:", response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ end Call failed:",
         error.response?.data || error.message,
       );
       throw error;

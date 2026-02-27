@@ -10,6 +10,7 @@ import {
   transformMessage,
 } from "../utils/messageHelpers";
 import { toast } from "sonner";
+import useCallStore from "./call.store";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -196,7 +197,9 @@ const useChatStore = create(
           set({ onlineUsers: onlineSet });
         });
 
-        console.log("✅ Chat socket listeners attached");
+        useCallStore.getState().attachCallSocketListeners();
+
+        console.log("✅ Chat + Call socket listeners attached");
       },
 
       getGroupOnlineCount: (group) => {

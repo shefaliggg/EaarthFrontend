@@ -24,6 +24,8 @@ import {
   Mic,
   Edit2,
   Pin,
+  Video,
+  Phone,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -338,6 +340,51 @@ export default function MessageBubble({
                   </p>
                 )}
 
+                {message.type === "call" &&
+                  (() => {
+                    const { callInfo } = message._raw?.content || {};
+
+                    const duration = callInfo?.duration || 0;
+                    const mins = Math.floor(duration / 60);
+                    const secs = duration % 60;
+
+                    const isVideo = callInfo?.type === "VIDEO";
+
+                    return (
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-md text-sm min-w-[220px]",
+                          isOwn
+                            ? "bg-primary-foreground/10 text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "flex items-center justify-center w-7 h-7 rounded-full",
+                            "bg-purple-50/20",
+                          )}
+                        >
+                          {isVideo ? (
+                            <Video className="w-4 h-4" />
+                          ) : (
+                            <Phone className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs font-medium">
+                            {isVideo ? "Video call" : "Audio call"}
+                          </span>
+
+                          <span className="text-[11px] opacity-70">
+                            {duration ? `${mins}m ${secs}s` : "Missed call"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                 {attachments.length > 0 && (
                   <div className={cn(attachmentLayoutClass, "gap-1.5")}>
                     {attachments.map((file, index) => {
@@ -413,9 +460,7 @@ export default function MessageBubble({
                         (edited)
                       </span>
                     )}
-                    {isFavorited && (
-                      <Star fill="yellow" className="w-3 h-3"/>
-                    )}
+                    {isFavorited && <Star fill="yellow" className="w-3 h-3" />}
                     <span className="text-[10px] text-primary-foreground/70">
                       {message.time}
                     </span>

@@ -1,6 +1,8 @@
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import AppRoutes from '@/routes/AppRoutes';
-import { Toaster } from '@/shared/components/ui/sonner';
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import AppRoutes from "@/routes/AppRoutes";
+import { Toaster } from "@/shared/components/ui/sonner";
+import CallModal from "./features/projects/project-chat/components/CallModal/CallModal";
+import IncomingCallToast from "./features/projects/project-chat/components/CallModal/IncomingCallToast";
 
 const router = createBrowserRouter(AppRoutes);
 
@@ -20,20 +22,10 @@ function App() {
           },
         }}
       />
+      <CallModal />
+      <IncomingCallToast />
     </>
   );
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
