@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import MyOffer from '../../crew/pages/Myoffer';
-import ViewOffer from '../../crew/pages/ViewOffers';
+// import ViewOffer from '../../crew/pages/ViewOffers';
 
 import Contracts from '../../crew/pages/Contracts';
 import ContractDocument from '../../crew/pages/ContractDocument';
@@ -55,21 +55,21 @@ const ProjectAppsRoutes = {
         // { path: 'locations', element: <ProjectAppLocations /> },
         // { path: 'approval', element: <ProjectAppApproval /> },
          { path: 'offers', element: <MyOffer /> },
-        { path: 'offers/:id/view', element: <ViewOffer /> },
+        // { path: 'offers/:id/view', element: <ViewOffer /> },
         { path: 'offers/create', element: <CreateOffer /> },
         { path: 'create/offers', element: <CreateOfferDialog /> },
         { path: 'offers/create/bulk', element: <BulkOfferCreate /> },
         // { path: 'offers/:id/review', element: <ViewOffer /> },
         { path: 'offers/:id/sign', element: <ContractDocument /> },
-        { path: 'offers/:id/production-check', element: <ViewOffer /> },
-        { path: 'offers/:id/accounts-check', element: <ViewOffer /> },
+        // { path: 'offers/:id/production-check', element: <ViewOffer /> },
+        // { path: 'offers/:id/accounts-check', element: <ViewOffer /> },
         
         { path: 'offers/:id/review', element: <CrewReview /> },
         { path: 'offers/:id/production-check', element: <CrewReview /> },
         { path: 'offers/:id/accounts-check', element: <CrewReview /> },
         
         // Legacy routes (keep for backwards compatibility)
-        { path: 'viewoffers', element: <ViewOffer /> },
+        // { path: 'viewoffers', element: <ViewOffer /> },
   
         { path: 'contracts', element: <Contracts /> },
         { path: 'contractdoc', element: <ContractDocument /> }, 
