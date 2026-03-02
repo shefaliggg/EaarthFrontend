@@ -132,7 +132,7 @@ export default function OfferStatusProgress({
 
   return (
     <div className="  transition-colors duration-400">
-      <div className="container mx-auto">
+      <div className="">
         <div className=" bg-background rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 transition-colors duration-400">
           {/* Header Row */}
           <div className="flex items-center justify-between mb-6">

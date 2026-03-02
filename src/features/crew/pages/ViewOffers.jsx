@@ -1,516 +1,848 @@
-// /**
-//  * ViewOffer.jsx
-//  *
-//  * Fully connected to real backend via Redux + offer.slice.
-//  *
-//  * - Loads offer from backend on mount (via getOfferThunk)
-//  * - Marks offer as viewed automatically when CREW opens a SENT_TO_CREW offer
-//  * - Renders role-specific action buttons based on viewRole from Redux
-//  * - Shows change requests panel when offer is in NEEDS_REVISION
-//  *
-//  * Place at: src/features/crew/pages/ViewOffer.jsx
-//  */
+/**
+ * ViewOffer.jsx
+ *
+ * Layout:
+ *   Top bar  → Back + Offer code + Refresh + ROLE SWITCHER
+ *   Progress → OfferStatusProgress bar
+ *   Body     → [3fr contract preview] [1fr action panel]
+ *
+ * Role switcher shows pill tabs:
+ *   PRODUCTION_ADMIN · CREW · ACCOUNTS · UPM · FC · STUDIO
+ *
+ * Action panel changes completely based on active role + offer status.
+ */
 
-// import { useEffect, useState } from "react";
-// import { useParams, useNavigate } from "react-router-dom";
-// import { useDispatch, useSelector } from "react-redux";
-// import { toast } from "sonner";
-// import { Button } from "../../../shared/components/ui/button";
-// import { Card, CardContent } from "../../../shared/components/ui/card";
-// import { Badge } from "../../../shared/components/ui/badge";
-// import { ArrowLeft, Download, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 
-// // Store
-// import {
-//   getOfferThunk,
-//   markViewedThunk,
-//   getChangeRequestsThunk,
-//   resolveChangeRequestThunk,
-//   selectCurrentOffer,
-//   selectOfferLoading,
-//   selectChangeRequests,
-//   selectSubmitting,
-//   selectOfferError,
-//   clearOfferError,
-//   clearCurrentOffer,
-// } from "../store/offer.slice";
-// import { selectViewRole, setViewRole } from "../store/viewrole.slice";
+import {
+  ArrowLeft, CheckCircle, XCircle, MessageSquare,
+  Loader2, AlertTriangle, Send, ClipboardCheck,
+  Calculator, PenLine, RefreshCw, Trash2, Eye,
+  Users, ShieldCheck, Landmark, Film, User,
+} from "lucide-react";
 
-// // Sub-components
-// import OfferStatusProgress from "../components/viewoffer/OfferStatusProgress";
-// import OfferDocuments from "../components/viewoffer/OfferDocuments";
-// import OfferDetailsCards from "../components/viewoffer/OfferDetailsCards";
-// import OfferCompensation from "../components/viewoffer/OfferCompensation";
+import { Card, CardContent } from "../../../shared/components/ui/card";
+import { Button }            from "../../../shared/components/ui/button";
+import { Badge }             from "../../../shared/components/ui/badge";
 
-// // Role actions
-// import ProductionAdminActions from "../components/roleActions/ProductionAdminActions/createoffer/ProductionadminActions";
-// import CrewActions from "../components/roleActions/CrewActions/CrewActions";
-// import AccountsAdminActions from "../components/roleActions/AccountsAdminActions/AccountsAdminActions";
-// import UpmActions from "../components/roleActions/UpmActions/UpmActions";
-// import FcActions from "../components/roleActions/FcActions.jsx/FcActions";
-// import StudioActions from "../components/roleActions/StudioActions/StudioActions";
+import {
+  getOfferThunk,
+  sendToCrewThunk,
+  markViewedThunk,
+  crewAcceptThunk,
+  crewRequestChangesThunk,
+  cancelOfferThunk,
+  moveToProductionCheckThunk,
+  moveToAccountsCheckThunk,
+  moveToPendingCrewSignatureThunk,
+  selectCurrentOffer,
+  selectOfferLoading,
+  selectSubmitting,
+  selectOfferError,
+  clearOfferError,
+} from "../store/offer.slice";
 
-// // ─── Available demo roles ──────────────────────────────────────────────────────
+import { selectViewRole, setViewRole } from "../store/viewrole.slice";
 
-// const DEMO_ROLES = [
-//   { value: "PRODUCTION_ADMIN", label: "Production Admin" },
-//   { value: "CREW",             label: "Crew" },
-//   { value: "ACCOUNTS_ADMIN",   label: "Accounts Admin" },
-//   { value: "UPM",              label: "UPM" },
-//   { value: "FC",               label: "FC" },
-//   { value: "STUDIO",           label: "Studio" },
-//   { value: "SUPER_ADMIN",      label: "Super Admin" },
-// ];
+import OfferStatusProgress   from "../components/viewoffer/OfferStatusProgress";
+import { CreateOfferLayout } from "../components/roleActions/ProductionAdminActions/createoffer/CreateOfferLayout";
+import OfferActionDialog     from "../components/onboarding/OfferActionDialog";
+import { calculateRates, defaultEngineSettings } from "../utils/rateCalculations";
+import { defaultAllowances } from "../utils/Defaultallowance";
 
-// // ─── Role action renderer ──────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// function RoleActions({ offer, viewRole, onEdit }) {
-//   switch (viewRole) {
-//     case "PRODUCTION_ADMIN":
-//     case "SUPER_ADMIN":
-//       return <ProductionAdminActions offer={offer} onEdit={onEdit} />;
-//     case "CREW":
-//       return <CrewActions offer={offer} />;
-//     case "ACCOUNTS_ADMIN":
-//       return <AccountsAdminActions offer={offer} />;
-//     case "UPM":
-//       return <UpmActions offer={offer} />;
-//     case "FC":
-//       return <FcActions offer={offer} />;
-//     case "STUDIO":
-//       return <StudioActions offer={offer} />;
-//     default:
-//       return null;
-//   }
-// }
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
 
-// // ─── Change requests panel ────────────────────────────────────────────────────
+const fmtMoney = (n, currency = "GBP") => {
+  const num = parseFloat(n);
+  if (!num) return null;
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency, minimumFractionDigits: 0 }).format(num);
+};
 
-// function ChangeRequestsPanel({ offerId, changeRequests, viewRole }) {
-//   const dispatch = useDispatch();
-//   const isSubmitting = useSelector(selectSubmitting);
-//   const [resolveForm, setResolveForm] = useState({ id: null, notes: "" });
+const STATUS_CONFIG = {
+  DRAFT:                    { label: "Draft",              color: "bg-gray-100 text-gray-600",       dot: "bg-gray-400"    },
+  SENT_TO_CREW:             { label: "Sent to Crew",       color: "bg-amber-100 text-amber-700",     dot: "bg-amber-500"   },
+  NEEDS_REVISION:           { label: "Needs Revision",     color: "bg-orange-100 text-orange-700",   dot: "bg-orange-500"  },
+  CREW_ACCEPTED:            { label: "Crew Accepted",      color: "bg-blue-100 text-blue-700",       dot: "bg-blue-500"    },
+  PRODUCTION_CHECK:         { label: "Production Check",   color: "bg-violet-100 text-violet-700",   dot: "bg-violet-500"  },
+  ACCOUNTS_CHECK:           { label: "Accounts Check",     color: "bg-indigo-100 text-indigo-700",   dot: "bg-indigo-500"  },
+  PENDING_CREW_SIGNATURE:   { label: "Crew Signature",     color: "bg-purple-100 text-purple-700",   dot: "bg-purple-500"  },
+  PENDING_UPM_SIGNATURE:    { label: "UPM Signing",        color: "bg-purple-100 text-purple-700",   dot: "bg-purple-500"  },
+  PENDING_FC_SIGNATURE:     { label: "FC Signing",         color: "bg-purple-100 text-purple-700",   dot: "bg-purple-500"  },
+  PENDING_STUDIO_SIGNATURE: { label: "Studio Signing",     color: "bg-purple-100 text-purple-700",   dot: "bg-purple-500"  },
+  COMPLETED:                { label: "Completed",          color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
+  CANCELLED:                { label: "Cancelled",          color: "bg-red-100 text-red-700",         dot: "bg-red-500"     },
+};
 
-//   const handleResolve = async (changeRequestId, status) => {
-//     const result = await dispatch(
-//       resolveChangeRequestThunk({
-//         offerId,
-//         changeRequestId,
-//         status,
-//         notes: resolveForm.id === changeRequestId ? resolveForm.notes : "",
-//       })
-//     );
-//     if (resolveChangeRequestThunk.fulfilled.match(result)) {
-//       toast.success(`Change request ${status.toLowerCase()}`);
-//       setResolveForm({ id: null, notes: "" });
-//     } else {
-//       toast.error("Failed to resolve change request");
-//     }
-//   };
+// ─── Role switcher config ─────────────────────────────────────────────────────
 
-//   if (!changeRequests?.length) return null;
+const ROLES = [
+  { key: "PRODUCTION_ADMIN", label: "Production",  Icon: Film       },
+  { key: "CREW",             label: "Crew",         Icon: User       },
+  { key: "ACCOUNTS_ADMIN",   label: "Accounts",     Icon: Calculator },
+  { key: "UPM",              label: "UPM",          Icon: ShieldCheck},
+  { key: "FC",               label: "FC",           Icon: Landmark   },
+  { key: "STUDIO",           label: "Studio",       Icon: Eye        },
+];
 
-//   return (
-//     <Card className="border border-amber-200 bg-amber-50/50 dark:border-amber-800/40 dark:bg-amber-900/10 shadow-sm">
-//       <div className="px-4 py-3 border-b border-amber-200 dark:border-amber-800/40 flex items-center gap-2">
-//         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-//         <h3 className="text-sm font-bold text-amber-800 dark:text-amber-300">
-//           Change Requests ({changeRequests.length})
-//         </h3>
-//       </div>
-//       <CardContent className="p-4 space-y-3">
-//         {changeRequests.map((cr) => (
-//           <div key={cr._id} className="bg-white dark:bg-gray-900 rounded-lg border p-3 space-y-2">
-//             <div className="flex items-start justify-between gap-2">
-//               <div className="flex-1">
-//                 <div className="flex items-center gap-2 mb-1">
-//                   <Badge
-//                     variant="secondary"
-//                     className={
-//                       cr.status === "PENDING"
-//                         ? "bg-amber-100 text-amber-700 text-[10px]"
-//                         : cr.status === "APPROVED"
-//                         ? "bg-emerald-100 text-emerald-700 text-[10px]"
-//                         : "bg-red-100 text-red-700 text-[10px]"
-//                     }
-//                   >
-//                     {cr.status}
-//                   </Badge>
-//                   {cr.fieldName && (
-//                     <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-//                       {cr.fieldName}
-//                     </span>
-//                   )}
-//                 </div>
-//                 <p className="text-xs text-foreground">{cr.reason}</p>
-//                 {cr.currentValue && cr.requestedValue && (
-//                   <p className="text-[10px] text-muted-foreground mt-1">
-//                     {cr.currentValue} → <span className="font-semibold text-primary">{cr.requestedValue}</span>
-//                   </p>
-//                 )}
-//               </div>
-//             </div>
+// ─── Role Switcher Panel ──────────────────────────────────────────────────────
 
-//             {/* Resolve controls — only PRODUCTION_ADMIN sees these */}
-//             {cr.status === "PENDING" && (viewRole === "PRODUCTION_ADMIN" || viewRole === "SUPER_ADMIN") && (
-//               <div className="pt-2 border-t space-y-2">
-//                 {resolveForm.id === cr._id && (
-//                   <textarea
-//                     value={resolveForm.notes}
-//                     onChange={(e) => setResolveForm((p) => ({ ...p, notes: e.target.value }))}
-//                     placeholder="Resolution notes (optional)..."
-//                     className="w-full border rounded px-2 py-1.5 text-xs min-h-[50px] resize-none"
-//                   />
-//                 )}
-//                 <div className="flex gap-2">
-//                   {resolveForm.id !== cr._id && (
-//                     <button
-//                       onClick={() => setResolveForm({ id: cr._id, notes: "" })}
-//                       className="text-[10px] text-muted-foreground underline"
-//                     >
-//                       Add notes
-//                     </button>
-//                   )}
-//                   <Button
-//                     size="sm"
-//                     onClick={() => handleResolve(cr._id, "APPROVED")}
-//                     disabled={isSubmitting}
-//                     className="h-6 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white ml-auto"
-//                   >
-//                     Approve
-//                   </Button>
-//                   <Button
-//                     size="sm"
-//                     variant="outline"
-//                     onClick={() => handleResolve(cr._id, "REJECTED")}
-//                     disabled={isSubmitting}
-//                     className="h-6 px-3 text-[10px] text-destructive border-destructive/40 hover:bg-destructive/10"
-//                   >
-//                     Reject
-//                   </Button>
-//                 </div>
-//               </div>
-//             )}
-//           </div>
-//         ))}
-//       </CardContent>
-//     </Card>
-//   );
-// }
+function RoleSwitcher({ viewRole, onChange }) {
+  return (
+    <div className="flex items-center gap-1.5 bg-muted/60 border border-border rounded-xl px-2 py-1.5">
+      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mr-1 whitespace-nowrap">
+        View as
+      </span>
+      {ROLES.map(({ key, label, Icon }) => {
+        const active = viewRole === key;
+        return (
+          <button
+            key={key}
+            onClick={() => onChange(key)}
+            className={`
+              flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold
+              transition-all duration-150 whitespace-nowrap
+              ${active
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm"
+              }
+            `}
+          >
+            <Icon className="w-3 h-3" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-// // ─── Main ViewOffer component ─────────────────────────────────────────────────
+// ─── Data mappers ─────────────────────────────────────────────────────────────
 
-// export default function ViewOffer() {
-// const params = useParams();
-// const offerId = params.offerId || params.id;// route: /offers/:offerId  (or adjust to your router)
-//   const navigate = useNavigate();
-//   const dispatch = useDispatch();
+function offerToContractData(offer) {
+  if (!offer) return {};
+  return {
+    fullName:                       offer.recipient?.fullName        || "",
+    email:                          offer.recipient?.email           || "",
+    mobileNumber:                   offer.recipient?.mobileNumber    || "",
+    isViaAgent:                     offer.representation?.isViaAgent || false,
+    agentEmail:                     offer.representation?.agentEmail || "",
+    agentName:                      offer.representation?.agentName  || "",
+    alternativeContract:            offer.alternativeContract        || "",
+    unit:                           offer.unit                       || "",
+    department:                     offer.department                 || "",
+    subDepartment:                  offer.subDepartment              || "",
+    jobTitle:                       offer.jobTitle                   || "",
+    newJobTitle:                    offer.newJobTitle                || "",
+    createOwnJobTitle:              offer.createOwnJobTitle          || false,
+    jobTitleSuffix:                 offer.jobTitleSuffix             || "",
+    allowSelfEmployed:              offer.taxStatus?.allowSelfEmployed              || "",
+    statusDeterminationReason:      offer.taxStatus?.statusDeterminationReason      || "",
+    otherStatusDeterminationReason: offer.taxStatus?.otherStatusDeterminationReason || "",
+    regularSiteOfWork:              offer.regularSiteOfWork || "",
+    workingInUK:                    offer.workingInUK       || "yes",
+    startDate:                      offer.startDate         || "",
+    endDate:                        offer.endDate           || "",
+    dailyOrWeekly:                  offer.dailyOrWeekly     || "daily",
+    engagementType:                 offer.engagementType    || "paye",
+    workingWeek:                    offer.workingWeek       || "5",
+    currency:                       offer.currency          || "GBP",
+    feePerDay:                      offer.feePerDay         || "",
+    overtime:                       offer.overtime          || "calculated",
+    otherOT:      offer.otherOT      || "",
+    cameraOTSWD:  offer.cameraOTSWD  || "",
+    cameraOTSCWD: offer.cameraOTSCWD || "",
+    cameraOTCWD:  offer.cameraOTCWD  || "",
+    otherDealProvisions: offer.notes?.otherDealProvisions || "",
+    additionalNotes:     offer.notes?.additionalNotes     || "",
+  };
+}
 
-//   const offer         = useSelector(selectCurrentOffer);
-//   const isLoading     = useSelector(selectOfferLoading);
-//   const error         = useSelector(selectOfferError);
-//   const changeRequests = useSelector(selectChangeRequests);
-//   const viewRole      = useSelector(selectViewRole);
+function offerToAllowances(offer) {
+  if (!offer?.allowances?.length) return defaultAllowances;
+  const result = { ...defaultAllowances };
+  offer.allowances.forEach((a) => {
+    if (a.key && result[a.key] !== undefined) result[a.key] = { ...result[a.key], ...a };
+  });
+  return result;
+}
 
-//   // Edit mode state (local — no server call until save)
-//   const [isEditMode, setIsEditMode]     = useState(false);
-//   const [editedOffer, setEditedOffer]   = useState(null);
+// ─── Offer summary card (shared across all panels) ───────────────────────────
 
-//   // ── Load offer on mount ───────────────────────────────────────────────────
+function OfferSummaryCard({ offer }) {
+  const status  = offer?.status;
+  const cfg     = STATUS_CONFIG[status] || { label: status, color: "bg-gray-100 text-gray-600", dot: "bg-gray-400" };
+  const jobTitle= offer?.createOwnJobTitle && offer?.newJobTitle ? offer.newJobTitle : offer?.jobTitle || "—";
+  const dept    = offer?.department?.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "";
+  const rate    = offer?.feePerDay;
+  const currency= offer?.currency || "GBP";
+  const rateType= offer?.dailyOrWeekly || "daily";
+  const engType = { loan_out:"Loan Out", paye:"PAYE", schd:"SCHD", long_form:"Long Form" }[offer?.engagementType] || "";
 
-//   useEffect(() => {
-//     if (!offerId) return;
-//     dispatch(clearOfferError());
-//     dispatch(getOfferThunk(offerId));
-//   }, [offerId, dispatch]);
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold">Offer Summary</h3>
+          <Badge className={`text-[10px] font-medium px-2 py-0.5 border-0 gap-1.5 ${cfg.color}`}>
+            <span className={`w-1.5 h-1.5 rounded-full inline-block ${cfg.dot}`} />
+            {cfg.label}
+          </Badge>
+        </div>
+        {offer?.offerCode && (
+          <p className="text-[10px] font-mono text-muted-foreground mb-2">{offer.offerCode}</p>
+        )}
+        <div className="space-y-1.5 text-xs text-muted-foreground border-t pt-3">
+          {[
+            { label: "Recipient",   value: offer?.recipient?.fullName },
+            { label: "Role",        value: jobTitle },
+            dept     && { label: "Department", value: dept },
+            rate     && { label: "Rate",       value: `${fmtMoney(rate, currency)} / ${rateType}` },
+            engType  && { label: "Engagement", value: engType },
+            offer?.startDate && { label: "Start",  value: fmtDate(offer.startDate) },
+            offer?.endDate   && { label: "End",    value: fmtDate(offer.endDate) },
+          ].filter(Boolean).map(({ label, value }) => (
+            <div key={label} className="flex justify-between gap-2">
+              <span>{label}</span>
+              <span className="font-medium text-foreground truncate max-w-[150px] text-right">{value || "—"}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-//   // ── Auto-mark viewed when CREW opens a SENT_TO_CREW offer ─────────────────
+// ─── Timeline card (shared) ───────────────────────────────────────────────────
 
-//   useEffect(() => {
-//     if (!offer) return;
-//     if (viewRole === "CREW" && offer.status === "SENT_TO_CREW" && !offer.timeline?.crewViewedAt) {
-//       dispatch(markViewedThunk(offer._id));
-//     }
-//   }, [offer, viewRole, dispatch]);
+function TimelineCard({ offer }) {
+  const tl = offer?.timeline || {};
+  const entries = [
+    { label: "Created",          date: offer?.createdAt },
+    { label: "Sent to Crew",     date: tl.sentToCrewAt },
+    { label: "Crew Viewed",      date: tl.crewViewedAt },
+    { label: "Crew Accepted",    date: tl.crewAcceptedAt },
+    { label: "Production Check", date: tl.productionCheckCompletedAt },
+    { label: "Accounts Check",   date: tl.accountsCheckCompletedAt },
+    { label: "Pending Signature",date: tl.pendingCrewSignatureAt },
+    { label: "Crew Signed",      date: tl.crewSignedAt },
+    { label: "UPM Signed",       date: tl.upmSignedAt },
+    { label: "FC Signed",        date: tl.fcSignedAt },
+    { label: "Studio Signed",    date: tl.studioSignedAt },
+    { label: "Completed",        date: tl.completedAt },
+    { label: "Cancelled",        date: tl.cancelledAt },
+  ].filter(e => e.date);
 
-//   // ── Load change requests when offer enters NEEDS_REVISION ─────────────────
+  if (!entries.length) return null;
 
-//   useEffect(() => {
-//     if (offer?.status === "NEEDS_REVISION" || offer?.status === "CREW_ACCEPTED") {
-//       dispatch(getChangeRequestsThunk(offer._id));
-//     }
-//   }, [offer?.status, offer?._id, dispatch]);
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <h3 className="text-sm font-semibold mb-3">Timeline</h3>
+        <div className="space-y-1.5 text-xs">
+          {entries.map((e, i) => (
+            <div key={i} className="flex justify-between gap-2">
+              <span className="text-muted-foreground">{e.label}</span>
+              <span className="font-medium text-right">{fmtDate(e.date)}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-//   // ── Cleanup on unmount ────────────────────────────────────────────────────
+// ─── Role-specific action panels ─────────────────────────────────────────────
 
-//   useEffect(() => () => { dispatch(clearCurrentOffer()); }, [dispatch]);
+function ActionButton({ onClick, disabled, className = "", icon: Icon, label, variant = "default" }) {
+  return (
+    <Button
+      variant={variant}
+      className={`w-full gap-2 justify-start h-10 ${className}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
+      {label}
+    </Button>
+  );
+}
 
-//   // ── Edit handlers ─────────────────────────────────────────────────────────
+// — Production Admin panel —
+function ProductionAdminPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
 
-//   const handleEdit = () => {
-//     setEditedOffer(JSON.parse(JSON.stringify(offer)));
-//     setIsEditMode(true);
-//   };
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+          <h3 className="text-sm font-semibold">Production Actions</h3>
+        </div>
 
-//   const handleCancelEdit = () => {
-//     setEditedOffer(null);
-//     setIsEditMode(false);
-//   };
+        {(status === "DRAFT" || status === "NEEDS_REVISION") && (
+          <ActionButton
+            icon={Send} disabled={isSubmitting}
+            label={status === "NEEDS_REVISION" ? "Re-send to Crew" : "Send to Crew"}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => onAction("sendToCrew")}
+          />
+        )}
+        {status === "CREW_ACCEPTED" && (
+          <ActionButton
+            icon={ClipboardCheck} disabled={isSubmitting}
+            label="Move to Production Check"
+            className="bg-violet-600 hover:bg-violet-700 text-white"
+            onClick={() => onAction("productionCheck")}
+          />
+        )}
+        {status === "PRODUCTION_CHECK" && (
+          <ActionButton
+            icon={Calculator} disabled={isSubmitting}
+            label="Move to Accounts Check"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            onClick={() => onAction("accountsCheck")}
+          />
+        )}
+        {status === "ACCOUNTS_CHECK" && (
+          <ActionButton
+            icon={PenLine} disabled={isSubmitting}
+            label="Send for Crew Signature"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => onAction("pendingCrewSignature")}
+          />
+        )}
 
-//   // ── Role switcher ─────────────────────────────────────────────────────────
+        {/* Awaiting states — read-only info */}
+        {status === "SENT_TO_CREW" && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-start gap-2">
+            <Eye className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Offer sent. Awaiting crew response.</span>
+          </div>
+        )}
+        {["PENDING_CREW_SIGNATURE","PENDING_UPM_SIGNATURE","PENDING_FC_SIGNATURE","PENDING_STUDIO_SIGNATURE"].includes(status) && (
+          <div className="rounded-xl bg-purple-50 border border-purple-200 p-3 text-xs text-purple-800 flex items-start gap-2">
+            <PenLine className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Contract is in the signing workflow.</span>
+          </div>
+        )}
+        {status === "COMPLETED" && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Contract fully signed and completed.</span>
+          </div>
+        )}
+        {status === "CANCELLED" && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-800 flex items-start gap-2">
+            <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>This offer has been cancelled.</span>
+          </div>
+        )}
 
-//   const handleRoleChange = (newRole) => {
-//     dispatch(setViewRole(newRole));
-//     // Refetch with new role header
-//     if (offerId) dispatch(getOfferThunk(offerId));
-//   };
+        {/* Cancel — available on most active statuses */}
+        {["DRAFT","SENT_TO_CREW","NEEDS_REVISION","CREW_ACCEPTED","PRODUCTION_CHECK","ACCOUNTS_CHECK","PENDING_CREW_SIGNATURE"].includes(status) && (
+          <div className="pt-1 border-t mt-2">
+            <ActionButton
+              icon={Trash2} disabled={isSubmitting} variant="outline"
+              label="Cancel Offer"
+              className="text-destructive border-destructive/30 hover:bg-destructive/5"
+              onClick={() => onAction("cancel")}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//   // ── Download (placeholder) ────────────────────────────────────────────────
+// — Crew panel —
+function CrewPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
 
-//   const handleDownload = (docId) => {
-//     toast.info(`Downloading ${docId}...`);
-//   };
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+          <h3 className="text-sm font-semibold">Your Response</h3>
+        </div>
 
-//   // ─────────────────────────────────────────────────────────────────────────
-//   // Render states
-//   // ─────────────────────────────────────────────────────────────────────────
+        {(status === "SENT_TO_CREW" || status === "NEEDS_REVISION") && (
+          <>
+            <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 mb-3">
+              Please review the contract and either accept or request changes.
+            </div>
+            <ActionButton
+              icon={CheckCircle} disabled={isSubmitting}
+              label="Accept Offer"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => onAction("openAccept")}
+            />
+            <ActionButton
+              icon={MessageSquare} disabled={isSubmitting} variant="outline"
+              label="Request Changes"
+              className="border-red-300 text-red-700 hover:bg-red-50"
+              onClick={() => onAction("openRequestChanges")}
+            />
+          </>
+        )}
 
-//   if (isLoading) {
-//     return (
-//       <div className="min-h-[400px] flex items-center justify-center">
-//         <div className="text-center space-y-3">
-//           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-//           <p className="text-sm text-muted-foreground">Loading offer...</p>
-//         </div>
-//       </div>
-//     );
-//   }
+        {status === "CREW_ACCEPTED" && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>You accepted this offer. Production is reviewing.</span>
+          </div>
+        )}
+        {status === "PENDING_CREW_SIGNATURE" && (
+          <ActionButton
+            icon={PenLine} disabled={isSubmitting}
+            label="Sign Contract"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => onAction("crewSign")}
+          />
+        )}
+        {["PENDING_UPM_SIGNATURE","PENDING_FC_SIGNATURE","PENDING_STUDIO_SIGNATURE"].includes(status) && (
+          <div className="rounded-xl bg-purple-50 border border-purple-200 p-3 text-xs text-purple-800 flex items-start gap-2">
+            <PenLine className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>You've signed. Awaiting further approvals.</span>
+          </div>
+        )}
+        {status === "COMPLETED" && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Contract fully executed. Welcome to the production!</span>
+          </div>
+        )}
+        {status === "DRAFT" && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+            This offer hasn't been sent to you yet.
+          </div>
+        )}
+        {status === "CANCELLED" && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-800 flex items-start gap-2">
+            <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>This offer has been cancelled by production.</span>
+          </div>
+        )}
+        {["PRODUCTION_CHECK","ACCOUNTS_CHECK"].includes(status) && (
+          <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 flex items-start gap-2">
+            <ClipboardCheck className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>Your offer is being reviewed internally.</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//   if (error && !offer) {
-//     return (
-//       <div className="min-h-[400px] flex items-center justify-center">
-//         <div className="text-center space-y-3">
-//           <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
-//           <p className="text-sm text-destructive font-medium">{error.message || "Failed to load offer"}</p>
-//           <Button size="sm" variant="outline" onClick={() => dispatch(getOfferThunk(offerId))}>
-//             <RefreshCw className="w-3.5 h-3.5 mr-1" /> Retry
-//           </Button>
-//         </div>
-//       </div>
-//     );
-//   }
+// — Accounts panel —
+function AccountsPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+          <h3 className="text-sm font-semibold">Accounts Actions</h3>
+        </div>
+        {status === "ACCOUNTS_CHECK" && (
+          <>
+            <div className="rounded-xl bg-indigo-50 border border-indigo-200 p-3 text-xs text-indigo-800 mb-2">
+              Review the rates and budget codes, then approve to send for signatures.
+            </div>
+            <ActionButton
+              icon={PenLine} disabled={isSubmitting}
+              label="Approve & Send for Signature"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={() => onAction("pendingCrewSignature")}
+            />
+          </>
+        )}
+        {status !== "ACCOUNTS_CHECK" && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+            {status === "COMPLETED" ? "Contract completed." :
+             status === "CANCELLED" ? "Offer was cancelled." :
+             "No action required at this stage."}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//   if (!offer) return null;
+// — UPM panel —
+function UPMPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-violet-600" />
+          <h3 className="text-sm font-semibold">UPM Actions</h3>
+        </div>
+        {status === "PENDING_UPM_SIGNATURE" && (
+          <>
+            <div className="rounded-xl bg-violet-50 border border-violet-200 p-3 text-xs text-violet-800 mb-2">
+              Crew has signed. Your signature is required.
+            </div>
+            <ActionButton
+              icon={PenLine} disabled={isSubmitting}
+              label="Sign Contract"
+              className="bg-violet-600 hover:bg-violet-700 text-white"
+              onClick={() => onAction("upmSign")}
+            />
+          </>
+        )}
+        {status !== "PENDING_UPM_SIGNATURE" && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+            {status === "COMPLETED" ? "Contract completed." :
+             status === "CANCELLED" ? "Offer was cancelled." :
+             "No action required at this stage."}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//   const displayOffer  = editedOffer || offer;
-//   const primaryRole   = displayOffer.roles?.find((r) => r.isPrimary) || displayOffer.roles?.[0] || {};
+// — FC panel —
+function FCPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-pink-600" />
+          <h3 className="text-sm font-semibold">Finance Controller</h3>
+        </div>
+        {status === "PENDING_FC_SIGNATURE" && (
+          <>
+            <div className="rounded-xl bg-pink-50 border border-pink-200 p-3 text-xs text-pink-800 mb-2">
+              UPM has signed. Your sign-off is required.
+            </div>
+            <ActionButton
+              icon={PenLine} disabled={isSubmitting}
+              label="Sign Contract"
+              className="bg-pink-600 hover:bg-pink-700 text-white"
+              onClick={() => onAction("fcSign")}
+            />
+          </>
+        )}
+        {status !== "PENDING_FC_SIGNATURE" && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+            {status === "COMPLETED" ? "Contract completed." :
+             status === "CANCELLED" ? "Offer was cancelled." :
+             "No action required at this stage."}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//   return (
-//     <div>
-//       <div className="container mx-auto p-6 space-y-4">
+// — Studio panel —
+function StudioPanel({ offer, onAction, isSubmitting }) {
+  const status = offer?.status;
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+          <h3 className="text-sm font-semibold">Studio Actions</h3>
+        </div>
+        {status === "PENDING_STUDIO_SIGNATURE" && (
+          <>
+            <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 mb-2">
+              Final studio signature required to complete the contract.
+            </div>
+            <ActionButton
+              icon={PenLine} disabled={isSubmitting}
+              label="Final Sign-off"
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+              onClick={() => onAction("studioSign")}
+            />
+          </>
+        )}
+        {status !== "PENDING_STUDIO_SIGNATURE" && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
+            {status === "COMPLETED" ? "Contract completed." :
+             status === "CANCELLED" ? "Offer was cancelled." :
+             "No action required at this stage."}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-//         {/* ── Demo Role Switcher ── */}
-//         <Card className="border shadow-sm">
-//           <CardContent className="p-3">
-//             <div className="flex items-center gap-3">
-//               <div className="flex-1">
-//                 <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground block mb-1">
-//                   View As Role (Demo)
-//                 </label>
-//                 <select
-//                   value={viewRole}
-//                   onChange={(e) => handleRoleChange(e.target.value)}
-//                   disabled={isEditMode}
-//                   className="w-full border rounded-md px-2 py-1.5 text-sm"
-//                 >
-//                   {DEMO_ROLES.map((r) => (
-//                     <option key={r.value} value={r.value}>{r.label}</option>
-//                   ))}
-//                 </select>
-//               </div>
-//               <div className="flex-1">
-//                 <label className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground block mb-1">
-//                   Offer Status
-//                 </label>
-//                 <div className="flex items-center gap-2 h-8">
-//                   <Badge
-//                     variant="secondary"
-//                     className="text-xs font-bold"
-//                   >
-//                     {offer.status?.replace(/_/g, " ")}
-//                   </Badge>
-//                   {offer.offerCode && (
-//                     <span className="text-xs font-mono text-muted-foreground">{offer.offerCode}</span>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           </CardContent>
-//         </Card>
+// ─── Unified right panel ──────────────────────────────────────────────────────
 
-//         {/* ── Header ── */}
-//         <div className="flex items-start justify-between gap-4 flex-wrap">
-//           <div>
-//             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 className="h-7 px-2"
-//                 onClick={() => navigate(-1)}
-//               >
-//                 <ArrowLeft className="w-3 h-3 mr-1" /> Offers
-//               </Button>
-//             </div>
-//             <h1 className="text-2xl font-bold flex items-center gap-2 flex-wrap">
-//               {isEditMode && (
-//                 <Badge variant="secondary" className="text-xs">EDITING</Badge>
-//               )}
-//               {displayOffer.recipient?.fullName || displayOffer.fullName || "—"}
-//             </h1>
-//             <p className="text-sm text-muted-foreground mt-0.5">
-//               {primaryRole?.jobRoleId?.name || primaryRole?.customRoleName || primaryRole?.jobTitle || "—"}
-//               {(primaryRole?.jobDepartmentId?.name || primaryRole?.department) && (
-//                 <> • {primaryRole?.jobDepartmentId?.name || primaryRole?.department}</>
-//               )}
-//             </p>
-//           </div>
+function RightPanel({ offer, viewRole, onAction, isSubmitting }) {
+  return (
+    <div className="space-y-3">
+      <OfferSummaryCard offer={offer} />
 
-//           <div className="flex items-center gap-2 flex-wrap">
-//             {offer.status === "COMPLETED" && (
-//               <Button variant="outline" size="sm" className="gap-1.5">
-//                 <Download className="w-3.5 h-3.5" />
-//                 Download Contract
-//               </Button>
-//             )}
+      {viewRole === "PRODUCTION_ADMIN" || viewRole === "SUPER_ADMIN"
+        ? <ProductionAdminPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : viewRole === "CREW"
+        ? <CrewPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : viewRole === "ACCOUNTS_ADMIN"
+        ? <AccountsPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : viewRole === "UPM"
+        ? <UPMPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : viewRole === "FC"
+        ? <FCPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : viewRole === "STUDIO"
+        ? <StudioPanel offer={offer} onAction={onAction} isSubmitting={isSubmitting} />
+        : null
+      }
 
-//             {/* Role-based action buttons */}
-//             {!isEditMode && (
-//               <RoleActions
-//                 offer={offer}
-//                 viewRole={viewRole}
-//                 onEdit={handleEdit}
-//               />
-//             )}
+      <TimelineCard offer={offer} />
+    </div>
+  );
+}
 
-//             {/* Edit mode controls */}
-//             {isEditMode && (
-//               <div className="flex gap-2">
-//                 <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-//                   Cancel
-//                 </Button>
-//                 <Button
-//                   size="sm"
-//                   onClick={() => {
-//                     // TODO: dispatch updateOfferThunk when implemented
-//                     toast.info("Save offer edit — connect to your update endpoint");
-//                     setIsEditMode(false);
-//                   }}
-//                 >
-//                   Save Changes
-//                 </Button>
-//               </div>
-//             )}
-//           </div>
-//         </div>
+// ─── Main page ────────────────────────────────────────────────────────────────
 
-//         {/* ── Status Progress ── */}
-//         <OfferStatusProgress
-//           status={offer.status}
-//           sentToCrewAt={offer.timeline?.sentToCrewAt}
-//           updatedAt={offer.updatedAt}
-//           crewAcceptedAt={offer.timeline?.crewAcceptedAt}
-//           productionCheckCompletedAt={offer.timeline?.productionCheckCompletedAt}
-//           accountsCheckCompletedAt={offer.timeline?.accountsCheckCompletedAt}
-//           crewSignedAt={offer.timeline?.crewSignedAt}
-//           upmSignedAt={offer.timeline?.upmSignedAt}
-//           fcSignedAt={offer.timeline?.fcSignedAt}
-//           studioSignedAt={offer.timeline?.studioSignedAt}
-//         />
+export default function ViewOffer() {
+  const { id, projectName } = useParams();
+  const navigate     = useNavigate();
+  const dispatch     = useDispatch();
 
-//         {/* ── Change Requests (shown when relevant) ── */}
-//         {(offer.status === "NEEDS_REVISION" || changeRequests?.length > 0) && (
-//           <ChangeRequestsPanel
-//             offerId={offer._id}
-//             changeRequests={changeRequests}
-//             viewRole={viewRole}
-//           />
-//         )}
+  const offer        = useSelector(selectCurrentOffer);
+  const isLoading    = useSelector(selectOfferLoading);
+  const isSubmitting = useSelector(selectSubmitting);
+  const apiError     = useSelector(selectOfferError);
+  const viewRole     = useSelector(selectViewRole);
 
-//         {/* ── Documents ── */}
-//         <OfferDocuments
-//           documents={["passport", "right_to_work", "employment_contract", "tax_forms", "bank_details", "nda"]}
-//           onDownload={handleDownload}
-//         />
+  const [dialog, setDialog] = useState(null);
 
-//         {/* ── Offer Details ── */}
-//         <OfferDetailsCards
-//           offer={{
-//             // Normalize backend shape → component shape
-//             fullName:              displayOffer.recipient?.fullName  || displayOffer.fullName,
-//             email:                 displayOffer.recipient?.email     || displayOffer.email,
-//             mobileNumber:          displayOffer.recipient?.mobileNumber || displayOffer.mobileNumber,
-//             isViaAgent:            displayOffer.representation?.isViaAgent,
-//             agentName:             displayOffer.representation?.agentName,
-//             agentEmailAddress:     displayOffer.representation?.agentEmail,
-//             alternativeContractType: displayOffer.roles?.[0]?.alternativeContractType,
-//             allowAsSelfEmployedOrLoanOut: displayOffer.taxStatus?.allowsSelfEmployedOrLoanOut ? "YES" : "NO",
-//             statusDeterminationReason: displayOffer.taxStatus?.reason,
-//             otherStatusDeterminationReason: displayOffer.taxStatus?.otherReason,
-//             productionName:        displayOffer.productionName,
-//             productionType:        displayOffer.productionType,
-//             studioCompany:         displayOffer.studioCompany,
-//             shootDuration:         displayOffer.shootDuration,
-//             otherDealProvisions:   displayOffer.notes?.otherDealProvisions,
-//             additionalNotes:       displayOffer.notes?.additionalNotes,
-//           }}
-//           primaryRole={{
-//             // Normalize role shape
-//             unit:                    primaryRole?.unit,
-//             department:              primaryRole?.jobDepartmentId?.name || primaryRole?.customDepartmentName,
-//             subDepartment:           primaryRole?.subDepartment,
-//             jobTitle:                primaryRole?.jobRoleId?.name || primaryRole?.customRoleName,
-//             jobTitleSuffix:          primaryRole?.roleNameSuffix,
-//             regularSiteOfWork:       primaryRole?.regularSiteOfWork,
-//             engagementType:          primaryRole?.engagementType,
-//             startDate:               primaryRole?.startDate,
-//             endDate:                 primaryRole?.endDate,
-//             dailyOrWeeklyEngagement: primaryRole?.rateType,
-//             workingWeek:             primaryRole?.workingWeek,
-//             shiftHours:              primaryRole?.standardWorkingHour,
-//           }}
-//           isEditing={isEditMode}
-//           onUpdate={(updates) => setEditedOffer((prev) => ({ ...prev, ...updates }))}
-//         />
+  // ── Fetch ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (id) dispatch(getOfferThunk(id));
+  }, [id, dispatch]);
 
-//         {/* ── Compensation ── */}
-//         <OfferCompensation
-//           primaryRole={{
-//             contractRate:    primaryRole?.salary?.base?.amount,
-//             budgetCode:      primaryRole?.salary?.budgetCode,
-//             allowances: {
-//               boxRental:                    primaryRole?.allowances?.find(a => a.type === "BOX_RENTAL")?.enabled,
-//               boxRentalFeePerWeek:          primaryRole?.allowances?.find(a => a.type === "BOX_RENTAL")?.rate?.amount,
-//               boxRentalBudgetCode:          primaryRole?.allowances?.find(a => a.type === "BOX_RENTAL")?.budgetCode,
-//               computerAllowance:            primaryRole?.allowances?.find(a => a.type === "COMPUTER")?.enabled,
-//               computerAllowanceFeePerWeek:  primaryRole?.allowances?.find(a => a.type === "COMPUTER")?.rate?.amount,
-//               computerAllowanceBudgetCode:  primaryRole?.allowances?.find(a => a.type === "COMPUTER")?.budgetCode,
-//               vehicleAllowance:             primaryRole?.allowances?.find(a => a.type === "VEHICLE")?.enabled,
-//               vehicleAllowanceFeePerWeek:   primaryRole?.allowances?.find(a => a.type === "VEHICLE")?.rate?.amount,
-//               vehicleAllowanceBudgetCode:   primaryRole?.allowances?.find(a => a.type === "VEHICLE")?.budgetCode,
-//             },
-//             customOvertimeRates: {
-//               sixthDayHourlyRate:    primaryRole?.salary?.specialDays?.find(d => d.type === "SIXTH_DAY")?.amount,
-//               seventhDayHourlyRate:  primaryRole?.salary?.specialDays?.find(d => d.type === "SEVENTH_DAY")?.amount,
-//             },
-//           }}
-//           isEditing={isEditMode}
-//           onUpdate={(updates) => setEditedOffer((prev) => ({
-//             ...prev,
-//             roles: [{ ...(prev.roles?.[0] || {}), ...updates }],
-//           }))}
-//         />
+  // ── Mark viewed ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (offer?._id && viewRole === "CREW" && offer.status === "SENT_TO_CREW") {
+      dispatch(markViewedThunk(offer._id));
+    }
+  }, [offer?._id, viewRole, offer?.status, dispatch]);
 
-//       </div>
-//     </div>
-//   );
-// }
+  // ── Errors ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (apiError) {
+      const msg = apiError.errors?.length
+        ? apiError.errors.map(e => e.message).join(" · ")
+        : apiError.message || "Something went wrong";
+      toast.error(msg);
+      dispatch(clearOfferError());
+    }
+  }, [apiError, dispatch]);
+
+  // ── Derived data ─────────────────────────────────────────────────────────
+  const contractData    = useMemo(() => offerToContractData(offer), [offer]);
+  const allowances      = useMemo(() => offerToAllowances(offer),   [offer]);
+  const calculatedRates = useMemo(() => {
+    const fee = parseFloat(contractData.feePerDay) || 0;
+    return calculateRates(fee, defaultEngineSettings);
+  }, [contractData.feePerDay]);
+
+  const salaryBudgetCodes   = offer?.salaryBudgetCodes   || [];
+  const salaryTags          = offer?.salaryTags          || [];
+  const overtimeBudgetCodes = offer?.overtimeBudgetCodes || [];
+  const overtimeTags        = offer?.overtimeTags        || [];
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  const handleAction = async (action, payload = {}) => {
+    const offerId = offer?._id;
+    if (!offerId) return;
+
+    if (action === "openAccept")         { setDialog("acceptOffer");    return; }
+    if (action === "openRequestChanges") { setDialog("requestChanges"); return; }
+
+    toast.loading("Processing…", { id: "va" });
+    let result;
+    switch (action) {
+      case "sendToCrew":           result = await dispatch(sendToCrewThunk(offerId));                          break;
+      case "accept":               result = await dispatch(crewAcceptThunk(offerId));                         break;
+      case "requestChanges":       result = await dispatch(crewRequestChangesThunk({ offerId, ...payload })); break;
+      case "cancel":               result = await dispatch(cancelOfferThunk(offerId));                        break;
+      case "productionCheck":      result = await dispatch(moveToProductionCheckThunk(offerId));              break;
+      case "accountsCheck":        result = await dispatch(moveToAccountsCheckThunk(offerId));                break;
+      case "pendingCrewSignature": result = await dispatch(moveToPendingCrewSignatureThunk(offerId));         break;
+      // Signature actions — wire up thunks when ready
+      case "crewSign":
+      case "upmSign":
+      case "fcSign":
+      case "studioSign":
+        toast.dismiss("va");
+        toast.info("Signature flow coming soon");
+        return;
+      default:
+        toast.dismiss("va");
+        return;
+    }
+    toast.dismiss("va");
+    if (!result.error) {
+      const msgs = {
+        sendToCrew: "📤 Sent to crew!", accept: "✅ Offer accepted!",
+        requestChanges: "📝 Change request submitted!", cancel: "❌ Offer cancelled.",
+        productionCheck: "✅ Moved to Production Check",
+        accountsCheck: "✅ Moved to Accounts Check",
+        pendingCrewSignature: "✅ Sent for signature",
+      };
+      toast.success(msgs[action] || "Done");
+      dispatch(getOfferThunk(offerId));
+    }
+  };
+
+  const handleDialogConfirm = async (payload) => {
+    const action = dialog === "acceptOffer" ? "accept" : "requestChanges";
+    setDialog(null);
+    await handleAction(action, payload);
+  };
+
+  // ── Loading / error ───────────────────────────────────────────────────────
+  if (isLoading && !offer) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading offer…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!offer && !isLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
+          <p className="text-sm font-medium">Offer not found</p>
+          <Button size="sm" variant="outline" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const tl   = offer?.timeline || {};
+  const proj = projectName || "demo-project";
+
+  return (
+    <div className="min-h-screen">
+      <div className=" py-5 space-y-4">
+
+        {/* ── Top bar ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Button variant="ghost" size="sm"
+            onClick={() => navigate(`/projects/${proj}/offers`)}
+            className="gap-2 text-muted-foreground hover:text-foreground shrink-0">
+            <ArrowLeft className="w-4 h-4" /> Back to Offers
+          </Button>
+
+          {/* Role Switcher — centre */}
+          <RoleSwitcher
+            viewRole={viewRole}
+            onChange={(role) => dispatch(setViewRole(role))}
+          />
+
+          {/* Right: offer code + refresh */}
+          <div className="flex items-center gap-2 shrink-0">
+            {offer?.offerCode && (
+              <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">
+                {offer.offerCode}
+              </span>
+            )}
+            <Button size="sm" variant="outline"
+              onClick={() => dispatch(getOfferThunk(id))}
+              className="h-8 w-8 p-0" title="Refresh">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* ── Status Progress ── */}
+        <OfferStatusProgress
+          status={offer?.status}
+          sentToCrewAt={tl.sentToCrewAt}
+          updatedAt={offer?.updatedAt}
+          crewAcceptedAt={tl.crewAcceptedAt}
+          productionCheckCompletedAt={tl.productionCheckCompletedAt}
+          accountsCheckCompletedAt={tl.accountsCheckCompletedAt}
+          crewSignedAt={tl.crewSignedAt}
+          upmSignedAt={tl.upmSignedAt}
+          fcSignedAt={tl.fcSignedAt}
+          studioSignedAt={tl.studioSignedAt}
+        />
+
+        {/* ── Body ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 items-start">
+
+          {/* Left: contract preview */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <CreateOfferLayout
+                data={contractData}
+                offer={offer}
+                activeField={null}
+                calculatedRates={calculatedRates}
+                engineSettings={defaultEngineSettings}
+                salaryBudgetCodes={salaryBudgetCodes}
+                setSalaryBudgetCodes={() => {}}
+                salaryTags={salaryTags}
+                setSalaryTags={() => {}}
+                overtimeBudgetCodes={overtimeBudgetCodes}
+                setOvertimeBudgetCodes={() => {}}
+                overtimeTags={overtimeTags}
+                setOvertimeTags={() => {}}
+                allowances={allowances}
+                hideOfferSections={false}
+                hideContractDocument={false}
+                isDocumentLocked={offer?.status === "COMPLETED"}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Right: role-based panel */}
+          <RightPanel
+            offer={offer}
+            viewRole={viewRole}
+            onAction={handleAction}
+            isSubmitting={isSubmitting}
+          />
+        </div>
+      </div>
+
+      {/* Dialogs */}
+      {dialog === "acceptOffer" && (
+        <OfferActionDialog
+          type="acceptOffer"
+          offer={offer}
+          open={true}
+          onConfirm={handleDialogConfirm}
+          onClose={() => setDialog(null)}
+          isLoading={isSubmitting}
+        />
+      )}
+      {dialog === "requestChanges" && (
+        <OfferActionDialog
+          type="requestChanges"
+          offer={offer}
+          open={true}
+          onConfirm={handleDialogConfirm}
+          onClose={() => setDialog(null)}
+          isLoading={isSubmitting}
+        />
+      )}
+    </div>
+  );
+}

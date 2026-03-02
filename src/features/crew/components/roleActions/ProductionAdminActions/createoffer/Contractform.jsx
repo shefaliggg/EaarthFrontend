@@ -219,18 +219,9 @@ export function ContractForm({
   const cs = { GBP:"£", USD:"$", EUR:"€", AUD:"A$", CAD:"C$", NZD:"NZ$", DKK:"kr", ISK:"kr" }[data.currency] ?? "£";
 
   return (
-    <div className="space-y-3">
+    <div className="py-0">
 
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-xs text-primary/60">
-        <span className="hover:text-primary cursor-pointer transition-colors">Werwulf</span>
-        <span>/</span>
-        <span className="hover:text-primary cursor-pointer transition-colors">Offers</span>
-        <span>/</span>
-        <span className="text-primary font-medium">Create offer</span>
-      </nav>
-
-      <h2 className="text-base font-semibold text-foreground">New Offer</h2>
+ 
 
       <div className="space-y-2">
 

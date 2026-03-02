@@ -1,80 +1,70 @@
-import { FileText, Hash, Calendar, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { FileText, Copy, Clock } from "lucide-react";
+import { useState } from "react";
 
-export function OfferHeader({ data, offerCollapsed, onToggleCollapse }) {
-  const getEngagementType = () => {
-    const typeMap = {
-      loan_out: "LOAN OUT",
-      paye: "PAYE",
-      schd: "SCHD (DAILY/WEEKLY)",
-      long_form: "LONG FORM",
-    };
-    return typeMap[data.engagementType] || data.allowSelfEmployed === "yes" ? "LOAN OUT" : "PAYE";
+const fmtDateTime = (d) => {
+  if (!d) return null;
+  const date = new Date(d);
+  return `${date.toLocaleDateString("en-GB", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+  })} at ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+};
+
+export function OfferHeader({ data, offer, offerCollapsed, onToggleCollapse }) {
+  const [copied, setCopied] = useState(false);
+
+  const offerId  = offer?._id        || offer?.offerCode || null;
+  const created  = offer?.createdAt  || null;
+  const updated  = offer?.updatedAt  || null;
+
+  const handleCopy = () => {
+    if (!offerId) return;
+    navigator.clipboard.writeText(offerId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   };
-
-  const now = new Date();
-  const createdDate = now.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const createdTime = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div
-      className="bg-white border-b border-purple-100 px-4 pt-2.5 pb-2 cursor-pointer select-none"
+      className="flex items-center justify-between px-3 py-2 bg-white border-b border-neutral-200/80 cursor-pointer select-none"
       onClick={onToggleCollapse}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-purple-700 flex items-center justify-center">
-            <FileText className="h-3.5 w-3.5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-[14px] font-semibold text-neutral-900 tracking-tight">Official Offer Document</h2>
-            <p className="text-[10px] text-neutral-400">Crew contract offer summary</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] px-3 py-1 rounded-md font-semibold tracking-wider border ${
-            data.dailyOrWeekly === "weekly"
-              ? "bg-white text-purple-700 border-purple-200"
-              : "bg-purple-700 text-white border-purple-700"
-          }`}>
-            {data.dailyOrWeekly ? data.dailyOrWeekly.toUpperCase() : "DAILY"}
-          </span>
-          <span className={`text-[10px] px-3 py-1 rounded-md font-semibold tracking-wider border ${
-            data.engagementType === "loan_out"
-              ? "bg-white text-purple-700 border-purple-200"
-              : "bg-purple-700 text-white border-purple-700"
-          }`}>
-            {getEngagementType()}
-          </span>
-          {offerCollapsed
-            ? <ChevronRight className="h-4 w-4 text-neutral-400 ml-1" />
-            : <ChevronDown className="h-4 w-4 text-neutral-400 ml-1" />
-          }
-        </div>
+      {/* Left: icon + title */}
+      <div className="flex items-center gap-2">
+        <FileText className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+        <span className="text-[11px] font-semibold text-neutral-800 uppercase tracking-wide">
+          Offer Preview
+        </span>
       </div>
 
-      <div className="flex items-center gap-4 text-[10px] text-neutral-500">
-        <div className="flex items-center gap-1.5">
-          <span className="text-neutral-400">Version:</span>
-          <span className="font-semibold text-purple-700">1.0</span>
-        </div>
-        <div className="h-3 w-px bg-purple-100" />
-        <div className="flex items-center gap-1.5">
-          <Hash className="h-3 w-3 text-purple-300" />
-          <span className="text-neutral-400">Offer ID:</span>
-          <span className="font-mono font-semibold text-purple-700">8492-3021</span>
-        </div>
-        <div className="h-3 w-px bg-purple-100" />
-        <div className="flex items-center gap-1.5">
-          <Calendar className="h-3 w-3 text-purple-300" />
-          <span className="text-neutral-400">Created:</span>
-          <span className="font-semibold text-neutral-700">{createdDate} at {createdTime}</span>
-        </div>
-        <div className="h-3 w-px bg-purple-100" />
-        <div className="flex items-center gap-1.5">
-          <RefreshCw className="h-3 w-3 text-purple-300" />
-          <span className="text-neutral-400">Updated:</span>
-          <span className="font-semibold text-neutral-700">{createdDate} at {createdTime}</span>
-        </div>
+      {/* Right: meta — only shown when real data exists */}
+      <div className="flex items-center gap-3 text-[9px] text-neutral-400 font-medium">
+        {offerId && (
+          <div
+            className="flex items-center gap-1 cursor-pointer hover:text-purple-600 transition-colors"
+            onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+            title="Copy offer ID"
+          >
+            <span className="text-purple-600 font-semibold">
+              OFFER ID: {offer?.offerCode || offerId.slice(-8).toUpperCase()}
+            </span>
+            <Copy className={`h-2.5 w-2.5 ${copied ? "text-emerald-500" : "text-neutral-300"}`} />
+          </div>
+        )}
+
+        {created && (
+          <div className="flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            <span>CREATED: {fmtDateTime(created)}</span>
+          </div>
+        )}
+
+        {updated && updated !== created && (
+          <div className="flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            <span>UPDATED: {fmtDateTime(updated)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
