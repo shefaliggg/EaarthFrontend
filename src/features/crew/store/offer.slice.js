@@ -1,19 +1,10 @@
 /**
  * offer.slice.js  (UPDATED)
- *
- * Changes from original:
- *  - crewSignThunk / upmSignThunk / fcSignThunk / studioSignThunk
- *    now accept { offerId, signature } so the canvas data URL is sent to backend.
- *  - moveToProductionCheckThunk / moveToAccountsCheckThunk /
- *    moveToPendingCrewSignatureThunk now call correct API functions.
- *  - signingStatus state added (tracks per-offer signing progress).
- *  - getSigningStatusThunk added.
  */
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as offerApi from "../api/offer.api";
 
-// ─── Error normalizer ─────────────────────────────────────────────────────────
 const normalizeError = (e) => ({
   message: e.response?.data?.message || e.message || "Something went wrong",
   errors:  e.response?.data?.errors  || [],
@@ -23,7 +14,6 @@ const normalizeError = (e) => ({
 
 // ─── THUNKS ───────────────────────────────────────────────────────────────────
 
-// CRUD
 export const createOfferThunk = createAsyncThunk("offers/create",
   async (payload, { rejectWithValue }) => {
     try { return await offerApi.createOffer(payload); }
@@ -52,6 +42,13 @@ export const getMyOffersThunk = createAsyncThunk("offers/getMine",
   }
 );
 
+export const updateOfferThunk = createAsyncThunk("offers/update",
+  async ({ id, data }, { rejectWithValue }) => {
+    try { return await offerApi.updateOffer(id, data); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
 export const deleteOfferThunk = createAsyncThunk("offers/delete",
   async (id, { rejectWithValue }) => {
     try { await offerApi.deleteOffer(id); return id; }
@@ -61,7 +58,7 @@ export const deleteOfferThunk = createAsyncThunk("offers/delete",
 
 // Workflow
 export const sendToCrewThunk = createAsyncThunk("offers/sendToCrew",
-  async ({ offerId }, { rejectWithValue }) => {
+  async (offerId, { rejectWithValue }) => {
     try { return await offerApi.sendToCrew(offerId); }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
@@ -89,7 +86,7 @@ export const crewRequestChangesThunk = createAsyncThunk("offers/requestChanges",
 );
 
 export const cancelOfferThunk = createAsyncThunk("offers/cancel",
-  async ({ offerId }, { rejectWithValue }) => {
+  async (offerId, { rejectWithValue }) => {
     try { return await offerApi.cancelOffer(offerId); }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
@@ -116,11 +113,7 @@ export const moveToPendingCrewSignatureThunk = createAsyncThunk("offers/pendingC
   }
 );
 
-// ─── SIGNING THUNKS ───────────────────────────────────────────────────────────
-// Each accepts { offerId, signature } where signature is the base64 canvas data URL.
-// The backend role check is done via the X-View-As-Role header (demo)
-// or the user's real JWT role (production).
-
+// Signing
 export const crewSignThunk = createAsyncThunk("offers/crewSign",
   async ({ offerId, signature }, { rejectWithValue }) => {
     try { return await offerApi.crewSign(offerId, signature); }
@@ -156,7 +149,6 @@ export const getSigningStatusThunk = createAsyncThunk("offers/getSigningStatus",
   }
 );
 
-// Change requests
 export const getChangeRequestsThunk = createAsyncThunk("offers/getChangeRequests",
   async (offerId, { rejectWithValue }) => {
     try { return await offerApi.getChangeRequests(offerId); }
@@ -178,11 +170,12 @@ const syncOffer = (state, updatedOffer) => {
   [state.projectOffers, state.myOffers].forEach((list) => {
     const idx = list.findIndex((o) => o._id === updatedOffer._id);
     if (idx !== -1) list[idx] = updatedOffer;
+    else if (list === state.projectOffers) list.unshift(updatedOffer);
   });
 };
 
-const setPending  = (loadingKey) => (state) => { state[loadingKey] = true;  state.error = null; };
-const setRejected = (loadingKey) => (state, { payload }) => { state[loadingKey] = false; state.error = payload; };
+const setPending  = (k) => (state) => { state[k] = true; state.error = null; };
+const setRejected = (k) => (state, { payload }) => { state[k] = false; state.error = payload; };
 
 const workflowThunks = [
   sendToCrewThunk, markViewedThunk, crewAcceptThunk, crewRequestChangesThunk,
@@ -198,7 +191,7 @@ const initialState = {
   myOffers:       [],
   currentOffer:   null,
   changeRequests: [],
-  signingStatus:  null,   // { offerId, currentStatus, signatories: [{role, signed, signedAt}] }
+  signingStatus:  null,
 
   isLoadingList:  false,
   isLoadingOffer: false,
@@ -219,11 +212,13 @@ const offerSlice = createSlice({
     clearOfferSuccess(state)             { state.successMessage = null; },
     clearCurrentOffer(state)             { state.currentOffer = null; },
     setStatusFilter(state, { payload })  { state.statusFilter = payload; },
+    // Optimistic local update for demo mode
+    localUpdateOffer(state, { payload }) { syncOffer(state, payload); },
   },
 
   extraReducers: (builder) => {
 
-    // ── createOffer ──────────────────────────────────────────────────────────
+    // createOffer
     builder
       .addCase(createOfferThunk.pending,   setPending("isSubmitting"))
       .addCase(createOfferThunk.fulfilled, (state, { payload }) => {
@@ -234,7 +229,17 @@ const offerSlice = createSlice({
       })
       .addCase(createOfferThunk.rejected,  setRejected("isSubmitting"));
 
-    // ── getOffer ─────────────────────────────────────────────────────────────
+    // updateOffer
+    builder
+      .addCase(updateOfferThunk.pending,   setPending("isSubmitting"))
+      .addCase(updateOfferThunk.fulfilled, (state, { payload }) => {
+        state.isSubmitting = false;
+        syncOffer(state, payload);
+        state.successMessage = "Offer updated";
+      })
+      .addCase(updateOfferThunk.rejected,  setRejected("isSubmitting"));
+
+    // getOffer
     builder
       .addCase(getOfferThunk.pending,   setPending("isLoadingOffer"))
       .addCase(getOfferThunk.fulfilled, (state, { payload }) => {
@@ -243,7 +248,7 @@ const offerSlice = createSlice({
       })
       .addCase(getOfferThunk.rejected,  setRejected("isLoadingOffer"));
 
-    // ── getProjectOffers ─────────────────────────────────────────────────────
+    // getProjectOffers
     builder
       .addCase(getProjectOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getProjectOffersThunk.fulfilled, (state, { payload }) => {
@@ -252,7 +257,7 @@ const offerSlice = createSlice({
       })
       .addCase(getProjectOffersThunk.rejected,  setRejected("isLoadingList"));
 
-    // ── getMyOffers ──────────────────────────────────────────────────────────
+    // getMyOffers
     builder
       .addCase(getMyOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getMyOffersThunk.fulfilled, (state, { payload }) => {
@@ -261,7 +266,7 @@ const offerSlice = createSlice({
       })
       .addCase(getMyOffersThunk.rejected,  setRejected("isLoadingList"));
 
-    // ── deleteOffer ──────────────────────────────────────────────────────────
+    // deleteOffer
     builder
       .addCase(deleteOfferThunk.fulfilled, (state, { payload: id }) => {
         state.projectOffers = state.projectOffers.filter((o) => o._id !== id);
@@ -270,7 +275,7 @@ const offerSlice = createSlice({
       })
       .addCase(deleteOfferThunk.rejected, (state, { payload }) => { state.error = payload; });
 
-    // ── All workflow thunks (all return updatedOffer) ─────────────────────────
+    // All workflow thunks
     workflowThunks.forEach((thunk) => {
       builder
         .addCase(thunk.pending,   setPending("isSubmitting"))
@@ -280,7 +285,6 @@ const offerSlice = createSlice({
             syncOffer(state, payload);
             state.successMessage = `Status: ${payload.status}`;
           } else {
-            // crewRequestChanges returns a ChangeRequest, not an Offer
             state.successMessage = "Done";
           }
         })
@@ -290,19 +294,17 @@ const offerSlice = createSlice({
         });
     });
 
-    // ── getSigningStatus ──────────────────────────────────────────────────────
-    builder
-      .addCase(getSigningStatusThunk.fulfilled, (state, { payload }) => {
-        state.signingStatus = payload;
-      });
+    // getSigningStatus
+    builder.addCase(getSigningStatusThunk.fulfilled, (state, { payload }) => {
+      state.signingStatus = payload;
+    });
 
-    // ── getChangeRequests ─────────────────────────────────────────────────────
-    builder
-      .addCase(getChangeRequestsThunk.fulfilled, (state, { payload }) => {
-        state.changeRequests = payload;
-      });
+    // getChangeRequests
+    builder.addCase(getChangeRequestsThunk.fulfilled, (state, { payload }) => {
+      state.changeRequests = payload;
+    });
 
-    // ── resolveChangeRequest ──────────────────────────────────────────────────
+    // resolveChangeRequest
     builder
       .addCase(resolveChangeRequestThunk.fulfilled, (state, { payload }) => {
         const idx = state.changeRequests.findIndex((c) => c._id === payload._id);
@@ -316,7 +318,7 @@ const offerSlice = createSlice({
 });
 
 export const {
-  clearOfferError, clearOfferSuccess, clearCurrentOffer, setStatusFilter,
+  clearOfferError, clearOfferSuccess, clearCurrentOffer, setStatusFilter, localUpdateOffer
 } = offerSlice.actions;
 
 export default offerSlice.reducer;

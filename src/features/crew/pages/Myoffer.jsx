@@ -1,7 +1,8 @@
 // src/features/crew/pages/MyOffer.jsx
 //
 // Fully connected to backend via Redux.
-// Fetches real offers, navigates to ViewOffer with real MongoDB _id.
+// Reads flat backend model fields (jobTitle, department, feePerDay, etc.)
+// Navigation: view → /projects/:projectName/offers/:id/view
 
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,45 +24,70 @@ import {
 } from "../store/offer.slice";
 import { selectViewRole } from "../store/viewrole.slice";
 
-// ─── Safe selectors ───────────────────────────────────────────────────────────
-const selectProjectOffers = (state) => state?.offers?.projectOffers ?? [];
-const selectMyOffers      = (state) => state?.offers?.myOffers      ?? [];
-const selectIsLoading     = (state) => state?.offers?.isLoadingList  ?? false;
-const selectError         = (state) => state?.offers?.error          ?? null;
+// ─── Selectors ────────────────────────────────────────────────────────────────
+const selectProjectOffers = (s) => s?.offers?.projectOffers ?? [];
+const selectMyOffers      = (s) => s?.offers?.myOffers      ?? [];
+const selectIsLoading     = (s) => s?.offers?.isLoadingList  ?? false;
+const selectError         = (s) => s?.offers?.error          ?? null;
 
-// ─── Status display config ─────────────────────────────────────────────────────
+// ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  DRAFT:                    { label: "Draft",              color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",           dot: "bg-gray-400"    },
-  SENT_TO_CREW:             { label: "Awaiting Response",  color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",    dot: "bg-amber-500"   },
-  NEEDS_REVISION:           { label: "Needs Revision",     color: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",dot: "bg-orange-500"  },
-  CREW_ACCEPTED:            { label: "Accepted",           color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",        dot: "bg-blue-500"    },
-  PRODUCTION_CHECK:         { label: "Production Check",   color: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",dot: "bg-violet-500"  },
-  ACCOUNTS_CHECK:           { label: "Accounts Check",     color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",dot: "bg-indigo-500"  },
-  PENDING_CREW_SIGNATURE:   { label: "Awaiting Signature", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",dot: "bg-purple-500"  },
-  PENDING_UPM_SIGNATURE:    { label: "UPM Signing",        color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",dot: "bg-purple-500"  },
-  PENDING_FC_SIGNATURE:     { label: "FC Signing",         color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",dot: "bg-purple-500"  },
-  PENDING_STUDIO_SIGNATURE: { label: "Studio Signing",     color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",dot: "bg-purple-500"  },
-  COMPLETED:                { label: "Completed",          color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",dot: "bg-emerald-500"},
-  CANCELLED:                { label: "Cancelled",          color: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",            dot: "bg-red-500"     },
+  DRAFT:                    { label: "Draft",              color: "bg-gray-100 text-gray-600",             dot: "bg-gray-400"    },
+  SENT_TO_CREW:             { label: "Awaiting Response",  color: "bg-amber-100 text-amber-700",           dot: "bg-amber-500"   },
+  NEEDS_REVISION:           { label: "Needs Revision",     color: "bg-orange-100 text-orange-700",         dot: "bg-orange-500"  },
+  CREW_ACCEPTED:            { label: "Accepted",           color: "bg-blue-100 text-blue-700",             dot: "bg-blue-500"    },
+  PRODUCTION_CHECK:         { label: "Production Check",   color: "bg-violet-100 text-violet-700",         dot: "bg-violet-500"  },
+  ACCOUNTS_CHECK:           { label: "Accounts Check",     color: "bg-indigo-100 text-indigo-700",         dot: "bg-indigo-500"  },
+  PENDING_CREW_SIGNATURE:   { label: "Awaiting Signature", color: "bg-purple-100 text-purple-700",         dot: "bg-purple-500"  },
+  PENDING_UPM_SIGNATURE:    { label: "UPM Signing",        color: "bg-purple-100 text-purple-700",         dot: "bg-purple-500"  },
+  PENDING_FC_SIGNATURE:     { label: "FC Signing",         color: "bg-purple-100 text-purple-700",         dot: "bg-purple-500"  },
+  PENDING_STUDIO_SIGNATURE: { label: "Studio Signing",     color: "bg-purple-100 text-purple-700",         dot: "bg-purple-500"  },
+  COMPLETED:                { label: "Completed",          color: "bg-emerald-100 text-emerald-700",       dot: "bg-emerald-500" },
+  CANCELLED:                { label: "Cancelled",          color: "bg-red-100 text-red-700",               dot: "bg-red-500"     },
 };
 const getStatusCfg = (s) => STATUS_CONFIG[s] || { label: s, color: "bg-gray-100 text-gray-600", dot: "bg-gray-400" };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "TBC";
-const fmtMoney = (n, c = "GBP") => n ? new Intl.NumberFormat("en-GB", { style: "currency", currency: c, minimumFractionDigits: 0 }).format(n) : null;
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
+
+const fmtMoney = (n, currency = "GBP") => {
+  const num = parseFloat(n);
+  if (!num) return null;
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency", currency, minimumFractionDigits: 0,
+  }).format(num);
+};
+
+// Read department label from flat backend field
+const deptLabel = (val = "") =>
+  val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+// Read engagement type label
+const engLabel = (val = "") => {
+  const map = { loan_out: "Loan Out", paye: "PAYE", schd: "SCHD", long_form: "Long Form" };
+  return map[val] || val.replace(/_/g, " ").toUpperCase();
+};
 
 // ─── OfferCard ────────────────────────────────────────────────────────────────
 function OfferCard({ offer, onView }) {
-  const cfg         = getStatusCfg(offer.status);
-  const role        = offer.roles?.find((r) => r.isPrimary) || offer.roles?.[0] || {};
-  const name        = offer.recipient?.fullName || "—";
-  const jobTitle    = role.customRoleName || role.jobRoleId?.name || "—";
-  const department  = role.customDepartmentName || role.jobDepartmentId?.name || null;
-  const rate        = role.salary?.base?.amount;
-  const rateType    = role.rateType || "DAILY";
-  const startDate   = role.startDate;
-  const endDate     = role.endDate;
-  const engagement  = role.engagementType;
+  const cfg = getStatusCfg(offer.status);
+
+  // ── Read from flat backend model fields ───────────────────────────────────
+  const name       = offer.recipient?.fullName || offer.fullName || "—";
+  const jobTitle   = offer.createOwnJobTitle && offer.newJobTitle
+    ? offer.newJobTitle
+    : offer.jobTitle || "—";
+  const dept       = offer.department ? deptLabel(offer.department) : null;
+  const rate       = offer.feePerDay;
+  const currency   = offer.currency || "GBP";
+  const rateType   = offer.dailyOrWeekly || "daily";
+  const engagement = offer.engagementType ? engLabel(offer.engagementType) : null;
+  const startDate  = offer.startDate;
+  const endDate    = offer.endDate;
+
+  const requiresAction =
+    offer.status === "SENT_TO_CREW" || offer.status === "PENDING_CREW_SIGNATURE";
 
   return (
     <Card
@@ -83,9 +109,14 @@ function OfferCard({ offer, onView }) {
                     {offer.offerCode}
                   </span>
                 )}
+                {requiresAction && (
+                  <span className="text-[10px] font-semibold text-white bg-primary px-1.5 py-0.5 rounded-full animate-pulse">
+                    Action Required
+                  </span>
+                )}
               </div>
               <p className="text-xs text-muted-foreground truncate">
-                {jobTitle}{department ? ` · ${department}` : ""}
+                {jobTitle}{dept ? ` · ${dept}` : ""}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -102,7 +133,8 @@ function OfferCard({ offer, onView }) {
             {rate && (
               <span className="flex items-center gap-1">
                 <DollarSign className="w-3 h-3" />
-                {fmtMoney(rate)} / {rateType === "WEEKLY" ? "week" : "day"}
+                <strong className="text-foreground">{fmtMoney(rate, currency)}</strong>
+                &nbsp;/ {rateType}
               </span>
             )}
             {engagement && (
@@ -114,7 +146,8 @@ function OfferCard({ offer, onView }) {
             {startDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
-                {fmtDate(startDate)}{endDate ? ` → ${fmtDate(endDate)}` : ""}
+                {fmtDate(startDate)}
+                {endDate ? ` → ${fmtDate(endDate)}` : ""}
               </span>
             )}
           </div>
@@ -122,7 +155,7 @@ function OfferCard({ offer, onView }) {
           {/* Footer */}
           <div className="mt-3 pt-3 border-t flex items-center justify-between">
             <span className="text-[10px] text-muted-foreground">
-              Updated {fmtDate(offer.updatedAt)}
+              {offer.updatedAt ? `Updated ${fmtDate(offer.updatedAt)}` : ""}
             </span>
             <Button
               size="sm"
@@ -158,7 +191,7 @@ function Section({ title, icon: Icon, iconColor, offers, onView }) {
   );
 }
 
-// ─── Empty ────────────────────────────────────────────────────────────────────
+// ─── Empty state ──────────────────────────────────────────────────────────────
 function Empty({ isProductionAdmin, onCreate }) {
   return (
     <Card className="p-12 text-center border-dashed">
@@ -182,9 +215,9 @@ function Empty({ isProductionAdmin, onCreate }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function MyOffer() {
-  const navigate      = useNavigate();
-  const dispatch      = useDispatch();
-  const { projectName } = useParams();
+  const navigate            = useNavigate();
+  const dispatch            = useDispatch();
+  const { projectName, projectId } = useParams();
 
   const viewRole      = useSelector(selectViewRole);
   const projectOffers = useSelector(selectProjectOffers);
@@ -195,43 +228,48 @@ export default function MyOffer() {
   const isProductionAdmin = viewRole === "PRODUCTION_ADMIN" || viewRole === "SUPER_ADMIN";
   const offers = isProductionAdmin ? projectOffers : myOffers;
 
-  // Hardcoded project ID — replace when you have real project context
-  const PROJECT_ID = "697c899668977a7ca2b27462";
+  // Use projectId from URL params — falls back to a known ID for dev
+  const resolvedProjectId = projectId || "697c899668977a7ca2b27462";
 
   const fetchOffers = () => {
     if (isProductionAdmin) {
-      dispatch(getProjectOffersThunk({ projectId: PROJECT_ID }));
+      dispatch(getProjectOffersThunk({ projectId: resolvedProjectId }));
     } else {
       dispatch(getMyOffersThunk());
     }
   };
 
-  useEffect(() => { fetchOffers(); }, [viewRole, dispatch]);
+  useEffect(() => { fetchOffers(); }, [viewRole, resolvedProjectId, dispatch]);
 
-  // Navigate to ViewOffer with real MongoDB _id
-  const handleView = (offerId) => {
-    navigate(`/projects/${projectName || "demo-project"}/offers/${offerId}/view`);
-  };
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  // Goes to ViewOffer page — path must match your router definition
+const handleView = (offerId) => {
+  navigate(`/projects/${projectName || "demo-project"}/offers/${offerId}/view`);
+};
 
   const handleCreate = () => {
     navigate(`/projects/${projectName || "demo-project"}/offers/create`);
   };
 
-  // Bucket offers by status
-  const pending    = offers.filter((o) => ["SENT_TO_CREW", "NEEDS_REVISION", "DRAFT"].includes(o.status));
-  const inProgress = offers.filter((o) => [
-    "CREW_ACCEPTED", "PRODUCTION_CHECK", "ACCOUNTS_CHECK",
-    "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE",
-    "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
-  ].includes(o.status));
-  const completed  = offers.filter((o) => o.status === "COMPLETED");
-  const cancelled  = offers.filter((o) => o.status === "CANCELLED");
+  // ── Bucket offers by status ───────────────────────────────────────────────
+  const actionRequired = offers.filter((o) =>
+    ["SENT_TO_CREW", "NEEDS_REVISION", "PENDING_CREW_SIGNATURE"].includes(o.status)
+  );
+  const drafts = offers.filter((o) => o.status === "DRAFT");
+  const inProgress = offers.filter((o) =>
+    ["CREW_ACCEPTED", "PRODUCTION_CHECK", "ACCOUNTS_CHECK",
+      "PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
+    ].includes(o.status)
+  );
+  const completed = offers.filter((o) => o.status === "COMPLETED");
+  const cancelled = offers.filter((o) => o.status === "CANCELLED");
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) return (
     <div className="min-h-[400px] flex items-center justify-center">
       <div className="text-center space-y-2">
         <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Loading offers...</p>
+        <p className="text-sm text-muted-foreground">Loading offers…</p>
       </div>
     </div>
   );
@@ -240,7 +278,9 @@ export default function MyOffer() {
     <div className="min-h-[400px] flex items-center justify-center">
       <div className="text-center space-y-3">
         <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
-        <p className="text-sm font-medium text-destructive">{error.message || "Failed to load offers"}</p>
+        <p className="text-sm font-medium text-destructive">
+          {error.message || "Failed to load offers"}
+        </p>
         <Button size="sm" variant="outline" onClick={fetchOffers} className="gap-2">
           <RefreshCw className="w-3.5 h-3.5" /> Retry
         </Button>
@@ -251,7 +291,7 @@ export default function MyOffer() {
   return (
     <div className="container mx-auto space-y-6 py-2">
 
-      {/* Header */}
+      {/* ── Page header ───────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -268,18 +308,20 @@ export default function MyOffer() {
           {/* Summary pills */}
           <div className="hidden sm:flex items-center gap-3 mr-2">
             {[
-              { label: "Pending",     count: pending.length,    dot: "bg-amber-500"   },
-              { label: "In Progress", count: inProgress.length, dot: "bg-blue-500"    },
-              { label: "Completed",   count: completed.length,  dot: "bg-emerald-500" },
+              { label: "Action",    count: actionRequired.length, dot: "bg-primary"     },
+              { label: "Progress",  count: inProgress.length,     dot: "bg-blue-500"    },
+              { label: "Completed", count: completed.length,       dot: "bg-emerald-500" },
             ].map(({ label, count, dot }) => (
               <div key={label} className="flex items-center gap-1.5 text-xs">
                 <div className={`w-2 h-2 rounded-full ${dot}`} />
-                <span className="text-muted-foreground">{label} <strong className="text-foreground">{count}</strong></span>
+                <span className="text-muted-foreground">
+                  {label} <strong className="text-foreground">{count}</strong>
+                </span>
               </div>
             ))}
           </div>
 
-          <Button size="sm" variant="outline" onClick={fetchOffers} className="h-8 w-8 p-0">
+          <Button size="sm" variant="outline" onClick={fetchOffers} className="h-8 w-8 p-0" title="Refresh">
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
 
@@ -291,15 +333,46 @@ export default function MyOffer() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Content ───────────────────────────────────────────────────────────── */}
       {offers.length === 0 ? (
         <Empty isProductionAdmin={isProductionAdmin} onCreate={handleCreate} />
       ) : (
         <div className="space-y-8">
-          <Section title="Pending Response"  icon={MessageSquare}   iconColor="text-amber-500"   offers={pending}    onView={handleView} />
-          <Section title="In Progress"       icon={Clock}           iconColor="text-blue-500"    offers={inProgress} onView={handleView} />
-          <Section title="Completed"         icon={CheckCircle}     iconColor="text-emerald-500" offers={completed}  onView={handleView} />
-          <Section title="Cancelled"         icon={AlertTriangle}   iconColor="text-red-400"     offers={cancelled}  onView={handleView} />
+          <Section
+            title="Action Required"
+            icon={AlertTriangle}
+            iconColor="text-primary"
+            offers={actionRequired}
+            onView={handleView}
+          />
+          <Section
+            title="Drafts"
+            icon={FileText}
+            iconColor="text-gray-400"
+            offers={drafts}
+            onView={handleView}
+          />
+          <Section
+            title="In Progress"
+            icon={Clock}
+            iconColor="text-blue-500"
+            offers={inProgress}
+            onView={handleView}
+          />
+          <Section
+            title="Completed"
+            icon={CheckCircle}
+            iconColor="text-emerald-500"
+            offers={completed}
+            onView={handleView}
+          />
+          <Section
+            title="Cancelled"
+            icon={AlertTriangle}
+            iconColor="text-red-400"
+            offers={cancelled}
+            onView={handleView}
+          />
         </div>
       )}
     </div>
