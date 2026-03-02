@@ -1,70 +1,118 @@
-import { FileText, Copy, Clock } from "lucide-react";
-import { useState } from "react";
+import { FileText, Calendar, RefreshCcw, Hash } from "lucide-react";
 
 const fmtDateTime = (d) => {
-  if (!d) return null;
+  if (!d) return "--";
   const date = new Date(d);
   return `${date.toLocaleDateString("en-GB", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-  })} at ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })} at ${date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 };
 
-export function OfferHeader({ data, offer, offerCollapsed, onToggleCollapse }) {
-  const [copied, setCopied] = useState(false);
-
-  const offerId  = offer?._id        || offer?.offerCode || null;
-  const created  = offer?.createdAt  || null;
-  const updated  = offer?.updatedAt  || null;
-
-  const handleCopy = () => {
-    if (!offerId) return;
-    navigator.clipboard.writeText(offerId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+function getEngagementLabel(val) {
+  const map = {
+    loan_out: "Loan Out",
+    LOAN_OUT: "Loan Out",
+    paye: "PAYE",
+    PAYE: "PAYE",
+    schd: "SCHD",
+    SCHD: "SCHD",
+    long_form: "Long Form",
+    LONG_FORM: "Long Form",
   };
+  return map[val] || (val ? val.replace(/_/g, " ") : null);
+}
+
+function getFreqLabel(val) {
+  if (!val) return null;
+  return val.toLowerCase() === "weekly" ? "Weekly" : "Daily";
+}
+
+export function OfferHeader({ data, offer }) {
+  const created = offer?.createdAt;
+  const updated = offer?.updatedAt;
+
+  const engLabel = getEngagementLabel(data?.engagementType);
+  const freqLabel = getFreqLabel(data?.dailyOrWeekly);
 
   return (
-    <div
-      className="flex items-center justify-between px-3 py-2 bg-white border-b border-neutral-200/80 cursor-pointer select-none"
-      onClick={onToggleCollapse}
-    >
-      {/* Left: icon + title */}
-      <div className="flex items-center gap-2">
-        <FileText className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-        <span className="text-[11px] font-semibold text-neutral-800 uppercase tracking-wide">
-          Offer Preview
-        </span>
-      </div>
+    <div className="w-full  border-b border-neutral-200 px-4 py-2">
+      <div className="flex items-start justify-between">
+        
+        {/* LEFT SECTION */}
+        <div className="flex items-start gap-4">
+          
+          {/* Purple Icon */}
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+            <FileText className="h-5 w-5 text-white" />
+          </div>
 
-      {/* Right: meta — only shown when real data exists */}
-      <div className="flex items-center gap-3 text-[9px] text-neutral-400 font-medium">
-        {offerId && (
-          <div
-            className="flex items-center gap-1 cursor-pointer hover:text-purple-600 transition-colors"
-            onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-            title="Copy offer ID"
-          >
-            <span className="text-purple-600 font-semibold">
-              OFFER ID: {offer?.offerCode || offerId.slice(-8).toUpperCase()}
+          <div>
+            {/* Title */}
+            <h1 className="text-[15px] font-semibold text-neutral-900 uppercase tracking-wide">
+              OFFICIAL OFFER DOCUMENT
+            </h1>
+
+            {/* Subtitle */}
+  
+
+            {/* Meta Row */}
+            <div className="flex flex-wrap items-center gap-6 mt-2 text-[11px] text-neutral-500">
+              
+              <span>
+                VERSION:{" "}
+                <span className="text-purple-600 font-semibold">
+                  {offer?.version || "1.0"}
+                </span>
+              </span>
+
+              <span className="flex items-center gap-1">
+                <Hash className="h-3 w-3 text-purple-500" />
+                OFFER ID:{" "}
+                <span className="text-purple-600 font-semibold">
+                  {offer?.offerCode || offer?._id?.slice(-8)?.toUpperCase()}
+                </span>
+              </span>
+
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-neutral-400" />
+                CREATED:{" "}
+                <span className="text-neutral-800 font-medium">
+                  {fmtDateTime(created)}
+                </span>
+              </span>
+
+              <span className="flex items-center gap-1">
+                <RefreshCcw className="h-3 w-3 text-neutral-400" />
+                UPDATED:{" "}
+                <span className="text-neutral-800 font-medium">
+                  {fmtDateTime(updated)}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT BADGES */}
+        <div className="flex items-center gap-3 mt-1">
+          
+          {freqLabel && (
+            <span className="bg-purple-600 text-white text-[11px] font-semibold px-6 py-2 rounded-full uppercase tracking-wide shadow-sm">
+              {freqLabel}
             </span>
-            <Copy className={`h-2.5 w-2.5 ${copied ? "text-emerald-500" : "text-neutral-300"}`} />
-          </div>
-        )}
+          )}
 
-        {created && (
-          <div className="flex items-center gap-1">
-            <Clock className="h-2.5 w-2.5" />
-            <span>CREATED: {fmtDateTime(created)}</span>
-          </div>
-        )}
+          {engLabel && (
+            <span className="border border-purple-500 text-purple-600 text-[11px] font-semibold px-6 py-2 rounded-full uppercase tracking-wide bg-white">
+              {engLabel}
+            </span>
+          )}
 
-        {updated && updated !== created && (
-          <div className="flex items-center gap-1">
-            <Clock className="h-2.5 w-2.5" />
-            <span>UPDATED: {fmtDateTime(updated)}</span>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

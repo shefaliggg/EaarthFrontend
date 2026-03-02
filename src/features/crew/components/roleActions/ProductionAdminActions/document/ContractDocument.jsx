@@ -10,83 +10,70 @@ const ROLE_LABEL_MAP = {
 };
 
 const ROLE_COLOR_MAP = {
-  crew: { bg: "bg-teal-50", border: "border-teal-300", text: "text-teal-700", ring: "ring-teal-200" },
-  upm: { bg: "bg-indigo-50", border: "border-indigo-300", text: "text-indigo-700", ring: "ring-indigo-200" },
-  fc: { bg: "bg-violet-50", border: "border-violet-300", text: "text-violet-700", ring: "ring-violet-200" },
+  crew:   { bg: "bg-teal-50",    border: "border-teal-300",    text: "text-teal-700",    ring: "ring-teal-200"    },
+  upm:    { bg: "bg-indigo-50",  border: "border-indigo-300",  text: "text-indigo-700",  ring: "ring-indigo-200"  },
+  fc:     { bg: "bg-violet-50",  border: "border-violet-300",  text: "text-violet-700",  ring: "ring-violet-200"  },
   studio: { bg: "bg-fuchsia-50", border: "border-fuchsia-300", text: "text-fuchsia-700", ring: "ring-fuchsia-200" },
 };
 
 const allowanceLabelMap = [
-  { key: "boxRental", label: "Box Rental" },
-  { key: "computer", label: "Computer" },
-  { key: "software", label: "Software" },
-  { key: "equipment", label: "Equipment" },
-  { key: "vehicle", label: "Vehicle" },
-  { key: "mobile", label: "Mobile" },
-  { key: "perDiem1", label: "Per Diem (Shoot)" },
-  { key: "perDiem2", label: "Per Diem (Non-Shoot)" },
-  { key: "living", label: "Living" },
-  { key: "breakfast", label: "Breakfast" },
-  { key: "lunch", label: "Lunch" },
-  { key: "dinner", label: "Dinner" },
-  { key: "fuel", label: "Fuel" },
-  { key: "mileage", label: "Mileage" },
+  { key: "boxRental",  label: "Box Rental"           },
+  { key: "computer",   label: "Computer"              },
+  { key: "software",   label: "Software"              },
+  { key: "equipment",  label: "Equipment"             },
+  { key: "vehicle",    label: "Vehicle"               },
+  { key: "mobile",     label: "Mobile"                },
+  { key: "perDiem1",   label: "Per Diem (Shoot)"      },
+  { key: "perDiem2",   label: "Per Diem (Non-Shoot)"  },
+  { key: "living",     label: "Living"                },
+  { key: "breakfast",  label: "Breakfast"             },
+  { key: "lunch",      label: "Lunch"                 },
+  { key: "dinner",     label: "Dinner"                },
+  { key: "fuel",       label: "Fuel"                  },
+  { key: "mileage",    label: "Mileage"               },
 ];
 
-// Map form field names → which "zone" in the contract they correspond to
-// Each zone has a label to show in the highlight tooltip and a color
 const FIELD_ZONE_MAP = {
-  // Recipient fields → highlight the recipient party block
-  fullName:     { zone: "recipient", label: "Full Name" },
-  email:        { zone: "recipient", label: "Email" },
-  mobileNumber: { zone: "recipient", label: "Phone" },
-  agentEmail:   { zone: "recipient", label: "Agent Email" },
-  isViaAgent:   { zone: "recipient", label: "Via Agent" },
-
-  // Deal terms
-  department:    { zone: "dealTerms", label: "Department" },
-  jobTitle:      { zone: "dealTerms", label: "Position" },
-  newJobTitle:   { zone: "dealTerms", label: "Position" },
-  jobTitleSuffix:{ zone: "dealTerms", label: "Position Suffix" },
-  startDate:     { zone: "dealTerms", label: "Start Date" },
-  endDate:       { zone: "dealTerms", label: "End Date" },
-  unit:          { zone: "dealTerms", label: "Unit" },
-
-  // Fee / engagement
-  feePerDay:      { zone: "feeStructure", label: "Fee Per Day" },
-  dailyOrWeekly:  { zone: "feeStructure", label: "Frequency" },
-  engagementType: { zone: "feeStructure", label: "Engagement Type" },
-  workingWeek:    { zone: "feeStructure", label: "Working Week" },
-  currency:       { zone: "feeStructure", label: "Currency" },
-  overtime:       { zone: "feeStructure", label: "Overtime" },
-  otherOT:        { zone: "feeStructure", label: "Other O/T" },
-  cameraOTSWD:    { zone: "feeStructure", label: "Camera O/T SWD" },
-  cameraOTSCWD:   { zone: "feeStructure", label: "Camera O/T SCWD" },
-  cameraOTCWD:    { zone: "feeStructure", label: "Camera O/T CWD" },
-
-  // Tax / IR35
-  allowSelfEmployed:              { zone: "feeStructure", label: "Engagement Type" },
-  statusDeterminationReason:      { zone: "feeStructure", label: "IR35 Reason" },
-  otherStatusDeterminationReason: { zone: "feeStructure", label: "IR35 Reason" },
-
-  // Other deal provisions
-  otherDealProvisions: { zone: "specialStipulations", label: "Special Stipulations" },
+  fullName:                       { zone: "recipient",           label: "Full Name"           },
+  email:                          { zone: "recipient",           label: "Email"               },
+  mobileNumber:                   { zone: "recipient",           label: "Phone"               },
+  agentEmail:                     { zone: "recipient",           label: "Agent Email"         },
+  isViaAgent:                     { zone: "recipient",           label: "Via Agent"           },
+  department:                     { zone: "dealTerms",           label: "Department"          },
+  jobTitle:                       { zone: "dealTerms",           label: "Position"            },
+  newJobTitle:                    { zone: "dealTerms",           label: "Position"            },
+  jobTitleSuffix:                 { zone: "dealTerms",           label: "Position Suffix"     },
+  startDate:                      { zone: "dealTerms",           label: "Start Date"          },
+  endDate:                        { zone: "dealTerms",           label: "End Date"            },
+  unit:                           { zone: "dealTerms",           label: "Unit"                },
+  feePerDay:                      { zone: "feeStructure",        label: "Fee Per Day"         },
+  dailyOrWeekly:                  { zone: "feeStructure",        label: "Frequency"           },
+  engagementType:                 { zone: "feeStructure",        label: "Engagement Type"     },
+  workingWeek:                    { zone: "feeStructure",        label: "Working Week"        },
+  currency:                       { zone: "feeStructure",        label: "Currency"            },
+  overtime:                       { zone: "feeStructure",        label: "Overtime"            },
+  otherOT:                        { zone: "feeStructure",        label: "Other O/T"           },
+  cameraOTSWD:                    { zone: "feeStructure",        label: "Camera O/T SWD"      },
+  cameraOTSCWD:                   { zone: "feeStructure",        label: "Camera O/T SCWD"     },
+  cameraOTCWD:                    { zone: "feeStructure",        label: "Camera O/T CWD"      },
+  allowSelfEmployed:              { zone: "feeStructure",        label: "Engagement Type"     },
+  statusDeterminationReason:      { zone: "feeStructure",        label: "IR35 Reason"         },
+  otherStatusDeterminationReason: { zone: "feeStructure",        label: "IR35 Reason"         },
+  otherDealProvisions:            { zone: "specialStipulations", label: "Special Stipulations"},
 };
 
-// Salary / overtime rows
-const SALARY_ZONE_RE   = /^salaryRow_/;
-const OVERTIME_ZONE_RE = /^overtimeRow_/;
+const SALARY_ZONE_RE    = /^salaryRow_/;
+const OVERTIME_ZONE_RE  = /^overtimeRow_/;
 const ALLOWANCE_ZONE_RE = /^allowance_/;
 
 function getZoneForField(fieldName) {
   if (!fieldName) return null;
-  if (SALARY_ZONE_RE.test(fieldName))   return { zone: "feeStructure", label: "Salary" };
-  if (OVERTIME_ZONE_RE.test(fieldName)) return { zone: "feeStructure", label: "Overtime" };
+  if (SALARY_ZONE_RE.test(fieldName))    return { zone: "feeStructure", label: "Salary"     };
+  if (OVERTIME_ZONE_RE.test(fieldName))  return { zone: "feeStructure", label: "Overtime"   };
   if (ALLOWANCE_ZONE_RE.test(fieldName)) return { zone: "feeStructure", label: "Allowances" };
   return FIELD_ZONE_MAP[fieldName] ?? null;
 }
 
-// Highlight wrapper component — wraps a zone block and pulses blue when active
 function ZoneHighlight({ zoneId, activeZone, label, children }) {
   const isActive = activeZone === zoneId;
   return (
@@ -105,30 +92,50 @@ function ZoneHighlight({ zoneId, activeZone, label, children }) {
   );
 }
 
+// ─── Normalise helpers — handle both lowercase (form) and uppercase (backend) ──
+
+function getEngagementLabel(val) {
+  const map = {
+    loan_out:  "LOAN OUT",  LOAN_OUT:  "LOAN OUT",
+    paye:      "PAYE",      PAYE:      "PAYE",
+    schd:      "SCHEDULE D", SCHD:     "SCHEDULE D",
+    long_form: "LONG FORM", LONG_FORM: "LONG FORM",
+  };
+  return map[val] || (val ? val.replace(/_/g, " ").toUpperCase() : "PAYE");
+}
+
+function getFrequencyLabel(val) {
+  if (!val) return "Daily";
+  const lower = val.toLowerCase();
+  if (lower === "weekly") return "Weekly";
+  return "Daily";
+}
+
+function getCurrencySymbol(currency) {
+  const map = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$", NZD: "NZ$" };
+  return map[currency] || "£";
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
 export function ContractDocument({
   data,
   calculatedRates,
   engineSettings,
   allowances,
-  activeField = null,
-  isLocked = false,
-  signatures = {},
+  activeField      = null,
+  isLocked         = false,
+  signatures       = {},
   activeSigningRole = null,
   onSignatureClick,
 }) {
-  // Derive which zone to highlight from the active field
-  const zoneInfo = getZoneForField(activeField);
-  const activeZone = zoneInfo?.zone ?? null;
+  const zoneInfo   = getZoneForField(activeField);
+  const activeZone = zoneInfo?.zone  ?? null;
   const activeLabel = zoneInfo?.label ?? "";
 
-  const cs = (() => {
-    switch (data.currency) {
-      case "GBP": return "£";
-      case "USD": return "$";
-      case "EUR": return "€";
-      default: return "£";
-    }
-  })();
+  const cs       = getCurrencySymbol(data.currency);
+  const engLabel = getEngagementLabel(data.engagementType);
+  const freqLabel = getFrequencyLabel(data.dailyOrWeekly);
 
   const formatDate = (dateString) => {
     if (!dateString) return "—";
@@ -139,24 +146,15 @@ export function ContractDocument({
   const getDeptLabel = (val) =>
     val ? val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "—";
 
-  const getEngType = () => {
-    const m = { loan_out: "LOAN OUT", paye: "PAYE", schd: "SCHEDULE D", long_form: "LONG FORM" };
-    return m[data.engagementType] || "PAYE";
-  };
-
   const getJobTitle = () => {
     if (data.createOwnJobTitle && data.newJobTitle) return data.newJobTitle;
     return data.jobTitle || "—";
   };
 
-  const freq = data.dailyOrWeekly
-    ? data.dailyOrWeekly.charAt(0).toUpperCase() + data.dailyOrWeekly.slice(1)
-    : "Daily";
-
-  const now = new Date();
+  const now     = new Date();
   const refDate = now.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-  const enabledAllowances = allowanceLabelMap.filter((a) => allowances[a.key]?.enabled);
+  const enabledAllowances = allowanceLabelMap.filter((a) => allowances?.[a.key]?.enabled);
 
   const Cell = ({ label, value, className = "" }) => (
     <div className={className}>
@@ -166,9 +164,9 @@ export function ContractDocument({
   );
 
   const renderSignatureBox = (label, role) => {
-    const isActive = role != null && role === activeSigningRole;
+    const isActive  = role != null && role === activeSigningRole;
     const signature = role ? signatures[role] : undefined;
-    const colors = role ? ROLE_COLOR_MAP[role] : null;
+    const colors    = role ? ROLE_COLOR_MAP[role] : null;
 
     if (signature) {
       return (
@@ -182,7 +180,8 @@ export function ContractDocument({
             </span>
           </div>
           <p className="text-[7px] font-semibold uppercase tracking-wider text-emerald-600 mt-px flex items-center gap-1">
-            {label} <span className="text-[5px] bg-emerald-100 text-emerald-600 px-1 py-px rounded font-bold">SIGNED</span>
+            {label}
+            <span className="text-[5px] bg-emerald-100 text-emerald-600 px-1 py-px rounded font-bold">SIGNED</span>
           </p>
         </div>
       );
@@ -200,7 +199,8 @@ export function ContractDocument({
             <span className={`text-[7px] font-semibold ${colors.text} uppercase tracking-wider`}>Click to sign</span>
           </button>
           <p className={`text-[7px] font-semibold uppercase tracking-wider ${colors.text} mt-px flex items-center gap-1`}>
-            {label} <span className={`text-[5px] ${colors.bg} ${colors.text} px-1 py-px rounded font-bold border ${colors.border}`}>YOUR TURN</span>
+            {label}
+            <span className={`text-[5px] ${colors.bg} ${colors.text} px-1 py-px rounded font-bold border ${colors.border}`}>YOUR TURN</span>
           </p>
         </div>
       );
@@ -226,7 +226,7 @@ export function ContractDocument({
       )}
 
       <div className="p-3">
-        {/* Header */}
+        {/* ── Document Header ── */}
         <div className="border-b-2 border-purple-700 pb-1.5 mb-2">
           <div className="flex justify-between items-end mb-1 border-b border-purple-100 pb-1">
             <div className="flex items-center gap-2">
@@ -243,31 +243,41 @@ export function ContractDocument({
               <div>Date: <span className="text-neutral-700 font-semibold">{refDate}</span></div>
             </div>
           </div>
+
+          {/* Title row with Frequency + Engagement Type badges */}
           <div className="flex justify-between items-center">
             <h2 className="text-[8px] font-semibold uppercase tracking-widest text-purple-800">
               Crew — Major Motion Picture — Individual Services Agreement
             </h2>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 items-center">
+              {/* Currency badge */}
               <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
-                <span className="border border-purple-700 text-purple-700 px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
-                  {freq}
+                <span className="border border-purple-300 text-purple-600 bg-purple-50 px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
+                  {data.currency || "GBP"}
                 </span>
               </ZoneHighlight>
+              {/* Frequency badge — Daily / Weekly */}
+              <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
+                <span className="border border-purple-700 text-purple-700 px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
+                  {freqLabel}
+                </span>
+              </ZoneHighlight>
+              {/* Engagement type badge — PAYE / LOAN OUT / SCHD / LONG FORM */}
               <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
                 <span className="bg-purple-700 text-white px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
-                  {getEngType()}
+                  {engLabel}
                 </span>
               </ZoneHighlight>
             </div>
           </div>
+
           <p className="mt-1 text-[8px] italic text-neutral-500">
             This Agreement is made with effect from between:
           </p>
         </div>
 
-        {/* Parties */}
+        {/* ── Parties ── */}
         <div className="grid grid-cols-2 gap-3 mb-2 text-[8px]">
-          {/* Producer — not highlighted */}
           <div>
             <p className="font-bold text-[9px] text-purple-900 mb-0.5">(1) MIRAGE PICTURES LIMITED</p>
             <p className="text-neutral-500 mb-1">(&ldquo;Producer&rdquo;)</p>
@@ -279,9 +289,10 @@ export function ContractDocument({
             </div>
           </div>
 
-          {/* Crew member — highlight on recipient fields */}
           <ZoneHighlight zoneId="recipient" activeZone={activeZone} label={activeLabel}>
-            <p className="font-bold text-[9px] text-purple-900 mb-0.5">(2) {data.fullName || "[CREW MEMBER]"}</p>
+            <p className="font-bold text-[9px] text-purple-900 mb-0.5">
+              (2) {data.fullName || "[CREW MEMBER]"}
+            </p>
             <p className="text-neutral-500 mb-1">(&ldquo;you&rdquo; / &ldquo;your&rdquo;)</p>
             <div className="grid grid-cols-[55px_1fr] gap-1">
               <span className="text-neutral-500 font-medium">Email:</span>
@@ -292,25 +303,26 @@ export function ContractDocument({
           </ZoneHighlight>
         </div>
 
-        {/* Deal Terms */}
+        {/* ── Deal Terms ── */}
         <div className="bg-purple-50/60 px-2 py-0.5 font-semibold text-[8px] uppercase text-purple-800 border-l-2 border-purple-600 tracking-wide mb-1.5">
           Deal Terms
         </div>
         <ZoneHighlight zoneId="dealTerms" activeZone={activeZone} label={activeLabel}>
           <div className="grid grid-cols-4 gap-x-3 gap-y-1 mb-2">
             <Cell label="Department" value={getDeptLabel(data.department)} />
-            <Cell label="Position" value={`${getJobTitle()}${data.jobTitleSuffix ? ` ${data.jobTitleSuffix}` : ""}`} />
+            <Cell label="Position"   value={`${getJobTitle()}${data.jobTitleSuffix ? ` ${data.jobTitleSuffix}` : ""}`} />
             <Cell label="Start Date" value={formatDate(data.startDate)} />
-            <Cell label="End Date" value={data.endDate ? formatDate(data.endDate) : "n/a"} />
+            <Cell label="End Date"   value={data.endDate ? formatDate(data.endDate) : "n/a"} />
           </div>
         </ZoneHighlight>
 
-        {/* Fee Structure */}
+        {/* ── Fee Structure ── */}
         <div className="bg-purple-50/60 px-2 py-0.5 font-semibold text-[8px] uppercase text-purple-800 border-l-2 border-purple-600 tracking-wide mb-1.5">
           Fee Structure
         </div>
         <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
           <div className="grid grid-cols-3 gap-1.5 mb-2 items-start">
+
             {/* Salary */}
             <div className="border border-purple-100 rounded-lg">
               <div className="bg-purple-700 px-2 py-0.5 rounded-t-lg">
@@ -318,10 +330,12 @@ export function ContractDocument({
               </div>
               <div className="px-1 py-0.5">
                 <div className="grid grid-cols-[1fr_50px_50px] text-[6px] font-semibold text-purple-500 uppercase tracking-wider border-b border-purple-50 pb-px mb-px">
-                  <span>Item</span><span className="text-right">Rate</span><span className="text-right">Gross</span>
+                  <span>Item</span>
+                  <span className="text-right">Rate</span>
+                  <span className="text-right">Gross</span>
                 </div>
-                {calculatedRates.salary.map((row, i) => (
-                  <div key={i} className={`grid grid-cols-[1fr_50px_50px] py-px text-[7px] ${i % 2 === 0 ? "" : "bg-purple-50/30"}`}>
+                {(calculatedRates?.salary || []).map((row, i) => (
+                  <div key={i} className={`grid grid-cols-[1fr_50px_50px] py-px text-[7px] ${i % 2 !== 0 ? "bg-purple-50/30" : ""}`}>
                     <span className="text-neutral-700">{row.item}</span>
                     <span className="text-right text-neutral-500 tabular-nums">{formatCurrency(row.rate, cs)}</span>
                     <span className="text-right text-purple-700 font-semibold tabular-nums">{formatCurrency(row.gross, cs)}</span>
@@ -337,10 +351,12 @@ export function ContractDocument({
               </div>
               <div className="px-1 py-0.5">
                 <div className="grid grid-cols-[1fr_50px_50px] text-[6px] font-semibold text-purple-500 uppercase tracking-wider border-b border-purple-50 pb-px mb-px">
-                  <span>Item</span><span className="text-right">Rate</span><span className="text-right">Gross</span>
+                  <span>Item</span>
+                  <span className="text-right">Rate</span>
+                  <span className="text-right">Gross</span>
                 </div>
-                {calculatedRates.overtime.map((row, i) => (
-                  <div key={i} className={`grid grid-cols-[1fr_50px_50px] py-px text-[7px] ${i % 2 === 0 ? "" : "bg-purple-50/30"}`}>
+                {(calculatedRates?.overtime || []).map((row, i) => (
+                  <div key={i} className={`grid grid-cols-[1fr_50px_50px] py-px text-[7px] ${i % 2 !== 0 ? "bg-purple-50/30" : ""}`}>
                     <span className="text-neutral-700">{row.item}</span>
                     <span className="text-right text-neutral-500 tabular-nums">{formatCurrency(row.rate, cs)}</span>
                     <span className="text-right text-blue-600 font-semibold tabular-nums">{formatCurrency(row.gross, cs)}</span>
@@ -356,13 +372,14 @@ export function ContractDocument({
               </div>
               <div className="px-1 py-0.5">
                 <div className="grid grid-cols-[1fr_60px] text-[6px] font-semibold text-purple-500 uppercase tracking-wider border-b border-purple-50 pb-px mb-px">
-                  <span>Item</span><span className="text-right">Rate / Cap</span>
+                  <span>Item</span>
+                  <span className="text-right">Rate / Cap</span>
                 </div>
                 {enabledAllowances.length > 0 ? (
                   enabledAllowances.map(({ key, label }, i) => {
                     const a = allowances[key];
                     return (
-                      <div key={key} className={`grid grid-cols-[1fr_60px] py-px text-[7px] ${i % 2 === 0 ? "" : "bg-purple-50/30"}`}>
+                      <div key={key} className={`grid grid-cols-[1fr_60px] py-px text-[7px] ${i % 2 !== 0 ? "bg-purple-50/30" : ""}`}>
                         <span className="text-neutral-700">{label}</span>
                         <span className="text-right text-teal-600 font-semibold tabular-nums">
                           {cs}{parseFloat(a.feePerWeek || "0").toFixed(2)}
@@ -378,12 +395,12 @@ export function ContractDocument({
           </div>
         </ZoneHighlight>
 
-        {/* Other Terms */}
+        {/* ── Other Terms ── */}
         <div className="text-[7.5px] space-y-1 mb-2">
           <div className="grid grid-cols-[80px_1fr] gap-1.5">
             <span className="font-semibold uppercase text-purple-800">Holiday:</span>
             <span className="text-neutral-600 leading-tight">
-              Paid holiday per year in accordance with the Regulations, pro-rated to the length of the term of Your services under this Agreement (Holiday uplift: {(engineSettings.holidayUplift * 100).toFixed(2)}%).
+              Paid holiday per year in accordance with the Regulations, pro-rated to the length of the term of Your services under this Agreement (Holiday uplift: {((engineSettings?.holidayUplift ?? 0) * 100).toFixed(2)}%).
             </span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-1.5">
@@ -398,12 +415,12 @@ export function ContractDocument({
           </div>
         </div>
 
-        {/* Note */}
+        {/* ── Immigration Note ── */}
         <div className="text-[7px] bg-amber-50/60 p-1.5 border-l-2 border-amber-400 mb-2 italic text-neutral-600 leading-tight rounded-r">
           <span className="font-semibold not-italic">Note:</span> The Immigration, Asylum and Nationality Act 2006 requires documentary evidence of eligibility to work in the United Kingdom. Please submit a copy of your passport to the production office.
         </div>
 
-        {/* Special Stipulations */}
+        {/* ── Special Stipulations ── */}
         {data.otherDealProvisions && (
           <>
             <div className="bg-purple-50/60 px-2 py-0.5 font-semibold text-[8px] uppercase text-purple-800 border-l-2 border-purple-600 tracking-wide mb-1">
@@ -415,7 +432,7 @@ export function ContractDocument({
           </>
         )}
 
-        {/* Agreement Text */}
+        {/* ── Agreement Text ── */}
         <div className="text-[7px] text-neutral-600 leading-snug bg-purple-50/20 p-1.5 border border-purple-100 rounded mb-2 text-justify">
           <p className="mb-1">
             Producer hereby agrees to engage You upon and subject to the terms and conditions of these Deal Terms, Special Stipulations (if any) and the attached Standard Terms and Conditions (together, the &ldquo;Agreement&rdquo;), in the Position set forth above in connection with the making of the motion picture provisionally entitled &ldquo;WERWULF&rdquo; (&ldquo;the Film&rdquo;) which Producer intends but does not undertake to make.
@@ -425,15 +442,17 @@ export function ContractDocument({
           </p>
         </div>
 
-        {/* Signature Block */}
+        {/* ── Signature Block ── */}
         <div className="border border-purple-200 rounded-lg p-2 bg-purple-50/30">
           <p className="text-center font-semibold text-[7px] uppercase mb-3 tracking-wide text-purple-800 leading-tight">
-            THIS NOTICE IS EFFECTIVE ONLY UPON SIGNATURE OF CREW MEMBER{data.isViaAgent ? " (OR AGENT)" : ""}, UNIT PRODUCTION MANAGER, FINANCIAL CONTROLLER AND THE APPROVED PRODUCTION EXECUTIVE
+            THIS NOTICE IS EFFECTIVE ONLY UPON SIGNATURE OF CREW MEMBER
+            {data.isViaAgent ? " (OR AGENT)" : ""},
+            UNIT PRODUCTION MANAGER, FINANCIAL CONTROLLER AND THE APPROVED PRODUCTION EXECUTIVE
           </p>
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             {(() => {
               const label = data.isViaAgent ? "AGENT ON BEHALF OF CREW" : "CREW MEMBER SIGNATURE";
-              const role = ROLE_LABEL_MAP["CREW MEMBER SIGNATURE"];
+              const role  = ROLE_LABEL_MAP["CREW MEMBER SIGNATURE"];
               return (
                 <div>
                   {renderSignatureBox(label, role)}
@@ -449,7 +468,7 @@ export function ContractDocument({
           </div>
         </div>
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div className="mt-2 pt-1.5 border-t border-neutral-200 flex justify-between text-[6px] text-neutral-400 font-mono">
           <span>REF: WERWULF-ISA-V1.0</span>
           <span>Page 1 of 1</span>
