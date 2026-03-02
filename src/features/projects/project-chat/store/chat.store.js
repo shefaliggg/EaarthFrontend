@@ -61,32 +61,55 @@ const useChatStore = create(
             conversationId,
             message,
           });
-          if (selectedChat.id === conversationId) {
-            socket.emit("message:delivered", {
-              messageId: message._id,
-            });
-            set({
-              typingUsers: {
-                ...get().typingUsers,
-                [conversationId]: (
-                  get().typingUsers[conversationId] || []
-                ).filter(
-                  (u) => u.userId !== message.senderId?._id || message.senderId, // <-- use senderId here
-                ),
-              },
-            });
-            get().addMessageToConversation(conversationId, message);
-          } else {
-            // dispatch(
-            //   addNotification({
-            //     id: message._id,
-            //     type: "CHAT",
-            //     title: message.senderName,
-            //     message: message.text,
-            //     conversationId,
-            //   }),
-            // );
-          }
+          socket.emit("message:delivered", {
+            messageId: message._id,
+          });
+          set({
+            typingUsers: {
+              ...get().typingUsers,
+              [conversationId]: (
+                get().typingUsers[conversationId] || []
+              ).filter(
+                (u) => u.userId !== message.senderId?._id || message.senderId, // <-- use senderId here
+              ),
+            },
+          });
+          get().addMessageToConversation(conversationId, message);
+          // dispatch(
+          //   addNotification({
+          //     id: message._id,
+          //     type: "CHAT",
+          //     title: message.senderName,
+          //     message: message.text,
+          //     conversationId,
+          //   }),
+          // );
+        });
+
+        socket.on("message:updated", ({ conversationId, message }) => {
+          console.log("🔄 Message updated:", message);
+
+          get().updateMessageInConversation(message._id, {
+            callInfo: message.content?.callInfo,
+            _raw: message,
+          });
+
+          // If this was last message → update sidebar preview
+          const preview =
+            message.content?.text ||
+            (message.type === "CALL"
+              ? `📞 ${
+                  message.content?.callInfo?.status === "MISSED"
+                    ? "Missed call"
+                    : "Call ended"
+                }`
+              : "");
+
+          get().updateConversationLastMessage(conversationId, {
+            content: { text: preview },
+            createdAt: message.updatedAt || new Date(),
+            senderId: message.senderId,
+          });
         });
 
         socket.on("message:edited", ({ messageId, text, editedAt }) => {
@@ -890,6 +913,7 @@ const useChatStore = create(
                 time: transformed.time,
                 timestamp: transformed.timestamp,
                 files: transformed.files,
+                callInfo: transformed.callInfo,
                 state: transformed.state,
                 readBy: transformed.readBy,
                 deliveredTo: transformed.deliveredTo,

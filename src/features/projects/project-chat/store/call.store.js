@@ -11,6 +11,7 @@ import {
 import { axiosConfig } from "../../../auth/config/axiosConfig";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import chatApi from "../api/chat.api";
+import { toast } from "sonner";
 
 // ─────────────────────────────────────────────────────────────
 // CALL STATES
@@ -48,6 +49,24 @@ const useCallStore = create(
       // ── INITIATE call (caller side) ──
       initiateCall: async (conversationId, callType = "VIDEO") => {
         set({ callState: "connecting", callType, conversationId });
+
+        const tempId = `temp-call-${crypto.randomUUID()}`;
+        const now = new Date();
+
+        // get().addMessageToConversation(conversationId, {
+        //   _id: tempId,
+        //   clientTempId: tempId,
+        //   type: "CALL",
+        //   senderId: currentUserId,
+        //   content: {
+        //     callInfo: {
+        //       type: callType,
+        //       status: "ONGOING",
+        //     },
+        //   },
+        //   createdAt: now,
+        // });
+
         try {
           const data = await chatApi.initiateCall(conversationId, callType);
           const { meeting, attendee } = data;
@@ -74,6 +93,44 @@ const useCallStore = create(
           set({ callState: "idle" });
           throw err;
         }
+      },
+
+      joinCallSafely: async (conversationId) => {
+        const state = get();
+
+        // 🚫 Already connected to THIS call
+        if (
+          state.callState === "connected" &&
+          state.conversationId === conversationId
+        ) {
+          toast.warning("You're already in this call");
+          return;
+        }
+
+        // 🚫 Prevent spam clicking
+        if (state.callState === "connecting") {
+          toast.info("Connecting to call...");
+          return;
+        }
+
+        // 🔄 Connected to another call
+        if (
+          state.callState === "connected" &&
+          state.conversationId !== conversationId
+        ) {
+          toast.info("Leaving current call...");
+          await state.leaveCall();
+        }
+
+        // 🚀 Join with promise toast
+        await toast.promise(state.joinCall(conversationId), {
+          loading: "Joining call...",
+          success: (data) => {
+            const callType = get().callType === "VIDEO" ? "Video" : "Audio";
+            return `${callType} call connected`;
+          },
+          error: "Failed to join call",
+        });
       },
 
       // ── DECLINE incoming call ──

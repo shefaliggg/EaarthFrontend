@@ -266,7 +266,7 @@ function MainContent({
     const allParticipants = [localUser, ...participants];
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 flex-1 overflow-auto">
+      <div className={cn("grid grid-cols-2 gap-4 p-4 flex-1 overflow-auto", getGridClass(allParticipants.length))}>
         {allParticipants.map((p) => (
           <AudioTile
             key={p.id}

@@ -287,7 +287,7 @@ export function transformMessage(
     type: msg.type?.toLowerCase() || "text",
 
     files: msg.content?.files || [],
-
+    callInfo : msg.content?.callInfo || {},
     isOwn,
 
     state: computeMessageState(msg, conversationMembersCount),
