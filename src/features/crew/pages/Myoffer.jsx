@@ -289,7 +289,7 @@ const handleView = (offerId) => {
   );
 
   return (
-    <div className="container mx-auto space-y-6 py-2">
+    <div className="space-y-6 py-2">
 
       {/* ── Page header ───────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
