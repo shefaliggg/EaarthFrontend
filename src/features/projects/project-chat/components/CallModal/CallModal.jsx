@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Users, Maximize2, Minimize2, Video, Phone } from "lucide-react";
+import {
+  Users,
+  Maximize2,
+  Minimize2,
+  Video,
+  Phone,
+  PhoneOff,
+  PhoneMissed,
+  PhoneCall,
+} from "lucide-react";
 import { Rnd } from "react-rnd";
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
@@ -17,21 +26,15 @@ function getGridClass(count) {
   return "grid-cols-5";
 }
 
-// Sizes for each draggable mode
 const MODE_SIZE = {
   compact: { width: 620, height: 520 },
   minimized: { width: 220, height: 100 },
 };
 
-// Calculate a safe centered/cornered default position for a given mode
 function getDefaultPosition(mode) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-
-  if (mode === "minimized") {
-    return { x: vw - 240, y: vh - 120 };
-  }
-  // compact — center
+  if (mode === "minimized") return { x: vw - 240, y: vh - 120 };
   const { width, height } = MODE_SIZE.compact;
   return {
     x: Math.max(0, (vw - width) / 2),
@@ -39,11 +42,44 @@ function getDefaultPosition(mode) {
   };
 }
 
+// ─── End reason config ───────────────────────────────────────────────────────
+const END_CONFIG = {
+  declined: {
+    icon: PhoneOff,
+    iconColor: "text-red-400",
+    bgColor: "bg-red-500/20",
+    title: "Call Declined",
+    subtitle: "The other person declined your call.",
+  },
+  missed: {
+    icon: PhoneMissed,
+    iconColor: "text-yellow-400",
+    bgColor: "bg-yellow-500/20",
+    title: "No Answer",
+    subtitle: "No one joined the call.",
+  },
+  ended: {
+    icon: PhoneOff,
+    iconColor: "text-zinc-400",
+    bgColor: "bg-zinc-700/40",
+    title: "Call Ended",
+    subtitle: "The call has ended.",
+  },
+  error: {
+    icon: PhoneOff,
+    iconColor: "text-red-400",
+    bgColor: "bg-red-500/20",
+    title: "Call Failed",
+    subtitle: "Something went wrong. Please try again.",
+  },
+};
+
 export default function CallModal() {
   const {
     viewMode,
     setViewMode,
     callState,
+    endReason,
     callType,
     localTileId,
     remoteTiles,
@@ -52,7 +88,6 @@ export default function CallModal() {
     participants,
   } = useCallStore();
 
-  // Per-mode position — keeps compact position while you minimise and come back
   const positionRef = useRef({
     compact: getDefaultPosition("compact"),
     minimized: getDefaultPosition("minimized"),
@@ -62,12 +97,13 @@ export default function CallModal() {
   const isFull = viewMode === "full";
   const isCompact = viewMode === "compact";
   const isMinimized = viewMode === "minimized";
+  const isEnding = callState === "ending";
 
   const screenShareTile = remoteTiles.find((t) => t.isContent);
   const cameraTiles = remoteTiles.filter((t) => !t.isContent);
   const gridClass = getGridClass(cameraTiles.length + 1);
 
-  // When the call first becomes connected, re-center the compact modal
+  // Re-center when call connects
   const prevCallState = useRef(null);
   useEffect(() => {
     if (prevCallState.current !== "connected" && callState === "connected") {
@@ -78,7 +114,6 @@ export default function CallModal() {
     prevCallState.current = callState;
   }, [callState]);
 
-  // Recalculate corner position for minimized on window resize
   useEffect(() => {
     const onResize = () => {
       positionRef.current.minimized = getDefaultPosition("minimized");
@@ -104,21 +139,19 @@ export default function CallModal() {
 
   const switchMode = useCallback(
     (mode) => {
-      // When switching TO minimized, snap to corner
-      if (mode === "minimized") {
+      if (mode === "minimized")
         positionRef.current.minimized = getDefaultPosition("minimized");
-      }
       setViewMode(mode);
     },
     [setViewMode],
   );
 
+  // Don't render at all when truly idle or just incoming (IncomingCallToast handles that)
   if (callState === "idle" || callState === "incoming") return null;
 
-  // ── Audio sink — rendered ONCE here, outside both branches ──
   const audioSink = <audio id="chime-audio-sink" style={{ display: "none" }} />;
 
-  // ── FULL SCREEN ──
+  // ── FULL SCREEN ──────────────────────────────────────────────────────────
   if (isFull) {
     return (
       <div className="fixed inset-0 z-[200] bg-zinc-950 flex flex-col">
@@ -131,48 +164,46 @@ export default function CallModal() {
           onCompact={() => switchMode("compact")}
           isFull
         />
-        <MainContent
-          callType={callType}
-          screenShareTile={screenShareTile}
-          cameraTiles={cameraTiles}
-          gridClass={gridClass}
-          localTileId={localTileId}
-          isVideoOff={isVideoOff}
-          participants={participants}
-          activeSpeakerId={activeSpeakerId}
-        />
-        <CallControls />
+        {isEnding ? (
+          <EndingOverlay reason={endReason} />
+        ) : (
+          <>
+            <MainContent
+              callType={callType}
+              screenShareTile={screenShareTile}
+              cameraTiles={cameraTiles}
+              gridClass={gridClass}
+              localTileId={localTileId}
+              isVideoOff={isVideoOff}
+              participants={participants}
+              activeSpeakerId={activeSpeakerId}
+            />
+            <CallControls />
+          </>
+        )}
       </div>
     );
   }
 
-  // ── DRAGGABLE MODES (compact | minimized) ──
-  //
-  // KEY FIX: wrap in a fixed full-viewport div with pointer-events-none.
-  // Rnd uses bounds="parent" so it's constrained to the real viewport — no
-  // virtual boundary bugs.  The inner modal div restores pointer-events.
+  // ── DRAGGABLE MODES ──────────────────────────────────────────────────────
   const currentMode = isMinimized ? "minimized" : "compact";
   const currentSize = MODE_SIZE[currentMode];
   const currentPos = positionRef.current[currentMode];
 
   return (
-    <div
-      className="fixed inset-0 z-[200] pointer-events-none overflow-hidden"
-      aria-label="call-bounds"
-    >
+    <div className="fixed inset-0 z-[200] pointer-events-none overflow-hidden">
       {audioSink}
       <Rnd
-        key={currentMode} // remount when mode changes — kills stale internal state
+        key={currentMode}
         size={currentSize}
         position={currentPos}
-        bounds="parent" // ← constrained to the fixed inset-0 div above
+        bounds="parent"
         minWidth={isMinimized ? 200 : 300}
         minHeight={isMinimized ? 80 : 300}
-        enableResizing={isCompact}
+        enableResizing={isCompact && !isEnding}
         dragHandleClassName="call-drag-handle"
         onDragStop={handleDragStop}
         onResizeStop={handleResizeStop}
-        // Rnd must be absolute inside our fixed parent — NOT itself fixed
         style={{ position: "absolute" }}
         className="pointer-events-auto"
       >
@@ -188,7 +219,19 @@ export default function CallModal() {
             isMinimized={isMinimized}
           />
 
-          {isCompact && (
+          {/* Ending state overrides the normal content */}
+          {isEnding && !isMinimized && <EndingOverlay reason={endReason} />}
+
+          {isEnding && isMinimized && (
+            <div className="flex items-center justify-center gap-2 flex-1 px-3">
+              <PhoneOff className="w-4 h-4 text-red-400" />
+              <span className="text-xs text-zinc-400">
+                {END_CONFIG[endReason]?.title ?? "Call ended"}
+              </span>
+            </div>
+          )}
+
+          {!isEnding && isCompact && (
             <>
               <MainContent
                 callType={callType}
@@ -205,7 +248,7 @@ export default function CallModal() {
             </>
           )}
 
-          {isMinimized && (
+          {!isEnding && isMinimized && (
             <MinimizedView
               count={participants.length + 1}
               onRestore={() => switchMode("compact")}
@@ -217,8 +260,74 @@ export default function CallModal() {
   );
 }
 
-/* ─────────────────────────────── COMPONENTS ─────────────────────────────── */
+/* ─────────────────────────────── ENDING OVERLAY ────────────────────────────
+   Animates in, holds, then the store auto-resets after 3.5s.
+   Uses a CSS keyframe via inline style so no Tailwind config needed.
+*/
+function EndingOverlay({ reason }) {
+  const config = END_CONFIG[reason] ?? END_CONFIG.ended;
+  const Icon = config.icon;
 
+  return (
+    <div
+      className="flex flex-col items-center justify-center flex-1 gap-5 bg-zinc-950"
+      style={{ animation: "fadeInUp 0.35s ease both" }}
+    >
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ripple {
+          0%   { transform: scale(1);   opacity: 0.6; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+      `}</style>
+
+      {/* Ripple icon */}
+      <div className="relative flex items-center justify-center">
+        {/* ripple rings */}
+        <span
+          className={cn("absolute rounded-full w-20 h-20", config.bgColor)}
+          style={{ animation: "ripple 1.4s ease-out infinite" }}
+        />
+        <span
+          className={cn("absolute rounded-full w-20 h-20", config.bgColor)}
+          style={{ animation: "ripple 1.4s ease-out 0.5s infinite" }}
+        />
+        <div
+          className={cn(
+            "relative w-16 h-16 rounded-full flex items-center justify-center",
+            config.bgColor,
+          )}
+        >
+          <Icon className={cn("w-7 h-7", config.iconColor)} />
+        </div>
+      </div>
+
+      <div className="text-center">
+        <p className="text-white font-semibold text-base">{config.title}</p>
+        <p className="text-zinc-400 text-sm mt-1">{config.subtitle}</p>
+      </div>
+
+      {/* Dismissing bar */}
+      <div className="w-32 h-0.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-zinc-500 rounded-full"
+          style={{ animation: "shrink 3.5s linear both" }}
+        />
+      </div>
+      <style>{`
+        @keyframes shrink {
+          from { width: 100%; }
+          to   { width: 0%; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── HEADER ────────────────────────────────── */
 function Header({
   callType,
   callState,
@@ -230,35 +339,51 @@ function Header({
   isMinimized,
   isFull,
 }) {
+  // "Live" only makes sense when at least one OTHER person has joined
+  const isLive = callState === "connected" && participants.length > 0;
+  const isEnding = callState === "ending";
+
   return (
-    // call-drag-handle is always on the header — dragging works from the header bar
     <div className="call-drag-handle flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/10 cursor-move select-none flex-shrink-0">
       <div className="flex items-center gap-2.5">
-        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        <span
+          className={cn(
+            "w-2 h-2 rounded-full",
+            isEnding ? "bg-red-400" : "bg-green-400 animate-pulse",
+          )}
+        />
         {callType === "VIDEO" ? (
           <Video className="size-4 text-white" />
         ) : (
           <Phone className="size-4 text-white" />
         )}
+
         {callState === "connecting" && (
           <span className="text-zinc-400 text-xs animate-pulse">
             Connecting…
           </span>
         )}
-        {callState === "connected" && !isMinimized && (
+        {/* Ringing = connected but alone — show "Ringing" not "Live" */}
+        {callState === "connected" &&
+          participants.length === 0 &&
+          !isMinimized && (
+            <span className="text-yellow-400 text-xs font-medium animate-pulse">
+              Ringing…
+            </span>
+          )}
+        {isLive && !isMinimized && (
           <span className="text-green-400 text-xs font-medium">Live</span>
         )}
       </div>
 
       <div className="flex items-center gap-2">
-        {!isMinimized && (
+        {!isMinimized && !isEnding && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-800 text-xs text-white">
             <Users size={12} />
             {participants.length + 1}
           </div>
         )}
 
-        {/* Full → go compact */}
         {isFull && (
           <Button
             variant="ghost"
@@ -270,21 +395,33 @@ function Header({
           </Button>
         )}
 
-        {/* Compact → minimize */}
-        {isCompact && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMinimize();
-            }}
-            className="bg-zinc-800 text-white h-7 w-7"
-          >
-            <Minimize2 size={14} />
-          </Button>
+        {isCompact && !isEnding && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onFull();
+              }}
+              className="bg-primary/20 text-white h-7 w-7"
+            >
+              <Maximize2 size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMinimize();
+              }}
+              className="bg-zinc-800 text-white h-7 w-7"
+            >
+              <Minimize2 size={14} />
+            </Button>
+          </>
         )}
-        {/* Minimized → expand to compact */}
+
         {isMinimized && (
           <Button
             variant="ghost"
@@ -298,26 +435,12 @@ function Header({
             <Maximize2 size={14} />
           </Button>
         )}
-
-        {/* Compact → go full */}
-        {isCompact && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onFull();
-            }}
-            className="bg-primary/20 text-white h-7 w-7"
-          >
-            <Maximize2 size={14} />
-          </Button>
-        )}
       </div>
     </div>
   );
 }
 
+/* ─────────────────────────────── MAIN CONTENT ───────────────────────────── */
 function MainContent({
   callType,
   screenShareTile,
@@ -334,7 +457,6 @@ function MainContent({
       { userId: "local", displayName: "You", isLocal: true },
       ...participants,
     ];
-
     return (
       <div
         className={cn(
@@ -373,7 +495,6 @@ function MainContent({
             />
           )}
         </div>
-
         {cameraTiles.length > 0 && (
           <div className="flex gap-2 overflow-x-auto flex-shrink-0 pb-1">
             {cameraTiles.slice(0, 6).map((tile) => (
@@ -399,7 +520,6 @@ function MainContent({
     );
   }
 
-  // Full grid
   return (
     <div className={cn("grid gap-2 p-4 flex-1 overflow-auto", gridClass)}>
       <LocalVideoTile
@@ -419,6 +539,7 @@ function MainContent({
   );
 }
 
+/* ─────────────────────────────── MINIMIZED ─────────────────────────────── */
 function MinimizedView({ count, onRestore }) {
   return (
     <div
@@ -434,6 +555,7 @@ function MinimizedView({ count, onRestore }) {
   );
 }
 
+/* ─────────────────────────────── AUDIO TILE ────────────────────────────── */
 function AudioTile({ name, isMuted, isActiveSpeaker, isLocal }) {
   return (
     <div

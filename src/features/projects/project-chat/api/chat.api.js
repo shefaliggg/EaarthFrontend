@@ -282,22 +282,23 @@ const chatApi = {
   },
 
   // Initiate call
-  initiateCall: async (conversationId, callType) => {
+  initiateCall: async ({ conversationId, callType, clientTempId }) => {
     try {
       console.log("📡 API: Intiating Call", {
         conversationId,
         callType,
+        clientTempId,
       });
 
       const response = await axiosConfig.post(
         `/chats/${conversationId}/call/initiate`,
-        { callType },
+        { callType, clientTempId },
       );
 
       console.log("✅ API: Call Initiated:", response.data);
       return response.data.data;
     } catch (error) {
-      toast.error("Failed to Initiate the Call.")
+      toast.error("Failed to Initiate the Call.");
       console.error(
         "❌ Initiate Call failed:",
         error.response?.data || error.message,

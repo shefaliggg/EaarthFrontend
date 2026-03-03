@@ -14,10 +14,13 @@ import { toast } from "sonner";
 import useChatStore from "./chat.store";
 import { getCurrentUserId } from "../../../../shared/config/utils";
 
+let endingTimer = null;
+
 const useCallStore = create(
   devtools(
     (set, get) => ({
       callState: "idle", // idle | incoming | connecting | connected
+      endReason: null,
       callType: null, // "VIDEO" | "AUDIO"
       conversationId: null,
       meetingSession: null,
@@ -43,6 +46,27 @@ const useCallStore = create(
         set({ incomingCall: data, callState: "incoming" }),
       clearIncomingCall: () => set({ incomingCall: null }),
 
+      enterEndingState: (reason = "ended") => {
+        const { meetingSession } = get();
+        try {
+          if (meetingSession) {
+            meetingSession.audioVideo.stopLocalVideoTile();
+            meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stop();
+          }
+        } catch (e) {
+          /* ignore */
+        }
+
+        set({ callState: "ending", endReason: reason, viewMode: "compact" });
+
+        if (endingTimer) clearTimeout(endingTimer);
+        endingTimer = setTimeout(() => {
+          get().resetCallState();
+          endingTimer = null;
+        }, 3500);
+      },
+
       initiateCall: async (conversationId, callType = "VIDEO") => {
         set({
           callState: "connecting",
@@ -51,8 +75,9 @@ const useCallStore = create(
           viewMode: "compact",
         });
 
-        const tempId = `temp-${conversationId}`;
         const currentUserId = getCurrentUserId();
+
+        const tempId = `temp-${crypto.randomUUID()}`;
 
         useChatStore.getState().addMessageToConversation(conversationId, {
           _id: tempId,
@@ -70,7 +95,7 @@ const useCallStore = create(
         });
 
         try {
-          const data = await chatApi.initiateCall(conversationId, callType);
+          const data = await chatApi.initiateCall({conversationId, callType,  clientTempId:tempId});
           await get().startSession(data.meeting, data.attendee, conversationId);
         } catch (err) {
           console.error("❌ initiateCall failed:", err);
@@ -133,14 +158,31 @@ const useCallStore = create(
         });
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // DECLINE INCOMING CALL
-      // ─────────────────────────────────────────────────────────────────────
-      declineCall: () => set({ incomingCall: null, callState: "idle" }),
+      declineCall: () => {
+        const { incomingCall } = get();
+        const socket = getChatSocket();
 
-      // ─────────────────────────────────────────────────────────────────────
-      // LEAVE CALL (this participant only)
-      // ─────────────────────────────────────────────────────────────────────
+        if (socket && incomingCall) {
+          const conversation = useChatStore
+            .getState()
+            .conversations.find((c) => c.id === incomingCall.conversationId);
+
+          const isDirect =
+            conversation?.type === "dm" ||
+            (Array.isArray(conversation?.members) &&
+              conversation.members.length <= 2);
+
+          if (isDirect) {
+            socket.emit("call:decline", {
+              conversationId: incomingCall.conversationId,
+              initiatorId: incomingCall.initiatorId,
+            });
+          }
+        }
+
+        set({ incomingCall: null, callState: "idle", endReason: null });
+      },
+
       leaveCall: async () => {
         const { conversationId, meetingSession } = get();
 
@@ -161,9 +203,6 @@ const useCallStore = create(
         get().resetCallState();
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // END CALL FOR EVERYONE
-      // ─────────────────────────────────────────────────────────────────────
       endCallForEveryone: async () => {
         const { conversationId, meetingSession } = get();
 
@@ -184,9 +223,6 @@ const useCallStore = create(
         get().resetCallState();
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // TOGGLE MUTE
-      // ─────────────────────────────────────────────────────────────────────
       toggleMute: () => {
         const { meetingSession, isAudioMuted } = get();
         if (!meetingSession) return;
@@ -199,9 +235,6 @@ const useCallStore = create(
         set({ isAudioMuted: !isAudioMuted });
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // TOGGLE VIDEO
-      // ─────────────────────────────────────────────────────────────────────
       toggleVideo: async () => {
         const { meetingSession, isVideoOff } = get();
         if (!meetingSession) return;
@@ -222,9 +255,6 @@ const useCallStore = create(
         set({ isVideoOff: !isVideoOff });
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // SCREEN SHARE
-      // ─────────────────────────────────────────────────────────────────────
       startScreenShare: async () => {
         const { meetingSession } = get();
         if (!meetingSession) return;
@@ -243,9 +273,6 @@ const useCallStore = create(
         set({ isSharingScreen: false });
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // INTERNAL: bootstrap Chime session
-      // ─────────────────────────────────────────────────────────────────────
       startSession: async (meeting, attendee, conversationId) => {
         const logger = new ConsoleLogger("ChimeSDK", LogLevel.WARN);
         const deviceController = new DefaultDeviceController(logger);
@@ -306,9 +333,6 @@ const useCallStore = create(
         });
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // INTERNAL: attach Chime observers
-      // ─────────────────────────────────────────────────────────────────────
       attachObservers: (meetingSession, conversationId) => {
         meetingSession.audioVideo.addObserver({
           videoTileDidUpdate: (tileState) => {
@@ -375,9 +399,6 @@ const useCallStore = create(
         );
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // INTERNAL: bind / unbind video tiles to DOM <video> elements
-      // ─────────────────────────────────────────────────────────────────────
       bindVideoTile: (tileId, videoElement) => {
         const { meetingSession } = get();
         if (!meetingSession || !videoElement) return;
@@ -394,9 +415,6 @@ const useCallStore = create(
         }
       },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // INTERNAL: full reset
-      // ─────────────────────────────────────────────────────────────────────
       resetCallState: () => {
         set({
           callState: "idle",
@@ -427,22 +445,53 @@ const useCallStore = create(
           get().setIncomingCall(data);
         });
 
-        socket.on("call:ended", ({ conversationId }) => {
+        socket.on("call:declined", ({ conversationId }) => {
           const state = get();
-          const isActiveCall =
+          if (
             state.conversationId === conversationId &&
-            state.callState !== "idle";
-          const isIncomingCall =
-            state.callState === "incoming" &&
-            state.incomingCall?.conversationId === conversationId;
-
-          if (isActiveCall || isIncomingCall) {
-            try {
-              state.meetingSession?.audioVideo.stop();
-            } catch (e) {}
-            get().resetCallState();
+            (state.callState === "connecting" ||
+              state.callState === "connected")
+          ) {
+            get().enterEndingState("declined");
           }
         });
+
+        socket.on(
+          "call:ended",
+          ({ conversationId, endedBy, status, reason }) => {
+            const state = get();
+            const currentUserId = getCurrentUserId();
+
+            const isActive =
+              state.conversationId === conversationId &&
+              state.callState !== "idle" &&
+              state.callState !== "ending";
+
+            const isPendingIncoming =
+              state.callState === "incoming" &&
+              state.incomingCall?.conversationId === conversationId;
+
+            if (!isActive && !isPendingIncoming) return;
+
+            if (isPendingIncoming) {
+              // Call was cancelled/timed-out before we answered — silent clear, no animation
+              get().resetCallState();
+              return;
+            }
+
+            let endReason;
+
+            if (status === "MISSED" || reason === "TIMEOUT") {
+              endReason = "missed";
+            } else if (status === "ENDED") {
+              endReason = "ended";
+            } else {
+              endReason = state.participants.length === 0 ? "missed" : "ended";
+            }
+
+            get().enterEndingState(endReason);
+          },
+        );
 
         socket.on("call:participant-joined", ({ userId, displayName }) => {
           set((state) => ({
