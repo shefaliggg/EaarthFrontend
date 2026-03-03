@@ -4,3 +4,6 @@ export * from "./project.slice";
 
 export { default as calendarReducer } from "./calendar.slice";
 export * from "./calendar.slice";
+
+export { default as tmoReducer } from "./tmo.slice";
+export * from "./tmo.slice";

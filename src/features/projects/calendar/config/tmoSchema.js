@@ -26,15 +26,17 @@ const accommodationDetailsSchema = z.object({
 
 export const tmoSchema = z.object({
   id: z.string().optional(),
-  tmoNumber: z.string().min(1, "TMO Number is required"),
+  
+  tmoNumber: z.string().optional(),
+  createdAt: z.string().optional(), 
+  
   name: z.string().min(1, "Traveler / Group Name is required"),
   department: z.string().optional(),
   status: z.enum(["DRAFT", "PENDING", "CONFIRMED", "CANCELLED"]),
-  createdAt: z.string().min(1, "Date is required"),
   
   contacts: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().optional(),
       role: z.string().min(1, "Role is required"),
       name: z.string().min(1, "Name is required"),
       phone: z.string().min(1, "Phone is required"),
@@ -43,7 +45,7 @@ export const tmoSchema = z.object({
 
   sections: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().optional(),
       type: z.enum(["travel", "accommodation"]),
       title: z.string().min(1, "Section Title is required"),
       travelDetails: travelDetailsSchema.optional(),

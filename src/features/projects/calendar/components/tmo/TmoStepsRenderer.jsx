@@ -18,10 +18,9 @@ function generateTimeOptions(step = 15) {
   const times = [];
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += step) {
-      const hour12 = h % 12 || 12;
-      const ampm = h < 12 ? "AM" : "PM";
+      const hours = h.toString().padStart(2, "0");
       const minutes = m.toString().padStart(2, "0");
-      times.push(`${hour12}:${minutes} ${ampm}`);
+      times.push(`${hours}:${minutes}`);
     }
   }
   return times;
@@ -44,13 +43,11 @@ export default function TmoStepsRenderer({
   const TIME_OPTIONS = useMemo(() => generateTimeOptions(15), []);
   const formErrors = form.formState.errors;
 
-  // Array for Flights & Hotels
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "sections",
   });
 
-  // Array for Contacts
   const { 
     fields: contactFields, 
     append: appendContact, 
@@ -97,6 +94,7 @@ export default function TmoStepsRenderer({
         name: file.name,
         type: file.type.includes("pdf") ? "pdf" : "other",
         size: `${(file.size / 1024).toFixed(1)} KB`,
+        file: file 
       };
       setAttachments([...attachments, newAttachment]);
     }
@@ -108,10 +106,9 @@ export default function TmoStepsRenderer({
       <div className="grid grid-cols-2 gap-4 border-b border-primary/20 pb-6">
         <div className="space-y-2">
           <Label>
-            TMO Number <span className="text-destructive">*</span>
+            TMO Number
           </Label>
-          <Input {...form.register("tmoNumber")} placeholder="#001" />
-          <ErrorMsg name="tmoNumber" errors={formErrors} />
+          <Input {...form.register("tmoNumber")} placeholder="Auto-generated on save" disabled className="bg-muted text-muted-foreground" />
         </div>
 
         <div className="space-y-2">
@@ -145,12 +142,6 @@ export default function TmoStepsRenderer({
         <div className="space-y-2">
           <Label>Department</Label>
           <Input {...form.register("department")} placeholder="e.g. Camera" />
-        </div>
-
-        <div className="space-y-2 col-span-2 md:col-span-1">
-          <Label>Creation Date</Label>
-          <Input type="date" {...form.register("createdAt")} />
-          <ErrorMsg name="createdAt" errors={formErrors} />
         </div>
       </div>
 

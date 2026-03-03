@@ -44,10 +44,11 @@ function ProjectCalendar() {
 
   const { currentUser: user } = useSelector((state) => state.user);
 
-  const canModify =
-    user &&
-    (user.userType === "studio_admin" ||
-      (user.userType === "crew" && user.accessPolicy === "no_contract"));
+  const canModify = user && (
+    user.role?.toLowerCase() === "production_admin" ||
+    user.activeAffiliation?.role?.toLowerCase() === "production_admin" ||
+    user.activeAffilitation?.role?.toLowerCase() === "production_admin"
+  );
 
   const handleDayClick = (date) => {
     if (canModify) {
@@ -59,6 +60,15 @@ function ProjectCalendar() {
   };
 
   const handleEventClick = (event) => {
+    const isTmoEvent = 
+      event.eventCategory?.toLowerCase() === "travel" || 
+      event.description?.includes("Auto-created from TMO");
+
+    if (isTmoEvent) {
+      toast.info("This is a Travel Order event. Edit it in the Tmo tab.");
+      return; 
+    }
+
     setSelectedEvent(event);
     setIsDetailsModalOpen(true);
   };

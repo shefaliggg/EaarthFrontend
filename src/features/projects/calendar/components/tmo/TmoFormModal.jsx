@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
 
 import { tmoSchema } from "../../config/tmoSchema";
 import { tmoFormConfig } from "../../config/tmoFormConfig";
 import TmoStepsRenderer from "./TmoStepsRenderer";
 
-export default function TmoFormModal({ isOpen, onClose, onSave, initialData }) {
+export default function TmoFormModal({ isOpen, onClose, onSave, initialData, isSaving }) {
   const [attachments, setAttachments] = useState([]);
 
   const defaultContacts = [
@@ -20,11 +21,9 @@ export default function TmoFormModal({ isOpen, onClose, onSave, initialData }) {
   const form = useForm({
     resolver: zodResolver(tmoSchema),
     defaultValues: {
-      tmoNumber: '#',
       name: '',
       department: '',
       status: 'DRAFT',
-      createdAt: new Date().toISOString().split('T')[0],
       sections: [],
       contacts: defaultContacts, 
     },
@@ -36,12 +35,9 @@ export default function TmoFormModal({ isOpen, onClose, onSave, initialData }) {
   useEffect(() => {
     if (isOpen) {
       form.reset(initialData || {
-        id: Math.random().toString(36).substr(2, 9),
-        tmoNumber: '#',
         name: '',
         department: '',
         status: 'DRAFT',
-        createdAt: new Date().toISOString().split('T')[0],
         sections: [],
         contacts: defaultContacts,
       });
@@ -53,8 +49,20 @@ export default function TmoFormModal({ isOpen, onClose, onSave, initialData }) {
   }, [isOpen, initialData, form]);
 
   const onSubmit = (data) => {
-    onSave({ ...data, attachments });
-    onClose();
+    const formattedSections = data.sections.map((section) => {
+      if (section.type === "travel" && section.travelDetails) {
+        const td = section.travelDetails;
+        if (td.date && td.departTime) {
+           td.startDateTime = new Date(`${td.date} ${td.departTime}`).toISOString();
+        }
+        if (td.date && td.arriveTime) {
+           td.endDateTime = new Date(`${td.date} ${td.arriveTime}`).toISOString();
+        }
+      }
+      return section;
+    });
+
+    onSave({ ...data, sections: formattedSections }, attachments);
   };
 
   return (
@@ -78,10 +86,11 @@ export default function TmoFormModal({ isOpen, onClose, onSave, initialData }) {
         </div>
 
         <div className="px-6 py-4 border-t border-border bg-background flex justify-end gap-3 shrink-0">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancel</Button>
           
-          <Button type="submit" form="tmo-form" disabled={!isValid}>
-            Save Document
+          <Button type="submit" form="tmo-form" disabled={!isValid || isSaving}>
+             {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+             {isSaving ? "Saving..." : "Save Document"}
           </Button>
         </div>
       </DialogContent>

@@ -64,14 +64,15 @@ function TmoSidebar({
           </div>
         ) : (
           <div className="p-3 space-y-2">
-            {filteredTmos.map((tmo) => {
-              const isSelected = selectedTmo?.id === tmo.id;
+            {filteredTmos.map((tmo, index) => {
+              const currentId = tmo._id || tmo.id || index;
+              const isSelected = selectedTmo?._id === currentId || selectedTmo?.id === currentId;
 
               return (
                 <div
-                  key={tmo.id}
+                  key={currentId}
                   onClick={() =>
-                    onSelectTmo(selectedTmo?.id === tmo.id ? null : tmo)
+                    onSelectTmo(isSelected ? null : tmo)
                   }
                   className={cn(
                     "p-4 rounded-xl border cursor-pointer transition-all duration-200",
@@ -83,10 +84,10 @@ function TmoSidebar({
                   {/* TMO number + date */}
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-mono text-[10px] font-bold text-primary/70 bg-primary/8 dark:bg-primary/15 px-2 py-0.5 rounded-md border border-primary/15 tracking-wide uppercase">
-                      {tmo.tmoNumber}
+                      {tmo.tmoCode || tmo.tmoNumber}
                     </span>
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tight">
-                      {tmo.createdAt}
+                      {new Date(tmo.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -155,7 +156,7 @@ function TmoSidebar({
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={(e) => onDeleteTmo(tmo.id, e)}
+                        onClick={(e) => onDeleteTmo(currentId, e)}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

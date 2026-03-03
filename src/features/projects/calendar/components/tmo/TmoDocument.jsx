@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import {
   Plane,
   User,
@@ -23,7 +23,6 @@ function SectionHeader({ icon: Icon, badge, label, accent }) {
         accent ? "bg-primary/5" : "bg-muted/40",
       )}
     >
-      {/* Icon */}
       <div
         className={cn(
           "w-6 h-6 rounded-lg flex items-center justify-center shrink-0",
@@ -125,6 +124,15 @@ export default function TmoDocument({ tmo }) {
     tmo.isGroup || /crew|team|unit|department/i.test(tmo.name || "");
   const NameIcon = isGroup ? Users : User;
 
+  const safeFormatDate = (dateVal, formatStr) => {
+    if (!dateVal) return "TBD";
+    try {
+      return format(new Date(dateVal), formatStr);
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
   return (
     <article
       className="bg-background text-foreground h-full"
@@ -152,12 +160,10 @@ export default function TmoDocument({ tmo }) {
               TMO Reference
             </p>
             <p className="text-[11px] font-mono font-bold text-foreground mt-0.5">
-              {tmo.tmoNumber || "TMO-XXXX"}
+              {tmo.tmoCode || tmo.tmoNumber || "TMO-XXXX"}
             </p>
             <p className="text-[9px] text-muted-foreground mt-0.5">
-              {tmo.createdAt
-                ? format(parseISO(tmo.createdAt), "dd MMM yyyy")
-                : "Date N/A"}
+              {safeFormatDate(tmo.createdAt, "dd MMM yyyy")}
             </p>
           </div>
         </div>
@@ -196,11 +202,11 @@ export default function TmoDocument({ tmo }) {
           </Grid2>
         </Card>
 
-        {tmo.sections?.map((section) => {
+        {tmo.sections?.map((section, index) => {
           if (section.type === "travel" && section.travelDetails) {
             const { travelDetails } = section;
             return (
-              <Card key={section.id}>
+              <Card key={section._id || section.id || index}>
                 <SectionHeader
                   icon={Plane}
                   badge="Flight"
@@ -210,14 +216,7 @@ export default function TmoDocument({ tmo }) {
                 <div className="p-5 border-b border-border grid grid-cols-2 gap-x-6 gap-y-4">
                   <Field
                     label="Travel Date"
-                    value={
-                      travelDetails.date
-                        ? format(
-                            parseISO(travelDetails.date),
-                            "EEEE, do MMMM yyyy",
-                          )
-                        : "TBD"
-                    }
+                    value={safeFormatDate(travelDetails.date, "EEEE, do MMMM yyyy")}
                     icon={Calendar}
                     wide
                   />
@@ -301,14 +300,13 @@ export default function TmoDocument({ tmo }) {
             );
           }
 
-          /* --- ACCOMMODATION --- */
           if (
             section.type === "accommodation" &&
             section.accommodationDetails
           ) {
             const { accommodationDetails: acc } = section;
             return (
-              <Card key={section.id}>
+              <Card key={section._id || section.id || index}>
                 <SectionHeader
                   icon={Building2}
                   badge="Hotel"
@@ -319,20 +317,12 @@ export default function TmoDocument({ tmo }) {
                 <Grid2 className="border-b border-border">
                   <Field
                     label="Check In"
-                    value={
-                      acc.startDate
-                        ? format(parseISO(acc.startDate), "EEE, do MMM yyyy")
-                        : "TBD"
-                    }
+                    value={safeFormatDate(acc.startDate, "EEE, do MMM yyyy")}
                     icon={Calendar}
                   />
                   <Field
                     label="Check Out"
-                    value={
-                      acc.endDate
-                        ? format(parseISO(acc.endDate), "EEE, do MMM yyyy")
-                        : "TBD"
-                    }
+                    value={safeFormatDate(acc.endDate, "EEE, do MMM yyyy")}
                     icon={Calendar}
                   />
                   <Field
@@ -394,13 +384,12 @@ export default function TmoDocument({ tmo }) {
           return null;
         })}
 
-        {/* 🚀 FIXED: Dynamic Contacts Array Rendering */}
         {tmo.contacts && tmo.contacts.length > 0 && (
           <Card>
             <SectionHeader icon={Phone} label="Travel Support Contacts" />
             <div className="p-5 grid grid-cols-2 gap-y-4 gap-x-6">
               {tmo.contacts.map((contact, i) => (
-                <div key={contact.id || i} className="flex items-start gap-3">
+                <div key={contact._id || contact.id || i} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 border border-primary/20">
                     <Phone className="w-4 h-4 text-primary" />
                   </div>
@@ -423,7 +412,7 @@ export default function TmoDocument({ tmo }) {
 
         <div className="text-center pt-2 pb-6">
           <p className="text-[8px] font-mono text-muted-foreground/40 uppercase tracking-widest">
-            Confidential · Travel Movement Order · {tmo.tmoNumber} · RAINBOW STUDIOS
+            Confidential · Travel Movement Order · {tmo.tmoCode || tmo.tmoNumber} · RAINBOW STUDIOS
           </p>
         </div>
       </div>
