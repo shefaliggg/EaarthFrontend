@@ -19,29 +19,23 @@ let endingTimer = null;
 const useCallStore = create(
   devtools(
     (set, get) => ({
-      callState: "idle", // idle | incoming | connecting | connected
+      callState: "idle", // idle | incoming | connecting | connected | ending
       endReason: null,
-      callType: null, // "VIDEO" | "AUDIO"
+      callType: null,
       conversationId: null,
       meetingSession: null,
-      incomingCall: null, // { conversationId, callType, meetingId, initiatorId, initiatorName }
-
-      viewMode: "compact", // "full" | "compact" | "minimized"
-
-      // ── Video tiles ──
+      incomingCall: null,
+      viewMode: "compact",
       localTileId: null,
-      remoteTiles: [], // [{ tileId, boundExternalUserId, isContent }]
-
-      // ── Controls ──
+      remoteTiles: [],
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
       activeSpeakerId: null,
-
-      participants: [], // [{ userId, displayName, isMuted, isVideoOff }]
+      participants: [],
+      hadParticipants: false, // [{ userId, displayName, isMuted, isVideoOff }]
 
       setViewMode: (mode) => set({ viewMode: mode }),
-
       setIncomingCall: (data) =>
         set({ incomingCall: data, callState: "incoming" }),
       clearIncomingCall: () => set({ incomingCall: null }),
@@ -448,6 +442,7 @@ const useCallStore = create(
           isSharingScreen: false,
           activeSpeakerId: null,
           participants: [],
+          hadParticipants: false,
           viewMode: "compact", // reset view mode for next call
         });
       },
@@ -525,6 +520,7 @@ const useCallStore = create(
                   isVideoOff: callType !== "VIDEO",
                 },
               ],
+              hadParticipants: true,
             }));
           },
         );
@@ -533,6 +529,15 @@ const useCallStore = create(
           set((state) => ({
             participants: state.participants.filter((p) => p.userId !== userId),
           }));
+
+          const updated = get();
+          if (
+            updated.callState === "connected" &&
+            updated.hadParticipants &&
+            updated.participants.length === 0
+          ) {
+            get().enterEndingState("ended");
+          }
         });
       },
     }),
