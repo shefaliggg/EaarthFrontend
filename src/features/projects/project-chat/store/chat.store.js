@@ -103,7 +103,7 @@ const useChatStore = create(
             conversationMembersCount: memberCount,
           });
 
-          get().updateMessageInConversation(transformed.id, transformed, transformed.clientTempId);
+          get().updateMessageInConversation(transformed.id, transformed);
 
           // 2️⃣ Update sidebar only if this is the latest message
           const existingMessages =
@@ -1007,30 +1007,16 @@ const useChatStore = create(
         set({ conversations });
       },
 
-      updateMessageInConversation: (
-        messageId,
-        updates,
-        clientTempId = null,
-      ) => {
+      updateMessageInConversation: (messageId, updates) => {
         const all = { ...get().messagesByConversation };
-
         Object.keys(all).forEach((convId) => {
           all[convId] = {
             ...all[convId],
-            messages: all[convId].messages.map((m) => {
-              const matchById = m.id === messageId;
-              const matchByTemp =
-                clientTempId && m.clientTempId === clientTempId;
-
-              if (matchById || matchByTemp) {
-                return { ...m, ...updates };
-              }
-
-              return m;
-            }),
+            messages: all[convId].messages.map((m) =>
+              m.id === messageId ? { ...m, ...updates } : m,
+            ),
           };
         });
-
         set({ messagesByConversation: all });
       },
 

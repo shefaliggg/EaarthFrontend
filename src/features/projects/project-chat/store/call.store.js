@@ -8,78 +8,70 @@ import {
   LogLevel,
   MeetingSessionConfiguration,
 } from "amazon-chime-sdk-js";
-import { axiosConfig } from "../../../auth/config/axiosConfig";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import chatApi from "../api/chat.api";
 import { toast } from "sonner";
 import useChatStore from "./chat.store";
 import { getCurrentUserId } from "../../../../shared/config/utils";
 
-// ─────────────────────────────────────────────────────────────
-// CALL STATES
-// "idle" | "incoming" | "connecting" | "connected" | "ended"
-// ─────────────────────────────────────────────────────────────
-
 const useCallStore = create(
   devtools(
     (set, get) => ({
-      // ── State ──
-      callState: "idle", // idle | incoming | connecting | connected | ended
+      callState: "idle", // idle | incoming | connecting | connected
       callType: null, // "VIDEO" | "AUDIO"
       conversationId: null,
       meetingSession: null,
       incomingCall: null, // { conversationId, callType, meetingId, initiatorId, initiatorName }
 
-      // Participant tiles
+      viewMode: "compact", // "full" | "compact" | "minimized"
+
+      // ── Video tiles ──
       localTileId: null,
       remoteTiles: [], // [{ tileId, boundExternalUserId, isContent }]
 
-      // Controls
+      // ── Controls ──
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
       activeSpeakerId: null,
 
-      // Participants list (for UI)
       participants: [], // [{ userId, displayName, isMuted, isVideoOff }]
 
-      // ── Incoming call from socket ──
+      setViewMode: (mode) => set({ viewMode: mode }),
+
       setIncomingCall: (data) =>
         set({ incomingCall: data, callState: "incoming" }),
       clearIncomingCall: () => set({ incomingCall: null }),
 
-      // ── INITIATE call (caller side) ──
       initiateCall: async (conversationId, callType = "VIDEO") => {
-        set({ callState: "connecting", callType, conversationId });
-
-        const tempId = `temp-${crypto.randomUUID()}`;
-        const now = new Date();
-        const currentUserId = getCurrentUserId()
-
-        const chatStore = useChatStore.getState();
-
-        chatStore.addMessageToConversation(
+        set({
+          callState: "connecting",
+          callType,
           conversationId,
-          {
-            _id: tempId,
-            clientTempId: tempId,
-            type: "CALL",
-            senderId: currentUserId,
-            content: {
-              callInfo: {
-                type: callType,
-                initiatorId : currentUserId,
-                status: "RINGING",
-              },
+          viewMode: "compact",
+        });
+
+        const tempId = `temp-${conversationId}`;
+        const currentUserId = getCurrentUserId();
+
+        useChatStore.getState().addMessageToConversation(conversationId, {
+          _id: tempId,
+          clientTempId: tempId,
+          type: "CALL",
+          senderId: currentUserId,
+          content: {
+            callInfo: {
+              type: callType,
+              initiatorId: currentUserId,
+              status: "RINGING",
             },
-            createdAt: now,
           },
-        );
+          createdAt: new Date(),
+        });
 
         try {
           const data = await chatApi.initiateCall(conversationId, callType);
-          const { meeting, attendee } = data;
-          await get().startSession(meeting, attendee, conversationId);
+          await get().startSession(data.meeting, data.attendee, conversationId);
         } catch (err) {
           console.error("❌ initiateCall failed:", err);
           set({ callState: "idle", callType: null, conversationId: null });
@@ -87,15 +79,13 @@ const useCallStore = create(
         }
       },
 
-      // ── JOIN call (callee side) ──
       joinCall: async (conversationId) => {
         set({ callState: "connecting", conversationId });
         try {
           const data = await chatApi.joinCall(conversationId);
-          const { meeting, attendee } = data;
           const callType = get().incomingCall?.callType || "VIDEO";
           set({ callType });
-          await get().startSession(meeting, attendee, conversationId);
+          await get().startSession(data.meeting, data.attendee, conversationId);
           get().clearIncomingCall();
         } catch (err) {
           console.error("❌ joinCall failed:", err);
@@ -107,54 +97,57 @@ const useCallStore = create(
       joinCallSafely: async (conversationId) => {
         const state = get();
 
-        // 🚫 Already connected to THIS call
+        // ✅ Already in THIS call — just bring the modal up
         if (
           state.callState === "connected" &&
           state.conversationId === conversationId
         ) {
-          toast.warning("You're already in this call");
+          set({ viewMode: "compact" });
           return;
         }
 
-        // 🚫 Prevent spam clicking
+        // 🚫 Prevent spam while connecting
         if (state.callState === "connecting") {
-          toast.info("Connecting to call...");
+          toast.info("Connecting to call…");
           return;
         }
 
-        // 🔄 Connected to another call
+        // 🔄 In a DIFFERENT call — leave it first
         if (
           state.callState === "connected" &&
           state.conversationId !== conversationId
         ) {
-          toast.info("Leaving current call...");
+          toast.info("Leaving current call…");
           await state.leaveCall();
         }
 
-        // 🚀 Join with promise toast
-        await toast.promise(state.joinCall(conversationId), {
-          loading: "Joining call...",
-          success: (data) => {
-            const callType = get().callType === "VIDEO" ? "Video" : "Audio";
-            return `${callType} call connected`;
+        // 🚀 Join
+        set({ viewMode: "compact" }); // ensure modal is visible before async work
+        await toast.promise(get().joinCall(conversationId), {
+          loading: "Joining call…",
+          success: () => {
+            const type = get().callType === "VIDEO" ? "Video" : "Audio";
+            return `${type} call connected`;
           },
           error: "Failed to join call",
         });
       },
 
-      // ── DECLINE incoming call ──
-      declineCall: () => {
-        set({ incomingCall: null, callState: "idle" });
-      },
+      // ─────────────────────────────────────────────────────────────────────
+      // DECLINE INCOMING CALL
+      // ─────────────────────────────────────────────────────────────────────
+      declineCall: () => set({ incomingCall: null, callState: "idle" }),
 
-      // ── LEAVE call (just this participant) ──
+      // ─────────────────────────────────────────────────────────────────────
+      // LEAVE CALL (this participant only)
+      // ─────────────────────────────────────────────────────────────────────
       leaveCall: async () => {
         const { conversationId, meetingSession } = get();
 
         try {
           if (meetingSession) {
-            await meetingSession.audioVideo.stopLocalVideoTile();
-            await meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stopLocalVideoTile();
+            meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();
           }
         } catch (e) {
@@ -168,13 +161,16 @@ const useCallStore = create(
         get().resetCallState();
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // END CALL FOR EVERYONE
+      // ─────────────────────────────────────────────────────────────────────
       endCallForEveryone: async () => {
         const { conversationId, meetingSession } = get();
 
         try {
           if (meetingSession) {
-            await meetingSession.audioVideo.stopLocalVideoTile();
-            await meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stopLocalVideoTile();
+            meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();
           }
         } catch (e) {
@@ -188,30 +184,34 @@ const useCallStore = create(
         get().resetCallState();
       },
 
-      // ── TOGGLE MUTE ──
-      toggleMute: async () => {
+      // ─────────────────────────────────────────────────────────────────────
+      // TOGGLE MUTE
+      // ─────────────────────────────────────────────────────────────────────
+      toggleMute: () => {
         const { meetingSession, isAudioMuted } = get();
         if (!meetingSession) return;
 
         if (isAudioMuted) {
-          await meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+          meetingSession.audioVideo.realtimeUnmuteLocalAudio();
         } else {
           meetingSession.audioVideo.realtimeMuteLocalAudio();
         }
         set({ isAudioMuted: !isAudioMuted });
       },
 
-      // ── TOGGLE VIDEO ──
+      // ─────────────────────────────────────────────────────────────────────
+      // TOGGLE VIDEO
+      // ─────────────────────────────────────────────────────────────────────
       toggleVideo: async () => {
         const { meetingSession, isVideoOff } = get();
         if (!meetingSession) return;
 
         if (isVideoOff) {
-          const videoInputDevices =
+          const devices =
             await meetingSession.audioVideo.listVideoInputDevices();
-          if (videoInputDevices.length > 0) {
+          if (devices.length > 0) {
             await meetingSession.audioVideo.startVideoInput(
-              videoInputDevices[0].deviceId,
+              devices[0].deviceId,
             );
           }
           meetingSession.audioVideo.startLocalVideoTile();
@@ -222,11 +222,12 @@ const useCallStore = create(
         set({ isVideoOff: !isVideoOff });
       },
 
-      // ── SCREEN SHARE ──
+      // ─────────────────────────────────────────────────────────────────────
+      // SCREEN SHARE
+      // ─────────────────────────────────────────────────────────────────────
       startScreenShare: async () => {
         const { meetingSession } = get();
         if (!meetingSession) return;
-
         try {
           await meetingSession.audioVideo.startContentShareFromScreenCapture();
           set({ isSharingScreen: true });
@@ -238,16 +239,16 @@ const useCallStore = create(
       stopScreenShare: async () => {
         const { meetingSession } = get();
         if (!meetingSession) return;
-
         await meetingSession.audioVideo.stopContentShare();
         set({ isSharingScreen: false });
       },
 
-      // ── INTERNAL: bootstrap Chime session ──
+      // ─────────────────────────────────────────────────────────────────────
+      // INTERNAL: bootstrap Chime session
+      // ─────────────────────────────────────────────────────────────────────
       startSession: async (meeting, attendee, conversationId) => {
         const logger = new ConsoleLogger("ChimeSDK", LogLevel.WARN);
         const deviceController = new DefaultDeviceController(logger);
-
         const configuration = new MeetingSessionConfiguration(
           meeting,
           attendee,
@@ -258,13 +259,17 @@ const useCallStore = create(
           deviceController,
         );
 
-        // ── Bind audio to a hidden <audio> element ──
+        // Bind audio output — the <audio> element is always rendered once in CallModal
         const audioEl = document.getElementById("chime-audio-sink");
         if (audioEl) {
           await meetingSession.audioVideo.bindAudioElement(audioEl);
+        } else {
+          console.warn(
+            "⚠️ chime-audio-sink element not found — remote audio may be silent",
+          );
         }
 
-        // ── Select default devices ──
+        // Mic input
         const audioInputDevices =
           await meetingSession.audioVideo.listAudioInputDevices();
         if (audioInputDevices.length > 0) {
@@ -273,6 +278,7 @@ const useCallStore = create(
           );
         }
 
+        // Camera input (VIDEO calls only)
         const callType = get().callType;
         if (callType === "VIDEO") {
           const videoInputDevices =
@@ -284,10 +290,7 @@ const useCallStore = create(
           }
         }
 
-        // ── Attach observers ──
         get().attachObservers(meetingSession, conversationId);
-
-        // ── Start the session ──
         meetingSession.audioVideo.start();
 
         if (callType === "VIDEO") {
@@ -303,8 +306,10 @@ const useCallStore = create(
         });
       },
 
+      // ─────────────────────────────────────────────────────────────────────
+      // INTERNAL: attach Chime observers
+      // ─────────────────────────────────────────────────────────────────────
       attachObservers: (meetingSession, conversationId) => {
-        // Video tile observers
         meetingSession.audioVideo.addObserver({
           videoTileDidUpdate: (tileState) => {
             if (!tileState.boundAttendeeId) return;
@@ -313,20 +318,21 @@ const useCallStore = create(
               set({ localTileId: tileState.tileId });
             } else {
               set((state) => {
-                const existing = state.remoteTiles.find(
+                // Update existing tile or add new one
+                const existingIdx = state.remoteTiles.findIndex(
                   (t) => t.tileId === tileState.tileId,
                 );
-                if (existing) return state;
-                return {
-                  remoteTiles: [
-                    ...state.remoteTiles,
-                    {
-                      tileId: tileState.tileId,
-                      boundExternalUserId: tileState.boundExternalUserId,
-                      isContent: tileState.isContent,
-                    },
-                  ],
+                const tile = {
+                  tileId: tileState.tileId,
+                  boundExternalUserId: tileState.boundExternalUserId,
+                  isContent: tileState.isContent,
                 };
+                if (existingIdx >= 0) {
+                  const updated = [...state.remoteTiles];
+                  updated[existingIdx] = tile;
+                  return { remoteTiles: updated };
+                }
+                return { remoteTiles: [...state.remoteTiles, tile] };
               });
             }
           },
@@ -344,38 +350,34 @@ const useCallStore = create(
             }
           },
 
-          // Session ended externally (host ended call)
           audioVideoDidStop: (sessionStatus) => {
-            console.log("Call stopped externally:", sessionStatus.statusCode());
+            console.log("Chime session stopped:", sessionStatus.statusCode());
             const { callState } = get();
             if (callState !== "idle") {
               get().resetCallState();
             }
           },
 
-          contentShareDidStart: () => {
-            set({ isSharingScreen: true });
-          },
-
-          contentShareDidStop: () => {
-            set({ isSharingScreen: false });
-          },
+          contentShareDidStart: () => set({ isSharingScreen: true }),
+          contentShareDidStop: () => set({ isSharingScreen: false }),
         });
 
-        // Active speaker
-        const activeSpeakerPolicy = new DefaultActiveSpeakerPolicy();
-
+        // Active speaker detector
         meetingSession.audioVideo.subscribeToActiveSpeakerDetector(
-          activeSpeakerPolicy,
+          new DefaultActiveSpeakerPolicy(),
           (activeSpeakers) => {
             if (activeSpeakers.length > 0) {
               set({ activeSpeakerId: activeSpeakers[0] });
+            } else {
+              set({ activeSpeakerId: null });
             }
           },
         );
       },
 
-      // ── INTERNAL: bind a video tile to a DOM element ──
+      // ─────────────────────────────────────────────────────────────────────
+      // INTERNAL: bind / unbind video tiles to DOM <video> elements
+      // ─────────────────────────────────────────────────────────────────────
       bindVideoTile: (tileId, videoElement) => {
         const { meetingSession } = get();
         if (!meetingSession || !videoElement) return;
@@ -385,10 +387,16 @@ const useCallStore = create(
       unbindVideoTile: (tileId) => {
         const { meetingSession } = get();
         if (!meetingSession) return;
-        meetingSession.audioVideo.unbindVideoElement(tileId);
+        try {
+          meetingSession.audioVideo.unbindVideoElement(tileId);
+        } catch (e) {
+          // tile may already be gone
+        }
       },
 
-      // ── INTERNAL: reset all call state ──
+      // ─────────────────────────────────────────────────────────────────────
+      // INTERNAL: full reset
+      // ─────────────────────────────────────────────────────────────────────
       resetCallState: () => {
         set({
           callState: "idle",
@@ -403,35 +411,35 @@ const useCallStore = create(
           isSharingScreen: false,
           activeSpeakerId: null,
           participants: [],
+          viewMode: "compact", // reset view mode for next call
         });
       },
 
-      // ── Socket listeners for call events ──
+      // ─────────────────────────────────────────────────────────────────────
+      // SOCKET LISTENERS
+      // ─────────────────────────────────────────────────────────────────────
       attachCallSocketListeners: () => {
         const socket = getChatSocket();
         if (!socket) return;
 
         socket.on("call:incoming", (data) => {
-          const { callState } = get();
-          if (callState !== "idle") return;
+          if (get().callState !== "idle") return;
           get().setIncomingCall(data);
         });
 
         socket.on("call:ended", ({ conversationId }) => {
-          console.log("Call ended:", conversationId);
-
           const state = get();
-
           const isActiveCall =
             state.conversationId === conversationId &&
             state.callState !== "idle";
-
           const isIncomingCall =
             state.callState === "incoming" &&
             state.incomingCall?.conversationId === conversationId;
 
           if (isActiveCall || isIncomingCall) {
-            state.meetingSession?.audioVideo.stop();
+            try {
+              state.meetingSession?.audioVideo.stop();
+            } catch (e) {}
             get().resetCallState();
           }
         });
