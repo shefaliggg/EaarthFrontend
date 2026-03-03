@@ -95,7 +95,11 @@ const useCallStore = create(
         });
 
         try {
-          const data = await chatApi.initiateCall({conversationId, callType,  clientTempId:tempId});
+          const data = await chatApi.initiateCall({
+            conversationId,
+            callType,
+            clientTempId: tempId,
+          });
           await get().startSession(data.meeting, data.attendee, conversationId);
         } catch (err) {
           console.error("❌ initiateCall failed:", err);
@@ -108,8 +112,22 @@ const useCallStore = create(
         set({ callState: "connecting", conversationId });
         try {
           const data = await chatApi.joinCall(conversationId);
-          const callType = get().incomingCall?.callType || "VIDEO";
+          const callType = data.callType || "AUDIO";
           set({ callType });
+
+          if (
+            Array.isArray(data.existingParticipants) &&
+            data.existingParticipants.length > 0
+          ) {
+            set({
+              participants: data.existingParticipants.map((p) => ({
+                userId: p.userId,
+                displayName: p.displayName,
+                isMuted: false,
+                isVideoOff: callType !== "VIDEO",
+              })),
+            });
+          }
           await get().startSession(data.meeting, data.attendee, conversationId);
           get().clearIncomingCall();
         } catch (err) {
@@ -418,6 +436,7 @@ const useCallStore = create(
       resetCallState: () => {
         set({
           callState: "idle",
+          endReason: null,
           callType: null,
           conversationId: null,
           meetingSession: null,
@@ -493,14 +512,22 @@ const useCallStore = create(
           },
         );
 
-        socket.on("call:participant-joined", ({ userId, displayName }) => {
-          set((state) => ({
-            participants: [
-              ...state.participants.filter((p) => p.userId !== userId),
-              { userId, displayName, isMuted: false, isVideoOff: false },
-            ],
-          }));
-        });
+        socket.on(
+          "call:participant-joined",
+          ({ userId, displayName, callType }) => {
+            set((state) => ({
+              participants: [
+                ...state.participants.filter((p) => p.userId !== userId),
+                {
+                  userId,
+                  displayName,
+                  isMuted: false,
+                  isVideoOff: callType !== "VIDEO",
+                },
+              ],
+            }));
+          },
+        );
 
         socket.on("call:participant-left", ({ userId }) => {
           set((state) => ({

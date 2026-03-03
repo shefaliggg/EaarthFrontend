@@ -1,33 +1,29 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
-  Users,
-  Maximize2,
-  Minimize2,
-  Video,
-  Phone,
-  PhoneOff,
-  PhoneMissed,
-  PhoneCall,
+  Users, Maximize2, Minimize2, Video, Phone,
+  PhoneOff, PhoneMissed, LayoutGrid, MonitorPlay,
 } from "lucide-react";
 import { Rnd } from "react-rnd";
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
-import { LocalVideoTile, VideoTile } from "./VideoTile";
+import { ParticipantTile } from "./VideoTile";
 import CallControls from "./CallControls";
 import { Button } from "../../../../../shared/components/ui/button";
 import { getAvatarFallback } from "../../../../../shared/config/utils";
+import { getCurrentUserId } from "../../../../../shared/config/utils";
 
+/* ─── Grid helpers ─────────────────────────────────────────────────────────── */
 function getGridClass(count) {
-  if (count <= 1) return "grid-cols-1";
-  if (count <= 2) return "grid-cols-2";
+  if (count === 1) return "grid-cols-1";
+  if (count === 2) return "grid-cols-2";
   if (count <= 4) return "grid-cols-2";
   if (count <= 9) return "grid-cols-3";
-  if (count <= 16) return "grid-cols-4";
-  return "grid-cols-5";
+  return "grid-cols-4";
 }
 
+/* ─── Draggable size / position helpers ────────────────────────────────────── */
 const MODE_SIZE = {
-  compact: { width: 620, height: 520 },
+  compact:   { width: 860, height: 560 },
   minimized: { width: 220, height: 100 },
 };
 
@@ -36,78 +32,138 @@ function getDefaultPosition(mode) {
   const vh = window.innerHeight;
   if (mode === "minimized") return { x: vw - 240, y: vh - 120 };
   const { width, height } = MODE_SIZE.compact;
-  return {
-    x: Math.max(0, (vw - width) / 2),
-    y: Math.max(0, (vh - height) / 2),
-  };
+  return { x: Math.max(0, (vw - width) / 2), y: Math.max(0, (vh - height) / 2) };
 }
 
-// ─── End reason config ───────────────────────────────────────────────────────
+/* ─── End-state config ──────────────────────────────────────────────────────── */
 const END_CONFIG = {
-  declined: {
-    icon: PhoneOff,
-    iconColor: "text-red-400",
-    bgColor: "bg-red-500/20",
-    title: "Call Declined",
-    subtitle: "The other person declined your call.",
-  },
-  missed: {
-    icon: PhoneMissed,
-    iconColor: "text-yellow-400",
-    bgColor: "bg-yellow-500/20",
-    title: "No Answer",
-    subtitle: "No one joined the call.",
-  },
-  ended: {
-    icon: PhoneOff,
-    iconColor: "text-zinc-400",
-    bgColor: "bg-zinc-700/40",
-    title: "Call Ended",
-    subtitle: "The call has ended.",
-  },
-  error: {
-    icon: PhoneOff,
-    iconColor: "text-red-400",
-    bgColor: "bg-red-500/20",
-    title: "Call Failed",
-    subtitle: "Something went wrong. Please try again.",
-  },
+  declined: { icon: PhoneOff,   iconColor: "text-red-400",    bg: "bg-red-500/20",    title: "Call Declined",  sub: "The other person declined your call." },
+  missed:   { icon: PhoneMissed,iconColor: "text-yellow-400", bg: "bg-yellow-500/20", title: "No Answer",      sub: "No one joined the call." },
+  ended:    { icon: PhoneOff,   iconColor: "text-zinc-400",   bg: "bg-zinc-700/40",   title: "Call Ended",     sub: "The call has ended." },
+  error:    { icon: PhoneOff,   iconColor: "text-red-400",    bg: "bg-red-500/20",    title: "Call Failed",    sub: "Something went wrong. Please try again." },
 };
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   CallModal
+═══════════════════════════════════════════════════════════════════════════ */
 export default function CallModal() {
   const {
-    viewMode,
-    setViewMode,
-    callState,
-    endReason,
+    viewMode, setViewMode,
+    callState, endReason,
     callType,
-    localTileId,
-    remoteTiles,
-    isVideoOff,
+    localTileId, remoteTiles,
+    isVideoOff, isAudioMuted,
     activeSpeakerId,
     participants,
   } = useCallStore();
 
+  const currentUserId = getCurrentUserId();
+
+  // ── Layout mode: "speaker" (default) or "grid" ──
+  const [layout, setLayout] = useState("speaker");
+  // ── Pinned tile: tileId or "local" ──
+  const [pinnedId, setPinnedId] = useState(null);
+
   const positionRef = useRef({
-    compact: getDefaultPosition("compact"),
+    compact:   getDefaultPosition("compact"),
     minimized: getDefaultPosition("minimized"),
   });
   const [, forceRender] = useState(0);
 
-  const isFull = viewMode === "full";
-  const isCompact = viewMode === "compact";
+  const isFull      = viewMode === "full";
+  const isCompact   = viewMode === "compact";
   const isMinimized = viewMode === "minimized";
-  const isEnding = callState === "ending";
+  const isEnding    = callState === "ending";
 
   const screenShareTile = remoteTiles.find((t) => t.isContent);
-  const cameraTiles = remoteTiles.filter((t) => !t.isContent);
-  const gridClass = getGridClass(cameraTiles.length + 1);
+  const cameraTiles     = remoteTiles.filter((t) => !t.isContent);
 
-  // Re-center when call connects
+  // Map tileId → participant info for display names
+  const participantByUserId = useMemo(() => {
+    const map = {};
+    participants.forEach((p) => { map[p.userId] = p; });
+    return map;
+  }, [participants]);
+
+  // Build unified participant list for grid / strip
+  // Each entry: { id, tileId, displayName, isLocal, isVideoOff, isMuted, isActiveSpeaker }
+  const allTiles = useMemo(() => {
+    const list = [];
+
+    // Local tile
+    list.push({
+      id: "local",
+      tileId: localTileId,
+      displayName: "You",
+      isLocal: true,
+      isVideoOff: isVideoOff || callType !== "VIDEO",
+      isMuted: isAudioMuted,
+      isActiveSpeaker: false,
+    });
+
+    // Remote camera tiles
+    cameraTiles.forEach((tile) => {
+      const p = participantByUserId[tile.boundExternalUserId];
+      list.push({
+        id: tile.tileId,
+        tileId: tile.tileId,
+        displayName: p?.displayName || "Participant",
+        isLocal: false,
+        isVideoOff: callType !== "VIDEO",
+        isMuted: p?.isMuted || false,
+        isActiveSpeaker: activeSpeakerId === tile.boundExternalUserId,
+      });
+    });
+
+    // Audio-only participants (in call but no video tile yet)
+    participants.forEach((p) => {
+      const hasTile = cameraTiles.some((t) => t.boundExternalUserId === p.userId);
+      if (!hasTile) {
+        list.push({
+          id: p.userId,
+          tileId: null,
+          displayName: p.displayName,
+          isLocal: false,
+          isVideoOff: true,
+          isMuted: p.isMuted || false,
+          isActiveSpeaker: activeSpeakerId === p.userId,
+        });
+      }
+    });
+
+    return list;
+  }, [localTileId, cameraTiles, participants, participantByUserId, isVideoOff, isAudioMuted, callType, activeSpeakerId]);
+
+  // Determine the active "speaker" tile for speaker view
+  const speakerTile = useMemo(() => {
+    if (pinnedId) return allTiles.find((t) => t.id === pinnedId) ?? allTiles[0];
+    // Prefer screen share
+    if (screenShareTile) return {
+      id: screenShareTile.tileId,
+      tileId: screenShareTile.tileId,
+      displayName: "Screen Share",
+      isContent: true,
+    };
+    // Prefer active speaker (not local)
+    const speaker = allTiles.find(
+      (t) => !t.isLocal && activeSpeakerId &&
+      (t.isActiveSpeaker || cameraTiles.some((c) => c.boundExternalUserId === activeSpeakerId && c.tileId === t.tileId)),
+    );
+    if (speaker) return speaker;
+    // First remote, else local
+    return allTiles.find((t) => !t.isLocal) ?? allTiles[0];
+  }, [allTiles, pinnedId, screenShareTile, activeSpeakerId, cameraTiles]);
+
+  const stripTiles = useMemo(
+    () => allTiles.filter((t) => t.id !== speakerTile?.id),
+    [allTiles, speakerTile],
+  );
+
+  // Re-centre when call connects
   const prevCallState = useRef(null);
   useEffect(() => {
     if (prevCallState.current !== "connected" && callState === "connected") {
-      positionRef.current.compact = getDefaultPosition("compact");
+      positionRef.current.compact   = getDefaultPosition("compact");
       positionRef.current.minimized = getDefaultPosition("minimized");
       forceRender((n) => n + 1);
     }
@@ -123,30 +179,22 @@ export default function CallModal() {
     return () => window.removeEventListener("resize", onResize);
   }, [isMinimized]);
 
-  const handleDragStop = useCallback(
-    (e, d) => {
-      const key = isMinimized ? "minimized" : "compact";
-      positionRef.current[key] = { x: d.x, y: d.y };
-      forceRender((n) => n + 1);
-    },
-    [isMinimized],
-  );
+  const handleDragStop    = useCallback((e, d) => {
+    const key = isMinimized ? "minimized" : "compact";
+    positionRef.current[key] = { x: d.x, y: d.y };
+    forceRender((n) => n + 1);
+  }, [isMinimized]);
 
-  const handleResizeStop = useCallback((e, dir, ref, delta, pos) => {
+  const handleResizeStop  = useCallback((e, dir, ref, delta, pos) => {
     positionRef.current.compact = pos;
     forceRender((n) => n + 1);
   }, []);
 
-  const switchMode = useCallback(
-    (mode) => {
-      if (mode === "minimized")
-        positionRef.current.minimized = getDefaultPosition("minimized");
-      setViewMode(mode);
-    },
-    [setViewMode],
-  );
+  const switchMode = useCallback((mode) => {
+    if (mode === "minimized") positionRef.current.minimized = getDefaultPosition("minimized");
+    setViewMode(mode);
+  }, [setViewMode]);
 
-  // Don't render at all when truly idle or just incoming (IncomingCallToast handles that)
   if (callState === "idle" || callState === "incoming") return null;
 
   const audioSink = <audio id="chime-audio-sink" style={{ display: "none" }} />;
@@ -156,10 +204,10 @@ export default function CallModal() {
     return (
       <div className="fixed inset-0 z-[200] bg-zinc-950 flex flex-col">
         {audioSink}
-        <Header
-          callType={callType}
-          callState={callState}
-          participants={participants}
+        <TopBar
+          callType={callType} callState={callState}
+          participantCount={allTiles.length}
+          layout={layout} onLayoutToggle={() => setLayout((l) => l === "speaker" ? "grid" : "speaker")}
           onMinimize={() => switchMode("minimized")}
           onCompact={() => switchMode("compact")}
           isFull
@@ -167,28 +215,26 @@ export default function CallModal() {
         {isEnding ? (
           <EndingOverlay reason={endReason} />
         ) : (
-          <>
-            <MainContent
-              callType={callType}
-              screenShareTile={screenShareTile}
-              cameraTiles={cameraTiles}
-              gridClass={gridClass}
-              localTileId={localTileId}
-              isVideoOff={isVideoOff}
-              participants={participants}
-              activeSpeakerId={activeSpeakerId}
-            />
-            <CallControls />
-          </>
+          <CallBody
+            layout={layout}
+            callType={callType}
+            allTiles={allTiles}
+            speakerTile={speakerTile}
+            stripTiles={stripTiles}
+            screenShareTile={screenShareTile}
+            pinnedId={pinnedId}
+            onPin={(id) => setPinnedId((prev) => prev === id ? null : id)}
+          />
         )}
+        {!isEnding && <CallControls />}
       </div>
     );
   }
 
-  // ── DRAGGABLE MODES ──────────────────────────────────────────────────────
+  // ── DRAGGABLE (compact / minimized) ─────────────────────────────────────
   const currentMode = isMinimized ? "minimized" : "compact";
   const currentSize = MODE_SIZE[currentMode];
-  const currentPos = positionRef.current[currentMode];
+  const currentPos  = positionRef.current[currentMode];
 
   return (
     <div className="fixed inset-0 z-[200] pointer-events-none overflow-hidden">
@@ -198,8 +244,8 @@ export default function CallModal() {
         size={currentSize}
         position={currentPos}
         bounds="parent"
-        minWidth={isMinimized ? 200 : 300}
-        minHeight={isMinimized ? 80 : 300}
+        minWidth={isMinimized ? 200 : 400}
+        minHeight={isMinimized ? 80 : 320}
         enableResizing={isCompact && !isEnding}
         dragHandleClassName="call-drag-handle"
         onDragStop={handleDragStop}
@@ -207,11 +253,11 @@ export default function CallModal() {
         style={{ position: "absolute" }}
         className="pointer-events-auto"
       >
-        <div className="bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-full">
-          <Header
-            callType={callType}
-            callState={callState}
-            participants={participants}
+        <div className="bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-800/60 overflow-hidden flex flex-col h-full">
+          <TopBar
+            callType={callType} callState={callState}
+            participantCount={allTiles.length}
+            layout={layout} onLayoutToggle={() => setLayout((l) => l === "speaker" ? "grid" : "speaker")}
             onFull={() => setViewMode("full")}
             onMinimize={() => switchMode("minimized")}
             onCompact={() => switchMode("compact")}
@@ -219,29 +265,26 @@ export default function CallModal() {
             isMinimized={isMinimized}
           />
 
-          {/* Ending state overrides the normal content */}
           {isEnding && !isMinimized && <EndingOverlay reason={endReason} />}
 
           {isEnding && isMinimized && (
             <div className="flex items-center justify-center gap-2 flex-1 px-3">
               <PhoneOff className="w-4 h-4 text-red-400" />
-              <span className="text-xs text-zinc-400">
-                {END_CONFIG[endReason]?.title ?? "Call ended"}
-              </span>
+              <span className="text-xs text-zinc-400">{END_CONFIG[endReason]?.title ?? "Call ended"}</span>
             </div>
           )}
 
           {!isEnding && isCompact && (
             <>
-              <MainContent
+              <CallBody
+                layout={layout}
                 callType={callType}
+                allTiles={allTiles}
+                speakerTile={speakerTile}
+                stripTiles={stripTiles}
                 screenShareTile={screenShareTile}
-                cameraTiles={cameraTiles}
-                gridClass={gridClass}
-                localTileId={localTileId}
-                isVideoOff={isVideoOff}
-                participants={participants}
-                activeSpeakerId={activeSpeakerId}
+                pinnedId={pinnedId}
+                onPin={(id) => setPinnedId((prev) => prev === id ? null : id)}
                 compact
               />
               <CallControls />
@@ -249,8 +292,8 @@ export default function CallModal() {
           )}
 
           {!isEnding && isMinimized && (
-            <MinimizedView
-              count={participants.length + 1}
+            <MinimizedPill
+              count={allTiles.length}
               onRestore={() => switchMode("compact")}
             />
           )}
@@ -260,13 +303,239 @@ export default function CallModal() {
   );
 }
 
-/* ─────────────────────────────── ENDING OVERLAY ────────────────────────────
-   Animates in, holds, then the store auto-resets after 3.5s.
-   Uses a CSS keyframe via inline style so no Tailwind config needed.
-*/
+/* ═══════════════════════════════════════════════════════════════════════════
+   CallBody — speaker view OR grid view
+═══════════════════════════════════════════════════════════════════════════ */
+function CallBody({ layout, callType, allTiles, speakerTile, stripTiles, screenShareTile, pinnedId, onPin, compact }) {
+
+  // Audio call: always grid
+  if (callType === "AUDIO") {
+    return (
+      <div className={cn(
+        "grid gap-3 p-3 flex-1 overflow-auto content-start",
+        getGridClass(allTiles.length),
+      )}>
+        {allTiles.map((tile) => (
+          <ParticipantTile
+            key={tile.id}
+            tileId={tile.tileId}
+            displayName={tile.displayName}
+            isLocal={tile.isLocal}
+            isVideoOff
+            isMuted={tile.isMuted}
+            isActiveSpeaker={tile.isActiveSpeaker}
+            className="aspect-square"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Grid layout
+  if (layout === "grid") {
+    return (
+      <div className={cn(
+        "grid gap-2 p-2 flex-1 overflow-auto content-start",
+        getGridClass(allTiles.length),
+      )}>
+        {allTiles.map((tile) => (
+          <ParticipantTile
+            key={tile.id}
+            tileId={tile.tileId}
+            displayName={tile.displayName}
+            isLocal={tile.isLocal}
+            isVideoOff={tile.isVideoOff}
+            isMuted={tile.isMuted}
+            isActiveSpeaker={tile.isActiveSpeaker}
+            className={cn("aspect-video cursor-pointer", pinnedId === tile.id && "ring-2 ring-primary")}
+            onClick={() => onPin(tile.id)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // ── Speaker layout ────────────────────────────────────────────────────
+  const singleParticipant = allTiles.length <= 1;
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0 p-2 gap-2">
+      {/* Main speaker area */}
+      <div className="flex-1 min-h-0 relative rounded-xl overflow-hidden">
+        {speakerTile && (
+          <ParticipantTile
+            tileId={speakerTile.tileId}
+            displayName={speakerTile.displayName}
+            isLocal={speakerTile.isLocal}
+            isVideoOff={speakerTile.isVideoOff}
+            isMuted={speakerTile.isMuted}
+            isActiveSpeaker={speakerTile.isActiveSpeaker}
+            isContent={speakerTile.isContent}
+            isMainView
+            className="w-full h-full"
+          />
+        )}
+
+        {/* Local PiP — bottom right corner — only in speaker mode and when local isn't the main view */}
+        {!singleParticipant && speakerTile?.id !== "local" && (
+          <div
+            className={cn(
+              "absolute bottom-3 right-3 cursor-pointer transition-transform hover:scale-105",
+              compact ? "w-28 h-20" : "w-36 h-24",
+            )}
+            onClick={() => onPin("local")}
+          >
+            <ParticipantTile
+              tileId={allTiles.find((t) => t.isLocal)?.tileId}
+              displayName="You"
+              isLocal
+              isVideoOff={allTiles.find((t) => t.isLocal)?.isVideoOff}
+              isMuted={allTiles.find((t) => t.isLocal)?.isMuted}
+              className="w-full h-full rounded-lg shadow-xl border border-zinc-700"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Strip — other participants */}
+      {stripTiles.length > 0 && !singleParticipant && (
+        <div className={cn(
+          "flex gap-2 overflow-x-auto flex-shrink-0 pb-0.5",
+          // hide the local pip tile from the strip when already shown as pip
+          speakerTile?.id !== "local" ? "pl-0" : "",
+        )}>
+          {stripTiles
+            .filter((t) => !(speakerTile?.id !== "local" && t.isLocal)) // hide local from strip when shown as PiP
+            .map((tile) => (
+              <button
+                key={tile.id}
+                onClick={() => onPin(tile.id)}
+                className={cn(
+                  "flex-shrink-0 rounded-lg overflow-hidden border transition-all",
+                  compact ? "w-28 h-20" : "w-36 h-24",
+                  pinnedId === tile.id
+                    ? "border-primary shadow-primary/30 shadow-md"
+                    : "border-zinc-700 hover:border-zinc-500",
+                )}
+              >
+                <ParticipantTile
+                  tileId={tile.tileId}
+                  displayName={tile.displayName}
+                  isLocal={tile.isLocal}
+                  isVideoOff={tile.isVideoOff}
+                  isMuted={tile.isMuted}
+                  isActiveSpeaker={tile.isActiveSpeaker}
+                  className="w-full h-full"
+                />
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TopBar
+═══════════════════════════════════════════════════════════════════════════ */
+function TopBar({
+  callType, callState, participantCount,
+  layout, onLayoutToggle,
+  onFull, onMinimize, onCompact,
+  isFull, isCompact, isMinimized,
+}) {
+  const isEnding    = callState === "ending";
+  const isConnected = callState === "connected";
+  const isLive      = isConnected && participantCount > 1;
+
+  return (
+    <div className="call-drag-handle flex items-center justify-between px-3 py-2 bg-zinc-950 border-b border-zinc-800/80 cursor-move select-none flex-shrink-0">
+      {/* Left: indicator + type + status */}
+      <div className="flex items-center gap-2.5">
+        <span className={cn(
+          "w-2 h-2 rounded-full flex-shrink-0",
+          isEnding    ? "bg-red-400" :
+          isLive      ? "bg-green-400 animate-pulse" :
+          isConnected ? "bg-yellow-400 animate-pulse" :
+                        "bg-zinc-500 animate-pulse",
+        )} />
+
+        {callType === "VIDEO"
+          ? <Video className="w-3.5 h-3.5 text-zinc-300" />
+          : <Phone className="w-3.5 h-3.5 text-zinc-300" />}
+
+        <span className={cn(
+          "text-xs font-medium",
+          isEnding    ? "text-red-400" :
+          isLive      ? "text-green-400" :
+          isConnected ? "text-yellow-400" :
+                        "text-zinc-400 animate-pulse",
+        )}>
+          {isEnding    ? "Ending…"     :
+           isLive      ? "Live"        :
+           isConnected ? "Ringing…"   :
+                         "Connecting…"}
+        </span>
+      </div>
+
+      {/* Right: controls */}
+      <div className="flex items-center gap-1.5">
+        {!isMinimized && !isEnding && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-xs text-zinc-300">
+            <Users className="w-3 h-3" />
+            {participantCount}
+          </div>
+        )}
+
+        {/* Layout toggle — only when video and not ending */}
+        {!isMinimized && !isEnding && callType === "VIDEO" && (
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onLayoutToggle(); }}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
+            title={layout === "speaker" ? "Grid view" : "Speaker view"}>
+            <LayoutGrid className="w-3.5 h-3.5" />
+          </Button>
+        )}
+
+        {isFull && (
+          <Button variant="ghost" size="icon" onClick={onCompact}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7">
+            <Minimize2 className="w-3.5 h-3.5" />
+          </Button>
+        )}
+
+        {isCompact && !isEnding && (
+          <>
+            <Button variant="ghost" size="icon"
+              onClick={(e) => { e.stopPropagation(); onFull(); }}
+              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7">
+              <Maximize2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon"
+              onClick={(e) => { e.stopPropagation(); onMinimize(); }}
+              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7">
+              <Minimize2 className="w-3.5 h-3.5" />
+            </Button>
+          </>
+        )}
+
+        {isMinimized && (
+          <Button variant="ghost" size="icon"
+            onClick={(e) => { e.stopPropagation(); onCompact(); }}
+            className="bg-primary/20 text-white h-7 w-7">
+            <Maximize2 className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EndingOverlay
+═══════════════════════════════════════════════════════════════════════════ */
 function EndingOverlay({ reason }) {
-  const config = END_CONFIG[reason] ?? END_CONFIG.ended;
-  const Icon = config.icon;
+  const cfg  = END_CONFIG[reason] ?? END_CONFIG.ended;
+  const Icon = cfg.icon;
 
   return (
     <div
@@ -274,303 +543,43 @@ function EndingOverlay({ reason }) {
       style={{ animation: "fadeInUp 0.35s ease both" }}
     >
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes ripple {
-          0%   { transform: scale(1);   opacity: 0.6; }
-          100% { transform: scale(2.4); opacity: 0; }
-        }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes ripple   { 0% { transform:scale(1); opacity:.6 } 100% { transform:scale(2.4); opacity:0 } }
+        @keyframes shrink   { from { width:100% } to { width:0% } }
       `}</style>
 
-      {/* Ripple icon */}
       <div className="relative flex items-center justify-center">
-        {/* ripple rings */}
-        <span
-          className={cn("absolute rounded-full w-20 h-20", config.bgColor)}
-          style={{ animation: "ripple 1.4s ease-out infinite" }}
-        />
-        <span
-          className={cn("absolute rounded-full w-20 h-20", config.bgColor)}
-          style={{ animation: "ripple 1.4s ease-out 0.5s infinite" }}
-        />
-        <div
-          className={cn(
-            "relative w-16 h-16 rounded-full flex items-center justify-center",
-            config.bgColor,
-          )}
-        >
-          <Icon className={cn("w-7 h-7", config.iconColor)} />
+        <span className={cn("absolute rounded-full w-20 h-20", cfg.bg)} style={{ animation: "ripple 1.4s ease-out infinite" }} />
+        <span className={cn("absolute rounded-full w-20 h-20", cfg.bg)} style={{ animation: "ripple 1.4s ease-out 0.5s infinite" }} />
+        <div className={cn("relative w-16 h-16 rounded-full flex items-center justify-center", cfg.bg)}>
+          <Icon className={cn("w-7 h-7", cfg.iconColor)} />
         </div>
       </div>
 
       <div className="text-center">
-        <p className="text-white font-semibold text-base">{config.title}</p>
-        <p className="text-zinc-400 text-sm mt-1">{config.subtitle}</p>
+        <p className="text-white font-semibold text-base">{cfg.title}</p>
+        <p className="text-zinc-400 text-sm mt-1">{cfg.sub}</p>
       </div>
 
-      {/* Dismissing bar */}
       <div className="w-32 h-0.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-zinc-500 rounded-full"
-          style={{ animation: "shrink 3.5s linear both" }}
-        />
-      </div>
-      <style>{`
-        @keyframes shrink {
-          from { width: 100%; }
-          to   { width: 0%; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-/* ─────────────────────────────── HEADER ────────────────────────────────── */
-function Header({
-  callType,
-  callState,
-  participants,
-  onFull,
-  onMinimize,
-  onCompact,
-  isCompact,
-  isMinimized,
-  isFull,
-}) {
-  // "Live" only makes sense when at least one OTHER person has joined
-  const isLive = callState === "connected" && participants.length > 0;
-  const isEnding = callState === "ending";
-
-  return (
-    <div className="call-drag-handle flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/10 cursor-move select-none flex-shrink-0">
-      <div className="flex items-center gap-2.5">
-        <span
-          className={cn(
-            "w-2 h-2 rounded-full",
-            isEnding ? "bg-red-400" : "bg-green-400 animate-pulse",
-          )}
-        />
-        {callType === "VIDEO" ? (
-          <Video className="size-4 text-white" />
-        ) : (
-          <Phone className="size-4 text-white" />
-        )}
-
-        {callState === "connecting" && (
-          <span className="text-zinc-400 text-xs animate-pulse">
-            Connecting…
-          </span>
-        )}
-        {/* Ringing = connected but alone — show "Ringing" not "Live" */}
-        {callState === "connected" &&
-          participants.length === 0 &&
-          !isMinimized && (
-            <span className="text-yellow-400 text-xs font-medium animate-pulse">
-              Ringing…
-            </span>
-          )}
-        {isLive && !isMinimized && (
-          <span className="text-green-400 text-xs font-medium">Live</span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2">
-        {!isMinimized && !isEnding && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-800 text-xs text-white">
-            <Users size={12} />
-            {participants.length + 1}
-          </div>
-        )}
-
-        {isFull && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCompact}
-            className="bg-primary/20 text-white h-7 w-7"
-          >
-            <Minimize2 size={14} />
-          </Button>
-        )}
-
-        {isCompact && !isEnding && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onFull();
-              }}
-              className="bg-primary/20 text-white h-7 w-7"
-            >
-              <Maximize2 size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMinimize();
-              }}
-              className="bg-zinc-800 text-white h-7 w-7"
-            >
-              <Minimize2 size={14} />
-            </Button>
-          </>
-        )}
-
-        {isMinimized && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCompact();
-            }}
-            className="bg-primary/20 text-white h-7 w-7"
-          >
-            <Maximize2 size={14} />
-          </Button>
-        )}
+        <div className="h-full bg-zinc-500 rounded-full" style={{ animation: "shrink 3.5s linear both" }} />
       </div>
     </div>
   );
 }
 
-/* ─────────────────────────────── MAIN CONTENT ───────────────────────────── */
-function MainContent({
-  callType,
-  screenShareTile,
-  cameraTiles,
-  gridClass,
-  localTileId,
-  isVideoOff,
-  participants,
-  activeSpeakerId,
-  compact,
-}) {
-  if (callType === "AUDIO") {
-    const allParticipants = [
-      { userId: "local", displayName: "You", isLocal: true },
-      ...participants,
-    ];
-    return (
-      <div
-        className={cn(
-          "grid gap-4 p-4 flex-1 overflow-auto",
-          getGridClass(allParticipants.length),
-        )}
-      >
-        {allParticipants.map((p) => (
-          <AudioTile
-            key={p.userId}
-            name={p.displayName}
-            isMuted={p.isMuted}
-            isLocal={p.isLocal}
-            isActiveSpeaker={activeSpeakerId === p.userId}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (compact) {
-    return (
-      <div className="flex flex-col flex-1 p-2 gap-2 min-h-0">
-        <div className="flex-1 rounded-xl overflow-hidden bg-zinc-900 min-h-0">
-          {screenShareTile ? (
-            <VideoTile
-              tileId={screenShareTile.tileId}
-              isContent
-              className="w-full h-full"
-            />
-          ) : (
-            <LocalVideoTile
-              tileId={localTileId}
-              isVideoOff={isVideoOff}
-              className="w-full h-full"
-            />
-          )}
-        </div>
-        {cameraTiles.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto flex-shrink-0 pb-1">
-            {cameraTiles.slice(0, 6).map((tile) => (
-              <div
-                key={tile.tileId}
-                className="w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0"
-              >
-                <VideoTile
-                  tileId={tile.tileId}
-                  isActiveSpeaker={activeSpeakerId === tile.boundExternalUserId}
-                  className="w-full h-full"
-                />
-              </div>
-            ))}
-            {cameraTiles.length > 6 && (
-              <div className="w-24 aspect-video rounded-lg bg-zinc-800 flex items-center justify-center text-white text-sm flex-shrink-0">
-                +{cameraTiles.length - 6}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   MinimizedPill
+═══════════════════════════════════════════════════════════════════════════ */
+function MinimizedPill({ count, onRestore }) {
   return (
-    <div className={cn("grid gap-2 p-4 flex-1 overflow-auto", gridClass)}>
-      <LocalVideoTile
-        tileId={localTileId}
-        isVideoOff={isVideoOff}
-        className="aspect-video"
-      />
-      {cameraTiles.map((tile) => (
-        <VideoTile
-          key={tile.tileId}
-          tileId={tile.tileId}
-          isActiveSpeaker={activeSpeakerId === tile.boundExternalUserId}
-          className="aspect-video"
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────────────── MINIMIZED ─────────────────────────────── */
-function MinimizedView({ count, onRestore }) {
-  return (
-    <div
-      onClick={onRestore}
-      className="flex items-center justify-center gap-3 flex-1 text-white cursor-pointer px-3"
-    >
+    <div onClick={onRestore}
+      className="flex items-center justify-center gap-3 flex-1 text-white cursor-pointer px-3">
       <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-sm font-semibold text-green-400">
         {count}
       </div>
       <span className="text-xs text-zinc-400">Tap to expand</span>
       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse ml-auto" />
-    </div>
-  );
-}
-
-/* ─────────────────────────────── AUDIO TILE ────────────────────────────── */
-function AudioTile({ name, isMuted, isActiveSpeaker, isLocal }) {
-  return (
-    <div
-      className={cn(
-        "aspect-square rounded-2xl bg-zinc-900 flex flex-col items-center justify-center relative transition-all duration-300",
-        isActiveSpeaker && "ring-2 ring-green-400 shadow-lg",
-      )}
-    >
-      <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-xl font-semibold text-white">
-        {getAvatarFallback(name)}
-      </div>
-      <span className="mt-3 text-sm text-white">{isLocal ? "You" : name}</span>
-      {isMuted && (
-        <span className="absolute bottom-3 text-xs text-red-400">Muted</span>
-      )}
     </div>
   );
 }
