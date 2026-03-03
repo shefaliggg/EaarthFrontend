@@ -6,10 +6,12 @@ import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
 import {
   computeMessageState,
+  generateConversationLastMessagePreview,
   transformConversation,
   transformMessage,
 } from "../utils/messageHelpers";
 import { toast } from "sonner";
+import useCallStore from "./call.store";
 
 export const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -74,7 +76,53 @@ const useChatStore = create(
             },
           });
           get().addMessageToConversation(conversationId, message);
-          get().updateConversationLastMessage(conversationId, message);
+          // dispatch(
+          //   addNotification({
+          //     id: message._id,
+          //     type: "CHAT",
+          //     title: message.senderName,
+          //     message: message.text,
+          //     conversationId,
+          //   }),
+          // );
+        });
+
+        socket.on("message:updated", ({ conversationId, message }) => {
+          console.log("🔄 Message updated:", message);
+
+          const currentUserId = getCurrentUserId();
+
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members?.length || 2;
+
+          const transformed = transformMessage(message, {
+            currentUserId,
+            conversationMembersCount: memberCount,
+          });
+
+          get().updateMessageInConversation(transformed.id, transformed);
+
+          // 2️⃣ Update sidebar only if this is the latest message
+          const existingMessages =
+            get().messagesByConversation[conversationId]?.messages || [];
+
+          const lastMessage = existingMessages[existingMessages.length - 1];
+
+          if (lastMessage?.id === transformed.id) {
+            const preview = generateConversationLastMessagePreview(message);
+            if (!preview) return;
+
+            get().updateConversationLastMessage(conversationId, {
+              content: {
+                text: preview,
+              },
+              createdAt: message.updatedAt || message.createdAt,
+              senderId: { _id: message.senderId?._id || message.senderId },
+            });
+          }
         });
 
         socket.on("message:edited", ({ messageId, text, editedAt }) => {
@@ -185,7 +233,9 @@ const useChatStore = create(
           set({ onlineUsers: onlineSet });
         });
 
-        console.log("✅ Chat socket listeners attached");
+        useCallStore.getState().attachCallSocketListeners();
+
+        console.log("✅ Chat + Call socket listeners attached");
       },
 
       getGroupOnlineCount: (group) => {
@@ -876,6 +926,7 @@ const useChatStore = create(
                 time: transformed.time,
                 timestamp: transformed.timestamp,
                 files: transformed.files,
+                callInfo: transformed.callInfo,
                 state: transformed.state,
                 readBy: transformed.readBy,
                 deliveredTo: transformed.deliveredTo,
@@ -899,7 +950,14 @@ const useChatStore = create(
           }
 
           // Prevent duplicate
-          if (updatedMessages.some((m) => m.id === transformed.id)) {
+          if (
+            updatedMessages.some(
+              (m) =>
+                m.id === transformed.id ||
+                (transformed.clientTempId &&
+                  m.clientTempId === transformed.clientTempId),
+            )
+          ) {
             return state;
           }
 

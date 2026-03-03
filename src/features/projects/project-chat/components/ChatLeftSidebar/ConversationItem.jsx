@@ -4,7 +4,6 @@ import { Badge } from "@/shared/components/ui/badge";
 import { convertToPrettyText } from "../../../../../shared/config/utils";
 import useChatStore from "../../store/chat.store";
 
-// Icon mapping for departments
 const DEPARTMENT_ICONS = {
   Production: Briefcase,
   Camera: Briefcase,
@@ -41,13 +40,18 @@ export default function ConversationItem({
   onClick,
   onContextMenu,
 }) {
-  const { onlineUsers } = useChatStore();
+  const { onlineUsers, typingUsers } = useChatStore();
   const Icon = item.icon || DEPARTMENT_ICONS[item.departmentName] || Briefcase;
   const isGroup = type === "group" || type === "all";
 
   const isOnline = item?.userId && onlineUsers.has(item.userId);
 
-  // console.log("NAME TYPE:", item.name, typeof item.name);
+  const currentTypingUsers = typingUsers[item.id] || [];
+  const isTyping = currentTypingUsers.length > 0;
+
+  const maxVisible = 3;
+  const visibleUsers = currentTypingUsers.slice(0, maxVisible);
+  const extraCount = currentTypingUsers.length - maxVisible;
 
   return (
     <button
@@ -110,14 +114,26 @@ export default function ConversationItem({
                 <VolumeX className="w-3 h-3 text-muted-foreground flex-shrink-0" />
               )}
               <p className="text-xs text-muted-foreground truncate">
-                {!isGroup && item.unread > 0 && (
-                  <span className="text-foreground font-medium">
-                    {item.lastMessage.substring(0, 20)}
-                    {item.lastMessage.length > 20 && "..."}
+                {isTyping ? (
+                  <span className="text-primary italic">
+                    {isGroup
+                      ? `${currentTypingUsers[0]?.name || "Someone"} typing...`
+                      : "Typing..."}
                   </span>
+                ) : (
+                  <>
+                    {!isGroup && item.unread > 0 && (
+                      <span className="text-primary font-medium">
+                        {item.lastMessage.substring(0, 20)}
+                        {item.lastMessage.length > 20 && "..."}
+                      </span>
+                    )}
+
+                    {!isGroup && item.unread === 0 && item.lastMessage}
+
+                    {isGroup && item.lastMessage}
+                  </>
                 )}
-                {!isGroup && item.unread === 0 && item.lastMessage}
-                {isGroup && item.lastMessage}
               </p>
             </div>
 

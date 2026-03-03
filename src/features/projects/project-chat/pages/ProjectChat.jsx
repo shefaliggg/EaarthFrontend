@@ -24,11 +24,6 @@ function ProjectChat() {
     attachSocketListeners,
   } = useChatStore();
 
-  // Attach socket listeners once
-  useEffect(() => {
-    attachSocketListeners();
-  }, []);
-
   // Load conversations when project changes
   useEffect(() => {
     if (currentProject?._id && currentUser?._id) {
@@ -42,7 +37,7 @@ function ProjectChat() {
   };
 
   return (
-    <div className="space-y-6 container mx-auto">
+    <div className="space-y-6 mx-auto">
       <PageHeader icon="MessageSquare" title="Project Chat" />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

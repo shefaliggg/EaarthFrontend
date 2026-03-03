@@ -30,8 +30,6 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
   const projectId = DEFAULT_PROJECT_ID;
 
-  console.log("conversations", conversations)
-
   const filteredConversations = conversations.filter((conv) => {
     if (!conv.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;

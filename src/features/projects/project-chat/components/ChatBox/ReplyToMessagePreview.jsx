@@ -11,6 +11,8 @@ import {
 export default function ReplyToMessagePreview({ replyTo, onClose }) {
   if (!replyTo) return null;
 
+  console.log("reply data", replyTo)
+
   const isMedia = replyTo.type?.toLowerCase() === "media";
   const files = replyTo.files || [];
   const visibleFiles = files.slice(0, 5);
@@ -89,7 +91,7 @@ export default function ReplyToMessagePreview({ replyTo, onClose }) {
         {/* ================= TEXT MESSAGE ================= */}
         {!isMedia && (
           <div className="text-xs text-muted-foreground truncate">
-            {replyTo.preview}
+            {replyTo.content}
           </div>
         )}
 

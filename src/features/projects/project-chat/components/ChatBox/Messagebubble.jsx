@@ -24,6 +24,8 @@ import {
   Mic,
   Edit2,
   Pin,
+  Video,
+  Phone,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -38,6 +40,8 @@ import { toast } from "sonner";
 import { formatDuration, getReadByCount } from "../../utils/messageHelpers";
 import { getCurrentUserId } from "../../../../../shared/config/utils";
 import { Button } from "../../../../../shared/components/ui/button";
+import CallMessagePreview from "./CallMessagePreview";
+import useCallStore from "../../store/call.store";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -87,6 +91,7 @@ export default function MessageBubble({
     togglePinMessage,
     toggleFavoriteMessage,
   } = useChatStore();
+  const { joinCallSafely } = useCallStore();
 
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -338,6 +343,16 @@ export default function MessageBubble({
                   </p>
                 )}
 
+                {message?.type === "call" && (
+                  <CallMessagePreview
+                    callInfo={message.callInfo}
+                    currentUserId={getCurrentUserId()}
+                    // conversationCall={conversation?.call}
+                    onJoin={() => joinCallSafely(selectedChatId)}
+                    isOwn={isOwn}
+                  />
+                )}
+
                 {attachments.length > 0 && (
                   <div className={cn(attachmentLayoutClass, "gap-1.5")}>
                     {attachments.map((file, index) => {
@@ -413,9 +428,7 @@ export default function MessageBubble({
                         (edited)
                       </span>
                     )}
-                    {isFavorited && (
-                      <Star fill="yellow" className="w-3 h-3"/>
-                    )}
+                    {isFavorited && <Star fill="yellow" className="w-3 h-3" />}
                     <span className="text-[10px] text-primary-foreground/70">
                       {message.time}
                     </span>

@@ -7,6 +7,7 @@ import {
 import { userReducer } from "../features/auth/store";
 import offerReducer from "../features/crew/store/offer.slice";
 import viewRoleReducer from "../features/crew/store/viewrole.slice";
+import { notificationReducer } from "../features/notifications/store";
 
 export const store = configureStore({
   reducer: {
@@ -19,5 +20,6 @@ export const store = configureStore({
     },
     offers: offerReducer, // key MUST be "offers" — selectors rely on state.offers
     viewRole: viewRoleReducer,
+    notification: notificationReducer,
   },
 });

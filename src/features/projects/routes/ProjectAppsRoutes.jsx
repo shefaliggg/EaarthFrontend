@@ -19,31 +19,31 @@ const ProjectChat         = lazy(() => import('../project-chat/pages/ProjectChat
 const NotFound            = lazy(() => import('@/shared/pages/NotFound'));
 
 const ProjectAppsRoutes = {
-  path: "",
-  children: [
-    // ── Offers list ──────────────────────────────────────────────────────────
-    { path: 'offers',              element: <MyOffer /> },
-
-    // ── Create offer ─────────────────────────────────────────────────────────
-    { path: 'offers/create',       element: <CreateOffer /> },
-    { path: 'create/offers',       element: <CreateOfferDialog /> },
-    { path: 'offers/create/bulk',  element: <BulkOfferCreate /> },
-
-    // ── VIEW OFFER — single unified page for all roles ────────────────────────
-    // Production Admin uses this to track status & take actions
-    // Crew uses this to accept / request changes
-    { path: 'offers/:id/view',              element: <ViewOffer /> },
-    { path: 'offers/:id/review',            element: <ViewOffer /> },
-    { path: 'offers/:id/production-check',  element: <ViewOffer /> },
-    { path: 'offers/:id/accounts-check',    element: <ViewOffer /> },
-
-    // ── Signing ───────────────────────────────────────────────────────────────
-    { path: 'offers/:id/sign',     element: <ContractDocument /> },
-    { path: 'offers/:id/contract', element: <ContractDocumentPage /> },
-
-    // ── Edit ─────────────────────────────────────────────────────────────────
-    { path: 'offers/:id/edit',     element: <EditOffer /> },
-    { path: 'edit',                element: <EditOffer /> },
+    path: "",
+    children: [
+         { path: 'offers', element: <MyOffer /> },
+        { path: 'offers/:id/view', element: <ViewOffer /> },
+        { path: 'offers/create', element: <CreateOffer /> },
+        { path: 'create/offers', element: <CreateOfferDialog /> },
+        { path: 'offers/create/bulk', element: <BulkOfferCreate /> },
+        // { path: 'offers/:id/review', element: <ViewOffer /> },
+        { path: 'offers/:id/sign', element: <ContractDocument /> },
+        { path: 'offers/:id/production-check', element: <ViewOffer /> },
+        { path: 'offers/:id/accounts-check', element: <ViewOffer /> },
+        
+        { path: 'offers/:id/review', element: <CrewReview /> },
+        { path: 'offers/:id/production-check', element: <CrewReview /> },
+        { path: 'offers/:id/accounts-check', element: <CrewReview /> },
+        
+        // Legacy routes (keep for backwards compatibility)
+        { path: 'viewoffers', element: <ViewOffer /> },
+  
+        { path: 'contracts', element: <Contracts /> },
+        { path: 'contractdoc', element: <ContractDocument /> }, 
+        { path: 'offers/:id/sign', element: <ContractDocumentPage /> },
+        { path: 'offers/:id/contract', element: <ContractDocumentPage /> },
+        { path: 'edit', element: <EditOffer /> },
+        { path: 'offers/:id/edit', element: <EditOffer /> },
 
     // ── Other pages ───────────────────────────────────────────────────────────
     { path: 'contracts',           element: <Contracts /> },
