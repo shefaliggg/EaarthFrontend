@@ -1,64 +1,145 @@
 /**
  * SignDialog.jsx
  *
- * Modal that wraps SignaturePad.
- * Used by all role action components that need to collect a signature.
+ * A signature canvas modal used by Crew, UPM, FC, and Studio.
+ * Uses react-signature-canvas (install: yarn add react-signature-canvas).
  *
- * Usage:
- *   <SignDialog
- *     open={showSign}
- *     onOpenChange={setShowSign}
- *     roleName="UPM"
- *     offerCode="OFR-0001"
- *     onSign={async (dataUrl) => { ... dispatch ... }}
- *     isSubmitting={isSubmitting}
- *   />
+ * Props:
+ *   open          — boolean
+ *   onOpenChange  — (open: boolean) => void
+ *   roleName      — display string e.g. "Crew Member", "UPM"
+ *   offerCode     — shown in the modal header
+ *   onSign        — async (base64DataUrl: string) => void
+ *   isSubmitting  — boolean
  *
- * Place at: src/features/crew/components/SignaturePad/SignDialog.jsx
+ * Place at:
+ *   src/features/offers/components/SignaturePad/SignDialog.jsx
  */
 
+import { useRef, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader,
+  DialogTitle, DialogDescription,
 } from "../../../../shared/components/ui/dialog";
-import SignaturePad from "./SignaturePad";
-import { PenTool } from "lucide-react";
+import { Button } from "../../../../shared/components/ui/button";
+import { PenTool, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
 
 export default function SignDialog({
   open,
   onOpenChange,
-  roleName,
-  offerCode,
+  roleName     = "Signatory",
+  offerCode    = "",
   onSign,
   isSubmitting = false,
 }) {
-  const handleSave = async (dataUrl) => {
+  const sigRef  = useRef(null);
+  const [empty, setEmpty] = useState(true);
+  const [done,  setDone]  = useState(false);
+
+  const handleClear = () => {
+    sigRef.current?.clear();
+    setEmpty(true);
+    setDone(false);
+  };
+
+  const handleStroke = () => setEmpty(false);
+
+  const handleConfirm = async () => {
+    if (!sigRef.current || sigRef.current.isEmpty()) return;
+    const dataUrl = sigRef.current.toDataURL("image/png");
     await onSign(dataUrl);
-    onOpenChange(false);
+    setDone(true);
+    setTimeout(() => {
+      onOpenChange(false);
+      setEmpty(true);
+      setDone(false);
+    }, 900);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <PenTool className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+      <DialogContent className="max-w-md p-0 overflow-hidden">
+
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center">
+              <PenTool className="w-3.5 h-3.5 text-white" />
             </div>
-            <DialogTitle>Sign as {roleName}</DialogTitle>
+            <div>
+              <DialogTitle className="text-sm font-semibold leading-tight">
+                Sign as {roleName}
+              </DialogTitle>
+              {offerCode && (
+                <DialogDescription className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                  {offerCode}
+                </DialogDescription>
+              )}
+            </div>
           </div>
-          <DialogDescription>
-            {offerCode && (
-              <span className="font-mono text-xs text-muted-foreground">{offerCode} · </span>
-            )}
-            Draw your signature below. This is a legally binding signature.
-          </DialogDescription>
         </DialogHeader>
 
-        <SignaturePad
-          onSave={handleSave}
-          onCancel={() => onOpenChange(false)}
-          disabled={isSubmitting}
-        />
+        <div className="px-5 py-4 space-y-3">
+
+          {/* Notice */}
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800 leading-snug">
+            By signing below you confirm you have read and agree to all terms in this agreement.
+            This signature is legally binding.
+          </div>
+
+          {/* Canvas */}
+          <div className="relative rounded-lg border-2 border-dashed border-purple-300 bg-purple-50/40 overflow-hidden">
+            <SignatureCanvas
+              ref={sigRef}
+              canvasProps={{
+                width:     396,
+                height:    130,
+                className: "block w-full",
+                style:     { touchAction: "none" },
+              }}
+              penColor="#1e1b4b"
+              onEnd={handleStroke}
+            />
+            {empty && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-xs text-purple-400 font-medium select-none">
+                  Sign here ↓
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClear}
+              disabled={isSubmitting || empty}
+              className="gap-1.5 border-border text-muted-foreground"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Clear
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={handleConfirm}
+              disabled={isSubmitting || empty || done}
+              className="flex-1 gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {done ? (
+                <><CheckCircle2 className="w-3.5 h-3.5" /> Signed!</>
+              ) : isSubmitting ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
+              ) : (
+                <><PenTool className="w-3.5 h-3.5" /> Confirm Signature</>
+              )}
+            </Button>
+          </div>
+
+        </div>
       </DialogContent>
     </Dialog>
   );

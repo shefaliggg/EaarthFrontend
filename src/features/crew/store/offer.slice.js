@@ -1,7 +1,3 @@
-/**
- * offer.slice.js  (UPDATED)
- */
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as offerApi from "../api/offer.api";
 
@@ -11,8 +7,6 @@ const normalizeError = (e) => ({
   code:    e.response?.data?.code    || "UNKNOWN_ERROR",
   status:  e.response?.status,
 });
-
-// ─── THUNKS ───────────────────────────────────────────────────────────────────
 
 export const createOfferThunk = createAsyncThunk("offers/create",
   async (payload, { rejectWithValue }) => {
@@ -56,7 +50,6 @@ export const deleteOfferThunk = createAsyncThunk("offers/delete",
   }
 );
 
-// Workflow
 export const sendToCrewThunk = createAsyncThunk("offers/sendToCrew",
   async (offerId, { rejectWithValue }) => {
     try { return await offerApi.sendToCrew(offerId); }
@@ -113,38 +106,36 @@ export const moveToPendingCrewSignatureThunk = createAsyncThunk("offers/pendingC
   }
 );
 
-// Signing
-export const crewSignThunk = createAsyncThunk("offers/crewSign",
-  async ({ offerId, signature }, { rejectWithValue }) => {
-    try { return await offerApi.crewSign(offerId, signature); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
+const makeSignThunk = (name, apiFn) =>
+  createAsyncThunk(`offers/${name}`,
+    async ({ contractId, signature }, { rejectWithValue }) => {
+      try { return await apiFn(contractId, signature); }
+      catch (e) { return rejectWithValue(normalizeError(e)); }
+    }
+  );
 
-export const upmSignThunk = createAsyncThunk("offers/upmSign",
-  async ({ offerId, signature }, { rejectWithValue }) => {
-    try { return await offerApi.upmSign(offerId, signature); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const fcSignThunk = createAsyncThunk("offers/fcSign",
-  async ({ offerId, signature }, { rejectWithValue }) => {
-    try { return await offerApi.fcSign(offerId, signature); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const studioSignThunk = createAsyncThunk("offers/studioSign",
-  async ({ offerId, signature }, { rejectWithValue }) => {
-    try { return await offerApi.studioSign(offerId, signature); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
+export const crewSignThunk   = makeSignThunk("crewSign",   offerApi.crewSign);
+export const upmSignThunk    = makeSignThunk("upmSign",    offerApi.upmSign);
+export const fcSignThunk     = makeSignThunk("fcSign",     offerApi.fcSign);
+export const studioSignThunk = makeSignThunk("studioSign", offerApi.studioSign);
 
 export const getSigningStatusThunk = createAsyncThunk("offers/getSigningStatus",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.getSigningStatus(offerId); }
+  async (contractId, { rejectWithValue }) => {
+    try { return await offerApi.getSigningStatus(contractId); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+export const getContractPreviewThunk = createAsyncThunk("offers/getContractPreview",
+  async (contractId, { rejectWithValue }) => {
+    try { return await offerApi.getContractPreview(contractId); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+export const getContractPdfUrlThunk = createAsyncThunk("offers/getContractPdfUrl",
+  async (contractId, { rejectWithValue }) => {
+    try { return await offerApi.getContractPdfUrl(contractId); }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
 );
@@ -166,6 +157,7 @@ export const resolveChangeRequestThunk = createAsyncThunk("offers/resolveChangeR
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const syncOffer = (state, updatedOffer) => {
+  if (!updatedOffer?._id) return;
   state.currentOffer = updatedOffer;
   [state.projectOffers, state.myOffers].forEach((list) => {
     const idx = list.findIndex((o) => o._id === updatedOffer._id);
@@ -181,25 +173,28 @@ const workflowThunks = [
   sendToCrewThunk, markViewedThunk, crewAcceptThunk, crewRequestChangesThunk,
   cancelOfferThunk, moveToProductionCheckThunk, moveToAccountsCheckThunk,
   moveToPendingCrewSignatureThunk,
-  crewSignThunk, upmSignThunk, fcSignThunk, studioSignThunk,
 ];
+
+const signThunks = [crewSignThunk, upmSignThunk, fcSignThunk, studioSignThunk];
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 
 const initialState = {
-  projectOffers:  [],
-  myOffers:       [],
-  currentOffer:   null,
-  changeRequests: [],
-  signingStatus:  null,
-
-  isLoadingList:  false,
-  isLoadingOffer: false,
-  isSubmitting:   false,
-
-  error:          null,
-  successMessage: null,
-  statusFilter:   "ALL",
+  projectOffers:        [],
+  myOffers:             [],
+  currentOffer:         null,
+  changeRequests:       [],
+  signingStatus:        null,
+  contractPreviewHtml:  null,
+  contractPdfUrl:       null,
+  isLoadingPreview:     false,
+  isLoadingPdfUrl:      false,
+  isLoadingList:        false,
+  isLoadingOffer:       false,
+  isSubmitting:         false,
+  error:                null,
+  successMessage:       null,
+  statusFilter:         "ALL",
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -211,14 +206,14 @@ const offerSlice = createSlice({
     clearOfferError(state)               { state.error = null; },
     clearOfferSuccess(state)             { state.successMessage = null; },
     clearCurrentOffer(state)             { state.currentOffer = null; },
+    clearContractPreview(state)          { state.contractPreviewHtml = null; },
+    clearContractPdfUrl(state)           { state.contractPdfUrl = null; },
     setStatusFilter(state, { payload })  { state.statusFilter = payload; },
-    // Optimistic local update for demo mode
     localUpdateOffer(state, { payload }) { syncOffer(state, payload); },
   },
 
   extraReducers: (builder) => {
 
-    // createOffer
     builder
       .addCase(createOfferThunk.pending,   setPending("isSubmitting"))
       .addCase(createOfferThunk.fulfilled, (state, { payload }) => {
@@ -227,46 +222,41 @@ const offerSlice = createSlice({
         state.projectOffers.unshift(payload);
         state.successMessage = "Offer created";
       })
-      .addCase(createOfferThunk.rejected,  setRejected("isSubmitting"));
+      .addCase(createOfferThunk.rejected, setRejected("isSubmitting"));
 
-    // updateOffer
     builder
       .addCase(updateOfferThunk.pending,   setPending("isSubmitting"))
       .addCase(updateOfferThunk.fulfilled, (state, { payload }) => {
-        state.isSubmitting = false;
+        state.isSubmitting   = false;
         syncOffer(state, payload);
         state.successMessage = "Offer updated";
       })
-      .addCase(updateOfferThunk.rejected,  setRejected("isSubmitting"));
+      .addCase(updateOfferThunk.rejected, setRejected("isSubmitting"));
 
-    // getOffer
     builder
       .addCase(getOfferThunk.pending,   setPending("isLoadingOffer"))
       .addCase(getOfferThunk.fulfilled, (state, { payload }) => {
         state.isLoadingOffer = false;
         state.currentOffer   = payload;
       })
-      .addCase(getOfferThunk.rejected,  setRejected("isLoadingOffer"));
+      .addCase(getOfferThunk.rejected, setRejected("isLoadingOffer"));
 
-    // getProjectOffers
     builder
       .addCase(getProjectOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getProjectOffersThunk.fulfilled, (state, { payload }) => {
         state.isLoadingList = false;
         state.projectOffers = payload;
       })
-      .addCase(getProjectOffersThunk.rejected,  setRejected("isLoadingList"));
+      .addCase(getProjectOffersThunk.rejected, setRejected("isLoadingList"));
 
-    // getMyOffers
     builder
       .addCase(getMyOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getMyOffersThunk.fulfilled, (state, { payload }) => {
         state.isLoadingList = false;
         state.myOffers      = payload;
       })
-      .addCase(getMyOffersThunk.rejected,  setRejected("isLoadingList"));
+      .addCase(getMyOffersThunk.rejected, setRejected("isLoadingList"));
 
-    // deleteOffer
     builder
       .addCase(deleteOfferThunk.fulfilled, (state, { payload: id }) => {
         state.projectOffers = state.projectOffers.filter((o) => o._id !== id);
@@ -275,7 +265,6 @@ const offerSlice = createSlice({
       })
       .addCase(deleteOfferThunk.rejected, (state, { payload }) => { state.error = payload; });
 
-    // All workflow thunks
     workflowThunks.forEach((thunk) => {
       builder
         .addCase(thunk.pending,   setPending("isSubmitting"))
@@ -294,17 +283,89 @@ const offerSlice = createSlice({
         });
     });
 
-    // getSigningStatus
-    builder.addCase(getSigningStatusThunk.fulfilled, (state, { payload }) => {
-      state.signingStatus = payload;
+    // Sign thunks — backend returns { contract, offer }
+    signThunks.forEach((thunk) => {
+      builder
+        .addCase(thunk.pending, setPending("isSubmitting"))
+        .addCase(thunk.fulfilled, (state, { payload }) => {
+          state.isSubmitting = false;
+
+          // Sync full offer if returned
+          if (payload?.offer?._id) {
+            syncOffer(state, payload.offer);
+            state.successMessage = "Signature recorded";
+          }
+
+          // ← KEY FIX: update currentOffer.status directly from contract
+          // handles case where offer isn't returned but contract is
+          if (payload?.contract?.status && state.currentOffer) {
+            state.currentOffer = {
+              ...state.currentOffer,
+              status: payload.contract.status,
+            };
+          }
+
+          // Update signing status card
+          if (payload?.contract && state.signingStatus) {
+            state.signingStatus = {
+              ...state.signingStatus,
+              pdfS3Key:      payload.contract.pdfS3Key,
+              currentStatus: payload.contract.status,
+              isLocked:      payload.contract.isLocked,
+            };
+          }
+
+          // Clear preview so it reloads with new signature
+          state.contractPreviewHtml = null;
+          state.contractPdfUrl      = null;
+        })
+        .addCase(thunk.rejected, (state, { payload }) => {
+          state.isSubmitting = false;
+          state.error = payload;
+        });
     });
 
-    // getChangeRequests
+    builder
+      .addCase(getSigningStatusThunk.pending,   (state) => { state.error = null; })
+      .addCase(getSigningStatusThunk.fulfilled, (state, { payload }) => {
+        state.signingStatus = payload;
+      })
+      .addCase(getSigningStatusThunk.rejected,  (state, { payload }) => {
+        state.error = payload;
+      });
+
+    builder
+      .addCase(getContractPreviewThunk.pending, (state) => {
+        state.isLoadingPreview    = true;
+        state.contractPreviewHtml = null;
+      })
+      .addCase(getContractPreviewThunk.fulfilled, (state, { payload }) => {
+        state.isLoadingPreview    = false;
+        state.contractPreviewHtml = payload;
+      })
+      .addCase(getContractPreviewThunk.rejected, (state, { payload }) => {
+        state.isLoadingPreview = false;
+        state.error            = payload;
+      });
+
+    builder
+      .addCase(getContractPdfUrlThunk.pending, (state) => {
+        state.isLoadingPdfUrl = true;
+        state.contractPdfUrl  = null;
+      })
+      .addCase(getContractPdfUrlThunk.fulfilled, (state, { payload }) => {
+        state.isLoadingPdfUrl = false;
+        state.contractPdfUrl  = payload?.url ?? null;
+      })
+      .addCase(getContractPdfUrlThunk.rejected, (state, { payload }) => {
+        state.isLoadingPdfUrl = false;
+        state.error           = payload;
+      });
+
     builder.addCase(getChangeRequestsThunk.fulfilled, (state, { payload }) => {
       state.changeRequests = payload;
     });
 
-    // resolveChangeRequest
     builder
       .addCase(resolveChangeRequestThunk.fulfilled, (state, { payload }) => {
         const idx = state.changeRequests.findIndex((c) => c._id === payload._id);
@@ -318,23 +379,28 @@ const offerSlice = createSlice({
 });
 
 export const {
-  clearOfferError, clearOfferSuccess, clearCurrentOffer, setStatusFilter, localUpdateOffer
+  clearOfferError, clearOfferSuccess, clearCurrentOffer,
+  clearContractPreview, clearContractPdfUrl,
+  setStatusFilter, localUpdateOffer,
 } = offerSlice.actions;
 
 export default offerSlice.reducer;
 
-// ─── Selectors ────────────────────────────────────────────────────────────────
-export const selectProjectOffers  = (s) => s.offers.projectOffers;
-export const selectMyOffers       = (s) => s.offers.myOffers;
-export const selectCurrentOffer   = (s) => s.offers.currentOffer;
-export const selectChangeRequests = (s) => s.offers.changeRequests;
-export const selectSigningStatus  = (s) => s.offers.signingStatus;
-export const selectOfferLoading   = (s) => s.offers.isLoadingOffer;
-export const selectListLoading    = (s) => s.offers.isLoadingList;
-export const selectSubmitting     = (s) => s.offers.isSubmitting;
-export const selectOfferError     = (s) => s.offers.error;
-export const selectOfferSuccess   = (s) => s.offers.successMessage;
-export const selectStatusFilter   = (s) => s.offers.statusFilter;
+export const selectProjectOffers       = (s) => s.offers.projectOffers;
+export const selectMyOffers            = (s) => s.offers.myOffers;
+export const selectCurrentOffer        = (s) => s.offers.currentOffer;
+export const selectChangeRequests      = (s) => s.offers.changeRequests;
+export const selectSigningStatus       = (s) => s.offers.signingStatus;
+export const selectContractPreviewHtml = (s) => s.offers.contractPreviewHtml;
+export const selectContractPdfUrl      = (s) => s.offers.contractPdfUrl;
+export const selectIsLoadingPreview    = (s) => s.offers.isLoadingPreview;
+export const selectIsLoadingPdfUrl     = (s) => s.offers.isLoadingPdfUrl;
+export const selectOfferLoading        = (s) => s.offers.isLoadingOffer;
+export const selectListLoading         = (s) => s.offers.isLoadingList;
+export const selectSubmitting          = (s) => s.offers.isSubmitting;
+export const selectOfferError          = (s) => s.offers.error;
+export const selectOfferSuccess        = (s) => s.offers.successMessage;
+export const selectStatusFilter        = (s) => s.offers.statusFilter;
 
 export const selectFilteredOffers = (s) => {
   const { projectOffers, statusFilter } = s.offers;
@@ -342,3 +408,5 @@ export const selectFilteredOffers = (s) => {
     ? projectOffers
     : projectOffers.filter((o) => o.status === statusFilter);
 };
+
+export const selectContractId = (s) => s.offers.currentOffer?.contractId ?? null;
