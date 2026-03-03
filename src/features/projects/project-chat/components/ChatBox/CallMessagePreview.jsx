@@ -31,7 +31,8 @@ export default function CallMessagePreview({
   const isActuallyActive =
     conversationCall?.isActive ?? (isRinging || isOngoing);
 
-  const canJoin = isActuallyActive && (isRinging || isOngoing);
+  const canJoin =
+    isActuallyActive && (isRinging || isOngoing) && (!isEnded || !isMissed);
 
   const durationText = formatDuration(callInfo?.duration);
 
@@ -61,14 +62,16 @@ export default function CallMessagePreview({
       <div
         className={cn(
           "flex items-center justify-center w-7 h-7 rounded-full",
-          isOwn ? "bg-purple-50/20" : "bg-purple-50 border border-purple-100",
+          isOwn
+            ? "bg-purple-50/20"
+            : "bg-purple-400 dark:bg-purple-950",
           canJoin && "animate-pulse",
         )}
       >
         {isVideo ? (
           <Video className="w-4 h-4" />
         ) : (
-          <Phone className="w-4 h-4" />
+          <Phone className={cn("w-4 h-4",!isOwn && "text-muted dark:text-muted-foreground" )} />
         )}
       </div>
 

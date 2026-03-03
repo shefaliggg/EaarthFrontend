@@ -20,7 +20,7 @@ function getGridClass(count) {
 
 export default function CallModal() {
   const [showParticipants, setShowParticipants] = useState(false);
-  const [viewMode, setViewMode] = useState("full"); // full | compact | minimized
+  const [viewMode, setViewMode] = useState("compact"); // full | compact | minimized
   const [position, setPosition] = useState({ x: 200, y: 100 });
 
   const {

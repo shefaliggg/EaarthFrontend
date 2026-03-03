@@ -12,6 +12,8 @@ import { axiosConfig } from "../../../auth/config/axiosConfig";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import chatApi from "../api/chat.api";
 import { toast } from "sonner";
+import useChatStore from "./chat.store";
+import { getCurrentUserId } from "../../../../shared/config/utils";
 
 // ─────────────────────────────────────────────────────────────
 // CALL STATES
@@ -50,22 +52,29 @@ const useCallStore = create(
       initiateCall: async (conversationId, callType = "VIDEO") => {
         set({ callState: "connecting", callType, conversationId });
 
-        const tempId = `temp-call-${crypto.randomUUID()}`;
+        const tempId = `temp-${crypto.randomUUID()}`;
         const now = new Date();
+        const currentUserId = getCurrentUserId()
 
-        // get().addMessageToConversation(conversationId, {
-        //   _id: tempId,
-        //   clientTempId: tempId,
-        //   type: "CALL",
-        //   senderId: currentUserId,
-        //   content: {
-        //     callInfo: {
-        //       type: callType,
-        //       status: "ONGOING",
-        //     },
-        //   },
-        //   createdAt: now,
-        // });
+        const chatStore = useChatStore.getState();
+
+        chatStore.addMessageToConversation(
+          conversationId,
+          {
+            _id: tempId,
+            clientTempId: tempId,
+            type: "CALL",
+            senderId: currentUserId,
+            content: {
+              callInfo: {
+                type: callType,
+                initiatorId : currentUserId,
+                status: "RINGING",
+              },
+            },
+            createdAt: now,
+          },
+        );
 
         try {
           const data = await chatApi.initiateCall(conversationId, callType);
@@ -338,7 +347,10 @@ const useCallStore = create(
           // Session ended externally (host ended call)
           audioVideoDidStop: (sessionStatus) => {
             console.log("Call stopped externally:", sessionStatus.statusCode());
-            get().resetCallState();
+            const { callState } = get();
+            if (callState !== "idle") {
+              get().resetCallState();
+            }
           },
 
           contentShareDidStart: () => {
@@ -401,18 +413,24 @@ const useCallStore = create(
 
         socket.on("call:incoming", (data) => {
           const { callState } = get();
-          // Don't show incoming toast if already in a call
           if (callState !== "idle") return;
           get().setIncomingCall(data);
         });
 
         socket.on("call:ended", ({ conversationId }) => {
+          console.log("Call ended:", conversationId);
+
           const state = get();
-          if (
+
+          const isActiveCall =
             state.conversationId === conversationId &&
-            state.callState !== "idle"
-          ) {
-            // Server ended the call
+            state.callState !== "idle";
+
+          const isIncomingCall =
+            state.callState === "incoming" &&
+            state.incomingCall?.conversationId === conversationId;
+
+          if (isActiveCall || isIncomingCall) {
             state.meetingSession?.audioVideo.stop();
             get().resetCallState();
           }

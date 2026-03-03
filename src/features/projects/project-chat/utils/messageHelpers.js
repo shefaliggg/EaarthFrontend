@@ -404,3 +404,20 @@ export const transformConversation = (conv, currentUserId) => {
     _raw: conv,
   };
 };
+
+export const generateConversationLastMessagePreview = (message) => {
+  if (message.type === "CALL") {
+    const status = message.callInfo?.status;
+
+    if (status === "MISSED") return "Missed call";
+    if (status === "ENDED") return "Call ended";
+
+    return null; // non-terminal call states
+  }
+
+  if (message.type === "IMAGE") return "📷 Photo";
+  if (message.type === "VIDEO") return "🎥 Video";
+  if (message.type === "FILE") return "📎 File";
+
+  return message.content || message.caption || "";
+};

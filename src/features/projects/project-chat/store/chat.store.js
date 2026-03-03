@@ -6,6 +6,7 @@ import { getChatSocket } from "../../../../shared/config/socketConfig";
 import { store } from "../../../../app/store";
 import {
   computeMessageState,
+  generateConversationLastMessagePreview,
   transformConversation,
   transformMessage,
 } from "../utils/messageHelpers";
@@ -89,27 +90,39 @@ const useChatStore = create(
         socket.on("message:updated", ({ conversationId, message }) => {
           console.log("🔄 Message updated:", message);
 
-          get().updateMessageInConversation(message._id, {
-            callInfo: message.content?.callInfo,
-            _raw: message,
+          const currentUserId = getCurrentUserId();
+
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members?.length || 2;
+
+          const transformed = transformMessage(message, {
+            currentUserId,
+            conversationMembersCount: memberCount,
           });
 
-          // If this was last message → update sidebar preview
-          const preview =
-            message.content?.text ||
-            (message.type === "CALL"
-              ? `📞 ${
-                  message.content?.callInfo?.status === "MISSED"
-                    ? "Missed call"
-                    : "Call ended"
-                }`
-              : "");
+          get().updateMessageInConversation(transformed.id, transformed, transformed.clientTempId);
 
-          get().updateConversationLastMessage(conversationId, {
-            content: { text: preview },
-            createdAt: message.updatedAt || new Date(),
-            senderId: message.senderId,
-          });
+          // 2️⃣ Update sidebar only if this is the latest message
+          const existingMessages =
+            get().messagesByConversation[conversationId]?.messages || [];
+
+          const lastMessage = existingMessages[existingMessages.length - 1];
+
+          if (lastMessage?.id === transformed.id) {
+            const preview = generateConversationLastMessagePreview(message);
+            if (!preview) return;
+
+            get().updateConversationLastMessage(conversationId, {
+              content: {
+                text: preview,
+              },
+              createdAt: message.updatedAt || message.createdAt,
+              senderId: { _id: message.senderId?._id || message.senderId },
+            });
+          }
         });
 
         socket.on("message:edited", ({ messageId, text, editedAt }) => {
@@ -994,16 +1007,30 @@ const useChatStore = create(
         set({ conversations });
       },
 
-      updateMessageInConversation: (messageId, updates) => {
+      updateMessageInConversation: (
+        messageId,
+        updates,
+        clientTempId = null,
+      ) => {
         const all = { ...get().messagesByConversation };
+
         Object.keys(all).forEach((convId) => {
           all[convId] = {
             ...all[convId],
-            messages: all[convId].messages.map((m) =>
-              m.id === messageId ? { ...m, ...updates } : m,
-            ),
+            messages: all[convId].messages.map((m) => {
+              const matchById = m.id === messageId;
+              const matchByTemp =
+                clientTempId && m.clientTempId === clientTempId;
+
+              if (matchById || matchByTemp) {
+                return { ...m, ...updates };
+              }
+
+              return m;
+            }),
           };
         });
+
         set({ messagesByConversation: all });
       },
 
