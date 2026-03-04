@@ -1,14 +1,11 @@
 ﻿/**
- * CreateOffer.jsx  — Updated
+ * CreateOffer.jsx  (FIXED)
  *
- * BEHAVIOUR:
- *  - "Save Draft"    → saves to backend, stays on the same page (no navigation)
- *  - "Send to Crew"  → opens SendToCrew confirmation dialog first
- *                      → on confirm: saves + sends → navigates to ViewOffer
- *
- * CONTRACT PREVIEW:
- *  - Only shows the main contract document (ISA form)
- *  - No policy acknowledgement / crew info / payout docs
+ * CHANGES FROM ORIGINAL:
+ *  1. buildPayload(isDraft) — adds saveAsDraft flag, sends feePerDay as
+ *     undefined (not "") when empty so backend skips validation on drafts
+ *  2. handleSaveDraft    → buildPayload(true)   draft save, relaxed validation
+ *  3. handleDialogConfirm → buildPayload(false)  send to crew, strict validation
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -68,7 +65,7 @@ export default function CreateOfferPage() {
 
   const [activeField, setActiveField] = useState(null);
   const savedOfferIdRef = useRef(null);
-  const [dialog, setDialog] = useState(null); // null | "sendToCrew"
+  const [dialog, setDialog] = useState(null);
 
   const [offer, setOffer] = useState({
     contractData:        defaultContractData,
@@ -98,7 +95,7 @@ export default function CreateOfferPage() {
   const setAllowances = (val) =>
     setOffer((p) => ({ ...p, allowances: typeof val === "function" ? val(p.allowances) : val }));
 
-  // ── API errors ──────────────────────────────────────────────────────────
+  // ── API error toast ──────────────────────────────────────────────────────
   useEffect(() => {
     if (apiError) {
       const msg = apiError.errors?.length
@@ -110,49 +107,92 @@ export default function CreateOfferPage() {
   }, [apiError, dispatch]);
 
   // ── Build payload ────────────────────────────────────────────────────────
-  const buildPayload = () => {
+  // isDraft=true  → saveAsDraft:true sent to backend, feePerDay sent as
+  //                 undefined when empty (backend skips required check)
+  // isDraft=false → saveAsDraft:false, feePerDay sent as-is (validated strictly)
+  const buildPayload = (isDraft = false) => {
     const cd = contractData;
     const allowancesArr = Object.entries(allowances).map(([key, a]) => ({
       key,
       label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()).trim(),
       ...a,
     }));
+
     return {
-      studioId: STUDIO_ID, projectId: PROJECT_ID,
-      recipient: { fullName: cd.fullName || "", email: cd.email || "", mobileNumber: cd.mobileNumber || undefined },
-      representation: { isViaAgent: !!cd.isViaAgent, agentName: cd.agentName || undefined, agentEmail: cd.agentEmail || undefined },
+      studioId:    STUDIO_ID,
+      projectId:   PROJECT_ID,
+      saveAsDraft: isDraft,         // ← tells backend to use relaxed validation
+
+      recipient: {
+        fullName:     cd.fullName     || "",
+        email:        cd.email        || "",
+        mobileNumber: cd.mobileNumber || undefined,
+      },
+      representation: {
+        isViaAgent: !!cd.isViaAgent,
+        agentName:  cd.agentName  || undefined,
+        agentEmail: cd.agentEmail || undefined,
+      },
       alternativeContract: cd.alternativeContract || "",
-      unit: cd.unit || "", department: cd.department || "", subDepartment: cd.subDepartment || "",
-      jobTitle: cd.jobTitle || "", newJobTitle: cd.newJobTitle || "",
-      createOwnJobTitle: !!cd.createOwnJobTitle, jobTitleSuffix: cd.jobTitleSuffix || "",
+      unit:              cd.unit              || "",
+      department:        cd.department        || "",
+      subDepartment:     cd.subDepartment     || "",
+      jobTitle:          cd.jobTitle          || "",
+      newJobTitle:       cd.newJobTitle        || "",
+      createOwnJobTitle: !!cd.createOwnJobTitle,
+      jobTitleSuffix:    cd.jobTitleSuffix    || "",
       taxStatus: {
-        allowSelfEmployed: cd.allowSelfEmployed || "",
-        statusDeterminationReason: cd.statusDeterminationReason || "",
+        allowSelfEmployed:              cd.allowSelfEmployed              || "",
+        statusDeterminationReason:      cd.statusDeterminationReason      || "",
         otherStatusDeterminationReason: cd.otherStatusDeterminationReason || "",
       },
-      regularSiteOfWork: cd.regularSiteOfWork || "", workingInUK: cd.workingInUK || "yes",
-      startDate: cd.startDate || "", endDate: cd.endDate || "",
-      dailyOrWeekly: cd.dailyOrWeekly || "daily", engagementType: cd.engagementType || "paye",
-      workingWeek: cd.workingWeek || "5", currency: cd.currency || "GBP",
-      feePerDay: cd.feePerDay || "", overtime: cd.overtime || "calculated",
-      otherOT: cd.otherOT || "", cameraOTSWD: cd.cameraOTSWD || "",
-      cameraOTSCWD: cd.cameraOTSCWD || "", cameraOTCWD: cd.cameraOTCWD || "",
-      calculatedRates, salaryBudgetCodes, salaryTags, overtimeBudgetCodes, overtimeTags,
+      regularSiteOfWork: cd.regularSiteOfWork || "",
+      workingInUK:       cd.workingInUK       || "yes",
+      startDate:         cd.startDate         || "",
+      endDate:           cd.endDate           || "",
+      dailyOrWeekly:     cd.dailyOrWeekly     || "daily",
+      engagementType:    cd.engagementType    || "paye",
+      workingWeek:       cd.workingWeek       || "5",
+      currency:          cd.currency          || "GBP",
+
+      // Send undefined (not "") for feePerDay when empty on draft saves.
+      // undefined fields are omitted from JSON.stringify, so the backend
+      // receives no feePerDay key at all → validation check is skipped.
+      feePerDay: (cd.feePerDay !== "" && cd.feePerDay !== undefined)
+        ? cd.feePerDay
+        : (isDraft ? undefined : ""),
+
+      overtime:     cd.overtime     || "calculated",
+      otherOT:      cd.otherOT      || "",
+      cameraOTSWD:  cd.cameraOTSWD  || "",
+      cameraOTSCWD: cd.cameraOTSCWD || "",
+      cameraOTCWD:  cd.cameraOTCWD  || "",
+      calculatedRates,
+      salaryBudgetCodes,
+      salaryTags,
+      overtimeBudgetCodes,
+      overtimeTags,
       allowances: allowancesArr,
-      notes: { otherDealProvisions: cd.otherDealProvisions || "", additionalNotes: cd.additionalNotes || "" },
+      notes: {
+        otherDealProvisions: cd.otherDealProvisions || "",
+        additionalNotes:     cd.additionalNotes     || "",
+      },
     };
   };
 
-  // ── SAVE DRAFT — stays on this page ─────────────────────────────────────
+  // ── SAVE DRAFT — stays on this page ──────────────────────────────────────
   const handleSaveDraft = async () => {
     if (isSubmitting) return;
     toast.loading("Saving draft…", { id: "offer-save" });
 
     let result;
     if (savedOfferIdRef.current) {
-      result = await dispatch(updateOfferThunk({ id: savedOfferIdRef.current, data: buildPayload() }));
+      result = await dispatch(updateOfferThunk({
+        id:   savedOfferIdRef.current,
+        data: buildPayload(true),       // ← isDraft=true
+      }));
     } else {
-      result = await dispatch(createOfferThunk(buildPayload()));
+      result = await dispatch(createOfferThunk(buildPayload(true)));  // ← isDraft=true
     }
 
     toast.dismiss("offer-save");
@@ -160,11 +200,10 @@ export default function CreateOfferPage() {
     if (!result.error && result.payload?._id) {
       savedOfferIdRef.current = result.payload._id;
       toast.success("✅ Draft saved!");
-      // No navigation — stay on create page
     }
   };
 
-  // ── SEND TO CREW — open dialog first ────────────────────────────────────
+  // ── SEND TO CREW — open dialog first ─────────────────────────────────────
   const handleSendToCrewClick = () => {
     if (isSubmitting) return;
     setDialog("sendToCrew");
@@ -177,7 +216,7 @@ export default function CreateOfferPage() {
     let offerId = savedOfferIdRef.current;
 
     if (!offerId) {
-      const createResult = await dispatch(createOfferThunk(buildPayload()));
+      const createResult = await dispatch(createOfferThunk(buildPayload(false)));  // ← isDraft=false
       if (createResult.error || !createResult.payload?._id) {
         toast.dismiss("offer-send");
         return;
@@ -199,7 +238,6 @@ export default function CreateOfferPage() {
     }
   };
 
-  // Preview object for dialog summary
   const dialogPreview = {
     recipient:         { fullName: contractData.fullName, email: contractData.email },
     jobTitle:          contractData.jobTitle,
@@ -256,7 +294,6 @@ export default function CreateOfferPage() {
             </CardContent>
           </Card>
 
-          {/* Preview — only shows ContractDocument, no other docs */}
           <Card>
             <CardContent className="p-0">
               <CreateOfferLayout
