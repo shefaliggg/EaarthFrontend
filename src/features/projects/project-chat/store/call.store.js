@@ -213,6 +213,7 @@ const useCallStore = create(
 
         try {
           if (meetingSession) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
             meetingSession.audioVideo.stopLocalVideoTile();
             meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();

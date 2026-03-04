@@ -9,7 +9,7 @@ export default function IncomingCallToast() {
 
   const isVisible = callState === "incoming" && incomingCall;
 
-  // useIncomingRingtone(isVisible);
+  useIncomingRingtone(isVisible);
 
   if (!isVisible) return null;
 
