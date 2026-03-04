@@ -7,6 +7,7 @@ import {
   DefaultMeetingSession,
   LogLevel,
   MeetingSessionConfiguration,
+  MeetingSessionStatusCode,
 } from "amazon-chime-sdk-js";
 import { getChatSocket } from "../../../../shared/config/socketConfig";
 import chatApi from "../api/chat.api";
@@ -28,6 +29,7 @@ const useCallStore = create(
       viewMode: "compact",
       localTileId: null,
       remoteTiles: [],
+      isInitiator: false,
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
@@ -37,10 +39,11 @@ const useCallStore = create(
 
       setViewMode: (mode) => set({ viewMode: mode }),
       setIncomingCall: (data) =>
-        set({ incomingCall: data, callState: "incoming" }),
+        set({ incomingCall: data, callState: "incoming", isInitiator: false }),
       clearIncomingCall: () => set({ incomingCall: null }),
 
       enterEndingState: (reason = "ended") => {
+        console.log("ending state triggered:", reason);
         const { meetingSession } = get();
         try {
           if (meetingSession) {
@@ -55,10 +58,13 @@ const useCallStore = create(
         set({ callState: "ending", endReason: reason, viewMode: "compact" });
 
         if (endingTimer) clearTimeout(endingTimer);
-        endingTimer = setTimeout(() => {
-          get().resetCallState();
-          endingTimer = null;
-        }, 3500);
+        endingTimer = setTimeout(
+          () => {
+            get().resetCallState();
+            endingTimer = null;
+          },
+          reason === "error" ? 6000 : 4000,
+        );
       },
 
       initiateCall: async (conversationId, callType = "VIDEO") => {
@@ -67,6 +73,7 @@ const useCallStore = create(
           callType,
           conversationId,
           viewMode: "compact",
+          isInitiator: true,
         });
 
         const currentUserId = getCurrentUserId();
@@ -97,7 +104,7 @@ const useCallStore = create(
           await get().startSession(data.meeting, data.attendee, conversationId);
         } catch (err) {
           console.error("❌ initiateCall failed:", err);
-          set({ callState: "idle", callType: null, conversationId: null });
+          get().enterEndingState("error");
           throw err;
         }
       },
@@ -126,7 +133,7 @@ const useCallStore = create(
           get().clearIncomingCall();
         } catch (err) {
           console.error("❌ joinCall failed:", err);
-          set({ callState: "idle" });
+          get().enterEndingState("error");
           throw err;
         }
       },
@@ -196,10 +203,17 @@ const useCallStore = create(
       },
 
       leaveCall: async () => {
-        const { conversationId, meetingSession } = get();
+        const { conversationId, meetingSession, callState } = get();
+
+        // ✅ Guard — don't fire if already cleaning up or idle
+        if (!conversationId || callState === "idle" || callState === "ending") {
+          console.warn("leaveCall called in invalid state:", callState);
+          return;
+        }
 
         try {
           if (meetingSession) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
             meetingSession.audioVideo.stopLocalVideoTile();
             meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();
@@ -208,15 +222,26 @@ const useCallStore = create(
           console.warn("Session stop error:", e);
         }
 
-        if (conversationId) {
+        try {
           await chatApi.leaveCall(conversationId);
+        } catch (err) {
+          // Backend already cleaned up (timeout, end call, etc.) — safe to ignore
+          console.warn(
+            "leaveCall API error (may already be ended):",
+            err.message,
+          );
         }
 
-        get().resetCallState();
+        get().enterEndingState("left");
       },
 
       endCallForEveryone: async () => {
-        const { conversationId, meetingSession } = get();
+        const { conversationId, meetingSession, callState } = get();
+
+        if (!conversationId || callState === "idle" || callState === "ending") {
+          console.warn("No active call to end");
+          return;
+        }
 
         try {
           if (meetingSession) {
@@ -224,15 +249,13 @@ const useCallStore = create(
             meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();
           }
-        } catch (e) {
-          console.warn("Session stop error:", e);
-        }
 
-        if (conversationId) {
           await chatApi.endCall(conversationId);
+        } catch (e) {
+          console.warn("End call error:", e.message);
         }
 
-        get().resetCallState();
+        get().enterEndingState("ended");
       },
 
       toggleMute: () => {
@@ -286,63 +309,71 @@ const useCallStore = create(
       },
 
       startSession: async (meeting, attendee, conversationId) => {
-        const logger = new ConsoleLogger("ChimeSDK", LogLevel.WARN);
-        const deviceController = new DefaultDeviceController(logger);
-        const configuration = new MeetingSessionConfiguration(
-          meeting,
-          attendee,
-        );
-        const meetingSession = new DefaultMeetingSession(
-          configuration,
-          logger,
-          deviceController,
-        );
-
-        // Bind audio output — the <audio> element is always rendered once in CallModal
-        const audioEl = document.getElementById("chime-audio-sink");
-        if (audioEl) {
-          await meetingSession.audioVideo.bindAudioElement(audioEl);
-        } else {
-          console.warn(
-            "⚠️ chime-audio-sink element not found — remote audio may be silent",
+        try {
+          const logger = new ConsoleLogger("ChimeSDK", LogLevel.WARN);
+          const deviceController = new DefaultDeviceController(logger);
+          const configuration = new MeetingSessionConfiguration(
+            meeting,
+            attendee,
           );
-        }
-
-        // Mic input
-        const audioInputDevices =
-          await meetingSession.audioVideo.listAudioInputDevices();
-        if (audioInputDevices.length > 0) {
-          await meetingSession.audioVideo.startAudioInput(
-            audioInputDevices[0].deviceId,
+          const meetingSession = new DefaultMeetingSession(
+            configuration,
+            logger,
+            deviceController,
           );
-        }
 
-        // Camera input (VIDEO calls only)
-        const callType = get().callType;
-        if (callType === "VIDEO") {
-          const videoInputDevices =
-            await meetingSession.audioVideo.listVideoInputDevices();
-          if (videoInputDevices.length > 0) {
-            await meetingSession.audioVideo.startVideoInput(
-              videoInputDevices[0].deviceId,
+          // Bind audio output — the <audio> element is always rendered once in CallModal
+          const audioEl = document.getElementById("chime-audio-sink");
+          if (audioEl) {
+            await meetingSession.audioVideo.bindAudioElement(audioEl);
+          } else {
+            console.warn(
+              "⚠️ chime-audio-sink element not found — remote audio may be silent",
             );
           }
+
+          // Mic input
+          const audioInputDevices =
+            await meetingSession.audioVideo.listAudioInputDevices();
+          if (audioInputDevices.length > 0) {
+            await meetingSession.audioVideo.startAudioInput(
+              audioInputDevices[0].deviceId,
+            );
+          }
+
+          // Camera input (VIDEO calls only)
+          const callType = get().callType;
+          if (callType === "VIDEO") {
+            const videoInputDevices =
+              await meetingSession.audioVideo.listVideoInputDevices();
+            if (videoInputDevices.length > 0) {
+              await meetingSession.audioVideo.startVideoInput(
+                videoInputDevices[0].deviceId,
+              );
+            }
+          }
+
+          get().attachObservers(meetingSession, conversationId);
+          meetingSession.audioVideo.start();
+
+          if (callType === "VIDEO") {
+            meetingSession.audioVideo.startLocalVideoTile();
+          }
+
+          set({
+            meetingSession,
+            callState: "connected",
+            conversationId,
+            isAudioMuted: false,
+            isVideoOff: callType !== "VIDEO",
+          });
+        } catch (err) {
+          console.error("❌ startSession failed:", err);
+
+          get().enterEndingState("error");
+
+          throw err;
         }
-
-        get().attachObservers(meetingSession, conversationId);
-        meetingSession.audioVideo.start();
-
-        if (callType === "VIDEO") {
-          meetingSession.audioVideo.startLocalVideoTile();
-        }
-
-        set({
-          meetingSession,
-          callState: "connected",
-          conversationId,
-          isAudioMuted: false,
-          isVideoOff: callType !== "VIDEO",
-        });
       },
 
       attachObservers: (meetingSession, conversationId) => {
@@ -386,11 +417,18 @@ const useCallStore = create(
             }
           },
 
-          audioVideoDidStop: (sessionStatus) => {
-            console.log("Chime session stopped:", sessionStatus.statusCode());
-            const { callState } = get();
-            if (callState !== "idle") {
-              get().resetCallState();
+          audioVideoDidStop: (status) => {
+            const state = get();
+
+            if (state.callState === "ending" || state.callState === "idle") {
+              return;
+            }
+
+            if (
+              status.statusCode() ===
+              MeetingSessionStatusCode.SignalingChannelClosedUnexpectedly
+            ) {
+              return;
             }
           },
 
@@ -476,33 +514,33 @@ const useCallStore = create(
             const state = get();
             const currentUserId = getCurrentUserId();
 
-            const isActive =
-              state.conversationId === conversationId &&
-              state.callState !== "idle" &&
-              state.callState !== "ending";
-
-            const isPendingIncoming =
-              state.callState === "incoming" &&
+            // Ignore if not related to this conversation at all
+            const isSameConversation =
+              state.conversationId === conversationId ||
               state.incomingCall?.conversationId === conversationId;
 
-            if (!isActive && !isPendingIncoming) return;
+            if (!isSameConversation) return;
 
-            if (isPendingIncoming) {
-              // Call was cancelled/timed-out before we answered — silent clear, no animation
-              get().resetCallState();
-              return;
-            }
+            console.log("📴 call:ended received", { status, endedBy });
 
-            let endReason;
+            // If already idle, ignore duplicate
+            if (state.callState === "idle") return;
 
-            if (status === "MISSED" || reason === "TIMEOUT") {
+            let endReason = "ended";
+
+            if (reason === "TIMEOUT" || status === "MISSED") {
               endReason = "missed";
-            } else if (status === "ENDED") {
-              endReason = "ended";
-            } else {
-              endReason = state.participants.length === 0 ? "missed" : "ended";
             }
 
+            if (status === "DECLINED") {
+              endReason = "declined";
+            }
+
+            if (status === "ERROR" || reason === "ERROR") {
+              endReason = "error";
+            }
+
+            // Always go through ending state
             get().enterEndingState(endReason);
           },
         );

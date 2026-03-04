@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import useCallStore from "../../store/call.store";
+import { useIncomingRingtone } from "../../hooks/call/useIncomingRingtone";
 
 export default function IncomingCallToast() {
   const { callState, incomingCall, joinCall, declineCall } = useCallStore();
@@ -8,17 +9,7 @@ export default function IncomingCallToast() {
 
   const isVisible = callState === "incoming" && incomingCall;
 
-  useEffect(() => {
-    if (isVisible) {
-      ringtoneRef.current?.play()?.catch(() => {});
-    } else {
-      ringtoneRef.current?.pause();
-    }
-
-    return () => {
-      ringtoneRef.current?.pause();
-    };
-  }, [isVisible]);
+  useIncomingRingtone(isVisible);
 
   if (!isVisible) return null;
 
@@ -65,14 +56,6 @@ export default function IncomingCallToast() {
           Answer
         </button>
       </div>
-
-      {/* Hidden ringtone element — swap src for your own audio file */}
-      <audio
-        ref={ringtoneRef}
-        src="/sounds/call-ringtone.mp3"
-        loop
-        preload="auto"
-      />
     </div>
   );
 }
