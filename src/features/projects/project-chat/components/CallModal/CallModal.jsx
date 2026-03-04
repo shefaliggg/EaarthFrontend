@@ -24,68 +24,16 @@ import CallControls from "./CallControls";
 import { Button } from "../../../../../shared/components/ui/button";
 import { getAvatarFallback } from "../../../../../shared/config/utils";
 import { getCurrentUserId } from "../../../../../shared/config/utils";
+import {
+  END_CONFIG,
+  getDefaultPosition,
+  getGridClass,
+  MODE_SIZE,
+} from "../../utils/CallHelpers";
+import { useOutgoingRingtone } from "../../hooks/call/useOutgoingRingtone";
+import { useCallEndSound } from "../../hooks/call/useCallEndSound";
+import EndingOverlay from "./EndingOverlay";
 
-/* ─── Grid helpers ─────────────────────────────────────────────────────────── */
-function getGridClass(count) {
-  if (count === 1) return "grid-cols-1";
-  if (count === 2) return "grid-cols-2";
-  if (count <= 4) return "grid-cols-2";
-  if (count <= 9) return "grid-cols-3";
-  return "grid-cols-4";
-}
-
-/* ─── Draggable size / position helpers ────────────────────────────────────── */
-const MODE_SIZE = {
-  compact: { width: 860, height: 560 },
-  minimized: { width: 220, height: 100 },
-};
-
-function getDefaultPosition(mode) {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  if (mode === "minimized") return { x: vw - 240, y: vh - 120 };
-  const { width, height } = MODE_SIZE.compact;
-  return {
-    x: Math.max(0, (vw - width) / 2),
-    y: Math.max(0, (vh - height) / 2),
-  };
-}
-
-/* ─── End-state config ──────────────────────────────────────────────────────── */
-const END_CONFIG = {
-  declined: {
-    icon: PhoneOff,
-    iconColor: "text-red-400",
-    bg: "bg-red-500/20",
-    title: "Call Declined",
-    sub: "The other person declined your call.",
-  },
-  missed: {
-    icon: PhoneMissed,
-    iconColor: "text-yellow-400",
-    bg: "bg-yellow-500/20",
-    title: "No Answer",
-    sub: "No one joined the call.",
-  },
-  ended: {
-    icon: PhoneOff,
-    iconColor: "text-zinc-400",
-    bg: "bg-zinc-700/40",
-    title: "Call Ended",
-    sub: "The call has ended.",
-  },
-  error: {
-    icon: PhoneOff,
-    iconColor: "text-red-400",
-    bg: "bg-red-500/20",
-    title: "Call Failed",
-    sub: "Something went wrong. Please try again.",
-  },
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   CallModal
-═══════════════════════════════════════════════════════════════════════════ */
 export default function CallModal() {
   const {
     viewMode,
@@ -100,13 +48,11 @@ export default function CallModal() {
     isAudioMuted,
     activeSpeakerId,
     participants,
+    isInitiator,
   } = useCallStore();
 
   const currentUserId = getCurrentUserId();
-
-  // ── Layout mode: "speaker" (default) or "grid" ──
   const [layout, setLayout] = useState("speaker");
-  // ── Pinned tile: tileId or "local" ──
   const [pinnedId, setPinnedId] = useState(null);
 
   const positionRef = useRef({
@@ -192,6 +138,13 @@ export default function CallModal() {
     activeSpeakerId,
   ]);
 
+  useOutgoingRingtone({
+    callState,
+    participantCount: allTiles.length,
+    isInitiator,
+    hadParticipants,
+  });
+
   // Determine the active "speaker" tile for speaker view
   const speakerTile = useMemo(() => {
     if (pinnedId) return allTiles.find((t) => t.id === pinnedId) ?? allTiles[0];
@@ -272,7 +225,6 @@ export default function CallModal() {
 
   const audioSink = <audio id="chime-audio-sink" style={{ display: "none" }} />;
 
-  // ── FULL SCREEN ──────────────────────────────────────────────────────────
   if (isFull) {
     return (
       <div className="fixed inset-0 z-[200] bg-zinc-950 flex flex-col">
@@ -556,8 +508,6 @@ function TopBar({
 }) {
   const isEnding = callState === "ending";
   const isConnected = callState === "connected";
-  // isLive: someone is currently with us
-  // isAlone: we were in a real call but everyone left (don't re-show Ringing)
   const isLive = isConnected && participantCount > 1;
   const isAlone = isConnected && participantCount <= 1 && hadParticipants;
 
@@ -655,22 +605,22 @@ function TopBar({
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                onFull();
+                onMinimize();
               }}
               className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <Minimize2 className="w-3.5 h-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                onMinimize();
+                onFull();
               }}
               className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
             >
-              <Minimize2 className="w-3.5 h-3.5" />
+              <Maximize2 className="w-3.5 h-3.5" />
             </Button>
           </>
         )}
@@ -688,58 +638,6 @@ function TopBar({
             <Maximize2 className="w-3.5 h-3.5" />
           </Button>
         )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   EndingOverlay
-═══════════════════════════════════════════════════════════════════════════ */
-function EndingOverlay({ reason }) {
-  const cfg = END_CONFIG[reason] ?? END_CONFIG.ended;
-  const Icon = cfg.icon;
-
-  return (
-    <div
-      className="flex flex-col items-center justify-center flex-1 gap-5 bg-zinc-950"
-      style={{ animation: "fadeInUp 0.35s ease both" }}
-    >
-      <style>{`
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes ripple   { 0% { transform:scale(1); opacity:.6 } 100% { transform:scale(2.4); opacity:0 } }
-        @keyframes shrink   { from { width:100% } to { width:0% } }
-      `}</style>
-
-      <div className="relative flex items-center justify-center">
-        <span
-          className={cn("absolute rounded-full w-20 h-20", cfg.bg)}
-          style={{ animation: "ripple 1.4s ease-out infinite" }}
-        />
-        <span
-          className={cn("absolute rounded-full w-20 h-20", cfg.bg)}
-          style={{ animation: "ripple 1.4s ease-out 0.5s infinite" }}
-        />
-        <div
-          className={cn(
-            "relative w-16 h-16 rounded-full flex items-center justify-center",
-            cfg.bg,
-          )}
-        >
-          <Icon className={cn("w-7 h-7", cfg.iconColor)} />
-        </div>
-      </div>
-
-      <div className="text-center">
-        <p className="text-white font-semibold text-base">{cfg.title}</p>
-        <p className="text-zinc-400 text-sm mt-1">{cfg.sub}</p>
-      </div>
-
-      <div className="w-32 h-0.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-zinc-500 rounded-full"
-          style={{ animation: "shrink 3.5s linear both" }}
-        />
       </div>
     </div>
   );

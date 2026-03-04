@@ -28,6 +28,7 @@ const useCallStore = create(
       viewMode: "compact",
       localTileId: null,
       remoteTiles: [],
+      isInitiator: false,
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
@@ -37,7 +38,7 @@ const useCallStore = create(
 
       setViewMode: (mode) => set({ viewMode: mode }),
       setIncomingCall: (data) =>
-        set({ incomingCall: data, callState: "incoming" }),
+        set({ incomingCall: data, callState: "incoming", isInitiator: false }),
       clearIncomingCall: () => set({ incomingCall: null }),
 
       enterEndingState: (reason = "ended") => {
@@ -58,7 +59,7 @@ const useCallStore = create(
         endingTimer = setTimeout(() => {
           get().resetCallState();
           endingTimer = null;
-        }, 3500);
+        }, 5000);
       },
 
       initiateCall: async (conversationId, callType = "VIDEO") => {
@@ -67,6 +68,7 @@ const useCallStore = create(
           callType,
           conversationId,
           viewMode: "compact",
+          isInitiator: true,
         });
 
         const currentUserId = getCurrentUserId();
