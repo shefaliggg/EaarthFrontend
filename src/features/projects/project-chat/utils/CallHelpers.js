@@ -42,6 +42,13 @@ export const END_CONFIG = {
     title: "No Answer",
     sub: "No one joined the call.",
   },
+  left: {
+    icon: PhoneOff,
+    iconColor: "text-purple-400",
+    bg: "bg-purple-500/20",
+    title: "You Left",
+    sub: "You have exited the call.",
+  },
   ended: {
     icon: PhoneOff,
     iconColor: "text-zinc-400",

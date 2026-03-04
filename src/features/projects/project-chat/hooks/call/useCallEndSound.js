@@ -5,7 +5,7 @@ export function useCallEndSound(callState) {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    const audio = new Audio("/sounds/call-end.mp3");
+    const audio = new Audio("/sounds/call-ending-tone.mp3");
     audio.preload = "auto";
     audio.volume = 0.8;
 

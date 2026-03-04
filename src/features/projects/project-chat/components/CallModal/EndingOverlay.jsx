@@ -49,7 +49,7 @@ function EndingOverlay() {
       <div className="w-32 h-0.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
           className="h-full bg-zinc-500 rounded-full"
-          style={{ animation: "shrink 5s linear both" }}
+          style={{ animation: `shrink ${endReason === "error" ? "6s" : "4s"} linear both` }}
         />
       </div>
     </div>
