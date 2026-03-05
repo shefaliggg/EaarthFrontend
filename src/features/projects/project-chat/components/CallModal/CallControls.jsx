@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
+import useChatStore from "../../store/chat.store";
 
 function ControlButton({ onClick, active, danger, disabled, children, label }) {
   return (
@@ -21,7 +22,7 @@ function ControlButton({ onClick, active, danger, disabled, children, label }) {
       title={label}
       className={cn(
         "flex flex-col items-center gap-1 group",
-        disabled && "opacity-40 cursor-not-allowed"
+        disabled && "opacity-40 cursor-not-allowed",
       )}
     >
       <div
@@ -31,7 +32,7 @@ function ControlButton({ onClick, active, danger, disabled, children, label }) {
             ? "bg-primary/50 hover:bg-primary"
             : danger
               ? "bg-red-500 hover:bg-red-600"
-              : "bg-zinc-800 hover:bg-zinc-700"
+              : "bg-zinc-800 hover:bg-zinc-700",
         )}
       >
         {children}
@@ -55,7 +56,15 @@ export default function CallControls({ onShowParticipants }) {
     stopScreenShare,
     leaveCall,
     endCallForEveryone,
+    conversationId,
   } = useCallStore();
+
+  const { conversations } = useChatStore();
+
+  const conversation = conversations.find((c) => c.id === conversationId);
+  const isDirect =
+    conversation?.type === "dm" ||
+    (Array.isArray(conversation?.members) && conversation.members.length <= 2);
 
   const handleScreenShare = () => {
     if (isSharingScreen) {
@@ -66,7 +75,7 @@ export default function CallControls({ onShowParticipants }) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-4 px-6 py-3 bg-primary/10 border-t border-primary/10 rounded-b-2xl">
+    <div className="flex items-center justify-center gap-4 px-6 py-3 bg-zinc-950 border-t border-zinc-800/80  rounded-b-2xl">
       {/* Mute */}
       <ControlButton
         onClick={toggleMute}
@@ -96,17 +105,19 @@ export default function CallControls({ onShowParticipants }) {
       )}
 
       {/* Screen Share */}
-      <ControlButton
-        onClick={handleScreenShare}
-        active={!isSharingScreen}
-        label={isSharingScreen ? "Stop Share" : "Share Screen"}
-      >
-        {isSharingScreen ? (
-          <MonitorOff className="w-5 h-5 text-blue-400" />
-        ) : (
-          <Monitor className="w-5 h-5 text-white" />
-        )}
-      </ControlButton>
+      {callType === "VIDEO" && (
+        <ControlButton
+          onClick={handleScreenShare}
+          active={!isSharingScreen}
+          label={isSharingScreen ? "Stop Share" : "Share Screen"}
+        >
+          {isSharingScreen ? (
+            <MonitorOff className="w-5 h-5 text-blue-400" />
+          ) : (
+            <Monitor className="w-5 h-5 text-white" />
+          )}
+        </ControlButton>
+      )}
 
       {/* Participants */}
       <ControlButton onClick={onShowParticipants} active label="Participants">
@@ -114,15 +125,19 @@ export default function CallControls({ onShowParticipants }) {
       </ControlButton>
 
       {/* Leave */}
-      <ControlButton onClick={leaveCall} danger label="Leave">
-        <PhoneOff className="w-5 h-5 text-white" />
-      </ControlButton>
+      {!isDirect && (
+        <ControlButton onClick={leaveCall} danger label="Leave">
+          <PhoneOff className="w-5 h-5 text-white" />
+        </ControlButton>
+      )}
 
       {/* End for everyone (could be role-gated in prod) */}
-      <ControlButton onClick={endCallForEveryone} danger label="End All">
+      <ControlButton onClick={endCallForEveryone} danger label={isDirect ? "End" : "End All"}>
         <div className="flex flex-col items-center">
           <PhoneOff className="w-4 h-4 text-white" />
-          <span className="text-[8px] text-white leading-none">All</span>
+          {!isDirect && (
+            <span className="text-[8px] text-white leading-none">All</span>
+          )}
         </div>
       </ControlButton>
     </div>

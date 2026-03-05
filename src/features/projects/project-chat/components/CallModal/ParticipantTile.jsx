@@ -4,24 +4,6 @@ import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
 import { getAvatarFallback } from "../../../../../shared/config/utils";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ParticipantTile
-//
-// Unified tile for both local and remote participants.
-// The <video> element is ALWAYS mounted — hiding it (not unmounting) is critical
-// so Chime's bindVideoElement never loses its target across camera-toggle cycles.
-//
-// Props:
-//   tileId       – Chime tile id (null when audio-only / camera off)
-//   displayName  – shown in label + avatar fallback
-//   isLocal      – mirrors video horizontally, always muted
-//   isVideoOff   – shows avatar overlay instead of video
-//   isMuted      – shows mic-off badge
-//   isActiveSpeaker – green ring
-//   isContent    – screen-share tile (no avatar overlay)
-//   isMainView   – larger layout adjustments
-//   className
-// ─────────────────────────────────────────────────────────────────────────────
 export function ParticipantTile({
   tileId,
   displayName,
@@ -45,7 +27,7 @@ export function ParticipantTile({
     return () => unbindVideoTile(tileId);
   }, [tileId]);
 
-  const initials = getAvatarFallback(displayName) || (isLocal ? "Y" : "?");
+  const initials = getAvatarFallback(displayName) || (isLocal ? "Y" : "U");
   const label = isLocal ? "You" : displayName || "Participant";
   const showAvatar = isVideoOff || (!tileId && !isContent);
 
@@ -53,7 +35,7 @@ export function ParticipantTile({
     <div
       className={cn(
         "relative rounded-xl overflow-hidden bg-zinc-900 flex items-center justify-center select-none",
-        isActiveSpeaker && !isContent && "ring-2 ring-green-400 ring-offset-1 ring-offset-zinc-950",
+        isActiveSpeaker && !isContent && "border border-green-600",
         className,
       )}
     >
@@ -79,8 +61,9 @@ export function ParticipantTile({
 
           <div
             className={cn(
-              "rounded-full bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center font-semibold text-white shadow-lg",
-              isMainView ? "w-20 h-20 text-3xl" : "w-12 h-12 text-lg",
+              "rounded-full bg-gradient-to-br flex items-center justify-center font-semibold text-white shadow-lg",
+              isMainView ? "w-30 h-30 text-3xl" : "w-12 h-12 text-lg",
+              isActiveSpeaker ? "from-primary to-primary/80" : "from-primary/80 to-primary/40"
             )}
           >
             {initials}
@@ -115,30 +98,5 @@ export function ParticipantTile({
         </div>
       </div>
     </div>
-  );
-}
-
-// ── Legacy named exports so existing imports don't break ───────────────────
-export function VideoTile({ tileId, displayName, isActiveSpeaker, isContent, className }) {
-  return (
-    <ParticipantTile
-      tileId={tileId}
-      displayName={displayName}
-      isActiveSpeaker={isActiveSpeaker}
-      isContent={isContent}
-      className={className}
-    />
-  );
-}
-
-export function LocalVideoTile({ tileId, isVideoOff, className }) {
-  return (
-    <ParticipantTile
-      tileId={tileId}
-      displayName="You"
-      isLocal
-      isVideoOff={isVideoOff}
-      className={className}
-    />
   );
 }

@@ -16,6 +16,7 @@ import useChatStore from "./chat.store";
 import { getCurrentUserId } from "../../../../shared/config/utils";
 
 let endingTimer = null;
+let activeSpeakerTimer = null;
 
 const useCallStore = create(
   devtools(
@@ -28,12 +29,13 @@ const useCallStore = create(
       incomingCall: null,
       viewMode: "compact",
       localTileId: null,
-      remoteTiles: [],
+      remoteTiles: {},
       isInitiator: false,
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
       activeSpeakerId: null,
+      attendeeIdToUserId: {},
       participants: [],
       hadParticipants: false, // [{ userId, displayName, isMuted, isVideoOff }]
 
@@ -120,14 +122,26 @@ const useCallStore = create(
             Array.isArray(data.existingParticipants) &&
             data.existingParticipants.length > 0
           ) {
-            set({
+            // Build attendeeIdToUserId mapping for existing participants
+            const attendeeMap = {};
+            data.existingParticipants.forEach((p) => {
+              if (p.attendeeId && p.userId) {
+                attendeeMap[p.attendeeId] = p.userId;
+              }
+            });
+
+            set((state) => ({
               participants: data.existingParticipants.map((p) => ({
                 userId: p.userId,
                 displayName: p.displayName,
-                isMuted: false,
-                isVideoOff: callType !== "VIDEO",
+                isMuted: p.isMuted ?? false,
+                isVideoOff: p.isVideoOff ?? (callType !== "VIDEO"),
               })),
-            });
+              attendeeIdToUserId: {
+                ...state.attendeeIdToUserId,
+                ...attendeeMap,
+              },
+            }));
           }
           await get().startSession(data.meeting, data.attendee, conversationId);
           get().clearIncomingCall();
@@ -267,7 +281,14 @@ const useCallStore = create(
         } else {
           meetingSession.audioVideo.realtimeMuteLocalAudio();
         }
-        set({ isAudioMuted: !isAudioMuted });
+        const currentUserId = getCurrentUserId();
+
+        set((state) => ({
+          isAudioMuted: !isAudioMuted,
+          participants: state.participants.map((p) =>
+            p.userId === currentUserId ? { ...p, isMuted: !isAudioMuted } : p,
+          ),
+        }));
       },
 
       toggleVideo: async () => {
@@ -306,6 +327,86 @@ const useCallStore = create(
         if (!meetingSession) return;
         await meetingSession.audioVideo.stopContentShare();
         set({ isSharingScreen: false });
+      },
+
+      syncParticipantJoin: ({ attendeeId, userId, displayName }) => {
+        set((state) => {
+          const exists = state.participants.find((p) => p.userId === userId);
+          if (exists) return state;
+
+          return {
+            participants: [
+              ...state.participants,
+              {
+                attendeeId,
+                userId,
+                displayName: displayName || "User",
+                isMuted: false,
+                isVideoOff: true,
+                isSpeaking: false,
+              },
+            ],
+            attendeeIdToUserId: {
+              ...state.attendeeIdToUserId,
+              [attendeeId]: userId,
+            },
+            hadParticipants: true,
+          };
+        });
+      },
+
+      syncParticipantLeave: (attendeeId) => {
+        set((state) => {
+          const userId = state.attendeeIdToUserId[attendeeId];
+          if (!userId) return state;
+
+          return {
+            participants: state.participants.filter((p) => p.userId !== userId),
+            attendeeIdToUserId: Object.fromEntries(
+              Object.entries(state.attendeeIdToUserId).filter(
+                ([id]) => id !== attendeeId,
+              ),
+            ),
+          };
+        });
+      },
+
+      syncMuteState: (attendeeId, muted) => {
+        const { attendeeIdToUserId } = get();
+        const userId = attendeeIdToUserId[attendeeId];
+        if (!userId) return;
+
+        set((state) => ({
+          participants: state.participants.map((p) =>
+            p.userId === userId ? { ...p, isMuted: muted } : p,
+          ),
+        }));
+      },
+
+      syncActiveSpeaker: (attendeeId) => {
+        const { attendeeIdToUserId } = get();
+        const userId = attendeeIdToUserId[attendeeId];
+        if (!userId) return;
+
+        set((state) => ({
+          activeSpeakerId: userId,
+          participants: state.participants.map((p) => ({
+            ...p,
+            isSpeaking: p.userId === userId,
+          })),
+        }));
+
+        if (activeSpeakerTimer) clearTimeout(activeSpeakerTimer);
+
+        activeSpeakerTimer = setTimeout(() => {
+          set((state) => ({
+            participants: state.participants.map((p) => ({
+              ...p,
+              isSpeaking: false,
+            })),
+            activeSpeakerId: null,
+          }));
+        }, 1200);
       },
 
       startSession: async (meeting, attendee, conversationId) => {
@@ -353,6 +454,16 @@ const useCallStore = create(
             }
           }
 
+          // map attendeeId -> userId
+          const currentUserId = getCurrentUserId();
+
+          set((state) => ({
+            attendeeIdToUserId: {
+              ...state.attendeeIdToUserId,
+              [attendee.AttendeeId]: currentUserId,
+            },
+          }));
+
           get().attachObservers(meetingSession, conversationId);
           meetingSession.audioVideo.start();
 
@@ -383,25 +494,21 @@ const useCallStore = create(
 
             if (tileState.localTile) {
               set({ localTileId: tileState.tileId });
-            } else {
-              set((state) => {
-                // Update existing tile or add new one
-                const existingIdx = state.remoteTiles.findIndex(
-                  (t) => t.tileId === tileState.tileId,
-                );
-                const tile = {
-                  tileId: tileState.tileId,
-                  boundExternalUserId: tileState.boundExternalUserId,
-                  isContent: tileState.isContent,
-                };
-                if (existingIdx >= 0) {
-                  const updated = [...state.remoteTiles];
-                  updated[existingIdx] = tile;
-                  return { remoteTiles: updated };
-                }
-                return { remoteTiles: [...state.remoteTiles, tile] };
-              });
+              return;
             }
+
+            const tile = {
+              tileId: tileState.tileId,
+              boundExternalUserId: tileState.boundExternalUserId,
+              isContent: tileState.isContent,
+            };
+
+            set((state) => ({
+              remoteTiles: {
+                ...state.remoteTiles,
+                [tileState.tileId]: tile,
+              },
+            }));
           },
 
           videoTileWasRemoved: (tileId) => {
@@ -409,27 +516,31 @@ const useCallStore = create(
             if (tileId === localTileId) {
               set({ localTileId: null });
             } else {
-              set((state) => ({
-                remoteTiles: state.remoteTiles.filter(
-                  (t) => t.tileId !== tileId,
-                ),
-              }));
+              set((state) => {
+                const updated = { ...state.remoteTiles };
+                delete updated[tileId];
+
+                return { remoteTiles: updated };
+              });
             }
           },
 
-          audioVideoDidStop: (status) => {
+          audioVideoDidStop: (sessionStatus) => {
+            const code = sessionStatus.statusCode();
             const state = get();
-
-            if (state.callState === "ending" || state.callState === "idle") {
+            if (state.callState === "ending" || state.callState === "idle")
               return;
-            }
-
             if (
-              status.statusCode() ===
-              MeetingSessionStatusCode.SignalingChannelClosedUnexpectedly
+              code === MeetingSessionStatusCode.AudioCallEnded ||
+              code === MeetingSessionStatusCode.MeetingEnded
             ) {
-              return;
+              get().enterEndingState("ended");
             }
+            if (
+              code ===
+              MeetingSessionStatusCode.SignalingChannelClosedUnexpectedly
+            )
+              return;
           },
 
           contentShareDidStart: () => set({ isSharingScreen: true }),
@@ -440,10 +551,40 @@ const useCallStore = create(
         meetingSession.audioVideo.subscribeToActiveSpeakerDetector(
           new DefaultActiveSpeakerPolicy(),
           (activeSpeakers) => {
-            if (activeSpeakers.length > 0) {
-              set({ activeSpeakerId: activeSpeakers[0] });
+            console.log("active speackers", activeSpeakers)
+            get().syncActiveSpeaker(activeSpeakers[0]);
+          },
+        );
+
+        meetingSession.audioVideo.realtimeSubscribeToAttendeeIdPresence(
+          (attendeeId, present, externalUserId) => {
+            // Skip content-share ghost attendees
+            if (attendeeId.includes("#content")) return;
+
+            if (present) {
+              // get().syncParticipantJoin({ attendeeId, userId: externalUserId });
+
+              // Subscribe to this attendee's volume individually
+              meetingSession.audioVideo.realtimeSubscribeToVolumeIndicator(
+                attendeeId,
+                (aId, volume, muted) => {
+                  if (muted !== null) {
+                    get().syncMuteState(aId, muted);
+                  }
+                  if (volume !== null && volume > 0.08 && muted === false) {
+                    get().syncActiveSpeaker(aId);
+                  }
+                },
+              );
             } else {
-              set({ activeSpeakerId: null });
+              // get().syncParticipantLeave(attendeeId);
+              try {
+                meetingSession.audioVideo.realtimeUnsubscribeFromVolumeIndicator(
+                  attendeeId,
+                );
+              } catch (_) {
+                /* already cleaned up */
+              }
             }
           },
         );
@@ -466,6 +607,10 @@ const useCallStore = create(
       },
 
       resetCallState: () => {
+        if (activeSpeakerTimer) {
+          clearTimeout(activeSpeakerTimer);
+          activeSpeakerTimer = null;
+        }
         set({
           callState: "idle",
           endReason: null,
@@ -474,11 +619,12 @@ const useCallStore = create(
           meetingSession: null,
           incomingCall: null,
           localTileId: null,
-          remoteTiles: [],
+          remoteTiles: {},
           isAudioMuted: false,
           isVideoOff: false,
           isSharingScreen: false,
           activeSpeakerId: null,
+          attendeeIdToUserId: {},
           participants: [],
           hadParticipants: false,
           viewMode: "compact", // reset view mode for next call
@@ -547,7 +693,7 @@ const useCallStore = create(
 
         socket.on(
           "call:participant-joined",
-          ({ userId, displayName, callType }) => {
+          ({ userId, displayName, callType, attendeeId }) => {
             set((state) => ({
               participants: [
                 ...state.participants.filter((p) => p.userId !== userId),
@@ -558,15 +704,33 @@ const useCallStore = create(
                   isVideoOff: callType !== "VIDEO",
                 },
               ],
+              attendeeIdToUserId: {
+                ...state.attendeeIdToUserId,
+                [attendeeId]: userId,
+              },
               hadParticipants: true,
             }));
           },
         );
 
         socket.on("call:participant-left", ({ userId }) => {
-          set((state) => ({
-            participants: state.participants.filter((p) => p.userId !== userId),
-          }));
+          set((state) => {
+            const newParticipants = state.participants.filter(
+              (p) => p.userId !== userId,
+            );
+
+            const newMap = { ...state.attendeeIdToUserId };
+            Object.keys(newMap).forEach((attendeeId) => {
+              if (newMap[attendeeId] === userId) {
+                delete newMap[attendeeId];
+              }
+            });
+
+            return {
+              participants: newParticipants,
+              attendeeIdToUserId: newMap,
+            };
+          });
 
           const updated = get();
           if (

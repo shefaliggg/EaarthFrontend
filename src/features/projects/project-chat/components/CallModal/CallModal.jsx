@@ -19,10 +19,9 @@ import {
 import { Rnd } from "react-rnd";
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
-import { ParticipantTile } from "./VideoTile";
+import { ParticipantTile } from "./ParticipantTile";
 import CallControls from "./CallControls";
 import { Button } from "../../../../../shared/components/ui/button";
-import { getAvatarFallback } from "../../../../../shared/config/utils";
 import { getCurrentUserId } from "../../../../../shared/config/utils";
 import {
   END_CONFIG,
@@ -31,8 +30,8 @@ import {
   MODE_SIZE,
 } from "../../utils/CallHelpers";
 import { useOutgoingRingtone } from "../../hooks/call/useOutgoingRingtone";
-import { useCallEndSound } from "../../hooks/call/useCallEndSound";
 import EndingOverlay from "./EndingOverlay";
+import { useSelector } from "react-redux";
 
 export default function CallModal() {
   const {
@@ -50,6 +49,7 @@ export default function CallModal() {
     participants,
     isInitiator,
   } = useCallStore();
+  const { currentUser } = useSelector((state) => state.user);
 
   const currentUserId = getCurrentUserId();
   const [layout, setLayout] = useState("speaker");
@@ -66,8 +66,13 @@ export default function CallModal() {
   const isMinimized = viewMode === "minimized";
   const isEnding = callState === "ending";
 
-  const screenShareTile = remoteTiles.find((t) => t.isContent);
-  const cameraTiles = remoteTiles.filter((t) => !t.isContent);
+  const remoteTileList = useMemo(
+    () => Object.values(remoteTiles),
+    [remoteTiles],
+  );
+
+  const screenShareTile = remoteTileList.find((t) => t.isContent);
+  const cameraTiles = remoteTileList.filter((t) => !t.isContent);
 
   // Map tileId → participant info for display names
   const participantByUserId = useMemo(() => {
@@ -87,16 +92,19 @@ export default function CallModal() {
     list.push({
       id: "local",
       tileId: localTileId,
-      displayName: "You",
+      displayName: currentUser?.displayName,
       isLocal: true,
       isVideoOff: isVideoOff || callType !== "VIDEO",
       isMuted: isAudioMuted,
-      isActiveSpeaker: false,
+      isActiveSpeaker: activeSpeakerId === currentUserId && !isAudioMuted,
     });
 
     // Remote camera tiles
     cameraTiles.forEach((tile) => {
-      const p = participantByUserId[tile.boundExternalUserId];
+      const userId = tile.boundExternalUserId;
+      if (!userId) return;
+
+      const p = participantByUserId[userId];
       list.push({
         id: tile.tileId,
         tileId: tile.tileId,
@@ -104,7 +112,7 @@ export default function CallModal() {
         isLocal: false,
         isVideoOff: callType !== "VIDEO",
         isMuted: p?.isMuted || false,
-        isActiveSpeaker: activeSpeakerId === tile.boundExternalUserId,
+        isActiveSpeaker: activeSpeakerId === userId,
       });
     });
 
@@ -136,7 +144,19 @@ export default function CallModal() {
     isAudioMuted,
     callType,
     activeSpeakerId,
+    currentUserId,
   ]);
+
+  // console.log("current user", currentUser);
+  // console.log(
+  //   "Active speaker:",
+  //   activeSpeakerId,
+  //   "tiles:",
+  //   allTiles.map((t) => ({
+  //     id: t.id,
+  //     active: t.isActiveSpeaker,
+  //   })),
+  // );
 
   useOutgoingRingtone({
     callState,
@@ -157,17 +177,8 @@ export default function CallModal() {
         isContent: true,
       };
     // Prefer active speaker (not local)
-    const speaker = allTiles.find(
-      (t) =>
-        !t.isLocal &&
-        activeSpeakerId &&
-        (t.isActiveSpeaker ||
-          cameraTiles.some(
-            (c) =>
-              c.boundExternalUserId === activeSpeakerId &&
-              c.tileId === t.tileId,
-          )),
-    );
+    const speaker = allTiles.find((t) => !t.isLocal && t.isActiveSpeaker);
+
     if (speaker) return speaker;
     // First remote, else local
     return allTiles.find((t) => !t.isLocal) ?? allTiles[0];
@@ -371,7 +382,7 @@ function CallBody({
             isVideoOff
             isMuted={tile.isMuted}
             isActiveSpeaker={tile.isActiveSpeaker}
-            className="aspect-square"
+            className={`${allTiles.length > 1 ? "aspect-square" : "aspect-video"}`}
           />
         ))}
       </div>
