@@ -52,7 +52,7 @@ export default function CallModal() {
   const { currentUser } = useSelector((state) => state.user);
 
   const currentUserId = getCurrentUserId();
-  const [layout, setLayout] = useState("speaker");
+  const [layout, setLayout] = useState("grid");
   const [pinnedId, setPinnedId] = useState(null);
 
   const positionRef = useRef({
@@ -83,6 +83,8 @@ export default function CallModal() {
     return map;
   }, [participants]);
 
+  console.log("participant details: ", participantByUserId)
+
   // Build unified participant list for grid / strip
   // Each entry: { id, tileId, displayName, isLocal, isVideoOff, isMuted, isActiveSpeaker }
   const allTiles = useMemo(() => {
@@ -90,7 +92,7 @@ export default function CallModal() {
 
     // Local tile
     list.push({
-      id: "local",
+      id: currentUserId,
       tileId: localTileId,
       displayName: currentUser?.displayName,
       isLocal: true,
@@ -106,7 +108,7 @@ export default function CallModal() {
 
       const p = participantByUserId[userId];
       list.push({
-        id: tile.tileId,
+        id: p.userId ? p.userId : tile.tileId,
         tileId: tile.tileId,
         displayName: p?.displayName || "Participant",
         isLocal: false,
@@ -118,6 +120,8 @@ export default function CallModal() {
 
     // Audio-only participants (in call but no video tile yet)
     participants.forEach((p) => {
+      if (p.userId === currentUserId) return;
+
       const hasTile = cameraTiles.some(
         (t) => t.boundExternalUserId === p.userId,
       );
@@ -147,16 +151,17 @@ export default function CallModal() {
     currentUserId,
   ]);
 
-  // console.log("current user", currentUser);
-  // console.log(
-  //   "Active speaker:",
-  //   activeSpeakerId,
-  //   "tiles:",
-  //   allTiles.map((t) => ({
-  //     id: t.id,
-  //     active: t.isActiveSpeaker,
-  //   })),
-  // );
+  console.log("current user", currentUser);
+  console.log("All participants", participants);
+  console.log(
+    "Active speaker:",
+    activeSpeakerId,
+    "tiles:",
+    allTiles.map((t) => ({
+      id: t.id,
+      active: t.isActiveSpeaker,
+    })),
+  );
 
   useOutgoingRingtone({
     callState,

@@ -307,7 +307,7 @@ export function transformMessage(
       msg.starredBy?.some((id) => id.toString() === currentUser) || false,
     system,
 
-    _raw: msg, // keep temporarily, but UI should stop using it
+    _raw: msg,
   };
 }
 

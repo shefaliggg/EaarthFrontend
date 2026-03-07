@@ -103,7 +103,16 @@ const useChatStore = create(
             conversationMembersCount: memberCount,
           });
 
-          get().updateMessageInConversation(transformed.id, transformed);
+          get().updateMessageInConversation(transformed.id, {
+            content: transformed.content,
+            caption: transformed.caption,
+            callInfo: transformed.callInfo,
+            state: transformed.state,
+            seenBy: transformed.seenBy,
+            deliveredTo: transformed.deliveredTo,
+            edited: transformed.edited,
+            editedAt: transformed.editedAt,
+          });
 
           // 2️⃣ Update sidebar only if this is the latest message
           const existingMessages =
@@ -656,7 +665,7 @@ const useChatStore = create(
         }));
 
         // resend
-        return get().sendMessage(conversationId, null, {
+        return get().sendMessage(conversationId, DEFAULT_PROJECT_ID, {
           text: content,
           type: type.toUpperCase(),
           replyTo,
