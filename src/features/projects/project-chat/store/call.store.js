@@ -14,6 +14,7 @@ import chatApi from "../api/chat.api";
 import { toast } from "sonner";
 import useChatStore from "./chat.store";
 import { getCurrentUserId } from "../../../../shared/config/utils";
+import { store } from "../../../../app/store";
 
 let endingTimer = null;
 let activeSpeakerTimer = null;
@@ -120,11 +121,16 @@ const useCallStore = create(
           set({ callType });
 
           const currentUserId = getCurrentUserId();
+          const currentUser = store.getState().user.currentUser;
 
           const existingParticipants = Array.isArray(data.existingParticipants)
             ? data.existingParticipants
             : [];
 
+          console.log(
+            "existing participatns in join call:",
+            existingParticipants,
+          );
           const attendeeMap = {};
           existingParticipants.forEach((p) => {
             if (p.attendeeId && p.userId) {
@@ -132,31 +138,14 @@ const useCallStore = create(
             }
           });
 
-          set((state) => ({
-            participants: [
-              ...existingParticipants
-                .filter((p) => p.userId !== currentUserId) // guard against server duplication
-                .map((p) => ({
-                  userId: p.userId,
-                  displayName: p.displayName,
-                  isMuted: p.isMuted ?? false,
-                  isVideoOff: p.isVideoOff ?? callType !== "VIDEO",
-                  isSpeaking: false,
-                })),
-              {
-                userId: currentUserId,
-                displayName: data.currentUserDisplayName ?? "You",
-                isMuted: false,
-                isVideoOff: callType !== "VIDEO",
-                isSpeaking: false,
-              },
-            ],
-            attendeeIdToUserId: {
-              ...state.attendeeIdToUserId,
-              ...attendeeMap,
-            },
-            hadParticipants: existingParticipants.length > 0,
-          }));
+          existingParticipants.forEach((p) => {
+            get().syncParticipantJoin({
+              attendeeId: p.attendeeId,
+              userId: p.userId,
+              displayName: p.displayName,
+              callType,
+            });
+          });
 
           await get().startSession(data.meeting, data.attendee, conversationId);
           get().clearIncomingCall();
@@ -344,8 +333,15 @@ const useCallStore = create(
         set({ isSharingScreen: false });
       },
 
-      syncParticipantJoin: ({ attendeeId, userId, displayName }) => {
+      syncParticipantJoin: ({
+        attendeeId,
+        userId,
+        displayName,
+        callType = "AUDIO",
+      }) => {
         set((state) => {
+          if (!userId) return state;
+
           const exists = state.participants.find((p) => p.userId === userId);
           if (exists) {
             return {
@@ -374,7 +370,7 @@ const useCallStore = create(
                 userId,
                 displayName: displayName || "User",
                 isMuted: false,
-                isVideoOff: true,
+                isVideoOff: callType !== "VIDEO",
                 isSpeaking: false,
               },
             ],
@@ -389,16 +385,26 @@ const useCallStore = create(
 
       syncParticipantLeave: (attendeeId) => {
         set((state) => {
+          // 🛡 Guard invalid events
+          if (!attendeeId) return state;
+
           const userId = state.attendeeIdToUserId[attendeeId];
+
+          // Nothing to remove
           if (!userId) return state;
 
+          const participantExists = state.participants.some(
+            (p) => p.userId === userId,
+          );
+
+          const updatedMap = { ...state.attendeeIdToUserId };
+          delete updatedMap[attendeeId];
+
           return {
-            participants: state.participants.filter((p) => p.userId !== userId),
-            attendeeIdToUserId: Object.fromEntries(
-              Object.entries(state.attendeeIdToUserId).filter(
-                ([id]) => id !== attendeeId,
-              ),
-            ),
+            participants: participantExists
+              ? state.participants.filter((p) => p.userId !== userId)
+              : state.participants,
+            attendeeIdToUserId: updatedMap,
           };
         });
       },
@@ -428,17 +434,17 @@ const useCallStore = create(
           })),
         }));
 
-        // if (activeSpeakerTimer) clearTimeout(activeSpeakerTimer);
+        if (activeSpeakerTimer) clearTimeout(activeSpeakerTimer);
 
-        // activeSpeakerTimer = setTimeout(() => {
-        //   set((state) => ({
-        //     participants: state.participants.map((p) => ({
-        //       ...p,
-        //       isSpeaking: false,
-        //     })),
-        //     activeSpeakerId: null,
-        //   }));
-        // }, 1200);
+        activeSpeakerTimer = setTimeout(() => {
+          set((state) => ({
+            participants: state.participants.map((p) => ({
+              ...p,
+              isSpeaking: false,
+            })),
+            activeSpeakerId: null,
+          }));
+        }, 600);
       },
 
       startSession: async (meeting, attendee, conversationId) => {
@@ -476,6 +482,7 @@ const useCallStore = create(
 
           // Camera input (VIDEO calls only)
           const callType = get().callType;
+
           if (callType === "VIDEO") {
             const videoInputDevices =
               await meetingSession.audioVideo.listVideoInputDevices();
@@ -486,22 +493,23 @@ const useCallStore = create(
             }
           }
 
-          // map attendeeId -> userId
           const currentUserId = getCurrentUserId();
+          const currentUser = store.getState().user.currentUser;
 
-          set((state) => ({
-            attendeeIdToUserId: {
-              ...state.attendeeIdToUserId,
-              [attendee.AttendeeId]: currentUserId,
-            },
-          }));
+          get().syncParticipantJoin({
+            attendeeId: attendee.AttendeeId,
+            userId: currentUserId,
+            displayName: currentUser?.displayName ?? "You",
+            callType,
+          });
 
-          get().attachObservers(meetingSession, conversationId);
           meetingSession.audioVideo.start();
 
           if (callType === "VIDEO") {
             meetingSession.audioVideo.startLocalVideoTile();
           }
+
+          get().attachObservers(meetingSession, conversationId);
 
           set({
             meetingSession,
@@ -579,20 +587,6 @@ const useCallStore = create(
           contentShareDidStop: () => set({ isSharingScreen: false }),
         });
 
-        // Active speaker detector
-        meetingSession.audioVideo.subscribeToActiveSpeakerDetector(
-          new DefaultActiveSpeakerPolicy({
-            // speakerWeight: 0.9,
-            cutoffThreshold: 0.01,
-            silenceThreshold: 0.2,
-          }),
-          (speakers) => {
-            console.log("all speackers", speakers);
-            if (!speakers || speakers.length === 0) return;
-            get().syncActiveSpeaker(speakers[0]);
-          },
-        );
-
         meetingSession.audioVideo.realtimeSubscribeToAttendeeIdPresence(
           (attendeeId, present, externalUserId) => {
             // Skip content-share ghost attendees
@@ -607,11 +601,18 @@ const useCallStore = create(
               meetingSession.audioVideo.realtimeSubscribeToVolumeIndicator(
                 attendeeId,
                 (aId, volume, muted) => {
+                  // console.log("volume", attendeeId, volume);
                   if (muted !== null) {
                     get().syncMuteState(aId, muted);
                   }
+
+                  if (volume !== null && volume > 0.5 && !muted) {
+                    get().syncActiveSpeaker(attendeeId);
+                  }
                 },
               );
+            } else {
+              get().syncParticipantLeave(attendeeId);
             }
           },
         );
@@ -728,44 +729,26 @@ const useCallStore = create(
 
         socket.on(
           "call:participant-joined",
-          ({ userId, displayName, callType, attendeeId }) => {
-            set((state) => ({
-              participants: [
-                ...state.participants.filter((p) => p.userId !== userId),
-                {
-                  userId,
-                  displayName,
-                  isMuted: false,
-                  isVideoOff: callType !== "VIDEO",
-                },
-              ],
-              attendeeIdToUserId: {
-                ...state.attendeeIdToUserId,
-                [attendeeId]: userId,
-              },
-              hadParticipants: true,
-            }));
+          ({ userId, displayName, attendeeId, callType }) => {
+            get().syncParticipantJoin({
+              attendeeId,
+              userId,
+              displayName,
+              callType,
+            });
           },
         );
 
         socket.on("call:participant-left", ({ userId }) => {
-          set((state) => {
-            const newParticipants = state.participants.filter(
-              (p) => p.userId !== userId,
-            );
+          const state = get();
 
-            const newMap = { ...state.attendeeIdToUserId };
-            Object.keys(newMap).forEach((attendeeId) => {
-              if (newMap[attendeeId] === userId) {
-                delete newMap[attendeeId];
-              }
-            });
+          const attendeeId = Object.keys(state.attendeeIdToUserId).find(
+            (id) => state.attendeeIdToUserId[id] === userId,
+          );
 
-            return {
-              participants: newParticipants,
-              attendeeIdToUserId: newMap,
-            };
-          });
+          if (!attendeeId) return;
+
+          get().syncParticipantLeave(attendeeId);
 
           const updated = get();
           if (

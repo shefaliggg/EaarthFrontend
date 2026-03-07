@@ -83,8 +83,6 @@ export default function CallModal() {
     return map;
   }, [participants]);
 
-  console.log("participant details: ", participantByUserId)
-
   // Build unified participant list for grid / strip
   // Each entry: { id, tileId, displayName, isLocal, isVideoOff, isMuted, isActiveSpeaker }
   const allTiles = useMemo(() => {
@@ -151,7 +149,6 @@ export default function CallModal() {
     currentUserId,
   ]);
 
-  console.log("current user", currentUser);
   console.log("All participants", participants);
   console.log(
     "Active speaker:",
