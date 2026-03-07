@@ -10,13 +10,17 @@ export function ParticipantTile({
   isLocal = false,
   isVideoOff = false,
   isMuted = false,
+  isSpeaking = false,
   isActiveSpeaker = false,
+  isSingle = false,
   isContent = false,
   isMainView = false,
   className,
 }) {
   const videoRef = useRef(null);
   const { bindVideoTile, unbindVideoTile } = useCallStore();
+
+  console.log("participant is speaking:", isSpeaking);
 
   // Bind whenever tileId or the video element changes.
   // We do NOT unmount the <video> — only hide it — so this effect runs
@@ -62,8 +66,12 @@ export function ParticipantTile({
           <div
             className={cn(
               "rounded-full bg-gradient-to-br flex items-center justify-center font-semibold text-white shadow-lg",
-              isMainView ? "w-30 h-30 text-3xl" : "w-12 h-12 text-lg",
-              isActiveSpeaker ? "from-primary to-primary/80" : "from-primary/80 to-primary/40"
+              isMainView || isSingle
+                ? "w-30 h-30 text-3xl"
+                : "w-12 h-12 text-lg",
+              isActiveSpeaker
+                ? "from-primary to-primary/80"
+                : "from-primary/80 to-primary/40",
             )}
           >
             {initials}
@@ -84,7 +92,7 @@ export function ParticipantTile({
       )}
 
       {/* ── Active speaker pulse ── */}
-      {isActiveSpeaker && !isContent && (
+      {isSpeaking && !isContent && (
         <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-400 animate-pulse" />
       )}
 

@@ -96,6 +96,9 @@ export default function CallModal() {
       isLocal: true,
       isVideoOff: isVideoOff || callType !== "VIDEO",
       isMuted: isAudioMuted,
+      isSpeaking:
+        participants.find((p) => p.userId === currentUserId)?.isSpeaking ||
+        false,
       isActiveSpeaker: activeSpeakerId === currentUserId && !isAudioMuted,
     });
 
@@ -112,6 +115,7 @@ export default function CallModal() {
         isLocal: false,
         isVideoOff: callType !== "VIDEO",
         isMuted: p?.isMuted || false,
+        isSpeaking: p?.isSpeaking || false,
         isActiveSpeaker: activeSpeakerId === userId,
       });
     });
@@ -131,6 +135,7 @@ export default function CallModal() {
           isLocal: false,
           isVideoOff: true,
           isMuted: p.isMuted || false,
+          isSpeaking: p?.isSpeaking || false,
           isActiveSpeaker: activeSpeakerId === p.userId,
         });
       }
@@ -149,16 +154,16 @@ export default function CallModal() {
     currentUserId,
   ]);
 
-  console.log("All participants", participants);
-  console.log(
-    "Active speaker:",
-    activeSpeakerId,
-    "tiles:",
-    allTiles.map((t) => ({
-      id: t.id,
-      active: t.isActiveSpeaker,
-    })),
-  );
+  // console.log("All participants", participants);
+  // console.log(
+  //   "Active speaker:",
+  //   activeSpeakerId,
+  //   "tiles:",
+  //   allTiles.map((t) => ({
+  //     id: t.id,
+  //     active: t.isActiveSpeaker,
+  //   })),
+  // );
 
   useOutgoingRingtone({
     callState,
@@ -267,6 +272,7 @@ export default function CallModal() {
             screenShareTile={screenShareTile}
             pinnedId={pinnedId}
             onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+            isFull
           />
         )}
         {!isEnding && <CallControls />}
@@ -334,7 +340,7 @@ export default function CallModal() {
                 screenShareTile={screenShareTile}
                 pinnedId={pinnedId}
                 onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
-                compact
+                compact={isCompact}
               />
               <CallControls />
             </>
@@ -383,8 +389,10 @@ function CallBody({
             isLocal={tile.isLocal}
             isVideoOff
             isMuted={tile.isMuted}
+            isSpeaking={tile.isSpeaking}
             isActiveSpeaker={tile.isActiveSpeaker}
-            className={`${allTiles.length > 1 ? "aspect-square" : "aspect-video"}`}
+            isSingle={allTiles.length === 1}
+            className={`${allTiles.length > 1 && compact ? "aspect-square" : "aspect-video"}`}
           />
         ))}
       </div>
@@ -408,7 +416,9 @@ function CallBody({
             isLocal={tile.isLocal}
             isVideoOff={tile.isVideoOff}
             isMuted={tile.isMuted}
+            isSpeaking={tile.isSpeaking}
             isActiveSpeaker={tile.isActiveSpeaker}
+            isSingle={allTiles.length === 1}
             className={cn(
               "aspect-video cursor-pointer",
               pinnedId === tile.id && "ring-2 ring-primary",
@@ -434,6 +444,7 @@ function CallBody({
             isLocal={speakerTile.isLocal}
             isVideoOff={speakerTile.isVideoOff}
             isMuted={speakerTile.isMuted}
+            isSpeaking={speakerTile.isSpeaking}
             isActiveSpeaker={speakerTile.isActiveSpeaker}
             isContent={speakerTile.isContent}
             isMainView
@@ -456,6 +467,7 @@ function CallBody({
               isLocal
               isVideoOff={allTiles.find((t) => t.isLocal)?.isVideoOff}
               isMuted={allTiles.find((t) => t.isLocal)?.isMuted}
+              isSpeaking={allTiles.find((t) => t.isLocal)?.isSpeaking}
               className="w-full h-full rounded-lg shadow-xl border border-zinc-700"
             />
           </div>
@@ -491,6 +503,7 @@ function CallBody({
                   isLocal={tile.isLocal}
                   isVideoOff={tile.isVideoOff}
                   isMuted={tile.isMuted}
+                  isSpeaking={tile.isSpeaking}
                   isActiveSpeaker={tile.isActiveSpeaker}
                   className="w-full h-full"
                 />

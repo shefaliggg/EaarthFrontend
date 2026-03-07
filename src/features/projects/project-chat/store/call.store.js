@@ -229,6 +229,8 @@ const useCallStore = create(
           return;
         }
 
+        get().enterEndingState("left");
+
         try {
           if (meetingSession) {
             await new Promise((resolve) => setTimeout(resolve, 100));
@@ -236,11 +238,7 @@ const useCallStore = create(
             meetingSession.audioVideo.stopContentShare();
             meetingSession.audioVideo.stop();
           }
-        } catch (e) {
-          console.warn("Session stop error:", e);
-        }
 
-        try {
           await chatApi.leaveCall(conversationId);
         } catch (err) {
           // Backend already cleaned up (timeout, end call, etc.) — safe to ignore
@@ -249,8 +247,6 @@ const useCallStore = create(
             err.message,
           );
         }
-
-        get().enterEndingState("left");
       },
 
       endCallForEveryone: async () => {
@@ -260,6 +256,8 @@ const useCallStore = create(
           console.warn("No active call to end");
           return;
         }
+
+        get().enterEndingState("ended");
 
         try {
           if (meetingSession) {
@@ -272,19 +270,10 @@ const useCallStore = create(
         } catch (e) {
           console.warn("End call error:", e.message);
         }
-
-        get().enterEndingState("ended");
       },
 
       toggleMute: () => {
         const { meetingSession, isAudioMuted } = get();
-        if (!meetingSession) return;
-
-        if (isAudioMuted) {
-          meetingSession.audioVideo.realtimeUnmuteLocalAudio();
-        } else {
-          meetingSession.audioVideo.realtimeMuteLocalAudio();
-        }
         const currentUserId = getCurrentUserId();
 
         set((state) => ({
@@ -293,10 +282,20 @@ const useCallStore = create(
             p.userId === currentUserId ? { ...p, isMuted: !isAudioMuted } : p,
           ),
         }));
+
+        if (!meetingSession) return;
+
+        if (isAudioMuted) {
+          meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+        } else {
+          meetingSession.audioVideo.realtimeMuteLocalAudio();
+        }
       },
 
       toggleVideo: async () => {
         const { meetingSession, isVideoOff } = get();
+        set({ isVideoOff: !isVideoOff });
+
         if (!meetingSession) return;
 
         if (isVideoOff) {
@@ -312,7 +311,6 @@ const useCallStore = create(
           await meetingSession.audioVideo.stopVideoInput();
           meetingSession.audioVideo.stopLocalVideoTile();
         }
-        set({ isVideoOff: !isVideoOff });
       },
 
       startScreenShare: async () => {
@@ -339,6 +337,7 @@ const useCallStore = create(
         displayName,
         callType = "AUDIO",
       }) => {
+        const { isAudioMuted } = get();
         set((state) => {
           if (!userId) return state;
 
@@ -369,7 +368,7 @@ const useCallStore = create(
                 attendeeId,
                 userId,
                 displayName: displayName || "User",
-                isMuted: false,
+                isMuted: isAudioMuted,
                 isVideoOff: callType !== "VIDEO",
                 isSpeaking: false,
               },
@@ -428,23 +427,35 @@ const useCallStore = create(
 
         set((state) => ({
           activeSpeakerId: userId,
-          participants: state.participants.map((p) => ({
-            ...p,
-            isSpeaking: p.userId === userId,
-          })),
         }));
 
         if (activeSpeakerTimer) clearTimeout(activeSpeakerTimer);
 
         activeSpeakerTimer = setTimeout(() => {
           set((state) => ({
-            participants: state.participants.map((p) => ({
-              ...p,
-              isSpeaking: false,
-            })),
             activeSpeakerId: null,
           }));
         }, 600);
+      },
+
+      markSpeaking: (attendeeId) => {
+        const { attendeeIdToUserId } = get();
+        const userId = attendeeIdToUserId[attendeeId];
+        if (!userId) return;
+
+        set((state) => ({
+          participants: state.participants.map((p) =>
+            p.userId === userId ? { ...p, isSpeaking: true } : p,
+          ),
+        }));
+
+        setTimeout(() => {
+          set((state) => ({
+            participants: state.participants.map((p) =>
+              p.userId === userId ? { ...p, isSpeaking: false } : p,
+            ),
+          }));
+        }, 800);
       },
 
       startSession: async (meeting, attendee, conversationId) => {
@@ -606,7 +617,10 @@ const useCallStore = create(
                     get().syncMuteState(aId, muted);
                   }
 
-                  if (volume !== null && volume > 0.5 && !muted) {
+                  if (volume !== null && volume > 0.3 && !muted) {
+                    get().markSpeaking(attendeeId);
+                  }
+                  if (volume !== null && volume > 0.6 && !muted) {
                     get().syncActiveSpeaker(attendeeId);
                   }
                 },
@@ -686,6 +700,7 @@ const useCallStore = create(
           "call:ended",
           ({ conversationId, endedBy, status, reason }) => {
             const state = get();
+            const currentUserId = getCurrentUserId();
 
             if (state.callState === "incoming") {
               set({
@@ -696,17 +711,21 @@ const useCallStore = create(
               return;
             }
 
-            // Ignore if not related to this conversation at all
             const isSameConversation =
               state.conversationId === conversationId ||
               state.incomingCall?.conversationId === conversationId;
 
             if (!isSameConversation) return;
 
-            console.log("📴 call:ended received", { status, endedBy });
+            console.log("📴 call:ended received", { status });
 
-            // If already idle, ignore duplicate
-            if (state.callState === "idle") return;
+            if (state.callState === "idle" || state.callState === "ending") {
+              return;
+            }
+
+            if (endedBy === currentUserId) {
+              return;
+            }
 
             let endReason = "ended";
 
