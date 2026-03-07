@@ -213,7 +213,7 @@ const useChatStore = create(
             },
             false,
             "typing:stop",
-          ); // Add action name for debugging
+          ); // Add action name for debuggcing
         });
 
         socket.on("user:online", (userId) => {

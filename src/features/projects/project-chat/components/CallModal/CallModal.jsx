@@ -32,6 +32,7 @@ import {
 import { useOutgoingRingtone } from "../../hooks/call/useOutgoingRingtone";
 import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
+import ParticipantsPanel from "./ParticipantsPanel";
 
 export default function CallModal() {
   const {
@@ -54,6 +55,7 @@ export default function CallModal() {
   const currentUserId = getCurrentUserId();
   const [layout, setLayout] = useState("grid");
   const [pinnedId, setPinnedId] = useState(null);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   const positionRef = useRef({
     compact: getDefaultPosition("compact"),
@@ -239,6 +241,15 @@ export default function CallModal() {
     [setViewMode],
   );
 
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setShowParticipants(false);
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
   if (callState === "idle" || callState === "incoming") return null;
 
   const audioSink = <audio id="chime-audio-sink" style={{ display: "none" }} />;
@@ -263,19 +274,36 @@ export default function CallModal() {
         {isEnding ? (
           <EndingOverlay reason={endReason} />
         ) : (
-          <CallBody
-            layout={layout}
-            callType={callType}
-            allTiles={allTiles}
-            speakerTile={speakerTile}
-            stripTiles={stripTiles}
-            screenShareTile={screenShareTile}
-            pinnedId={pinnedId}
-            onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
-            isFull
+          <div
+            className="relative flex-1 min-h-0"
+            onClick={() => {
+              if (showParticipants) setShowParticipants(false);
+            }}
+          >
+            <CallBody
+              layout={layout}
+              callType={callType}
+              allTiles={allTiles}
+              speakerTile={speakerTile}
+              stripTiles={stripTiles}
+              screenShareTile={screenShareTile}
+              pinnedId={pinnedId}
+              onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+              isFull
+            />
+
+            <ParticipantsPanel
+              open={showParticipants}
+              participants={participants}
+              currentUserId={currentUserId}
+            />
+          </div>
+        )}
+        {!isEnding && (
+          <CallControls
+            onShowParticipants={() => setShowParticipants((p) => !p)}
           />
         )}
-        {!isEnding && <CallControls />}
       </div>
     );
   }
@@ -331,18 +359,40 @@ export default function CallModal() {
 
           {!isEnding && isCompact && (
             <>
-              <CallBody
-                layout={layout}
-                callType={callType}
-                allTiles={allTiles}
-                speakerTile={speakerTile}
-                stripTiles={stripTiles}
-                screenShareTile={screenShareTile}
-                pinnedId={pinnedId}
-                onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
-                compact={isCompact}
+              <div
+                className="relative flex-1 min-h-0"
+                onClick={() => {
+                  if (showParticipants) setShowParticipants(false);
+                }}
+              >
+                <CallBody
+                  layout={layout}
+                  callType={callType}
+                  allTiles={allTiles}
+                  speakerTile={speakerTile}
+                  stripTiles={stripTiles}
+                  screenShareTile={screenShareTile}
+                  pinnedId={pinnedId}
+                  onPin={(id) =>
+                    setPinnedId((prev) => (prev === id ? null : id))
+                  }
+                  compact={isCompact}
+                />
+
+                {showParticipants && (
+                  <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-20 transition" />
+                )}
+
+                <ParticipantsPanel
+                  open={showParticipants}
+                  participants={participants}
+                  currentUserId={currentUserId}
+                />
+              </div>
+
+              <CallControls
+                onShowParticipants={() => setShowParticipants((p) => !p)}
               />
-              <CallControls />
             </>
           )}
 

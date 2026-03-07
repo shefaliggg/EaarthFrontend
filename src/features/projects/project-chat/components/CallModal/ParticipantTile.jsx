@@ -20,8 +20,6 @@ export function ParticipantTile({
   const videoRef = useRef(null);
   const { bindVideoTile, unbindVideoTile } = useCallStore();
 
-  console.log("participant is speaking:", isSpeaking);
-
   // Bind whenever tileId or the video element changes.
   // We do NOT unmount the <video> — only hide it — so this effect runs
   // exactly once per tileId, not on every camera toggle.

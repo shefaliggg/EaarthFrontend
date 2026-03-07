@@ -120,9 +120,11 @@ export default function CallControls({ onShowParticipants }) {
       )}
 
       {/* Participants */}
-      <ControlButton onClick={onShowParticipants} active label="Participants">
-        <Users className="w-5 h-5 text-white" />
-      </ControlButton>
+      {!isDirect && (
+        <ControlButton onClick={onShowParticipants} active label="Participants">
+          <Users className="w-5 h-5 text-white" />
+        </ControlButton>
+      )}
 
       {/* Leave */}
       {!isDirect && (
@@ -132,7 +134,11 @@ export default function CallControls({ onShowParticipants }) {
       )}
 
       {/* End for everyone (could be role-gated in prod) */}
-      <ControlButton onClick={endCallForEveryone} danger label={isDirect ? "End" : "End All"}>
+      <ControlButton
+        onClick={endCallForEveryone}
+        danger
+        label={isDirect ? "End" : "End All"}
+      >
         <div className="flex flex-col items-center">
           <PhoneOff className="w-4 h-4 text-white" />
           {!isDirect && (

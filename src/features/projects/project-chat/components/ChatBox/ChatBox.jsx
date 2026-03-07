@@ -101,7 +101,7 @@ function ChatBox() {
       }
 
       // load older messages when scrollTop is near top
-      if (scrollTop < 100 && messagesData.hasMore && !isLoadingMessages) {
+      if (scrollTop < 80 && messagesData.hasMore && !isLoadingMessages) {
         const prevScrollHeight = container.scrollHeight;
         const prevScrollTop = container.scrollTop;
 
