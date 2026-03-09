@@ -287,7 +287,7 @@ export function transformMessage(
     type: msg.type?.toLowerCase() || "text",
 
     files: msg.content?.files || [],
-    callInfo : msg.content?.callInfo || {},
+    callInfo: msg.content?.callInfo || {},
     isOwn,
 
     state: computeMessageState(msg, conversationMembersCount),
@@ -380,7 +380,9 @@ export const transformConversation = (conv, currentUserId) => {
           : otherUser?.userId?.displayName || "Unknown User",
     department: conv.department?._id,
     departmentName:
-      conv.type === "DIRECT" ? otherUser?.userId?.departmentName : conv.departmentName,
+      conv.type === "DIRECT"
+        ? otherUser?.userId?.departmentName
+        : conv.departmentName,
     userId: otherUser?.userId?._id,
     avatar: otherUser
       ? getAvatarFallback(otherUser?.userId?.displayName) || "U"
@@ -405,19 +407,44 @@ export const transformConversation = (conv, currentUserId) => {
   };
 };
 
+export function getSystemPreview(action, targets) {
+  switch (action) {
+    case "MEMBER_ADDED":
+      return `${targets.length} member(s) added`;
+    case "MEMBER_REMOVED":
+      return `${targets.length} member(s) removed`;
+    default:
+      return "System update";
+  }
+}
+
 export const generateConversationLastMessagePreview = (message) => {
-  if (message.type === "CALL") {
-    const status = message.callInfo?.status;
-
-    if (status === "MISSED") return "Missed call";
-    if (status === "ENDED") return "Call ended";
-
-    return null; // non-terminal call states
+  //always pass raw backedn data instead of transformed message.
+  if (message.type === "SYSTEM") {
+    return getSystemPreview(
+      message.system.action,
+      message.system.targetUserIds,
+    );
   }
 
-  if (message.type === "IMAGE") return "📷 Photo";
-  if (message.type === "VIDEO") return "🎥 Video";
-  if (message.type === "FILE") return "📎 File";
+  if (message.type === "CALL") {
+    const callType =
+      message.content.callInfo.type === "VIDEO" ? "Video" : "Audio";
+    const status = message.content?.callInfo?.status;
 
-  return message.content || message.caption || "";
+    return `${callType} call ${status.toLowerCase()}`;
+  }
+
+  if (message.type === "MEDIA")
+    return `${message.content.files.length} attachment(s)`;
+
+  if (message.type === "AUDIO") return "Voice Message";
+
+  if (message.type === "TEXT") {
+    if (message.content?.text) {
+      return message.content.text.slice(0, 200);
+    }
+  }
+
+  return "New message";
 };

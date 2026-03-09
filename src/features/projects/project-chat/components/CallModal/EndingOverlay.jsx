@@ -9,7 +9,7 @@ function EndingOverlay() {
 
   const cfg = END_CONFIG[endReason] ?? END_CONFIG.ended;
   const Icon = cfg.icon;
-  useCallEndSound(callState);
+  // useCallEndSound(callState);
 
   return (
     <div

@@ -33,6 +33,7 @@ import { useOutgoingRingtone } from "../../hooks/call/useOutgoingRingtone";
 import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
 import ParticipantsPanel from "./ParticipantsPanel";
+import { useCallSounds } from "../../hooks/call/useCallSounds";
 
 export default function CallModal() {
   const {
@@ -41,6 +42,7 @@ export default function CallModal() {
     callState,
     endReason,
     callType,
+    incomingCall,
     hadParticipants,
     localTileId,
     remoteTiles,
@@ -156,19 +158,9 @@ export default function CallModal() {
     currentUserId,
   ]);
 
-  // console.log("All participants", participants);
-  // console.log(
-  //   "Active speaker:",
-  //   activeSpeakerId,
-  //   "tiles:",
-  //   allTiles.map((t) => ({
-  //     id: t.id,
-  //     active: t.isActiveSpeaker,
-  //   })),
-  // );
-
-  useOutgoingRingtone({
+  useCallSounds({
     callState,
+    incomingCall,
     participantCount: allTiles.length,
     isInitiator,
     hadParticipants,

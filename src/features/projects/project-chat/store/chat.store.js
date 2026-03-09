@@ -75,7 +75,23 @@ const useChatStore = create(
               ),
             },
           });
-          get().addMessageToConversation(conversationId, message);
+          const existingMessages =
+            get().messagesByConversation[conversationId]?.messages || [];
+          if (existingMessages.length > 0) {
+            get().addMessageToConversation(conversationId, message);
+          }
+
+          const preview = generateConversationLastMessagePreview(message);
+          if (!preview) return;
+
+          get().updateConversationLastMessage(conversationId, {
+            content: {
+              text: preview,
+            },
+            createdAt: message.updatedAt || message.createdAt,
+            senderId: { _id: message.senderId?._id || message.senderId },
+          });
+
           // dispatch(
           //   addNotification({
           //     id: message._id,
@@ -92,35 +108,36 @@ const useChatStore = create(
 
           const currentUserId = getCurrentUserId();
 
-          const conversation = get().conversations.find(
-            (c) => c.id === conversationId,
-          );
-
-          const memberCount = conversation?.members?.length || 2;
-
-          const transformed = transformMessage(message, {
-            currentUserId,
-            conversationMembersCount: memberCount,
-          });
-
-          get().updateMessageInConversation(transformed.id, {
-            content: transformed.content,
-            caption: transformed.caption,
-            callInfo: transformed.callInfo,
-            state: transformed.state,
-            seenBy: transformed.seenBy,
-            deliveredTo: transformed.deliveredTo,
-            edited: transformed.edited,
-            editedAt: transformed.editedAt,
-          });
-
-          // 2️⃣ Update sidebar only if this is the latest message
           const existingMessages =
             get().messagesByConversation[conversationId]?.messages || [];
 
+          if (existingMessages.length > 0) {
+            const conversation = get().conversations.find(
+              (c) => c.id === conversationId,
+            );
+
+            const memberCount = conversation?.members?.length || 2;
+
+            const transformed = transformMessage(message, {
+              currentUserId,
+              conversationMembersCount: memberCount,
+            });
+
+            get().updateMessageInConversation(transformed.id, {
+              content: transformed.content,
+              caption: transformed.caption,
+              callInfo: transformed.callInfo,
+              state: transformed.state,
+              seenBy: transformed.seenBy,
+              deliveredTo: transformed.deliveredTo,
+              edited: transformed.edited,
+              editedAt: transformed.editedAt,
+            });
+          }
+          // 2️⃣ Update sidebar only if this is the latest message
           const lastMessage = existingMessages[existingMessages.length - 1];
 
-          if (lastMessage?.id === transformed.id) {
+          if (lastMessage?.id === message._id) {
             const preview = generateConversationLastMessagePreview(message);
             if (!preview) return;
 
@@ -982,18 +999,6 @@ const useChatStore = create(
               },
             },
           };
-        });
-
-        // Update conversation preview
-        const preview =
-          transformed.content ||
-          transformed.caption ||
-          (transformed.files?.length ? "Attachment" : "");
-
-        get().updateConversationLastMessage(conversationId, {
-          content: { text: preview },
-          createdAt: message.createdAt || new Date(),
-          senderId: { _id: message.senderId?._id || message.senderId },
         });
       },
 
