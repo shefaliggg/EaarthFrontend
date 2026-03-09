@@ -7,12 +7,12 @@ function ParticipantsPanel({ open, participants, currentUserId }) {
     <div
       onClick={(e) => e.stopPropagation()}
       className={cn(
-        "absolute right-0 top-0 h-full w-64 border-l shadow-2xl border-zinc-800 bg-zinc-950",
+        "absolute right-0 top-0 h-full w-64 border-l shadow-2xl border-zinc-900 bg-zinc-950",
         "transform transition-transform duration-300 z-30",
         open ? "translate-x-0" : "translate-x-full",
       )}
     >
-      <div className="p-3 border-b border-zinc-800 text-sm font-medium text-zinc-300">
+      <div className="p-3 border-b border-zinc-900 text-sm font-medium text-zinc-300">
         Participants ({participants.length})
       </div>
 

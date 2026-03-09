@@ -29,7 +29,6 @@ import {
   getGridClass,
   MODE_SIZE,
 } from "../../utils/CallHelpers";
-import { useOutgoingRingtone } from "../../hooks/call/useOutgoingRingtone";
 import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
 import ParticipantsPanel from "./ParticipantsPanel";
@@ -281,7 +280,7 @@ export default function CallModal() {
               screenShareTile={screenShareTile}
               pinnedId={pinnedId}
               onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
-              isFull
+              compact={isCompact}
             />
 
             <ParticipantsPanel
@@ -434,7 +433,7 @@ function CallBody({
             isSpeaking={tile.isSpeaking}
             isActiveSpeaker={tile.isActiveSpeaker}
             isSingle={allTiles.length === 1}
-            className={`${allTiles.length > 1 && compact ? "aspect-square" : "aspect-video"}`}
+            className={`${allTiles.length > 1 && compact ? "aspect-square" : `${compact ? "aspect-video" : "aspect-[2/0.9]"}`}`}
           />
         ))}
       </div>
@@ -580,7 +579,7 @@ function TopBar({
   const isAlone = isConnected && participantCount <= 1 && hadParticipants;
 
   return (
-    <div className="call-drag-handle flex items-center justify-between px-3 py-2 bg-zinc-950 border-b border-zinc-800/80 cursor-move select-none flex-shrink-0">
+    <div className="call-drag-handle flex items-center justify-between px-3 py-2 bg-zinc-950 border-b border-zinc-900 cursor-move select-none flex-shrink-0">
       {/* Left: indicator + type + status */}
       <div className="flex items-center gap-2.5">
         <span

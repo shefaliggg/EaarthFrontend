@@ -75,7 +75,7 @@ export default function CallControls({ onShowParticipants }) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-4 px-6 py-3 bg-zinc-950 border-t border-zinc-800/80  rounded-b-2xl">
+    <div className="flex items-center justify-center gap-4 px-6 py-3 bg-zinc-950 border-t border-zinc-900  rounded-b-2xl z-10">
       {/* Mute */}
       <ControlButton
         onClick={toggleMute}

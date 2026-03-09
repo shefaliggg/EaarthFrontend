@@ -65,7 +65,7 @@ export function ParticipantTile({
             className={cn(
               "rounded-full bg-gradient-to-br flex items-center justify-center font-semibold text-white shadow-lg",
               isMainView || isSingle
-                ? "w-30 h-30 text-3xl"
+                ? "w-26 h-26 text-3xl"
                 : "w-12 h-12 text-lg",
               isActiveSpeaker
                 ? "from-primary to-primary/80"

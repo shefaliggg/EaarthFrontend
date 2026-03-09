@@ -1,15 +1,10 @@
-import React, { useEffect, useRef } from "react";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import useCallStore from "../../store/call.store";
-import { useIncomingRingtone } from "../../hooks/call/useIncomingRingtone";
 
 export default function IncomingCallToast() {
   const { callState, incomingCall, joinCall, declineCall } = useCallStore();
-  const ringtoneRef = useRef(null);
 
   const isVisible = callState === "incoming" && incomingCall;
-
-  // useIncomingRingtone(isVisible);
 
   if (!isVisible) return null;
 

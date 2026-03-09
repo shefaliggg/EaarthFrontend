@@ -337,11 +337,16 @@ const useCallStore = create(
         displayName,
         callType = "AUDIO",
       }) => {
+        const currentUserId = getCurrentUserId();
         const { isAudioMuted } = get();
+
         set((state) => {
           if (!userId) return state;
 
           const exists = state.participants.find((p) => p.userId === userId);
+
+          const isRemoteUser = userId !== currentUserId;
+
           if (exists) {
             return {
               participants: state.participants.map((p) =>
@@ -357,7 +362,7 @@ const useCallStore = create(
                 ...state.attendeeIdToUserId,
                 [attendeeId]: userId,
               },
-              hadParticipants: true,
+              hadParticipants: state.hadParticipants || isRemoteUser,
             };
           }
 
@@ -377,7 +382,7 @@ const useCallStore = create(
               ...state.attendeeIdToUserId,
               [attendeeId]: userId,
             },
-            hadParticipants: true,
+            hadParticipants: state.hadParticipants || isRemoteUser,
           };
         });
       },

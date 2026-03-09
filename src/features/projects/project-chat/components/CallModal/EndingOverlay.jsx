@@ -1,15 +1,13 @@
 import React from "react";
 import { END_CONFIG } from "../../utils/CallHelpers";
-import { useCallEndSound } from "../../hooks/call/useCallEndSound";
 import useCallStore from "../../store/call.store";
 import { cn } from "../../../../../shared/config/utils";
 
 function EndingOverlay() {
-  const { callState, endReason } = useCallStore();
+  const { endReason } = useCallStore();
 
   const cfg = END_CONFIG[endReason] ?? END_CONFIG.ended;
   const Icon = cfg.icon;
-  // useCallEndSound(callState);
 
   return (
     <div
