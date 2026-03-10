@@ -52,6 +52,8 @@ const useCallStore = create(
           if (meetingSession) {
             meetingSession.audioVideo.stopLocalVideoTile();
             meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stopAudioInput();
+            meetingSession.audioVideo.stopVideoInput();
             meetingSession.audioVideo.stop();
           }
         } catch (e) {
@@ -236,6 +238,8 @@ const useCallStore = create(
             await new Promise((resolve) => setTimeout(resolve, 100));
             meetingSession.audioVideo.stopLocalVideoTile();
             meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stopAudioInput();
+            meetingSession.audioVideo.stopVideoInput();
             meetingSession.audioVideo.stop();
           }
 
@@ -263,6 +267,8 @@ const useCallStore = create(
           if (meetingSession) {
             meetingSession.audioVideo.stopLocalVideoTile();
             meetingSession.audioVideo.stopContentShare();
+            meetingSession.audioVideo.stopAudioInput();
+            meetingSession.audioVideo.stopVideoInput();
             meetingSession.audioVideo.stop();
           }
 

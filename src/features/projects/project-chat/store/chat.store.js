@@ -105,6 +105,7 @@ const useChatStore = create(
 
         socket.on("message:updated", ({ conversationId, message }) => {
           console.log("🔄 Message updated:", message);
+          if(!message) return
 
           const currentUserId = getCurrentUserId();
 
