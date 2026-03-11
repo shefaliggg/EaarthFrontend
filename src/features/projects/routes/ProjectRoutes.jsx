@@ -4,7 +4,7 @@ import ProjectList from '../pages/ProjectList';
 import CreateProject from '../components/CreateProject';
 import EditProject from '../components/EditProject';
 import ProjectDetails from '../pages/ProjectSettings/ProjectDetails';
-import ProjectDetailsPage from '../pages/ProjectDetails';
+import ProjectDashboard from '../pages/ProjectDashboard';
 import ProjectSettings from '../pages/ProjectSettings/ProjectSettings';
 import ProjectOnboarding from '../pages/ProjectSettings/ProjectOnboarding';
 import ProjectTimesheet from '../pages/ProjectSettings/ProjectTimesheet';
@@ -81,7 +81,7 @@ const ProjectRoutes = {
     {
       path: ':projectName',
       children: [
-        { index: true, element: <ProjectDetailsPage /> },
+        { index: true, element: <ProjectDashboard /> },
         TimesheetsRoutes,
         FuelAndMileageRoutes,
         pettyCashRoutes,
