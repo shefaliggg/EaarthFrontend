@@ -1,26 +1,19 @@
 // ProjectOnboarding.jsx
 import { useState } from 'react';
-import { 
-  Info, Plus, Eye, Download, Trash2, Minus, FileText, Lock,
-  Upload, Edit, CheckCircle, AlertCircle, Calendar, Users, Briefcase,
-  FileCheck, Settings, Sparkles, Save, Building2, Shield, ScrollText,
-  UserCog, Zap, Brain, Bot, Wand2, CheckSquare, X, File,
-  ZoomIn, ZoomOut, Printer, ChevronLeft, ChevronRight, Clock
+import {
+  Info, Plus, Eye, Minus, Clock,
+  Pencil, ChevronUp, ChevronDown, Sparkles
 } from 'lucide-react';
+
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { Switch } from "@/shared/components/ui/switch";
-import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Badge } from "@/shared/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
-import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
 import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
-import { PageHeader } from "../../../../shared/components/PageHeader";
-import SearchBar from "../../../../shared/components/SearchBar";
+
 
 // Button Toggle Component
 const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = false }) => {
@@ -39,6 +32,7 @@ const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = fals
           </Tooltip>
         )}
       </div>
+
       <div className="flex gap-2 flex-wrap">
         {options.map((option) => (
           <button
@@ -58,8 +52,12 @@ const ButtonToggleGroup = ({ label, options, selected, onChange, showInfo = fals
   );
 };
 
+
 const ProjectOnboarding = () => {
+
   const [activeTab, setActiveTab] = useState('general');
+  const [bundleSubTab, setBundleSubTab] = useState('Standard Crew');
+
   const [formData, setFormData] = useState({
     offerEndDate: 'Optional',
     shareStatusDetermination: true,
@@ -71,49 +69,26 @@ const ProjectOnboarding = () => {
 
 (Original notice):
 
-On behalf of Mirage Pictures Limited, I hereby confirm that your last day of engagement on Werwulf will be [finish date].
+On behalf of Mirage Pictures Limited, I hereby confirm that your last day of engagement will be [finish date].
 
 (Revised notice):
 
-Further to your notice dated [date of previous notice], I hereby confirm that your revised last day of engagement on Werwulf will be [revised finish date].
+Further to your notice dated [date of previous notice], I hereby confirm that your revised last day of engagement will be [revised finish date].
 
 Many thanks for your hard work on the production.`,
-    pennyContracts: 3,
-    crewSearchQuery: '',
-    departmentFilter: 'All Departments'
   });
 
-  // Contract management state
-  const [uploadedTemplates, setUploadedTemplates] = useState([
-    { 
-      id: '1', 
-      name: 'Standard_Crew_Contract_v2.pdf', 
-      category: 'Standard Crew', 
-      uploadDate: '2026-02-01', 
-      size: '245 KB'
-    },
-    { 
-      id: '2', 
-      name: 'HOD_Weekly_Template.docx', 
-      category: 'HOD', 
-      uploadDate: '2026-01-28', 
-      size: '180 KB'
-    }
-  ]);
-
-  const [selectedContracts, setSelectedContracts] = useState({});
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const crewCategories = [
-    { name: 'Standard Crew', icon: Users, color: 'purple' },
-    { name: 'Senior / Buyout', icon: UserCog, color: 'blue' },
-    { name: 'Construction', icon: Building2, color: 'orange' },
-    { name: 'Electrical', icon: Zap, color: 'amber' },
-    { name: 'HOD', icon: Briefcase, color: 'green' },
-    { name: 'Rigging', icon: Settings, color: 'red' },
-    { name: 'Transport', icon: FileCheck, color: 'indigo' }
+    { name: 'Standard Crew' },
+    { name: 'Senior / Buyout' },
+    { name: 'Construction' },
+    { name: 'Electrical' },
+    { name: 'HOD' },
+    { name: 'Rigging' },
+    { name: 'Transport' }
   ];
+
 
   const contractTypes = [
     { label: 'Weekly - PAYE', value: 'weekly_paye', status: 'view' },
@@ -126,592 +101,903 @@ Many thanks for your hard work on the production.`,
     { label: 'Daily - Loan Out', value: 'daily_loan_out', status: 'upload' }
   ];
 
-  const formCategories = {
-    contractual: [
-      { name: 'Box Rental', status: 'view' },
-      { name: 'Computer Allowance', status: 'pending' },
-      { name: 'Software Allowance', status: 'upload' },
-      { name: 'Equipment Rental', status: 'view' },
-      { name: 'Mobile Allowance', status: 'upload' },
-      { name: 'Vehicle Allowance', status: 'pending' },
-      { name: 'Living Allowance', status: 'view' },
-      { name: 'Deal Memo (PACT BECTU)', status: 'upload' },
-      { name: 'Status Determination', status: 'pending' },
-      { name: 'Start Form', status: 'view' }
-    ],
-    standard: [
-      { name: 'Child Protection Declaration', status: 'view' },
-      { name: 'Conflict of Interest', status: 'pending' },
-      { name: 'Driver Declaration', status: 'upload' },
-      { name: 'NDA / Confidentiality', status: 'view' },
-      { name: 'Policy Acknowledgement', status: 'pending' }
-    ],
-    tax: [
-      { name: 'W-4 (Federal)', status: 'upload' },
-      { name: 'I-9', status: 'view' },
-      { name: 'State Tax Exemption', status: 'pending' }
-    ],
-    insurance: [
-      { name: 'Certificate of Insurance', status: 'view' },
-      { name: 'Child Support Notice', status: 'pending' },
-      { name: 'Direct Deposit', status: 'upload' }
-    ],
-    other: [
-      { name: 'Disability Disclosure', status: 'upload' },
-      { name: 'Emergency Contact', status: 'view' },
-      { name: 'Picture ID Release', status: 'pending' }
-    ]
-  };
-
-  const selectAllForCategory = (categoryName) => {
-    setSelectedContracts(prev => ({
-      ...prev,
-      [categoryName]: contractTypes.map(c => c.value)
-    }));
-  };
-
-  const handleFileUpload = (event, category) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      const newTemplate = {
-        id: Date.now().toString(),
-        name: file.name,
-        category: category,
-        uploadDate: new Date().toISOString().split('T')[0],
-        size: `${Math.round(file.size / 1024)} KB`
-      };
-      setUploadedTemplates(prev => [...prev, newTemplate]);
+  const formGroups = [
+    {
+      name: 'Contractual Forms',
+      forms: [
+        { name: 'Box Rental', locked: true, isDefault: true, state: 'ready' },
+        { name: 'Computer Allowance', locked: true, isDefault: true, state: 'ready' },
+        { name: 'Crew Information Form', locked: true, isDefault: true, state: 'ready' },
+        { name: 'Software Allowance', locked: false, isDefault: false, state: 'ready' },
+        { name: 'Start Form', locked: true, isDefault: true, state: 'ready' }
+      ]
+    },
+    {
+      name: 'Standard Forms',
+      forms: [
+        { name: 'Child Protection Declaration', locked: false, isDefault: false, state: 'ready' },
+        { name: 'Conflict of Interest', locked: false, isDefault: false, state: 'ready' },
+        { name: 'Driver Declaration', locked: false, isDefault: false, state: 'ready' },
+        { name: 'NDA / Confidentiality', locked: true, isDefault: true, state: 'ready' },
+        { name: 'Policy Acknowledgement', locked: true, isDefault: true, state: 'ready' }
+      ]
+    },
+    {
+      name: 'Tax & Compliance',
+      forms: [
+        { name: 'W-4 (Federal)', locked: false, isDefault: false, state: 'upload' },
+        { name: 'I-9', locked: false, isDefault: false, state: 'upload' },
+        { name: 'State Tax Exemption', locked: false, isDefault: false, state: 'upload' },
+        { name: 'Direct Deposit', locked: false, isDefault: false, state: 'ready' }
+      ]
+    },
+    {
+      name: 'Insurance & Legal',
+      forms: [
+        { name: 'Certificate of Insurance', locked: false, isDefault: false, state: 'ready' },
+        { name: 'Child Support Notice', locked: false, isDefault: false, state: 'upload' },
+        { name: 'Emergency Contact', locked: false, isDefault: false, state: 'ready' }
+      ]
+    },
+    {
+      name: 'Picture & More',
+      forms: [
+        { name: 'Disability Disclosure', locked: false, isDefault: false, state: 'ready' },
+        { name: 'Picture ID Release', locked: false, isDefault: false, state: 'ready' }
+      ]
     }
-  };
+  ];
 
-  const removeTemplate = (id) => {
-    setUploadedTemplates(prev => prev.filter(t => t.id !== id));
-  };
+  const contractBundles = [
+    {
+      name: 'Weekly PAYE Standard Crew',
+      code: 'WEEKLY PAYE',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Weekly Self-Employed Standard Crew',
+      code: 'WEEKLY SE',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly Direct Hire Standard Crew',
+      code: 'WEEKLY DH',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Weekly Loan Out Standard Crew',
+      code: 'WEEKLY LO',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily PAYE Standard Crew',
+      code: 'DAILY PAYE',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Daily Self-Employed Standard Crew',
+      code: 'DAILY SE',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily Direct Hire Standard Crew',
+      code: 'DAILY DH',
+      category: 'Standard Crew',
+      status: 'Draft',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Daily Loan Out Standard Crew',
+      code: 'DAILY LO',
+      category: 'Standard Crew',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly PAYE Senior / Buyout',
+      code: 'WEEKLY PAYE',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Weekly Self-Employed Senior / Buyout',
+      code: 'WEEKLY SE',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly Direct Hire Senior / Buyout',
+      code: 'WEEKLY DH',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Weekly Loan Out Senior / Buyout',
+      code: 'WEEKLY LO',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily PAYE Senior / Buyout',
+      code: 'DAILY PAYE',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Daily Self-Employed Senior / Buyout',
+      code: 'DAILY SE',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily Direct Hire Senior / Buyout',
+      code: 'DAILY DH',
+      category: 'Senior / Buyout',
+      status: 'Draft',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Daily Loan Out Senior / Buyout',
+      code: 'DAILY LO',
+      category: 'Senior / Buyout',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly PAYE Construction',
+      code: 'WEEKLY PAYE',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Weekly Self-Employed Construction',
+      code: 'WEEKLY SE',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly Direct Hire Construction',
+      code: 'WEEKLY DH',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Weekly Loan Out Construction',
+      code: 'WEEKLY LO',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily PAYE Construction',
+      code: 'DAILY PAYE',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Daily Self-Employed Construction',
+      code: 'DAILY SE',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily Direct Hire Construction',
+      code: 'DAILY DH',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Daily Loan Out Construction',
+      code: 'DAILY LO',
+      category: 'Construction',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly PAYE Electrical',
+      code: 'WEEKLY PAYE',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Weekly Self-Employed Electrical',
+      code: 'WEEKLY SE',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly Direct Hire Electrical',
+      code: 'WEEKLY DH',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Weekly Loan Out Electrical',
+      code: 'WEEKLY LO',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily PAYE Electrical',
+      code: 'DAILY PAYE',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Daily Self-Employed Electrical',
+      code: 'DAILY SE',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily Direct Hire Electrical',
+      code: 'DAILY DH',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Daily Loan Out Electrical',
+      code: 'DAILY LO',
+      category: 'Electrical',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly PAYE HOD',
+      code: 'WEEKLY PAYE',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Weekly Self-Employed HOD',
+      code: 'WEEKLY SE',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Weekly Direct Hire HOD',
+      code: 'WEEKLY DH',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Weekly Loan Out HOD',
+      code: 'WEEKLY LO',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily PAYE HOD',
+      code: 'DAILY PAYE',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['PAYE Contract', 'Policy Acknowledgement', 'Crew Information Form', 'Start Form'],
+      optional: ['P45 / P46']
+    },
+    {
+      name: 'Daily Self-Employed HOD',
+      code: 'DAILY SE',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Self-Employed Contract', 'Self-Assessment Declaration', 'Certificate of Insurance'],
+      optional: ['NDA / Confidentiality']
+    },
+    {
+      name: 'Daily Direct Hire HOD',
+      code: 'DAILY DH',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Direct Hire Agreement', 'Policy Acknowledgement', 'Crew Information Form'],
+      optional: ['Direct Deposit Form']
+    },
+    {
+      name: 'Daily Loan Out HOD',
+      code: 'DAILY LO',
+      category: 'HOD',
+      status: 'Active',
+      primaryForms: ['Box Rental', 'Computer Allowance', 'Crew Information Form', 'Mobile Allowance', 'Start Form', 'NDA / Confidentiality', 'Policy Acknowledgement'],
+      documents: ['Loan Out Agreement', 'Certificate of Insurance', 'Company Details Form'],
+      optional: ['NDA / Confidentiality']
+    }
+  ];
 
-  const [crewMembers] = useState([
-    { id: 1, name: 'Sarah Johnson', role: 'Director of Photography', department: 'Camera', contractType: 'Weekly', status: 'Standard' },
-    { id: 2, name: 'Michael Chen', role: '1st AC', department: 'Camera', contractType: 'Weekly', status: 'Penny Contract' },
-    { id: 3, name: 'Emily Rodriguez', role: 'Sound Mixer', department: 'Sound', contractType: 'Weekly', status: 'Penny Contract' },
-    { id: 4, name: 'James Wilson', role: 'Key Grip', department: 'Grip', contractType: 'Daily', status: 'Standard' },
-    { id: 5, name: 'Lisa Anderson', role: 'Gaffer', department: 'Electric', contractType: 'Weekly', status: 'Standard' },
-    { id: 6, name: 'David Martinez', role: 'Production Designer', department: 'Art', contractType: 'Weekly', status: 'Penny Contract' },
-    { id: 7, name: 'Jennifer Lee', role: 'Costume Designer', department: 'Costume', contractType: 'Weekly', status: 'Standard' },
-    { id: 8, name: 'Robert Taylor', role: '2nd AC', department: 'Camera', contractType: 'Daily', status: 'Standard' }
-  ]);
+  const bundleSubTabs = [
+    'Standard Crew',
+    'Senior / Buyout',
+    'Construction',
+    'Electrical',
+    'HOD',
+    'Rigging',
+    'Transport'
+  ];
+
+  const filteredContractBundles = contractBundles.filter(
+    (bundle) => bundle.category === bundleSubTab
+  );
+
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const updateNestedField = (parent, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: value
-      }
-    }));
-  };
 
   return (
     <div className="space-y-4">
-      {/* Header with Action Buttons */}
+
+      {/* Header */}
       <div className="flex items-center justify-between bg-background border rounded-lg p-4 shadow-sm">
+
         <h2 className="text-base font-semibold">Onboarding</h2>
+
         <div className="flex gap-2">
-          <Button 
-            variant={activeTab === 'general' ? 'default' : 'ghost'} 
+
+          <Button
+            variant={activeTab === 'general' ? 'default' : 'ghost'}
             size="sm"
-            className={activeTab === 'general' ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
             onClick={() => setActiveTab('general')}
           >
             General
           </Button>
-          <Button 
-            variant={activeTab === 'contracts' ? 'default' : 'ghost'} 
+
+          <Button
+            variant={activeTab === 'contracts' ? 'default' : 'ghost'}
             size="sm"
-            className={activeTab === 'contracts' ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
             onClick={() => setActiveTab('contracts')}
           >
-            Contract bundles
+            Contract categories
           </Button>
-          <Button 
-            variant={activeTab === 'forms' ? 'default' : 'ghost'} 
+
+          <Button
+            variant={activeTab === 'forms' ? 'default' : 'ghost'}
             size="sm"
-            className={activeTab === 'forms' ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
             onClick={() => setActiveTab('forms')}
           >
             Forms & Documents
           </Button>
+
+          <Button
+            variant={activeTab === 'contract-bundles' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('contract-bundles')}
+          >
+            Contract bundles
+          </Button>
+
         </div>
       </div>
 
-      {/* General Tab Content */}
+
+      {/* ================= GENERAL TAB ================= */}
+
       {activeTab === 'general' && (
-      <div className="space-y-4">
-      {/* Offer handling and Notice in 5:7 ratio */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Offer handling */}
-        <div className="lg:col-span-5">
-        <CardWrapper 
-          title="Offer handling" 
-          variant="default"
-          showLabel={true}
-        >
-          <div className="space-y-3 -mt-2.5 min-h-80">
-            <div>
-              <ButtonToggleGroup
-                label="Offer end date"
-                options={[
-                  { value: 'Optional', label: 'Optional' },
-                  { value: 'Mandatory', label: 'Mandatory' }
-                ]}
-                selected={formData.offerEndDate}
-                onChange={(val) => updateField('offerEndDate', val)}
-                showInfo={true}
-              />
-            </div>
+        <div className="space-y-4">
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Label className="text-sm">Tax status handling</Label>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-3 h-3 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Select how tax status should be handled</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                <Select value={formData.taxStatusHandling} onValueChange={(val) => updateField('taxStatusHandling', val)}>
-                  <SelectTrigger className="w-full h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Accounts approver required for self-employed or loan out">
-                      Accounts approver required
-                    </SelectItem>
-                    <SelectItem value="No approval required">No approval required</SelectItem>
-                    <SelectItem value="Approval required for all">Approval required</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Label htmlFor="tax-query-email" className="text-sm">Tax status query email</Label>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-3 h-3 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Email address for tax status queries</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                <Input
-                  id="tax-query-email"
-                  type="email"
-                  value={formData.taxStatusQueryEmail}
-                  onChange={(e) => updateField('taxStatusQueryEmail', e.target.value)}
-                  placeholder="email@example.com"
-                  className="w-full h-8 text-xs"
-                />
-              </div>
-            </div>
+            {/* Offer Handling */}
+            <div className="lg:col-span-5">
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Label className="text-sm">Offer approval</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="w-3 h-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Define the approval workflow</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Select value={formData.offerApproval} onValueChange={(val) => updateField('offerApproval', val)}>
-                <SelectTrigger className="w-full h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Production > Accounts">Production &gt; Accounts</SelectItem>
-                  <SelectItem value="Accounts only">Accounts only</SelectItem>
-                  <SelectItem value="Production only">Production only</SelectItem>
-                  <SelectItem value="No approval required">No approval required</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <CardWrapper title="Offer handling">
 
-            <div className="space-y-1 w-full border-t border-border pt-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Label className="text-sm">Share status determination with crew members?</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="w-3 h-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Enable to share tax status determination information</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => updateField('shareStatusDetermination', true)}
-                  className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                    formData.shareStatusDetermination === true
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
-                  }`}
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => updateField('shareStatusDetermination', false)}
-                  className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                    formData.shareStatusDetermination === false
-                      ? 'bg-gray-100 text-gray-700 border-gray-300'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300'
-                  }`}
-                >
-                  No
-                </button>
-              </div>
-            </div>
-          </div>
-        </CardWrapper>
-        </div>
+                <div className="space-y-4">
 
-        {/* Notice */}
-        <div className="lg:col-span-7">
-        <CardWrapper 
-          title="Notice" 
-          variant="default"
-          showLabel={true}
-        >
-          <div className="space-y-4 -mt-2.5 min-h-80 flex flex-col">
-            <div className="space-y-1 flex flex-col flex-grow">
-              <div className="flex items-center justify-between mb-1">
-                <Label className="text-sm">Notice email wording</Label>
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm">Notice period</Label>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
-                    onClick={() => updateField('noticePeriod', Math.max(0, formData.noticePeriod - 1))}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <Input
-                    type="number"
-                    value={formData.noticePeriod}
-                    onChange={(e) => updateField('noticePeriod', Number(e.target.value))}
-                    className="text-center h-7 w-14 text-xs"
+                  <ButtonToggleGroup
+                    label="Offer end date"
+                    options={[
+                      { value: 'Optional', label: 'Optional' },
+                      { value: 'Mandatory', label: 'Mandatory' }
+                    ]}
+                    selected={formData.offerEndDate}
+                    onChange={(val) => updateField('offerEndDate', val)}
+                    showInfo
                   />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7 bg-purple-100 border-purple-300 hover:bg-purple-200 text-purple-700"
-                    onClick={() => updateField('noticePeriod', formData.noticePeriod + 1)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                  <span className="text-xs text-muted-foreground ml-1">days</span>
+
+                  <div className="grid grid-cols-2 gap-2">
+
+                    <div className="space-y-1">
+
+                      <Label className="text-sm">Tax status handling</Label>
+
+                      <Select
+                        value={formData.taxStatusHandling}
+                        onValueChange={(val) => updateField('taxStatusHandling', val)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          <SelectItem value="Accounts approver required for self-employed or loan out">
+                            Accounts approver required
+                          </SelectItem>
+                          <SelectItem value="No approval required">
+                            No approval required
+                          </SelectItem>
+                          <SelectItem value="Approval required for all">
+                            Approval required
+                          </SelectItem>
+                        </SelectContent>
+
+                      </Select>
+
+                    </div>
+
+                    <div className="space-y-1">
+
+                      <Label className="text-sm">Tax status query email</Label>
+
+                      <Input
+                        type="email"
+                        value={formData.taxStatusQueryEmail}
+                        onChange={(e) =>
+                          updateField('taxStatusQueryEmail', e.target.value)
+                        }
+                        placeholder="email@example.com"
+                        className="h-8 text-xs"
+                      />
+
+                    </div>
+
+                  </div>
+
                 </div>
-              </div>
-              <Textarea
-                value={formData.noticeEmailWording}
-                onChange={(e) => updateField('noticeEmailWording', e.target.value)}
-                rows={3}
-                className="w-full resize-none font-mono text-xs flex-grow"
-              />
+
+              </CardWrapper>
+
             </div>
+
+
+            {/* Notice */}
+            <div className="lg:col-span-7">
+
+              <CardWrapper title="Notice">
+
+                <div className="space-y-3">
+
+                  <div className="flex items-center justify-between">
+
+                    <Label className="text-sm">Notice period</Label>
+
+                    <div className="flex items-center gap-2">
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() =>
+                          updateField(
+                            'noticePeriod',
+                            Math.max(0, formData.noticePeriod - 1)
+                          )
+                        }
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+
+                      <Input
+                        type="number"
+                        value={formData.noticePeriod}
+                        onChange={(e) =>
+                          updateField('noticePeriod', Number(e.target.value))
+                        }
+                        className="text-center h-7 w-14 text-xs"
+                      />
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() =>
+                          updateField(
+                            'noticePeriod',
+                            formData.noticePeriod + 1
+                          )
+                        }
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+
+                      <span className="text-xs text-muted-foreground">
+                        days
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <Textarea
+                    value={formData.noticeEmailWording}
+                    onChange={(e) =>
+                      updateField('noticeEmailWording', e.target.value)
+                    }
+                    rows={4}
+                    className="font-mono text-xs"
+                  />
+
+                </div>
+
+              </CardWrapper>
+
+            </div>
+
           </div>
-        </CardWrapper>
+
         </div>
-      </div>
-
-      {/* Choose design for contracts and forms */}
-      <CardWrapper 
-        title="Choose design for contracts and forms" 
-        variant="default"
-        showLabel={true}
-      >
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {/* Modern Design */}
-          <div className="border-2 border-border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-white">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xs font-semibold text-center">Modern</h4>
-          </div>
-
-          {/* Classic Design */}
-          <div className="border-2 border-primary rounded-lg p-3 cursor-pointer bg-primary/5 relative">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center relative">
-              <FileText className="w-8 h-8 text-gray-400" />
-              <div className="absolute -top-1 -right-1 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded">✓</div>
-            </div>
-            <h4 className="text-xs font-semibold text-center">Classic</h4>
-          </div>
-
-          {/* Creative Design */}
-          <div className="border-2 border-border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-white">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xs font-semibold text-center">Creative</h4>
-          </div>
-
-          {/* Professional Design */}
-          <div className="border-2 border-border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-white">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xs font-semibold text-center">Professional</h4>
-          </div>
-
-          {/* Elegant Design */}
-          <div className="border-2 border-border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-white">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xs font-semibold text-center">Elegant</h4>
-          </div>
-
-          {/* Minimal Design */}
-          <div className="border-2 border-border rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-white">
-            <div className="aspect-[3/4] bg-gray-100 rounded mb-2 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xs font-semibold text-center">Minimal</h4>
-          </div>
-        </div>
-      </CardWrapper>
-      </div>
       )}
 
-      {/* Contract Bundles Tab */}
+
+      {/* ================= CONTRACTS TAB ================= */}
+
       {activeTab === 'contracts' && (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {crewCategories.map((category) => {
-                const Icon = category.icon;
-                const selectedCount = selectedContracts[category.name]?.length || 0;
-                
-                return (
-                  <div key={category.name} className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                    <div className={`p-2 bg-${category.color}-50/50 border-b border-border`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className={`w-3.5 h-3.5 text-${category.color}-600`} />
-                          <span className="text-sm font-medium">{category.name}</span>
-                          {selectedCount > 0 && (
-                            <Badge className="bg-white text-xs px-1.5 py-0">{selectedCount}</Badge>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            {crewCategories.map((category) => (
+              <div
+                key={category.name}
+                className="border border-border rounded-lg bg-background hover:shadow-sm transition-shadow group/card"
+              >
+                <div className="flex items-center justify-between px-3 pt-3 pb-2 gap-1">
+                  <div className="flex items-center gap-1.5 min-w-0 group/name">
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      {category.name}
+                    </span>
+                    <button
+                      className="shrink-0 opacity-0 group-hover/name:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                      title="Rename"
+                    >
+                      <Pencil className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      className="inline-flex items-center gap-0.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      title="Add form type"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-px mx-3 bg-border" />
+
+                <div className="px-3 py-2 space-y-0.5">
+                  {contractTypes.map((contract, index) => {
+                    const moveUpDisabled = index === 0;
+                    const moveDownDisabled = index === contractTypes.length - 1;
+                    const label = contract.label.replace(' - ', ' ');
+
+                    return (
+                      <div
+                        key={contract.value}
+                        className="flex items-center justify-between py-1 group/row"
+                      >
+                        <div className="flex items-center gap-1 min-w-0">
+                          <div className="flex flex-col shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                            <button
+                              disabled={moveUpDisabled}
+                              className="text-muted-foreground hover:text-primary disabled:opacity-20 disabled:cursor-default"
+                              title="Move up"
+                            >
+                              <ChevronUp className="h-2.5 w-2.5" />
+                            </button>
+                            <button
+                              disabled={moveDownDisabled}
+                              className="text-muted-foreground hover:text-primary disabled:opacity-20 disabled:cursor-default"
+                              title="Move down"
+                            >
+                              <ChevronDown className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 min-w-0 group/name">
+                            <span className="truncate text-xs text-muted-foreground">
+                              {label}
+                            </span>
+                            <button
+                              className="shrink-0 opacity-0 group-hover/name:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                              title="Rename"
+                            >
+                              <Pencil className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {contract.status === 'upload' && (
+                            <button
+                              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              title="Upload & convert template"
+                            >
+                              <Sparkles className="h-2.5 w-2.5" />
+                              <span className="text-[8px] font-semibold uppercase tracking-wider">
+                                Upload
+                              </span>
+                            </button>
+                          )}
+
+                          {contract.status === 'view' && (
+                            <button
+                              className="text-muted-foreground hover:text-primary transition-colors"
+                              title="View template"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </button>
+                          )}
+
+                          {contract.status === 'pending' && (
+                            <button
+                              className="text-muted-foreground hover:text-primary transition-colors"
+                              title="Pending"
+                            >
+                              <Clock className="h-3 w-3" />
+                            </button>
                           )}
                         </div>
-                        <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                          <Plus className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">New form</span>
-                        </button>
                       </div>
-                    </div>
-                    <div className="p-2 space-y-1">
-                      {contractTypes.map((contract) => {
-                        const StatusIcon = contract.status === 'view' ? Eye : contract.status === 'pending' ? Clock : Upload;
-                        const iconColor = contract.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                        const statusText = contract.status === 'view' ? 'View' : contract.status === 'pending' ? 'Pending' : 'Upload';
-                        
-                        return (
-                          <div key={contract.value} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                            <span className="text-xs flex-1">
-                              {contract.label.replace('Weekly - ', 'W-').replace('Daily - ', 'D-')}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                              <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-        <button className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-primary text-primary hover:bg-primary/5 rounded-lg transition-colors">
-          <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">Add Bundle</span>
-        </button>
-      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            Add Category
+          </button>
+        </div>
+
       )}
 
-      {/* Forms & Documents Tab */}
+      {/* ================= CONTRACT BUNDLES TAB ================= */}
+      {activeTab === 'contract-bundles' && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {bundleSubTabs.map((subTab) => (
+              <button
+                key={subTab}
+                onClick={() => setBundleSubTab(subTab)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                  bundleSubTab === subTab
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted text-muted-foreground border-transparent hover:bg-muted/80'
+                }`}
+              >
+                {subTab}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            {filteredContractBundles.map((bundle) => (
+              <div
+                key={bundle.name}
+                className="border border-border rounded-xl bg-background p-3 space-y-3"
+              >
+                <div className="flex items-center">
+                  <h3 className="text-sm font-semibold text-foreground truncate min-w-0">
+                    {bundle.name}
+                  </h3>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {bundle.primaryForms.map((formName) => (
+                    <span
+                      key={`${bundle.name}-${formName}`}
+                      className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary"
+                    >
+                      {formName}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="h-px bg-border" />
+
+                <div className="flex flex-wrap gap-1.5">
+                  {bundle.documents.map((documentName) => (
+                    <span
+                      key={`${bundle.name}-${documentName}`}
+                      className="rounded-full bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      {documentName}
+                    </span>
+                  ))}
+
+                  {bundle.optional.map((optionalName) => (
+                    <span
+                      key={`${bundle.name}-${optionalName}`}
+                      className="rounded-full border border-dashed border-border bg-background px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      {optionalName} OPT
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Badge variant={bundle.status === 'Active' ? 'default' : 'secondary'}>
+                    {bundle.status}
+                  </Badge>
+                  <button className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                    View
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredContractBundles.length === 0 && (
+            <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              No bundles available for {bundleSubTab} yet.
+            </div>
+          )}
+
+          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            Add Bundle
+          </button>
+        </div>
+      )}
+
+      {/* ================= FORMS TAB ================= */}
       {activeTab === 'forms' && (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {/* Contractual Forms */}
-              <div className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                <div className="p-2 bg-gray-50 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">Contractual Forms</h4>
-                    <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span className="text-xs font-medium">New form</span>
-                    </button>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+              {formGroups.map((group) => (
+                <div
+                  key={group.name}
+                  className="border border-border rounded-lg bg-background hover:shadow-sm transition-shadow group/card"
+                >
+                  <div className="px-3 pt-3 pb-2">
+                    <span className="truncate text-sm font-semibold text-foreground block">
+                      {group.name}
+                    </span>
                   </div>
-                </div>
-                <div className="p-2 space-y-1">
-                  {formCategories.contractual.map(form => {
-                    const StatusIcon = form.status === 'view' ? Eye : form.status === 'pending' ? Clock : Upload;
-                    const iconColor = form.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                    const statusText = form.status === 'view' ? 'View' : form.status === 'pending' ? 'Pending' : 'Upload';
-                    
-                    return (
-                      <div key={form.name} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                        <span className="text-xs leading-tight flex-1">{form.name}</span>
-                        <div className="flex items-center gap-1">
-                          <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                          <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Standard Forms */}
-              <div className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                <div className="p-2 bg-gray-50 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">Standard Forms</h4>
-                    <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span className="text-xs font-medium">New form</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="p-2 space-y-1">
-                  {formCategories.standard.map(form => {
-                    const StatusIcon = form.status === 'view' ? Eye : form.status === 'pending' ? Clock : Upload;
-                    const iconColor = form.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                    const statusText = form.status === 'view' ? 'View' : form.status === 'pending' ? 'Pending' : 'Upload';
-                    
-                    return (
-                      <div key={form.name} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                        <span className="text-xs leading-tight flex-1">{form.name}</span>
-                        <div className="flex items-center gap-1">
-                          <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                          <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                  <div className="h-px mx-3 bg-border" />
 
-              {/* Tax & Compliance */}
-              <div className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                <div className="p-2 bg-gray-50 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">Tax & Compliance</h4>
-                    <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span className="text-xs font-medium">New form</span>
-                    </button>
+                  <div className="px-3 py-2 space-y-0.5">
+                    {group.forms.map((form) => {
+                      return (
+                        <div
+                          key={form.name}
+                          className="flex items-center justify-between py-1"
+                        >
+                          <span className="truncate text-xs text-muted-foreground">
+                            {form.name}
+                          </span>
+                          <button
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            title="Preview template"
+                          >
+                            <Eye className="h-2.5 w-2.5" />
+                            <span className="text-[8px] font-semibold uppercase tracking-wider">View</span>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="p-2 space-y-1">
-                  {formCategories.tax.map(form => {
-                    const StatusIcon = form.status === 'view' ? Eye : form.status === 'pending' ? Clock : Upload;
-                    const iconColor = form.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                    const statusText = form.status === 'view' ? 'View' : form.status === 'pending' ? 'Pending' : 'Upload';
-                    
-                    return (
-                      <div key={form.name} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                        <span className="text-xs leading-tight flex-1">{form.name}</span>
-                        <div className="flex items-center gap-1">
-                          <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                          <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              ))}
+          </div>
 
-              {/* Insurance & Legal */}
-              <div className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                <div className="p-2 bg-gray-50 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">Insurance & Legal</h4>
-                    <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span className="text-xs font-medium">New form</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="p-2 space-y-1">
-                  {formCategories.insurance.map(form => {
-                    const StatusIcon = form.status === 'view' ? Eye : form.status === 'pending' ? Clock : Upload;
-                    const iconColor = form.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                    const statusText = form.status === 'view' ? 'View' : form.status === 'pending' ? 'Pending' : 'Upload';
-                    
-                    return (
-                      <div key={form.name} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                        <span className="text-xs leading-tight flex-1">{form.name}</span>
-                        <div className="flex items-center gap-1">
-                          <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                          <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Picture & More */}
-              <div className="border border-border rounded-lg hover:shadow-sm transition-shadow bg-white">
-                <div className="p-2 bg-gray-50 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900">Picture & More</h4>
-                    <button className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span className="text-xs font-medium">New form</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="p-2 space-y-1">
-                  {formCategories.other.map(form => {
-                    const StatusIcon = form.status === 'view' ? Eye : form.status === 'pending' ? Clock : Upload;
-                    const iconColor = form.status === 'upload' ? 'text-primary' : 'text-gray-400';
-                    const statusText = form.status === 'view' ? 'View' : form.status === 'pending' ? 'Pending' : 'Upload';
-                    
-                    return (
-                      <div key={form.name} className="flex items-center justify-between hover:bg-muted/30 rounded px-2 py-1 cursor-pointer">
-                        <span className="text-xs leading-tight flex-1">{form.name}</span>
-                        <div className="flex items-center gap-1">
-                          <StatusIcon className={`w-3.5 h-3.5 ${iconColor} hover:text-primary`} />
-                          <span className={`text-xs ${iconColor}`}>{statusText}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-        <button className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-primary text-primary hover:bg-primary/5 rounded-lg transition-colors">
-          <Plus className="w-4 h-4" />
-          <span className="text-sm font-medium">New form group</span>
-        </button>
-      </div>
+          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            Add Group
+          </button>
+        </div>
       )}
+
     </div>
   );
 };
