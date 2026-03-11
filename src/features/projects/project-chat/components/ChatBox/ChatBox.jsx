@@ -13,6 +13,7 @@ import {
   X,
   Pin,
   Paperclip,
+  MessageCircle,
 } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
@@ -214,7 +215,7 @@ function ChatBox() {
       <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex items-center justify-center mx-auto">
         <div className="text-center space-y-3 p-8">
           <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-primary" />
+            <MessageCircle className="w-8 h-8 text-primary" />
           </div>
           <h3 className="text-lg font-semibold">
             Select a chat to start messaging

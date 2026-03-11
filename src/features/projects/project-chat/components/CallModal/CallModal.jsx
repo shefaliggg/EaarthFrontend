@@ -86,8 +86,6 @@ export default function CallModal() {
     return map;
   }, [participants]);
 
-  // Build unified participant list for grid / strip
-  // Each entry: { id, tileId, displayName, isLocal, isVideoOff, isMuted, isActiveSpeaker }
   const allTiles = useMemo(() => {
     const list = [];
 
@@ -266,7 +264,7 @@ export default function CallModal() {
           <EndingOverlay reason={endReason} />
         ) : (
           <div
-            className="relative flex-1 min-h-0"
+            className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
             onClick={() => {
               if (showParticipants) setShowParticipants(false);
             }}
@@ -351,7 +349,7 @@ export default function CallModal() {
           {!isEnding && isCompact && (
             <>
               <div
-                className="relative flex-1 min-h-0"
+                className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
                 onClick={() => {
                   if (showParticipants) setShowParticipants(false);
                 }}
@@ -418,7 +416,7 @@ function CallBody({
     return (
       <div
         className={cn(
-          "grid gap-3 p-3 flex-1 overflow-auto content-start",
+          "grid gap-2 p-2 overflow-y-auto place-items-center",
           getGridClass(allTiles.length),
         )}
       >
@@ -433,7 +431,12 @@ function CallBody({
             isSpeaking={tile.isSpeaking}
             isActiveSpeaker={tile.isActiveSpeaker}
             isSingle={allTiles.length === 1}
-            className={`${allTiles.length > 1 && compact ? "aspect-square" : `${compact ? "aspect-video" : "aspect-[2/0.9]"}`}`}
+            className={cn(
+              "w-full",
+              allTiles.length === 1 && compact && "aspect-video",
+              allTiles.length === 1 && !compact && "aspect-[4/1]",
+              "aspect-video",
+            )}
           />
         ))}
       </div>
@@ -445,7 +448,7 @@ function CallBody({
     return (
       <div
         className={cn(
-          "grid gap-2 p-2 flex-1 overflow-auto content-start",
+          "grid gap-2 p-2 overflow-y-auto place-items-center",
           getGridClass(allTiles.length),
         )}
       >
@@ -461,7 +464,7 @@ function CallBody({
             isActiveSpeaker={tile.isActiveSpeaker}
             isSingle={allTiles.length === 1}
             className={cn(
-              "aspect-video cursor-pointer",
+              "w-full aspect-video cursor-pointer",
               pinnedId === tile.id && "ring-2 ring-primary",
             )}
             onClick={() => onPin(tile.id)}
@@ -475,7 +478,7 @@ function CallBody({
   const singleParticipant = allTiles.length <= 1;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 p-2 gap-2">
+    <div className="flex flex-1 min-h-0 p-2 gap-2">
       {/* Main speaker area */}
       <div className="flex-1 min-h-0 relative rounded-xl overflow-hidden">
         {speakerTile && (
@@ -489,7 +492,7 @@ function CallBody({
             isActiveSpeaker={speakerTile.isActiveSpeaker}
             isContent={speakerTile.isContent}
             isMainView
-            className="w-full h-full"
+            className="w-full h-full aspect-video"
           />
         )}
 
@@ -519,7 +522,7 @@ function CallBody({
       {stripTiles.length > 0 && !singleParticipant && (
         <div
           className={cn(
-            "flex gap-2 overflow-x-auto flex-shrink-0 pb-0.5",
+            "flex flex-col gap-2 overflow-y-auto flex-shrink-0 pb-0.5",
             // hide the local pip tile from the strip when already shown as pip
             speakerTile?.id !== "local" ? "pl-0" : "",
           )}
@@ -531,8 +534,8 @@ function CallBody({
                 key={tile.id}
                 onClick={() => onPin(tile.id)}
                 className={cn(
-                  "flex-shrink-0 rounded-lg overflow-hidden border transition-all",
-                  compact ? "w-28 h-20" : "w-36 h-24",
+                  "flex-shrink-0 rounded-lg overflow-hidden border transition-all aspect-video",
+                  compact ? "w-28" : "w-56",
                   pinnedId === tile.id
                     ? "border-primary shadow-primary/30 shadow-md"
                     : "border-zinc-700 hover:border-zinc-500",

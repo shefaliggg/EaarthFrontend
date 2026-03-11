@@ -105,8 +105,7 @@ export default function ChatHeader() {
               variant={"ghost"}
               size={"icon"}
               aria-label="Start Video Call"
-              // onClick={() => initiateCall(selectedChat.id, "VIDEO")}
-              disabled
+              onClick={() => initiateCall(selectedChat.id, "VIDEO")}
             >
               <Video className="w-4 h-4" />
             </Button>

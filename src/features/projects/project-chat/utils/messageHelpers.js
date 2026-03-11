@@ -273,7 +273,7 @@ export function transformMessage(
     sender: msg.senderId?.displayName || "System",
     senderId,
 
-    avatar: msg.senderId?.displayName?.charAt(0)?.toUpperCase() || "S",
+    avatar: getAvatarFallback(msg.senderId?.displayName),
 
     time: createdAt.toLocaleTimeString("en-US", {
       hour: "numeric",

@@ -18,6 +18,7 @@ import { store } from "../../../../app/store";
 
 let endingTimer = null;
 let activeSpeakerTimer = null;
+let speakingTimers = {};
 
 const useCallStore = create(
   devtools(
@@ -432,9 +433,11 @@ const useCallStore = create(
       },
 
       syncActiveSpeaker: (attendeeId) => {
-        const { attendeeIdToUserId } = get();
+        const { attendeeIdToUserId, activeSpeakerId } = get();
         const userId = attendeeIdToUserId[attendeeId];
         if (!userId) return;
+
+        if (activeSpeakerId === userId) return;
 
         set((state) => ({
           activeSpeakerId: userId,
@@ -446,7 +449,7 @@ const useCallStore = create(
           set((state) => ({
             activeSpeakerId: null,
           }));
-        }, 600);
+        }, 1200);
       },
 
       markSpeaking: (attendeeId) => {
@@ -460,13 +463,19 @@ const useCallStore = create(
           ),
         }));
 
-        setTimeout(() => {
+        // clear previous timer for this user
+        if (speakingTimers[userId]) {
+          clearTimeout(speakingTimers[userId]);
+        }
+
+        speakingTimers[userId] = setTimeout(() => {
           set((state) => ({
             participants: state.participants.map((p) =>
               p.userId === userId ? { ...p, isSpeaking: false } : p,
             ),
           }));
-        }, 800);
+          delete speakingTimers[userId];
+        }, 900);
       },
 
       startSession: async (meeting, attendee, conversationId) => {
@@ -628,7 +637,7 @@ const useCallStore = create(
                     get().syncMuteState(aId, muted);
                   }
 
-                  if (volume !== null && volume > 0.3 && !muted) {
+                  if (volume !== null && volume > 0.25 && !muted) {
                     get().markSpeaking(attendeeId);
                   }
                   if (volume !== null && volume > 0.6 && !muted) {

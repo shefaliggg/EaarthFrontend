@@ -10,12 +10,12 @@ export function useCallSounds({
 }) {
   const currentSoundRef = useRef(null);
 
-  console.log("call sound parameters",{
-    callState,
-    participantCount,
-    isInitiator,
-    hadParticipants,
-  });
+  // console.log("call sound parameters",{
+  //   callState,
+  //   participantCount,
+  //   isInitiator,
+  //   hadParticipants,
+  // });
 
   const isIncoming = callState === "incoming" && incomingCall;
 

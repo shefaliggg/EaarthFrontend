@@ -19,10 +19,7 @@ export function ParticipantTile({
 }) {
   const videoRef = useRef(null);
   const { bindVideoTile, unbindVideoTile } = useCallStore();
-
-  // Bind whenever tileId or the video element changes.
-  // We do NOT unmount the <video> — only hide it — so this effect runs
-  // exactly once per tileId, not on every camera toggle.
+  
   useEffect(() => {
     if (!tileId || !videoRef.current) return;
     bindVideoTile(tileId, videoRef.current);
@@ -37,7 +34,7 @@ export function ParticipantTile({
     <div
       className={cn(
         "relative rounded-xl overflow-hidden bg-zinc-900 flex items-center justify-center select-none",
-        isActiveSpeaker && !isContent && "border border-green-600",
+        isActiveSpeaker && !isContent && "border-2 border-primary",
         className,
       )}
     >
@@ -48,9 +45,8 @@ export function ParticipantTile({
         playsInline
         muted={isLocal || !isContent}
         className={cn(
-          "w-full h-full object-cover transition-opacity duration-200",
+          "w-full h-full object-contain bg-black transition-opacity duration-200",
           isLocal && "scale-x-[-1]",
-          // Hide when avatar should show, but keep mounted so Chime stays bound
           showAvatar && "opacity-0 absolute inset-0",
         )}
       />
@@ -58,15 +54,12 @@ export function ParticipantTile({
       {/* ── Avatar overlay (camera off / audio-only) ── */}
       {showAvatar && !isContent && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-zinc-900">
-          {/* Subtle noise texture */}
-          <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJub2lzZSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuNjUiIG51bU9jdGF2ZXMiPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWx0ZXI9InVybCgjbm9pc2UpIiBvcGFjaXR5PSIxIi8+PC9zdmc+')] pointer-events-none" />
-
           <div
             className={cn(
               "rounded-full bg-gradient-to-br flex items-center justify-center font-semibold text-white shadow-lg",
               isMainView || isSingle
                 ? "w-26 h-26 text-3xl"
-                : "w-12 h-12 text-lg",
+                : "w-10 h-10 text-lg",
               isActiveSpeaker
                 ? "from-primary to-primary/80"
                 : "from-primary/80 to-primary/40",
@@ -91,7 +84,7 @@ export function ParticipantTile({
 
       {/* ── Active speaker pulse ── */}
       {isSpeaking && !isContent && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
       )}
 
       {/* ── Bottom label bar ── */}

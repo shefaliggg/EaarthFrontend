@@ -232,11 +232,12 @@ export default function MessageBubble({
         "flex gap-3 transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",
         isGroupStart ? "mt-4" : "mt-0",
+        selectedChat.type === "dm" && "ml-4",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}
     >
-      {!isOwn && (
+      {!isOwn && selectedChat.type !== "dm" && (
         <div className={cn("w-8", isGroupStart ? "" : "invisible")}>
           {isGroupStart && (
             <Avatar className="h-8 w-8">
@@ -249,15 +250,15 @@ export default function MessageBubble({
       )}
 
       <div className={cn("flex flex-col max-w-[60%]")}>
-        {!isOwn && isGroupStart && (
+        {!isOwn && isGroupStart && selectedChat.type !== "dm" && (
           <div className="flex items-center gap-2 mb-1 px-1">
-            <span className="font-semibold text-xs text-foreground">
+            <span className="font-semibold text-xs text-primary">
               {message.sender}
             </span>
-            <span className="text-[10px] text-muted-foreground">
-              {message.time}
-            </span>
-            <Badge variant="outline" className="text-[9px] h-4 px-1.5">
+            <Badge
+              variant="outline"
+              className="text-[9px] text-muted-foreground h-4 px-1.5 border-muted"
+            >
               Read by {getReadByCount(message, getCurrentUserId())}
             </Badge>
           </div>
@@ -414,27 +415,39 @@ export default function MessageBubble({
                   </p>
                 )}
 
-                {isOwn && (
-                  <div className="flex items-center justify-end gap-1 mt-0 pl-3">
-                    {message.edited && (
-                      <span
-                        className={cn(
-                          "text-[10px] italic mr-1",
-                          isOwn
-                            ? "text-primary-foreground/50"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        (edited)
-                      </span>
-                    )}
-                    {isFavorited && <Star fill="yellow" className="w-3 h-3" />}
-                    <span className="text-[10px] text-primary-foreground/70">
-                      {message.time}
+                <div
+                  className={cn(
+                    "flex items-center justify-end gap-1 mt-0 pl-3",
+                    !isOwn && "pr-2",
+                  )}
+                >
+                  {message.edited && (
+                    <span
+                      className={cn(
+                        "text-[10px] italic mr-1",
+                        isOwn
+                          ? "text-primary-foreground/50"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      (edited)
                     </span>
-                    <MessageStateIcon state={message.state} />
-                  </div>
-                )}
+                  )}
+                  {isFavorited && (
+                    <Star fill="orange" className="w-3 h-3 text-amber-500" />
+                  )}
+                  <span
+                    className={cn(
+                      "text-[10px]",
+                      isOwn
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground/70",
+                    )}
+                  >
+                    {message.time}
+                  </span>
+                  {isOwn && <MessageStateIcon state={message.state} />}
+                </div>
               </div>
             </div>
             {message.state === "failed" && (
@@ -449,7 +462,7 @@ export default function MessageBubble({
           {message.reactions && Object.keys(message.reactions).length > 0 && (
             <div
               className={cn(
-                "flex gap-1 mt-1",
+                "flex gap-1 mb-1",
                 isOwn ? "flex-row-reverse" : "flex-row",
               )}
             >
@@ -486,14 +499,19 @@ export default function MessageBubble({
                 onReply(message);
               }}
             />
-            <ActionButton
-              icon={Forward}
-              tooltip="Forward"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleForward();
-              }}
-            />
+            {message?.type !== "call" && (
+              <>
+                <ActionButton
+                  icon={Forward}
+                  tooltip="Forward"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleForward();
+                  }}
+                />
+              </>
+            )}
+
             <ActionButton
               icon={Smile}
               tooltip="React"
@@ -513,6 +531,7 @@ export default function MessageBubble({
                 handleToggleFavorite();
               }}
             />
+
             <ActionButton
               icon={Pin}
               tooltip="Pin"
@@ -521,15 +540,18 @@ export default function MessageBubble({
                 handlePin();
               }}
             />
-            <ActionButton
-              icon={Copy}
-              tooltip="Copy"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopy();
-              }}
-            />
-            {isOwn && canEdit && (
+
+            {message?.type !== "call" && (
+              <ActionButton
+                icon={Copy}
+                tooltip="Copy"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+              />
+            )}
+            {isOwn && canEdit && message.type !== "call" && (
               <ActionButton
                 icon={Edit2}
                 tooltip="Edit"
