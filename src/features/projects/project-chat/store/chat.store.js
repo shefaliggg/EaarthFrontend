@@ -105,7 +105,7 @@ const useChatStore = create(
 
         socket.on("message:updated", ({ conversationId, message }) => {
           console.log("🔄 Message updated:", message);
-          if(!message) return
+          if (!message) return;
 
           const currentUserId = getCurrentUserId();
 
@@ -164,6 +164,24 @@ const useChatStore = create(
         socket.on("message:deleted", ({ messageId }) => {
           console.log("🗑️ Message deleted:", messageId);
           get().markMessageAsDeleted(messageId);
+        });
+
+        socket.on("message:pinned", ({ message, conversationId }) => {
+          console.log("📌 Message pinned:", message);
+
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c.id === conversationId
+                ? {
+                    ...c,
+                    pinnedMessage:
+                      c.pinnedMessage?.messageId === message.messageId
+                        ? null
+                        : message,
+                  }
+                : c,
+            ),
+          }));
         });
 
         socket.on("message:reaction", ({ messageId, reactions }) => {
@@ -806,16 +824,15 @@ const useChatStore = create(
 
         const previous = state.conversations;
 
-        // 📌 optimistic update
         set({
           conversations: state.conversations.map((c) =>
             c.id === conversationId
               ? {
                   ...c,
                   pinnedMessage:
-                    c.pinnedMessage?.id === messageId
+                    c.pinnedMessage?.messageId === messageId
                       ? null
-                      : { id: messageId },
+                      : { messageId },
                 }
               : c,
           ),

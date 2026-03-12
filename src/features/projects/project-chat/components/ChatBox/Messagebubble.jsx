@@ -194,8 +194,6 @@ export default function MessageBubble({
 
   const hasNonMedia = attachments.some((f) => !isMedia(f.mime));
 
-  const isSingleAttachment = attachments.length === 1;
-
   const isMediaGrid = attachments.length > 1 && !hasNonMedia;
 
   const attachmentLayoutClass = isMediaGrid

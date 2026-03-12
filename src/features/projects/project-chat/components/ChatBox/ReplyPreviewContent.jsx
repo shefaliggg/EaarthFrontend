@@ -27,7 +27,7 @@ function ReplyPreviewContent({ reply }) {
   // =========================
   if (type === "text") {
     return (
-      <span className="text-[11px] truncate">
+      <span className="text-[11px]">
         {reply.preview || "Text message"}
       </span>
     );

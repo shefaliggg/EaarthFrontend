@@ -7,7 +7,7 @@ import { SmartIcon } from "./SmartIcon";
 const SIZE_STYLES = {
   sm: {
     list: "p-0.5 gap-1",
-    trigger: "px-2 pr-1 py-1 text-xs shadow-none",
+    trigger: "px-2 pr-1 py-1 text-xs shadow-none flex-0",
     icon: "w-3 h-3",
   },
   md: {
@@ -56,7 +56,7 @@ function FilterPillTabs({
         } ${
           fullWidth
             ? "grid grid-flow-col auto-cols-fr w-full"
-            : "flex flex-wrap"
+            : "flex flex-wrap justify-start"
         }`}
       >
         {options.map((option) => {

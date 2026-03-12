@@ -14,6 +14,10 @@ import {
   Pin,
   Paperclip,
   MessageCircle,
+  Phone,
+  Video,
+  Slash,
+  SeparatorVertical,
 } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
@@ -206,6 +210,7 @@ function ChatBox() {
   };
 
   const pinnedMessage = selectedChat?.pinnedMessage;
+  console.log("pinned message", pinnedMessage)
 
   // ────────────────────────────────
   // Render
@@ -232,38 +237,57 @@ function ChatBox() {
     <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex flex-col mx-auto">
       <ChatHeader />
 
-      {pinnedMessage?.messageId && (
-        <div className="px-4 border-b bg-muted/40 backdrop-blur-sm">
+      <div className="relative w-full">
+        {pinnedMessage?.messageId && (
           <button
             onClick={() => scrollToMessage(pinnedMessage.messageId)}
-            className="w-full flex items-center gap-3 text-left cursor-pointer p-2 rounded-lg transition-all"
+            className="absolute top-2 left-3 z-50 w-[calc(100%-24px)] bg-card/70 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border shadow-xl transition-all hover:bg-muted/60 backdrop-blur-2xl"
           >
-            <Pin className="text-primary w-5 h-5" />
+            {/* Pin icon */}
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary mr-1">
+              <Pin className="w-4 h-4" />
+            </div>
 
-            <div className="flex-1">
-              <p className="text-[10px] font-medium text-primary uppercase tracking-wide">
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-semibold text-primary uppercase tracking-wide">
                 Pinned Message
               </p>
-              <p className="text-sm text-foreground line-clamp-1">
+
+              <p className="text-sm text-foreground truncate">
                 {pinnedMessage.text}
               </p>
             </div>
-            
-            {pinnedMessage.containsAttachments && (
-              <div className="w-9 h-9 flex items-center justify-center text-primary rounded-[7px] bg-primary/10">
-                <Paperclip className="w-4 h-4" />
+
+            {/* Attachment indicator */}
+            {pinnedMessage.attachmentCount > 0 && (
+              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-3xl bg-primary/10 text-primary text-xs font-medium">
+                <Paperclip className="w-3.5 h-3.5" />
+                {pinnedMessage.attachmentCount}
               </div>
             )}
-            <X
+
+            {pinnedMessage.isCallMessage && (
+              <div className="flex items-center gap-1 p-2.5 rounded-3xl bg-primary/10 text-primary text-xs font-medium">
+                <Phone className="w-3.5 h-3.5" />
+                <SeparatorVertical className="w-3.5 h-3.5"/>
+                <Video className="w-3.5 h-3.5" />
+              </div>
+            )}
+
+            {/* Unpin */}
+            <span
               onClick={(e) => {
                 e.stopPropagation();
-                // handleUnpin();
+                // handleUnpin()
               }}
-              className="w-4 h-4 text-muted-foreground hover:text-destructive"
-            />
+              className="opacity-0 scale-0 max-w-0 group-hover:max-w-4 group-hover:mr-2  group-hover:scale-100 group-hover:opacity-100 transition-all text-muted-foreground hover:text-destructive"
+            >
+              <X className="w-4 h-4" />
+            </span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       <div
         ref={scrollContainerRef}

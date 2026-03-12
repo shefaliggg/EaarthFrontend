@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Hash, Users, Mail, Search, X, MessageCirclePlus } from "lucide-react";
+import {
+  Hash,
+  Users,
+  Mail,
+  Search,
+  X,
+  MessageCirclePlus,
+  MessageCircleOff,
+  SearchX,
+  MessageCircleX,
+} from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Input } from "@/shared/components/ui/input";
 import useChatStore, { DEFAULT_PROJECT_ID } from "../../store/chat.store";
@@ -45,10 +55,99 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     return b.timestamp - a.timestamp;
   });
 
-  const departments = sortedConversations.filter(
-    (c) => c.type === "all" || c.type === "group",
+  const categorizedConversations = sortedConversations.reduce(
+    (acc, conv) => {
+      if (conv.type === "all" || conv.type === "group") {
+        acc.departments.push(conv);
+      }
+
+      if (conv.type === "dm") {
+        acc.teamMembers.push(conv);
+      }
+
+      if (conv.unread > 0) {
+        acc.unread.push(conv);
+      }
+      if (conv.isFavorite) {
+        acc.favorited.push(conv);
+      }
+
+      return acc;
+    },
+    {
+      departments: [],
+      teamMembers: [],
+      unread: [],
+      favorite: [],
+    },
   );
-  const teamMembers = sortedConversations.filter((c) => c.type === "dm");
+
+  const { departments, teamMembers, unread, favorite } =
+    categorizedConversations;
+
+  const renderConversationList = (list) => {
+    return list.map((item) => (
+      <ConversationItem
+        key={item.id}
+        item={item}
+        type={item.type === "dm" ? "personal" : "group"}
+        isSelected={selectedChat?.id === item.id}
+        onClick={() =>
+          item.canSendMessage
+            ? handleChatClick(item)
+            : toast.error(
+                "You do not have permission to send messages in this Chat",
+              )
+        }
+        onContextMenu={(e) =>
+          handleContextMenu(e, item, item.type === "dm" ? "personal" : "team")
+        }
+      />
+    ));
+  };
+
+  const activeList = (() => {
+    switch (activeTab) {
+      case "departments":
+        return departments;
+
+      case "personal":
+        return teamMembers;
+
+      case "unread":
+        return unread;
+
+      case "favorite":
+        return favorite;
+
+      case "all":
+      default:
+        return [...departments, ...teamMembers];
+    }
+  })();
+
+  const getEmptyMessage = () => {
+    if (searchQuery) {
+      return `No conversations found for "${searchQuery}"`;
+    }
+
+    switch (activeTab) {
+      case "departments":
+        return "No departments found";
+
+      case "personal":
+        return "No personal conversations yet";
+
+      case "unread":
+        return "No unread messages";
+
+      case "favorite":
+        return "No Favorite conversations";
+
+      default:
+        return "No conversations yet";
+    }
+  };
 
   useEffect(() => {
     if (projectId) {
@@ -70,7 +169,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     <>
       <div className="flex flex-col gap-4">
         {/* Tab Selection */}
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        {/* <div className="rounded-xl border bg-card p-4 shadow-sm">
           <h3 className="font-bold mb-3">Conversations</h3>
           <div className="space-y-2">
             <button
@@ -105,7 +204,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               </div>
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Conversations List */}
         <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[710px] sticky top-5">
@@ -115,15 +214,13 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               <h2 className="text-lg font-bold">
                 {activeTab === "Email" ? "Email" : "Chat Conversations"}
               </h2>
-              {activeTab !== "departments" && (
-                <Button
-                  variant="ghost"
-                  size={"icon"}
-                  onClick={() => setShowDirectMessageCreationDialog(true)}
-                >
-                  <MessageCirclePlus className="text-primary" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size={"icon"}
+                onClick={() => setShowDirectMessageCreationDialog(true)}
+              >
+                <MessageCirclePlus className="text-primary" />
+              </Button>
             </div>
 
             {/* Search Bar */}
@@ -161,6 +258,16 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                   value: "personal",
                   badge: teamMembers.length,
                 },
+                {
+                  label: "Unread",
+                  value: "unread",
+                  badge: unread.length,
+                },
+                {
+                  label: "Favorites",
+                  value: "favorite",
+                  badge: favorite.length,
+                },
               ]}
               value={activeTab}
               onChange={onTabChange}
@@ -177,84 +284,20 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                 ))}
               </div>
             ) : (
-              <div className="p-1 px-2 space-y-0.5">
-                {activeTab !== "personal" && (
-                  <>
-                    {activeTab === "all" && (
-                      <div className="px-2 py-0.5 rounded-full grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <div className="h-0.5 w-full bg-muted rounded-3xl" />
-                        <div className="text-center text-[9px] text-muted-foreground">
-                          Department chats
-                        </div>
-                        <div className="h-0.5 w-full bg-muted rounded-3xl" />
-                      </div>
-                    )}
-
-                    {departments.map((dept) => (
-                      <ConversationItem
-                        key={dept.id}
-                        item={dept}
-                        type={dept.type}
-                        isSelected={selectedChat?.id === dept.id}
-                        onClick={() =>
-                          dept.canSendMessage
-                            ? handleChatClick(dept, dept.type)
-                            : toast.error(
-                                "You do not have permission to send messages in this department",
-                              )
-                        }
-                        onContextMenu={(e) =>
-                          handleContextMenu(e, dept, "team")
-                        }
-                      />
-                    ))}
-
-                    {departments.length === 0 && (
-                      <div className="text-center py-12">
-                        <p className="text-xs text-muted-foreground">
-                          {searchQuery
-                            ? `No departments found for "${searchQuery}"`
-                            : "No departments found"}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {activeTab !== "departments" && (
-                  <>
-                    {activeTab === "all" && (
-                      <div className="px-2 py-0.5 rounded-full grid grid-cols-[1fr_auto_1fr] items-center gap-2 mt-1">
-                        <div className="h-0.5 w-full bg-muted rounded-3xl" />
-                        <div className="text-center text-[9px] text-muted-foreground">
-                          Personal chats
-                        </div>
-                        <div className="h-0.5 w-full bg-muted rounded-3xl" />
-                      </div>
-                    )}
-                    {teamMembers.map((member) => (
-                      <ConversationItem
-                        key={member.id}
-                        item={member}
-                        type="dm"
-                        isSelected={selectedChat?.id === member.id}
-                        onClick={() => handleChatClick(member, "dm")}
-                        onContextMenu={(e) =>
-                          handleContextMenu(e, member, "personal")
-                        }
-                      />
-                    ))}
-
-                    {teamMembers.length === 0 && (
-                      <div className="text-center py-12">
-                        <p className="text-xs text-muted-foreground">
-                          {searchQuery
-                            ? `No members found for "${searchQuery}"`
-                            : "No Personal messages yet"}
-                        </p>
-                      </div>
-                    )}
-                  </>
+              <div className="p-1 px-2 space-y-1">
+                {activeList.length > 0 ? (
+                  renderConversationList(activeList)
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-xs text-muted-foreground flex flex-col items-center gap-4">
+                      {searchQuery ? (
+                        <SearchX className="w-6 h-6 text-primary" />
+                      ) : (
+                        <MessageCircleX className="w-6 h-6 text-primary" />
+                      )}
+                      {getEmptyMessage()}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
