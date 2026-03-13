@@ -1,158 +1,29 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import * as offerApi from "../api/offer.api";
+/**
+ * offer.slice.js
+ * Pure slice — state, reducers, and extra reducers only.
+ * All thunks live in offer.thunks.js and are re-exported here for convenience.
+ */
 
-const normalizeError = (e) => ({
-  message: e.response?.data?.message || e.message || "Something went wrong",
-  errors:  e.response?.data?.errors  || [],
-  code:    e.response?.data?.code    || "UNKNOWN_ERROR",
-  status:  e.response?.status,
-});
+import { createSlice } from "@reduxjs/toolkit";
 
-export const createOfferThunk = createAsyncThunk("offers/create",
-  async (payload, { rejectWithValue }) => {
-    try { return await offerApi.createOffer(payload); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
+import {
+  createOfferThunk,
+  updateOfferThunk,
+  getOfferThunk,
+  getProjectOffersThunk,
+  getMyOffersThunk,
+  deleteOfferThunk,
+  getSigningStatusThunk,
+  getContractPreviewThunk,
+  getContractPdfUrlThunk,
+  getChangeRequestsThunk,
+  resolveChangeRequestThunk,
+  workflowThunks,
+  signThunks,
+} from "./offer.thunks";
 
-export const getOfferThunk = createAsyncThunk("offers/getOne",
-  async (id, { rejectWithValue }) => {
-    try { return await offerApi.getOffer(id); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const getProjectOffersThunk = createAsyncThunk("offers/getByProject",
-  async ({ projectId, filters = {} }, { rejectWithValue }) => {
-    try { return await offerApi.getProjectOffers(projectId, filters); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const getMyOffersThunk = createAsyncThunk("offers/getMine",
-  async (_, { rejectWithValue }) => {
-    try { return await offerApi.getMyOffers(); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const updateOfferThunk = createAsyncThunk("offers/update",
-  async ({ id, data }, { rejectWithValue }) => {
-    try { return await offerApi.updateOffer(id, data); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const deleteOfferThunk = createAsyncThunk("offers/delete",
-  async (id, { rejectWithValue }) => {
-    try { await offerApi.deleteOffer(id); return id; }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const sendToCrewThunk = createAsyncThunk("offers/sendToCrew",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.sendToCrew(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const markViewedThunk = createAsyncThunk("offers/markViewed",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.markViewed(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const crewAcceptThunk = createAsyncThunk("offers/crewAccept",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.crewAccept(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const crewRequestChangesThunk = createAsyncThunk("offers/requestChanges",
-  async ({ offerId, ...payload }, { rejectWithValue }) => {
-    try { return await offerApi.crewRequestChanges(offerId, payload); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const cancelOfferThunk = createAsyncThunk("offers/cancel",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.cancelOffer(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const moveToProductionCheckThunk = createAsyncThunk("offers/productionCheck",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.moveToProductionCheck(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const moveToAccountsCheckThunk = createAsyncThunk("offers/accountsCheck",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.moveToAccountsCheck(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const moveToPendingCrewSignatureThunk = createAsyncThunk("offers/pendingCrewSig",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.moveToPendingCrewSignature(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-const makeSignThunk = (name, apiFn) =>
-  createAsyncThunk(`offers/${name}`,
-    async ({ contractId, signature }, { rejectWithValue }) => {
-      try { return await apiFn(contractId, signature); }
-      catch (e) { return rejectWithValue(normalizeError(e)); }
-    }
-  );
-
-export const crewSignThunk   = makeSignThunk("crewSign",   offerApi.crewSign);
-export const upmSignThunk    = makeSignThunk("upmSign",    offerApi.upmSign);
-export const fcSignThunk     = makeSignThunk("fcSign",     offerApi.fcSign);
-export const studioSignThunk = makeSignThunk("studioSign", offerApi.studioSign);
-
-export const getSigningStatusThunk = createAsyncThunk("offers/getSigningStatus",
-  async (contractId, { rejectWithValue }) => {
-    try { return await offerApi.getSigningStatus(contractId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const getContractPreviewThunk = createAsyncThunk("offers/getContractPreview",
-  async (contractId, { rejectWithValue }) => {
-    try { return await offerApi.getContractPreview(contractId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const getContractPdfUrlThunk = createAsyncThunk("offers/getContractPdfUrl",
-  async (contractId, { rejectWithValue }) => {
-    try { return await offerApi.getContractPdfUrl(contractId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const getChangeRequestsThunk = createAsyncThunk("offers/getChangeRequests",
-  async (offerId, { rejectWithValue }) => {
-    try { return await offerApi.getChangeRequests(offerId); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
-
-export const resolveChangeRequestThunk = createAsyncThunk("offers/resolveChangeRequest",
-  async ({ offerId, changeRequestId, status, notes }, { rejectWithValue }) => {
-    try { return await offerApi.resolveChangeRequest(offerId, changeRequestId, status, notes); }
-    catch (e) { return rejectWithValue(normalizeError(e)); }
-  }
-);
+// Re-export everything so consumers only need to import from this file
+export * from "./offer.thunks";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -168,14 +39,6 @@ const syncOffer = (state, updatedOffer) => {
 
 const setPending  = (k) => (state) => { state[k] = true; state.error = null; };
 const setRejected = (k) => (state, { payload }) => { state[k] = false; state.error = payload; };
-
-const workflowThunks = [
-  sendToCrewThunk, markViewedThunk, crewAcceptThunk, crewRequestChangesThunk,
-  cancelOfferThunk, moveToProductionCheckThunk, moveToAccountsCheckThunk,
-  moveToPendingCrewSignatureThunk,
-];
-
-const signThunks = [crewSignThunk, upmSignThunk, fcSignThunk, studioSignThunk];
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 
@@ -214,6 +77,7 @@ const offerSlice = createSlice({
 
   extraReducers: (builder) => {
 
+    // ── Create ──────────────────────────────────────────────────────────────
     builder
       .addCase(createOfferThunk.pending,   setPending("isSubmitting"))
       .addCase(createOfferThunk.fulfilled, (state, { payload }) => {
@@ -224,6 +88,7 @@ const offerSlice = createSlice({
       })
       .addCase(createOfferThunk.rejected, setRejected("isSubmitting"));
 
+    // ── Update ──────────────────────────────────────────────────────────────
     builder
       .addCase(updateOfferThunk.pending,   setPending("isSubmitting"))
       .addCase(updateOfferThunk.fulfilled, (state, { payload }) => {
@@ -233,6 +98,7 @@ const offerSlice = createSlice({
       })
       .addCase(updateOfferThunk.rejected, setRejected("isSubmitting"));
 
+    // ── Get one ─────────────────────────────────────────────────────────────
     builder
       .addCase(getOfferThunk.pending,   setPending("isLoadingOffer"))
       .addCase(getOfferThunk.fulfilled, (state, { payload }) => {
@@ -241,6 +107,7 @@ const offerSlice = createSlice({
       })
       .addCase(getOfferThunk.rejected, setRejected("isLoadingOffer"));
 
+    // ── Get project list ────────────────────────────────────────────────────
     builder
       .addCase(getProjectOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getProjectOffersThunk.fulfilled, (state, { payload }) => {
@@ -249,6 +116,7 @@ const offerSlice = createSlice({
       })
       .addCase(getProjectOffersThunk.rejected, setRejected("isLoadingList"));
 
+    // ── Get my offers ───────────────────────────────────────────────────────
     builder
       .addCase(getMyOffersThunk.pending,   setPending("isLoadingList"))
       .addCase(getMyOffersThunk.fulfilled, (state, { payload }) => {
@@ -257,6 +125,7 @@ const offerSlice = createSlice({
       })
       .addCase(getMyOffersThunk.rejected, setRejected("isLoadingList"));
 
+    // ── Delete ──────────────────────────────────────────────────────────────
     builder
       .addCase(deleteOfferThunk.fulfilled, (state, { payload: id }) => {
         state.projectOffers = state.projectOffers.filter((o) => o._id !== id);
@@ -265,6 +134,7 @@ const offerSlice = createSlice({
       })
       .addCase(deleteOfferThunk.rejected, (state, { payload }) => { state.error = payload; });
 
+    // ── Workflow thunks (all share same pattern) ─────────────────────────────
     workflowThunks.forEach((thunk) => {
       builder
         .addCase(thunk.pending,   setPending("isSubmitting"))
@@ -283,21 +153,18 @@ const offerSlice = createSlice({
         });
     });
 
-    // Sign thunks — backend returns { contract, offer }
+    // ── Sign thunks — backend returns { contract, offer } ───────────────────
     signThunks.forEach((thunk) => {
       builder
         .addCase(thunk.pending, setPending("isSubmitting"))
         .addCase(thunk.fulfilled, (state, { payload }) => {
           state.isSubmitting = false;
 
-          // Sync full offer if returned
           if (payload?.offer?._id) {
             syncOffer(state, payload.offer);
             state.successMessage = "Signature recorded";
           }
 
-          // ← KEY FIX: update currentOffer.status directly from contract
-          // handles case where offer isn't returned but contract is
           if (payload?.contract?.status && state.currentOffer) {
             state.currentOffer = {
               ...state.currentOffer,
@@ -305,7 +172,6 @@ const offerSlice = createSlice({
             };
           }
 
-          // Update signing status card
           if (payload?.contract && state.signingStatus) {
             state.signingStatus = {
               ...state.signingStatus,
@@ -315,7 +181,6 @@ const offerSlice = createSlice({
             };
           }
 
-          // Clear preview so it reloads with new signature
           state.contractPreviewHtml = null;
           state.contractPdfUrl      = null;
         })
@@ -325,6 +190,7 @@ const offerSlice = createSlice({
         });
     });
 
+    // ── Signing status ───────────────────────────────────────────────────────
     builder
       .addCase(getSigningStatusThunk.pending,   (state) => { state.error = null; })
       .addCase(getSigningStatusThunk.fulfilled, (state, { payload }) => {
@@ -334,6 +200,7 @@ const offerSlice = createSlice({
         state.error = payload;
       });
 
+    // ── Contract preview ─────────────────────────────────────────────────────
     builder
       .addCase(getContractPreviewThunk.pending, (state) => {
         state.isLoadingPreview    = true;
@@ -348,6 +215,7 @@ const offerSlice = createSlice({
         state.error            = payload;
       });
 
+    // ── Contract PDF URL ─────────────────────────────────────────────────────
     builder
       .addCase(getContractPdfUrlThunk.pending, (state) => {
         state.isLoadingPdfUrl = true;
@@ -362,6 +230,7 @@ const offerSlice = createSlice({
         state.error           = payload;
       });
 
+    // ── Change requests ───────────────────────────────────────────────────────
     builder.addCase(getChangeRequestsThunk.fulfilled, (state, { payload }) => {
       state.changeRequests = payload;
     });
@@ -378,13 +247,21 @@ const offerSlice = createSlice({
   },
 });
 
+// ─── Actions ─────────────────────────────────────────────────────────────────
+
 export const {
-  clearOfferError, clearOfferSuccess, clearCurrentOffer,
-  clearContractPreview, clearContractPdfUrl,
-  setStatusFilter, localUpdateOffer,
+  clearOfferError,
+  clearOfferSuccess,
+  clearCurrentOffer,
+  clearContractPreview,
+  clearContractPdfUrl,
+  setStatusFilter,
+  localUpdateOffer,
 } = offerSlice.actions;
 
 export default offerSlice.reducer;
+
+// ─── Selectors ────────────────────────────────────────────────────────────────
 
 export const selectProjectOffers       = (s) => s.offers.projectOffers;
 export const selectMyOffers            = (s) => s.offers.myOffers;

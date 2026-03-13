@@ -56,9 +56,6 @@ const FIELD_ZONE_MAP = {
   cameraOTSWD:                    { zone: "feeStructure",        label: "Camera O/T SWD"      },
   cameraOTSCWD:                   { zone: "feeStructure",        label: "Camera O/T SCWD"     },
   cameraOTCWD:                    { zone: "feeStructure",        label: "Camera O/T CWD"      },
-  allowSelfEmployed:              { zone: "feeStructure",        label: "Engagement Type"     },
-  statusDeterminationReason:      { zone: "feeStructure",        label: "IR35 Reason"         },
-  otherStatusDeterminationReason: { zone: "feeStructure",        label: "IR35 Reason"         },
   otherDealProvisions:            { zone: "specialStipulations", label: "Special Stipulations"},
 };
 
@@ -92,7 +89,7 @@ function ZoneHighlight({ zoneId, activeZone, label, children }) {
   );
 }
 
-// ─── Normalise helpers — handle both lowercase (form) and uppercase (backend) ──
+// ─── Normalise helpers ────────────────────────────────────────────────────────
 
 function getEngagementLabel(val) {
   const map = {
@@ -106,13 +103,11 @@ function getEngagementLabel(val) {
 
 function getFrequencyLabel(val) {
   if (!val) return "Daily";
-  const lower = val.toLowerCase();
-  if (lower === "weekly") return "Weekly";
-  return "Daily";
+  return val.toLowerCase() === "weekly" ? "Weekly" : "Daily";
 }
 
 function getCurrencySymbol(currency) {
-  const map = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$", NZD: "NZ$" };
+  const map = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$", NZD: "NZ$", DKK: "kr", ISK: "kr" };
   return map[currency] || "£";
 }
 
@@ -120,6 +115,7 @@ function getCurrencySymbol(currency) {
 
 export function ContractDocument({
   data,
+  projectSettings = null,   // FIX: receive project settings (movieTitle, productionCompany, etc.)
   calculatedRates,
   engineSettings,
   allowances,
@@ -129,18 +125,43 @@ export function ContractDocument({
   activeSigningRole = null,
   onSignatureClick,
 }) {
-  const zoneInfo   = getZoneForField(activeField);
-  const activeZone = zoneInfo?.zone  ?? null;
+  const zoneInfo    = getZoneForField(activeField);
+  const activeZone  = zoneInfo?.zone  ?? null;
   const activeLabel = zoneInfo?.label ?? "";
 
-  const cs       = getCurrencySymbol(data.currency);
-  const engLabel = getEngagementLabel(data.engagementType);
+  const cs        = getCurrencySymbol(data.currency);
+  const engLabel  = getEngagementLabel(data.engagementType);
   const freqLabel = getFrequencyLabel(data.dailyOrWeekly);
+
+  // FIX: pull dynamic values from projectSettings / data — no hardcoding
+  const movieTitle       = projectSettings?.movieTitle       || data.projectName       || "UNTITLED";
+  const productionCompany = projectSettings?.productionCompany || data.productionCompany || "PRODUCTION COMPANY";
+  const productionBase   = projectSettings?.productionBase   || data.productionBase   || "PRODUCTION BASE";
+  const offerCode        = data.offerCode || "DRAFT";
+  const offerVersion     = data.version   || 1;
+  const docRef           = `${movieTitle.replace(/\s+/g, "-").toUpperCase()}-ISA-V${offerVersion}.0`;
+
+  // FIX: read recipient from data.recipient.* (matches offer model)
+  const recipientName   = data.recipient?.fullName   || "[CREW MEMBER]";
+  const recipientEmail  = data.recipient?.email      || "—";
+  const recipientPhone  = data.recipient?.mobileNumber || "—";
+  const isViaAgent      = data.representation?.isViaAgent ?? data.isViaAgent ?? false;
+  const agentEmail      = data.representation?.agentEmail ?? data.recipient?.agentEmail ?? "";
+
+  // FIX: read notes from data.notes.* (matches offer model)
+  const otherDealProvisions = data.notes?.otherDealProvisions || data.otherDealProvisions || "";
+
+  // FIX: read taxStatus from data.taxStatus.* (matches offer model)
+  const holidayUplift = projectSettings?.holidayUpliftPercentage
+    ?? engineSettings?.holidayUplift
+    ?? 0.1207;
 
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return isNaN(d.getTime())
+      ? dateString
+      : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const getDeptLabel = (val) =>
@@ -233,36 +254,34 @@ export function ContractDocument({
               <div className="h-5 w-5 rounded bg-purple-700 flex items-center justify-center">
                 <FileText className="h-3 w-3 text-white" />
               </div>
+              {/* FIX: dynamic movie title */}
               <h1 className="text-[14px] font-black uppercase tracking-tighter text-purple-900">
-                FILM: &ldquo;WERWULF&rdquo;
+                FILM: &ldquo;{movieTitle.toUpperCase()}&rdquo;
               </h1>
             </div>
             <div className="text-[7px] font-mono text-neutral-400 flex flex-col items-end gap-px">
-              <div>Version: <span className="text-purple-700 font-semibold">1.0</span></div>
-              <div>Ref: <span className="text-purple-700 font-semibold">WERWULF-ISA-V1.0</span></div>
+              <div>Version: <span className="text-purple-700 font-semibold">{offerVersion}.0</span></div>
+              {/* FIX: dynamic ref */}
+              <div>Ref: <span className="text-purple-700 font-semibold">{docRef}</span></div>
               <div>Date: <span className="text-neutral-700 font-semibold">{refDate}</span></div>
             </div>
           </div>
 
-          {/* Title row with Frequency + Engagement Type badges */}
           <div className="flex justify-between items-center">
             <h2 className="text-[8px] font-semibold uppercase tracking-widest text-purple-800">
               Crew — Major Motion Picture — Individual Services Agreement
             </h2>
             <div className="flex gap-1.5 items-center">
-              {/* Currency badge */}
               <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
                 <span className="border border-purple-300 text-purple-600 bg-purple-50 px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
                   {data.currency || "GBP"}
                 </span>
               </ZoneHighlight>
-              {/* Frequency badge — Daily / Weekly */}
               <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
                 <span className="border border-purple-700 text-purple-700 px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
                   {freqLabel}
                 </span>
               </ZoneHighlight>
-              {/* Engagement type badge — PAYE / LOAN OUT / SCHD / LONG FORM */}
               <ZoneHighlight zoneId="feeStructure" activeZone={activeZone} label={activeLabel}>
                 <span className="bg-purple-700 text-white px-2 py-px text-[8px] font-black uppercase tracking-wider rounded">
                   {engLabel}
@@ -278,27 +297,35 @@ export function ContractDocument({
 
         {/* ── Parties ── */}
         <div className="grid grid-cols-2 gap-3 mb-2 text-[8px]">
+          {/* FIX: dynamic production company + base */}
           <div>
-            <p className="font-bold text-[9px] text-purple-900 mb-0.5">(1) MIRAGE PICTURES LIMITED</p>
+            <p className="font-bold text-[9px] text-purple-900 mb-0.5">
+              (1) {productionCompany.toUpperCase()}
+            </p>
             <p className="text-neutral-500 mb-1">(&ldquo;Producer&rdquo;)</p>
             <div className="grid grid-cols-[45px_1fr] gap-1">
               <span className="text-neutral-500 font-medium">Address:</span>
-              <span className="text-neutral-700">Sky Elstree Studios, Borehamwood</span>
-              <span className="text-neutral-500 font-medium">Phone:</span>
-              <span className="text-neutral-700">020 3945 9013</span>
+              <span className="text-neutral-700">{productionBase}</span>
+              {projectSettings?.productionPhone && (
+                <>
+                  <span className="text-neutral-500 font-medium">Phone:</span>
+                  <span className="text-neutral-700">{projectSettings.productionPhone}</span>
+                </>
+              )}
             </div>
           </div>
 
+          {/* FIX: use data.recipient.* */}
           <ZoneHighlight zoneId="recipient" activeZone={activeZone} label={activeLabel}>
             <p className="font-bold text-[9px] text-purple-900 mb-0.5">
-              (2) {data.fullName || "[CREW MEMBER]"}
+              (2) {recipientName}
             </p>
             <p className="text-neutral-500 mb-1">(&ldquo;you&rdquo; / &ldquo;your&rdquo;)</p>
             <div className="grid grid-cols-[55px_1fr] gap-1">
               <span className="text-neutral-500 font-medium">Email:</span>
-              <span className="text-neutral-700">{data.email || "—"}</span>
+              <span className="text-neutral-700">{recipientEmail}</span>
               <span className="text-neutral-500 font-medium">Phone:</span>
-              <span className="text-neutral-700">{data.mobileNumber || "—"}</span>
+              <span className="text-neutral-700">{recipientPhone}</span>
             </div>
           </ZoneHighlight>
         </div>
@@ -400,7 +427,7 @@ export function ContractDocument({
           <div className="grid grid-cols-[80px_1fr] gap-1.5">
             <span className="font-semibold uppercase text-purple-800">Holiday:</span>
             <span className="text-neutral-600 leading-tight">
-              Paid holiday per year in accordance with the Regulations, pro-rated to the length of the term of Your services under this Agreement (Holiday uplift: {((engineSettings?.holidayUplift ?? 0) * 100).toFixed(2)}%).
+              Paid holiday per year in accordance with the Regulations, pro-rated to the length of the term of Your services under this Agreement (Holiday uplift: {(parseFloat(holidayUplift) * 100).toFixed(2)}%).
             </span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-1.5">
@@ -411,7 +438,8 @@ export function ContractDocument({
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-1.5">
             <span className="font-semibold uppercase text-purple-800">Prod. Base:</span>
-            <span className="text-neutral-600">Sky Elstree Studios, Rowley Lane, Borehamwood, WD6 1FX</span>
+            {/* FIX: dynamic production base */}
+            <span className="text-neutral-600">{productionBase}</span>
           </div>
         </div>
 
@@ -421,13 +449,14 @@ export function ContractDocument({
         </div>
 
         {/* ── Special Stipulations ── */}
-        {data.otherDealProvisions && (
+        {/* FIX: read from data.notes.otherDealProvisions */}
+        {otherDealProvisions && (
           <>
             <div className="bg-purple-50/60 px-2 py-0.5 font-semibold text-[8px] uppercase text-purple-800 border-l-2 border-purple-600 tracking-wide mb-1">
               Special Stipulations
             </div>
             <ZoneHighlight zoneId="specialStipulations" activeZone={activeZone} label={activeLabel}>
-              <p className="text-[8px] text-neutral-700 mb-2 leading-snug px-1">{data.otherDealProvisions}</p>
+              <p className="text-[8px] text-neutral-700 mb-2 leading-snug px-1">{otherDealProvisions}</p>
             </ZoneHighlight>
           </>
         )}
@@ -435,7 +464,7 @@ export function ContractDocument({
         {/* ── Agreement Text ── */}
         <div className="text-[7px] text-neutral-600 leading-snug bg-purple-50/20 p-1.5 border border-purple-100 rounded mb-2 text-justify">
           <p className="mb-1">
-            Producer hereby agrees to engage You upon and subject to the terms and conditions of these Deal Terms, Special Stipulations (if any) and the attached Standard Terms and Conditions (together, the &ldquo;Agreement&rdquo;), in the Position set forth above in connection with the making of the motion picture provisionally entitled &ldquo;WERWULF&rdquo; (&ldquo;the Film&rdquo;) which Producer intends but does not undertake to make.
+            Producer hereby agrees to engage You upon and subject to the terms and conditions of these Deal Terms, Special Stipulations (if any) and the attached Standard Terms and Conditions (together, the &ldquo;Agreement&rdquo;), in the Position set forth above in connection with the making of the motion picture provisionally entitled &ldquo;{movieTitle}&rdquo; (&ldquo;the Film&rdquo;) which Producer intends but does not undertake to make.
           </p>
           <p>
             You acknowledge by signing this Agreement that You have read, understood, and agree with all of the above Deal Terms/Special Stipulations as well as all those set out in the attached Standard Terms and Conditions.
@@ -446,18 +475,18 @@ export function ContractDocument({
         <div className="border border-purple-200 rounded-lg p-2 bg-purple-50/30">
           <p className="text-center font-semibold text-[7px] uppercase mb-3 tracking-wide text-purple-800 leading-tight">
             THIS NOTICE IS EFFECTIVE ONLY UPON SIGNATURE OF CREW MEMBER
-            {data.isViaAgent ? " (OR AGENT)" : ""},
+            {isViaAgent ? " (OR AGENT)" : ""},
             UNIT PRODUCTION MANAGER, FINANCIAL CONTROLLER AND THE APPROVED PRODUCTION EXECUTIVE
           </p>
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             {(() => {
-              const label = data.isViaAgent ? "AGENT ON BEHALF OF CREW" : "CREW MEMBER SIGNATURE";
+              const label = isViaAgent ? "AGENT ON BEHALF OF CREW" : "CREW MEMBER SIGNATURE";
               const role  = ROLE_LABEL_MAP["CREW MEMBER SIGNATURE"];
               return (
                 <div>
                   {renderSignatureBox(label, role)}
-                  {data.isViaAgent && data.agentEmail && (
-                    <p className="text-[6px] text-purple-600/70 mt-0.5">For: {data.fullName}</p>
+                  {isViaAgent && agentEmail && (
+                    <p className="text-[6px] text-purple-600/70 mt-0.5">For: {recipientName}</p>
                   )}
                 </div>
               );
@@ -470,7 +499,7 @@ export function ContractDocument({
 
         {/* ── Footer ── */}
         <div className="mt-2 pt-1.5 border-t border-neutral-200 flex justify-between text-[6px] text-neutral-400 font-mono">
-          <span>REF: WERWULF-ISA-V1.0</span>
+          <span>REF: {docRef}</span>
           <span>Page 1 of 1</span>
           <span>CONFIDENTIAL</span>
         </div>

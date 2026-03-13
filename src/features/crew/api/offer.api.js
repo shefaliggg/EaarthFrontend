@@ -1,5 +1,5 @@
 /**
- * offer.api.js  (FINAL FIX)
+ * offer.api.js
  *
  * Root cause of preview not working:
  *   getContractPreview was using .then(unwrap) which does res.data.data
@@ -72,8 +72,6 @@ export const moveToPendingCrewSignature = (id) =>
   axiosConfig.patch(`${BASE}/${id}/pending-crew-signature`, {}, { headers: roleHeaders() }).then(unwrap);
 
 // ─── SIGNING ──────────────────────────────────────────────────────────────────
-// POST /signatures/:contractId/sign
-// Returns { success, data: { contract, offer } }
 
 const signAs = (contractId, signature) =>
   axiosConfig
@@ -93,28 +91,20 @@ export const getSigningStatus = (contractId) =>
     .then(unwrap);
 
 // ─── CONTRACT PREVIEW ─────────────────────────────────────────────────────────
-// GET /signatures/:contractId/preview
-//
 // ⚠️  CRITICAL — DO NOT USE unwrap() HERE
-//
-// Backend returns raw HTML text (Content-Type: text/html), not JSON.
-// unwrap() does res.data.data — which returns undefined on a text response.
-// That's why the iframe was always empty / "preview not available".
-//
-// Fix: responseType: "text" prevents axios trying to JSON-parse the response.
-//      .then((res) => res.data) returns the raw HTML string directly.
+// Backend returns raw HTML text, not JSON. responseType: "text" prevents axios
+// from trying to JSON-parse the response. .then((res) => res.data) returns
+// the raw HTML string directly.
 
 export const getContractPreview = (contractId) =>
   axiosConfig
     .get(`${SIG_BASE}/${contractId}/preview`, {
       headers:      roleHeaders(),
-      responseType: "text",       // ← tells axios: keep response as plain string
+      responseType: "text",
     })
-    .then((res) => res.data);     // ← raw HTML string  (NOT res.data.data)
+    .then((res) => res.data);
 
 // ─── CONTRACT PDF DOWNLOAD URL ────────────────────────────────────────────────
-// GET /contracts/:contractId/pdf-url
-// Returns { success, data: { url: "https://..." } } — temporary signed S3 URL
 
 export const getContractPdfUrl = (contractId) =>
   axiosConfig
@@ -134,3 +124,49 @@ export const resolveChangeRequest = (offerId, changeRequestId, status, notes) =>
       { headers: roleHeaders() }
     )
     .then(unwrap);
+
+// ─── CONTRACT INSTANCES ───────────────────────────────────────────────────────
+// FIX: was using undefined `api` — must use `axiosConfig` throughout this file.
+
+// GET /offers/:offerId/contract-instances
+// Returns list metadata (no htmlContent).
+export const getContractInstances = (offerId) =>
+  axiosConfig
+    .get(`${BASE}/${offerId}/contract-instances`, {
+      params:  { activeOnly: "true" },
+      headers: roleHeaders(),
+    })
+    .then((res) => res.data);
+
+// GET /contract-instances/:instanceId/html
+// Returns raw HTML string — responseType: "text" is REQUIRED.
+
+
+// GET /contract-instances/:instanceId/html
+export const getContractInstanceHtml = (instanceId) =>
+  axiosConfig
+    .get(`/contract-instances/${instanceId}/html`, {
+      headers: roleHeaders(),
+      responseType: "text",
+    })
+    .then((res) => res.data);
+
+
+// GET /contract-instances/:instanceId
+export const getContractInstance = (instanceId) =>
+  axiosConfig
+    .get(`/contract-instances/${instanceId}`, {
+      headers: roleHeaders(),
+    })
+    .then((res) => res.data.data);
+
+
+// PATCH /contract-instances/:instanceId/status
+export const updateContractInstanceStatus = (instanceId, status) =>
+  axiosConfig
+    .patch(
+      `/contract-instances/${instanceId}/status`,
+      { status },
+      { headers: roleHeaders() }
+    )
+    .then((res) => res.data.data);
