@@ -168,20 +168,21 @@ const useChatStore = create(
 
         socket.on("message:pinned", ({ message, conversationId }) => {
           console.log("📌 Message pinned:", message);
+          set((state) => {
+            const updatedConversations = state.conversations.map((c) =>
+              c.id === conversationId ? { ...c, pinnedMessage: message } : c,
+            );
 
-          set((state) => ({
-            conversations: state.conversations.map((c) =>
-              c.id === conversationId
-                ? {
-                    ...c,
-                    pinnedMessage:
-                      c.pinnedMessage?.messageId === message.messageId
-                        ? null
-                        : message,
-                  }
-                : c,
-            ),
-          }));
+            const updatedSelectedChat =
+              state.selectedChat?.id === conversationId
+                ? { ...state.selectedChat, pinnedMessage: message }
+                : state.selectedChat;
+
+            return {
+              conversations: updatedConversations,
+              selectedChat: updatedSelectedChat,
+            };
+          });
         });
 
         socket.on("message:reaction", ({ messageId, reactions }) => {
@@ -822,30 +823,43 @@ const useChatStore = create(
       togglePinMessage: async (conversationId, messageId) => {
         const state = get();
 
-        const previous = state.conversations;
+        const previousConversations = state.conversations;
+        const previousSelectedChat = state.selectedChat;
 
-        set({
+        const isUnpin =
+          state.conversations.find((c) => c.id === conversationId)
+            ?.pinnedMessage?.messageId === messageId;
+
+        const optimisticPinned = isUnpin
+          ? null
+          : {
+              messageId,
+              text: "Pinning message...",
+              attachmentCount: 0,
+              isCallMessage: null,
+            };
+
+        set((state) => ({
           conversations: state.conversations.map((c) =>
             c.id === conversationId
-              ? {
-                  ...c,
-                  pinnedMessage:
-                    c.pinnedMessage?.messageId === messageId
-                      ? null
-                      : { messageId },
-                }
+              ? { ...c, pinnedMessage: optimisticPinned }
               : c,
           ),
-        });
+          selectedChat:
+            state.selectedChat?.id === conversationId
+              ? { ...state.selectedChat, pinnedMessage: optimisticPinned }
+              : state.selectedChat,
+        }));
 
         const promise = chatApi.pinMessage(conversationId, messageId);
 
         return toast.promise(promise, {
-          loading: "Pinning Message...",
-          success: "Message Pinned",
           error: (err) => {
-            // rollback
-            set({ conversations: previous });
+            // rollback both
+            set({
+              conversations: previousConversations,
+              selectedChat: previousSelectedChat,
+            });
 
             return err?.response?.data?.message || "Failed to Pin Message";
           },

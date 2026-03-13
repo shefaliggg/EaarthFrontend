@@ -71,7 +71,7 @@ export default function RecipientSelectorDialog({
           onValueChange={(e) => onSearchChange(e.target.value)}
           placeholder={`Search for ${mode === "direct" ? "Project members" : "Conversations"}`}
         />
-        <div className="space-y-2 min-h-[200px] max-h-[400px] overflow-y-auto">
+        <div className="space-y-1 min-h-[40vh] max-h-[90vh] overflow-y-auto mt-2">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
@@ -97,14 +97,14 @@ export default function RecipientSelectorDialog({
                   key={item.id}
                   onClick={() => handleSelect(item.id)}
                   className={cn(
-                    "w-full p-3 rounded-lg border text-left transition-all",
+                    "w-full p-2.5 rounded-lg border text-left transition-all",
                     isSelected
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-muted border-transparent",
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 border-2 border-primary/20">
+                    <Avatar className="h-9 w-9 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
                       <AvatarFallback>
                         {item.avatar || item.name?.charAt(0)}
                       </AvatarFallback>

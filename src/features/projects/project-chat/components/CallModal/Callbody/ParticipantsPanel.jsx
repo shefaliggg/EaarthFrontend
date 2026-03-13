@@ -1,6 +1,6 @@
 import { MicOff } from "lucide-react";
 import React from "react";
-import { cn, getAvatarFallback } from "../../../../../shared/config/utils";
+import { cn, getAvatarFallback } from "../../../../../../shared/config/utils";
 
 function ParticipantsPanel({ open, participants, currentUserId }) {
   return (
@@ -13,11 +13,11 @@ function ParticipantsPanel({ open, participants, currentUserId }) {
       )}
     >
       <div className="p-3 border-b border-zinc-900 text-sm font-medium text-zinc-300">
-        Participants ({participants.length})
+        Participants ({participants?.length})
       </div>
 
       <div className="overflow-y-auto flex flex-col gap-2 p-3">
-        {participants.map((p) => (
+        {participants?.map((p) => (
           <div
             key={p.userId}
             className="flex items-center justify-between px-3 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 transition"

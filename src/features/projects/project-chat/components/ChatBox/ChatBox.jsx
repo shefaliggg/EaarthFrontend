@@ -57,6 +57,7 @@ function ChatBox() {
     emitConversationRead,
     isLoadingMessages,
     typingUsers,
+    togglePinMessage,
   } = useChatStore();
 
   const messagesData = useMemo(() => {
@@ -209,8 +210,12 @@ function ChatBox() {
     }
   };
 
+  const handleUnpin = async (messageId) => {
+    await togglePinMessage(selectedChat.id, messageId);
+  };
+
   const pinnedMessage = selectedChat?.pinnedMessage;
-  console.log("pinned message", pinnedMessage)
+  console.log("pinned message", pinnedMessage);
 
   // ────────────────────────────────
   // Render
@@ -234,7 +239,7 @@ function ChatBox() {
   }
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] sticky top-5 flex flex-col mx-auto">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] flex flex-col mx-auto">
       <ChatHeader />
 
       <div className="relative w-full">
@@ -270,7 +275,7 @@ function ChatBox() {
             {pinnedMessage.isCallMessage && (
               <div className="flex items-center gap-1 p-2.5 rounded-3xl bg-primary/10 text-primary text-xs font-medium">
                 <Phone className="w-3.5 h-3.5" />
-                <SeparatorVertical className="w-3.5 h-3.5"/>
+                <SeparatorVertical className="w-3.5 h-3.5" />
                 <Video className="w-3.5 h-3.5" />
               </div>
             )}
@@ -279,7 +284,7 @@ function ChatBox() {
             <span
               onClick={(e) => {
                 e.stopPropagation();
-                // handleUnpin()
+                handleUnpin(pinnedMessage.messageId);
               }}
               className="opacity-0 scale-0 max-w-0 group-hover:max-w-4 group-hover:mr-2  group-hover:scale-100 group-hover:opacity-100 transition-all text-muted-foreground hover:text-destructive"
             >

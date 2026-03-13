@@ -42,7 +42,7 @@ export default function ConversationItem({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        "w-full px-3 py-1 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
+        "w-full px-2 pl-1.5 py-1 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
         isSelected && "bg-muted ring-2 ring-primary/20",
       )}
     >
@@ -50,7 +50,7 @@ export default function ConversationItem({
         {/* Icon/Avatar */}
         {isGroup ? (
           <div className="p-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex-shrink-0">
-            <Clapperboard className="w-4 h-4 text-white" />
+            <Clapperboard className="w-4 h-4 text-primary-foreground" />
           </div>
         ) : (
           <div className="relative flex-shrink-0">
@@ -79,7 +79,7 @@ export default function ConversationItem({
 
                 {!isGroup && (
                   <>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                    <p className="text-[9px] text-muted-foreground truncate">
                       {convertToPrettyText(item.role)}
                     </p>
                   </>

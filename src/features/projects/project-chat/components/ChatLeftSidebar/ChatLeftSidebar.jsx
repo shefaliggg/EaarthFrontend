@@ -58,7 +58,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   const categorizedConversations = sortedConversations.reduce(
     (acc, conv) => {
       if (conv.type === "all" || conv.type === "group") {
-        acc.departments.push(conv);
+        acc.groups.push(conv);
       }
 
       if (conv.type === "dm") {
@@ -75,14 +75,14 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
       return acc;
     },
     {
-      departments: [],
+      groups: [],
       teamMembers: [],
       unread: [],
       favorite: [],
     },
   );
 
-  const { departments, teamMembers, unread, favorite } =
+  const { groups, teamMembers, unread, favorite } =
     categorizedConversations;
 
   const renderConversationList = (list) => {
@@ -90,7 +90,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
       <ConversationItem
         key={item.id}
         item={item}
-        type={item.type === "dm" ? "personal" : "group"}
+        type={item.type === "dm" ? "direct" : "group"}
         isSelected={selectedChat?.id === item.id}
         onClick={() =>
           item.canSendMessage
@@ -100,7 +100,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               )
         }
         onContextMenu={(e) =>
-          handleContextMenu(e, item, item.type === "dm" ? "personal" : "team")
+          handleContextMenu(e, item, item.type === "dm" ? "direct" : "team")
         }
       />
     ));
@@ -108,10 +108,10 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
   const activeList = (() => {
     switch (activeTab) {
-      case "departments":
-        return departments;
+      case "groups":
+        return groups;
 
-      case "personal":
+      case "direct":
         return teamMembers;
 
       case "unread":
@@ -122,7 +122,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
       case "all":
       default:
-        return [...departments, ...teamMembers];
+        return [...groups, ...teamMembers];
     }
   })();
 
@@ -132,11 +132,11 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     }
 
     switch (activeTab) {
-      case "departments":
-        return "No departments found";
+      case "groups":
+        return "No groups found";
 
-      case "personal":
-        return "No personal conversations yet";
+      case "direct":
+        return "No direct conversations yet";
 
       case "unread":
         return "No unread messages";
@@ -207,12 +207,12 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
         </div> */}
 
         {/* Conversations List */}
-        <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[710px] sticky top-5">
+        <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[924px]">
           {/* Header */}
           <div className="border-b bg-card px-4 py-2.5 pt-3 mb-1">
-            <div className="flex items-center justify-between mb-3 pl-1.5">
+            <div className="flex items-center justify-between mb-2 pl-1.5">
               <h2 className="text-lg font-bold">
-                {activeTab === "Email" ? "Email" : "Chat Conversations"}
+                {activeTab === "Email" ? "Email" : "Chats"}
               </h2>
               <Button
                 variant="ghost"
@@ -246,16 +246,16 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                 {
                   label: "All",
                   value: "all",
-                  badge: departments.length + teamMembers.length,
+                  badge: groups.length + teamMembers.length,
                 },
                 {
-                  label: "Departments",
-                  value: "departments",
-                  badge: departments.length,
+                  label: "Groups",
+                  value: "groups",
+                  badge: groups.length,
                 },
                 {
-                  label: "Personal",
-                  value: "personal",
+                  label: "Direct",
+                  value: "direct",
                   badge: teamMembers.length,
                 },
                 {
