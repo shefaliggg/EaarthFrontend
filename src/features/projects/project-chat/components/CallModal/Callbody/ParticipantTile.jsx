@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { Monitor, MicOff } from "lucide-react";
 import { cn } from "@/shared/config/utils";
-import useCallStore from "../../store/call.store";
-import { getAvatarFallback } from "../../../../../shared/config/utils";
+import useCallStore from "../../../store/call.store";
+import { getAvatarFallback } from "../../../../../../shared/config/utils";
 
 export function ParticipantTile({
   tileId,
@@ -19,12 +19,13 @@ export function ParticipantTile({
 }) {
   const videoRef = useRef(null);
   const { bindVideoTile, unbindVideoTile } = useCallStore();
-  
+
+
   useEffect(() => {
     if (!tileId || !videoRef.current) return;
     bindVideoTile(tileId, videoRef.current);
     return () => unbindVideoTile(tileId);
-  }, [tileId]);
+  }, [tileId, bindVideoTile, unbindVideoTile]);
 
   const initials = getAvatarFallback(displayName) || (isLocal ? "Y" : "U");
   const label = isLocal ? "You" : displayName || "Participant";
@@ -88,12 +89,12 @@ export function ParticipantTile({
       )}
 
       {/* ── Bottom label bar ── */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 py-1.5 bg-gradient-to-t from-black/40 to-transparent">
         <span className="text-white text-xs font-medium truncate max-w-[80%]">
           {isContent ? "Screen Share" : label}
         </span>
         <div className="flex items-center gap-1">
-          {isMuted && <MicOff className="w-3 h-3 text-red-400 flex-shrink-0" />}
+          {isMuted && <MicOff className="w-3 h-3 text-red-500 flex-shrink-0" />}
         </div>
       </div>
     </div>

@@ -19,7 +19,7 @@ import {
 import { Rnd } from "react-rnd";
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
-import { ParticipantTile } from "./ParticipantTile";
+import { ParticipantTile } from "./Callbody/ParticipantTile";
 import CallControls from "./CallControls";
 import { Button } from "../../../../../shared/components/ui/button";
 import { getCurrentUserId } from "../../../../../shared/config/utils";
@@ -31,8 +31,9 @@ import {
 } from "../../utils/CallHelpers";
 import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
-import ParticipantsPanel from "./ParticipantsPanel";
+import ParticipantsPanel from "./Callbody/ParticipantsPanel";
 import { useCallSounds } from "../../hooks/call/useCallSounds";
+import CallBody from "./Callbody/CallBody";
 
 export default function CallModal() {
   const {
@@ -102,6 +103,187 @@ export default function CallModal() {
         false,
       isActiveSpeaker: activeSpeakerId === currentUserId && !isAudioMuted,
     });
+
+    list.push({
+      id: "p.userId",
+      tileId: "null",
+      displayName: "p.displayName",
+      isLocal: false,
+      isVideoOff: true,
+      isMuted: false,
+      isSpeaking: false,
+      isActiveSpeaker: activeSpeakerId === "p.userId",
+    });
+    list.push({
+      id: "p.userId2",
+      tileId: "null2",
+      displayName: "2p.displayName",
+      isLocal: false,
+      isVideoOff: true,
+      isMuted: false,
+      isSpeaking: false,
+      isActiveSpeaker: activeSpeakerId === "p.userId2",
+    });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
+    // list.push({
+    //   id: "p.userId",
+    //   tileId: "null",
+    //   displayName: "p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId",
+    // });
+    // list.push({
+    //   id: "p.userId2",
+    //   tileId: "null2",
+    //   displayName: "2p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
+    // });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
+    // list.push({
+    //   id: "p.userId",
+    //   tileId: "null",
+    //   displayName: "p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId",
+    // });
+    // list.push({
+    //   id: "p.userId2",
+    //   tileId: "null2",
+    //   displayName: "2p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
+    // });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
+    // list.push({
+    //   id: "p.userId",
+    //   tileId: "null",
+    //   displayName: "p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId",
+    // });
+    // list.push({
+    //   id: "p.userId2",
+    //   tileId: "null2",
+    //   displayName: "2p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
+    // });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
+    // list.push({
+    //   id: "p.userId",
+    //   tileId: "null",
+    //   displayName: "p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId",
+    // });
+    // list.push({
+    //   id: "p.userId2",
+    //   tileId: "null2",
+    //   displayName: "2p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
+    // });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
+    // list.push({
+    //   id: "p.userId",
+    //   tileId: "null",
+    //   displayName: "p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId",
+    // });
+    // list.push({
+    //   id: "p.userId2",
+    //   tileId: "null2",
+    //   displayName: "2p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
+    // });
+    // list.push({
+    //   id: "p.userId3",
+    //   tileId: "null3",
+    //   displayName: "3p.displayName",
+    //   isLocal: false,
+    //   isVideoOff: true,
+    //   isMuted: false,
+    //   isSpeaking: false,
+    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
+    // });
 
     // Remote camera tiles
     cameraTiles.forEach((tile) => {
@@ -263,30 +445,20 @@ export default function CallModal() {
         {isEnding ? (
           <EndingOverlay reason={endReason} />
         ) : (
-          <div
-            className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
-            onClick={() => {
-              if (showParticipants) setShowParticipants(false);
-            }}
-          >
-            <CallBody
-              layout={layout}
-              callType={callType}
-              allTiles={allTiles}
-              speakerTile={speakerTile}
-              stripTiles={stripTiles}
-              screenShareTile={screenShareTile}
-              pinnedId={pinnedId}
-              onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
-              compact={isCompact}
-            />
-
-            <ParticipantsPanel
-              open={showParticipants}
-              participants={participants}
-              currentUserId={currentUserId}
-            />
-          </div>
+          <CallBody
+            layout={layout}
+            callType={callType}
+            allTiles={allTiles}
+            speakerTile={speakerTile}
+            stripTiles={stripTiles}
+            pinnedId={pinnedId}
+            onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+            compact={isCompact}
+            showParticipants={showParticipants}
+            setShowParticipants={setShowParticipants}
+            participants={participants}
+            currentUserId={currentUserId}
+          />
         )}
         {!isEnding && (
           <CallControls
@@ -348,36 +520,20 @@ export default function CallModal() {
 
           {!isEnding && isCompact && (
             <>
-              <div
-                className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
-                onClick={() => {
-                  if (showParticipants) setShowParticipants(false);
-                }}
-              >
-                <CallBody
-                  layout={layout}
-                  callType={callType}
-                  allTiles={allTiles}
-                  speakerTile={speakerTile}
-                  stripTiles={stripTiles}
-                  screenShareTile={screenShareTile}
-                  pinnedId={pinnedId}
-                  onPin={(id) =>
-                    setPinnedId((prev) => (prev === id ? null : id))
-                  }
-                  compact={isCompact}
-                />
-
-                {showParticipants && (
-                  <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-20 transition" />
-                )}
-
-                <ParticipantsPanel
-                  open={showParticipants}
-                  participants={participants}
-                  currentUserId={currentUserId}
-                />
-              </div>
+              <CallBody
+                layout={layout}
+                callType={callType}
+                allTiles={allTiles}
+                speakerTile={speakerTile}
+                stripTiles={stripTiles}
+                pinnedId={pinnedId}
+                onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+                compact={isCompact}
+                showParticipants={showParticipants}
+                setShowParticipants={setShowParticipants}
+                participants={participants}
+                currentUserId={currentUserId}
+              />
 
               <CallControls
                 onShowParticipants={() => setShowParticipants((p) => !p)}
@@ -393,168 +549,6 @@ export default function CallModal() {
           )}
         </div>
       </Rnd>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   CallBody — speaker view OR grid view
-═══════════════════════════════════════════════════════════════════════════ */
-function CallBody({
-  layout,
-  callType,
-  allTiles,
-  speakerTile,
-  stripTiles,
-  screenShareTile,
-  pinnedId,
-  onPin,
-  compact,
-}) {
-  // Audio call: always grid
-  if (callType === "AUDIO") {
-    return (
-      <div
-        className={cn(
-          "grid gap-2 p-2 overflow-y-auto place-items-center",
-          getGridClass(allTiles.length),
-        )}
-      >
-        {allTiles.map((tile) => (
-          <ParticipantTile
-            key={tile.id}
-            tileId={tile.tileId}
-            displayName={tile.displayName}
-            isLocal={tile.isLocal}
-            isVideoOff
-            isMuted={tile.isMuted}
-            isSpeaking={tile.isSpeaking}
-            isActiveSpeaker={tile.isActiveSpeaker}
-            isSingle={allTiles.length === 1}
-            className={cn(
-              "w-full",
-              allTiles.length === 1 && compact && "aspect-video",
-              allTiles.length === 1 && !compact && "aspect-[4/1]",
-              "aspect-video",
-            )}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // Grid layout
-  if (layout === "grid") {
-    return (
-      <div
-        className={cn(
-          "grid gap-2 p-2 overflow-y-auto place-items-center",
-          getGridClass(allTiles.length),
-        )}
-      >
-        {allTiles.map((tile) => (
-          <ParticipantTile
-            key={tile.id}
-            tileId={tile.tileId}
-            displayName={tile.displayName}
-            isLocal={tile.isLocal}
-            isVideoOff={tile.isVideoOff}
-            isMuted={tile.isMuted}
-            isSpeaking={tile.isSpeaking}
-            isActiveSpeaker={tile.isActiveSpeaker}
-            isSingle={allTiles.length === 1}
-            className={cn(
-              "w-full aspect-video cursor-pointer",
-              pinnedId === tile.id && "ring-2 ring-primary",
-            )}
-            onClick={() => onPin(tile.id)}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // ── Speaker layout ────────────────────────────────────────────────────
-  const singleParticipant = allTiles.length <= 1;
-
-  return (
-    <div className="flex flex-1 min-h-0 p-2 gap-2">
-      {/* Main speaker area */}
-      <div className="flex-1 min-h-0 relative rounded-xl overflow-hidden">
-        {speakerTile && (
-          <ParticipantTile
-            tileId={speakerTile.tileId}
-            displayName={speakerTile.displayName}
-            isLocal={speakerTile.isLocal}
-            isVideoOff={speakerTile.isVideoOff}
-            isMuted={speakerTile.isMuted}
-            isSpeaking={speakerTile.isSpeaking}
-            isActiveSpeaker={speakerTile.isActiveSpeaker}
-            isContent={speakerTile.isContent}
-            isMainView
-            className="w-full h-full aspect-video"
-          />
-        )}
-
-        {/* Local PiP — bottom right corner — only in speaker mode and when local isn't the main view */}
-        {!singleParticipant && speakerTile?.id !== "local" && (
-          <div
-            className={cn(
-              "absolute bottom-3 right-3 cursor-pointer transition-transform hover:scale-105",
-              compact ? "w-28 h-20" : "w-36 h-24",
-            )}
-            onClick={() => onPin("local")}
-          >
-            <ParticipantTile
-              tileId={allTiles.find((t) => t.isLocal)?.tileId}
-              displayName="You"
-              isLocal
-              isVideoOff={allTiles.find((t) => t.isLocal)?.isVideoOff}
-              isMuted={allTiles.find((t) => t.isLocal)?.isMuted}
-              isSpeaking={allTiles.find((t) => t.isLocal)?.isSpeaking}
-              className="w-full h-full rounded-lg shadow-xl border border-zinc-700"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Strip — other participants */}
-      {stripTiles.length > 0 && !singleParticipant && (
-        <div
-          className={cn(
-            "flex flex-col gap-2 overflow-y-auto flex-shrink-0 pb-0.5",
-            // hide the local pip tile from the strip when already shown as pip
-            speakerTile?.id !== "local" ? "pl-0" : "",
-          )}
-        >
-          {stripTiles
-            .filter((t) => !(speakerTile?.id !== "local" && t.isLocal)) // hide local from strip when shown as PiP
-            .map((tile) => (
-              <button
-                key={tile.id}
-                onClick={() => onPin(tile.id)}
-                className={cn(
-                  "flex-shrink-0 rounded-lg overflow-hidden border transition-all aspect-video",
-                  compact ? "w-28" : "w-56",
-                  pinnedId === tile.id
-                    ? "border-primary shadow-primary/30 shadow-md"
-                    : "border-zinc-700 hover:border-zinc-500",
-                )}
-              >
-                <ParticipantTile
-                  tileId={tile.tileId}
-                  displayName={tile.displayName}
-                  isLocal={tile.isLocal}
-                  isVideoOff={tile.isVideoOff}
-                  isMuted={tile.isMuted}
-                  isSpeaking={tile.isSpeaking}
-                  isActiveSpeaker={tile.isActiveSpeaker}
-                  className="w-full h-full"
-                />
-              </button>
-            ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export function getGridClass(count) {
 
 /* ─── Draggable size / position helpers ────────────────────────────────────── */
 export const MODE_SIZE = {
-  compact: { width: 660, height: 516 },
+  compact: { width: 660, height: 521 },
   minimized: { width: 220, height: 100 },
 };
 
