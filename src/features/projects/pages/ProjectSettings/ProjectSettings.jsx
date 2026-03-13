@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,110 +57,6 @@ const PROJECT_SETTINGS_STEPS = [
   { id: "rates-construction", label: "Construction", icon: Building },
   { id: "rates-places", label: "Places", icon: MapPin },
   { id: "rates-departments", label: "Departments", icon: Users },
-=======
-/**
- * ProjectSettings.jsx  (UPDATED — adds Contract Templates tab)
- *
- * Adds "Contract Templates" as a new settings section alongside existing ones.
- * All other existing tabs unchanged.
- */
-
-import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { PageHeader } from '@/shared/components/PageHeader'
-import {
-  Settings,
-  FileText,
-  HardHat,
-  Clock,
-  Users,
-  Bell,
-  FileSignature,
-  Workflow,
-  CreditCard,
-  UserCog,
-  CheckCircle2,
-  LayoutTemplate,   // ← new icon for Contract Templates
-} from 'lucide-react'
-
-// Import all settings components
-import ProjectDetailsGeneral from './ProjectDetailsGeneral'
-import ProjectOnboarding from './ProjectOnboarding'
-import ProjectTimesheet from './ProjectTimesheet'
-import ProjectRoles from './ProjectRoles'
-import ProjectNotifications from './ProjectNotifications'
-import SignersRecipients from './SignersRecipients'
-import ApprovalWorkflows from './ApprovalWorkflows'
-import Billing from './Billing'
-import ProjectContractTemplates from './ProjectContractTemplates'   // ← NEW
-
-const settingsMenuItems = [
-  {
-    id: 'details-general',
-    label: 'Project Details',
-    icon: FileText,
-    component: ProjectDetailsGeneral,
-    completed: true,
-  },
-  {
-    id: 'onboarding',
-    label: 'Onboarding',
-    icon: UserCog,
-    component: ProjectOnboarding,
-    completed: false,
-  },
-  {
-    id: 'contract-templates',        // ← NEW
-    label: 'Contract Templates',
-    icon: LayoutTemplate,
-    component: ProjectContractTemplates,
-    completed: false,
-  },
-  {
-    id: 'timesheet',
-    label: 'Timesheet',
-    icon: Clock,
-    component: ProjectTimesheet,
-    completed: false,
-  },
-  {
-    id: 'roles',
-    label: 'Roles',
-    icon: Users,
-    component: ProjectRoles,
-    completed: true,
-  },
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: Bell,
-    component: ProjectNotifications,
-    completed: true,
-  },
-  {
-    id: 'signers-recipients',
-    label: 'Signers & Recipients',
-    icon: FileSignature,
-    component: SignersRecipients,
-    completed: false,
-  },
-  {
-    id: 'approval-workflows',
-    label: 'Approval Workflows',
-    icon: Workflow,
-    component: ApprovalWorkflows,
-    completed: true,
-  },
-  {
-    id: 'billing',
-    label: 'Billing',
-    icon: CreditCard,
-    component: Billing,
-    completed: false,
-  },
-]
->>>>>>> shanid/contract
 
   { id: "doc-signers", label: "Signatures & Workflow", icon: FileCheck },
   { id: "contracts-forms", label: "Contracts & Forms", icon: FileText },
@@ -1023,7 +918,6 @@ const nextTab =
     );
   }
 function ProjectSettings() {
-<<<<<<< HEAD
   const { projectName } = useParams();
   const project = projects.find((p) => p.id === projectName);
 
@@ -1138,71 +1032,6 @@ const reportProgress = (tab, pct) => {
               )}
             </motion.button>
           </div>
-=======
-  // projectId may come from the URL (e.g. /projects/:projectId/settings)
-  const { projectId: projectIdParam, studioId: studioIdParam } = useParams()
-
-  // studioId lives on the user's active affiliation in Redux — more reliable
-  // than URL params since most routes don't include :studioId
-  const user = useSelector((state) => state.user)
-  const studioIdFromStore =
-    user?.activeAffiliation?.studioId ||
-    user?.currentUser?.activeAffiliation?.studioId ||
-    user?.profile?.studioId ||
-    user?.studioId
-
-  const studioId = studioIdFromStore || studioIdParam
-  const projectId = projectIdParam
-  const [activeTab, setActiveTab] = useState('details-general')
-
-  const activeItem = settingsMenuItems.find((item) => item.id === activeTab)
-  const ActiveComponent = activeItem?.component || ProjectDetailsGeneral
-
-  // Pass studioId and projectId to Contract Templates
-  const componentProps =
-    activeTab === 'contract-templates'
-      ? { studioId, projectId }
-      : {}
-
-  return (
-    <div className="space-y-4">
-      <PageHeader title="Project Settings" icon="Settings" />
-
-      <div className="flex gap-6">
-        {/* ── Vertical Tabs ── */}
-        <div className="w-64 flex-shrink-0">
-          <nav className="space-y-1">
-            {settingsMenuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                    isActive
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium text-sm flex-1">{item.label}</span>
-                  <CheckCircle2
-                    className={`w-5 h-5 flex-shrink-0 ${
-                      item.completed ? 'text-green-500' : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              )
-            })}
-          </nav>
-        </div>
-
-        {/* ── Content Area ── */}
-        <div className="flex-1 min-w-0">
-          <ActiveComponent {...componentProps} />
->>>>>>> shanid/contract
         </div>
         <ProjectSettingsStepper
           activeTab={activeTab}
@@ -1230,8 +1059,4 @@ const reportProgress = (tab, pct) => {
   );
 }
 
-<<<<<<< HEAD
 export default ProjectSettings;
-=======
-export default ProjectSettings
->>>>>>> shanid/contract
