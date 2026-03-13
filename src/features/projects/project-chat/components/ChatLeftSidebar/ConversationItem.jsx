@@ -50,7 +50,7 @@ export default function ConversationItem({
         {/* Icon/Avatar */}
         {isGroup ? (
           <div className="p-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex-shrink-0">
-            <Clapperboard className="w-4 h-4 text-white" />
+            <Clapperboard className="w-4 h-4 text-primary-foreground" />
           </div>
         ) : (
           <div className="relative flex-shrink-0">
@@ -79,7 +79,7 @@ export default function ConversationItem({
 
                 {!isGroup && (
                   <>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                    <p className="text-[9px] text-muted-foreground truncate">
                       {convertToPrettyText(item.role)}
                     </p>
                   </>

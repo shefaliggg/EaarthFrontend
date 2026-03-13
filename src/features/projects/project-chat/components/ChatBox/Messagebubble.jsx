@@ -38,7 +38,7 @@ import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
 import { toast } from "sonner";
 import { formatDuration, getReadByCount } from "../../utils/messageHelpers";
-import { getCurrentUserId } from "../../../../../shared/config/utils";
+import { convertToPrettyText, getCurrentUserId } from "../../../../../shared/config/utils";
 import { Button } from "../../../../../shared/components/ui/button";
 import CallMessagePreview from "./CallMessagePreview";
 import useCallStore from "../../store/call.store";
@@ -880,15 +880,24 @@ function MessageAudio({ message, file, url, single = true, isOwn }) {
 
       {/* Download button for audio file */}
       {isAudioFile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() =>
-            downloadAttachment(message.conversationId, message._id, file)
-          }
+        // <Button
+        //   variant="ghost"
+        //   size="icon"
+        //   onClick={() =>
+        //     downloadAttachment(message.conversationId, message._id, file)
+        //   }
+        // >
+        //   <Download className="w-4 h-4" />
+        // </Button>
+        <a
+          href={url}
+          rel="noopener noreferrer"
+          download
+          onClick={() => toast.info("Downloading Audio File")}
+          className="p-2 hover:bg-muted rounded-xl"
         >
           <Download className="w-4 h-4" />
-        </Button>
+        </a>
       )}
 
       {/* Hidden audio element */}
@@ -914,12 +923,12 @@ function MessageFile({ file, url, single, isOwn }) {
       className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[260px] max-w-[260px]"} ${isOwn ? "bg-muted/90 ml-auto" : "bg-primary/10"} p-3 px-2 rounded-md`}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-        <FileText className="w-5 h-5 text-primary" />
+        <FileText className="w-4 h-4 text-primary" />
       </div>
 
       <div className="flex-1 min-w-0 pl-1">
         <p className="text-xs font-medium truncate text-foreground">
-          {file.name || "Document"}
+          {convertToPrettyText(file.name) || "Document"}
         </p>
         {file.size && (
           <p className="text-xs text-muted-foreground">
@@ -935,7 +944,7 @@ function MessageFile({ file, url, single, isOwn }) {
         onClick={() => toast.info("Downloading Document")}
         className="p-2 hover:bg-muted rounded-xl"
       >
-        <Download className="w-4 h-4 text-primary" />
+        <Download className="w-4 h-4" />
       </a>
     </div>
   );
