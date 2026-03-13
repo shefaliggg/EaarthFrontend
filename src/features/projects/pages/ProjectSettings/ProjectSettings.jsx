@@ -1,23 +1,4 @@
-/**
- * ProjectSettings.jsx  (UPDATED — adds Contract Templates tab)
- *
- * Adds "Contract Templates" as a new settings section alongside existing ones.
- * All other existing tabs unchanged.
- */
-
-import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { PageHeader } from '@/shared/components/PageHeader'
-import {
-  Settings,
-  FileText,
-  HardHat,
-  Clock,
-  Users,
-  Bell,
-  FileSignature,
-  Workflow,
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +29,56 @@ import {
   ChevronRight,
   Clock,
   Contact,
+  CreditCard,
+  FileCheck,
+  FileText,
+  LayoutGrid,
+  Lock,
+  LockKeyhole,
+  MapPin,
+  MessageCircle,
+  Palette,
+  Rocket,
+  Settings,
+  Settings2,
+  Sliders,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+import { CircularProgress } from "@/shared/components/ui/circular-progress";
+import { cn } from "@/shared/config/utils";
+
+const PROJECT_SETTINGS_STEPS = [
+  { id: "details", label: "Details", icon: Settings2 },
+  { id: "contacts", label: "Contacts", icon: Contact },
+  { id: "dates", label: "Dates", icon: CalendarDays },
+
+  { id: "rates-project", label: "Project", icon: Bookmark },
+  { id: "rates-crew", label: "Standard Crew", icon: Users },
+  { id: "rates-construction", label: "Construction", icon: Building },
+  { id: "rates-places", label: "Places", icon: MapPin },
+  { id: "rates-departments", label: "Departments", icon: Users },
+=======
+/**
+ * ProjectSettings.jsx  (UPDATED — adds Contract Templates tab)
+ *
+ * Adds "Contract Templates" as a new settings section alongside existing ones.
+ * All other existing tabs unchanged.
+ */
+
+import React, { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { PageHeader } from '@/shared/components/PageHeader'
+import {
+  Settings,
+  FileText,
+  HardHat,
+  Clock,
+  Users,
+  Bell,
+  FileSignature,
+  Workflow,
   CreditCard,
   UserCog,
   CheckCircle2,
@@ -130,60 +161,7 @@ const settingsMenuItems = [
     completed: false,
   },
 ]
-
-function ProjectSettings() {
-  // projectId may come from the URL (e.g. /projects/:projectId/settings)
-  const { projectId: projectIdParam, studioId: studioIdParam } = useParams()
-
-  // studioId lives on the user's active affiliation in Redux — more reliable
-  // than URL params since most routes don't include :studioId
-  const user = useSelector((state) => state.user)
-  const studioIdFromStore =
-    user?.activeAffiliation?.studioId ||
-    user?.currentUser?.activeAffiliation?.studioId ||
-    user?.profile?.studioId ||
-    user?.studioId
-
-  const studioId = studioIdFromStore || studioIdParam
-  const projectId = projectIdParam
-  const [activeTab, setActiveTab] = useState('details-general')
-
-  const activeItem = settingsMenuItems.find((item) => item.id === activeTab)
-  const ActiveComponent = activeItem?.component || ProjectDetailsGeneral
-
-  // Pass studioId and projectId to Contract Templates
-  const componentProps =
-    activeTab === 'contract-templates'
-      ? { studioId, projectId }
-      : {}
-  FileCheck,
-  FileText,
-  LayoutGrid,
-  Lock,
-  LockKeyhole,
-  MapPin,
-  MessageCircle,
-  Palette,
-  Rocket,
-  Settings,
-  Settings2,
-  Sliders,
-  Users,
-} from "lucide-react";
-import { toast } from "sonner";
-import { CircularProgress } from "@/shared/components/ui/circular-progress";
-import { cn } from "@/shared/config/utils";
-
-const PROJECT_SETTINGS_STEPS = [
-  { id: "details", label: "Details", icon: Settings2 },
-  { id: "contacts", label: "Contacts", icon: Contact },
-  { id: "dates", label: "Dates", icon: CalendarDays },
-
-  { id: "rates-project", label: "Project", icon: Bookmark },
-  { id: "rates-crew", label: "Standard Crew", icon: Users },
-  { id: "rates-construction", label: "Construction", icon: Building },
-  { id: "rates-places", label: "Places", icon: MapPin },
-  { id: "rates-departments", label: "Departments", icon: Users },
+>>>>>>> shanid/contract
 
   { id: "doc-signers", label: "Signatures & Workflow", icon: FileCheck },
   { id: "contracts-forms", label: "Contracts & Forms", icon: FileText },
@@ -353,51 +331,6 @@ const nextTab =
   const prevLocked =
   i > 0 && !!locks[PROJECT_SETTINGS_STEPS[i - 1].id];
 
-  return (
-    <div className="space-y-4">
-      <PageHeader title="Project Settings" icon="Settings" />
-
-      <div className="flex gap-6">
-        {/* ── Vertical Tabs ── */}
-        <div className="w-64 flex-shrink-0">
-          <nav className="space-y-1">
-            {settingsMenuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                    isActive
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium text-sm flex-1">{item.label}</span>
-                  <CheckCircle2
-                    className={`w-5 h-5 flex-shrink-0 ${
-                      item.completed ? 'text-green-500' : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              )
-            })}
-          </nav>
-        </div>
-
-        {/* ── Content Area ── */}
-        <div className="flex-1 min-w-0">
-          <ActiveComponent {...componentProps} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default ProjectSettings
                 return (
                   <div key={tid} className="contents">
                     {i > 0 && (
@@ -1090,6 +1023,7 @@ export default ProjectSettings
     );
   }
 function ProjectSettings() {
+<<<<<<< HEAD
   const { projectName } = useParams();
   const project = projects.find((p) => p.id === projectName);
 
@@ -1204,6 +1138,71 @@ const reportProgress = (tab, pct) => {
               )}
             </motion.button>
           </div>
+=======
+  // projectId may come from the URL (e.g. /projects/:projectId/settings)
+  const { projectId: projectIdParam, studioId: studioIdParam } = useParams()
+
+  // studioId lives on the user's active affiliation in Redux — more reliable
+  // than URL params since most routes don't include :studioId
+  const user = useSelector((state) => state.user)
+  const studioIdFromStore =
+    user?.activeAffiliation?.studioId ||
+    user?.currentUser?.activeAffiliation?.studioId ||
+    user?.profile?.studioId ||
+    user?.studioId
+
+  const studioId = studioIdFromStore || studioIdParam
+  const projectId = projectIdParam
+  const [activeTab, setActiveTab] = useState('details-general')
+
+  const activeItem = settingsMenuItems.find((item) => item.id === activeTab)
+  const ActiveComponent = activeItem?.component || ProjectDetailsGeneral
+
+  // Pass studioId and projectId to Contract Templates
+  const componentProps =
+    activeTab === 'contract-templates'
+      ? { studioId, projectId }
+      : {}
+
+  return (
+    <div className="space-y-4">
+      <PageHeader title="Project Settings" icon="Settings" />
+
+      <div className="flex gap-6">
+        {/* ── Vertical Tabs ── */}
+        <div className="w-64 flex-shrink-0">
+          <nav className="space-y-1">
+            {settingsMenuItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
+                    isActive
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  <CheckCircle2
+                    className={`w-5 h-5 flex-shrink-0 ${
+                      item.completed ? 'text-green-500' : 'text-gray-300'
+                    }`}
+                  />
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* ── Content Area ── */}
+        <div className="flex-1 min-w-0">
+          <ActiveComponent {...componentProps} />
+>>>>>>> shanid/contract
         </div>
         <ProjectSettingsStepper
           activeTab={activeTab}
@@ -1231,4 +1230,8 @@ const reportProgress = (tab, pct) => {
   );
 }
 
+<<<<<<< HEAD
 export default ProjectSettings;
+=======
+export default ProjectSettings
+>>>>>>> shanid/contract
