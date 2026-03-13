@@ -5,6 +5,7 @@ export function CircularProgress({
   size = 64,
   strokeWidth = 6,
   className,
+  color,
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -15,7 +16,7 @@ export function CircularProgress({
     <div
       className={cn(
         "relative inline-flex items-center justify-center transition-all duration-300 ease-out motion-reduce:transition-none",
-        className
+        className,
       )}
       style={{ width: size, height: size }}
     >
@@ -38,7 +39,11 @@ export function CircularProgress({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="fill-none stroke-primary transition-[stroke-dashoffset] duration-300 ease-out"
+          style={color ? { stroke: color } : undefined}
+          className={cn(
+            "fill-none transition-[stroke-dashoffset] duration-300 ease-out",
+            !color && "stroke-primary",
+          )}
         />
       </svg>
 
