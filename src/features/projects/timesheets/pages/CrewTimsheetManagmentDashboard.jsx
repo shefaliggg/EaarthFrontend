@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { PageHeader } from '../../../../shared/components/PageHeader'
 import { generateMockCrewData } from '../config/mockCrewData(temp)';
-import { CircularProgress } from '../../../../shared/components/ui/ circular-progress';
+import { CircularProgress } from '../../../../shared/components/ui/circular-progress';
 import { WeekNavigator } from '../../../../shared/components/buttons/WeekNavigator';
 import PrimaryStats from '../../../../shared/components/wrappers/PrimaryStats';
 import SearchBar from '../../../../shared/components/SearchBar';
