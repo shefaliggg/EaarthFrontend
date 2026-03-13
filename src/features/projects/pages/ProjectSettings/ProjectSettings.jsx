@@ -1,18 +1,27 @@
+/**
+ * ProjectSettings.jsx  (UPDATED — adds Contract Templates tab)
+ *
+ * Adds "Contract Templates" as a new settings section alongside existing ones.
+ * All other existing tabs unchanged.
+ */
+
 import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { PageHeader } from '@/shared/components/PageHeader'
-import { 
-  Settings, 
-  FileText, 
-  HardHat, 
-  Clock, 
-  Users, 
-  Bell, 
-  FileSignature, 
-  Workflow, 
+import {
+  Settings,
+  FileText,
+  HardHat,
+  Clock,
+  Users,
+  Bell,
+  FileSignature,
+  Workflow,
   CreditCard,
   UserCog,
-  CheckCircle2
+  CheckCircle2,
+  LayoutTemplate,   // ← new icon for Contract Templates
 } from 'lucide-react'
 
 // Import all settings components
@@ -24,39 +33,112 @@ import ProjectNotifications from './ProjectNotifications'
 import SignersRecipients from './SignersRecipients'
 import ApprovalWorkflows from './ApprovalWorkflows'
 import Billing from './Billing'
+import ProjectContractTemplates from './ProjectContractTemplates'   // ← NEW
 
 const settingsMenuItems = [
-  { id: 'details-general', label: 'Project Details', icon: FileText, component: ProjectDetailsGeneral, completed: true },
-  { id: 'onboarding', label: 'Onboarding', icon: UserCog, component: ProjectOnboarding, completed: false },
-  { id: 'timesheet', label: 'Timesheet', icon: Clock, component: ProjectTimesheet, completed: false },
-  { id: 'roles', label: 'Roles', icon: Users, component: ProjectRoles, completed: true },
-  { id: 'notifications', label: 'Notifications', icon: Bell, component: ProjectNotifications, completed: true },
-  { id: 'signers-recipients', label: 'Signers & Recipients', icon: FileSignature, component: SignersRecipients, completed: false },
-  { id: 'approval-workflows', label: 'Approval Workflows', icon: Workflow, component: ApprovalWorkflows, completed: true },
-  { id: 'billing', label: 'Billing', icon: CreditCard, component: Billing, completed: false },
+  {
+    id: 'details-general',
+    label: 'Project Details',
+    icon: FileText,
+    component: ProjectDetailsGeneral,
+    completed: true,
+  },
+  {
+    id: 'onboarding',
+    label: 'Onboarding',
+    icon: UserCog,
+    component: ProjectOnboarding,
+    completed: false,
+  },
+  {
+    id: 'contract-templates',        // ← NEW
+    label: 'Contract Templates',
+    icon: LayoutTemplate,
+    component: ProjectContractTemplates,
+    completed: false,
+  },
+  {
+    id: 'timesheet',
+    label: 'Timesheet',
+    icon: Clock,
+    component: ProjectTimesheet,
+    completed: false,
+  },
+  {
+    id: 'roles',
+    label: 'Roles',
+    icon: Users,
+    component: ProjectRoles,
+    completed: true,
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: Bell,
+    component: ProjectNotifications,
+    completed: true,
+  },
+  {
+    id: 'signers-recipients',
+    label: 'Signers & Recipients',
+    icon: FileSignature,
+    component: SignersRecipients,
+    completed: false,
+  },
+  {
+    id: 'approval-workflows',
+    label: 'Approval Workflows',
+    icon: Workflow,
+    component: ApprovalWorkflows,
+    completed: true,
+  },
+  {
+    id: 'billing',
+    label: 'Billing',
+    icon: CreditCard,
+    component: Billing,
+    completed: false,
+  },
 ]
 
 function ProjectSettings() {
-  const { projectName } = useParams()
+  // projectId may come from the URL (e.g. /projects/:projectId/settings)
+  const { projectId: projectIdParam, studioId: studioIdParam } = useParams()
+
+  // studioId lives on the user's active affiliation in Redux — more reliable
+  // than URL params since most routes don't include :studioId
+  const user = useSelector((state) => state.user)
+  const studioIdFromStore =
+    user?.activeAffiliation?.studioId ||
+    user?.currentUser?.activeAffiliation?.studioId ||
+    user?.profile?.studioId ||
+    user?.studioId
+
+  const studioId = studioIdFromStore || studioIdParam
+  const projectId = projectIdParam
   const [activeTab, setActiveTab] = useState('details-general')
 
-  const ActiveComponent = settingsMenuItems.find(item => item.id === activeTab)?.component || ProjectDetailsGeneral
+  const activeItem = settingsMenuItems.find((item) => item.id === activeTab)
+  const ActiveComponent = activeItem?.component || ProjectDetailsGeneral
+
+  // Pass studioId and projectId to Contract Templates
+  const componentProps =
+    activeTab === 'contract-templates'
+      ? { studioId, projectId }
+      : {}
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Project Settings"
-        icon="Settings"
-      />
-      
+      <PageHeader title="Project Settings" icon="Settings" />
+
       <div className="flex gap-6">
-        {/* Vertical Tabs */}
+        {/* ── Vertical Tabs ── */}
         <div className="w-64 flex-shrink-0">
           <nav className="space-y-1">
             {settingsMenuItems.map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.id
-              
+
               return (
                 <button
                   key={item.id}
@@ -69,18 +151,20 @@ function ProjectSettings() {
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-sm flex-1">{item.label}</span>
-                  <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${
-                    item.completed ? 'text-green-500' : 'text-gray-300'
-                  }`} />
+                  <CheckCircle2
+                    className={`w-5 h-5 flex-shrink-0 ${
+                      item.completed ? 'text-green-500' : 'text-gray-300'
+                    }`}
+                  />
                 </button>
               )
             })}
           </nav>
         </div>
 
-        {/* Content Area */}
+        {/* ── Content Area ── */}
         <div className="flex-1 min-w-0">
-          <ActiveComponent />
+          <ActiveComponent {...componentProps} />
         </div>
       </div>
     </div>
@@ -88,10 +172,3 @@ function ProjectSettings() {
 }
 
 export default ProjectSettings
-
-
-
-
-
-
-

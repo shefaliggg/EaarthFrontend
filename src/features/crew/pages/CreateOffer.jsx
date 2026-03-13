@@ -1,11 +1,20 @@
 ﻿/**
  * CreateOffer.jsx  (FIXED)
  *
- * CHANGES FROM ORIGINAL:
- *  1. buildPayload(isDraft) — adds saveAsDraft flag, sends feePerDay as
- *     undefined (not "") when empty so backend skips validation on drafts
- *  2. handleSaveDraft    → buildPayload(true)   draft save, relaxed validation
- *  3. handleDialogConfirm → buildPayload(false)  send to crew, strict validation
+ * FIXES FROM REVIEW:
+ *  1. defaultContractData restructured to match offer.model.js nested shape
+ *     (recipient, representation, taxStatus, notes all nested correctly)
+ *  2. categoryId added to payload (required for backend bundle resolution)
+ *  3. buildPayload reads from correct nested paths (cd.recipient.*, cd.taxStatus.*, etc.)
+ *  4. dialogPreview jobTitle respects createOwnJobTitle flag
+ *  5. Allowance label removed from payload (backend doesn't need it)
+ *  6. px- typo fixed → px-6
+ *  7. projectSettings passed to CreateOfferLayout → ContractDocument
+ *  8. categories fetched from API and passed to ContractForm
+ *  9. FIX: fetchCategories and fetchSettings now use axiosConfig (not raw fetch)
+ *     so auth headers are automatically included.
+ * 10. FIX: fetch URL corrected from /api/studio/.../contract-categories
+ *     to /studio/.../categories (axiosConfig has /api/v1 base already)
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -21,6 +30,9 @@ import { calculateRates, defaultEngineSettings } from "../utils/rateCalculations
 import { defaultAllowances }  from "../utils/Defaultallowance";
 import OfferActionDialog      from "../components/onboarding/OfferActionDialog";
 
+// FIX: use axiosConfig for all API calls so auth token is automatically included
+import axiosConfig from "../../auth/config/axiosConfig";
+
 import {
   createOfferThunk,
   sendToCrewThunk,
@@ -32,27 +44,72 @@ import {
   clearCurrentOffer,
 } from "../store/offer.slice";
 
-// ─── Real IDs ─────────────────────────────────────────────────────────────────
-const STUDIO_ID  = "69494aa6df29472c2c6b5d8f";
-const PROJECT_ID = "697c899668977a7ca2b27462";
+// ─── Config — single project/studio for now ───────────────────────────────────
+import { APP_CONFIG } from "../config/appConfig";
 
-// ─── Default form data ────────────────────────────────────────────────────────
+const STUDIO_ID  = APP_CONFIG.STUDIO_ID;
+const PROJECT_ID = APP_CONFIG.PROJECT_ID;
+
+// ─── Default form state — matches offer.model.js nested shape ─────────────────
 const defaultContractData = {
-  fullName: "", email: "", mobileNumber: "",
-  isViaAgent: false, agentEmail: "", agentName: "",
-  alternativeContract: "",
-  unit: "main", department: "", subDepartment: "new",
-  jobTitle: "", searchAllDepartments: false,
-  createOwnJobTitle: false, newJobTitle: "", jobTitleSuffix: "",
-  allowSelfEmployed: "no", statusDeterminationReason: "hmrc_list",
-  otherStatusDeterminationReason: "",
-  regularSiteOfWork: "on_set", workingInUK: "yes",
-  startDate: "", endDate: "",
-  dailyOrWeekly: "daily", engagementType: "paye", workingWeek: "5",
-  currency: "GBP", feePerDay: "",
-  overtime: "calculated",
-  otherOT: "", cameraOTSWD: "", cameraOTSCWD: "", cameraOTCWD: "",
-  otherDealProvisions: "", additionalNotes: "",
+  // ── RECIPIENT ──────────────────────────────────────────────────────────────
+  recipient: {
+    fullName:     "",
+    email:        "",
+    mobileNumber: "",
+  },
+
+  // ── REPRESENTATION ─────────────────────────────────────────────────────────
+  representation: {
+    isViaAgent: false,
+    agentName:  "",
+    agentEmail: "",
+  },
+
+  // ── TOP-LEVEL FIELDS ───────────────────────────────────────────────────────
+  alternativeContract:  "",
+  unit:                 "main",
+  department:           "",
+  subDepartment:        "new",
+  jobTitle:             "",
+  searchAllDepartments: false,
+  createOwnJobTitle:    false,
+  newJobTitle:          "",
+  jobTitleSuffix:       "",
+
+  // ── TAX STATUS ─────────────────────────────────────────────────────────────
+  taxStatus: {
+    allowSelfEmployed:              "no",
+    statusDeterminationReason:      "hmrc_list",
+    otherStatusDeterminationReason: "",
+  },
+
+  // ── PLACE OF WORK ──────────────────────────────────────────────────────────
+  regularSiteOfWork: "on_set",
+  workingInUK:       "yes",
+
+  // ── ENGAGEMENT ─────────────────────────────────────────────────────────────
+  startDate:      "",
+  endDate:        "",
+  dailyOrWeekly:  "daily",
+  engagementType: "paye",
+  workingWeek:    "5",
+  categoryId:     "",   // ObjectId of ContractFormCategory — drives bundle
+
+  // ── RATES ──────────────────────────────────────────────────────────────────
+  currency:    "GBP",
+  feePerDay:   "",
+  overtime:    "calculated",
+  otherOT:     "",
+  cameraOTSWD: "",
+  cameraOTSCWD:"",
+  cameraOTCWD: "",
+
+  // ── NOTES ──────────────────────────────────────────────────────────────────
+  notes: {
+    otherDealProvisions: "",
+    additionalNotes:     "",
+  },
 };
 
 export default function CreateOfferPage() {
@@ -66,6 +123,11 @@ export default function CreateOfferPage() {
   const [activeField, setActiveField] = useState(null);
   const savedOfferIdRef = useRef(null);
   const [dialog, setDialog] = useState(null);
+
+  // Categories fetched from backend — passed to ContractForm for the dropdown
+  const [categories, setCategories] = useState(null);
+  // Project settings fetched from backend — passed to ContractDocument via CreateOfferLayout
+  const [projectSettings, setProjectSettings] = useState(null);
 
   const [offer, setOffer] = useState({
     contractData:        defaultContractData,
@@ -95,6 +157,38 @@ export default function CreateOfferPage() {
   const setAllowances = (val) =>
     setOffer((p) => ({ ...p, allowances: typeof val === "function" ? val(p.allowances) : val }));
 
+  // ── Fetch categories on mount ────────────────────────────────────────────
+  // FIX: was using raw fetch() with wrong URL /api/studio/.../contract-categories
+  // NOW:  uses axiosConfig (auth headers automatic) with correct path /studio/.../categories
+  // axiosConfig base URL already includes /api/v1 so we only add /studio/...
+  useEffect(() => {
+    axiosConfig
+      .get(`/studio/${STUDIO_ID}/categories`, {
+        headers: { "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN" },
+      })
+      .then((res) => {
+        if (res.data?.data?.length) setCategories(res.data.data);
+      })
+      .catch(() => {
+        // silently fall back to static list in ContractForm — no error toast needed
+      });
+  }, []);
+
+  // ── Fetch project settings on mount ─────────────────────────────────────
+  // FIX: was using raw fetch() — now uses axiosConfig for consistent auth
+  useEffect(() => {
+    axiosConfig
+      .get(`/project/${PROJECT_ID}/settings`, {
+        headers: { "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN" },
+      })
+      .then((res) => {
+        if (res.data?.data) setProjectSettings(res.data.data);
+      })
+      .catch(() => {
+        // not fatal — ContractDocument has fallbacks
+      });
+  }, []);
+
   // ── API error toast ──────────────────────────────────────────────────────
   useEffect(() => {
     if (apiError) {
@@ -107,45 +201,46 @@ export default function CreateOfferPage() {
   }, [apiError, dispatch]);
 
   // ── Build payload ────────────────────────────────────────────────────────
-  // isDraft=true  → saveAsDraft:true sent to backend, feePerDay sent as
-  //                 undefined when empty (backend skips required check)
-  // isDraft=false → saveAsDraft:false, feePerDay sent as-is (validated strictly)
   const buildPayload = (isDraft = false) => {
     const cd = contractData;
-    const allowancesArr = Object.entries(allowances).map(([key, a]) => ({
-      key,
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()).trim(),
-      ...a,
-    }));
+
+    // Only send enabled allowances — no label field (backend doesn't use it)
+    const allowancesArr = Object.entries(allowances)
+      .filter(([, a]) => a.enabled)
+      .map(([key, a]) => ({ key, ...a }));
 
     return {
       studioId:    STUDIO_ID,
       projectId:   PROJECT_ID,
-      saveAsDraft: isDraft,         // ← tells backend to use relaxed validation
+      saveAsDraft: isDraft,
 
       recipient: {
-        fullName:     cd.fullName     || "",
-        email:        cd.email        || "",
-        mobileNumber: cd.mobileNumber || undefined,
+        fullName:     cd.recipient?.fullName     || "",
+        email:        cd.recipient?.email        || "",
+        mobileNumber: cd.recipient?.mobileNumber || undefined,
       },
+
       representation: {
-        isViaAgent: !!cd.isViaAgent,
-        agentName:  cd.agentName  || undefined,
-        agentEmail: cd.agentEmail || undefined,
+        isViaAgent: !!cd.representation?.isViaAgent,
+        agentName:  cd.representation?.agentName  || undefined,
+        agentEmail: cd.representation?.agentEmail || undefined,
       },
+
       alternativeContract: cd.alternativeContract || "",
-      unit:              cd.unit              || "",
-      department:        cd.department        || "",
-      subDepartment:     cd.subDepartment     || "",
-      jobTitle:          cd.jobTitle          || "",
-      newJobTitle:       cd.newJobTitle        || "",
-      createOwnJobTitle: !!cd.createOwnJobTitle,
-      jobTitleSuffix:    cd.jobTitleSuffix    || "",
+      unit:                cd.unit                || "",
+      department:          cd.department          || "",
+      subDepartment:       cd.subDepartment       || "",
+      jobTitle:            cd.jobTitle            || "",
+      newJobTitle:         cd.newJobTitle         || "",
+      createOwnJobTitle:   !!cd.createOwnJobTitle,
+      jobTitleSuffix:      cd.jobTitleSuffix      || "",
+
       taxStatus: {
-        allowSelfEmployed:              cd.allowSelfEmployed              || "",
-        statusDeterminationReason:      cd.statusDeterminationReason      || "",
-        otherStatusDeterminationReason: cd.otherStatusDeterminationReason || "",
+        allowSelfEmployed:              cd.taxStatus?.allowSelfEmployed              || "",
+        statusDeterminationReason:      cd.taxStatus?.statusDeterminationReason      || "",
+        otherStatusDeterminationReason: cd.taxStatus?.otherStatusDeterminationReason || "",
       },
+
       regularSiteOfWork: cd.regularSiteOfWork || "",
       workingInUK:       cd.workingInUK       || "yes",
       startDate:         cd.startDate         || "",
@@ -153,34 +248,39 @@ export default function CreateOfferPage() {
       dailyOrWeekly:     cd.dailyOrWeekly     || "daily",
       engagementType:    cd.engagementType    || "paye",
       workingWeek:       cd.workingWeek       || "5",
-      currency:          cd.currency          || "GBP",
 
-      // Send undefined (not "") for feePerDay when empty on draft saves.
-      // undefined fields are omitted from JSON.stringify, so the backend
-      // receives no feePerDay key at all → validation check is skipped.
+      // categoryId — ObjectId from ContractFormCategory (fetched from API)
+      categoryId: cd.categoryId || undefined,
+
+      currency: cd.currency || "GBP",
+
+      // Send undefined (not "") for feePerDay when empty on drafts
       feePerDay: (cd.feePerDay !== "" && cd.feePerDay !== undefined)
         ? cd.feePerDay
         : (isDraft ? undefined : ""),
 
-      overtime:     cd.overtime     || "calculated",
-      otherOT:      cd.otherOT      || "",
-      cameraOTSWD:  cd.cameraOTSWD  || "",
-      cameraOTSCWD: cd.cameraOTSCWD || "",
-      cameraOTCWD:  cd.cameraOTCWD  || "",
+      overtime:    cd.overtime    || "calculated",
+      otherOT:     cd.otherOT     || "",
+      cameraOTSWD: cd.cameraOTSWD || "",
+      cameraOTSCWD:cd.cameraOTSCWD|| "",
+      cameraOTCWD: cd.cameraOTCWD || "",
+
       calculatedRates,
       salaryBudgetCodes,
       salaryTags,
       overtimeBudgetCodes,
       overtimeTags,
+
       allowances: allowancesArr,
+
       notes: {
-        otherDealProvisions: cd.otherDealProvisions || "",
-        additionalNotes:     cd.additionalNotes     || "",
+        otherDealProvisions: cd.notes?.otherDealProvisions || "",
+        additionalNotes:     cd.notes?.additionalNotes     || "",
       },
     };
   };
 
-  // ── SAVE DRAFT — stays on this page ──────────────────────────────────────
+  // ── SAVE DRAFT ───────────────────────────────────────────────────────────
   const handleSaveDraft = async () => {
     if (isSubmitting) return;
     toast.loading("Saving draft…", { id: "offer-save" });
@@ -189,10 +289,10 @@ export default function CreateOfferPage() {
     if (savedOfferIdRef.current) {
       result = await dispatch(updateOfferThunk({
         id:   savedOfferIdRef.current,
-        data: buildPayload(true),       // ← isDraft=true
+        data: buildPayload(true),
       }));
     } else {
-      result = await dispatch(createOfferThunk(buildPayload(true)));  // ← isDraft=true
+      result = await dispatch(createOfferThunk(buildPayload(true)));
     }
 
     toast.dismiss("offer-save");
@@ -203,7 +303,7 @@ export default function CreateOfferPage() {
     }
   };
 
-  // ── SEND TO CREW — open dialog first ─────────────────────────────────────
+  // ── SEND TO CREW ─────────────────────────────────────────────────────────
   const handleSendToCrewClick = () => {
     if (isSubmitting) return;
     setDialog("sendToCrew");
@@ -216,7 +316,7 @@ export default function CreateOfferPage() {
     let offerId = savedOfferIdRef.current;
 
     if (!offerId) {
-      const createResult = await dispatch(createOfferThunk(buildPayload(false)));  // ← isDraft=false
+      const createResult = await dispatch(createOfferThunk(buildPayload(false)));
       if (createResult.error || !createResult.payload?._id) {
         toast.dismiss("offer-send");
         return;
@@ -238,38 +338,48 @@ export default function CreateOfferPage() {
     }
   };
 
+  // Dialog preview — respects createOwnJobTitle flag
   const dialogPreview = {
-    recipient:         { fullName: contractData.fullName, email: contractData.email },
-    jobTitle:          contractData.jobTitle,
-    newJobTitle:       contractData.newJobTitle,
-    createOwnJobTitle: contractData.createOwnJobTitle,
-    feePerDay:         contractData.feePerDay,
-    currency:          contractData.currency,
-    startDate:         contractData.startDate,
-    endDate:           contractData.endDate,
+    recipient: {
+      fullName: contractData.recipient?.fullName,
+      email:    contractData.recipient?.email,
+    },
+    jobTitle: contractData.createOwnJobTitle
+      ? contractData.newJobTitle
+      : contractData.jobTitle,
+    feePerDay: contractData.feePerDay,
+    currency:  contractData.currency,
+    startDate: contractData.startDate,
+    endDate:   contractData.endDate,
   };
 
   return (
     <div className="min-h-screen bg-purple-50/40">
-      <div className="px- pt-6 pb-4">
+      <div className="px-6 pt-6 pb-4">
         <PageHeader
           title="Create Offer"
           icon="FileText"
           secondaryActions={[{
-            label: isSubmitting ? "Saving…" : "Save Draft",
-            icon: "Save", variant: "outline", disabled: isSubmitting,
+            label:       isSubmitting ? "Saving…" : "Save Draft",
+            icon:        "Save",
+            variant:     "outline",
+            disabled:    isSubmitting,
             clickAction: handleSaveDraft,
           }]}
           primaryAction={{
-            label: isSubmitting ? "Sending…" : "Send to Crew",
-            icon: "Send", variant: "default", disabled: isSubmitting,
+            label:       isSubmitting ? "Sending…" : "Send to Crew",
+            icon:        "Send",
+            variant:     "default",
+            disabled:    isSubmitting,
             clickAction: handleSendToCrewClick,
           }}
         />
       </div>
 
-      <div className="px- pb-">
+      <div className="px-6 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
+
+          {/* Left panel — ContractForm */}
           <Card>
             <CardContent className="p-4">
               <ContractForm
@@ -289,11 +399,15 @@ export default function CreateOfferPage() {
                 setAllowances={setAllowances}
                 onFieldFocus={(f) => setActiveField(f)}
                 onFieldBlur={() => setActiveField(null)}
+                onSave={handleSaveDraft}
                 onPrint={handleSaveDraft}
+                // Real categories from API — dropdown uses ObjectIds not slugs
+                categories={categories}
               />
             </CardContent>
           </Card>
 
+          {/* Right panel — CreateOfferLayout (preview) */}
           <Card>
             <CardContent className="p-0">
               <CreateOfferLayout
@@ -312,11 +426,13 @@ export default function CreateOfferPage() {
                 overtimeTags={overtimeTags}
                 setOvertimeTags={setOvertimeTags}
                 allowances={allowances}
+                projectSettings={projectSettings}
                 hideOfferSections={false}
                 hideContractDocument={false}
               />
             </CardContent>
           </Card>
+
         </div>
       </div>
 

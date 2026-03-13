@@ -24,9 +24,17 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "../../../../../../shared/components/ui/select";
 
-// ── Data constants ─────────────────────────────────────────────────────────
+// ── Bundle resolver (single source of truth for preview only) ─────────────
+import {
+  resolveContractBundle,
+  canResolveBundle,
+} from "../../../../utils/bundleResolver";
 
-const DEPARTMENTS = [
+// ─────────────────────────────────────────────────────────────────────────────
+// Static fallbacks (used only when parent has not supplied API data yet)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DEFAULT_DEPARTMENTS = [
   "Accounts","Action Vehicles","Aerial","Animals","Animation","Armoury","Art","Assets",
   "Assistant Directors","Camera","Cast","Chaperones","Choreography","Clearances",
   "Computer Graphics","Construction","Continuity","Costume","Costume FX","Covid Safety",
@@ -40,7 +48,7 @@ const DEPARTMENTS = [
   "Underwater","VFX","Video","Voice",
 ];
 
-const JOB_TITLES = [
+const DEFAULT_JOB_TITLES = [
   "1st AC (SELF-EMPLOYED)","1st AC - A Camera (SELF-EMPLOYED)","1st AC - B Camera (SELF-EMPLOYED)",
   "1st Assistant Accountant (PAYE)","1st Assistant Director (SELF-EMPLOYED)",
   "1st Assistant Editor (SELF-EMPLOYED)","1st Boom Operator (SELF-EMPLOYED)",
@@ -149,7 +157,6 @@ function TooltipLabel({ htmlFor, label, tooltip }) {
 // ── DatePicker ─────────────────────────────────────────────────────────────
 function DatePicker({ id, value, onChange, onFocus, onBlur, placeholder = "Pick a date" }) {
   const date = value ? new Date(value + "T00:00:00") : undefined;
-
   return (
     <Popover onOpenChange={(open) => { if (open) onFocus?.(); else onBlur?.(); }}>
       <PopoverTrigger asChild>
@@ -174,11 +181,58 @@ function DatePicker({ id, value, onChange, onFocus, onBlur, placeholder = "Pick 
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Transform allowances object → array before submitting to backend.
+// Call this in your CreateOffer submit handler:
+//   payload.allowances = transformAllowancesForApi(allowances);
+// ─────────────────────────────────────────────────────────────────────────────
+export function transformAllowancesForApi(allowancesObj) {
+  return Object.entries(allowancesObj)
+    .filter(([, value]) => value.enabled)
+    .map(([key, value]) => ({ key, ...value }));
+}
+
+// ── BundlePreviewBar ───────────────────────────────────────────────────────
+// Preview only — real bundle resolution happens on the backend.
+function BundlePreviewBar({ offer }) {
+  if (!canResolveBundle(offer)) {
+    return (
+      <p className="text-xs text-muted-foreground px-1 py-1">
+        Select category, engagement type, and pay frequency to preview the contract bundle.
+      </p>
+    );
+  }
+  const { bundleName, contractForms, allowanceForms } = resolveContractBundle(offer);
+  return (
+    <div className="rounded-lg border border-border bg-accent/10 px-3 py-2.5 space-y-1.5">
+      <p className="text-xs font-semibold text-primary">{bundleName}</p>
+      <div className="flex flex-wrap gap-1">
+        {contractForms.map((f) => (
+          <span key={f.key}
+            className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            {f.label}
+          </span>
+        ))}
+        {allowanceForms.map((f) => (
+          <span key={f.key}
+            className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            {f.label}
+          </span>
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        Preview only — exact bundle confirmed by backend on offer submission.
+      </p>
+    </div>
+  );
+}
+
 // ── Main ContractForm ──────────────────────────────────────────────────────
 
 export function ContractForm({
   data,
   onChange,
+  onSave,
   onPrint,
   onFieldFocus,
   onFieldBlur,
@@ -194,18 +248,49 @@ export function ContractForm({
   setOvertimeTags,
   allowances,
   setAllowances,
+  // Accept categories from parent (API response: [{ _id, name, slug }])
+  // Falls back to bundleResolver CATEGORIES if not supplied
+  categories = null,
+  // Accept departments and job titles from parent API response
+  departments = DEFAULT_DEPARTMENTS,
+  jobTitles   = DEFAULT_JOB_TITLES,
 }) {
-  const NO_UPPER = [
+  // Fields that must NOT be uppercased
+  const NO_UPPER = new Set([
     "overtime","allowSelfEmployed","workingInUK","statusDeterminationReason",
     "engagementType","dailyOrWeekly","unit","department","subDepartment",
-    "currency","alternativeContract","searchAllDepartments","startDate","endDate",
-    "isViaAgent","createOwnJobTitle","searchAllDepartments",
-  ];
+    "currency","categoryId","startDate","endDate","isViaAgent",
+    "createOwnJobTitle","searchAllDepartments",
+  ]);
 
+  // ── Top-level flat setter ────────────────────────────────────────────────
   const set = (field, value) => {
-    const v = typeof value === "string" && !NO_UPPER.includes(field)
+    const v = typeof value === "string" && !NO_UPPER.has(field)
       ? value.toUpperCase() : value;
     onChange({ ...data, [field]: v });
+  };
+
+  // ── FIX: nested setter for data.recipient.* ──────────────────────────────
+  const setRecipient = (field, value) => {
+    const v = field !== "email" && typeof value === "string"
+      ? value.toUpperCase() : value;
+    onChange({ ...data, recipient: { ...data.recipient, [field]: v } });
+  };
+
+  // ── FIX: nested setter for data.representation.* ────────────────────────
+  const setRepresentation = (field, value) => {
+    onChange({ ...data, representation: { ...data.representation, [field]: value } });
+  };
+
+  // ── FIX: nested setter for data.taxStatus.* (matches offer.model.js) ────
+  const setTaxStatus = (field, value) => {
+    onChange({ ...data, taxStatus: { ...data.taxStatus, [field]: value } });
+  };
+
+  // ── FIX: nested setter for data.notes.* (matches offer.model.js) ────────
+  const setNotes = (field, value) => {
+    const v = typeof value === "string" ? value.toUpperCase() : value;
+    onChange({ ...data, notes: { ...data.notes, [field]: v } });
   };
 
   const updateArr = (setter, i, value) =>
@@ -218,55 +303,79 @@ export function ContractForm({
 
   const cs = { GBP:"£", USD:"$", EUR:"€", AUD:"A$", CAD:"C$", NZD:"NZ$", DKK:"kr", ISK:"kr" }[data.currency] ?? "£";
 
+  // ── FIX: read from correct nested paths ─────────────────────────────────
+  const taxStatus        = data.taxStatus        || {};
+  const notes            = data.notes            || {};
+  const representation   = data.representation   || {};
+
+  // Build category options:
+  // If parent passes real API categories ([{ _id, name }]), use those.
+  // Otherwise fall back to bundleResolver static list.
+  const categoryOptions = categories
+    ? categories.map((c) => ({ value: c._id, label: c.name }))
+    : [
+        { value: "standard_crew",  label: "Standard Crew"   },
+        { value: "senior_buyout",  label: "Senior / Buyout" },
+        { value: "construction",   label: "Construction"    },
+        { value: "electrical",     label: "Electrical"      },
+        { value: "hod",            label: "HOD"             },
+        { value: "rigging",        label: "Rigging"         },
+        { value: "transport",      label: "Transport"       },
+      ];
+
   return (
     <div className="py-0">
-
- 
-
       <div className="space-y-2">
 
-        {/* ── Recipient ── */}
+        {/* ── Recipient ────────────────────────────────────────────────── */}
+        {/* FIX: all fields write to data.recipient.* */}
         <CollapsibleSection title="Recipient">
           <div className="space-y-1.5">
             <Label htmlFor="fullName" className="text-xs text-foreground/80">Full name</Label>
-            <Input id="fullName" value={data.fullName ?? ""}
-              onChange={(e) => set("fullName", e.target.value)}
-              onFocus={() => onFieldFocus?.("fullName")} onBlur={onFieldBlur}
+            <Input id="fullName"
+              value={data.recipient?.fullName ?? ""}
+              onChange={(e) => setRecipient("fullName", e.target.value)}
+              onFocus={() => onFieldFocus?.("recipient.fullName")} onBlur={onFieldBlur}
               placeholder="FULL NAME" className="h-9 bg-input text-sm uppercase" />
           </div>
 
           <div className="space-y-1.5">
             <TooltipLabel htmlFor="email" label="Email"
               tooltip="Ensure this is the recipient's preferred email address for use on their engine account." />
-            <Input id="email" type="email" value={data.email ?? ""}
-              onChange={(e) => set("email", e.target.value)}
-              onFocus={() => onFieldFocus?.("email")} onBlur={onFieldBlur}
-              placeholder="EMAIL ADDRESS" className="h-9 bg-input text-sm uppercase" />
+            <Input id="email" type="email"
+              value={data.recipient?.email ?? ""}
+              onChange={(e) => setRecipient("email", e.target.value)}
+              onFocus={() => onFieldFocus?.("recipient.email")} onBlur={onFieldBlur}
+              placeholder="email@example.com" className="h-9 bg-input text-sm" />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="mobileNumber" className="text-xs text-foreground/80">Mobile number</Label>
-            <Input id="mobileNumber" value={data.mobileNumber ?? ""}
-              onChange={(e) => set("mobileNumber", e.target.value)}
-              onFocus={() => onFieldFocus?.("mobileNumber")} onBlur={onFieldBlur}
+            <Input id="mobileNumber"
+              value={data.recipient?.mobileNumber ?? ""}
+              onChange={(e) => setRecipient("mobileNumber", e.target.value)}
+              onFocus={() => onFieldFocus?.("recipient.mobileNumber")} onBlur={onFieldBlur}
               placeholder="MOBILE NUMBER" className="h-9 bg-input text-sm" />
           </div>
 
+          {/* FIX: isViaAgent lives under data.representation.isViaAgent */}
           <div className="flex items-center gap-2 pt-1">
-            <Checkbox id="isViaAgent" checked={!!data.isViaAgent}
-              onCheckedChange={(v) => set("isViaAgent", v)} />
+            <Checkbox id="isViaAgent" checked={!!representation.isViaAgent}
+              onCheckedChange={(v) => setRepresentation("isViaAgent", v)} />
             <Label htmlFor="isViaAgent" className="text-sm font-normal cursor-pointer">
               Check the box if this deal is via an agent
             </Label>
           </div>
 
-          {data.isViaAgent && (
+          {/* FIX: agentEmail lives under data.representation.agentEmail */}
+          {representation.isViaAgent && (
             <div className="space-y-1.5">
               <Label htmlFor="agentEmail" className="text-xs text-foreground/80">Agent email</Label>
-              <Input id="agentEmail" type="email" value={data.agentEmail ?? ""}
-                onChange={(e) => set("agentEmail", e.target.value)}
-                onFocus={() => onFieldFocus?.("agentEmail")} onBlur={onFieldBlur}
-                placeholder="AGENT EMAIL" className="h-9 bg-input text-sm uppercase" />
+              <Input id="agentEmail" type="email"
+                value={representation.agentEmail ?? ""}
+                onChange={(e) => setRepresentation("agentEmail", e.target.value)}
+                onFocus={() => onFieldFocus?.("representation.agentEmail")} onBlur={onFieldBlur}
+                placeholder="agent@example.com" className="h-9 bg-input text-sm" />
             </div>
           )}
         </CollapsibleSection>
@@ -306,7 +415,7 @@ export function ContractForm({
             <Select value={data.department ?? ""} onValueChange={(v) => set("department", v)}>
               <SelectTrigger className={ST}><SelectValue placeholder="Select department..." /></SelectTrigger>
               <SelectContent className={SC}>
-                {DEPARTMENTS.map((d) => (
+                {departments.map((d) => (
                   <SelectItem className={SI} key={d} value={d.toLowerCase().replace(/\s+/g, "_")}>{d}</SelectItem>
                 ))}
               </SelectContent>
@@ -333,6 +442,7 @@ export function ContractForm({
               onChange={(v) => set("jobTitle", v)}
               onFocus={() => onFieldFocus?.("jobTitle")}
               onBlur={onFieldBlur}
+              jobTitles={jobTitles}
             />
           </div>
 
@@ -376,11 +486,13 @@ export function ContractForm({
         </CollapsibleSection>
 
         {/* ── Tax Status ── */}
+        {/* FIX: all fields write to data.taxStatus.* */}
         <CollapsibleSection title="Tax Status" defaultOpen={false}>
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Allow as self-employed or loan out?</Label>
-            <RadioGroup value={data.allowSelfEmployed ?? ""}
-              onValueChange={(v) => set("allowSelfEmployed", v)}
+            <RadioGroup
+              value={taxStatus.allowSelfEmployed ?? ""}
+              onValueChange={(v) => setTaxStatus("allowSelfEmployed", v)}
               className="flex gap-4">
               {["yes","no"].map((v) => (
                 <div key={v} className="flex items-center gap-2">
@@ -393,8 +505,9 @@ export function ContractForm({
 
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Status determination reason</Label>
-            <Select value={data.statusDeterminationReason ?? ""}
-              onValueChange={(v) => set("statusDeterminationReason", v)}>
+            <Select
+              value={taxStatus.statusDeterminationReason ?? ""}
+              onValueChange={(v) => setTaxStatus("statusDeterminationReason", v)}>
               <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
               <SelectContent className={SC}>
                 <SelectItem className={SI} value="hmrc_list">Job title appears on HMRC list of 'Roles normally treated as self-employed'</SelectItem>
@@ -405,12 +518,14 @@ export function ContractForm({
             </Select>
           </div>
 
-          {data.statusDeterminationReason === "other" && (
+          {taxStatus.statusDeterminationReason === "other" && (
             <div className="space-y-1.5">
               <Label className="text-xs text-foreground/80">Other reason</Label>
-              <Input value={data.otherStatusDeterminationReason ?? ""}
-                onChange={(e) => set("otherStatusDeterminationReason", e.target.value)}
-                onFocus={() => onFieldFocus?.("otherStatusDeterminationReason")} onBlur={onFieldBlur}
+              <Input
+                value={taxStatus.otherStatusDeterminationReason ?? ""}
+                onChange={(e) => setTaxStatus("otherStatusDeterminationReason", e.target.value)}
+                onFocus={() => onFieldFocus?.("taxStatus.otherStatusDeterminationReason")}
+                onBlur={onFieldBlur}
                 className="h-9 bg-input text-sm uppercase" />
             </div>
           )}
@@ -450,6 +565,32 @@ export function ContractForm({
 
         {/* ── Engagement ── */}
         <CollapsibleSection title="Engagement">
+
+          {/* FIX: category uses real ObjectIds from API (or slug fallback) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-foreground/80">
+              Contract category <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={data.categoryId ?? ""}
+              onValueChange={(v) => set("categoryId", v)}
+            >
+              <SelectTrigger className={ST}>
+                <SelectValue placeholder="Select category..." />
+              </SelectTrigger>
+              <SelectContent className={SC}>
+                {categoryOptions.map(({ value, label }) => (
+                  <SelectItem className={SI} key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Determines which contract bundle is assigned to this offer.
+            </p>
+          </div>
+
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">
               Start date <span className="text-destructive">*</span>
@@ -505,6 +646,10 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Live bundle preview (UI only — backend is authoritative) */}
+          <BundlePreviewBar offer={data} />
+
         </CollapsibleSection>
 
         {/* ── Rates ── */}
@@ -551,10 +696,10 @@ export function ContractForm({
           {data.overtime === "custom" && (
             <div className="space-y-2 pt-1">
               {[
-                {id:"otherOT",    label:"Other O/T"},
-                {id:"cameraOTSWD",  label:"Camera O/T (SWD)"},
-                {id:"cameraOTSCWD", label:"Camera O/T (SCWD)"},
-                {id:"cameraOTCWD",  label:"Camera O/T (CWD)"},
+                {id:"otherOT",       label:"Other O/T"},
+                {id:"cameraOTSWD",   label:"Camera O/T (SWD)"},
+                {id:"cameraOTSCWD",  label:"Camera O/T (SCWD)"},
+                {id:"cameraOTCWD",   label:"Camera O/T (CWD)"},
               ].map(({id, label}) => (
                 <div key={id} className="space-y-1.5">
                   <Label htmlFor={id} className="text-xs text-foreground/80">
@@ -646,6 +791,8 @@ export function ContractForm({
         </CollapsibleSection>
 
         {/* ── Allowances ── */}
+        {/* UI state stays as object for ease of editing.
+            Call transformAllowancesForApi(allowances) before the API call. */}
         <CollapsibleSection title="Allowances">
           <p className="text-xs text-muted-foreground">
             Enable allowances below.{" "}
@@ -668,7 +815,6 @@ export function ContractForm({
             const a = allowances[key];
             return (
               <div key={key} className="border border-border rounded-lg overflow-hidden">
-                {/* Allowance header */}
                 <div className="flex items-center justify-between px-3 py-2 bg-accent/20">
                   <div className="flex items-center gap-2">
                     <Checkbox id={`allow_${key}`} checked={!!a.enabled}
@@ -687,7 +833,6 @@ export function ContractForm({
 
                 {a.enabled && (
                   <div className="px-3 py-2 space-y-2">
-                    {/* Budget Code + Tag */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Budget Code</Label>
@@ -814,7 +959,6 @@ export function ContractForm({
                       </div>
                     )}
 
-                    {/* Cap + Payable In */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Cap Calculated As</Label>
@@ -861,25 +1005,28 @@ export function ContractForm({
         </CollapsibleSection>
 
         {/* ── Other ── */}
+        {/* FIX: writes to data.notes.otherDealProvisions and data.notes.additionalNotes */}
         <CollapsibleSection title="Other" defaultOpen={false}>
           <div className="space-y-1.5">
             <Label htmlFor="otherDealProvisions" className="text-xs text-foreground/80">Other deal provisions</Label>
-            <Textarea id="otherDealProvisions" value={data.otherDealProvisions ?? ""}
-              onChange={(e) => { if (e.target.value.length <= 300) set("otherDealProvisions", e.target.value); }}
-              onFocus={() => onFieldFocus?.("otherDealProvisions")} onBlur={onFieldBlur}
+            <Textarea id="otherDealProvisions"
+              value={notes.otherDealProvisions ?? ""}
+              onChange={(e) => { if (e.target.value.length <= 300) setNotes("otherDealProvisions", e.target.value); }}
+              onFocus={() => onFieldFocus?.("notes.otherDealProvisions")} onBlur={onFieldBlur}
               placeholder="Other deal provisions..." rows={2}
               className="bg-input text-sm resize-none uppercase" />
-            <p className="text-xs text-muted-foreground text-right">{(data.otherDealProvisions ?? "").length}/300</p>
+            <p className="text-xs text-muted-foreground text-right">{(notes.otherDealProvisions ?? "").length}/300</p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="additionalNotes" className="text-xs text-foreground/80">Internal notes</Label>
-            <Textarea id="additionalNotes" value={data.additionalNotes ?? ""}
-              onChange={(e) => { if (e.target.value.length <= 300) set("additionalNotes", e.target.value); }}
-              onFocus={() => onFieldFocus?.("additionalNotes")} onBlur={onFieldBlur}
+            <Textarea id="additionalNotes"
+              value={notes.additionalNotes ?? ""}
+              onChange={(e) => { if (e.target.value.length <= 300) setNotes("additionalNotes", e.target.value); }}
+              onFocus={() => onFieldFocus?.("notes.additionalNotes")} onBlur={onFieldBlur}
               placeholder="Internal notes..." rows={2}
               className="bg-input text-sm resize-none" />
-            <p className="text-xs text-muted-foreground text-right">{(data.additionalNotes ?? "").length}/300</p>
+            <p className="text-xs text-muted-foreground text-right">{(notes.additionalNotes ?? "").length}/300</p>
             <p className="text-xs text-muted-foreground">
               Internal notes are shown to everyone in Offers in Engine, but NOT on contracts/documents.
             </p>
@@ -890,7 +1037,7 @@ export function ContractForm({
 
       {/* ── Footer ── */}
       <div className="flex gap-2 pt-1">
-        <Button onClick={onPrint} className="flex-1 text-sm">
+        <Button onClick={onSave} className="flex-1 text-sm">
           Save Offer
         </Button>
         <Button onClick={onPrint} variant="outline"
@@ -906,14 +1053,14 @@ export function ContractForm({
 
 // ── Job Title Combobox ─────────────────────────────────────────────────────
 
-function JobTitleCombobox({ value, onChange, onFocus, onBlur }) {
+function JobTitleCombobox({ value, onChange, onFocus, onBlur, jobTitles = DEFAULT_JOB_TITLES }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef(null);
 
-  const filtered = JOB_TITLES.filter((t) =>
-    t.toLowerCase().includes(search.toLowerCase())
-  ).slice(0, 50);
+  const filtered = jobTitles
+    .filter((t) => t.toLowerCase().includes(search.toLowerCase()))
+    .slice(0, 50);
 
   useEffect(() => {
     const handler = (e) => {

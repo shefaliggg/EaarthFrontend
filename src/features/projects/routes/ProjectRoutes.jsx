@@ -15,7 +15,7 @@ import FuelAndMileageRoutes from './FuelAndMileageRoutes';
 import pettyCashRoutes from './PettyCashRoutes';
 import TimesheetsRoutes from './TimesheetsRoutes';
 import ProjectCalendarRoutes from './ProjectCalendarRoutes';
-import ContractRoutes from './ContractRoutes';
+// import ContractRoutes from './ContractRoutes';
 
 import { ViewReports } from '../components/ViewReports';
 import { ManageTeam } from '../components/ManageTeam';
@@ -88,7 +88,7 @@ const ProjectRoutes = {
         ProjectAppsRoutes,
         ProjectDepartmentsRoutes,
         ProjectCalendarRoutes,
-        ContractRoutes, // 🆕 ADD THIS
+        // ContractRoutes, // 🆕 ADD THIS
         { path: '*', element: <NotFound /> },
       ],
     },
