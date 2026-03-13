@@ -15,6 +15,8 @@ import {
   PhoneMissed,
   LayoutGrid,
   MonitorPlay,
+  PictureInPicture2,
+  Grid2x2,
 } from "lucide-react";
 import { Rnd } from "react-rnd";
 import { cn } from "@/shared/config/utils";
@@ -34,6 +36,7 @@ import { useSelector } from "react-redux";
 import ParticipantsPanel from "./Callbody/ParticipantsPanel";
 import { useCallSounds } from "../../hooks/call/useCallSounds";
 import CallBody from "./Callbody/CallBody";
+import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
 
 export default function CallModal() {
   const {
@@ -103,187 +106,6 @@ export default function CallModal() {
         false,
       isActiveSpeaker: activeSpeakerId === currentUserId && !isAudioMuted,
     });
-
-    list.push({
-      id: "p.userId",
-      tileId: "null",
-      displayName: "p.displayName",
-      isLocal: false,
-      isVideoOff: true,
-      isMuted: false,
-      isSpeaking: false,
-      isActiveSpeaker: activeSpeakerId === "p.userId",
-    });
-    list.push({
-      id: "p.userId2",
-      tileId: "null2",
-      displayName: "2p.displayName",
-      isLocal: false,
-      isVideoOff: true,
-      isMuted: false,
-      isSpeaking: false,
-      isActiveSpeaker: activeSpeakerId === "p.userId2",
-    });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
-    // list.push({
-    //   id: "p.userId",
-    //   tileId: "null",
-    //   displayName: "p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId",
-    // });
-    // list.push({
-    //   id: "p.userId2",
-    //   tileId: "null2",
-    //   displayName: "2p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
-    // });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
-    // list.push({
-    //   id: "p.userId",
-    //   tileId: "null",
-    //   displayName: "p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId",
-    // });
-    // list.push({
-    //   id: "p.userId2",
-    //   tileId: "null2",
-    //   displayName: "2p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
-    // });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
-    // list.push({
-    //   id: "p.userId",
-    //   tileId: "null",
-    //   displayName: "p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId",
-    // });
-    // list.push({
-    //   id: "p.userId2",
-    //   tileId: "null2",
-    //   displayName: "2p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
-    // });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
-    // list.push({
-    //   id: "p.userId",
-    //   tileId: "null",
-    //   displayName: "p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId",
-    // });
-    // list.push({
-    //   id: "p.userId2",
-    //   tileId: "null2",
-    //   displayName: "2p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
-    // });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
-    // list.push({
-    //   id: "p.userId",
-    //   tileId: "null",
-    //   displayName: "p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId",
-    // });
-    // list.push({
-    //   id: "p.userId2",
-    //   tileId: "null2",
-    //   displayName: "2p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId2",
-    // });
-    // list.push({
-    //   id: "p.userId3",
-    //   tileId: "null3",
-    //   displayName: "3p.displayName",
-    //   isLocal: false,
-    //   isVideoOff: true,
-    //   isMuted: false,
-    //   isSpeaking: false,
-    //   isActiveSpeaker: activeSpeakerId === "p.userId3",
-    // });
 
     // Remote camera tiles
     cameraTiles.forEach((tile) => {
@@ -363,6 +185,12 @@ export default function CallModal() {
     // First remote, else local
     return allTiles.find((t) => !t.isLocal) ?? allTiles[0];
   }, [allTiles, pinnedId, screenShareTile, activeSpeakerId, cameraTiles]);
+
+  useEffect(() => {
+    if (pinnedId && !allTiles.some((t) => t.id === pinnedId)) {
+      setPinnedId(null);
+    }
+  }, [allTiles, pinnedId]);
 
   const stripTiles = useMemo(
     () => allTiles.filter((t) => t.id !== speakerTile?.id),
@@ -452,7 +280,10 @@ export default function CallModal() {
             speakerTile={speakerTile}
             stripTiles={stripTiles}
             pinnedId={pinnedId}
-            onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+            onPin={(id) => {
+              setPinnedId((prev) => (prev === id ? null : id));
+              setLayout("speaker");
+            }}
             compact={isCompact}
             showParticipants={showParticipants}
             setShowParticipants={setShowParticipants}
@@ -527,7 +358,10 @@ export default function CallModal() {
                 speakerTile={speakerTile}
                 stripTiles={stripTiles}
                 pinnedId={pinnedId}
-                onPin={(id) => setPinnedId((prev) => (prev === id ? null : id))}
+                onPin={(id) => {
+                  setPinnedId((prev) => (prev === id ? null : id));
+                  setLayout("speaker");
+                }}
                 compact={isCompact}
                 showParticipants={showParticipants}
                 setShowParticipants={setShowParticipants}
@@ -637,70 +471,90 @@ function TopBar({
 
         {/* Layout toggle — only when video and not ending */}
         {!isMinimized && !isEnding && callType === "VIDEO" && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onLayoutToggle();
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-            title={layout === "speaker" ? "Grid view" : "Speaker view"}
+          <InfoTooltip
+            content={
+              layout === "speaker"
+                ? "Switch to grid view"
+                : "Switch to speaker view"
+            }
+            side={isCompact ? "top" : "bottom"}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
-          </Button>
-        )}
-
-        {isFull && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCompact}
-            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-          >
-            <Minimize2 className="w-3.5 h-3.5" />
-          </Button>
-        )}
-
-        {isCompact && !isEnding && (
-          <>
             <Button
               variant="ghost"
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                onMinimize();
+                onLayoutToggle();
               }}
+              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
+            >
+              {layout === "speaker" ? (
+                <Grid2x2 className="w-3.5 h-3.5" />
+              ) : (
+                <PictureInPicture2 className="w-3.5 h-3.5" />
+              )}
+            </Button>
+          </InfoTooltip>
+        )}
+
+        {isFull && (
+          <InfoTooltip content="Compact screen" side="bottom">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCompact}
               className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
             >
               <Minimize2 className="w-3.5 h-3.5" />
             </Button>
+          </InfoTooltip>
+        )}
+
+        {isCompact && !isEnding && (
+          <>
+            <InfoTooltip content="Minimize call">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMinimize();
+                }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
+              >
+                <Minimize2 className="w-3.5 h-3.5" />
+              </Button>
+            </InfoTooltip>
+            <InfoTooltip content="Full screen">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFull();
+                }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </Button>
+            </InfoTooltip>
+          </>
+        )}
+
+        {isMinimized && (
+          <InfoTooltip content="Restore call">
             <Button
               variant="ghost"
               size="icon"
               onClick={(e) => {
                 e.stopPropagation();
-                onFull();
+                onCompact();
               }}
-              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
+              className="bg-primary/20 text-white h-7 w-7"
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </Button>
-          </>
-        )}
-
-        {isMinimized && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCompact();
-            }}
-            className="bg-primary/20 text-white h-7 w-7"
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </Button>
+          </InfoTooltip>
         )}
       </div>
     </div>

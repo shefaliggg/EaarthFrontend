@@ -22,17 +22,19 @@ function GridLayout({ tiles, callType, pinnedId, onPin, compact }) {
             tileId={tile.tileId}
             displayName={tile.displayName}
             isLocal={tile.isLocal}
+            isAudioCall={isAudio}
             isVideoOff={isAudio ? true : tile.isVideoOff}
             isMuted={tile.isMuted}
             isSpeaking={tile.isSpeaking}
             isActiveSpeaker={tile.isActiveSpeaker}
             isSingle={single}
+            isPinned={pinnedId === tile.id}
+            onPin={() => onPin?.(tile.id)}
             className={cn(
               "w-full cursor-pointer aspect-video",
               single && "h-full",
-              pinnedId === tile.id && "ring-2 ring-primary",
+              //   pinnedId === tile.id && "ring-2 ring-primary",
             )}
-            onClick={() => onPin?.(tile.id)}
           />
         ))}
       </div>

@@ -20,7 +20,7 @@ function CallBody({
   const isGrid = callType === "AUDIO" || layout === "grid";
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden h-full">
       {isGrid ? (
         <GridLayout
           tiles={allTiles}

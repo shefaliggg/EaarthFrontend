@@ -23,9 +23,9 @@ let speakingTimers = {};
 const useCallStore = create(
   devtools(
     (set, get) => ({
-      callState: "connected", // idle | incoming | connecting | connected | ending
+      callState: "idle", // idle | incoming | connecting | connected | ending
       endReason: null,
-      callType: "AUDIO",
+      callType: null,
       conversationId: null,
       meetingSession: null,
       incomingCall: null,

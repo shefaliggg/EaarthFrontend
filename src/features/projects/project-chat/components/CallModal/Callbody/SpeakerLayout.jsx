@@ -11,11 +11,10 @@ function SpeakerLayout({
   compact,
 }) {
   const single = allTiles.length <= 1;
-
   const localTile = allTiles.find((t) => t.isLocal);
 
   return (
-    <div className="flex flex-1 min-h-0 p-2 gap-2">
+    <div className="flex flex-1 min-h-0 p-2 gap-2 h-full">
       {/* MAIN SPEAKER */}
       <div className="flex-1 min-h-0 relative rounded-xl overflow-hidden">
         {speakerTile && (
@@ -29,7 +28,9 @@ function SpeakerLayout({
             isActiveSpeaker={speakerTile.isActiveSpeaker}
             isContent={speakerTile.isContent}
             isMainView
-            className="w-full h-full aspect-video"
+            isPinned={pinnedId === speakerTile.id}
+            onPin={() => onPin?.(speakerTile.id)}
+            className="w-full h-full"
           />
         )}
 
@@ -37,10 +38,10 @@ function SpeakerLayout({
         {!single && speakerTile?.id !== localTile?.id && localTile && (
           <div
             className={cn(
-              "absolute bottom-3 right-3 cursor-pointer transition-transform hover:scale-105",
-              compact ? "w-28 h-20" : "w-36 h-24",
+              "absolute bottom-12 right-3 aspect-video transition-transform hover:scale-105",
+              compact ? "w-28" : "w-36",
             )}
-            onClick={() => onPin(localTile.id)}
+            onClick={() => onPin?.(localTile.id)}
           >
             <ParticipantTile
               tileId={localTile.tileId}
@@ -49,7 +50,9 @@ function SpeakerLayout({
               isVideoOff={localTile.isVideoOff}
               isMuted={localTile.isMuted}
               isSpeaking={localTile.isSpeaking}
-              className="w-full h-full rounded-lg shadow-xl border border-zinc-700"
+              isPinned={pinnedId === localTile.id}
+              hidePin={true}
+              className="w-full h-full rounded-sm shadow-xl"
             />
           </div>
         )}
@@ -61,12 +64,11 @@ function SpeakerLayout({
           {stripTiles
             .filter((t) => !(speakerTile?.id !== localTile?.id && t.isLocal))
             .map((tile) => (
-              <button
+              <div
                 key={tile.id}
-                onClick={() => onPin(tile.id)}
                 className={cn(
                   "flex-shrink-0 rounded-lg overflow-hidden border transition-all aspect-video",
-                  compact ? "w-28" : "w-56",
+                  compact ? "w-30" : "w-60",
                   pinnedId === tile.id
                     ? "border-primary shadow-primary/30 shadow-md"
                     : "border-zinc-700 hover:border-zinc-500",
@@ -80,9 +82,11 @@ function SpeakerLayout({
                   isMuted={tile.isMuted}
                   isSpeaking={tile.isSpeaking}
                   isActiveSpeaker={tile.isActiveSpeaker}
+                  isPinned={pinnedId === tile.id}
+                  onPin={() => onPin?.(tile.id)}
                   className="w-full h-full"
                 />
-              </button>
+              </div>
             ))}
         </div>
       )}

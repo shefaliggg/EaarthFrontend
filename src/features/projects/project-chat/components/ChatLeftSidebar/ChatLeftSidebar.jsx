@@ -209,10 +209,10 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
         {/* Conversations List */}
         <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[924px]">
           {/* Header */}
-          <div className="border-b bg-card px-3 py-2.5 pt-3 mb-1">
-            <div className="flex items-center justify-between mb-3 pl-1.5">
+          <div className="border-b bg-card px-4 py-2.5 pt-3 mb-1">
+            <div className="flex items-center justify-between mb-2 pl-1.5">
               <h2 className="text-lg font-bold">
-                {activeTab === "Email" ? "Email" : "Chat Conversations"}
+                {activeTab === "Email" ? "Email" : "Chats"}
               </h2>
               <Button
                 variant="ghost"
