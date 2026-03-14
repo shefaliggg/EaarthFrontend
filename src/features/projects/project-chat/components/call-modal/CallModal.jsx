@@ -1,42 +1,19 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import {
-  Users,
-  Maximize2,
-  Minimize2,
-  Video,
-  Phone,
-  PhoneOff,
-  PhoneMissed,
-  LayoutGrid,
-  MonitorPlay,
-  PictureInPicture2,
-  Grid2x2,
-} from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Rnd } from "react-rnd";
-import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
-import { ParticipantTile } from "./Callbody/ParticipantTile";
 import CallControls from "./CallControls";
-import { Button } from "../../../../../shared/components/ui/button";
 import { getCurrentUserId } from "../../../../../shared/config/utils";
 import {
   END_CONFIG,
   getDefaultPosition,
-  getGridClass,
   MODE_SIZE,
 } from "../../utils/CallHelpers";
 import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
-import ParticipantsPanel from "./Callbody/ParticipantsPanel";
 import { useCallSounds } from "../../hooks/call/useCallSounds";
-import CallBody from "./Callbody/CallBody";
-import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
+import CallBody from "./Call-body/CallBody";
+import TopBar from "./TopBar";
+import MinimizedCallPill from "./MinimizedCallPill";
 
 export default function CallModal() {
   const {
@@ -338,16 +315,7 @@ export default function CallModal() {
             isMinimized={isMinimized}
           />
 
-          {isEnding && !isMinimized && <EndingOverlay reason={endReason} />}
-
-          {isEnding && isMinimized && (
-            <div className="flex items-center justify-center gap-2 flex-1 px-3">
-              <PhoneOff className="w-4 h-4 text-red-400" />
-              <span className="text-xs text-zinc-400">
-                {END_CONFIG[endReason]?.title ?? "Call ended"}
-              </span>
-            </div>
-          )}
+          {isEnding && <EndingOverlay reason={endReason} />}
 
           {!isEnding && isCompact && (
             <>
@@ -376,205 +344,13 @@ export default function CallModal() {
           )}
 
           {!isEnding && isMinimized && (
-            <MinimizedPill
+            <MinimizedCallPill
               count={allTiles.length}
               onRestore={() => switchMode("compact")}
             />
           )}
         </div>
       </Rnd>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   TopBar
-═══════════════════════════════════════════════════════════════════════════ */
-function TopBar({
-  callType,
-  callState,
-  participantCount,
-  hadParticipants,
-  layout,
-  onLayoutToggle,
-  onFull,
-  onMinimize,
-  onCompact,
-  isFull,
-  isCompact,
-  isMinimized,
-}) {
-  const isEnding = callState === "ending";
-  const isConnected = callState === "connected";
-  const isLive = isConnected && participantCount > 1;
-  const isAlone = isConnected && participantCount <= 1 && hadParticipants;
-
-  return (
-    <div className="call-drag-handle flex items-center justify-between px-3 py-2 bg-zinc-950 border-b border-zinc-900 cursor-move select-none flex-shrink-0">
-      {/* Left: indicator + type + status */}
-      <div className="flex items-center gap-2.5">
-        <span
-          className={cn(
-            "w-2 h-2 rounded-full flex-shrink-0",
-            isEnding
-              ? "bg-red-400"
-              : isLive
-                ? "bg-green-400 animate-pulse"
-                : isAlone
-                  ? "bg-red-400"
-                  : isConnected
-                    ? "bg-yellow-400 animate-pulse"
-                    : "bg-zinc-500 animate-pulse",
-          )}
-        />
-
-        {callType === "VIDEO" ? (
-          <Video className="w-3.5 h-3.5 text-zinc-300" />
-        ) : (
-          <Phone className="w-3.5 h-3.5 text-zinc-300" />
-        )}
-
-        <span
-          className={cn(
-            "text-xs font-medium",
-            isEnding
-              ? "text-red-400"
-              : isLive
-                ? "text-green-400"
-                : isAlone
-                  ? "text-red-400"
-                  : isConnected
-                    ? "text-yellow-400"
-                    : "text-zinc-400 animate-pulse",
-          )}
-        >
-          {isEnding
-            ? "Ending…"
-            : isLive
-              ? "Live"
-              : isAlone
-                ? "Call ended…"
-                : isConnected
-                  ? "Ringing…"
-                  : "Connecting…"}
-        </span>
-      </div>
-
-      {/* Right: controls */}
-      <div className="flex items-center gap-1.5">
-        {!isMinimized && !isEnding && (
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-xs text-zinc-300">
-            <Users className="w-3 h-3" />
-            {participantCount}
-          </div>
-        )}
-
-        {/* Layout toggle — only when video and not ending */}
-        {!isMinimized && !isEnding && callType === "VIDEO" && (
-          <InfoTooltip
-            content={
-              layout === "speaker"
-                ? "Switch to grid view"
-                : "Switch to speaker view"
-            }
-            side={isCompact ? "top" : "bottom"}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLayoutToggle();
-              }}
-              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-            >
-              {layout === "speaker" ? (
-                <Grid2x2 className="w-3.5 h-3.5" />
-              ) : (
-                <PictureInPicture2 className="w-3.5 h-3.5" />
-              )}
-            </Button>
-          </InfoTooltip>
-        )}
-
-        {isFull && (
-          <InfoTooltip content="Compact screen" side="bottom">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onCompact}
-              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-            >
-              <Minimize2 className="w-3.5 h-3.5" />
-            </Button>
-          </InfoTooltip>
-        )}
-
-        {isCompact && !isEnding && (
-          <>
-            <InfoTooltip content="Minimize call">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMinimize();
-                }}
-                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-              >
-                <Minimize2 className="w-3.5 h-3.5" />
-              </Button>
-            </InfoTooltip>
-            <InfoTooltip content="Full screen">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFull();
-                }}
-                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 h-7 w-7"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-              </Button>
-            </InfoTooltip>
-          </>
-        )}
-
-        {isMinimized && (
-          <InfoTooltip content="Restore call">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCompact();
-              }}
-              className="bg-primary/20 text-white h-7 w-7"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </Button>
-          </InfoTooltip>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MinimizedPill
-═══════════════════════════════════════════════════════════════════════════ */
-function MinimizedPill({ count, onRestore }) {
-  return (
-    <div
-      onClick={onRestore}
-      className="flex items-center justify-center gap-3 flex-1 text-white cursor-pointer px-3"
-    >
-      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-sm font-semibold text-green-400">
-        {count}
-      </div>
-      <span className="text-xs text-zinc-400">Tap to expand</span>
-      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse ml-auto" />
     </div>
   );
 }

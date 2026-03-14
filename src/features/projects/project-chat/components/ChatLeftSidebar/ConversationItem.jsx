@@ -1,4 +1,13 @@
-import { Pin, Star, VolumeX, Briefcase, Minus, Dot, Clapperboard } from "lucide-react";
+import {
+  Pin,
+  Star,
+  VolumeX,
+  Briefcase,
+  Minus,
+  Dot,
+  Clapperboard,
+  Megaphone,
+} from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { convertToPrettyText } from "../../../../../shared/config/utils";
@@ -49,8 +58,19 @@ export default function ConversationItem({
       <div className="flex items-center gap-2.5">
         {/* Icon/Avatar */}
         {isGroup ? (
-          <div className="p-2.5 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex-shrink-0">
-            <Clapperboard className="w-4 h-4 text-primary-foreground" />
+          <div
+            className={cn(
+              "p-2.5 rounded-full text-primary-foreground flex-shrink-0",
+              type === "all"
+                ? "bg-gradient-to-br from-primary/10 to-primary/20 border"
+                : "bg-gradient-to-br from-primary to-primary/70",
+            )}
+          >
+            {type === "all" ? (
+              <Megaphone className="w-4 h-4 text-primary" />
+            ) : (
+              <Clapperboard className="w-4 h-4" />
+            )}
           </div>
         ) : (
           <div className="relative flex-shrink-0">
@@ -125,9 +145,7 @@ export default function ConversationItem({
 
             {/* Badges */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {item.isPinned && (
-                <Pin className="w-3 h-3 text-primary" />
-              )}
+              {item.isPinned && <Pin className="w-3 h-3 text-primary" />}
               {item.mentions > 0 && (
                 <Badge className="bg-purple-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
                   <span className="text-xs mb-0.5">@</span>

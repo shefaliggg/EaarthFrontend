@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Phone,
   Video,
+  Megaphone,
+  Clapperboard,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -15,6 +17,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Button } from "../../../../../shared/components/ui/button";
 import useChatStore from "../../store/chat.store";
 import useCallStore from "../../store/call.store";
+import { canUserSendMessage } from "../../utils/chatPermissions";
+import { getCurrentUserId } from "../../../../../shared/config/utils";
 
 export default function ChatHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -25,8 +29,11 @@ export default function ChatHeader() {
   const { selectedChat, getGroupOnlineCount, onlineUsers } = useChatStore();
   const { initiateCall } = useCallStore();
 
-  const isOnline = selectedChat?.userId && onlineUsers.has(selectedChat.userId);
+  const { canSend } = canUserSendMessage(selectedChat, getCurrentUserId());
 
+  const isGroup = selectedChat.type === "group" || selectedChat.type === "all";
+
+  const isOnline = selectedChat?.userId && onlineUsers.has(selectedChat.userId);
   const onlineCount = getGroupOnlineCount(selectedChat);
 
   return (
@@ -37,10 +44,23 @@ export default function ChatHeader() {
           <div className="flex items-center gap-2.5">
             {selectedChat.avatar && (
               <Avatar className="h-9! w-9! border-2 border-primary/20">
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-sm">
-                  {selectedChat.type === "dm"
-                    ? selectedChat.avatar
-                    : selectedChat.name.charAt(0)}
+                <AvatarFallback
+                  className={cn(
+                    "text-primary-foreground font-bold text-sm",
+                    selectedChat.type === "all"
+                      ? "bg-gradient-to-br from-primary/10 to-primary/20 border"
+                      : "bg-gradient-to-br from-primary to-primary/70",
+                  )}
+                >
+                  {isGroup ? (
+                    selectedChat.type === "all" ? (
+                      <Megaphone className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Clapperboard className="w-4 h-4" />
+                    )
+                  ) : (
+                    selectedChat.avatar
+                  )}
                 </AvatarFallback>
               </Avatar>
             )}
@@ -93,23 +113,26 @@ export default function ChatHeader() {
               <span className="hidden sm:inline">Summarize</span>
             </Button> */}
 
-            <Button
-              variant={"ghost"}
-              size={"icon"}
-              aria-label="Start Voice Call"
-              onClick={() => initiateCall(selectedChat.id, "AUDIO")}
-            >
-              <Phone className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={"ghost"}
-              size={"icon"}
-              aria-label="Start Video Call"
-              onClick={() => initiateCall(selectedChat.id, "VIDEO")}
-            >
-              <Video className="w-4 h-4" />
-            </Button>
-
+            {canSend && (
+              <>
+                <Button
+                  variant={"ghost"}
+                  size={"icon"}
+                  aria-label="Start Voice Call"
+                  onClick={() => initiateCall(selectedChat.id, "AUDIO")}
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={"ghost"}
+                  size={"icon"}
+                  aria-label="Start Video Call"
+                  onClick={() => initiateCall(selectedChat.id, "VIDEO")}
+                >
+                  <Video className="w-4 h-4" />
+                </Button>
+              </>
+            )}
             <Button
               onClick={() => setIsSearchOpen(true)}
               variant={"ghost"}

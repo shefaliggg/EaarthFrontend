@@ -28,6 +28,7 @@ import RecordingBar from "./RecordingBar";
 import ReplyToMessagePreview from "./ReplyToMessagePreview";
 import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 import TypingIndicator from "./TypingIndicator";
+import { insertDateSeparators } from "../../utils/messageHelpers";
 
 function ChatBox() {
   const scrollContainerRef = useRef(null);
@@ -68,6 +69,11 @@ function ChatBox() {
   }, [selectedChat?.id, messagesByConversation]);
 
   const messages = messagesData.messages || [];
+
+  const messagesWithDates = useMemo(() => {
+    if (!messages.length) return [];
+    return insertDateSeparators(messages);
+  }, [messages]);
 
   const NEAR_BOTTOM_THRESHOLD = 100; // px from bottom considered "near"
 
@@ -215,7 +221,6 @@ function ChatBox() {
   };
 
   const pinnedMessage = selectedChat?.pinnedMessage;
-  console.log("pinned message", pinnedMessage);
 
   // ────────────────────────────────
   // Render
@@ -319,9 +324,9 @@ function ChatBox() {
           </div>
         )}
 
-        {messages.length > 0 && (
+        {messagesWithDates.length > 0 && (
           <MessageList
-            messages={messages}
+            messages={messagesWithDates}
             messagesData={messagesData}
             isLoadingMessages={isLoadingMessages}
             onReply={setReplyTo}
@@ -330,11 +335,9 @@ function ChatBox() {
         )}
 
         {!isLoadingMessages && messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-2">
-              <div className="text-4xl">💬</div>
-              <p className="text-sm text-muted-foreground">No messages yet</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-full -m-2 gap-2">
+            <MessageCircle className="w-8 h-8 text-primary" />
+            <p className="text-sm text-muted-foreground">No messages yet</p>
           </div>
         )}
 

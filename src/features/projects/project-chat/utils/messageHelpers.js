@@ -374,7 +374,7 @@ export const transformConversation = (conv, currentUserId) => {
     projectId: conv.projectId,
     name:
       conv.type === "PROJECT_ALL"
-        ? "General"
+        ? "Announcements"
         : conv.type === "DEPARTMENT"
           ? conv.department?.name || "Department"
           : otherUser?.userId?.displayName || "Unknown User",
@@ -393,6 +393,7 @@ export const transformConversation = (conv, currentUserId) => {
     mentions: 0,
     lastMessage: conv.lastMessage?.preview || "",
     pinnedMessage: conv.pinnedMessage,
+    settings: conv.settings,
     timestamp: conv.lastMessage?.createdAt
       ? new Date(conv.lastMessage.createdAt).getTime()
       : Date.now(),
@@ -447,4 +448,92 @@ export const generateConversationLastMessagePreview = (message) => {
   }
 
   return "New message";
+};
+
+export const formatSystemMessage = (msg, members = []) => {
+  const action = msg?.system?.action;
+  const targetIds = msg?.system?.targetUserIds || [];
+
+  // Map IDs → names from conversation members
+  const names = targetIds
+    .map(
+      (id) =>
+        members.find((m) => String(m?.userId?._id) === String(id))?.userId
+          ?.displayName,
+    )
+    .filter(Boolean);
+
+  const formatNames = () => {
+    if (names.length === 0) return `${targetIds.length} members`;
+
+    if (names.length === 1) return names[0];
+
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+
+    if (names.length === 3) return `${names[0]}, ${names[1]} and ${names[2]}`;
+
+    return `${names[0]}, ${names[1]} and ${names.length - 2} others`;
+  };
+
+  switch (action) {
+    case "MEMBER_ADDED":
+      return `${formatNames()} has been added to chat`;
+
+    case "MEMBER_REMOVED":
+      return `${formatNames()} has been removed from the chat`;
+
+    default:
+      return "System update";
+  }
+};
+
+export const formatMessageDateLabel = (date) => {
+  const d = new Date(date);
+  const today = new Date();
+  const yesterday = new Date();
+
+  yesterday.setDate(today.getDate() - 1);
+
+  const isToday = d.toDateString() === today.toDateString();
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  if (isToday) return "Today";
+  if (isYesterday) return "Yesterday";
+
+  return d.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export const insertDateSeparators = (messages = []) => {
+  if (!messages.length) return [];
+
+  const result = [];
+  let lastDate = null;
+
+  for (const msg of messages) {
+    if (!msg.timestamp) {
+      result.push(msg);
+      continue;
+    }
+
+    const dateObj = new Date(msg.timestamp);
+    const msgDate = dateObj.toDateString();
+
+    if (msgDate !== lastDate) {
+      result.push({
+        id: `date-${msgDate}`,
+        type: "date-separator",
+        date: formatMessageDateLabel(dateObj),
+      });
+
+      lastDate = msgDate;
+    }
+
+    result.push(msg);
+  }
+
+  return result;
 };

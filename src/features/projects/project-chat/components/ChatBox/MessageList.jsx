@@ -4,6 +4,7 @@ import MessageBubble from "./Messagebubble";
 import TypingIndicator from "./TypingIndicator";
 import useChatStore from "../../store/chat.store";
 import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
+import { formatSystemMessage } from "../../utils/messageHelpers";
 
 export default function MessageList({
   messages,
@@ -59,10 +60,10 @@ export default function MessageList({
           return (
             <div
               key={msg.id}
-              className="flex justify-center my-4"
+              className="flex justify-center my-3"
               role="separator"
             >
-              <div className="bg-muted/50 px-3 py-1.5 rounded-full text-xs text-muted-foreground font-medium">
+              <div className="bg-muted/50 px-2 py-0.5 rounded-full text-[11px] text-muted-foreground font-medium">
                 {msg.date}
               </div>
             </div>
@@ -70,7 +71,10 @@ export default function MessageList({
         }
 
         // System message
+        // System message
         if (msg.type === "system") {
+          const text = formatSystemMessage(msg, selectedChat?.members);
+
           return (
             <div
               key={msg.id}
@@ -79,8 +83,8 @@ export default function MessageList({
             >
               <div className="bg-muted/30 px-3 py-1.5 rounded-lg text-xs text-muted-foreground flex items-center gap-2">
                 <AlertCircle className="w-3.5 h-3.5" />
-                {msg.content}
-                <span className="text-[10px]">{msg.time}</span>
+                {text}
+                <span className="text-[8px]">{msg.time}</span>
               </div>
             </div>
           );

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Smile, Send, Paperclip, Mic } from "lucide-react";
+import { Smile, Send, Paperclip, Mic, Lock } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import EmojiPicker from "emoji-picker-react";
 import useChatStore from "../../store/chat.store";
@@ -7,6 +7,8 @@ import FileAttachmentMenu from "./FileAttachmentMenu";
 import { buildReplyPayload } from "../../utils/messageHelpers";
 import { Button } from "../../../../../shared/components/ui/button";
 import { toast } from "sonner";
+import { getCurrentUserId } from "../../../../../shared/config/utils";
+import { canUserSendMessage } from "../../utils/chatPermissions";
 
 const DEFAULT_PROJECT_ID = "697c899668977a7ca2b27462";
 
@@ -34,7 +36,11 @@ const MessageInput = React.memo(
     const { sendMessage, editMessage, emitTypingStart, emitTypingStop } =
       useChatStore();
 
-    // REF to always have latest attachments
+    const { canSend, reason } = canUserSendMessage(
+      selectedChat,
+      getCurrentUserId(),
+    );
+
     const attachmentsRef = useRef(attachments);
     useEffect(() => {
       attachmentsRef.current = attachments;
@@ -310,6 +316,34 @@ const MessageInput = React.memo(
 
     const showSendButton =
       messageInput.trim().length > 0 || attachments.length > 0;
+
+    if (!canSend) {
+      return (
+        <div className="flex items-center gap-1 justify-center min-h-[30px] text-sm text-muted-foreground pointer-events-none">
+          <Lock className="w-3 h-3 text-red-500" />
+
+          {reason === "ROLE_RESTRICTED" && (
+            <>
+              Only{" "}
+              <span className="font-medium text-primary">
+                Production Admin, Account Admin, and Supervisor
+              </span>{" "}
+              can send messages in this group.
+            </>
+          )}
+
+          {reason === "TEMP_RESTRICTED" && (
+            <>You are temporarily restricted from sending messages.</>
+          )}
+
+          {reason === "NOT_MEMBER" && (
+            <>You are not part of this conversation.</>
+          )}
+
+          {reason === "NO_CONVERSATION" && <>Conversation not available.</>}
+        </div>
+      );
+    }
 
     return (
       <div className="flex rounded-xl items-end gap-2">

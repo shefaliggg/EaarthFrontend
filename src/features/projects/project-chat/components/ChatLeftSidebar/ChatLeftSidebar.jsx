@@ -82,23 +82,16 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     },
   );
 
-  const { groups, teamMembers, unread, favorite } =
-    categorizedConversations;
+  const { groups, teamMembers, unread, favorite } = categorizedConversations;
 
   const renderConversationList = (list) => {
     return list.map((item) => (
       <ConversationItem
         key={item.id}
         item={item}
-        type={item.type === "dm" ? "direct" : "group"}
+        type={item.type === "dm" ? "direct" : item.type}
         isSelected={selectedChat?.id === item.id}
-        onClick={() =>
-          item.canSendMessage
-            ? handleChatClick(item)
-            : toast.error(
-                "You do not have permission to send messages in this Chat",
-              )
-        }
+        onClick={() => handleChatClick(item)}
         onContextMenu={(e) =>
           handleContextMenu(e, item, item.type === "dm" ? "direct" : "team")
         }
