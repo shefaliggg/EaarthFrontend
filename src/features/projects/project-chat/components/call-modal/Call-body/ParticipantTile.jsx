@@ -95,8 +95,8 @@ export function ParticipantTile({
       {/* ── Pin button (hover) ── */}
       {!isContent && !hidePin && (
         <InfoTooltip
-          content={isPinned ? "Un Pin Participant" : "Pin Participant"}
-          side={"bottom"}
+          content={isPinned ? "Unpin participant" : "Pin participant"}
+          side="bottom"
         >
           <button
             onClick={(e) => {
@@ -104,25 +104,20 @@ export function ParticipantTile({
               onPin?.();
             }}
             className={cn(
-              "absolute top-2 right-2 z-20 rounded-full p-1.5 transition",
-              "bg-zinc-900/70 backdrop-blur hover:bg-zinc-800",
-              "opacity-0 group-hover:opacity-100",
+              "absolute top-2 right-2 z-20 rounded-full p-1.5 transition-all",
+              "backdrop-blur",
+              isPinned
+                ? "bg-primary text-white opacity-100"
+                : "bg-zinc-900/70 hover:bg-zinc-800 opacity-0 group-hover:opacity-100",
             )}
           >
             {isPinned ? (
-              <PinOff className="w-3.5 h-3.5 text-red-500" />
+              <PinOff className="w-3.5 h-3.5" />
             ) : (
               <Pin className="w-3.5 h-3.5 text-white" />
             )}
           </button>
         </InfoTooltip>
-      )}
-
-      {/* ── Pinned indicator ── */}
-      {isPinned && (
-        <div className="absolute top-2 left-2 z-20 bg-primary rounded-full p-1">
-          <Pin className="w-4 h-4" />
-        </div>
       )}
 
       {/* ── Bottom label bar ── */}

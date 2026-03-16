@@ -172,11 +172,6 @@ export default function CallModal() {
     }
   }, [allTiles, pinnedId]);
 
-  const stripTiles = useMemo(
-    () => allTiles.filter((t) => t.id !== speakerTile?.id),
-    [allTiles, speakerTile],
-  );
-
   // Re-centre when call connects
   const prevCallState = useRef(null);
   useEffect(() => {
@@ -259,7 +254,6 @@ export default function CallModal() {
             callType={callType}
             allTiles={allTiles}
             speakerTile={speakerTile}
-            stripTiles={stripTiles}
             pinnedId={pinnedId}
             onPin={(id) => {
               setPinnedId((prev) => (prev === id ? null : id));
@@ -328,7 +322,6 @@ export default function CallModal() {
                 callType={callType}
                 allTiles={allTiles}
                 speakerTile={speakerTile}
-                stripTiles={stripTiles}
                 pinnedId={pinnedId}
                 onPin={(id) => {
                   setPinnedId((prev) => (prev === id ? null : id));

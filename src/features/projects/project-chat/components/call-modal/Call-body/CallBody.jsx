@@ -8,7 +8,6 @@ function CallBody({
   callType,
   allTiles,
   speakerTile,
-  stripTiles,
   pinnedId,
   onPin,
   compact,
@@ -33,7 +32,6 @@ function CallBody({
         <SpeakerLayout
           allTiles={allTiles}
           speakerTile={speakerTile}
-          stripTiles={stripTiles}
           pinnedId={pinnedId}
           onPin={onPin}
           compact={compact}
