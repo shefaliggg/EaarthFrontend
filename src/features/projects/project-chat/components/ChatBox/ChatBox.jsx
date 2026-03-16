@@ -51,19 +51,17 @@ function ChatBox() {
 
   const [recordingState, setRecordingState] = useState("idle"); // "idle" | "recording" | "preview"
 
-  const {
-    selectedChat,
-    messagesByConversation,
-    loadMessages,
-    emitConversationRead,
-    isLoadingMessages,
-    typingUsers,
-    togglePinMessage,
-  } = useChatStore();
+  const selectedChat = useChatStore((s) => s.selectedChat);
+  const messagesByConversation = useChatStore((s) => s.messagesByConversation);
+  const loadMessages = useChatStore((s) => s.loadMessages);
+  const emitConversationRead = useChatStore((s) => s.emitConversationRead);
+  const isLoadingMessages = useChatStore((s) => s.isLoadingMessages);
+  const typingUsers = useChatStore((s) => s.typingUsers);
+  const togglePinMessage = useChatStore((s) => s.togglePinMessage);
 
   const messagesData = useMemo(() => {
     if (!selectedChat?.id || !messagesByConversation[selectedChat.id]) {
-      return { messages: [], hasMore: false };
+      return { messages: [], hasMore: false, messagesLoaded: false };
     }
     return messagesByConversation[selectedChat.id];
   }, [selectedChat?.id, messagesByConversation]);
@@ -114,18 +112,24 @@ function ChatBox() {
 
       // load older messages when scrollTop is near top
       if (scrollTop < 80 && messagesData.hasMore && !isLoadingMessages) {
-        const prevScrollHeight = container.scrollHeight;
-        const prevScrollTop = container.scrollTop;
+        const container = scrollContainerRef.current;
 
-        // measure loader height BEFORE fetch
-        const loaderHeight = topLoaderRef.current?.offsetHeight || 0;
+        const firstVisible = container.querySelector("[data-message-id]");
+        const anchorId = firstVisible?.dataset?.messageId;
+        const anchorOffset = firstVisible?.getBoundingClientRect().top;
 
         loadMessages(selectedChat.id, true).then(() => {
           requestAnimationFrame(() => {
-            const newScrollHeight = container.scrollHeight;
-            const heightDiff = newScrollHeight - prevScrollHeight;
+            const anchor = container.querySelector(
+              `[data-message-id="${anchorId}"]`,
+            );
 
-            container.scrollTop = prevScrollTop + heightDiff - loaderHeight;
+            if (!anchor) return;
+
+            const newOffset = anchor.getBoundingClientRect().top;
+            const diff = newOffset - anchorOffset;
+
+            container.scrollTop += diff;
           });
         });
       }
@@ -148,16 +152,19 @@ function ChatBox() {
 
     setLoadError(null);
     setUnreadNewMessages(0);
-    setIsUserAtBottom(true); // important
+    setIsUserAtBottom(true);
     setReplyTo(null);
     setEditingMessage(null);
     setIsRecording(false);
     setRecordingTime(0);
 
-    loadMessages(selectedChat.id).catch((err) => {
-      setLoadError(err.message || "Failed to load messages");
-    });
-  }, [selectedChat?.id]);
+    // only load if conversation not already loaded
+    if (!messagesData.messagesLoaded) {
+      loadMessages(selectedChat.id).catch((err) => {
+        setLoadError(err.message || "Failed to load messages");
+      });
+    }
+  }, [selectedChat?.id, messagesData.messagesLoaded]);
 
   useLayoutEffect(() => {
     if (!selectedChat?.id) return;
@@ -168,7 +175,7 @@ function ChatBox() {
     if (!container) return;
 
     container.scrollTop = container.scrollHeight;
-  }, [isLoadingMessages]);
+  }, [isLoadingMessages, selectedChat?.id]);
 
   useEffect(() => {
     if (!messages.length) return;

@@ -469,6 +469,7 @@ const useChatStore = create(
             messages: [],
             hasMore: true,
             cursor: null,
+            messagesLoaded: false,
           };
 
           const cursor = loadMore ? existing.cursor : null;
@@ -498,6 +499,7 @@ const useChatStore = create(
                 messages: updatedMessages,
                 hasMore: result.hasMore,
                 cursor: result.nextCursor,
+                messagesLoaded: true,
               },
             },
             isLoadingMessages: false,

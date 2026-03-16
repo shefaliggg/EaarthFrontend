@@ -38,7 +38,10 @@ import useChatStore from "../../store/chat.store";
 import ReplyPreviewContent from "./ReplyPreviewContent";
 import { toast } from "sonner";
 import { formatDuration, getReadByCount } from "../../utils/messageHelpers";
-import { convertToPrettyText, getCurrentUserId } from "../../../../../shared/config/utils";
+import {
+  convertToPrettyText,
+  getCurrentUserId,
+} from "../../../../../shared/config/utils";
 import { Button } from "../../../../../shared/components/ui/button";
 import CallMessagePreview from "./CallMessagePreview";
 import useCallStore from "../../store/call.store";
@@ -203,7 +206,8 @@ export default function MessageBubble({
   if (message.deleted) {
     return (
       <div
-        id={`message-${message.id}`}
+        id={`message-${message.clientTempId || message.id}`}
+        data-message-id={message.clientTempId || message.id}
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
@@ -226,6 +230,7 @@ export default function MessageBubble({
   return (
     <div
       id={`message-${message.clientTempId || message.id}`}
+      data-message-id={message.clientTempId || message.id}
       className={cn(
         "flex gap-3 transition-all",
         isOwn ? "flex-row-reverse" : "flex-row",

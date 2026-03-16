@@ -51,7 +51,7 @@ export default function ConversationItem({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        "w-full px-2 pl-1.5 py-1 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
+        "w-full px-2 pl-1.5 py-1.5 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
         isSelected && "bg-muted ring-2 ring-primary/20",
       )}
     >
