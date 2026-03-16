@@ -119,7 +119,9 @@ export default function ChatHeader() {
                   variant={"ghost"}
                   size={"icon"}
                   aria-label="Start Voice Call"
-                  onClick={() => initiateCall(selectedChat.id, "AUDIO")}
+                  onClick={() =>
+                    initiateCall(selectedChat.id, selectedChat.type, "AUDIO")
+                  }
                 >
                   <Phone className="w-4 h-4" />
                 </Button>
@@ -127,7 +129,9 @@ export default function ChatHeader() {
                   variant={"ghost"}
                   size={"icon"}
                   aria-label="Start Video Call"
-                  onClick={() => initiateCall(selectedChat.id, "VIDEO")}
+                  onClick={() =>
+                    initiateCall(selectedChat.id, selectedChat.type, "VIDEO")
+                  }
                 >
                   <Video className="w-4 h-4" />
                 </Button>

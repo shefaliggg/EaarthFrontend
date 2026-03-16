@@ -30,21 +30,52 @@ const useCallStore = create(
       meetingSession: null,
       incomingCall: null,
       viewMode: "compact",
+      layout: "grid",
       localTileId: null,
       remoteTiles: {},
       isInitiator: false,
       isAudioMuted: false,
       isVideoOff: false,
       isSharingScreen: false,
+      deviceWarnings: [],
       activeSpeakerId: null,
       attendeeIdToUserId: {},
       participants: [],
       hadParticipants: false, // [{ userId, displayName, isMuted, isVideoOff }]
 
       setViewMode: (mode) => set({ viewMode: mode }),
+
+      setLayout: (layout) => set({ layout }),
+      toggleLayout: () =>
+        set((state) => ({
+          layout: state.layout === "speaker" ? "grid" : "speaker",
+        })),
+
       setIncomingCall: (data) =>
         set({ incomingCall: data, callState: "incoming", isInitiator: false }),
       clearIncomingCall: () => set({ incomingCall: null }),
+
+      addDeviceWarning: (message) => {
+        const warnings = get().deviceWarnings || [];
+
+        const exists = warnings.some((w) => w.message === message);
+        if (exists) return;
+
+        const id = crypto.randomUUID();
+
+        set((state) => ({
+          deviceWarnings: [...(state.deviceWarnings || []), { id, message }],
+        }));
+
+        setTimeout(() => {
+          get().removeDeviceWarning(id);
+        }, 8000);
+      },
+
+      removeDeviceWarning: (id) =>
+        set((state) => ({
+          deviceWarnings: state.deviceWarnings.filter((w) => w.id !== id),
+        })),
 
       enterEndingState: (reason = "ended") => {
         console.log("ending state triggered:", reason);
@@ -73,12 +104,17 @@ const useCallStore = create(
         );
       },
 
-      initiateCall: async (conversationId, callType = "VIDEO") => {
+      initiateCall: async (
+        conversationId,
+        convType = "group",
+        callType = "VIDEO",
+      ) => {
         set({
           callState: "connecting",
           callType,
           conversationId,
           viewMode: "compact",
+          layout: convType === "dm" ? "speaker" : "grid",
           isInitiator: true,
         });
 
@@ -121,10 +157,10 @@ const useCallStore = create(
         try {
           const data = await chatApi.joinCall(conversationId);
           const callType = data.callType || "AUDIO";
-          set({ callType });
-
-          const currentUserId = getCurrentUserId();
-          const currentUser = store.getState().user.currentUser;
+          set({
+            callType,
+            layout: data.conversationType === "DIRECT" ? "speaker" : "grid",
+          });
 
           const existingParticipants = Array.isArray(data.existingParticipants)
             ? data.existingParticipants
@@ -279,44 +315,73 @@ const useCallStore = create(
         }
       },
 
-      toggleMute: () => {
+      toggleMute: async () => {
         const { meetingSession, isAudioMuted } = get();
         const currentUserId = getCurrentUserId();
 
-        set((state) => ({
-          isAudioMuted: !isAudioMuted,
-          participants: state.participants.map((p) =>
-            p.userId === currentUserId ? { ...p, isMuted: !isAudioMuted } : p,
-          ),
-        }));
-
         if (!meetingSession) return;
 
-        if (isAudioMuted) {
-          meetingSession.audioVideo.realtimeUnmuteLocalAudio();
-        } else {
-          meetingSession.audioVideo.realtimeMuteLocalAudio();
+        try {
+          if (isAudioMuted) {
+            meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+          } else {
+            meetingSession.audioVideo.realtimeMuteLocalAudio();
+          }
+
+          set((state) => ({
+            isAudioMuted: !isAudioMuted,
+            participants: state.participants.map((p) =>
+              p.userId === currentUserId ? { ...p, isMuted: !isAudioMuted } : p,
+            ),
+          }));
+        } catch (err) {
+          console.warn("⚠️ Failed to toggle microphone:", err.message);
+
+          get().addDeviceWarning("Unable to access microphone.");
         }
       },
 
       toggleVideo: async () => {
         const { meetingSession, isVideoOff } = get();
-        set({ isVideoOff: !isVideoOff });
+        const currentUserId = getCurrentUserId();
 
         if (!meetingSession) return;
 
-        if (isVideoOff) {
-          const devices =
-            await meetingSession.audioVideo.listVideoInputDevices();
-          if (devices.length > 0) {
+        try {
+          if (isVideoOff) {
+            const devices =
+              await meetingSession.audioVideo.listVideoInputDevices();
+
+            if (!devices.length) {
+              throw new Error("No camera device found");
+            }
+
             await meetingSession.audioVideo.startVideoInput(
               devices[0].deviceId,
             );
+            meetingSession.audioVideo.startLocalVideoTile();
+
+            set((state) => ({
+              isVideoOff: false,
+              participants: state.participants.map((p) =>
+                p.userId === currentUserId ? { ...p, isVideoOff: false } : p,
+              ),
+            }));
+          } else {
+            await meetingSession.audioVideo.stopVideoInput();
+            meetingSession.audioVideo.stopLocalVideoTile();
+
+            set((state) => ({
+              isVideoOff: true,
+              participants: state.participants.map((p) =>
+                p.userId === currentUserId ? { ...p, isVideoOff: true } : p,
+              ),
+            }));
           }
-          meetingSession.audioVideo.startLocalVideoTile();
-        } else {
-          await meetingSession.audioVideo.stopVideoInput();
-          meetingSession.audioVideo.stopLocalVideoTile();
+        } catch (err) {
+          console.warn("⚠️ Camera toggle failed:", err.message);
+
+          get().addDeviceWarning("Camera unavailable.");
         }
       },
 
@@ -503,23 +568,49 @@ const useCallStore = create(
           }
 
           // Mic input
-          const audioInputDevices =
-            await meetingSession.audioVideo.listAudioInputDevices();
-          if (audioInputDevices.length > 0) {
-            await meetingSession.audioVideo.startAudioInput(
-              audioInputDevices[0].deviceId,
-            );
+          try {
+            const audioInputDevices =
+              await meetingSession.audioVideo.listAudioInputDevices();
+
+            if (audioInputDevices.length > 0) {
+              await meetingSession.audioVideo.startAudioInput(
+                audioInputDevices[0].deviceId,
+              );
+            } else {
+              throw new Error("No microphone available");
+            }
+          } catch (err) {
+            console.warn("⚠️ Microphone unavailable:", err.message);
+
+            set({ isAudioMuted: true });
+
+            get().addDeviceWarning("Microphone unavailable. You joined muted.");
           }
 
           // Camera input (VIDEO calls only)
           const callType = get().callType;
 
+          // Camera input (VIDEO calls only)
           if (callType === "VIDEO") {
-            const videoInputDevices =
-              await meetingSession.audioVideo.listVideoInputDevices();
-            if (videoInputDevices.length > 0) {
-              await meetingSession.audioVideo.startVideoInput(
-                videoInputDevices[0].deviceId,
+            try {
+              const videoInputDevices =
+                await meetingSession.audioVideo.listVideoInputDevices();
+
+              if (videoInputDevices.length > 0) {
+                await meetingSession.audioVideo.startVideoInput(
+                  videoInputDevices[0].deviceId,
+                );
+              } else {
+                throw new Error("No camera available");
+              }
+            } catch (err) {
+              console.warn("⚠️ Camera unavailable:", err.message);
+
+              // Keep call running but disable camera
+              set({ isVideoOff: true });
+
+              get().addDeviceWarning(
+                "Camera unavailable. You joined with camera off.",
               );
             }
           }
@@ -536,7 +627,7 @@ const useCallStore = create(
 
           meetingSession.audioVideo.start();
 
-          if (callType === "VIDEO") {
+          if (callType === "VIDEO" && !get().isVideoOff) {
             meetingSession.audioVideo.startLocalVideoTile();
           }
 
@@ -547,7 +638,9 @@ const useCallStore = create(
             callState: "connected",
             conversationId,
             isAudioMuted: false,
-            isVideoOff: callType !== "VIDEO",
+            isVideoOff: get().isVideoOff
+              ? get().isVideoOff
+              : callType !== "VIDEO",
           });
         } catch (err) {
           console.error("❌ startSession failed:", err);
@@ -685,11 +778,13 @@ const useCallStore = create(
           isAudioMuted: false,
           isVideoOff: false,
           isSharingScreen: false,
+          deviceWarnings: [],
           activeSpeakerId: null,
           attendeeIdToUserId: {},
           participants: [],
           hadParticipants: false,
           viewMode: "compact", // reset view mode for next call
+          layout: "grid",
         });
       },
 

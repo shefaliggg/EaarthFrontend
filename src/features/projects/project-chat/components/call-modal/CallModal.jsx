@@ -14,6 +14,7 @@ import { useCallSounds } from "../../hooks/call/useCallSounds";
 import CallBody from "./Call-body/CallBody";
 import TopBar from "./TopBar";
 import MinimizedCallPill from "./MinimizedCallPill";
+import CallWarnings from "./CallWarnings";
 
 export default function CallModal() {
   const {
@@ -31,11 +32,13 @@ export default function CallModal() {
     activeSpeakerId,
     participants,
     isInitiator,
+    layout,
+    setLayout,
+    toggleLayout,
   } = useCallStore();
   const { currentUser } = useSelector((state) => state.user);
 
   const currentUserId = getCurrentUserId();
-  const [layout, setLayout] = useState("grid");
   const [pinnedId, setPinnedId] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
 
@@ -240,13 +243,14 @@ export default function CallModal() {
           participantCount={allTiles.length}
           hadParticipants={hadParticipants}
           layout={layout}
-          onLayoutToggle={() =>
-            setLayout((l) => (l === "speaker" ? "grid" : "speaker"))
-          }
+          onLayoutToggle={toggleLayout}
           onMinimize={() => switchMode("minimized")}
           onCompact={() => switchMode("compact")}
           isFull
         />
+
+        <CallWarnings />
+
         {isEnding ? (
           <EndingOverlay reason={endReason} />
         ) : (
@@ -305,15 +309,15 @@ export default function CallModal() {
             callState={callState}
             participantCount={allTiles.length}
             layout={layout}
-            onLayoutToggle={() =>
-              setLayout((l) => (l === "speaker" ? "grid" : "speaker"))
-            }
+            onLayoutToggle={toggleLayout}
             onFull={() => setViewMode("full")}
             onMinimize={() => switchMode("minimized")}
             onCompact={() => switchMode("compact")}
             isCompact={isCompact}
             isMinimized={isMinimized}
           />
+
+          <CallWarnings />
 
           {isEnding && <EndingOverlay reason={endReason} />}
 
