@@ -31,6 +31,7 @@ const useCallStore = create(
       incomingCall: null,
       viewMode: "compact",
       layout: "grid",
+      previousLayout: null,
       localTileId: null,
       remoteTiles: {},
       isInitiator: false,
@@ -47,10 +48,19 @@ const useCallStore = create(
       setViewMode: (mode) => set({ viewMode: mode }),
 
       setLayout: (layout) => set({ layout }),
-      toggleLayout: () =>
+      toggleLayout: () => {
+        const { isLocalSharingScreen, isRemoteSharingScreen } = get();
+
+        if (isLocalSharingScreen || isRemoteSharingScreen) {
+          return toast.warning(
+            "Layout can't be changed while screen sharing is active",
+          );
+        }
+
         set((state) => ({
           layout: state.layout === "speaker" ? "grid" : "speaker",
-        })),
+        }));
+      },
 
       setIncomingCall: (data) =>
         set({ incomingCall: data, callState: "incoming", isInitiator: false }),
@@ -387,7 +397,12 @@ const useCallStore = create(
       },
 
       startScreenShare: async () => {
-        const { meetingSession, isLocalSharingScreen, remoteTiles } = get();
+        const {
+          meetingSession,
+          isLocalSharingScreen,
+          isRemoteSharingScreen,
+          remoteTiles,
+        } = get();
 
         if (!meetingSession || isLocalSharingScreen) return;
 
@@ -397,9 +412,30 @@ const useCallStore = create(
         }
 
         try {
-          await meetingSession.audioVideo.startContentShareFromScreenCapture();
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true,
+          });
+
+          const track = stream.getVideoTracks()[0];
+
+          track.onended = () => {
+            console.log("🛑 Browser stopped screen share");
+            get().handleScreenShareStopped();
+          };
+
+          await meetingSession.audioVideo.startContentShare(stream);
+
+          toast.info(
+            "For the best experience, share your entire screen instead of a browser tab.",
+          );
+
+          setTimeout(() => {
+            window.focus();
+          }, 300);
 
           set({ isLocalSharingScreen: true });
+          get().updateLayoutForScreenShare();
         } catch (err) {
           console.error("❌ Screen share error:", err);
 
@@ -414,8 +450,29 @@ const useCallStore = create(
       stopScreenShare: async () => {
         const { meetingSession } = get();
         if (!meetingSession) return;
-        await meetingSession.audioVideo.stopContentShare();
-        set({ isLocalSharingScreen: false });
+
+        try {
+          await meetingSession.audioVideo.stopContentShare();
+        } catch (e) {
+          console.warn("stopContentShare error:", e);
+        }
+
+        get().handleScreenShareStopped();
+      },
+
+      handleScreenShareStopped: () => {
+        const { isLocalSharingScreen, isRemoteSharingScreen } = get();
+
+        if (!isLocalSharingScreen && !isRemoteSharingScreen) return;
+
+        console.log("🖥 Screen share stopped");
+
+        set({
+          isLocalSharingScreen: false,
+          isRemoteSharingScreen: false,
+        });
+
+        get().updateLayoutForScreenShare();
       },
 
       syncParticipantJoin: ({
@@ -558,6 +615,28 @@ const useCallStore = create(
         }, 900);
       },
 
+      updateLayoutForScreenShare: () => {
+        const {
+          isLocalSharingScreen,
+          isRemoteSharingScreen,
+          layout,
+          previousLayout,
+        } = get();
+
+        const sharing = isLocalSharingScreen || isRemoteSharingScreen;
+
+        if (sharing && layout !== "speaker") {
+          set({ previousLayout: layout, layout: "speaker" });
+        }
+
+        if (!sharing && layout === "speaker" && previousLayout) {
+          set({
+            layout: previousLayout || "grid",
+            previousLayout: null,
+          });
+        }
+      },
+
       startSession: async (meeting, attendee, conversationId) => {
         try {
           const logger = new ConsoleLogger("ChimeSDK", LogLevel.WARN);
@@ -669,7 +748,6 @@ const useCallStore = create(
       attachObservers: (meetingSession, conversationId) => {
         meetingSession.audioVideo.addObserver({
           videoTileDidUpdate: (tileState) => {
-            console.log("TILE UPDATE", tileState);
             if (!tileState.boundAttendeeId) return;
 
             if (tileState.localTile) {
@@ -677,31 +755,55 @@ const useCallStore = create(
               return;
             }
 
+            const currentUserId = getCurrentUserId();
+
             const tile = {
               tileId: tileState.tileId,
               boundExternalUserId: tileState.boundExternalUserId,
               isContent: tileState.isContent,
             };
 
-            set((state) => ({
-              remoteTiles: {
+            set((state) => {
+              const updatedTiles = {
                 ...state.remoteTiles,
                 [tileState.tileId]: tile,
-              },
-            }));
+              };
+
+              const isRemoteSharingScreen = Object.values(updatedTiles).some(
+                (t) => t.isContent && t.boundExternalUserId !== currentUserId,
+              );
+
+              const result = {
+                remoteTiles: updatedTiles,
+                isRemoteSharingScreen,
+              };
+
+              setTimeout(() => get().updateLayoutForScreenShare(), 0);
+
+              return result;
+            });
           },
 
           videoTileWasRemoved: (tileId) => {
-            const { localTileId } = get();
+            const { localTileId, remoteTiles } = get();
+
             if (tileId === localTileId) {
               set({ localTileId: null });
-            } else {
-              set((state) => {
-                const updated = { ...state.remoteTiles };
-                delete updated[tileId];
+              return;
+            }
 
-                return { remoteTiles: updated };
-              });
+            const removedTile = remoteTiles[tileId];
+
+            set((state) => {
+              const updated = { ...state.remoteTiles };
+              delete updated[tileId];
+
+              return { remoteTiles: updated };
+            });
+
+            if (removedTile?.isContent) {
+              console.log("🖥 Content tile removed");
+              get().handleScreenShareStopped();
             }
           },
 
@@ -736,10 +838,7 @@ const useCallStore = create(
           },
 
           contentShareDidStop: () => {
-            set({
-              isLocalSharingScreen: false,
-              isRemoteSharingScreen: false,
-            });
+            get().handleScreenShareStopped();
           },
         });
 
@@ -820,6 +919,7 @@ const useCallStore = create(
           hadParticipants: false,
           viewMode: "compact", // reset view mode for next call
           layout: "grid",
+          previousLayout: null,
         });
       },
 
