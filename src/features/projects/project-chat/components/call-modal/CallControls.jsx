@@ -48,7 +48,8 @@ export default function CallControls({ onShowParticipants }) {
   const {
     isAudioMuted,
     isVideoOff,
-    isSharingScreen,
+    isLocalSharingScreen,
+    isRemoteSharingScreen,
     callType,
     toggleMute,
     toggleVideo,
@@ -67,7 +68,7 @@ export default function CallControls({ onShowParticipants }) {
     (Array.isArray(conversation?.members) && conversation.members.length <= 2);
 
   const handleScreenShare = () => {
-    if (isSharingScreen) {
+    if (isLocalSharingScreen) {
       stopScreenShare();
     } else {
       startScreenShare();
@@ -108,10 +109,11 @@ export default function CallControls({ onShowParticipants }) {
       {callType === "VIDEO" && (
         <ControlButton
           onClick={handleScreenShare}
-          active={!isSharingScreen}
-          label={isSharingScreen ? "Stop Share" : "Share Screen"}
+          active={!isLocalSharingScreen}
+          label={isLocalSharingScreen ? "Stop Share" : "Share Screen"}
+          disabled={isRemoteSharingScreen}
         >
-          {isSharingScreen ? (
+          {isLocalSharingScreen ? (
             <MonitorOff className="w-5 h-5 text-blue-400" />
           ) : (
             <Monitor className="w-5 h-5 text-white" />

@@ -36,7 +36,8 @@ const useCallStore = create(
       isInitiator: false,
       isAudioMuted: false,
       isVideoOff: false,
-      isSharingScreen: false,
+      isLocalSharingScreen: false,
+      isRemoteSharingScreen: false,
       deviceWarnings: [],
       activeSpeakerId: null,
       attendeeIdToUserId: {},
@@ -386,13 +387,27 @@ const useCallStore = create(
       },
 
       startScreenShare: async () => {
-        const { meetingSession } = get();
-        if (!meetingSession) return;
+        const { meetingSession, isLocalSharingScreen, remoteTiles } = get();
+
+        if (!meetingSession || isLocalSharingScreen) return;
+
+        if (Object.values(remoteTiles).some((t) => t.isContent)) {
+          toast.info("Someone is already sharing their screen");
+          return;
+        }
+
         try {
           await meetingSession.audioVideo.startContentShareFromScreenCapture();
-          set({ isSharingScreen: true });
+
+          set({ isLocalSharingScreen: true });
         } catch (err) {
-          console.error("Screen share error:", err);
+          console.error("❌ Screen share error:", err);
+
+          if (err?.name === "NotAllowedError") {
+            return;
+          }
+
+          get().addDeviceWarning("Unable to start screen share.");
         }
       },
 
@@ -400,7 +415,7 @@ const useCallStore = create(
         const { meetingSession } = get();
         if (!meetingSession) return;
         await meetingSession.audioVideo.stopContentShare();
-        set({ isSharingScreen: false });
+        set({ isLocalSharingScreen: false });
       },
 
       syncParticipantJoin: ({
@@ -654,6 +669,7 @@ const useCallStore = create(
       attachObservers: (meetingSession, conversationId) => {
         meetingSession.audioVideo.addObserver({
           videoTileDidUpdate: (tileState) => {
+            console.log("TILE UPDATE", tileState);
             if (!tileState.boundAttendeeId) return;
 
             if (tileState.localTile) {
@@ -707,39 +723,57 @@ const useCallStore = create(
               return;
           },
 
-          contentShareDidStart: () => set({ isSharingScreen: true }),
-          contentShareDidStop: () => set({ isSharingScreen: false }),
+          contentShareDidStart: () => {
+            const currentUserId = getCurrentUserId();
+
+            const hasRemoteShare = Object.values(get().remoteTiles).some(
+              (t) => t.isContent && t.boundExternalUserId !== currentUserId,
+            );
+
+            set({
+              isRemoteSharingScreen: hasRemoteShare,
+            });
+          },
+
+          contentShareDidStop: () => {
+            set({
+              isLocalSharingScreen: false,
+              isRemoteSharingScreen: false,
+            });
+          },
         });
 
         meetingSession.audioVideo.realtimeSubscribeToAttendeeIdPresence(
           (attendeeId, present, externalUserId) => {
             // Skip content-share ghost attendees
-            if (attendeeId.includes("#content")) return;
+            const isContent = attendeeId.includes("#content");
 
-            if (present) {
-              get().syncParticipantJoin({
-                attendeeId,
-                userId: externalUserId,
-              });
+            if (!isContent) {
+              if (present) {
+                get().syncParticipantJoin({
+                  attendeeId,
+                  userId: externalUserId,
+                });
 
-              meetingSession.audioVideo.realtimeSubscribeToVolumeIndicator(
-                attendeeId,
-                (aId, volume, muted) => {
-                  // console.log("volume", attendeeId, volume);
-                  if (muted !== null) {
-                    get().syncMuteState(aId, muted);
-                  }
+                meetingSession.audioVideo.realtimeSubscribeToVolumeIndicator(
+                  attendeeId,
+                  (aId, volume, muted) => {
+                    // console.log("volume", attendeeId, volume);
+                    if (muted !== null) {
+                      get().syncMuteState(aId, muted);
+                    }
 
-                  if (volume !== null && volume > 0.25 && !muted) {
-                    get().markSpeaking(attendeeId);
-                  }
-                  if (volume !== null && volume > 0.6 && !muted) {
-                    get().syncActiveSpeaker(attendeeId);
-                  }
-                },
-              );
-            } else {
-              get().syncParticipantLeave(attendeeId);
+                    if (volume !== null && volume > 0.25 && !muted) {
+                      get().markSpeaking(attendeeId);
+                    }
+                    if (volume !== null && volume > 0.6 && !muted) {
+                      get().syncActiveSpeaker(attendeeId);
+                    }
+                  },
+                );
+              } else {
+                get().syncParticipantLeave(attendeeId);
+              }
             }
           },
         );
@@ -777,7 +811,8 @@ const useCallStore = create(
           remoteTiles: {},
           isAudioMuted: false,
           isVideoOff: false,
-          isSharingScreen: false,
+          isLocalSharingScreen: false,
+          isRemoteSharingScreen: false,
           deviceWarnings: [],
           activeSpeakerId: null,
           attendeeIdToUserId: {},
