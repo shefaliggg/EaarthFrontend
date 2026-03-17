@@ -5,8 +5,9 @@
  * Tabs: preview (ContractPreviewIframe) | offer (OfferDetailsPane, read-only)
  * Sidebar: sign button when it's this role's turn, else status message
  *
- * Props:
- *   role — "UPM" | "FC" | "STUDIO"
+ * FIX: Sign button now checks BOTH offer.status AND signingStatus.currentStatus
+ * so UPM/FC/STUDIO can sign even when offer.status hasn't advanced to match.
+ * Contract status (via signingStatus.currentStatus) is the source of truth for signing.
  */
 
 import { useState } from "react";
@@ -50,12 +51,25 @@ export default function LayoutSignatory({
   const cfg    = SIGN_ROLE_MAP[role];
   const status = offer?.status;
 
-  // Derive a consistent accent bg color for the tab bar from the button color
+  // FIX: Use contract status (signingStatus.currentStatus) as source of truth.
+  // offer.status may lag behind contract.status after a signature is recorded.
+  const contractStatus = signingStatus?.currentStatus ?? status;
+  const isMyTurn = contractStatus === cfg?.requiredStatus || status === cfg?.requiredStatus;
+
+  const isCompleted = contractStatus === "COMPLETED" || status === "COMPLETED";
+  const isCancelled = status === "CANCELLED";
+
+  // Derive signing progress from signatories array
+  const mySignatory = signingStatus?.signatories?.find((s) => s.role === role);
+  const iHaveSigned = mySignatory?.signed ?? false;
+
   const accentBg = {
     UPM:    "bg-indigo-600",
     FC:     "bg-pink-600",
     STUDIO: "bg-violet-600",
   }[role] || "bg-purple-600";
+
+  const btnColor = cfg?.btnColor || accentBg;
 
   return (
     <>
@@ -65,10 +79,14 @@ export default function LayoutSignatory({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start">
         <div>
-          {tab === "preview" && <ContractPreviewIframe preview={previewHtml} isLoading={isLoadingPrev} />}
-          {tab === "offer"   && (
-            <OfferDetailsPane offer={offer} contractData={contractData} allowances={allowances}
-              calculatedRates={calculatedRates} locked={status==="COMPLETED"} />
+          {tab === "preview" && (
+            <ContractPreviewIframe preview={previewHtml} isLoading={isLoadingPrev} />
+          )}
+          {tab === "offer" && (
+            <OfferDetailsPane
+              offer={offer} contractData={contractData} allowances={allowances}
+              calculatedRates={calculatedRates} locked={isCompleted}
+            />
           )}
         </div>
 
@@ -76,23 +94,56 @@ export default function LayoutSignatory({
           <SidebarSummaryCard offer={offer} />
 
           <div className="bg-white rounded-xl border border-neutral-200 p-4 space-y-2">
-            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{cfg?.label}</p>
+            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+              {cfg?.label}
+            </p>
 
-            {status === cfg?.requiredStatus ? (
+            {/* ── Already signed ── */}
+            {iHaveSigned && !isCompleted && (
+              <InfoBox icon={CheckCircle} color="green">
+                You have signed. Awaiting remaining signatories.
+              </InfoBox>
+            )}
+
+            {/* ── My turn to sign ── */}
+            {!iHaveSigned && isMyTurn && !isCompleted && !isCancelled && (
               <>
-                <InfoBox icon={PenLine} color="purple">Your signature is required to proceed.</InfoBox>
-                <button disabled={isSubmitting} onClick={() => onSign(role)}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-[12px] font-semibold disabled:opacity-60 transition-colors ${cfg.btnColor}`}>
-                  {isSubmitting?<Loader2 className="w-3.5 h-3.5 animate-spin"/>:<PenLine className="w-3.5 h-3.5"/>}
+                <InfoBox icon={PenLine} color="purple">
+                  Your signature is required to proceed.
+                </InfoBox>
+                <button
+                  disabled={isSubmitting}
+                  onClick={() => onSign(role)}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-[12px] font-semibold disabled:opacity-60 transition-colors ${btnColor}`}
+                >
+                  {isSubmitting
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <PenLine className="w-3.5 h-3.5" />
+                  }
                   Sign as {role}
                 </button>
               </>
-            ) : status === "COMPLETED" ? (
-              <InfoBox icon={CheckCircle} color="green">Contract fully executed and locked.</InfoBox>
-            ) : status === "CANCELLED" ? (
-              <InfoBox icon={XCircle} color="red">Offer was cancelled.</InfoBox>
-            ) : (
-              <InfoBox icon={Eye} color="gray">No action required at this stage.</InfoBox>
+            )}
+
+            {/* ── Not my turn yet ── */}
+            {!iHaveSigned && !isMyTurn && !isCompleted && !isCancelled && (
+              <InfoBox icon={Eye} color="gray">
+                No action required at this stage.
+              </InfoBox>
+            )}
+
+            {/* ── Completed ── */}
+            {isCompleted && (
+              <InfoBox icon={CheckCircle} color="green">
+                Contract fully executed and locked.
+              </InfoBox>
+            )}
+
+            {/* ── Cancelled ── */}
+            {isCancelled && (
+              <InfoBox icon={XCircle} color="red">
+                Offer was cancelled.
+              </InfoBox>
             )}
           </div>
 

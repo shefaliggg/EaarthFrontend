@@ -26,10 +26,11 @@ const ProjectAppsRoutes = {
     // ── Offers ────────────────────────────────────────────────────────────────
     { path: 'offers',                        element: <MyOffer /> },
     { path: 'offers/create',                 element: <CreateOffer /> },
+    { path: 'offers/:id/edit',               element: <CreateOffer /> },
     { path: 'offers/create/bulk',            element: <BulkOfferCreate /> },
     { path: 'create/offers',                 element: <CreateOfferDialog /> },
     { path: 'offers/:id/view',               element: <ViewOffer /> },
-    { path: 'offers/:id/edit',               element: <EditOffer /> },
+    // { path: 'offers/:id/edit',               element: <EditOffer /> },
     { path: 'offers/:id/review',             element: <CrewReview /> },
     // { path: 'offers/:id/production-review',  element: <ProductionReview/> },
     { path: 'offers/:id/sign',               element: <ContractDocumentPage /> },
