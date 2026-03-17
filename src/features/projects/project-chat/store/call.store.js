@@ -36,7 +36,7 @@ const useCallStore = create(
       remoteTiles: {},
       isInitiator: false,
       isAudioMuted: false,
-      isVideoOff: false,
+      isVideoOff: true,
       isLocalSharingScreen: false,
       isRemoteSharingScreen: false,
       deviceWarnings: [],
@@ -231,21 +231,14 @@ const useCallStore = create(
           state.conversationId !== conversationId
         ) {
           toast.info("Leaving current call…");
-          await state.leaveCall();
+          await get().leaveCall();
         }
 
         console.log("join safely call params:", { conversationId, callType });
 
         // 🚀 Join
         set({ viewMode: "compact" }); // ensure modal is visible before async work
-        await toast.promise(get().joinCall({ conversationId, callType }), {
-          loading: "Joining call…",
-          success: () => {
-            const type = get().callType === "VIDEO" ? "Video" : "Audio";
-            return `${type} call connected`;
-          },
-          error: "Failed to join call",
-        });
+        await get().joinCall({ conversationId, callType });
       },
 
       declineCall: () => {
@@ -333,6 +326,13 @@ const useCallStore = create(
         const { meetingSession, isAudioMuted } = get();
         const currentUserId = getCurrentUserId();
 
+        set((state) => ({
+          isAudioMuted: !isAudioMuted,
+          participants: state.participants.map((p) =>
+            p.userId === currentUserId ? { ...p, isMuted: !isAudioMuted } : p,
+          ),
+        }));
+
         if (!meetingSession) return;
 
         try {
@@ -358,6 +358,13 @@ const useCallStore = create(
       toggleVideo: async () => {
         const { meetingSession, isVideoOff } = get();
         const currentUserId = getCurrentUserId();
+
+        set((state) => ({
+          isVideoOff: !isVideoOff,
+          participants: state.participants.map((p) =>
+            p.userId === currentUserId ? { ...p, isVideoOff: !isVideoOff } : p,
+          ),
+        }));
 
         if (!meetingSession) return;
 
@@ -400,12 +407,7 @@ const useCallStore = create(
       },
 
       startScreenShare: async () => {
-        const {
-          meetingSession,
-          isLocalSharingScreen,
-          isRemoteSharingScreen,
-          remoteTiles,
-        } = get();
+        const { meetingSession, isLocalSharingScreen, remoteTiles } = get();
 
         if (!meetingSession || isLocalSharingScreen) return;
 
@@ -413,10 +415,6 @@ const useCallStore = create(
           toast.info("Someone is already sharing their screen");
           return;
         }
-
-        toast.info(
-          "For the best experience, share your entire screen instead of a browser tab.",
-        );
 
         try {
           const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -428,14 +426,11 @@ const useCallStore = create(
 
           track.onended = () => {
             console.log("🛑 Browser stopped screen share");
+            toast.info("Screen sharing stopped");
             get().handleScreenShareStopped();
           };
 
           await meetingSession.audioVideo.startContentShare(stream);
-
-          setTimeout(() => {
-            window.focus();
-          }, 300);
 
           set({ isLocalSharingScreen: true });
           get().updateLayoutForScreenShare();
@@ -485,7 +480,7 @@ const useCallStore = create(
         callType = "AUDIO",
       }) => {
         const currentUserId = getCurrentUserId();
-        const { isAudioMuted } = get();
+        const { isAudioMuted, isVideoOff } = get();
 
         set((state) => {
           if (!userId) return state;
@@ -521,7 +516,7 @@ const useCallStore = create(
                 userId,
                 displayName: displayName || "User",
                 isMuted: isAudioMuted,
-                isVideoOff: callType !== "VIDEO",
+                isVideoOff: isVideoOff,
                 isSpeaking: false,
               },
             ],
@@ -724,6 +719,10 @@ const useCallStore = create(
 
           meetingSession.audioVideo.start();
 
+          if (get().isAudioMuted) {
+            meetingSession.audioVideo.realtimeMuteLocalAudio();
+          }
+
           if (callType === "VIDEO" && !get().isVideoOff) {
             meetingSession.audioVideo.startLocalVideoTile();
           }
@@ -734,10 +733,8 @@ const useCallStore = create(
             meetingSession,
             callState: "connected",
             conversationId,
-            isAudioMuted: false,
-            isVideoOff: get().isVideoOff
-              ? get().isVideoOff
-              : callType !== "VIDEO",
+            isAudioMuted: get().isAudioMuted,
+            isVideoOff: get().isVideoOff,
           });
         } catch (err) {
           console.error("❌ startSession failed:", err);

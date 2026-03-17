@@ -8,6 +8,7 @@ function CallBody({
   callType,
   allTiles,
   speakerTile,
+  screenShareTile,
   pinnedId,
   onPin,
   compact,
@@ -33,6 +34,7 @@ function CallBody({
           allTiles={allTiles}
           speakerTile={speakerTile}
           pinnedId={pinnedId}
+          screenShareTile={screenShareTile}
           onPin={onPin}
           compact={compact}
         />

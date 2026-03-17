@@ -2,7 +2,14 @@ import React, { useMemo } from "react";
 import { ParticipantTile } from "./ParticipantTile";
 import { cn } from "@/shared/config/utils";
 
-function SpeakerLayout({ allTiles, speakerTile, pinnedId, onPin, compact }) {
+function SpeakerLayout({
+  allTiles,
+  speakerTile,
+  pinnedId,
+  onPin,
+  screenShareTile,
+  compact,
+}) {
   const single = allTiles.length <= 1;
   const onlyTwoMembers = allTiles.length === 2;
 
@@ -18,27 +25,34 @@ function SpeakerLayout({ allTiles, speakerTile, pinnedId, onPin, compact }) {
 
       const remoteTile = allTiles.find((t) => !t.isLocal);
 
-      if (pinnedId === localTile.id) {
-        return remoteTile;
-      }
+      if (pinnedId === localTile.id) return remoteTile;
+      if (pinnedId === remoteTile?.id) return localTile;
 
-      if (pinnedId === remoteTile?.id) {
-        return localTile;
-      }
-
-      return localTile; // default
+      return localTile;
     }
 
-    if (pinnedId === localTile?.id) {
-      return null;
-    }
+    const isSameAsSpeaker = (tile) => tile?.id === speakerTile?.id;
+    const contentTile = allTiles.find((t) => t.isContent);
 
-    if (speakerTile?.id !== localTile?.id) {
+    if (contentTile) {
+      const sharer = allTiles.find(
+        (t) => t.id === screenShareTile?.boundExternalUserId,
+      );
+      if (isSameAsSpeaker(contentTile)) {
+        if (sharer && !isSameAsSpeaker(sharer)) {
+          return sharer;
+        }
+        return localTile && !isSameAsSpeaker(localTile) ? localTile : null;
+      }
+      return contentTile;
+    }
+    
+    if (localTile && !isSameAsSpeaker(localTile)) {
       return localTile;
     }
 
     return null;
-  }, [pinnedId, speakerTile, localTile, activeSpeakerTile]);
+  }, [allTiles, pinnedId, speakerTile, localTile, screenShareTile]);
 
   const stripTiles = useMemo(() => {
     if (onlyTwoMembers) return [];
@@ -79,7 +93,7 @@ function SpeakerLayout({ allTiles, speakerTile, pinnedId, onPin, compact }) {
                 ? "bottom-12"
                 : "bottom-3",
             )}
-            onClick={() => onPin?.(localTile.id)}
+            onClick={() => onPin?.(pipTile.id)}
           >
             <ParticipantTile
               tileId={pipTile.tileId}
@@ -99,33 +113,31 @@ function SpeakerLayout({ allTiles, speakerTile, pinnedId, onPin, compact }) {
       {/* STRIP */}
       {stripTiles.length > 0 && !single && (
         <div className="flex flex-col gap-2 overflow-y-auto flex-shrink-0 pb-0.5">
-          {stripTiles
-            .filter((t) => !(speakerTile?.id !== localTile?.id && t.isLocal))
-            .map((tile) => (
-              <div
-                key={tile.id}
-                className={cn(
-                  "flex-shrink-0 rounded-lg overflow-hidden border transition-all aspect-video",
-                  compact ? "w-30" : "w-60",
-                  pinnedId === tile.id
-                    ? "border-primary shadow-primary/30 shadow-md"
-                    : "border-zinc-700 hover:border-zinc-500",
-                )}
-              >
-                <ParticipantTile
-                  tileId={tile.tileId}
-                  displayName={tile.displayName}
-                  isLocal={tile.isLocal}
-                  isVideoOff={tile.isVideoOff}
-                  isMuted={tile.isMuted}
-                  isSpeaking={tile.isSpeaking}
-                  isActiveSpeaker={tile.isActiveSpeaker}
-                  isPinned={pinnedId === tile.id}
-                  onPin={() => onPin?.(tile.id)}
-                  className="w-full h-full"
-                />
-              </div>
-            ))}
+          {stripTiles.map((tile) => (
+            <div
+              key={tile.id}
+              className={cn(
+                "flex-shrink-0 rounded-lg overflow-hidden border transition-all aspect-video",
+                compact ? "w-30" : "w-60",
+                pinnedId === tile.id
+                  ? "border-primary shadow-primary/30 shadow-md"
+                  : "border-zinc-700 hover:border-zinc-500",
+              )}
+            >
+              <ParticipantTile
+                tileId={tile.tileId}
+                displayName={tile.displayName}
+                isLocal={tile.isLocal}
+                isVideoOff={tile.isVideoOff}
+                isMuted={tile.isMuted}
+                isSpeaking={tile.isSpeaking}
+                isActiveSpeaker={tile.isActiveSpeaker}
+                isPinned={pinnedId === tile.id}
+                onPin={() => onPin?.(tile.id)}
+                className="w-full h-full"
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

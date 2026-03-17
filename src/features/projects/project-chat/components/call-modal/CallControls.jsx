@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Mic,
   MicOff,
@@ -13,6 +13,8 @@ import {
 import { cn } from "@/shared/config/utils";
 import useCallStore from "../../store/call.store";
 import useChatStore from "../../store/chat.store";
+import { Button } from "../../../../../shared/components/ui/button";
+import ScreenShareInfoDialog from "./ScreenShareInfoDialog";
 
 function ControlButton({ onClick, active, danger, disabled, children, label }) {
   return (
@@ -45,12 +47,15 @@ function ControlButton({ onClick, active, danger, disabled, children, label }) {
 }
 
 export default function CallControls({ onShowParticipants }) {
+  const [showShareDialog, setShowShareDialog] = useState(false);
+
   const {
     isAudioMuted,
     isVideoOff,
     isLocalSharingScreen,
     isRemoteSharingScreen,
     callType,
+    callState,
     toggleMute,
     toggleVideo,
     startScreenShare,
@@ -70,84 +75,108 @@ export default function CallControls({ onShowParticipants }) {
   const handleScreenShare = () => {
     if (isLocalSharingScreen) {
       stopScreenShare();
-    } else {
+      return;
+    }
+
+    const skip = localStorage.getItem("skipShareWarning");
+
+    if (skip) {
       startScreenShare();
+    } else {
+      setShowShareDialog(true);
     }
   };
 
+  const confirmScreenShare = () => {
+    setShowShareDialog(false);
+    startScreenShare();
+  };
+
   return (
-    <div className="flex items-center justify-center gap-4 px-6 py-2 bg-gradient-to-b from-zinc-950/50 to-zinc-950 backdrop-blur-2xl border-t border-zinc-900  rounded-b-2xl z-10">
-      {/* Mute */}
-      <ControlButton
-        onClick={toggleMute}
-        active={!isAudioMuted}
-        label={isAudioMuted ? "Unmute" : "Mute"}
-      >
-        {isAudioMuted ? (
-          <MicOff className="w-5 h-5 text-white" />
-        ) : (
-          <Mic className="w-5 h-5 text-white" />
+    <>
+      <div className="flex items-center justify-center gap-4 px-6 py-2 bg-gradient-to-b from-zinc-950/50 to-zinc-950 backdrop-blur-2xl border-t border-zinc-900  rounded-b-2xl z-10">
+        {/* Mute */}
+        <ControlButton
+          onClick={toggleMute}
+          active={!isAudioMuted}
+          label={isAudioMuted ? "Unmute" : "Mute"}
+        >
+          {isAudioMuted ? (
+            <MicOff className="w-5 h-5 text-white" />
+          ) : (
+            <Mic className="w-5 h-5 text-white" />
+          )}
+        </ControlButton>
+
+        {/* Video (only for video calls) */}
+        {callType === "VIDEO" && (
+          <ControlButton
+            onClick={toggleVideo}
+            active={!isVideoOff}
+            label={isVideoOff ? "Start Video" : "Stop Video"}
+          >
+            {isVideoOff ? (
+              <VideoOff className="w-5 h-5 text-white" />
+            ) : (
+              <Video className="w-5 h-5 text-white" />
+            )}
+          </ControlButton>
         )}
-      </ControlButton>
 
-      {/* Video (only for video calls) */}
-      {callType === "VIDEO" && (
+        {/* Screen Share */}
+        {callType === "VIDEO" && (
+          <ControlButton
+            onClick={handleScreenShare}
+            active={!isLocalSharingScreen}
+            label={isLocalSharingScreen ? "Stop Share" : "Share Screen"}
+            disabled={isRemoteSharingScreen || callState === "connecting"}
+          >
+            {isLocalSharingScreen ? (
+              <MonitorOff className="w-5 h-5 text-blue-400" />
+            ) : (
+              <Monitor className="w-5 h-5 text-white" />
+            )}
+          </ControlButton>
+        )}
+
+        {/* Participants */}
+        {!isDirect && (
+          <ControlButton
+            onClick={onShowParticipants}
+            active
+            label="Participants"
+          >
+            <Users className="w-5 h-5 text-white" />
+          </ControlButton>
+        )}
+
+        {/* Leave */}
+        {!isDirect && (
+          <ControlButton onClick={leaveCall} danger label="Leave">
+            <PhoneOff className="w-5 h-5 text-white" />
+          </ControlButton>
+        )}
+
+        {/* End for everyone (could be role-gated in prod) */}
         <ControlButton
-          onClick={toggleVideo}
-          active={!isVideoOff}
-          label={isVideoOff ? "Start Video" : "Stop Video"}
+          onClick={endCallForEveryone}
+          danger
+          label={isDirect ? "End" : "End All"}
         >
-          {isVideoOff ? (
-            <VideoOff className="w-5 h-5 text-white" />
-          ) : (
-            <Video className="w-5 h-5 text-white" />
-          )}
+          <div className="flex flex-col items-center">
+            <PhoneOff className="w-4 h-4 text-white" />
+            {!isDirect && (
+              <span className="text-[8px] text-white leading-none">All</span>
+            )}
+          </div>
         </ControlButton>
-      )}
+      </div>
 
-      {/* Screen Share */}
-      {callType === "VIDEO" && (
-        <ControlButton
-          onClick={handleScreenShare}
-          active={!isLocalSharingScreen}
-          label={isLocalSharingScreen ? "Stop Share" : "Share Screen"}
-          disabled={isRemoteSharingScreen}
-        >
-          {isLocalSharingScreen ? (
-            <MonitorOff className="w-5 h-5 text-blue-400" />
-          ) : (
-            <Monitor className="w-5 h-5 text-white" />
-          )}
-        </ControlButton>
-      )}
-
-      {/* Participants */}
-      {!isDirect && (
-        <ControlButton onClick={onShowParticipants} active label="Participants">
-          <Users className="w-5 h-5 text-white" />
-        </ControlButton>
-      )}
-
-      {/* Leave */}
-      {!isDirect && (
-        <ControlButton onClick={leaveCall} danger label="Leave">
-          <PhoneOff className="w-5 h-5 text-white" />
-        </ControlButton>
-      )}
-
-      {/* End for everyone (could be role-gated in prod) */}
-      <ControlButton
-        onClick={endCallForEveryone}
-        danger
-        label={isDirect ? "End" : "End All"}
-      >
-        <div className="flex flex-col items-center">
-          <PhoneOff className="w-4 h-4 text-white" />
-          {!isDirect && (
-            <span className="text-[8px] text-white leading-none">All</span>
-          )}
-        </div>
-      </ControlButton>
-    </div>
+      <ScreenShareInfoDialog
+        open={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        onConfirm={confirmScreenShare}
+      />
+    </>
   );
 }

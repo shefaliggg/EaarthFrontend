@@ -58,6 +58,7 @@ export default function CallModal() {
     [remoteTiles],
   );
 
+  console.log("reomte tile lists:", remoteTileList);
   const screenShareTile = remoteTileList.find((t) => t.isContent);
   const cameraTiles = remoteTileList.filter((t) => !t.isContent);
 
@@ -86,6 +87,18 @@ export default function CallModal() {
         false,
       isActiveSpeaker: activeSpeakerId === currentUserId && !isAudioMuted,
     });
+
+    if (screenShareTile) {
+      list.push({
+        id: `content-${screenShareTile.tileId}`,
+        tileId: screenShareTile.tileId,
+        displayName: "Screen Share",
+        isLocal: false,
+        isContent: true,
+        isVideoOff: false,
+        isMuted: true,
+      });
+    }
 
     // Remote camera tiles
     cameraTiles.forEach((tile) => {
@@ -151,13 +164,7 @@ export default function CallModal() {
   const speakerTile = useMemo(() => {
     if (pinnedId) return allTiles.find((t) => t.id === pinnedId) ?? allTiles[0];
     // Prefer screen share
-    if (screenShareTile)
-      return {
-        id: screenShareTile.tileId,
-        tileId: screenShareTile.tileId,
-        displayName: "Screen Share",
-        isContent: true,
-      };
+    if (screenShareTile) return allTiles.find((t) => t.isContent);
     // Prefer active speaker (not local)
     const speaker = allTiles.find((t) => !t.isLocal && t.isActiveSpeaker);
 
@@ -254,6 +261,7 @@ export default function CallModal() {
             callType={callType}
             allTiles={allTiles}
             speakerTile={speakerTile}
+            screenShareTile={screenShareTile}
             pinnedId={pinnedId}
             onPin={(id) => {
               setPinnedId((prev) => (prev === id ? null : id));
@@ -322,6 +330,7 @@ export default function CallModal() {
                 callType={callType}
                 allTiles={allTiles}
                 speakerTile={speakerTile}
+                screenShareTile={screenShareTile}
                 pinnedId={pinnedId}
                 onPin={(id) => {
                   setPinnedId((prev) => (prev === id ? null : id));

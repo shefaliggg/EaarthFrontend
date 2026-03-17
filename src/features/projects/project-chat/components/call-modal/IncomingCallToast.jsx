@@ -2,7 +2,8 @@ import { Phone, PhoneOff, Video } from "lucide-react";
 import useCallStore from "../../store/call.store";
 
 export default function IncomingCallToast() {
-  const { callState, incomingCall, joinCall, declineCall } = useCallStore();
+  const { callState, incomingCall, joinCallSafely, declineCall } =
+    useCallStore();
 
   const isVisible = callState === "incoming" && incomingCall;
 
@@ -41,7 +42,7 @@ export default function IncomingCallToast() {
         </button>
         <button
           onClick={() =>
-            joinCall({
+            joinCallSafely({
               conversationId,
               callType,
             })
