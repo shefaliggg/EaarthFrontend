@@ -163,8 +163,9 @@ const useCallStore = create(
         }
       },
 
-      joinCall: async (conversationId) => {
-        set({ callState: "connecting", conversationId });
+      joinCall: async ({ conversationId, callType }) => {
+        set({ callState: "connecting", callType, conversationId });
+        console.log("jpin call params:", { conversationId, callType });
         try {
           const data = await chatApi.joinCall(conversationId);
           const callType = data.callType || "AUDIO";
@@ -206,7 +207,7 @@ const useCallStore = create(
         }
       },
 
-      joinCallSafely: async (conversationId) => {
+      joinCallSafely: async ({ conversationId, callType }) => {
         const state = get();
 
         // ✅ Already in THIS call — just bring the modal up
@@ -233,9 +234,11 @@ const useCallStore = create(
           await state.leaveCall();
         }
 
+        console.log("join safely call params:", { conversationId, callType });
+
         // 🚀 Join
         set({ viewMode: "compact" }); // ensure modal is visible before async work
-        await toast.promise(get().joinCall(conversationId), {
+        await toast.promise(get().joinCall({ conversationId, callType }), {
           loading: "Joining call…",
           success: () => {
             const type = get().callType === "VIDEO" ? "Video" : "Audio";
@@ -411,6 +414,10 @@ const useCallStore = create(
           return;
         }
 
+        toast.info(
+          "For the best experience, share your entire screen instead of a browser tab.",
+        );
+
         try {
           const stream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
@@ -425,10 +432,6 @@ const useCallStore = create(
           };
 
           await meetingSession.audioVideo.startContentShare(stream);
-
-          toast.info(
-            "For the best experience, share your entire screen instead of a browser tab.",
-          );
 
           setTimeout(() => {
             window.focus();

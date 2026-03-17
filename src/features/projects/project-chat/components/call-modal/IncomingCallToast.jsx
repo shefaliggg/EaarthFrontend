@@ -40,7 +40,12 @@ export default function IncomingCallToast() {
           Decline
         </button>
         <button
-          onClick={() => joinCall(conversationId)}
+          onClick={() =>
+            joinCall({
+              conversationId,
+              callType,
+            })
+          }
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors"
         >
           {callType === "VIDEO" ? (

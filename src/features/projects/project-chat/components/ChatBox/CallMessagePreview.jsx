@@ -69,7 +69,7 @@ export default function CallMessagePreview({
         )}
       >
         {isVideo ? (
-          <Video className="w-4 h-4" />
+          <Video className={cn("w-4 h-4",!isOwn && "text-muted dark:text-muted-foreground" )}  />
         ) : (
           <Phone className={cn("w-4 h-4",!isOwn && "text-muted dark:text-muted-foreground" )} />
         )}

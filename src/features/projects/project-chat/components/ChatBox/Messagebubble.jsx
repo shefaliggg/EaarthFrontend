@@ -352,7 +352,12 @@ export default function MessageBubble({
                     callInfo={message.callInfo}
                     currentUserId={getCurrentUserId()}
                     // conversationCall={conversation?.call}
-                    onJoin={() => joinCallSafely(selectedChatId)}
+                    onJoin={() =>
+                      joinCallSafely({
+                        conversationId: selectedChatId,
+                        callType: message.callInfo.type || "AUDIO",
+                      })
+                    }
                     isOwn={isOwn}
                   />
                 )}
