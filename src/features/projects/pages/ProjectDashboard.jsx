@@ -1,6 +1,7 @@
 import { PageHeader } from "@/shared/components/PageHeader";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { projects } from "@/features/projects/pages/ProjectSettings/data.js";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -36,8 +37,10 @@ import {
 
 function ProjectDashboard() {
   const { projectName } = useParams();
-  const MotionLink = motion(Link);
+  const MotionLink = motion.create(Link);
   const navigate = useNavigate();
+  const project = projects.find((p) => p.id === projectName);
+  const color = project?.color || "#7c3aed"
   const applications = [
     {
       id: "project-calendar",
@@ -248,43 +251,47 @@ function ProjectDashboard() {
             const notificationCount = app.notifications || 0;
 
             return (
-              <>
-                <MotionLink
-                  key={app.name}
-                  // to={`/projects/${projectName}/${app.name.toLowerCase()}`}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: i * 0.02 }}
-                  className="relative group flex flex-col items-center justify-center gap-3 p-4 rounded-xl border bg-card shadow-sm overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div className="absolute top-0 left-6 right-6 h-0.75 rounded-b-full bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
+              <MotionLink
+                key={app.id}
+                // to={`/projects/${projectName}/${app.name.toLowerCase()}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: i * 0.02 }}
+                className="relative group flex flex-col items-center justify-center gap-3 p-4 rounded-xl border bg-card shadow-sm overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+              >
+                <div
+                  className="absolute top-0 left-6 right-6 h-0.75 rounded-b-full opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ backgroundColor: color }}
+                />
 
-                  <div className="relative">
-                    <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110">
-                      <Icon className="w-5 h-5" />
-                    </div>
-
-                    {notificationCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 500,
-                          damping: 25,
-                          delay: 0.15 + i * 0.02,
-                        }}
-                        className="absolute -top-1 -right-1 flex items-center justify-center min-w-4 h-4 rounded-full bg-destructive text-primary-foreground text-[10px] font-semibold ring-2 ring-card"
-                      >
-                        {notificationCount > 9 ? "9+" : notificationCount}
-                      </motion.span>
-                    )}
+                <div className="relative">
+                  <div
+                    className="flex items-center justify-center w-11 h-11 rounded-xl transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${color}1A`, color: color }}
+                  >
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-xs text-center text-muted-foreground">
-                    {app.name}
-                  </span>
-                </MotionLink>
-              </>
+
+                  {notificationCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 25,
+                        delay: 0.15 + i * 0.02,
+                      }}
+                      className="absolute -top-1 -right-1 flex items-center justify-center min-w-4 h-4 rounded-full bg-destructive text-primary-foreground text-[10px] font-semibold ring-2 ring-card"
+                    >
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </motion.span>
+                  )}
+                </div>
+                <span className="text-xs text-center text-muted-foreground">
+                  {app.name}
+                </span>
+              </MotionLink>
             );
           })}
         </div>

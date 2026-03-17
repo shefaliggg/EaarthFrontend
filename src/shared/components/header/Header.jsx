@@ -80,7 +80,10 @@ export default function Header() {
   /* ---------- PROJECT MENUS ---------- */
   const PROJECTS = [
     { id: 'avatar1', name: 'AVATAR 1' },
+    { id: 'avatar2', name: 'AVATAR 2' },
     { id: 'avatar3', name: 'AVATAR 3' },
+    { id: 'avatar4', name: 'AVATAR 4' },
+    { id: 'avatar5', name: 'AVATAR 5' },
   ];
 
   const projectMenus = useProjectMenus(PROJECTS);
