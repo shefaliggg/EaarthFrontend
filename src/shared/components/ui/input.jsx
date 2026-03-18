@@ -10,8 +10,8 @@ function Input({ className, type = "text", ...props }) {
         w-full min-w-0
         placeholder:normal-case
         rounded-md px-3 py-2
-        border border-transparent
-        bg-gray-100 dark:bg-gray-800
+        border border-border
+        bg-gray-50/50 dark:bg-gray-800/30
         text-foreground
         placeholder:text-muted-foreground
 
@@ -19,6 +19,7 @@ function Input({ className, type = "text", ...props }) {
         transition-all duration-200 ease-out
 
         focus-visible:outline-none
+        focus:border-primary/30
 
         disabled:cursor-not-allowed
         disabled:opacity-50
