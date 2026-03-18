@@ -431,6 +431,10 @@ export const generateConversationLastMessagePreview = (message) => {
     );
   }
 
+  if (message.status?.deletedForEveryone) {
+    return "This message was deleted";
+  }
+
   if (message.type === "CALL") {
     const callType =
       message.content.callInfo.type === "VIDEO" ? "Video" : "Audio";
@@ -439,8 +443,13 @@ export const generateConversationLastMessagePreview = (message) => {
     return `${callType} call ${status.toLowerCase()}`;
   }
 
-  if (message.type === "MEDIA")
-    return `${message.content.files.length} attachment(s)`;
+  if (message.type === "MEDIA") {
+    if (message.content?.caption) {
+      return `${message.content.caption.slice(0, 200)} • ${message.content.files.length} attachment(s)`;
+    } else {
+      return `${message.content.files.length} attachment(s)`;
+    }
+  }
 
   if (message.type === "AUDIO") return "Voice Message";
 

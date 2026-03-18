@@ -161,9 +161,25 @@ const useChatStore = create(
           });
         });
 
-        socket.on("message:deleted", ({ messageId }) => {
+        socket.on("message:deleted", ({ conversationId, messageId }) => {
           console.log("🗑️ Message deleted:", messageId);
+
           get().markMessageAsDeleted(messageId);
+
+          const existing =
+            get().messagesByConversation[conversationId]?.messages || [];
+
+          if (!existing.length) return;
+
+          const lastMessage = existing[existing.length - 1];
+
+          if (lastMessage?.id === messageId) {
+            get().updateConversationLastMessage(conversationId, {
+              content: { text: "This message was deleted" },
+              createdAt: new Date(),
+              senderId: lastMessage.senderId,
+            });
+          }
         });
 
         socket.on("message:pinned", ({ message, conversationId }) => {
@@ -849,12 +865,6 @@ const useChatStore = create(
         );
 
         return toast.promise(promise, {
-          loading: isFavorited
-            ? "Removing from favorites..."
-            : "Adding to favorites...",
-          success: isFavorited
-            ? "Removed from favorites"
-            : "Added to favorites",
           error: (err) => {
             // 🔁 rollback
             set({
@@ -881,17 +891,44 @@ const useChatStore = create(
 
         const previous = conv.messages;
 
+        // 🧠 check if already reacted
+        const alreadyReacted =
+          message.reactions?.[emoji]?.includes(currentUserId);
+
+        // 🔥 clone reactions safely
+        const updatedReactions = { ...(message.reactions || {}) };
+
+        if (alreadyReacted) {
+          // ❌ remove reaction
+          updatedReactions[emoji] = updatedReactions[emoji].filter(
+            (id) => id !== currentUserId,
+          );
+
+          // cleanup empty emoji
+          if (updatedReactions[emoji].length === 0) {
+            delete updatedReactions[emoji];
+          }
+        } else {
+          // ✅ add reaction
+          if (!updatedReactions[emoji]) {
+            updatedReactions[emoji] = [];
+          }
+
+          updatedReactions[emoji].push(currentUserId);
+        }
+
+        // ⚡ OPTIMISTIC UPDATE
+        get().updateMessageInConversation(message.id, {
+          reactions: updatedReactions,
+        });
+
         const promise = chatApi.toggleReaction(
           conversationId,
           message.id,
           emoji,
         );
 
-        const reacted = message.reactions[emoji]?.includes(currentUserId);
-
         return toast.promise(promise, {
-          loading: reacted ? "Removing reaction..." : "Adding reaction...",
-          success: reacted ? "Reaction removed" : "Reaction added",
           error: (err) => {
             // 🔁 rollback
             set({
@@ -976,8 +1013,6 @@ const useChatStore = create(
         const promise = chatApi.deleteMessageForMe(conversationId, messageId);
 
         return toast.promise(promise, {
-          loading: "Deleting message...",
-          success: "Message deleted",
           error: (err) => {
             // rollback
             set({
@@ -1001,6 +1036,13 @@ const useChatStore = create(
         if (!conv) return;
 
         const oldMessages = conv.messages;
+        const lastMessage = conv.messages[conv.messages.length - 1];
+
+        const prevConversation = get().conversations.find(
+          (c) => c.id === conversationId,
+        );
+
+        const isLast = lastMessage?.id === messageId;
 
         // optimistic soft delete
         get().updateMessageInConversation(messageId, {
@@ -1008,14 +1050,21 @@ const useChatStore = create(
           content: "",
         });
 
+        // ✅ optimistic sidebar update
+        if (isLast) {
+          get().updateConversationLastMessage(conversationId, {
+            content: { text: "This message was deleted" },
+            createdAt: new Date(),
+            senderId: lastMessage.senderId,
+          });
+        }
+
         const promise = chatApi.deleteMessageForEveryone(
           conversationId,
           messageId,
         );
 
         return toast.promise(promise, {
-          loading: "Deleting for everyone...",
-          success: "Message deleted for everyone",
           error: (err) => {
             // rollback
             set({
@@ -1026,6 +1075,9 @@ const useChatStore = create(
                   messages: oldMessages,
                 },
               },
+              conversations: get().conversations.map((c) =>
+                c.id === conversationId ? prevConversation : c,
+              ),
             });
 
             return err?.response?.data?.message || "Delete failed";
