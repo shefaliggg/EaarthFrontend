@@ -4,11 +4,10 @@ import {
   CircleCheck,
   Shield,
   Sparkles,
-  Plus,
-  Trash2,
   Lock,
   Unlock,
   ArrowRight,
+  HelpCircle,
 } from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/config/utils";
@@ -293,8 +292,6 @@ function InputField({
 }) {
   const [focused, setFocused] = useState(false);
   const hasValue = String(value ?? "").length > 0;
-
-  // Only uppercase plain text — not dates, numbers, emails, tel
   const shouldUppercase = !type || type === "text";
 
   return (
@@ -337,9 +334,131 @@ function InputField({
 }
 
 /* ─────────────────────────────────────────────────────────
-   DATES TAB
+   SELECT FIELD
 ───────────────────────────────────────────────────────── */
-function DatesTab({
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  color,
+  disabled,
+  required,
+}) {
+  const [focused, setFocused] = useState(false);
+  const hasValue = !!value;
+
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        disabled={disabled}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value)}
+        style={focused ? { borderColor: `${color}40` } : undefined}
+        className="w-full pt-5 pb-2 px-3.5 rounded-xl border border-border bg-input text-[0.72rem] text-foreground appearance-none focus:outline-none focus:ring-0 transition-colors"
+      >
+        <option value="" disabled hidden />
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+      <motion.label
+        className="absolute left-3.5 pointer-events-none origin-left flex items-center gap-1 text-[0.7rem]"
+        animate={{
+          top: focused || hasValue ? 6 : 14,
+          scale: focused || hasValue ? 0.78 : 1,
+          color: focused ? color : "#9ca3af",
+        }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+      >
+        {label}
+        {required && <span style={{ color }}> *</span>}
+      </motion.label>
+      <svg
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   PILL TOGGLE
+───────────────────────────────────────────────────────── */
+function PillToggle({ label, value, onChange, color, disabled }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-gray-500 dark:text-gray-400 text-[0.65rem]">
+        {label}
+      </span>
+      <button
+        disabled={disabled}
+        onClick={() => onChange(!value)}
+        className={cn(
+          "relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0",
+          disabled && "opacity-40 cursor-not-allowed",
+        )}
+        style={{ backgroundColor: value ? color : "#d1d5db" }}
+      >
+        <motion.span
+          className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
+          animate={{ x: value ? 16 : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        />
+      </button>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   TOOLTIP ICON
+───────────────────────────────────────────────────────── */
+function TooltipIcon({ text, color }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={() => setShow((p) => !p)}
+        className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors"
+      >
+        <HelpCircle className="w-3 h-3" />
+      </button>
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-56 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg p-2.5"
+            style={{ fontSize: "0.5rem" }}
+          >
+            <span className="text-gray-600 dark:text-gray-300 leading-relaxed">
+              {text}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   RATES CREW TAB
+───────────────────────────────────────────────────────── */
+function RatesCrewTab({
   color,
   projectId,
   locked,
@@ -349,62 +468,38 @@ function DatesTab({
 }) {
   const d = locked;
 
-  /* ── Overall Dates ── */
-  const [dates, setDates] = useState(() =>
-    loadSettings(projectId, "dates-overall", {
-      prepStart: "",
-      prepEnd: "",
-      shootStart: "",
-      shootEnd: "",
-      shootDurationDays: "",
+  const MULTIPLIERS = ["1.0", "1.5", "2.0"];
+
+  /* ── 6th/7th Day ── */
+  const [sixSeven, setSixSeven] = useState(() =>
+    loadSettings(projectId, "crew-6th7th", {
+      sixthDayMultiplier: "1.5",
+      seventhDayMultiplier: "2.0",
+      showMinHoursInOffers: false,
     }),
   );
 
-  /* ── Hiatuses ── */
-  const [hiatuses, setHiatuses] = useState(() =>
-    loadSettings(projectId, "dates-hiatus", []),
+  /* ── Overtime ── */
+  const [ot, setOt] = useState(() =>
+    loadSettings(projectId, "crew-overtime", {
+      customOtRate1: "",
+      customOtRate2: "",
+      customOtRate3: "",
+    }),
   );
 
-  /* ── Post Production ── */
-  const [post, setPost] = useState(() =>
-    loadSettings(projectId, "dates-post", {
-      postStart: "",
-      postEnd: "",
+  /* ── Other (Camera) ── */
+  const [other, setOther] = useState(() =>
+    loadSettings(projectId, "crew-other", {
+      cameraStandardDay: "",
+      cameraContinuousDay: "",
+      cameraSemiContinuousDay: "",
     }),
   );
 
   const updateAndPersist = (storageKey, newValue, setState) => {
     setState(newValue);
     saveSettings(projectId, storageKey, newValue);
-  };
-
-  /* ── Hiatus helpers ── */
-  const addHiatus = () => {
-    const next = [
-      ...hiatuses,
-      {
-        id: Date.now().toString(),
-        start: "",
-        end: "",
-        label: `Hiatus ${hiatuses.length + 1}`,
-      },
-    ];
-    setHiatuses(next);
-    saveSettings(projectId, "dates-hiatus", next);
-  };
-
-  const updateHiatus = (id, field, val) => {
-    const next = hiatuses.map((h) =>
-      h.id === id ? { ...h, [field]: val } : h,
-    );
-    setHiatuses(next);
-    saveSettings(projectId, "dates-hiatus", next);
-  };
-
-  const removeHiatus = (id) => {
-    const next = hiatuses.filter((h) => h.id !== id);
-    setHiatuses(next);
-    saveSettings(projectId, "dates-hiatus", next);
   };
 
   /* ── Lock handler ── */
@@ -417,13 +512,8 @@ function DatesTab({
 
   /* ── Progress ── */
   const requiredFields = [
-    dates.prepStart,
-    dates.prepEnd,
-    dates.shootStart,
-    dates.shootEnd,
-    dates.shootDurationDays,
-    post.postStart,
-    post.postEnd,
+    sixSeven.sixthDayMultiplier,
+    sixSeven.seventhDayMultiplier,
   ];
 
   const progressPercentage = Math.round(
@@ -433,6 +523,9 @@ function DatesTab({
   useEffect(() => {
     setTabProgressById((prev) => ({ ...prev, [tabId]: progressPercentage }));
   }, [progressPercentage, tabId, setTabProgressById]);
+
+  const pactTooltip =
+    "For projects using the Film PACT/BECTU MMPA, this multiplier will only apply to crew who are on deals outside of the agreement (e.g. Unit Drivers, or individuals on over £3,000/wk for whom OT is negotiable).";
 
   /* ─────────────────── RENDER ─────────────────── */
   return (
@@ -444,7 +537,7 @@ function DatesTab({
       className="flex flex-col gap-5"
     >
       <TabHeader
-        label="Dates"
+        label="Standard Crew"
         progressPercentage={progressPercentage}
         color={color}
         locked={locked}
@@ -453,229 +546,167 @@ function DatesTab({
       <div
         className={cn(locked && "opacity-50 pointer-events-none select-none")}
       >
-        {/* ── Section 1: Overall Dates ── */}
+        {/* ── Section 1: 6th/7th Days ── */}
         <SectionCard
-          title="Overall Dates"
-          description="Key production milestone dates for planning and crew information."
+          title="6th/7th Days"
+          description="Fee multipliers for 6th and 7th day work."
           color={color}
           delay={0.05}
         >
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <InputField
-                label="Prep Start"
-                value={dates.prepStart}
-                onChange={(v) =>
-                  updateAndPersist(
-                    "dates-overall",
-                    { ...dates, prepStart: v },
-                    setDates,
-                  )
-                }
-                type="date"
-                color={color}
-                disabled={d}
-                required
-              />
-              <InputField
-                label="Prep End"
-                value={dates.prepEnd}
-                onChange={(v) =>
-                  updateAndPersist(
-                    "dates-overall",
-                    { ...dates, prepEnd: v },
-                    setDates,
-                  )
-                }
-                type="date"
-                color={color}
-                disabled={d}
-                required
-              />
+              {/* 6th Day */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span
+                    className="text-gray-500 dark:text-gray-400 uppercase"
+                    style={{ fontSize: "0.52rem" }}
+                  >
+                    6th Day Fee Multiplier
+                  </span>
+                  <TooltipIcon text={pactTooltip} color={color} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-gray-500 dark:text-gray-400"
+                    style={{ fontSize: "0.7rem" }}
+                  >
+                    x
+                  </span>
+                  <div className="flex-1">
+                    <SelectField
+                      label=""
+                      value={sixSeven.sixthDayMultiplier}
+                      onChange={(v) =>
+                        updateAndPersist(
+                          "crew-6th7th",
+                          { ...sixSeven, sixthDayMultiplier: v },
+                          setSixSeven,
+                        )
+                      }
+                      options={MULTIPLIERS}
+                      color={color}
+                      disabled={d}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 7th Day */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span
+                    className="text-gray-500 dark:text-gray-400 uppercase"
+                    style={{ fontSize: "0.52rem" }}
+                  >
+                    7th Day Fee Multiplier
+                  </span>
+                  <TooltipIcon text={pactTooltip} color={color} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-gray-500 dark:text-gray-400"
+                    style={{ fontSize: "0.7rem" }}
+                  >
+                    x
+                  </span>
+                  <div className="flex-1">
+                    <SelectField
+                      label=""
+                      value={sixSeven.seventhDayMultiplier}
+                      onChange={(v) =>
+                        updateAndPersist(
+                          "crew-6th7th",
+                          { ...sixSeven, seventhDayMultiplier: v },
+                          setSixSeven,
+                        )
+                      }
+                      options={MULTIPLIERS}
+                      color={color}
+                      disabled={d}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <InputField
-                label="Shoot Start"
-                value={dates.shootStart}
-                onChange={(v) =>
-                  updateAndPersist(
-                    "dates-overall",
-                    { ...dates, shootStart: v },
-                    setDates,
-                  )
-                }
-                type="date"
-                color={color}
-                disabled={d}
-                required
-              />
-              <InputField
-                label="Shoot End"
-                value={dates.shootEnd}
-                onChange={(v) =>
-                  updateAndPersist(
-                    "dates-overall",
-                    { ...dates, shootEnd: v },
-                    setDates,
-                  )
-                }
-                type="date"
-                color={color}
-                disabled={d}
-                required
-              />
-            </div>
-
-            <div>
-              <InputField
-                label="Shoot Duration Days"
-                value={dates.shootDurationDays}
-                onChange={(v) =>
-                  updateAndPersist(
-                    "dates-overall",
-                    { ...dates, shootDurationDays: v },
-                    setDates,
-                  )
-                }
-                type="number"
-                color={color}
-                disabled={d}
-                required
-              />
-              <p
-                className="text-gray-400 dark:text-gray-500 mt-1 px-1"
-                style={{ fontSize: "0.48rem" }}
-              >
-                This is just guide information for crew and can be updated for
-                everyone at any time.
-              </p>
-            </div>
+            <PillToggle
+              label="Show minimum hours on 6th and 7th days in offers?"
+              value={sixSeven.showMinHoursInOffers}
+              onChange={(v) =>
+                updateAndPersist(
+                  "crew-6th7th",
+                  { ...sixSeven, showMinHoursInOffers: v },
+                  setSixSeven,
+                )
+              }
+              color={color}
+              disabled={d}
+            />
           </div>
         </SectionCard>
 
-        {/* ── Section 2: Hiatus ── */}
+        {/* ── Section 2: Overtime ── */}
         <SectionCard
-          title="Hiatus"
-          description="Add any planned production breaks or hiatus periods."
+          title="Overtime"
+          description="Custom overtime rates which an offer will default to if you choose not to pay overtime as 'Calculated per agreement'."
           color={color}
           delay={0.1}
         >
-          <div className="space-y-3">
-            <AnimatePresence mode="popLayout">
-              {hiatuses.map((h, i) => (
-                <motion.div
-                  key={h.id}
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20 p-3"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className="text-gray-500 dark:text-gray-400 uppercase"
-                      style={{ fontSize: "0.56rem" }}
-                    >
-                      Hiatus {i + 1}
-                    </span>
-                    {!d && (
-                      <button
-                        onClick={() => removeHiatus(h.id)}
-                        className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <InputField
-                      label="Label"
-                      value={h.label}
-                      onChange={(v) => updateHiatus(h.id, "label", v)}
-                      color={color}
-                      disabled={d}
-                    />
-                    <InputField
-                      label="Start Date"
-                      value={h.start}
-                      onChange={(v) => updateHiatus(h.id, "start", v)}
-                      type="date"
-                      color={color}
-                      disabled={d}
-                    />
-                    <InputField
-                      label="End Date"
-                      value={h.end}
-                      onChange={(v) => updateHiatus(h.id, "end", v)}
-                      type="date"
-                      color={color}
-                      disabled={d}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {hiatuses.length === 0 && (
-              <div className="text-center py-4">
-                <span
-                  className="text-gray-400 dark:text-gray-500"
-                  style={{ fontSize: "0.58rem" }}
-                >
-                  No hiatus periods added yet.
-                </span>
-              </div>
-            )}
-
-            {!d && (
-              <motion.button
-                onClick={addHiatus}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-                style={{ fontSize: "0.62rem" }}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span className="uppercase">Add Hiatus</span>
-              </motion.button>
-            )}
-          </div>
-        </SectionCard>
-
-        {/* ── Section 3: Post Production ── */}
-        <SectionCard
-          title="Post Production"
-          description="Post-production phase start and end dates."
-          color={color}
-          delay={0.15}
-        >
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-4">
             <InputField
-              label="Post Production Start"
-              value={post.postStart}
+              label="Other"
+              value={ot.customOtRate1}
               onChange={(v) =>
                 updateAndPersist(
-                  "dates-post",
-                  { ...post, postStart: v },
-                  setPost,
+                  "crew-overtime",
+                  { ...ot, customOtRate1: v },
+                  setOt,
                 )
               }
-              type="date"
               color={color}
               disabled={d}
-              required
             />
             <InputField
-              label="Post Production End"
-              value={post.postEnd}
+              label="Camera - standard day"
+              value={other.cameraStandardDay}
               onChange={(v) =>
-                updateAndPersist("dates-post", { ...post, postEnd: v }, setPost)
+                updateAndPersist(
+                  "crew-other",
+                  { ...other, cameraStandardDay: v },
+                  setOther,
+                )
               }
-              type="date"
               color={color}
               disabled={d}
-              required
+            />
+            <InputField
+              label="Camera - continuous day"
+              value={other.cameraContinuousDay}
+              onChange={(v) =>
+                updateAndPersist(
+                  "crew-other",
+                  { ...other, cameraContinuousDay: v },
+                  setOther,
+                )
+              }
+              color={color}
+              disabled={d}
+            />
+            <InputField
+              label="Camera - semi-continuous day"
+              value={other.cameraSemiContinuousDay}
+              onChange={(v) =>
+                updateAndPersist(
+                  "crew-other",
+                  { ...other, cameraSemiContinuousDay: v },
+                  setOther,
+                )
+              }
+              color={color}
+              disabled={d}
             />
           </div>
         </SectionCard>
@@ -692,4 +723,4 @@ function DatesTab({
   );
 }
 
-export default DatesTab;
+export default RatesCrewTab;

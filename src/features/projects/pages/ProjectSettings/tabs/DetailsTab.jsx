@@ -78,7 +78,7 @@ function TabHeader({ label, progressPercentage, color, locked }) {
               fill="none"
               strokeWidth={strokeWidth}
               strokeLinecap="round"
-              style={{ stroke: locked ? "#22c55e" : color }}
+              stroke={locked ? "#22c55e" : color} // ← direct prop, not style={}
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
               animate={{
@@ -160,7 +160,6 @@ export function ActionFooter({ locked, onLock, color, progressPercentage }) {
       className="mb-2 rounded-2xl overflow-hidden"
     >
       <div className="relative bg-card rounded-2xl border border-gray-100/80 dark:border-gray-800/60 px-5 py-3.5 flex items-center justify-between">
-
         {/* LEFT — status + progress bar */}
         <div className="flex items-center gap-3">
           <motion.div
@@ -491,7 +490,15 @@ function PillToggle({ label, value, onChange, color, disabled }) {
 /* ─────────────────────────────────────────────────────────
    SEGMENTED CONTROL
 ───────────────────────────────────────────────────────── */
-function SegmentedControl({ label, value, onChange, options, color, disabled, tooltip }) {
+function SegmentedControl({
+  label,
+  value,
+  onChange,
+  options,
+  color,
+  disabled,
+  tooltip,
+}) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1.5">
@@ -662,8 +669,9 @@ function DetailsTab({
         locked={locked}
       />
 
-      <div className={cn(locked && "opacity-50 pointer-events-none select-none")}>
-
+      <div
+        className={cn(locked && "opacity-50 pointer-events-none select-none")}
+      >
         {/* ── Section 1: Project Details ── */}
         <SectionCard
           title="Project Details"
@@ -676,7 +684,11 @@ function DetailsTab({
               label="Title"
               value={details.title}
               onChange={(v) =>
-                updateAndPersist("proj-details", { ...details, title: v }, setDetails)
+                updateAndPersist(
+                  "proj-details",
+                  { ...details, title: v },
+                  setDetails,
+                )
               }
               color={color}
               disabled={d}
@@ -687,16 +699,20 @@ function DetailsTab({
                 label="Codename"
                 value={details.codename}
                 onChange={(v) =>
-                  updateAndPersist("proj-details", { ...details, codename: v }, setDetails)
+                  updateAndPersist(
+                    "proj-details",
+                    { ...details, codename: v },
+                    setDetails,
+                  )
                 }
                 color={color}
                 disabled={d}
                 required
               />
               <p className="text-gray-400 dark:text-gray-500 text-[0.52rem] px-1">
-                If your project has an alternative name for secrecy, enter
-                that. Otherwise enter the Project title. The Codename will be
-                used in all emails and pages.
+                If your project has an alternative name for secrecy, enter that.
+                Otherwise enter the Project title. The Codename will be used in
+                all emails and pages.
               </p>
             </div>
           </div>
@@ -706,7 +722,11 @@ function DetailsTab({
               label="Description (Optional)"
               value={details.description}
               onChange={(v) =>
-                updateAndPersist("proj-details", { ...details, description: v }, setDetails)
+                updateAndPersist(
+                  "proj-details",
+                  { ...details, description: v },
+                  setDetails,
+                )
               }
               maxLength={300}
               color={color}
@@ -717,7 +737,11 @@ function DetailsTab({
               label="Locations (Optional)"
               value={details.locations}
               onChange={(v) =>
-                updateAndPersist("proj-details", { ...details, locations: v }, setDetails)
+                updateAndPersist(
+                  "proj-details",
+                  { ...details, locations: v },
+                  setDetails,
+                )
               }
               maxLength={300}
               color={color}
@@ -728,7 +752,11 @@ function DetailsTab({
               label="Additional Notes (Optional)"
               value={details.additionalNotes}
               onChange={(v) =>
-                updateAndPersist("proj-details", { ...details, additionalNotes: v }, setDetails)
+                updateAndPersist(
+                  "proj-details",
+                  { ...details, additionalNotes: v },
+                  setDetails,
+                )
               }
               maxLength={300}
               color={color}
@@ -746,12 +774,15 @@ function DetailsTab({
           delay={0.1}
         >
           <div className="space-y-4">
-
             <SegmentedControl
               label="Project Type"
               value={settings.projectType}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, projectType: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, projectType: v },
+                  setSettings,
+                )
               }
               options={["Feature Film", "Television"]}
               color={color}
@@ -763,7 +794,11 @@ function DetailsTab({
               label="Show project type in offers?"
               value={settings.showProjectTypeInOffers}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, showProjectTypeInOffers: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, showProjectTypeInOffers: v },
+                  setSettings,
+                )
               }
               color={color}
               disabled={d}
@@ -773,7 +808,11 @@ function DetailsTab({
               label="Legal Territory"
               value={settings.legalTerritory}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, legalTerritory: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, legalTerritory: v },
+                  setSettings,
+                )
               }
               options={["United Kingdom", "Iceland", "Ireland", "Malta"]}
               color={color}
@@ -784,7 +823,11 @@ function DetailsTab({
               label="Union Agreement"
               value={settings.unionAgreement}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, unionAgreement: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, unionAgreement: v },
+                  setSettings,
+                )
               }
               options={["None", "PACT/BECTU Agreement (2021)"]}
               color={color}
@@ -796,7 +839,11 @@ function DetailsTab({
               label="Construction Union Agreement"
               value={settings.constructionUnionAgreement}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, constructionUnionAgreement: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, constructionUnionAgreement: v },
+                  setSettings,
+                )
               }
               options={["None", "PACT/BECTU Agreement", "Custom Agreement"]}
               color={color}
@@ -808,7 +855,11 @@ function DetailsTab({
                 label="Budget"
                 value={settings.budget}
                 onChange={(v) =>
-                  updateAndPersist("proj-settings", { ...settings, budget: v }, setSettings)
+                  updateAndPersist(
+                    "proj-settings",
+                    { ...settings, budget: v },
+                    setSettings,
+                  )
                 }
                 options={[
                   "Low (under £10 million)",
@@ -823,7 +874,11 @@ function DetailsTab({
                   label="Show budget level to crew members?"
                   value={settings.showBudgetToCrew}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, showBudgetToCrew: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, showBudgetToCrew: v },
+                      setSettings,
+                    )
                   }
                   color={color}
                   disabled={d}
@@ -835,7 +890,11 @@ function DetailsTab({
               label="Holiday Pay Percentage"
               value={settings.holidayPayPct}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, holidayPayPct: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, holidayPayPct: v },
+                  setSettings,
+                )
               }
               options={["0%", "10.77%", "12.07%"]}
               color={color}
@@ -846,7 +905,11 @@ function DetailsTab({
               label="Different holiday pay percentage for Dailies"
               value={settings.differentHolidayForDailies}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, differentHolidayForDailies: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, differentHolidayForDailies: v },
+                  setSettings,
+                )
               }
               color={color}
               disabled={d}
@@ -856,7 +919,11 @@ function DetailsTab({
               label="Withhold holiday pay on 6th and 7th days"
               value={settings.withholdHolidayOn6th7th}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, withholdHolidayOn6th7th: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, withholdHolidayOn6th7th: v },
+                  setSettings,
+                )
               }
               color={color}
               disabled={d}
@@ -866,7 +933,11 @@ function DetailsTab({
               label="Overtime"
               value={settings.overtime}
               onChange={(v) =>
-                updateAndPersist("proj-settings", { ...settings, overtime: v }, setSettings)
+                updateAndPersist(
+                  "proj-settings",
+                  { ...settings, overtime: v },
+                  setSettings,
+                )
               }
               color={color}
               disabled={d}
@@ -884,7 +955,11 @@ function DetailsTab({
                   label="Offer view"
                   value={settings.showWeeklyRateOfferView}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, showWeeklyRateOfferView: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, showWeeklyRateOfferView: v },
+                      setSettings,
+                    )
                   }
                   color={color}
                   disabled={d}
@@ -893,7 +968,11 @@ function DetailsTab({
                   label="Documents"
                   value={settings.showWeeklyRateDocuments}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, showWeeklyRateDocuments: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, showWeeklyRateDocuments: v },
+                      setSettings,
+                    )
                   }
                   color={color}
                   disabled={d}
@@ -907,7 +986,11 @@ function DetailsTab({
                   label="Default Standard Working Hours"
                   value={settings.defaultWorkingHours}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, defaultWorkingHours: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, defaultWorkingHours: v },
+                      setSettings,
+                    )
                   }
                   options={[
                     "12 hours (continuous)",
@@ -934,15 +1017,19 @@ function DetailsTab({
                   className="text-gray-400 dark:text-gray-500 mt-1 px-1"
                   style={{ fontSize: "0.48rem" }}
                 >
-                  Excluding lunch. This is for standard crew contracts. You
-                  can still specify different hours in each offer.
+                  Excluding lunch. This is for standard crew contracts. You can
+                  still specify different hours in each offer.
                 </p>
               </div>
               <SegmentedControl
                 label="Offer End Date"
                 value={settings.offerEndDate}
                 onChange={(v) =>
-                  updateAndPersist("proj-settings", { ...settings, offerEndDate: v }, setSettings)
+                  updateAndPersist(
+                    "proj-settings",
+                    { ...settings, offerEndDate: v },
+                    setSettings,
+                  )
                 }
                 options={["Optional", "Mandatory"]}
                 color={color}
@@ -956,7 +1043,11 @@ function DetailsTab({
                 label="Payroll Company"
                 value={settings.payrollCompany}
                 onChange={(v) =>
-                  updateAndPersist("proj-settings", { ...settings, payrollCompany: v }, setSettings)
+                  updateAndPersist(
+                    "proj-settings",
+                    { ...settings, payrollCompany: v },
+                    setSettings,
+                  )
                 }
                 options={[
                   "Dataplan",
@@ -976,7 +1067,11 @@ function DetailsTab({
                   label="Crew Data CSV Export Layout"
                   value={settings.crewDataCsvLayout}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, crewDataCsvLayout: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, crewDataCsvLayout: v },
+                      setSettings,
+                    )
                   }
                   options={["EAARTH", "Moneypenny"]}
                   color={color}
@@ -995,7 +1090,11 @@ function DetailsTab({
                   label="Payroll CSV Export Layout"
                   value={settings.payrollCsvLayout}
                   onChange={(v) =>
-                    updateAndPersist("proj-settings", { ...settings, payrollCsvLayout: v }, setSettings)
+                    updateAndPersist(
+                      "proj-settings",
+                      { ...settings, payrollCsvLayout: v },
+                      setSettings,
+                    )
                   }
                   options={[
                     "Dataplan",
@@ -1018,7 +1117,6 @@ function DetailsTab({
                 </p>
               </div>
             </div>
-
           </div>
         </SectionCard>
 
@@ -1030,12 +1128,15 @@ function DetailsTab({
           delay={0.15}
         >
           <div className="space-y-4">
-
             <PillToggle
               label="Share status determination with crew members?"
               value={offer.shareStatusDetermination}
               onChange={(v) =>
-                updateAndPersist("offer-handling", { ...offer, shareStatusDetermination: v }, setOffer)
+                updateAndPersist(
+                  "offer-handling",
+                  { ...offer, shareStatusDetermination: v },
+                  setOffer,
+                )
               }
               color={color}
               disabled={d}
@@ -1054,7 +1155,11 @@ function DetailsTab({
                 label="Tax Status Handling"
                 value={offer.taxStatusHandling}
                 onChange={(v) =>
-                  updateAndPersist("offer-handling", { ...offer, taxStatusHandling: v }, setOffer)
+                  updateAndPersist(
+                    "offer-handling",
+                    { ...offer, taxStatusHandling: v },
+                    setOffer,
+                  )
                 }
                 options={[
                   "Do not allow loan outs",
@@ -1081,7 +1186,11 @@ function DetailsTab({
                 label="Tax Status Query Email"
                 value={offer.taxStatusQueryEmail}
                 onChange={(v) =>
-                  updateAndPersist("offer-handling", { ...offer, taxStatusQueryEmail: v }, setOffer)
+                  updateAndPersist(
+                    "offer-handling",
+                    { ...offer, taxStatusQueryEmail: v },
+                    setOffer,
+                  )
                 }
                 type="email"
                 color={color}
@@ -1100,7 +1209,11 @@ function DetailsTab({
                 label="Offer Approval"
                 value={offer.offerApproval}
                 onChange={(v) =>
-                  updateAndPersist("offer-handling", { ...offer, offerApproval: v }, setOffer)
+                  updateAndPersist(
+                    "offer-handling",
+                    { ...offer, offerApproval: v },
+                    setOffer,
+                  )
                 }
                 options={[
                   "Accounts",
@@ -1121,10 +1234,8 @@ function DetailsTab({
                 selection.
               </p>
             </div>
-
           </div>
         </SectionCard>
-
       </div>
 
       {/* ── Action Footer ── */}

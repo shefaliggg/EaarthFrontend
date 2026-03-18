@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CircleCheck, Shield, Sparkles } from "lucide-react";
+import {
+  CircleCheck,
+  Shield,
+  Sparkles,
+  Lock,
+  Unlock,
+  ArrowRight,
+} from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/shared/config/utils";
@@ -62,14 +69,14 @@ function TabHeader({ label, progressPercentage, color, locked }) {
               strokeWidth={strokeWidth}
               className="fill-none stroke-muted"
             />
-            <motion.circle
+              <motion.circle
               cx="20"
               cy="20"
               r={radius}
               fill="none"
               strokeWidth={strokeWidth}
               strokeLinecap="round"
-              style={{ stroke: locked ? "#22c55e" : color }}
+              stroke={locked ? "#22c55e" : color} // ← direct prop, not style={}
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
               animate={{
@@ -136,6 +143,100 @@ function TabHeader({ label, progressPercentage, color, locked }) {
 }
 
 /* ─────────────────────────────────────────────────────────
+   ACTION FOOTER
+───────────────────────────────────────────────────────── */
+function ActionFooter({ locked, onLock, color, progressPercentage }) {
+  const canLock = progressPercentage >= 100;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.15 }}
+      className="mb-2 rounded-2xl overflow-hidden"
+    >
+      <div className="relative bg-card rounded-2xl border border-gray-100/80 dark:border-gray-800/60 px-5 py-3.5 flex items-center justify-between">
+
+        {/* LEFT — status + progress bar */}
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: locked ? "#22c55e" : "#a3e635" }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          <span
+            className="text-gray-400 dark:text-gray-500"
+            style={{ fontSize: "0.6rem" }}
+          >
+            {locked ? "This tab is locked" : "All changes auto-saved"}
+          </span>
+
+          {/* Mini progress bar — only when unlocked and incomplete */}
+          {!locked && progressPercentage < 100 && (
+            <div className="flex items-center gap-2 ml-2">
+              <div className="w-16 h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: color }}
+                  animate={{ width: `${progressPercentage}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+              <span
+                className="text-gray-300 dark:text-gray-600"
+                style={{ fontSize: "0.52rem" }}
+              >
+                {progressPercentage}%
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — Lock / Unlock button */}
+        <motion.button
+          onClick={onLock}
+          disabled={!canLock && !locked}
+          whileHover={canLock || locked ? { scale: 1.02 } : undefined}
+          whileTap={canLock || locked ? { scale: 0.98 } : undefined}
+          className={cn(
+            "flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300",
+            locked
+              ? "text-emerald-600 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+              : canLock
+                ? "text-white shadow-lg hover:shadow-xl"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed",
+          )}
+          style={
+            !locked && canLock
+              ? {
+                  background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
+                  fontSize: "0.7rem",
+                }
+              : { fontSize: "0.7rem" }
+          }
+        >
+          {locked ? (
+            <>
+              <Unlock className="w-3.5 h-3.5" /> Unlock Tab
+            </>
+          ) : canLock ? (
+            <>
+              <Lock className="w-3.5 h-3.5" /> Lock &amp; Continue{" "}
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </>
+          ) : (
+            <>
+              <Lock className="w-3.5 h-3.5" /> Complete to Lock
+            </>
+          )}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
    SECTION CARD
 ───────────────────────────────────────────────────────── */
 function SectionCard({ title, description, children, color, delay = 0.05 }) {
@@ -192,6 +293,8 @@ function InputField({
 }) {
   const [focused, setFocused] = useState(false);
   const hasValue = String(value ?? "").length > 0;
+
+  // Only uppercase plain text — not dates, numbers, emails, tel
   const shouldUppercase = !type || type === "text";
 
   return (
@@ -295,7 +398,15 @@ function TextareaField({
 /* ─────────────────────────────────────────────────────────
    SELECT FIELD
 ───────────────────────────────────────────────────────── */
-function SelectField({ label, value, onChange, options, color, disabled, required }) {
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  color,
+  disabled,
+  required,
+}) {
   const [focused, setFocused] = useState(false);
   const hasValue = !!value;
 
@@ -438,6 +549,14 @@ function RatesProjectTab({
     saveSettings(projectId, storageKey, newValue);
   };
 
+  /* ── Lock handler ── */
+  const handleLock = () => {
+    setTabLockStatusById((prev) => ({
+      ...prev,
+      [tabId]: !prev[tabId],
+    }));
+  };
+
   /* ── Progress ── */
   const requiredFields = [basic.workingWeek, notice.noticePeriod];
 
@@ -488,6 +607,7 @@ function RatesProjectTab({
               options={["5 days", "5.5 days", "5/6 days", "6 days"]}
               color={color}
               disabled={d}
+              required
             />
             <PillToggle
               label="Show prep/wrap mins in Offer view?"
@@ -874,6 +994,14 @@ function RatesProjectTab({
         </SectionCard>
 
       </div>
+
+      {/* ── Action Footer ── */}
+      <ActionFooter
+        locked={locked}
+        onLock={handleLock}
+        color={color}
+        progressPercentage={progressPercentage}
+      />
     </motion.div>
   );
 }
