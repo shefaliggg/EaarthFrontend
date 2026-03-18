@@ -513,6 +513,7 @@ const useChatStore = create(
       sendMessage: async (conversationId, projectIdParam, messageData) => {
         const currentUserId = getCurrentUserId();
         const selectedChat = get().selectedChat;
+
         const projectId =
           projectIdParam || selectedChat?.projectId || DEFAULT_PROJECT_ID;
 
@@ -520,90 +521,111 @@ const useChatStore = create(
 
         const isFileUpload = !!messageData.formData;
 
-        // 🔥 deterministic temp id
-        const clientTempId = `temp-${crypto.randomUUID()}`;
+        // 🔥 detect retry
+        const isRetry = !!messageData.clientTempId;
+
+        const clientTempId =
+          messageData.clientTempId || `temp-${crypto.randomUUID()}`;
+
         const now = new Date();
 
-        const optimisticMessage = {
-          id: clientTempId,
-          clientTempId,
-
-          conversationId,
-          projectId,
-
-          sender: "You",
-          senderId: currentUserId,
-          avatar: "Y",
-
-          time: now.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          }),
-
-          timestamp: now.getTime(),
-
-          content: messageData.text || "",
-          caption: isFileUpload
-            ? messageData.formData.get("caption") || ""
-            : messageData.caption || "",
-
-          type: isFileUpload
-            ? messageData.formData.get("type")?.toLowerCase() || "file"
-            : messageData.type?.toLowerCase() || "text",
-
-          files: isFileUpload
-            ? messageData.formData.getAll("attachments").map((file) => ({
-                url: URL.createObjectURL(file),
-                name: file.name,
-                size: file.size,
-                mime: file.type,
-              }))
-            : messageData.files || [],
-
-          isOwn: true,
-          state: "sending",
-
-          readBy: 0,
-          deliveredTo: 0,
-
-          edited: false,
-          editedAt: null,
-          deleted: false,
-
-          reactions: {},
-
-          replyTo: null,
-          forwardedFrom: messageData.forwardedFrom || null,
-          isForwarded: !!messageData.forwardedFrom,
-
-          isStarred: false,
-          system: null,
-
-          _raw: null,
+        // 🔥 helper to cleanup blobs
+        const cleanupBlobs = (files = []) => {
+          files.forEach((f) => {
+            if (f.url?.startsWith("blob:")) {
+              URL.revokeObjectURL(f.url);
+            }
+          });
         };
 
-        // Reply handling
-        if (messageData.replyFull) {
-          const original = messageData.replyFull;
+        // 🔥 build optimistic message ONLY if not retry
+        let optimisticMessage;
 
-          optimisticMessage.replyTo = {
-            messageId: original.id,
-            sender: original.sender,
-            senderId: original.senderId,
-            preview:
-              original.content ||
-              original.caption ||
-              (original.files?.length ? "Attachment" : ""),
-            type: original.type?.toLowerCase(),
-            files: original.files || [],
-            caption: original.caption || "",
-            deleted: original.deleted || false,
+        if (!isRetry) {
+          optimisticMessage = {
+            id: clientTempId,
+            clientTempId,
+
+            conversationId,
+            projectId,
+
+            sender: "You",
+            senderId: currentUserId,
+            avatar: "Y",
+
+            time: now.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+
+            timestamp: now.getTime(),
+
+            content: messageData.text || "",
+
+            caption: isFileUpload
+              ? messageData.formData.get("caption") || ""
+              : messageData.caption || "",
+
+            type: isFileUpload
+              ? messageData.formData.get("type")?.toLowerCase() || "file"
+              : messageData.type?.toLowerCase() || "text",
+
+            files: isFileUpload
+              ? messageData.formData.getAll("attachments").map((file) => ({
+                  url: URL.createObjectURL(file), // preview
+                  file, // 🔥 KEEP ORIGINAL FILE
+                  name: file.name,
+                  size: file.size,
+                  mime: file.type,
+                }))
+              : messageData.files || [],
+
+            isOwn: true,
+            state: "sending",
+
+            readBy: 0,
+            deliveredTo: 0,
+
+            edited: false,
+            editedAt: null,
+            deleted: false,
+
+            reactions: {},
+
+            replyTo: null,
+            forwardedFrom: messageData.forwardedFrom || null,
+            isForwarded: !!messageData.forwardedFrom,
+
+            isStarred: false,
+            system: null,
+
+            _raw: null,
           };
+
+          // Reply handling
+          if (messageData.replyFull) {
+            const original = messageData.replyFull;
+
+            optimisticMessage.replyTo = {
+              messageId: original.id,
+              sender: original.sender,
+              senderId: original.senderId,
+              preview:
+                original.content ||
+                original.caption ||
+                (original.files?.length ? "Attachment" : ""),
+              type: original.type?.toLowerCase(),
+              files: original.files || [],
+              caption: original.caption || "",
+              deleted: original.deleted || false,
+            };
+          }
         }
 
         if (isFileUpload) {
-          // 🔥 attach temp id to formData
-          messageData.formData.append("clientTempId", clientTempId);
+          if (!isRetry) {
+            messageData?.formData.append("clientTempId", clientTempId);
+          }
         }
 
         const existing = get().messagesByConversation[conversationId] || {
@@ -612,24 +634,25 @@ const useChatStore = create(
           cursor: null,
         };
 
-        // 🔥 Add optimistic message
-        set({
-          messagesByConversation: {
-            ...get().messagesByConversation,
-            [conversationId]: {
-              ...existing,
-              messages: [...existing.messages, optimisticMessage],
+        // 🔥 only add optimistic if NOT retry
+        if (!isRetry) {
+          set({
+            messagesByConversation: {
+              ...get().messagesByConversation,
+              [conversationId]: {
+                ...existing,
+                messages: [...existing.messages, optimisticMessage],
+              },
             },
-          },
-          isSendingMessage: true,
-        });
+            isSendingMessage: true,
+          });
 
-        // 🔥 Update sidebar last message immediately
-        get().updateConversationLastMessage(conversationId, {
-          content: { text: optimisticMessage.content },
-          createdAt: now,
-          senderId: { _id: currentUserId },
-        });
+          get().updateConversationLastMessage(conversationId, {
+            content: { text: optimisticMessage.content },
+            createdAt: now,
+            senderId: { _id: currentUserId },
+          });
+        }
 
         try {
           let sentMessage;
@@ -655,11 +678,36 @@ const useChatStore = create(
 
             sentMessage = await chatApi.sendMessage(conversationId, payload);
           }
-          set({ isSendingMessage: false });
+
+          // 🔥 cleanup blobs after success
+          const updated = get().messagesByConversation[conversationId];
+          const msg = updated?.messages.find(
+            (m) => m.clientTempId === clientTempId,
+          );
+
+          if (msg?.files) cleanupBlobs(msg.files);
+
+          set({
+            messagesByConversation: {
+              ...get().messagesByConversation,
+              [conversationId]: {
+                ...updated,
+                messages: updated.messages.map((m) => {
+                  if (m.clientTempId !== clientTempId) return m;
+                  if (m.state === "delivered" || m.state === "seen") {
+                    return m;
+                  }
+                  return { ...m, state: "sent" };
+                }),
+              },
+            },
+            isSendingMessage: false,
+          });
 
           return sentMessage;
         } catch (error) {
           console.error("❌ Failed to send message:", error);
+
           toast.error("Failed to send message. Please try again.", {
             description: error.response?.data?.message || error.message,
           });
@@ -686,9 +734,19 @@ const useChatStore = create(
       },
 
       retryMessage: async (conversationId, message) => {
-        const { id, content, type, replyTo } = message;
+        const {
+          id,
+          content,
+          type,
+          replyTo,
+          files = [],
+          clientTempId,
+          caption,
+          projectId,
+        } = message;
 
-        // set back to sending
+        console.log("🔁 Retry message:", message);
+
         set((state) => ({
           messagesByConversation: {
             ...state.messagesByConversation,
@@ -703,11 +761,40 @@ const useChatStore = create(
           },
         }));
 
-        // resend
+        const hasFiles = files.length > 0;
+
+        if (hasFiles) {
+          const formData = new FormData();
+
+          formData.append("projectId", projectId);
+          formData.append("type", type.toUpperCase());
+          formData.append("caption", caption || "");
+          formData.append("clientTempId", clientTempId);
+
+          files.forEach((f) => {
+            if (f.file) {
+              formData.append("attachments", f.file);
+            }
+          });
+
+          if (replyTo) {
+            formData.append("replyTo[messageId]", replyTo.messageId);
+            formData.append("replyTo[senderId]", replyTo.senderId);
+            formData.append("replyTo[preview]", replyTo.preview || "");
+            formData.append("replyTo[type]", replyTo.type);
+          }
+
+          return get().sendMessage(conversationId, DEFAULT_PROJECT_ID, {
+            formData,
+            clientTempId, // 🔥 prevents duplicate optimistic
+          });
+        }
+
         return get().sendMessage(conversationId, DEFAULT_PROJECT_ID, {
           text: content,
           type: type.toUpperCase(),
           replyTo,
+          clientTempId, // 🔥 reuse
         });
       },
 
@@ -1134,15 +1221,28 @@ const useChatStore = create(
       emitConversationRead: async (conversationId) => {
         if (!conversationId) return;
 
+        const prevConversation = get().conversations.find(
+          (c) => c.id === conversationId,
+        );
+
+        set({
+          conversations: get().conversations.map((c) =>
+            c.id === conversationId ? { ...c, unread: 0 } : c,
+          ),
+        });
+
         try {
           await chatApi.markAsRead(conversationId);
-          set({
-            conversations: get().conversations.map((c) =>
-              c.id === conversationId ? { ...c, unread: 0 } : c,
-            ),
-          });
         } catch (error) {
           console.error("❌ Failed to mark as read:", error);
+
+          if (!prevConversation) return;
+
+          set({
+            conversations: get().conversations.map((c) =>
+              c.id === conversationId ? prevConversation : c,
+            ),
+          });
         }
       },
 

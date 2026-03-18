@@ -169,6 +169,7 @@ const MessageInput = React.memo(
           await sendMessage(selectedChat.id, projectId, {
             formData,
             replyFull: replyTo ? replyTo : null,
+            // forceFail: true,
           });
         } else {
           setMessageInput("");
@@ -178,10 +179,11 @@ const MessageInput = React.memo(
             type: "TEXT",
             replyTo: normalizedReply,
             replyFull: replyTo ? replyTo : null,
+            // forceFail: true,
           });
         }
       } catch (err) {
-        toast.error("❌ Failed to send message:", err);
+        console.error("❌ Failed to send message:", err);
       }
     }, [
       messageInput,

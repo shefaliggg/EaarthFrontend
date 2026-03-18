@@ -11,7 +11,7 @@ function AttachmentButton({ icon: Icon, label, onClick }) {
       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
         <Icon className="w-4 h-4 text-primary" />
       </div>
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[10px] font-medium truncate">{label}</span>
     </button>
   );
 }

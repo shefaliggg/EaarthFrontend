@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { axiosConfig } from "../../../auth/config/axiosConfig";
+import { axiosConfig, uploadConfig } from "../../../auth/config/axiosConfig";
 
 const chatApi = {
   // Get conversations for a project
@@ -128,6 +128,7 @@ const chatApi = {
     const response = await axiosConfig.post(
       `/chats/${conversationId}/messages`,
       messageData,
+      uploadConfig,
     );
 
     console.log("✅ API: Message sent successfully:", response.data.data);

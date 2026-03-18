@@ -314,6 +314,9 @@ export function transformMessage(
 export function computeMessageState(message, memberCount) {
   if (!message.senderId) return null;
 
+  const isOptimistic = message.clientTempId === message.id;
+  if (isOptimistic) return message.state;
+
   // Number of recipients excluding sender
   const recipientsCount = Math.max(memberCount - 1, 1);
 

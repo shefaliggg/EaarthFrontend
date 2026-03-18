@@ -58,7 +58,7 @@ export default function CallModal() {
     [remoteTiles],
   );
 
-  console.log("reomte tile lists:", remoteTileList);
+  // console.log("reomte tile lists:", remoteTileList);
   const screenShareTile = remoteTileList.find((t) => t.isContent);
   const cameraTiles = remoteTileList.filter((t) => !t.isContent);
 

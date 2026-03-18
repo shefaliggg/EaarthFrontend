@@ -11,7 +11,7 @@ import {
 export default function ReplyToMessagePreview({ replyTo, onClose }) {
   if (!replyTo) return null;
 
-  console.log("reply data", replyTo)
+  console.log("reply data", replyTo);
 
   const isMedia = replyTo.type?.toLowerCase() === "media";
   const files = replyTo.files || [];

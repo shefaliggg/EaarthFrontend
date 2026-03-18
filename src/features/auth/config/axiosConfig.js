@@ -34,6 +34,16 @@ export const axiosConfig = axios.create({
   timeout: 120000,
 });
 
+export const uploadConfig = {
+  timeout: 0,
+  onUploadProgress: (progressEvent) => {
+    const percent = Math.round(
+      (progressEvent.loaded * 100) / progressEvent.total
+    );
+    console.log("upload percent:", percent);
+  },
+};
+
 const AUTH_EXCLUDED_ROUTES = [
   "/auth/login",
   "/auth/temp-login",

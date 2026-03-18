@@ -103,6 +103,7 @@ export default function MessageBubble({
   const isOwn = message.isOwn;
   const isFavorited = message.isStarred;
   const isForwarded = message.isForwarded;
+  const isSending = message.state === "sending";
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -364,6 +365,11 @@ export default function MessageBubble({
 
                 {attachments.length > 0 && (
                   <div className={cn(attachmentLayoutClass, "gap-1.5")}>
+                    {isSending && (
+                      <div className="absolute z-10 inset-0 mb-5 m-1 bg-black/40 rounded-xl flex items-center justify-center">
+                        <Clock className="w-5 h-5 animate-pulse text-white/80" />
+                      </div>
+                    )}
                     {attachments.map((file, index) => {
                       const url = getFileUrl(file.url);
                       if (file.mime.startsWith("image/"))
@@ -502,6 +508,7 @@ export default function MessageBubble({
             <ActionButton
               icon={Reply}
               tooltip="Reply"
+              disabled={isSending}
               onClick={(e) => {
                 e.stopPropagation();
                 onReply(message);
@@ -512,6 +519,7 @@ export default function MessageBubble({
                 <ActionButton
                   icon={Forward}
                   tooltip="Forward"
+                  disabled={isSending}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleForward();
@@ -523,6 +531,7 @@ export default function MessageBubble({
             <ActionButton
               icon={Smile}
               tooltip="React"
+              disabled={isSending}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowReactionPicker(
@@ -533,6 +542,7 @@ export default function MessageBubble({
             <ActionButton
               icon={Star}
               tooltip={isFavorited ? "Unstar" : "Star"}
+              disabled={isSending}
               className={isFavorited ? "text-yellow-500" : ""}
               onClick={(e) => {
                 e.stopPropagation();
@@ -543,6 +553,7 @@ export default function MessageBubble({
             <ActionButton
               icon={Pin}
               tooltip="Pin"
+              disabled={isSending}
               onClick={(e) => {
                 e.stopPropagation();
                 handlePin();
@@ -553,6 +564,7 @@ export default function MessageBubble({
               <ActionButton
                 icon={Copy}
                 tooltip="Copy"
+                disabled={isSending}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopy();
@@ -563,6 +575,7 @@ export default function MessageBubble({
               <ActionButton
                 icon={Edit2}
                 tooltip="Edit"
+                disabled={isSending}
                 className="text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -573,6 +586,7 @@ export default function MessageBubble({
             <ActionButton
               icon={Trash2}
               tooltip="Delete"
+              disabled={isSending}
               className="text-red-500"
               onClick={(e) => {
                 e.stopPropagation();
@@ -634,16 +648,19 @@ export default function MessageBubble({
   );
 }
 
-function ActionButton({ icon: Icon, tooltip, className, onClick }) {
+function ActionButton({ icon: Icon, tooltip, className, onClick, disabled }) {
   return (
     <button
       title={tooltip}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={cn(
-        "p-1.5 rounded-xl bg-muted/80 hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95",
+        "p-1.5 rounded-xl bg-muted/80 transition-all duration-200",
+        disabled
+          ? "opacity-40 cursor-not-allowed"
+          : "hover:bg-muted hover:scale-110 active:scale-95",
         className,
       )}
-      aria-label={tooltip}
     >
       <Icon className="w-3.5 h-3.5" />
     </button>
@@ -674,7 +691,7 @@ function MessageImage({ file, url, onClick, single = true }) {
 
   return (
     <div
-      className={`overflow-hidden relative  w-full ${single ? " max-w-[260px] max-h-[300px]" : "min-w-[160px] max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
+      className={`overflow-hidden relative  w-full ${single ? " max-w-[260px]" : "min-w-[160px] max-w-[160px] max-h-[160px]"} bg-muted/90 rounded-sm relative ${!loaded ? "aspect-4/3" : ""}`}
     >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-200 dark:bg-purple-800 animate-pulse">
@@ -708,7 +725,7 @@ function MessageVideo({ file, url, single = true }) {
       <video
         src={url}
         controls
-        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px] max-h-[280px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
+        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
       >
         Your browser does not support the video tag.
       </video>
