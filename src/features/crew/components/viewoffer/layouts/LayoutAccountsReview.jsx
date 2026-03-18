@@ -1,28 +1,113 @@
+/**
+ * layouts/LayoutAccountsReview.jsx
+ *
+ * ACCOUNTS REVIEW — differs from ProductionReview in these ways:
+ *
+ *  1. NO CrewIdentityHeader / No Edit button (accounts doesn't edit)
+ *  2. "Return to Production" button → opens ReturnToProductionDialog
+ *     (orange header, textarea for issue notes)
+ *  3. Dialog confirm → navigates to /offers/:id/edit (Create Offer in edit mode)
+ *     (future: will also call backend action + send notification)
+ *  4. Checklist items → budget/payroll/final
+ *  5. Primary action → "Approve & Send for Signatures" → onAction("pendingCrewSignature")
+ */
+
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  ClipboardCheck, Loader2, CheckCircle2, X,
-  FileText, ShieldCheck, Building, FileCheck,
-  BadgeCheck, DollarSign, MessageSquare, PenLine,
+  ClipboardCheck, Send, Loader2, CheckCircle2, X,
+  FileText, ShieldCheck, FileCheck, PenLine,
+  TrendingUp, DollarSign, Receipt, BarChart2, AlertTriangle,
 } from "lucide-react";
 
-import CrewIdentityHeader      from "../../../components/viewoffer/layouts/CrewIdentityHeader";
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
-import { InlineEditPanel }     from "./layoutHelpers";
 
-// ─── Checklist config ─────────────────────────────────────────────────────────
+// ─── Checklist items ──────────────────────────────────────────────────────────
 
 const ACCT_CHECKLIST = [
-  { key: "budgetCodesVerified",   label: "All budget codes verified",           Icon: DollarSign,     cat: "Budget"  },
-  { key: "rateCalcsReviewed",     label: "Rate calculations reviewed",          Icon: FileCheck,      cat: "Budget"  },
-  { key: "allowancesConfirmed",   label: "Allowances confirmed against budget", Icon: DollarSign,     cat: "Budget"  },
-  { key: "overtimeRatesOk",       label: "Overtime rates confirmed",            Icon: ClipboardCheck, cat: "Budget"  },
-  { key: "payrollSetupOk",        label: "Payroll setup confirmed",             Icon: FileCheck,      cat: "Payroll" },
-  { key: "taxStatusConfirmed",    label: "Tax status confirmed",                Icon: FileCheck,      cat: "Payroll" },
-  { key: "companyInvoicingSetup", label: "Company invoicing setup",             Icon: Building,       cat: "Payroll" },
-  { key: "contractTermsApproved", label: "Contract terms approved by accounts", Icon: ClipboardCheck, cat: "Final"   },
-  { key: "readyForSignature",     label: "Ready for crew signature",            Icon: BadgeCheck,     cat: "Final"   },
+  { key: "budgetCodesVerified",   label: "All budget codes verified",           Icon: BarChart2,   cat: "Budget"  },
+  { key: "rateCalcsReviewed",     label: "Rate calculations reviewed",          Icon: TrendingUp,  cat: "Budget"  },
+  { key: "allowancesConfirmed",   label: "Allowances confirmed against budget", Icon: DollarSign,  cat: "Budget"  },
+  { key: "overtimeRatesOk",       label: "Overtime rates confirmed",            Icon: Receipt,     cat: "Budget"  },
+  { key: "payrollSetupOk",        label: "Payroll setup confirmed",             Icon: ShieldCheck, cat: "Payroll" },
+  { key: "taxStatusConfirmed",    label: "Tax status confirmed",                Icon: FileCheck,   cat: "Payroll" },
+  { key: "contractTermsApproved", label: "Contract terms approved by accounts", Icon: FileText,    cat: "Final"   },
+  { key: "readyForSignature",     label: "Ready for crew signature",            Icon: PenLine,     cat: "Final"   },
 ];
+
+// ─── Return to Production Dialog ──────────────────────────────────────────────
+
+function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
+  const [notes, setNotes] = useState("");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* Orange header */}
+        <div className="bg-orange-500 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+              <Send className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h2 className="text-[15px] font-bold text-white">Return to Production</h2>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-3">
+          <p className="text-[13px] text-neutral-600 leading-relaxed">
+            Specify the issues found during accounts review for{" "}
+            <strong>{offer?.recipient?.fullName || contractName}</strong>. The offer will be sent
+            back to Production Review.
+          </p>
+
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="E.G., BUDGET CODES DO NOT MATCH APPROVED CODES. OVERTIME RATE EXCEEDS APPROVED CAP..."
+            rows={5}
+            className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[13px] uppercase placeholder:normal-case placeholder:text-neutral-400 text-neutral-800 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400/40 focus:border-orange-400 transition-colors"
+          />
+
+          <p className="text-[11px] text-neutral-400">
+            All text is stored in uppercase. Production will receive a notification.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-5 pb-5">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 h-11 rounded-xl border border-neutral-200 text-[13px] font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(notes.trim())}
+            disabled={isLoading}
+            className="flex-1 h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          >
+            {isLoading
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Send className="w-4 h-4" />
+            }
+            Return to Production
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Checklist widget ─────────────────────────────────────────────────────────
 
@@ -34,27 +119,23 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-2.5 flex items-center justify-between border-b border-neutral-100">
+      <div className="bg-violet-600 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <DollarSign className="h-3.5 w-3.5 text-neutral-500" />
-          <span className="text-neutral-700 text-[11px] font-semibold uppercase tracking-wide">
+          <ClipboardCheck className="h-3.5 w-3.5 text-white" />
+          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">
             Accounts Checklist
           </span>
         </div>
-        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold border ${
-          allDone
-            ? "bg-emerald-400 text-emerald-900 border-emerald-300"
-            : "bg-white text-neutral-500 border-neutral-200"
+        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+          allDone ? "bg-emerald-400 text-emerald-900" : "bg-white/20 text-white"
         }`}>
           {done}/{total} verified
         </span>
       </div>
 
-      {/* Progress bar */}
       <div className="h-1 bg-neutral-100">
         <div
-          className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-indigo-500"}`}
+          className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`}
           style={{ width: `${total ? (done / total) * 100 : 0}%` }}
         />
       </div>
@@ -66,7 +147,7 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
           return (
             <div key={cat}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">{cat}</span>
+                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">{cat}</span>
                 <span className="text-[8px] text-neutral-400">{catDone}/{catItems.length}</span>
               </div>
               <div className="space-y-1">
@@ -120,29 +201,31 @@ export default function LayoutAccountsReview({
   offer, contractData, allowances, calculatedRates,
   isSubmitting, onAction, dispatch,
 }) {
-  const [showEdit,    setShowEdit   ] = useState(false);
+  const navigate             = useNavigate();
+  const { id, projectName }  = useParams();
+  const proj                 = projectName || "demo-project";
+  const offerId              = id || offer?._id;
+
   const [checklist,   setChecklist  ] = useState({});
   const [showApprove, setShowApprove] = useState(false);
+  const [showReturn,  setShowReturn  ] = useState(false);   // Return to Production dialog
   const [approved,    setApproved   ] = useState(false);
 
   const allDone = ACCT_CHECKLIST.every((c) => checklist[c.key]);
 
+  // ── Return to Production confirmed ────────────────────────────────────────
+  // For now: navigate to edit page. Future: also call backend + send notification.
+  const handleReturnConfirm = (notes) => {
+    setShowReturn(false);
+    // TODO (future): dispatch action to send notes to production + reset status
+    // await onAction("returnToProduction", { notes });
+    navigate(`/projects/${proj}/offers/${offerId}/edit`);
+  };
+
   return (
     <div className="space-y-4">
-      <InlineEditPanel
-        show={showEdit} onClose={() => setShowEdit(false)}
-        offer={offer} contractData={contractData}
-        calculatedRates={calculatedRates} allowances={allowances} dispatch={dispatch}
-        accentBg="bg-indigo-700" accentText="text-indigo-300"
-      />
 
-      {/* ── Full-width crew identity card ── */}
-      <CrewIdentityHeader
-        contractData={contractData}
-        offer={offer}
-        showEdit={showEdit}
-        onToggleEdit={() => setShowEdit((p) => !p)}
-      />
+      {/* ── NO CrewIdentityHeader in Accounts Review ── */}
 
       {/* ── Main 2-col layout ── */}
       <div className="flex gap-4 items-start">
@@ -154,7 +237,7 @@ export default function LayoutAccountsReview({
 
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
-              <FileText className="w-3.5 h-3.5 text-indigo-500" />
+              <FileText className="w-3.5 h-3.5 text-violet-500" />
               <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
             </div>
             <div className="p-4">
@@ -164,7 +247,7 @@ export default function LayoutAccountsReview({
 
         </div>
 
-        {/* ── Right sidebar ── */}
+        {/* Right sidebar */}
         <div className="w-[260px] shrink-0 space-y-3">
 
           <ChecklistWidget
@@ -176,31 +259,33 @@ export default function LayoutAccountsReview({
 
           {!approved ? (
             <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
-              {/* Primary: Approve & Send for Signatures */}
+              {/* Primary — Approve */}
               <button
                 onClick={() => allDone && setShowApprove(true)}
                 disabled={!allDone || isSubmitting}
                 className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all ${
                   allDone && !isSubmitting
-                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                    ? "bg-violet-600 text-white hover:bg-violet-700"
                     : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
+                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PenLine className="h-3.5 w-3.5" />}
                 Approve &amp; Send for Signatures
               </button>
 
-              {/* Secondary: Return to Production — amber outlined */}
+              {/* Secondary — Return to Production (opens dialog) */}
               <button
-                onClick={() => onAction("productionCheck")}
+                onClick={() => setShowReturn(true)}
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-amber-400 text-amber-600 text-[12px] font-medium hover:bg-amber-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-orange-200 text-orange-600 text-[11px] font-medium hover:bg-orange-50 transition-colors"
               >
-                <MessageSquare className="h-3.5 w-3.5" /> Return to Production
+                <Send className="h-3 w-3" /> Return to Production
               </button>
 
               {!allDone && (
-                <p className="text-[9px] text-neutral-400 text-center">Complete all checklist items to enable approval</p>
+                <p className="text-[9px] text-neutral-400 text-center">
+                  Complete all checklist items to approve
+                </p>
               )}
             </div>
           ) : (
@@ -214,34 +299,32 @@ export default function LayoutAccountsReview({
         </div>
       </div>
 
-      {/* Approve modal */}
+      {/* ── Approve modal ── */}
       {showApprove && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="bg-indigo-700 px-6 py-4 flex items-center justify-between">
+            <div className="bg-violet-700 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PenLine className="h-5 w-5 text-white" />
                 <h3 className="text-white font-semibold">Approve &amp; Send for Signatures?</h3>
               </div>
-              <button onClick={() => setShowApprove(false)} className="text-indigo-300 hover:text-white">
+              <button onClick={() => setShowApprove(false)} className="text-violet-300 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6">
               <p className="text-[13px] text-neutral-600 mb-5">
-                Financial checks complete for <strong>{contractData.fullName}</strong>. Send for crew signature?
+                Financial checks complete for <strong>{contractData?.fullName}</strong>. Send for crew signature?
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowApprove(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50"
-                >
+                <button onClick={() => setShowApprove(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
                   Cancel
                 </button>
                 <button
                   onClick={async () => { await onAction("pendingCrewSignature"); setApproved(true); setShowApprove(false); }}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 text-white text-[13px] font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenLine className="h-4 w-4" />}
                   Approve &amp; Send
@@ -250,6 +333,16 @@ export default function LayoutAccountsReview({
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Return to Production dialog ── */}
+      {showReturn && (
+        <ReturnToProductionDialog
+          offer={offer}
+          onConfirm={handleReturnConfirm}
+          onClose={() => setShowReturn(false)}
+          isLoading={isSubmitting}
+        />
       )}
     </div>
   );

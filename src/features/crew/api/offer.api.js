@@ -85,10 +85,7 @@ export const studioSign = (contractId, signature) => signAs(contractId, signatur
 
 // ─── SIGNING STATUS ───────────────────────────────────────────────────────────
 
-export const getSigningStatus = (contractId) =>
-  axiosConfig
-    .get(`${SIG_BASE}/${contractId}/status`, { headers: roleHeaders() })
-    .then(unwrap);
+
 
 // ─── CONTRACT PREVIEW ─────────────────────────────────────────────────────────
 // ⚠️  CRITICAL — DO NOT USE unwrap() HERE
@@ -101,9 +98,17 @@ export const getContractPreview = (contractId) =>
     .get(`${SIG_BASE}/${contractId}/preview`, {
       headers:      roleHeaders(),
       responseType: "text",
+      params: { _t: Date.now() },  // ← ADD THIS
     })
     .then((res) => res.data);
 
+export const getSigningStatus = (contractId) =>
+  axiosConfig
+    .get(`${SIG_BASE}/${contractId}/status`, {
+      headers: roleHeaders(),
+      params: { _t: Date.now() },  // ← ADD THIS
+    })
+    .then(unwrap);
 // ─── CONTRACT PDF DOWNLOAD URL ────────────────────────────────────────────────
 
 export const getContractPdfUrl = (contractId) =>
@@ -170,3 +175,9 @@ export const updateContractInstanceStatus = (instanceId, status) =>
       { headers: roleHeaders() }
     )
     .then((res) => res.data.data);
+
+
+export const productionEditOffer = (id, data) =>
+  axiosConfig
+    .patch(`/offers/${id}/production-edit`, data, { headers: roleHeaders() })
+    .then(unwrap);    
