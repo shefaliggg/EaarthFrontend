@@ -97,8 +97,8 @@ export default function MessageList({
             message={msg}
             isGroupStart={isGroupStart}
             isGroupEnd={isGroupEnd}
-            isSelected={selectedMessage === msg.id}
-            onSelect={() => setSelectedMessage(msg.id)}
+            isSelected={selectedMessage === msg.clientTempId}
+            onSelect={() => setSelectedMessage(msg.clientTempId)}
             hoveredMessageId={hoveredMessageId}
             setHoveredMessageId={setHoveredMessageId}
             showReactionPicker={showReactionPicker}

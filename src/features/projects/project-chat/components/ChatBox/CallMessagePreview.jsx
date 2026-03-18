@@ -1,12 +1,6 @@
 import { Phone, Video } from "lucide-react";
 import { cn } from "@/shared/config/utils";
-
-function formatDuration(seconds = 0) {
-  if (!seconds) return null;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
-}
+import { formatCallDuration } from "../../utils/CallHelpers";
 
 export default function CallMessagePreview({
   callInfo,
@@ -34,7 +28,7 @@ export default function CallMessagePreview({
   const canJoin =
     isActuallyActive && (isRinging || isOngoing) && (!isEnded || !isMissed);
 
-  const durationText = formatDuration(callInfo?.duration);
+  const durationText = formatCallDuration(callInfo?.duration);
 
   let statusText = "Missed call";
 

@@ -1,5 +1,13 @@
 import React from "react";
-import { Image as ImageIcon, Video, FileText, Music, Mic } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Video,
+  FileText,
+  Music,
+  Mic,
+  Phone,
+} from "lucide-react";
+import { formatCallDuration } from "../../utils/CallHelpers";
 
 function ReplyPreviewContent({ reply }) {
   if (!reply) {
@@ -20,16 +28,45 @@ function ReplyPreviewContent({ reply }) {
 
   const type = reply.type?.toLowerCase();
   const files = reply.files || [];
+  const callInfo = reply?.callInfo;
   const firstFile = files[0];
+
+  // =========================
+  // CALL MESSAGE
+  // =========================
+  if (type === "call") {
+    const isVideo = callInfo?.type === "VIDEO";
+    const isMissed = callInfo?.status === "MISSED";
+    const isOngoing = callInfo?.status === "ONGOING";
+    const isRinging = callInfo?.status === "RINGING";
+    const durationText = formatCallDuration(callInfo?.duration);
+
+    let status = "Ended";
+
+    if (isRinging) status = "Ringing...";
+    else if (isOngoing) status = "Ongoing";
+    else if (isMissed) status = "Missed";
+    else if (callInfo?.duration) {
+      status = durationText;
+    }
+
+    return (
+      <div className="flex items-center gap-1 text-[11px] min-w-30">
+        {isVideo ? <Video size={14} /> : <Phone size={14} />}
+
+        <span>{isVideo ? "Video call" : "Audio call"}</span>
+
+        <span className="opacity-70">• {status}</span>
+      </div>
+    );
+  }
 
   // =========================
   // TEXT MESSAGE
   // =========================
   if (type === "text") {
     return (
-      <span className="text-[11px]">
-        {reply.preview || "Text message"}
-      </span>
+      <span className="text-[11px]">{reply.preview || "Text message"}</span>
     );
   }
 

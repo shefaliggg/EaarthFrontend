@@ -237,6 +237,7 @@ export default function MessageBubble({
         isOwn ? "flex-row-reverse" : "flex-row",
         isGroupStart ? "mt-4" : "mt-0",
         selectedChat.type === "dm" && "ml-4",
+        isSelected && "bg-primary/10",
       )}
       role="article"
       aria-label={`Message from ${message.sender} at ${message.time}`}

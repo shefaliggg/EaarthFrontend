@@ -221,6 +221,7 @@ export function transformMessage(
       type: original.type?.toLowerCase() || "text",
       caption: original.content?.caption || "",
       files: original.content?.files || [],
+      callInfo: original.content.callInfo || {},
       deleted: original.status?.deletedForEveryone || false,
     };
   }
