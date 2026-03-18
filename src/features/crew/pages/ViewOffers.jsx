@@ -57,6 +57,9 @@ const ROLES = [
 // ── Statuses where contract instances should be fetched ───────────────────────
 
 const INSTANCE_FETCH_STATUSES = [
+  "SENT_TO_CREW",            // crew views offer — ContractInstancesPanel shown
+  "NEEDS_REVISION",          // crew reviews revised offer
+  "CREW_ACCEPTED",           // after crew accepts, instances exist
   "PRODUCTION_CHECK",
   "ACCOUNTS_CHECK",
   "PENDING_CREW_SIGNATURE",

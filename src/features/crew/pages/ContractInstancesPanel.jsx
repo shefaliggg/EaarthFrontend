@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Loader2, AlertCircle, RefreshCw, ChevronLeft, ChevronRight,
@@ -14,6 +14,7 @@ import {
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
+  selectCurrentOfferId,
 } from "../store/contractInstances.slice";
 
 import { ContractStepper, isSignedStatus } from "../components/viewoffer/layouts/ContractStepper";
@@ -282,31 +283,46 @@ function EmptyState({ onRefresh, loading }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ContractInstancesPanel({ offerId, className }) {
-  const dispatch  = useDispatch();
-  const instances = useSelector(selectInstances);
-  const loading   = useSelector(selectInstancesLoading);
-  const error     = useSelector(selectInstancesError);
+  const dispatch       = useDispatch();
+  const instances      = useSelector(selectInstances);
+  const loading        = useSelector(selectInstancesLoading);
+  const error          = useSelector(selectInstancesError);
+  const currentOfferId = useSelector(selectCurrentOfferId);   // ← key selector
   const [activeIdx, setActiveIdx] = useState(0);
-
-  // Retry ref — prevents infinite retry loop
   const retryDoneRef = useRef(false);
 
+  // ── Manual refresh (button click) ──────────────────────────────────────────
+  // Only this clears the store — never the auto-fetch on mount.
   const handleRefresh = useCallback(() => {
     retryDoneRef.current = false;
     dispatch(clearInstances());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
-  // Initial fetch — always clear first to prevent stale data
+  // ── Initial fetch ──────────────────────────────────────────────────────────
+  // KEY FIX: Do NOT call clearInstances() here.
+  // ViewOffer already fetches instances when offer status is in
+  // INSTANCE_FETCH_STATUSES and calls clearInstances() before doing so.
+  // Calling clearInstances() here races with that fetch and wipes the data.
+  //
+  // Only fetch if:
+  //  a) offerId changed (navigated to different offer), OR
+  //  b) store is empty and not already loading
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
-    dispatch(clearInstances());
-    dispatch(getContractInstancesThunk(offerId));
-  }, [dispatch, offerId]);
 
-  // One-time retry after 2s if empty on first load
-  // Handles race condition where backend is still generating
+    const alreadyLoaded = currentOfferId === offerId && instances.length > 0;
+    if (alreadyLoaded) return;   // ViewOffer already fetched — use store data
+
+    if (!loading) {
+      dispatch(getContractInstancesThunk(offerId));
+    }
+  }, [offerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Intentionally only re-run when offerId changes, not on every store update.
+
+  // ── One-time retry after 2s if still empty ─────────────────────────────────
+  // Handles race where backend is still generating instances after crew accept.
   useEffect(() => {
     if (!offerId) return;
     if (loading) return;
@@ -321,12 +337,12 @@ export default function ContractInstancesPanel({ offerId, className }) {
     return () => clearTimeout(t);
   }, [offerId, loading, instances.length, dispatch]);
 
-  // Reset active index when instances change
+  // Reset active tab when switching offers
   useEffect(() => {
     setActiveIdx(0);
   }, [offerId]);
 
-  // Active + deduplicated list
+  // ── Derived list ───────────────────────────────────────────────────────────
   const activeInstances = dedupByFormKey(
     instances
       .filter((i) => i.status !== "SUPERSEDED" && i.status !== "VOIDED")
@@ -345,6 +361,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
     signed: isSignedStatus(inst.status),
   }));
 
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading && instances.length === 0) {
     return (
       <div className={cn("flex items-center justify-center py-20", className)}>
@@ -356,6 +373,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
+  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className={cn(
@@ -364,16 +382,14 @@ export default function ContractInstancesPanel({ offerId, className }) {
       )}>
         <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
         <p className="text-[11px] text-red-600">{error}</p>
-        <button
-          onClick={handleRefresh}
-          className="ml-auto text-[10px] text-red-500 underline"
-        >
+        <button onClick={handleRefresh} className="ml-auto text-[10px] text-red-500 underline">
           Retry
         </button>
       </div>
     );
   }
 
+  // ── Empty state ────────────────────────────────────────────────────────────
   if (!loading && total === 0) {
     return <EmptyState onRefresh={handleRefresh} loading={loading} />;
   }
