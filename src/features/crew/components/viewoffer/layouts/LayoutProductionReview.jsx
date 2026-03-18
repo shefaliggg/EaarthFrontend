@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ClipboardCheck, Send, Loader2, CheckCircle2, X,
   FileText, ShieldCheck, Building, Package, Monitor, Car,
@@ -8,9 +9,6 @@ import {
 import CrewIdentityHeader      from "../../../components/viewoffer/layouts/CrewIdentityHeader";
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
-import { InlineEditPanel }     from "./layoutHelpers";
-
-// ─── Checklist config ─────────────────────────────────────────────────────────
 
 const PROD_CHECKLIST = [
   { key: "documentsUploaded",      label: "All required documents uploaded", Icon: FileCheck,   cat: "Identity",  always: true    },
@@ -24,8 +22,6 @@ const PROD_CHECKLIST = [
   { key: "vehicleRequirementsMet", label: "Vehicle requirements met",        Icon: Car,         cat: "Equipment", vehicle: true   },
   { key: "noMissingExpiredDocs",   label: "No missing or expired documents", Icon: ShieldCheck, cat: "Final",     always: true    },
 ];
-
-// ─── Checklist widget ─────────────────────────────────────────────────────────
 
 function ChecklistWidget({ items, checked, onChange, disabled }) {
   const cats    = [...new Set(items.map((c) => c.cat))];
@@ -63,7 +59,9 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
           return (
             <div key={cat}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">{cat}</span>
+                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">
+                  {cat}
+                </span>
                 <span className="text-[8px] text-neutral-400">{catDone}/{catItems.length}</span>
               </div>
               <div className="space-y-1">
@@ -76,7 +74,10 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
                       disabled={disabled}
                       onClick={() => onChange(item.key, !on)}
                       className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all
-                        ${on ? "bg-emerald-50 border border-emerald-200" : "bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-white"}
+                        ${on
+                          ? "bg-emerald-50 border border-emerald-200"
+                          : "bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-white"
+                        }
                         ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
                     >
                       <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
@@ -88,7 +89,9 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
                           </svg>
                         )}
                       </div>
-                      {ItemIcon && <ItemIcon className={`h-3 w-3 shrink-0 ${on ? "text-emerald-400" : "text-neutral-300"}`} />}
+                      {ItemIcon && (
+                        <ItemIcon className={`h-3 w-3 shrink-0 ${on ? "text-emerald-400" : "text-neutral-300"}`} />
+                      )}
                       <span className={`text-[10px] leading-tight flex-1 ${on ? "text-emerald-700" : "text-neutral-600"}`}>
                         {item.label}
                       </span>
@@ -111,13 +114,15 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
   );
 }
 
-// ─── Main layout ──────────────────────────────────────────────────────────────
-
 export default function LayoutProductionReview({
   offer, contractData, allowances, calculatedRates,
   isSubmitting, onAction, dispatch,
 }) {
-  const [showEdit,    setShowEdit   ] = useState(false);
+  const navigate            = useNavigate();
+  const { id, projectName } = useParams();
+  const proj                = projectName || "demo-project";
+  const offerId             = id || offer?._id;
+
   const [checklist,   setChecklist  ] = useState({});
   const [showApprove, setShowApprove] = useState(false);
   const [approved,    setApproved   ] = useState(false);
@@ -135,21 +140,14 @@ export default function LayoutProductionReview({
 
   return (
     <div className="space-y-4">
-      <InlineEditPanel
-        show={showEdit} onClose={() => setShowEdit(false)}
-        offer={offer} contractData={contractData}
-        calculatedRates={calculatedRates} allowances={allowances} dispatch={dispatch}
-      />
 
-      {/* ── Full-width crew identity card ── */}
       <CrewIdentityHeader
         contractData={contractData}
         offer={offer}
-        showEdit={showEdit}
-        onToggleEdit={() => setShowEdit((p) => !p)}
+        showEdit={false}
+        onToggleEdit={() => navigate(`/projects/${proj}/offers/${offerId}/edit`)}
       />
 
-      {/* ── Main 2-col layout ── */}
       <div className="flex gap-4 items-start">
 
         {/* Centre column */}
@@ -163,13 +161,15 @@ export default function LayoutProductionReview({
               <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
             </div>
             <div className="p-4">
-              {offer?._id && <ContractInstancesPanel offerId={offer._id} />}
+              {offer?._id && (
+                <ContractInstancesPanel offerId={offer._id} />
+              )}
             </div>
           </div>
 
         </div>
 
-        {/* ── Right sidebar ── */}
+        {/* Right sidebar */}
         <div className="w-[260px] shrink-0 space-y-3">
 
           <ChecklistWidget
@@ -190,9 +190,13 @@ export default function LayoutProductionReview({
                     : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
+                {isSubmitting
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <ClipboardCheck className="h-3.5 w-3.5" />
+                }
                 Approve &amp; Send to Accounts
               </button>
+
               <button
                 onClick={() => onAction("sendToCrew")}
                 disabled={isSubmitting}
@@ -200,8 +204,11 @@ export default function LayoutProductionReview({
               >
                 <Send className="h-3 w-3" /> Return to Crew
               </button>
+
               {!allDone && (
-                <p className="text-[9px] text-neutral-400 text-center">Complete all checklist items to approve</p>
+                <p className="text-[9px] text-neutral-400 text-center">
+                  Complete all checklist items to approve
+                </p>
               )}
             </div>
           ) : (
@@ -224,25 +231,39 @@ export default function LayoutProductionReview({
                 <ClipboardCheck className="h-5 w-5 text-white" />
                 <h3 className="text-white font-semibold">Approve &amp; Send to Accounts?</h3>
               </div>
-              <button onClick={() => setShowApprove(false)} className="text-violet-300 hover:text-white">
+              <button
+                onClick={() => setShowApprove(false)}
+                className="text-violet-300 hover:text-white"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6">
               <p className="text-[13px] text-neutral-600 mb-5">
-                Production checks complete for <strong>{contractData.fullName}</strong>. Send to Accounts for financial review?
+                Production checks complete for{" "}
+                <strong>{contractData?.fullName}</strong>.
+                Send to Accounts for financial review?
               </p>
               <div className="flex gap-3">
-                <button onClick={() => setShowApprove(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
+                <button
+                  onClick={() => setShowApprove(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50"
+                >
                   Cancel
                 </button>
                 <button
-                  onClick={async () => { await onAction("accountsCheck"); setApproved(true); setShowApprove(false); }}
+                  onClick={async () => {
+                    await onAction("accountsCheck");
+                    setApproved(true);
+                    setShowApprove(false);
+                  }}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
+                  {isSubmitting
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <ClipboardCheck className="h-4 w-4" />
+                  }
                   Approve &amp; Send
                 </button>
               </div>

@@ -1,29 +1,3 @@
-/**
- * ViewOffer.jsx  — slim orchestrator
- *
- * All layout logic lives in layouts/*.jsx.
- * This file only handles:
- *   - data fetching (offer, signing status, contract preview)
- *   - role routing (which layout to render)
- *   - action dispatch (workflow thunks, sign thunks)
- *   - the top bar (back, role switcher, offer code, PDF, refresh)
- *   - OfferStatusProgress (always shown)
- *   - SignDialog (shared)
- *
- * Layout routing:
- *   PRODUCTION_ADMIN + PRODUCTION_CHECK  → LayoutProductionReview
- *   PRODUCTION_ADMIN + other             → LayoutProductionAdmin
- *   ACCOUNTS_ADMIN   + ACCOUNTS_CHECK    → LayoutAccountsReview
- *   ACCOUNTS_ADMIN   + other             → LayoutAccountsReadOnly
- *   CREW                                 → LayoutCrew
- *   UPM / FC / STUDIO                   → LayoutSignatory
- *
- * FIXES:
- *   - handleSignConfirm: after a signature is recorded, also clears and
- *     re-fetches contract instances so ContractInstancesPanel shows live
- *     signatures instead of stale htmlContent snapshots.
- */
-
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate }    from "react-router-dom";
 import { useDispatch, useSelector }  from "react-redux";
@@ -34,7 +8,6 @@ import {
 } from "lucide-react";
 import { Button } from "../../../shared/components/ui/button";
 
-// ── Redux ─────────────────────────────────────────────────────────────────────
 import {
   getOfferThunk, sendToCrewThunk, markViewedThunk,
   crewAcceptThunk, crewRequestChangesThunk, cancelOfferThunk,
@@ -51,18 +24,15 @@ import {
 
 import { selectViewRole, setViewRole } from "../store/viewrole.slice";
 
-// ── Contract instances — needed to refresh instances panel after signing ──────
 import {
   clearInstances,
   getContractInstancesThunk,
 } from "../store/contractInstances.slice";
 
-// ── Shared UI ──────────────────────────────────────────────────────────────────
 import OfferStatusProgress from "../components/viewoffer/OfferStatusProgress";
 import SignDialog          from "../components/SignaturePad/SignDialog";
 import { SIGN_ROLE_MAP }   from "../components/viewoffer/layouts/layoutHelpers";
 
-// ── Layout files ─────────────────────────────────────────────────────────────
 import LayoutProductionAdmin  from "../components/viewoffer/layouts/LayoutProductionAdmin";
 import LayoutProductionReview from "../components/viewoffer/layouts/LayoutProductionReview";
 import LayoutAccountsReview   from "../components/viewoffer/layouts/LayoutAccountsReview";
@@ -70,11 +40,10 @@ import LayoutAccountsReadOnly from "../components/viewoffer/layouts/LayoutAccoun
 import LayoutCrew             from "../components/viewoffer/layouts/LayoutCrew";
 import LayoutSignatory        from "../components/viewoffer/layouts/LayoutSignatory";
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
 import { calculateRates, defaultEngineSettings } from "../utils/rateCalculations";
 import { defaultAllowances }                      from "../utils/Defaultallowance";
 
-// ─── Role switcher UI config ──────────────────────────────────────────────────
+// ── Role switcher config ──────────────────────────────────────────────────────
 
 const ROLES = [
   { key: "PRODUCTION_ADMIN", label: "Production" },
@@ -85,7 +54,22 @@ const ROLES = [
   { key: "STUDIO",           label: "Studio"      },
 ];
 
-// ─── Data transform helpers ───────────────────────────────────────────────────
+// ── Statuses where contract instances should be fetched ───────────────────────
+
+const INSTANCE_FETCH_STATUSES = [
+  "SENT_TO_CREW",            // crew views offer — ContractInstancesPanel shown
+  "NEEDS_REVISION",          // crew reviews revised offer
+  "CREW_ACCEPTED",           // after crew accepts, instances exist
+  "PRODUCTION_CHECK",
+  "ACCOUNTS_CHECK",
+  "PENDING_CREW_SIGNATURE",
+  "PENDING_UPM_SIGNATURE",
+  "PENDING_FC_SIGNATURE",
+  "PENDING_STUDIO_SIGNATURE",
+  "COMPLETED",
+];
+
+// ── Data helpers ──────────────────────────────────────────────────────────────
 
 function offerToContractData(offer) {
   if (!offer) return {};
@@ -135,7 +119,7 @@ function offerToAllowances(offer) {
   return result;
 }
 
-// ─── Role switcher ────────────────────────────────────────────────────────────
+// ── Role switcher UI ──────────────────────────────────────────────────────────
 
 function RoleSwitcher({ viewRole, onChange }) {
   return (
@@ -169,7 +153,6 @@ export default function ViewOffer() {
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
 
-  // ── Selectors ──────────────────────────────────────────────────────────────
   const offer          = useSelector(selectCurrentOffer);
   const isLoading      = useSelector(selectOfferLoading);
   const isSubmitting   = useSelector(selectSubmitting);
@@ -191,7 +174,7 @@ export default function ViewOffer() {
     if (id) dispatch(getOfferThunk(id));
   }, [id, dispatch]);
 
-  // ── Mark viewed by crew ────────────────────────────────────────────────────
+  // ── Mark viewed ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (offer?._id && viewRole === "CREW" && offer.status === "SENT_TO_CREW")
       dispatch(markViewedThunk(offer._id));
@@ -204,6 +187,15 @@ export default function ViewOffer() {
     dispatch(getContractPreviewThunk(contractId));
   }, [contractId, dispatch]);
 
+  // ── Fetch contract instances when offer reaches review/signing stages ──────
+  useEffect(() => {
+    if (!offer?._id) return;
+    if (!INSTANCE_FETCH_STATUSES.includes(offer.status)) return;
+
+    dispatch(clearInstances());
+    dispatch(getContractInstancesThunk(offer._id));
+  }, [offer?._id, offer?.status, dispatch]);
+
   // ── Refresh preview after each signature ──────────────────────────────────
   useEffect(() => {
     const curr = signingStatus?.currentStatus;
@@ -211,9 +203,14 @@ export default function ViewOffer() {
     if (prevSignRef.current && prevSignRef.current !== curr) {
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
+      // Also refresh instances so signature images appear
+      if (offer?._id) {
+        dispatch(clearInstances());
+        dispatch(getContractInstancesThunk(offer._id));
+      }
     }
     prevSignRef.current = curr;
-  }, [signingStatus?.currentStatus, contractId, dispatch]);
+  }, [signingStatus?.currentStatus, contractId, offer?._id, dispatch]);
 
   // ── API error toast ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -235,7 +232,7 @@ export default function ViewOffer() {
     [contractData.feePerDay]
   );
 
-  // ── Action handler — maps action key → thunk ───────────────────────────────
+  // ── Action handler ─────────────────────────────────────────────────────────
   const handleAction = async (action, payload = {}) => {
     const oid = offer?._id;
     if (!oid) return;
@@ -269,19 +266,41 @@ export default function ViewOffer() {
       };
       toast.success(MSG[action] || "Done");
 
+      // Refresh offer
       const fresh = await dispatch(getOfferThunk(oid));
       const cid   = fresh.payload?.contractId ?? contractId;
+
       if (cid) {
         dispatch(getSigningStatusThunk(cid));
         dispatch(clearContractPreview());
         dispatch(getContractPreviewThunk(cid));
       }
+
+      // After crew accepts → fetch instances immediately
+      // (backend creates them synchronously before returning)
+      if (action === "accept") {
+        dispatch(clearInstances());
+        dispatch(getContractInstancesThunk(oid));
+      }
+
+      // After accounts approves → refresh instances (status changes to PENDING_CREW_SIGNATURE)
+      if (action === "accountsCheck" || action === "pendingCrewSignature") {
+        dispatch(clearInstances());
+        dispatch(getContractInstancesThunk(oid));
+      }
+
+    } else {
+      toast.error(
+        result.payload?.errors?.map(e => e.message).join(" · ") ||
+        result.payload?.message ||
+        "Something went wrong"
+      );
     }
   };
 
   const handleSign = useCallback((role) => setSignRole(role), []);
 
-  // ── Sign confirm — refreshes BOTH the preview iframe AND the instances panel
+  // ── Sign confirm ───────────────────────────────────────────────────────────
   const handleSignConfirm = async (dataUrl) => {
     if (!contractId || !signRole) return;
 
@@ -297,16 +316,13 @@ export default function ViewOffer() {
     if (!result.error) {
       toast.success(`${signRole} signature recorded!`);
 
-      // Refresh offer + signing status
       await dispatch(getOfferThunk(offer._id));
       await dispatch(getSigningStatusThunk(contractId));
 
-      // Refresh ContractPreviewIframe (used in LayoutCrew / LayoutSignatory / LayoutProductionAdmin)
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
 
-      // Refresh ContractInstancesPanel — clears stale htmlContent snapshots so
-      // each DocumentCard re-fetches /contract-instances/:id/html with live sigs
+      // Refresh instances so signature images appear in document viewer
       dispatch(clearInstances());
       dispatch(getContractInstancesThunk(offer._id));
     } else {
@@ -331,13 +347,13 @@ export default function ViewOffer() {
       dispatch(getSigningStatusThunk(cid));
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(cid));
-      // Also refresh instances panel on manual refresh
-      dispatch(clearInstances());
-      dispatch(getContractInstancesThunk(id));
     }
+    // Always refresh instances on manual refresh
+    dispatch(clearInstances());
+    dispatch(getContractInstancesThunk(id));
   };
 
-  // ── Layout routing helpers ─────────────────────────────────────────────────
+  // ── Layout routing ─────────────────────────────────────────────────────────
   const isProdAdmin = viewRole === "PRODUCTION_ADMIN" || viewRole === "SUPER_ADMIN";
   const isAcctAdmin = viewRole === "ACCOUNTS_ADMIN";
   const isCrew      = viewRole === "CREW";
@@ -349,7 +365,6 @@ export default function ViewOffer() {
   const tl     = offer?.timeline || {};
   const hasPdf = !!(signingStatus?.pdfS3Key);
 
-  // Props shared across all layout components
   const sharedProps = {
     offer, contractData, allowances, calculatedRates,
     isSubmitting, onAction: handleAction, dispatch,
@@ -369,7 +384,7 @@ export default function ViewOffer() {
 
   if (!offer && !isLoading) {
     return (
-      <div className=" flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center space-y-3">
           <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
           <p className="text-sm font-medium text-neutral-700">Offer not found</p>
@@ -386,7 +401,7 @@ export default function ViewOffer() {
     <div className="min-h-screen bg-gray-50/40">
       <div className="px-4 space-y-4">
 
-        {/* ── Top bar ── */}
+        {/* Top bar */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <Button
             variant="ghost"
@@ -432,7 +447,7 @@ export default function ViewOffer() {
           </div>
         </div>
 
-        {/* ── Status progress — always shown ── */}
+        {/* Status progress */}
         <OfferStatusProgress
           status={offer?.status}
           sentToCrewAt={tl.sentToCrewAt}
@@ -446,8 +461,7 @@ export default function ViewOffer() {
           studioSignedAt={tl.studioSignedAt}
         />
 
-        {/* ── Layout routing — exactly one renders ── */}
-
+        {/* Layout routing */}
         {isProdReview && (
           <LayoutProductionReview {...sharedProps} />
         )}
@@ -497,7 +511,7 @@ export default function ViewOffer() {
 
       </div>
 
-      {/* ── SignDialog — shared across all layouts ── */}
+      {/* Sign dialog */}
       {signRole && (
         <SignDialog
           open={!!signRole}

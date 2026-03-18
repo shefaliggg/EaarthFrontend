@@ -1,20 +1,4 @@
-/**
- * ContractInstancesPanel.jsx
- *
- * Uses the reusable <ContractStepper> component.
- *
- * KEY FIX — deduplication:
- *   dedupByFormKey() keeps only the highest-generation instance per formKey.
- *   This eliminates duplicates that appear when:
- *     - Multiple bundles share the same form template (e.g. 2× "Start Form")
- *     - A contract was regenerated and old SUPERSEDED record leaked through
- *     - Redux state was not cleared before re-fetching (now fixed below)
- *
- * Also: clearInstances() is dispatched before every fetch so Redux never
- * accumulates stale entries across navigations.
- */
-
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Loader2, AlertCircle, RefreshCw, ChevronLeft, ChevronRight,
@@ -30,6 +14,7 @@ import {
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
+  selectCurrentOfferId,
 } from "../store/contractInstances.slice";
 
 import { ContractStepper, isSignedStatus } from "../components/viewoffer/layouts/ContractStepper";
@@ -70,9 +55,7 @@ const STATUS_COLOR = {
   SUPERSEDED:             "bg-zinc-100 text-zinc-400 border-zinc-200",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DEDUP — keeps highest-generation instance per formKey/formName
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Dedup — keeps highest-generation instance per formKey ─────────────────────
 
 function dedupByFormKey(instances) {
   const map = new Map();
@@ -96,27 +79,46 @@ function AutoIframe({ html, title }) {
   useEffect(() => {
     if (!html || !ref.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+
     const blob = new Blob([html], { type: "text/html; charset=utf-8" });
     blobRef.current = URL.createObjectURL(blob);
     ref.current.src = blobRef.current;
+
     const onLoad = () => {
       try {
         const doc = ref.current?.contentDocument || ref.current?.contentWindow?.document;
-        if (doc) setHeight(Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0, 400) + 24);
-      } catch { setHeight(900); }
+        if (doc) {
+          setHeight(
+            Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0, 400) + 24
+          );
+        }
+      } catch {
+        setHeight(900);
+      }
     };
+
     ref.current.addEventListener("load", onLoad);
     const t = setTimeout(onLoad, 500);
+
     return () => {
       ref.current?.removeEventListener("load", onLoad);
       clearTimeout(t);
-      if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+      if (blobRef.current) {
+        URL.revokeObjectURL(blobRef.current);
+        blobRef.current = null;
+      }
     };
   }, [html]);
 
   return (
-    <iframe ref={ref} title={title} className="w-full border-0 block"
-      style={{ height: `${height}px` }} sandbox="allow-same-origin allow-scripts" scrolling="no" />
+    <iframe
+      ref={ref}
+      title={title}
+      className="w-full border-0 block"
+      style={{ height: `${height}px` }}
+      sandbox="allow-same-origin allow-scripts"
+      scrolling="no"
+    />
   );
 }
 
@@ -126,7 +128,10 @@ function StatusBadge({ status }) {
   const cfg  = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
   const Icon = cfg.Icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide", STATUS_COLOR[status] ?? STATUS_COLOR.DRAFT)}>
+    <span className={cn(
+      "inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide",
+      STATUS_COLOR[status] ?? STATUS_COLOR.DRAFT
+    )}>
       <Icon className="w-2.5 h-2.5" />{cfg.label}
     </span>
   );
@@ -139,37 +144,63 @@ function DocumentView({ instance, index, total }) {
   const [html,    setHtml   ] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError  ] = useState(null);
-  const signed   = isSignedStatus(instance.status);
-  const typeCfg  = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
+
+  const signed  = isSignedStatus(instance.status);
+  const typeCfg = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true); setError(null); setHtml(null);
+    setLoading(true);
+    setError(null);
+    setHtml(null);
+
     dispatch(getContractInstanceHtmlThunk(instance._id)).then((res) => {
       if (cancelled) return;
-      if (res.error)         setError(res.payload?.message || "Failed to load");
-      else if (res.payload?.html) setHtml(res.payload.html);
-      else                   setError("No content returned");
-    }).finally(() => { if (!cancelled) setLoading(false); });
+      if (res.error) {
+        setError(res.payload?.message || "Failed to load");
+      } else if (res.payload?.html) {
+        setHtml(res.payload.html);
+      } else {
+        setError("No content returned");
+      }
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
     return () => { cancelled = true; };
   }, [instance._id, dispatch]);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-200">
-      <div className={cn("rounded-xl overflow-hidden border", signed ? "border-emerald-200" : "border-neutral-200")}>
+      <div className={cn(
+        "rounded-xl overflow-hidden border",
+        signed ? "border-emerald-200" : "border-neutral-200"
+      )}>
 
         {/* Header */}
-        <div className={cn("flex items-center gap-3 px-4 py-3", signed ? "bg-emerald-600" : "bg-violet-700")}>
+        <div className={cn(
+          "flex items-center gap-3 px-4 py-3",
+          signed ? "bg-emerald-600" : "bg-violet-700"
+        )}>
           <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-            {signed ? <CheckCircle2 className="w-4 h-4 text-white" /> : <FileText className="w-4 h-4 text-white" />}
+            {signed
+              ? <CheckCircle2 className="w-4 h-4 text-white" />
+              : <FileText className="w-4 h-4 text-white" />
+            }
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-[13px] font-semibold truncate">{instance.formName}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[8px] font-bold px-1.5 py-px rounded border bg-white/20 text-white border-white/30 uppercase tracking-wider">{typeCfg.label}</span>
-              <span className="text-[8px] text-white/70 font-mono uppercase tracking-wider">DOC {index + 1} OF {total}</span>
+              <span className="text-[8px] font-bold px-1.5 py-px rounded border bg-white/20 text-white border-white/30 uppercase tracking-wider">
+                {typeCfg.label}
+              </span>
+              <span className="text-[8px] text-white/70 font-mono uppercase tracking-wider">
+                DOC {index + 1} OF {total}
+              </span>
               {(instance.generation ?? 1) > 1 && (
-                <span className="text-[8px] font-mono text-white/70 bg-white/10 px-1.5 py-px rounded border border-white/20">GEN {instance.generation}</span>
+                <span className="text-[8px] font-mono text-white/70 bg-white/10 px-1.5 py-px rounded border border-white/20">
+                  GEN {instance.generation}
+                </span>
               )}
             </div>
           </div>
@@ -178,14 +209,25 @@ function DocumentView({ instance, index, total }) {
 
         {/* Signature row */}
         <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/60 flex items-center gap-3">
-          <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0", signed ? "bg-emerald-100" : "bg-neutral-100")}>
-            {signed ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" /> : <PenLine className="w-3.5 h-3.5 text-neutral-400" />}
+          <div className={cn(
+            "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
+            signed ? "bg-emerald-100" : "bg-neutral-100"
+          )}>
+            {signed
+              ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+              : <PenLine className="w-3.5 h-3.5 text-neutral-400" />
+            }
           </div>
           <div className="flex-1 min-w-0">
-            <p className={cn("text-[11px] font-semibold", signed ? "text-emerald-700" : "text-neutral-600")}>
+            <p className={cn(
+              "text-[11px] font-semibold",
+              signed ? "text-emerald-700" : "text-neutral-600"
+            )}>
               {signed ? "Signature recorded" : "Signature pending"}
             </p>
-            <p className="text-[10px] text-neutral-400">{STATUS_CFG[instance.status]?.label ?? "Draft"}</p>
+            <p className="text-[10px] text-neutral-400">
+              {STATUS_CFG[instance.status]?.label ?? "Draft"}
+            </p>
           </div>
         </div>
 
@@ -216,7 +258,7 @@ function DocumentView({ instance, index, total }) {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ onRefresh, loading }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="w-14 h-14 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-4">
@@ -226,6 +268,14 @@ function EmptyState() {
       <p className="text-[11px] text-neutral-400 mt-1.5 max-w-xs leading-relaxed">
         Documents are generated when the crew accepts the offer.
       </p>
+      <button
+        onClick={onRefresh}
+        disabled={loading}
+        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 text-[11px] text-neutral-500 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+      >
+        <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
+        Refresh
+      </button>
     </div>
   );
 }
@@ -233,25 +283,66 @@ function EmptyState() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ContractInstancesPanel({ offerId, className }) {
-  const dispatch  = useDispatch();
-  const instances = useSelector(selectInstances);
-  const loading   = useSelector(selectInstancesLoading);
-  const error     = useSelector(selectInstancesError);
+  const dispatch       = useDispatch();
+  const instances      = useSelector(selectInstances);
+  const loading        = useSelector(selectInstancesLoading);
+  const error          = useSelector(selectInstancesError);
+  const currentOfferId = useSelector(selectCurrentOfferId);   // ← key selector
   const [activeIdx, setActiveIdx] = useState(0);
+  const retryDoneRef = useRef(false);
 
-  // FIX: clear before fetch — prevents stale entries accumulating in Redux
+  // ── Manual refresh (button click) ──────────────────────────────────────────
+  // Only this clears the store — never the auto-fetch on mount.
   const handleRefresh = useCallback(() => {
+    retryDoneRef.current = false;
     dispatch(clearInstances());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
+  // ── Initial fetch ──────────────────────────────────────────────────────────
+  // KEY FIX: Do NOT call clearInstances() here.
+  // ViewOffer already fetches instances when offer status is in
+  // INSTANCE_FETCH_STATUSES and calls clearInstances() before doing so.
+  // Calling clearInstances() here races with that fetch and wipes the data.
+  //
+  // Only fetch if:
+  //  a) offerId changed (navigated to different offer), OR
+  //  b) store is empty and not already loading
   useEffect(() => {
     if (!offerId) return;
-    dispatch(clearInstances());
-    dispatch(getContractInstancesThunk(offerId));
-  }, [dispatch, offerId]);
+    retryDoneRef.current = false;
 
-  // Active + deduplicated list
+    const alreadyLoaded = currentOfferId === offerId && instances.length > 0;
+    if (alreadyLoaded) return;   // ViewOffer already fetched — use store data
+
+    if (!loading) {
+      dispatch(getContractInstancesThunk(offerId));
+    }
+  }, [offerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Intentionally only re-run when offerId changes, not on every store update.
+
+  // ── One-time retry after 2s if still empty ─────────────────────────────────
+  // Handles race where backend is still generating instances after crew accept.
+  useEffect(() => {
+    if (!offerId) return;
+    if (loading) return;
+    if (instances.length > 0) return;
+    if (retryDoneRef.current) return;
+
+    const t = setTimeout(() => {
+      retryDoneRef.current = true;
+      dispatch(getContractInstancesThunk(offerId));
+    }, 2000);
+
+    return () => clearTimeout(t);
+  }, [offerId, loading, instances.length, dispatch]);
+
+  // Reset active tab when switching offers
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [offerId]);
+
+  // ── Derived list ───────────────────────────────────────────────────────────
   const activeInstances = dedupByFormKey(
     instances
       .filter((i) => i.status !== "SUPERSEDED" && i.status !== "VOIDED")
@@ -270,6 +361,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
     signed: isSignedStatus(inst.status),
   }));
 
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading && instances.length === 0) {
     return (
       <div className={cn("flex items-center justify-center py-20", className)}>
@@ -281,17 +373,26 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
+  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className={cn("bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2", className)}>
+      <div className={cn(
+        "bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2",
+        className
+      )}>
         <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
         <p className="text-[11px] text-red-600">{error}</p>
-        <button onClick={handleRefresh} className="ml-auto text-[10px] text-red-500 underline">Retry</button>
+        <button onClick={handleRefresh} className="ml-auto text-[10px] text-red-500 underline">
+          Retry
+        </button>
       </div>
     );
   }
 
-  if (!loading && total === 0) return <EmptyState />;
+  // ── Empty state ────────────────────────────────────────────────────────────
+  if (!loading && total === 0) {
+    return <EmptyState onRefresh={handleRefresh} loading={loading} />;
+  }
 
   const current = activeInstances[safeIdx];
 
@@ -308,38 +409,62 @@ export default function ContractInstancesPanel({ offerId, className }) {
             <p className="text-[13px] font-bold text-neutral-800">Contract Bundle</p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[10px] text-neutral-400">{total} documents</span>
-              {signedCount > 0 && <span className="text-[10px] text-emerald-600 font-semibold">· {signedCount} signed</span>}
+              {signedCount > 0 && (
+                <span className="text-[10px] text-emerald-600 font-semibold">
+                  · {signedCount} signed
+                </span>
+              )}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-28 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <span className="text-[10px] text-neutral-400 shrink-0">{signedCount}/{total}</span>
-          <button onClick={handleRefresh} disabled={loading} title="Refresh"
-            className="p-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50 transition-colors">
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh"
+            className="p-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50 transition-colors"
+          >
             <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
           </button>
         </div>
       </div>
 
-      {/* ── Reusable stepper ── */}
+      {/* Stepper */}
       <ContractStepper steps={steps} activeIndex={safeIdx} onSelect={setActiveIdx} />
 
       {/* Active document */}
-      {current && <DocumentView key={current._id} instance={current} index={safeIdx} total={total} />}
+      {current && (
+        <DocumentView
+          key={current._id}
+          instance={current}
+          index={safeIdx}
+          total={total}
+        />
+      )}
 
       {/* Prev / Next */}
       {total > 1 && (
         <div className="flex items-center justify-between">
-          <button onClick={() => setActiveIdx(i => Math.max(0, i - 1))} disabled={safeIdx === 0}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+          <button
+            onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
+            disabled={safeIdx === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
             <ChevronLeft className="w-3.5 h-3.5" /> Previous
           </button>
           <span className="text-[11px] text-neutral-400">{safeIdx + 1} of {total}</span>
-          <button onClick={() => setActiveIdx(i => Math.min(total - 1, i + 1))} disabled={safeIdx === total - 1}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+          <button
+            onClick={() => setActiveIdx(i => Math.min(total - 1, i + 1))}
+            disabled={safeIdx === total - 1}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
             Next <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
