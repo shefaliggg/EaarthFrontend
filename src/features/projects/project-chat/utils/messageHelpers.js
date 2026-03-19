@@ -395,7 +395,19 @@ export const transformConversation = (conv, currentUserId) => {
     members: Array.isArray(conv.members) ? conv.members : [],
     unread: unreadCount,
     mentions: 0,
-    lastMessage: conv.lastMessage?.preview || "",
+    lastMessage: conv.lastMessage
+      ? {
+          id: conv.lastMessage.messageId,
+          text: conv.lastMessage.preview,
+          senderId: conv.lastMessage.senderId?._id || conv.lastMessage.senderId,
+          senderName:
+            conv.lastMessage.senderName ||
+            conv.lastMessage.senderId?.displayName ||
+            "member",
+          type: conv.lastMessage.type,
+          createdAt: conv.lastMessage.createdAt,
+        }
+      : null,
     pinnedMessage: conv.pinnedMessage,
     settings: conv.settings,
     timestamp: conv.lastMessage?.createdAt

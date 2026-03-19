@@ -212,10 +212,12 @@ export default function MessageBubble({
         className={cn(
           "flex gap-3 group transition-all",
           isOwn ? "flex-row-reverse" : "flex-row",
-          isGroupStart ? "mt-4" : "mt-1",
+          isGroupStart ? "mt-4" : "mt-0",
         )}
       >
-        {!isOwn && <div className="w-8" />}
+        {!isOwn && (
+          <div className={cn(selectedChat.type !== "dm" ? "w-8" : "")} />
+        )}
         <div
           className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}
         >

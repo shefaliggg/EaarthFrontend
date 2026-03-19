@@ -7,10 +7,15 @@ import {
   Dot,
   Clapperboard,
   Megaphone,
+  Phone,
+  Paperclip,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Badge } from "@/shared/components/ui/badge";
-import { convertToPrettyText } from "../../../../../shared/config/utils";
+import {
+  convertToPrettyText,
+  getCurrentUserId,
+} from "../../../../../shared/config/utils";
 import useChatStore from "../../store/chat.store";
 
 const formatTime = (timestamp) => {
@@ -31,6 +36,44 @@ const formatTime = (timestamp) => {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
+const getLastMessagePreview = (item, isGroup) => {
+  const msg = item.lastMessage;
+
+  if (!msg) return "";
+
+  const currentUserId = getCurrentUserId();
+  const isOwn = msg.senderId?.toString() === currentUserId?.toString();
+
+  const senderPrefix = isGroup
+    ? isOwn
+      ? "You: "
+      : `${msg.senderName || "Unknown"}: `
+    : "";
+
+  // 🧠 TYPE HANDLING
+  switch (msg.type) {
+    case "CALL":
+      return {
+        icon: <Phone className="w-3 h-3 text-primary" />,
+        text: `${msg.text || "Call"}`,
+      };
+
+    case "MEDIA":
+    case "AUDIO":
+      return {
+        icon: <Paperclip className="w-3 h-3 text-primary" />,
+        text: `${senderPrefix}${msg.text || "Attachment"}`,
+      };
+
+    case "TEXT":
+    default:
+      return {
+        icon: null,
+        text: `${senderPrefix}${msg.text || ""}`,
+      };
+  }
+};
+
 export default function ConversationItem({
   item,
   type,
@@ -40,11 +83,12 @@ export default function ConversationItem({
 }) {
   const { onlineUsers, typingUsers } = useChatStore();
   const isGroup = type === "group" || type === "all";
-
   const isOnline = item?.userId && onlineUsers.has(item.userId);
-
   const currentTypingUsers = typingUsers[item.id] || [];
   const isTyping = currentTypingUsers.length > 0;
+  const previewData = getLastMessagePreview(item, isGroup);
+
+  console.log("conversation:", item);
 
   return (
     <button
@@ -97,13 +141,13 @@ export default function ConversationItem({
                   {convertToPrettyText(item.name)}
                 </p>
 
-                {!isGroup && (
+                {/* {!isGroup && (
                   <>
                     <p className="text-[9px] text-muted-foreground truncate">
                       {convertToPrettyText(item.role)}
                     </p>
                   </>
-                )}
+                )} */}
               </div>
               {item.isFavorite && (
                 <Star className="w-3 h-3 fill-yellow-500 text-yellow-500 flex-shrink-0" />
@@ -119,7 +163,7 @@ export default function ConversationItem({
               {item.isMuted && (
                 <VolumeX className="w-3 h-3 text-muted-foreground flex-shrink-0" />
               )}
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 {isTyping ? (
                   <span className="text-primary italic">
                     {isGroup
@@ -128,16 +172,17 @@ export default function ConversationItem({
                   </span>
                 ) : (
                   <>
-                    {!isGroup && item.unread > 0 && (
-                      <span className="text-primary font-medium">
-                        {item.lastMessage.substring(0, 20)}
-                        {item.lastMessage.length > 20 && "..."}
-                      </span>
-                    )}
+                    {previewData?.icon}
 
-                    {!isGroup && item.unread === 0 && item.lastMessage}
-
-                    {isGroup && item.lastMessage}
+                    <span
+                      className={cn(
+                        !isGroup &&
+                          item.unread > 0 &&
+                          "text-primary font-medium",
+                      )}
+                    >
+                      {previewData?.text}
+                    </span>
                   </>
                 )}
               </p>
