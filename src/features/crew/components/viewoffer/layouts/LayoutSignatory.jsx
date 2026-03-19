@@ -1,23 +1,24 @@
 /**
  * layouts/LayoutSignatory.jsx
  *
- * Shared layout for UPM, FC, and STUDIO signatories.
- * Mirrors LayoutCrew exactly:
- *   - CrewIdentityHeader on top
- *   - ContractInstancesPanel (stepper + document viewer) on the left
- *   - Role-specific signing action sidebar on the right
+ * Shared layout for UPM, FC, STUDIO.
+ *
+ * "Edit Offer" → OfferActionDialog type="sendToProduction" role={role}
+ * Each role gets its own description text inside the dialog.
+ * onConfirm(notes) → navigate to /offers/:id/edit
  */
 
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Eye, CheckCircle, XCircle, PenLine, ClipboardCheck,
   Loader2, FileText, Shield, Lock,
 } from "lucide-react";
 
 import ContractInstancesPanel from "../../../pages/ContractInstancesPanel";
+import OfferActionDialog      from "../../onboarding/OfferActionDialog";
 import CrewIdentityHeader     from "./CrewIdentityHeader";
-
-import { InfoBox } from "./layoutHelpers";
+import { InfoBox }            from "./layoutHelpers";
 
 // ── Role config ───────────────────────────────────────────────────────────────
 
@@ -26,7 +27,6 @@ const ROLE_CFG = {
     label:          "Unit Production Manager",
     short:          "UPM",
     requiredStatus: "PENDING_UPM_SIGNATURE",
-    signedStatus:   "UPM_SIGNED",
     waitingMsg:     "Awaiting crew signature before UPM can sign.",
     signedMsg:      "You have signed as UPM. Awaiting Financial Controller.",
   },
@@ -34,7 +34,6 @@ const ROLE_CFG = {
     label:          "Financial Controller",
     short:          "FC",
     requiredStatus: "PENDING_FC_SIGNATURE",
-    signedStatus:   "FC_SIGNED",
     waitingMsg:     "Awaiting UPM signature before FC can sign.",
     signedMsg:      "You have signed as FC. Awaiting Studio approval.",
   },
@@ -42,7 +41,6 @@ const ROLE_CFG = {
     label:          "Approved Production Executive",
     short:          "Studio",
     requiredStatus: "PENDING_STUDIO_SIGNATURE",
-    signedStatus:   "COMPLETED",
     waitingMsg:     "Awaiting FC signature before Studio can sign.",
     signedMsg:      "Contract fully executed.",
   },
@@ -51,13 +49,12 @@ const ROLE_CFG = {
 // ── Signature status card ─────────────────────────────────────────────────────
 
 function SignatureStatusCard({ signingStatus }) {
-  const sigs = signingStatus?.signatories ?? [];
-
+  const sigs  = signingStatus?.signatories ?? [];
   const order = [
-    { role: "CREW",   label: "Crew Member"          },
-    { role: "UPM",    label: "UPM"                   },
-    { role: "FC",     label: "Financial Controller"  },
-    { role: "STUDIO", label: "Production Executive"  },
+    { role: "CREW",   label: "Crew Member"         },
+    { role: "UPM",    label: "UPM"                  },
+    { role: "FC",     label: "Financial Controller" },
+    { role: "STUDIO", label: "Production Executive" },
   ];
 
   return (
@@ -75,20 +72,16 @@ function SignatureStatusCard({ signingStatus }) {
           return (
             <div key={role} className="flex items-center gap-2.5">
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                signed
-                  ? "bg-teal-500 border-teal-500"
-                  : "bg-white border-neutral-300"
+                signed ? "bg-teal-500 border-teal-500" : "bg-white border-neutral-300"
               }`}>
                 {signed && (
                   <svg className="w-2 h-2 text-white" viewBox="0 0 8 8" fill="none">
                     <path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.5"
-                          strokeLinecap="round" strokeLinejoin="round"/>
+                          strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
-              <span className={`text-[11px] font-medium ${
-                signed ? "text-teal-700" : "text-neutral-500"
-              }`}>
+              <span className={`text-[11px] font-medium ${signed ? "text-teal-700" : "text-neutral-500"}`}>
                 {label}
               </span>
               {signed && sig?.signedAt && (
@@ -107,22 +100,16 @@ function SignatureStatusCard({ signingStatus }) {
 // ── Signatory action sidebar ──────────────────────────────────────────────────
 
 function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign }) {
-  const status  = offer?.status;
-  const cfg     = ROLE_CFG[role];
+  const status = offer?.status;
+  const cfg    = ROLE_CFG[role];
   if (!cfg) return null;
 
-  const canSign    = status === cfg.requiredStatus;
-  const hasSigned  = status === cfg.signedStatus ||
-    ["PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED"].includes(status) && role === "UPM" ||
-    ["PENDING_STUDIO_SIGNATURE", "COMPLETED"].includes(status) && role === "FC" ||
-    status === "COMPLETED" && role === "STUDIO";
-
+  const canSign     = status === cfg.requiredStatus;
   const isCompleted = status === "COMPLETED";
   const isCancelled = status === "CANCELLED";
 
-  // More precise signed detection from signingStatus
-  const sigs = signingStatus?.signatories ?? [];
-  const mySig = sigs.find((s) => s.role === role);
+  const sigs    = signingStatus?.signatories ?? [];
+  const mySig   = sigs.find((s) => s.role === role);
   const iSigned = !!mySig?.signed;
 
   return (
@@ -138,9 +125,7 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign }) 
             {cfg.label}
           </span>
         </div>
-        <p className="text-[10px] text-neutral-400">
-          Signing as {cfg.short}
-        </p>
+        <p className="text-[10px] text-neutral-400">Signing as {cfg.short}</p>
       </div>
 
       {/* Action card */}
@@ -149,14 +134,10 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign }) 
           Your Action
         </p>
 
-        {/* Not yet reached signing stage */}
         {!canSign && !iSigned && !isCompleted && !isCancelled && (
-          <InfoBox icon={ClipboardCheck} color="blue">
-            {cfg.waitingMsg}
-          </InfoBox>
+          <InfoBox icon={ClipboardCheck} color="blue">{cfg.waitingMsg}</InfoBox>
         )}
 
-        {/* Can sign now */}
         {canSign && !iSigned && (
           <>
             <InfoBox icon={Eye} color="purple">
@@ -169,45 +150,32 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign }) 
             >
               {isSubmitting
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <PenLine className="w-3.5 h-3.5" />
-              }
+                : <PenLine className="w-3.5 h-3.5" />}
               Sign as {cfg.short}
             </button>
           </>
         )}
 
-        {/* Already signed */}
         {iSigned && !isCompleted && (
-          <InfoBox icon={CheckCircle} color="green">
-            {cfg.signedMsg}
-          </InfoBox>
+          <InfoBox icon={CheckCircle} color="green">{cfg.signedMsg}</InfoBox>
         )}
 
-        {/* Completed */}
         {isCompleted && (
-          <InfoBox icon={Lock} color="green">
-            Contract fully executed and locked.
-          </InfoBox>
+          <InfoBox icon={Lock} color="green">Contract fully executed and locked.</InfoBox>
         )}
 
-        {/* Cancelled */}
         {isCancelled && (
-          <InfoBox icon={XCircle} color="red">
-            This offer has been cancelled.
-          </InfoBox>
+          <InfoBox icon={XCircle} color="red">This offer has been cancelled.</InfoBox>
         )}
       </div>
 
-      {/* Signature status overview */}
-      {signingStatus && (
-        <SignatureStatusCard signingStatus={signingStatus} />
-      )}
+      {signingStatus && <SignatureStatusCard signingStatus={signingStatus} />}
 
     </div>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function LayoutSignatory({
   role,
@@ -215,6 +183,13 @@ export default function LayoutSignatory({
   signingStatus, previewHtml, isLoadingPrev,
   isSubmitting, onAction, onSign,
 }) {
+  const navigate            = useNavigate();
+  const { id, projectName } = useParams();
+  const proj                = projectName || "demo-project";
+  const offerId             = id || offer?._id;
+
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
   const status = offer?.status;
 
   const signingInProgress = [
@@ -225,36 +200,29 @@ export default function LayoutSignatory({
 
   return (
     <>
-      {/* Identity header — same as LayoutCrew / LayoutProductionReview */}
+      {/* Edit Offer → sendToProduction dialog with this role's text → navigate on confirm */}
       <CrewIdentityHeader
         contractData={contractData}
         offer={offer}
         showEdit={false}
+        onToggleEdit={() => setShowEditDialog(true)}
       />
 
       <div className="flex gap-4 items-start">
 
-        {/* ── Left column: contract documents ── */}
+        {/* Left column */}
         <div className="flex-1 min-w-0 space-y-4">
-
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
               <FileText className="w-3.5 h-3.5 text-violet-500" />
-              <h3 className="text-[12px] font-semibold text-neutral-800">
-                Contract Documents
-              </h3>
+              <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
               {status === "COMPLETED" && (
-                <span className="ml-auto text-[9px] text-emerald-600 font-mono font-semibold">
-                  ALL SIGNED
-                </span>
+                <span className="ml-auto text-[9px] text-emerald-600 font-mono font-semibold">ALL SIGNED</span>
               )}
               {signingInProgress && (
-                <span className="ml-auto text-[9px] text-violet-500 font-mono">
-                  PENDING SIGNATURE
-                </span>
+                <span className="ml-auto text-[9px] text-violet-500 font-mono">PENDING SIGNATURE</span>
               )}
             </div>
-
             <div className="p-4">
               {offer?._id ? (
                 <ContractInstancesPanel offerId={offer._id} />
@@ -268,10 +236,9 @@ export default function LayoutSignatory({
               )}
             </div>
           </div>
-
         </div>
 
-        {/* ── Right column: signing actions ── */}
+        {/* Right column */}
         <div className="w-[260px] shrink-0">
           <SignatorySidebar
             role={role}
@@ -283,6 +250,20 @@ export default function LayoutSignatory({
         </div>
 
       </div>
+
+      {/* Send to Production — role prop drives the description text */}
+      <OfferActionDialog
+        type="sendToProduction"
+        role={role}
+        offer={offer}
+        open={showEditDialog}
+        onConfirm={(notes) => {
+          setShowEditDialog(false);
+          navigate(`/projects/${proj}/offers/${offerId}/edit`);
+        }}
+        onClose={() => setShowEditDialog(false)}
+        isLoading={false}
+      />
     </>
   );
 }

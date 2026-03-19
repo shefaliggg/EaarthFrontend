@@ -1,29 +1,41 @@
 /**
  * layouts/LayoutAccountsReview.jsx
  *
- * ACCOUNTS REVIEW — differs from ProductionReview in these ways:
+ * ACCOUNTS_CHECK stage.
  *
- *  1. NO CrewIdentityHeader / No Edit button (accounts doesn't edit)
- *  2. "Return to Production" button → opens ReturnToProductionDialog
- *     (orange header, textarea for issue notes)
- *  3. Dialog confirm → navigates to /offers/:id/edit (Create Offer in edit mode)
- *     (future: will also call backend action + send notification)
- *  4. Checklist items → budget/payroll/final
- *  5. Primary action → "Approve & Send for Signatures" → onAction("pendingCrewSignature")
+ * "Return to Production":
+ *   → Calls returnToProductionThunk → PATCH /offers/:id/return-to-production
+ *   → Backend sets status = NEEDS_REVISION + creates ChangeRequest (fieldName=ACCOUNTS_REVIEW)
+ *   → Production admin sees ViewOffer with:
+ *       - Indigo ChangeRequestBanner "Accounts Flagged Issues" (same as Image 2 orange banner)
+ *       - Edit Offer button (orange)
+ *       - Resend to Crew button (purple)
+ *   → Navigates to /onboarding — offer shows NEEDS_REVISION in the pipeline table
+ *
+ * "Approve & Send for Signatures":
+ *   → onAction("pendingCrewSignature") → PENDING_CREW_SIGNATURE
  */
 
-import { useState } from "react";
+import { useState }               from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast }                  from "sonner";
 import {
   ClipboardCheck, Send, Loader2, CheckCircle2, X,
   FileText, ShieldCheck, FileCheck, PenLine,
-  TrendingUp, DollarSign, Receipt, BarChart2, AlertTriangle,
+  TrendingUp, DollarSign, Receipt, BarChart2, MessageSquare,
 } from "lucide-react";
 
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
 
-// ─── Checklist items ──────────────────────────────────────────────────────────
+import {
+  getProjectOffersThunk,
+  returnToProductionThunk,
+} from "../../../store/offer.slice";
+
+import { APP_CONFIG } from "../../../config/appConfig";
+
+// ─── Checklist ────────────────────────────────────────────────────────────────
 
 const ACCT_CHECKLIST = [
   { key: "budgetCodesVerified",   label: "All budget codes verified",           Icon: BarChart2,   cat: "Budget"  },
@@ -36,54 +48,52 @@ const ACCT_CHECKLIST = [
   { key: "readyForSignature",     label: "Ready for crew signature",            Icon: PenLine,     cat: "Final"   },
 ];
 
-// ─── Return to Production Dialog ──────────────────────────────────────────────
+// ─── Return to Production dialog ──────────────────────────────────────────────
 
 function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
   const [notes, setNotes] = useState("");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
-      {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-        {/* Orange header */}
-        <div className="bg-orange-500 px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <Send className="w-3.5 h-3.5 text-white" />
+        <div className="bg-indigo-600 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <MessageSquare className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-[15px] font-bold text-white">Return to Production</h2>
+            <div>
+              <h2 className="text-[15px] font-bold text-white">Return to Production</h2>
+              {offer?.offerCode && (
+                <p className="text-[9px] text-white/60 font-mono mt-0.5">{offer.offerCode}</p>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-5 py-4 space-y-3">
+        {/* Body — textarea only, no info box */}
+        <div className="px-5 py-5 space-y-3">
           <p className="text-[13px] text-neutral-600 leading-relaxed">
-            Specify the issues found during accounts review for{" "}
-            <strong>{offer?.recipient?.fullName || contractName}</strong>. The offer will be sent
-            back to Production Review.
+            Describe the financial issues found for{" "}
+            <strong className="text-neutral-900">
+              {offer?.recipient?.fullName || "this crew member"}
+            </strong>.
+            Production will see your notes and can edit and resend to crew.
           </p>
 
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="E.G., BUDGET CODES DO NOT MATCH APPROVED CODES. OVERTIME RATE EXCEEDS APPROVED CAP..."
+            placeholder="E.G., BUDGET CODES DO NOT MATCH APPROVED CODES. OVERTIME RATE EXCEEDS APPROVED CAP. FEE SHOULD BE £850 NOT £800..."
             rows={5}
-            className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[13px] uppercase placeholder:normal-case placeholder:text-neutral-400 text-neutral-800 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400/40 focus:border-orange-400 transition-colors"
+            className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[13px] uppercase placeholder:normal-case placeholder:text-neutral-400 text-neutral-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-500 transition-colors"
           />
-
-          <p className="text-[11px] text-neutral-400">
-            All text is stored in uppercase. Production will receive a notification.
-          </p>
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 px-5 pb-5">
           <button
             onClick={onClose}
@@ -93,9 +103,9 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(notes.trim())}
-            disabled={isLoading}
-            className="flex-1 h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+            onClick={() => { if (!notes.trim()) return; onConfirm(notes.trim()); }}
+            disabled={isLoading || !notes.trim()}
+            className="flex-1 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -122,9 +132,7 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
       <div className="bg-violet-600 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ClipboardCheck className="h-3.5 w-3.5 text-white" />
-          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">
-            Accounts Checklist
-          </span>
+          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">Accounts Checklist</span>
         </div>
         <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
           allDone ? "bg-emerald-400 text-emerald-900" : "bg-white/20 text-white"
@@ -183,7 +191,6 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
             </div>
           );
         })}
-
         {allDone && (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 mt-1">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -195,42 +202,81 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
   );
 }
 
-// ─── Main layout ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export default function LayoutAccountsReview({
   offer, contractData, allowances, calculatedRates,
   isSubmitting, onAction, dispatch,
 }) {
-  const navigate             = useNavigate();
-  const { id, projectName }  = useParams();
-  const proj                 = projectName || "demo-project";
-  const offerId              = id || offer?._id;
+  const navigate            = useNavigate();
+  const { id, projectName } = useParams();
+  const proj                = projectName || "demo-project";
+  const offerId             = id || offer?._id;
 
   const [checklist,   setChecklist  ] = useState({});
   const [showApprove, setShowApprove] = useState(false);
-  const [showReturn,  setShowReturn  ] = useState(false);   // Return to Production dialog
+  const [showReturn,  setShowReturn  ] = useState(false);
+  const [returning,   setReturning  ] = useState(false);
   const [approved,    setApproved   ] = useState(false);
 
   const allDone = ACCT_CHECKLIST.every((c) => checklist[c.key]);
 
-  // ── Return to Production confirmed ────────────────────────────────────────
-  // For now: navigate to edit page. Future: also call backend + send notification.
-  const handleReturnConfirm = (notes) => {
+  // ── Return to Production ────────────────────────────────────────────────────
+  // Calls returnToProductionThunk:
+  //   PATCH /offers/:id/return-to-production
+  //   Backend: status → NEEDS_REVISION + ChangeRequest (fieldName=ACCOUNTS_REVIEW)
+  //
+  // Result on production admin ViewOffer:
+  //   - Status badge: NEEDS_REVISION
+  //   - Indigo ChangeRequestBanner: "Accounts Flagged Issues" with the accounts notes
+  //   - Actions sidebar: Edit Offer (orange) + Resend to Crew (purple) + Cancel
+  //   → Same layout as Image 2 (crew request changes page)
+  //
+  // After success: refresh list → navigate to onboarding
+  const handleReturnConfirm = async (notes) => {
     setShowReturn(false);
-    // TODO (future): dispatch action to send notes to production + reset status
-    // await onAction("returnToProduction", { notes });
-    navigate(`/projects/${proj}/offers/${offerId}/edit`);
+    setReturning(true);
+    toast.loading("Returning to production…", { id: "return-prod" });
+
+    try {
+      const result = await dispatch(returnToProductionThunk({
+        offerId,
+        reason: notes.toUpperCase(),
+      }));
+
+      toast.dismiss("return-prod");
+
+      if (!result.error) {
+        toast.success("Returned to production. Offer set to Needs Revision.");
+
+        // Refresh the onboarding list so NEEDS_REVISION stage is visible
+        const projectId = offer?.projectId || APP_CONFIG.PROJECT_ID;
+        await dispatch(getProjectOffersThunk({ projectId }));
+
+        // Navigate to onboarding — production sees NEEDS_REVISION row,
+        // clicks it → ViewOffer → indigo ChangeRequestBanner + Edit Offer button
+        setTimeout(() => navigate(`/projects/${proj}/onboarding`), 500);
+      } else {
+        toast.error(
+          result.payload?.message || "Failed to return to production. Please try again."
+        );
+      }
+    } catch (err) {
+      toast.dismiss("return-prod");
+      toast.error(err.message || "Something went wrong.");
+    } finally {
+      setReturning(false);
+    }
   };
 
   return (
     <div className="space-y-4">
 
-      {/* ── NO CrewIdentityHeader in Accounts Review ── */}
-
-      {/* ── Main 2-col layout ── */}
       <div className="flex gap-4 items-start">
 
-        {/* Centre column */}
+        {/* Left — documents */}
         <div className="flex-1 min-w-0 space-y-4">
 
           <SubmittedDocumentsPanel offerId={offer?._id} offer={offer} />
@@ -239,6 +285,7 @@ export default function LayoutAccountsReview({
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
               <FileText className="w-3.5 h-3.5 text-violet-500" />
               <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
+              <span className="ml-auto text-[9px] text-indigo-500 font-mono">ACCOUNTS REVIEW</span>
             </div>
             <div className="p-4">
               {offer?._id && <ContractInstancesPanel offerId={offer._id} />}
@@ -259,7 +306,8 @@ export default function LayoutAccountsReview({
 
           {!approved ? (
             <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
-              {/* Primary — Approve */}
+
+              {/* Approve → PENDING_CREW_SIGNATURE */}
               <button
                 onClick={() => allDone && setShowApprove(true)}
                 disabled={!allDone || isSubmitting}
@@ -269,17 +317,24 @@ export default function LayoutAccountsReview({
                     : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PenLine className="h-3.5 w-3.5" />}
+                {isSubmitting
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <PenLine className="h-3.5 w-3.5" />
+                }
                 Approve &amp; Send for Signatures
               </button>
 
-              {/* Secondary — Return to Production (opens dialog) */}
+              {/* Return to Production → NEEDS_REVISION + ChangeRequest */}
               <button
                 onClick={() => setShowReturn(true)}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-orange-200 text-orange-600 text-[11px] font-medium hover:bg-orange-50 transition-colors"
+                disabled={isSubmitting || returning}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 text-[11px] font-medium hover:bg-indigo-50 transition-colors disabled:opacity-60"
               >
-                <Send className="h-3 w-3" /> Return to Production
+                {returning
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <MessageSquare className="h-3 w-3" />
+                }
+                Return to Production
               </button>
 
               {!allDone && (
@@ -299,7 +354,7 @@ export default function LayoutAccountsReview({
         </div>
       </div>
 
-      {/* ── Approve modal ── */}
+      {/* Approve confirm modal */}
       {showApprove && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
@@ -314,19 +369,29 @@ export default function LayoutAccountsReview({
             </div>
             <div className="p-6">
               <p className="text-[13px] text-neutral-600 mb-5">
-                Financial checks complete for <strong>{contractData?.fullName}</strong>. Send for crew signature?
+                Financial checks complete for <strong>{contractData?.fullName}</strong>.
+                Send for crew signature?
               </p>
               <div className="flex gap-3">
-                <button onClick={() => setShowApprove(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
+                <button
+                  onClick={() => setShowApprove(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50"
+                >
                   Cancel
                 </button>
                 <button
-                  onClick={async () => { await onAction("pendingCrewSignature"); setApproved(true); setShowApprove(false); }}
+                  onClick={async () => {
+                    await onAction("pendingCrewSignature");
+                    setApproved(true);
+                    setShowApprove(false);
+                  }}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenLine className="h-4 w-4" />}
+                  {isSubmitting
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <PenLine className="h-4 w-4" />
+                  }
                   Approve &amp; Send
                 </button>
               </div>
@@ -335,13 +400,13 @@ export default function LayoutAccountsReview({
         </div>
       )}
 
-      {/* ── Return to Production dialog ── */}
+      {/* Return to Production dialog */}
       {showReturn && (
         <ReturnToProductionDialog
           offer={offer}
           onConfirm={handleReturnConfirm}
           onClose={() => setShowReturn(false)}
-          isLoading={isSubmitting}
+          isLoading={returning}
         />
       )}
     </div>

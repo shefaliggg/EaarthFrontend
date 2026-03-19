@@ -1,3 +1,15 @@
+/**
+ * ContractInstancesPanel.jsx
+ *
+ * FIX: Role-aware signing display throughout.
+ *
+ * Each role only sees green ticks for signatures that INCLUDE their own.
+ * e.g. Studio viewing docs that are FC_SIGNED sees them as "unsigned" (waiting)
+ *      until Studio has also signed (STUDIO_SIGNED / COMPLETED).
+ *
+ * Uses isSignedForRole(status, viewRole) from ContractStepper.
+ */
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -17,7 +29,13 @@ import {
   selectCurrentOfferId,
 } from "../store/contractInstances.slice";
 
-import { ContractStepper, isSignedStatus } from "../components/viewoffer/layouts/ContractStepper";
+import { selectViewRole } from "../store/viewrole.slice";
+
+import {
+  ContractStepper,
+  isSignedForRole,
+  isSignedStatus,
+} from "../components/viewoffer/layouts/ContractStepper";
 
 // ── Type badge config ─────────────────────────────────────────────────────────
 
@@ -122,7 +140,7 @@ function AutoIframe({ html, title }) {
   );
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
+// ── Status badge (uses raw status label, not role-aware) ──────────────────────
 
 function StatusBadge({ status }) {
   const cfg  = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
@@ -139,13 +157,14 @@ function StatusBadge({ status }) {
 
 // ── Single document view ──────────────────────────────────────────────────────
 
-function DocumentView({ instance, index, total }) {
+function DocumentView({ instance, index, total, viewRole }) {
   const dispatch  = useDispatch();
   const [html,    setHtml   ] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError  ] = useState(null);
 
-  const signed  = isSignedStatus(instance.status);
+  // Role-aware: is this doc signed FROM THIS ROLE'S PERSPECTIVE?
+  const signed  = isSignedForRole(instance.status, viewRole);
   const typeCfg = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
   useEffect(() => {
@@ -204,10 +223,11 @@ function DocumentView({ instance, index, total }) {
               )}
             </div>
           </div>
+          {/* Always show raw status badge so admin can see real state */}
           <StatusBadge status={instance.status} />
         </div>
 
-        {/* Signature row */}
+        {/* Signature row — role-aware message */}
         <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/60 flex items-center gap-3">
           <div className={cn(
             "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
@@ -287,60 +307,36 @@ export default function ContractInstancesPanel({ offerId, className }) {
   const instances      = useSelector(selectInstances);
   const loading        = useSelector(selectInstancesLoading);
   const error          = useSelector(selectInstancesError);
-  const currentOfferId = useSelector(selectCurrentOfferId);   // ← key selector
+  const currentOfferId = useSelector(selectCurrentOfferId);
+  const viewRole       = useSelector(selectViewRole);  // ← role-aware
+
   const [activeIdx, setActiveIdx] = useState(0);
   const retryDoneRef = useRef(false);
 
-  // ── Manual refresh (button click) ──────────────────────────────────────────
-  // Only this clears the store — never the auto-fetch on mount.
   const handleRefresh = useCallback(() => {
     retryDoneRef.current = false;
     dispatch(clearInstances());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
-  // ── Initial fetch ──────────────────────────────────────────────────────────
-  // KEY FIX: Do NOT call clearInstances() here.
-  // ViewOffer already fetches instances when offer status is in
-  // INSTANCE_FETCH_STATUSES and calls clearInstances() before doing so.
-  // Calling clearInstances() here races with that fetch and wipes the data.
-  //
-  // Only fetch if:
-  //  a) offerId changed (navigated to different offer), OR
-  //  b) store is empty and not already loading
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
-
     const alreadyLoaded = currentOfferId === offerId && instances.length > 0;
-    if (alreadyLoaded) return;   // ViewOffer already fetched — use store data
-
-    if (!loading) {
-      dispatch(getContractInstancesThunk(offerId));
-    }
+    if (alreadyLoaded) return;
+    if (!loading) dispatch(getContractInstancesThunk(offerId));
   }, [offerId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Intentionally only re-run when offerId changes, not on every store update.
 
-  // ── One-time retry after 2s if still empty ─────────────────────────────────
-  // Handles race where backend is still generating instances after crew accept.
   useEffect(() => {
-    if (!offerId) return;
-    if (loading) return;
-    if (instances.length > 0) return;
-    if (retryDoneRef.current) return;
-
+    if (!offerId || loading || instances.length > 0 || retryDoneRef.current) return;
     const t = setTimeout(() => {
       retryDoneRef.current = true;
       dispatch(getContractInstancesThunk(offerId));
     }, 2000);
-
     return () => clearTimeout(t);
   }, [offerId, loading, instances.length, dispatch]);
 
-  // Reset active tab when switching offers
-  useEffect(() => {
-    setActiveIdx(0);
-  }, [offerId]);
+  useEffect(() => { setActiveIdx(0); }, [offerId]);
 
   // ── Derived list ───────────────────────────────────────────────────────────
   const activeInstances = dedupByFormKey(
@@ -349,19 +345,20 @@ export default function ContractInstancesPanel({ offerId, className }) {
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   );
 
-  const safeIdx     = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
-  const signedCount = activeInstances.filter((i) => isSignedStatus(i.status)).length;
-  const total       = activeInstances.length;
+  const safeIdx = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
+  const total   = activeInstances.length;
+
+  // Role-aware progress: count docs THIS role has "signed"
+  const signedCount = activeInstances.filter((i) => isSignedForRole(i.status, viewRole)).length;
   const progress    = total ? Math.round((signedCount / total) * 100) : 0;
 
   const steps = activeInstances.map((inst) => ({
     id:     inst._id,
     label:  inst.formName,
     status: inst.status,
-    signed: isSignedStatus(inst.status),
+    // signed prop not needed — ContractStepper will call isSignedForRole internally
   }));
 
-  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading && instances.length === 0) {
     return (
       <div className={cn("flex items-center justify-center py-20", className)}>
@@ -373,7 +370,6 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className={cn(
@@ -389,7 +385,6 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
   if (!loading && total === 0) {
     return <EmptyState onRefresh={handleRefresh} loading={loading} />;
   }
@@ -436,8 +431,13 @@ export default function ContractInstancesPanel({ offerId, className }) {
         </div>
       </div>
 
-      {/* Stepper */}
-      <ContractStepper steps={steps} activeIndex={safeIdx} onSelect={setActiveIdx} />
+      {/* Stepper — passes viewRole so each role sees correct green ticks */}
+      <ContractStepper
+        steps={steps}
+        activeIndex={safeIdx}
+        onSelect={setActiveIdx}
+        viewRole={viewRole}
+      />
 
       {/* Active document */}
       {current && (
@@ -446,6 +446,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
           instance={current}
           index={safeIdx}
           total={total}
+          viewRole={viewRole}
         />
       )}
 

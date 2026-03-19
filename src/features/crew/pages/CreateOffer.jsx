@@ -1,27 +1,17 @@
 ﻿/**
  * CreateOffer.jsx — Unified Create + Edit page
  *
- * MODES:
- *   /projects/:projectName/offers/create        → CREATE mode (no offerId)
- *   /projects/:projectName/offers/:id/edit      → EDIT mode (offerId from params)
+ * REDIRECT LOGIC:
+ *   Edit from ViewOffer (NEEDS_REVISION monitoring) → ?redirectTo=view  → back to ViewOffer
+ *   Edit from ProductionAdmin (PRODUCTION_CHECK)    → ?redirectTo=onboarding → Onboarding
+ *   Accounts return → production edits              → ?redirectTo=onboarding → Onboarding
  *
- * EDIT FLOW:
- *   1. Loads existing offer from Redux / API
- *   2. Pre-fills ContractForm with all existing data
- *   3. On Save → PATCH /offers/:id/production-edit
- *      Backend: resets to NEEDS_REVISION, bumps version, triggers safeRegenerate
- *   4. Redirect back to ViewOffer
- *
- * CREATE FLOW (unchanged):
- *   1. Empty form
- *   2. Save Draft → createOffer or updateOffer (DRAFT)
- *   3. Send to Crew → createOffer (if needed) then sendToCrew
- *   4. Redirect to ViewOffer
+ * Default (no param) = "view"
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { ContractForm }      from "../components/roleActions/ProductionAdminActions/createoffer/Contractform";
@@ -31,6 +21,7 @@ import { Card, CardContent } from "../../../shared/components/ui/card";
 import { calculateRates, defaultEngineSettings } from "../utils/rateCalculations";
 import { defaultAllowances } from "../utils/Defaultallowance";
 import OfferActionDialog     from "../components/onboarding/OfferActionDialog";
+import ChangeRequestBanner   from "../components/viewoffer/layouts/ChangeRequestBanner";
 
 import axiosConfig from "../../auth/config/axiosConfig";
 
@@ -39,6 +30,7 @@ import {
   sendToCrewThunk,
   updateOfferThunk,
   getOfferThunk,
+  getProjectOffersThunk,
   selectSubmitting,
   selectOfferError,
   selectCurrentOffer,
@@ -155,12 +147,17 @@ function offerToAllowances(offer) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function CreateOfferPage() {
-  const navigate                  = useNavigate();
-  const dispatch                  = useDispatch();
-  const { projectName, id }       = useParams();   // id is present in edit mode
+  const navigate            = useNavigate();
+  const dispatch            = useDispatch();
+  const { projectName, id } = useParams();
+  const [searchParams]      = useSearchParams();
 
-  // ── Mode ───────────────────────────────────────────────────────────────────
   const isEditMode = Boolean(id);
+
+  // Where to navigate after a successful edit save:
+  //   "view"       → back to ViewOffer (default — used from NEEDS_REVISION monitoring)
+  //   "onboarding" → back to onboarding list (used from PRODUCTION_CHECK edit)
+  const redirectAfterSave = searchParams.get("redirectTo") || "view";
 
   const isSubmitting  = useSelector(selectSubmitting);
   const apiError      = useSelector(selectOfferError);
@@ -187,9 +184,7 @@ export default function CreateOfferPage() {
   // ── EDIT MODE: load existing offer ────────────────────────────────────────
   useEffect(() => {
     if (!isEditMode) return;
-    if (!existingOffer || existingOffer._id !== id) {
-      dispatch(getOfferThunk(id));
-    }
+    dispatch(getOfferThunk(id));
   }, [id, isEditMode, dispatch]);
 
   // ── EDIT MODE: pre-fill form once offer is loaded ─────────────────────────
@@ -199,10 +194,10 @@ export default function CreateOfferPage() {
 
     setContractData(offerToFormData(existingOffer));
     setAllowances(offerToAllowances(existingOffer));
-    setSalaryBudgetCodes(existingOffer.salaryBudgetCodes   || []);
-    setSalaryTags(existingOffer.salaryTags                 || []);
+    setSalaryBudgetCodes(existingOffer.salaryBudgetCodes     || []);
+    setSalaryTags(existingOffer.salaryTags                   || []);
     setOvertimeBudgetCodes(existingOffer.overtimeBudgetCodes || []);
-    setOvertimeTags(existingOffer.overtimeTags             || []);
+    setOvertimeTags(existingOffer.overtimeTags               || []);
     setEditInitialized(true);
   }, [existingOffer, id, isEditMode, editInitialized]);
 
@@ -308,28 +303,85 @@ export default function CreateOfferPage() {
     };
   };
 
-  // ── EDIT: Save changes ─────────────────────────────────────────────────────
-  // PATCH /offers/:id/production-edit
-  // Backend resets to NEEDS_REVISION, bumps version, runs safeRegenerate
+  // ── EDIT: Save & Resend ────────────────────────────────────────────────────
+  //
+  // After saving + sending to crew, navigate based on redirectAfterSave param:
+  //   "view"       → /offers/:id/view  (default — came from monitoring ViewOffer)
+  //   "onboarding" → /onboarding       (came from ProductionReview or AccountsReview edit)
+  //
   const handleEditSave = async () => {
     if (isSubmitting) return;
+
+    const offerStatus    = existingOffer?.status;
+    const currentVersion = existingOffer?.version || 1;
+    const useStandardPut = offerStatus === "NEEDS_REVISION" || offerStatus === "DRAFT";
+
     toast.loading("Saving changes…", { id: "edit-save" });
 
     try {
-      const res = await axiosConfig.patch(
-        `/offers/${id}/production-edit`,
-        buildPayload(false),
-        { headers: rh() }
-      );
+      // ── Step 1: Save the offer ────────────────────────────────────────────
+      let saveOk = false;
+
+      if (useStandardPut) {
+        // NEEDS_REVISION / DRAFT → standard PUT
+        const res = await axiosConfig.put(
+          `/offers/${id}`,
+          { ...buildPayload(false), version: currentVersion + 1 },
+          { headers: rh() }
+        );
+        saveOk = !!res.data?.success;
+      } else {
+        // PRODUCTION_CHECK / ACCOUNTS_CHECK / PENDING_* → production-edit
+        const res = await axiosConfig.patch(
+          `/offers/${id}/production-edit`,
+          buildPayload(false),
+          { headers: rh() }
+        );
+        saveOk = !!res.data?.success;
+      }
+
       toast.dismiss("edit-save");
 
-      if (res.data?.success) {
-        toast.success(`✅ Offer updated — version ${res.data.data?.version || ""} created`);
-        dispatch(getOfferThunk(id));
-        setTimeout(() => navigate(`/projects/${proj}/offers/${id}/view`), 600);
+      if (!saveOk) {
+        toast.error("Failed to save offer.");
+        return;
       }
+
+      // ── Step 2: Resend to crew ─────────────────────────────────────────────
+      toast.loading("Sending to crew…", { id: "edit-send" });
+      const sendRes = await axiosConfig.patch(
+        `/offers/${id}/send`,
+        {},
+        { headers: rh() }
+      );
+      toast.dismiss("edit-send");
+
+      if (!sendRes.data?.success) {
+        toast.error("Offer saved but failed to send to crew.");
+        return;
+      }
+
+      toast.success(`✅ Offer v${currentVersion + 1} sent to crew for review!`);
+
+      // Refresh current offer in Redux
+      dispatch(getOfferThunk(id));
+
+      // Always refresh the onboarding list so status row updates
+      dispatch(getProjectOffersThunk({ projectId: PROJECT_ID }));
+
+      // ── Step 3: Navigate based on who triggered the edit ──────────────────
+      //   "view"       → back to ViewOffer (NEEDS_REVISION flow from monitoring)
+      //   "onboarding" → back to onboarding list (PRODUCTION_CHECK / ACCOUNTS flow)
+      const destination =
+        redirectAfterSave === "onboarding"
+          ? `/projects/${proj}/onboarding`
+          : `/projects/${proj}/offers/${id}/view`;
+
+      setTimeout(() => navigate(destination), 600);
+
     } catch (err) {
       toast.dismiss("edit-save");
+      toast.dismiss("edit-send");
       const msg = err.response?.data?.message || err.message || "Failed to save";
       toast.error(msg);
     }
@@ -406,10 +458,14 @@ export default function CreateOfferPage() {
         clickAction: handleSaveDraft,
       }];
 
+  const isRevisionEdit = isEditMode && (
+    existingOffer?.status === "NEEDS_REVISION" || existingOffer?.status === "DRAFT"
+  );
+
   const primaryAction = isEditMode
     ? {
-        label:       isSubmitting ? "Saving…" : "Save Changes",
-        icon:        "Save",
+        label:       isSubmitting ? "Saving…" : "Save & Resend to Crew",
+        icon:        "Send",
         variant:     "default",
         disabled:    isSubmitting,
         clickAction: handleEditSave,
@@ -456,14 +512,20 @@ export default function CreateOfferPage() {
           primaryAction={primaryAction}
         />
 
-        {/* Edit mode banner */}
+        {/* Change request banner — shown when editing a NEEDS_REVISION offer */}
+        {isRevisionEdit && (
+          <div className="mt-4">
+            <ChangeRequestBanner offerId={id} />
+          </div>
+        )}
+
+        {/* Edit mode info banner */}
         {isEditMode && (
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
             <p className="text-[12px] text-amber-800">
-              <strong>Editing offer v{existingOffer?.version || 1}</strong> — saving will create
-              version {(existingOffer?.version || 1) + 1} and regenerate all unsigned contract
-              documents. Crew will need to re-sign.
+              <strong>Editing offer v{existingOffer?.version || 1}</strong>
+              {" "}— saving will create version {(existingOffer?.version || 1) + 1}, regenerate contracts, and resend to crew for review.
             </p>
           </div>
         )}
