@@ -46,6 +46,12 @@ import CustomTab from "./tabs/CustomTab";
 import NotificationsTab from "./tabs/NotificationsTab";
 import TimecardTab from "./tabs/TimecardTab";
 import SubscriptionsTab from "./tabs/SubscriptionsTab";
+import StyleTab from "./tabs/StyleTab";
+import LayoutTab from "./tabs/LayoutTab";
+import AppSettingsTab from "./tabs/AppSettingsTab";
+import ChatTab from "./tabs/ChatTab";
+import CalendarTab from "./tabs/CalendarTab";
+import AIKnowledgeBaseTab from "./tabs/AIKnowledgeBaseTab";
 
 const tabs = [
   { id: "details", label: "Details", icon: Settings2 },
@@ -87,7 +93,13 @@ const IMPLEMENTED_TAB_IDS = [
   "custom", // ← added
   "notifications",
   "timecard", // ← added
-  "subscriptions"
+  "subscriptions",
+  "style",
+  "layout",
+  "apps",
+  "chat",
+  "calendar",
+  "ai-knowledge-base",
 ];
 
 /* ─────────────────────────────────────────────────────────
@@ -225,18 +237,18 @@ function computeInitialProgress(projectId) {
     "rates-departments": 100, // all defaults pre-filled
     "doc-signers": 100, // default signers + workflows pre-filled
     "contracts-forms": 100, // all category + group defaults pre-filled
-    "admin": 100, // default roles + assignments pre-filled
-    "custom": 100, // all defaults pre-filled
-    "notifications": 100, // all defaults pre-filled
+    admin: 100, // default roles + assignments pre-filled
+    custom: 100, // all defaults pre-filled
+    notifications: 100, // all defaults pre-filled
     // Not yet implemented tabs
-    "timecard": 100,
-    "subscriptions": 100,
-    "style": 0,
-    "layout": 0,
-    "apps": 0,
-    "chat": 0,
-    "calendar": 0,
-    "ai-knowledge-base": 0,
+    timecard: 100,
+    subscriptions: 100,
+    style: 100,
+    layout: 100,
+    apps: 100,
+    chat: 100,
+    calendar: 100,
+    "ai-knowledge-base": 100,
   };
   // console.log("[computeProgress] FINAL result:", result);
   return result;
@@ -545,6 +557,76 @@ function ProjectSettings() {
               color={color}
               projectId={project.id}
               locked={!!tabLockStatusById["subscriptions"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+
+          {activeTab === "style" && (
+            <StyleTab
+              key="style"
+              tabId="style"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["style"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+
+          {activeTab === "layout" && (
+            <LayoutTab
+              key="layout"
+              tabId="layout"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["layout"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+
+          {activeTab === "apps" && (
+            <AppSettingsTab
+              key="apps"
+              tabId="apps"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["apps"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+          {activeTab === "chat" && (
+            <ChatTab
+              key="chat"
+              tabId="chat"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["chat"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+
+          {activeTab === "calendar" && (
+            <CalendarTab
+              key="calendar"
+              tabId="calendar"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["calendar"]}
+              setTabLockStatusById={setTabLockStatusById}
+              setTabProgressById={setTabProgressById}
+            />
+          )}
+          {activeTab === "ai-knowledge-base" && (
+            <AIKnowledgeBaseTab
+              key="ai-knowledge-base"
+              tabId="ai-knowledge-base"
+              color={color}
+              projectId={project.id}
+              locked={!!tabLockStatusById["ai-knowledge-base"]}
               setTabLockStatusById={setTabLockStatusById}
               setTabProgressById={setTabProgressById}
             />
