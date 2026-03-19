@@ -12,7 +12,7 @@ import EndingOverlay from "./EndingOverlay";
 import { useSelector } from "react-redux";
 import { useCallSounds } from "../../hooks/call/useCallSounds";
 import CallBody from "./Call-body/CallBody";
-import TopBar from "./TopBar";
+import CallTopBar from "./CallTopBar";
 import MinimizedCallPill from "./MinimizedCallPill";
 import CallWarnings from "./CallWarnings";
 
@@ -239,7 +239,7 @@ export default function CallModal() {
     return (
       <div className="fixed inset-0 z-[200] bg-zinc-950 flex flex-col">
         {audioSink}
-        <TopBar
+        <CallTopBar
           callType={callType}
           callState={callState}
           participantCount={allTiles.length}
@@ -306,7 +306,7 @@ export default function CallModal() {
         className="pointer-events-auto"
       >
         <div className="bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-800/60 overflow-hidden flex flex-col h-full">
-          <TopBar
+          <CallTopBar
             callType={callType}
             callState={callState}
             participantCount={allTiles.length}

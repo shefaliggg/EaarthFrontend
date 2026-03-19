@@ -18,7 +18,10 @@ import { Button } from "../../../../../shared/components/ui/button";
 import useChatStore from "../../store/chat.store";
 import useCallStore from "../../store/call.store";
 import { canUserSendMessage } from "../../utils/chatPermissions";
-import { getCurrentUserId } from "../../../../../shared/config/utils";
+import {
+  convertToPrettyText,
+  getCurrentUserId,
+} from "../../../../../shared/config/utils";
 
 export default function ChatHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -76,7 +79,7 @@ export default function ChatHeader() {
                         isOnline ? "bg-green-500 animate-pulse" : "bg-gray-400",
                       )}
                     />
-                    <span>{selectedChat.role}</span>
+                    <span>{convertToPrettyText(selectedChat.role)}</span>
                   </>
                 ) : (
                   <>

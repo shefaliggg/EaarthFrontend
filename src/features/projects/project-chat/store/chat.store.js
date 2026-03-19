@@ -85,11 +85,12 @@ const useChatStore = create(
           if (!preview) return;
 
           get().updateConversationLastMessage(conversationId, {
-            content: {
-              text: preview,
-            },
+            _id: message._id,
+            text: preview,
             createdAt: message.updatedAt || message.createdAt,
-            senderId: { _id: message.senderId?._id || message.senderId },
+            senderId: message.senderId?._id || message.senderId,
+            senderName: message.senderId?.displayName || "Member",
+            type: message.type,
           });
 
           // dispatch(
@@ -143,11 +144,12 @@ const useChatStore = create(
             if (!preview) return;
 
             get().updateConversationLastMessage(conversationId, {
-              content: {
-                text: preview,
-              },
+              _id: message._id,
+              text: preview,
               createdAt: message.updatedAt || message.createdAt,
-              senderId: { _id: message.senderId?._id || message.senderId },
+              senderId: message.senderId?._id || message.senderId,
+              senderName: message.senderId?.displayName || "Member",
+              type: message.type,
             });
           }
         });
@@ -175,7 +177,10 @@ const useChatStore = create(
 
           if (lastMessage?.id === messageId) {
             get().updateConversationLastMessage(conversationId, {
-              content: { text: "This message was deleted" },
+              _id: messageId,
+              text: "This message was deleted",
+              senderId: lastMessage.senderId,
+              senderName: lastMessage.sender,
               createdAt: new Date(),
               senderId: lastMessage.senderId,
             });
@@ -664,9 +669,12 @@ const useChatStore = create(
           });
 
           get().updateConversationLastMessage(conversationId, {
-            content: { text: optimisticMessage.content },
-            createdAt: now,
-            senderId: { _id: currentUserId },
+            _id: optimisticMessage.id,
+            text: optimisticMessage.content,
+            senderId: optimisticMessage.senderId,
+            senderName: optimisticMessage.sender,
+            type: optimisticMessage.type,
+            createdAt: new Date(),
           });
         }
 
@@ -802,7 +810,7 @@ const useChatStore = create(
 
           return get().sendMessage(conversationId, DEFAULT_PROJECT_ID, {
             formData,
-            clientTempId, // 🔥 prevents duplicate optimistic
+            clientTempId,
           });
         }
 
@@ -810,7 +818,7 @@ const useChatStore = create(
           text: content,
           type: type.toUpperCase(),
           replyTo,
-          clientTempId, // 🔥 reuse
+          clientTempId,
         });
       },
 
@@ -1050,12 +1058,14 @@ const useChatStore = create(
           content: "",
         });
 
-        // ✅ optimistic sidebar update
         if (isLast) {
           get().updateConversationLastMessage(conversationId, {
-            content: { text: "This message was deleted" },
+            _id: lastMessage?.id,
+            text: "This message was deleted",
             createdAt: new Date(),
             senderId: lastMessage.senderId,
+            senderName: lastMessage.sender,
+            type: lastMessage.type,
           });
         }
 
@@ -1176,21 +1186,33 @@ const useChatStore = create(
       },
 
       updateConversationLastMessage: (conversationId, message) => {
+        const currentUserId = getCurrentUserId();
+        const createdAt = message.createdAt || new Date().toISOString();
+
         const conversations = get().conversations.map((conv) => {
           if (conv.id !== conversationId) return conv;
 
           const isOwn =
-            message.senderId?._id?.toString() ===
-            getCurrentUserId()?.toString();
+            message.senderId?.toString() === currentUserId?.toString();
 
           const isSelected = get().selectedChat?.id === conversationId;
+
           return {
             ...conv,
-            lastMessage: message.content?.text || "",
-            timestamp: new Date(message.createdAt).getTime(),
+            lastMessage: {
+              id: message._id || message.id,
+              text: message.content?.text || message.text || "",
+              senderId: message.senderId,
+              senderName:
+                message.senderName || message.senderId?.displayName || "You",
+              type: message.type || "TEXT",
+              createdAt,
+            },
+            timestamp: new Date(createdAt).getTime(),
             unread: isOwn || isSelected ? conv.unread : conv.unread + 1,
           };
         });
+
         set({ conversations });
       },
 

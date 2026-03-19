@@ -71,9 +71,8 @@ export default function MessageList({
         }
 
         // System message
-        // System message
         if (msg.type === "system") {
-          const text = formatSystemMessage(msg, selectedChat?.members);
+          const text = formatSystemMessage(msg, selectedChat?.members, "full");
 
           return (
             <div
@@ -84,7 +83,7 @@ export default function MessageList({
               <div className="bg-muted/30 px-3 py-1.5 rounded-lg text-xs text-muted-foreground flex items-center gap-2">
                 <AlertCircle className="w-3.5 h-3.5" />
                 {text}
-                <span className="text-[8px]">{msg.time}</span>
+                <span className="text-[10px]">{msg.time}</span>
               </div>
             </div>
           );

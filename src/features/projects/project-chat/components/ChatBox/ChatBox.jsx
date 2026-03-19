@@ -258,7 +258,7 @@ function ChatBox() {
         {pinnedMessage?.messageId && (
           <button
             onClick={() => scrollToMessage(pinnedMessage.messageId)}
-            className="absolute top-2 left-3 z-50 w-[calc(100%-24px)] bg-card/70 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border shadow-xl transition-all hover:bg-muted/60 backdrop-blur-2xl"
+            className="absolute top-2 left-3 z-5 w-[calc(100%-24px)] bg-card/50 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border border-muted shadow-xl transition-all hover:bg-muted/60 backdrop-blur-2xl"
           >
             {/* Pin icon */}
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary mr-1">
@@ -336,8 +336,14 @@ function ChatBox() {
             messages={messagesWithDates}
             messagesData={messagesData}
             isLoadingMessages={isLoadingMessages}
-            onReply={setReplyTo}
-            onEdit={setEditingMessage}
+            onReply={(message) => {
+              setEditingMessage(null);
+              setReplyTo(message);
+            }}
+            onEdit={(message) => {
+              setReplyTo(null);
+              setEditingMessage(message);
+            }}
           />
         )}
 
@@ -394,7 +400,9 @@ function ChatBox() {
                   />
                 ) : (
                   <div className="w-full h-full bg-primary/20 flex items-center justify-center text-[10px] rounded-lg">
-                    <p className="w-full h-full overflow-hidden text-ellipsis p-1">{att.file.name}</p>
+                    <p className="w-full h-full overflow-hidden text-ellipsis p-1">
+                      {att.file.name}
+                    </p>
                   </div>
                 )}
                 <button

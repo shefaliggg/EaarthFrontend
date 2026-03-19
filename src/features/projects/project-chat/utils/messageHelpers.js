@@ -395,7 +395,20 @@ export const transformConversation = (conv, currentUserId) => {
     members: Array.isArray(conv.members) ? conv.members : [],
     unread: unreadCount,
     mentions: 0,
-    lastMessage: conv.lastMessage?.preview || "",
+    lastMessage: conv.lastMessage
+      ? {
+          id: conv.lastMessage.messageId,
+          text: conv.lastMessage.preview,
+          senderId: conv.lastMessage.senderId?._id || conv.lastMessage.senderId,
+          senderName:
+            conv.lastMessage.senderName ||
+            conv.lastMessage.senderId?.displayName ||
+            "member",
+          type: conv.lastMessage.type,
+          createdAt: conv.lastMessage.createdAt,
+          isDeleted: conv.lastMessage.isDeleted,
+        }
+      : null,
     pinnedMessage: conv.pinnedMessage,
     settings: conv.settings,
     timestamp: conv.lastMessage?.createdAt
@@ -412,24 +425,13 @@ export const transformConversation = (conv, currentUserId) => {
   };
 };
 
-export function getSystemPreview(action, targets) {
-  switch (action) {
-    case "MEMBER_ADDED":
-      return `${targets.length} member(s) added`;
-    case "MEMBER_REMOVED":
-      return `${targets.length} member(s) removed`;
-    default:
-      return "System update";
-  }
-}
-
-export const generateConversationLastMessagePreview = (message) => {
+export const generateConversationLastMessagePreview = (
+  message,
+  members = [],
+) => {
   //always pass raw backedn data instead of transformed message.
   if (message.type === "SYSTEM") {
-    return getSystemPreview(
-      message.system.action,
-      message.system.targetUserIds,
-    );
+    return formatSystemMessage(message, members, "preview");
   }
 
   if (message.status?.deletedForEveryone) {
@@ -463,11 +465,12 @@ export const generateConversationLastMessagePreview = (message) => {
   return "New message";
 };
 
-export const formatSystemMessage = (msg, members = []) => {
+export const formatSystemMessage = (msg, members = [], mode = "full") => {
+  console.log("system message:", msg, "mode:", mode);
   const action = msg?.system?.action;
   const targetIds = msg?.system?.targetUserIds || [];
 
-  // Map IDs → names from conversation members
+  // 🧠 Resolve names
   const names = targetIds
     .map(
       (id) =>
@@ -476,28 +479,55 @@ export const formatSystemMessage = (msg, members = []) => {
     )
     .filter(Boolean);
 
+  // 🎭 Name formatter
   const formatNames = () => {
-    if (names.length === 0) return `${targetIds.length} members`;
+    if (names.length === 0) {
+      return mode === "preview"
+        ? `${targetIds.length} member(s)`
+        : `${targetIds.length} members`;
+    }
 
     if (names.length === 1) return names[0];
-
     if (names.length === 2) return `${names[0]} and ${names[1]}`;
-
     if (names.length === 3) return `${names[0]}, ${names[1]} and ${names[2]}`;
 
     return `${names[0]}, ${names[1]} and ${names.length - 2} others`;
   };
 
-  switch (action) {
-    case "MEMBER_ADDED":
-      return `${formatNames()} has been added to chat`;
+  const subject = formatNames();
 
-    case "MEMBER_REMOVED":
-      return `${formatNames()} has been removed from the chat`;
+  // 🧩 Action mapping
+  const map = {
+    MEMBER_ADDED:
+      mode === "preview"
+        ? `${targetIds.length} member(s) added`
+        : `${subject} joined the chat`,
 
-    default:
-      return "System update";
-  }
+    MEMBER_REMOVED:
+      mode === "preview"
+        ? `${targetIds.length} member(s) removed`
+        : `${subject} was removed from the chat`,
+
+    MEMBER_EXPIRED:
+      mode === "preview"
+        ? "Members removed"
+        : `${subject} removed (contract expired)`,
+
+    MEMBER_REACTIVATED:
+      mode === "preview" ? "Members rejoined" : `${subject} rejoined the chat`,
+
+    MESSAGE_PINNED:
+      mode === "preview"
+        ? "Message pinned"
+        : `${subject || "Someone"} pinned a message`,
+
+    MESSAGE_UNPINNED:
+      mode === "preview"
+        ? "Message unpinned"
+        : `${subject || "Someone"} unpinned a message`,
+  };
+
+  return map[action] || "System update";
 };
 
 export const formatMessageDateLabel = (date) => {

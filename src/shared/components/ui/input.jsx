@@ -10,8 +10,8 @@ function Input({ className, type = "text", ...props }) {
         w-full min-w-0
         placeholder:normal-case
         rounded-md px-3 py-2
-        border border-border
-        bg-gray-50/50 dark:bg-gray-800/30
+        border
+        bg-muted dark:bg-muted
         text-foreground
         placeholder:text-muted-foreground
 
