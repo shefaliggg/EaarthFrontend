@@ -9,6 +9,9 @@ import {
   Megaphone,
   Phone,
   Paperclip,
+  Ban,
+  DotSquareIcon,
+  CircleDot,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Badge } from "@/shared/components/ui/badge";
@@ -43,15 +46,34 @@ const getLastMessagePreview = (item, isGroup) => {
 
   const currentUserId = getCurrentUserId();
   const isOwn = msg.senderId?.toString() === currentUserId?.toString();
+  const isDeleted = msg.isDeleted;
 
+  let msgType = msg.type;
+
+  if (isDeleted) {
+    msgType = "DELETED";
+  }
   const senderPrefix = isGroup
     ? isOwn
       ? "You: "
-      : `${msg.senderName || "Unknown"}: `
+      : `${msg.senderName.split(" ")[1] || "Unknown"}: `
     : "";
 
   // 🧠 TYPE HANDLING
-  switch (msg.type) {
+  switch (msgType) {
+    case "DELETED":
+      return {
+        icon: <Ban className="w-3 h-3 text-destructive" />,
+        text: `${isGroup ? senderPrefix : ""}${
+          isOwn ? "You deleted this message" : "This message was deleted"
+        }`,
+      };
+    case "SYSTEM":
+      return {
+        icon: <CircleDot className="w-3 h-3 text-muted-foreground" />,
+        text: msg.text || "",
+        isSystem: true,
+      };
     case "CALL":
       return {
         icon: <Phone className="w-3 h-3 text-primary" />,
@@ -95,8 +117,8 @@ export default function ConversationItem({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        "w-full px-2 pl-1.5 py-1.5 text-left transition-all hover:bg-muted/50 relative rounded-md border border-transparent hover:border-border/50",
-        isSelected && "bg-muted ring-2 ring-primary/20",
+        "w-full px-2.5 pl-1.5 py-1.5 text-left transition-all hover:bg-primary/20 relative rounded-md border border-transparent hover:border-border/50",
+        isSelected && "bg-primary/10 ring-2 ring-primary/20",
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -163,19 +185,28 @@ export default function ConversationItem({
               {item.isMuted && (
                 <VolumeX className="w-3 h-3 text-muted-foreground flex-shrink-0" />
               )}
-              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+
+              {/* CONTENT */}
+              <div className="flex items-center gap-1 flex-1 min-w-0">
                 {isTyping ? (
-                  <span className="text-primary italic">
+                  <span className="text-xs text-primary italic truncate block min-w-0">
                     {isGroup
                       ? `${currentTypingUsers[0]?.name || "Someone"} typing...`
                       : "Typing..."}
                   </span>
                 ) : (
                   <>
-                    {previewData?.icon}
+                    {/* ICON */}
+                    {previewData?.icon && (
+                      <span className="flex-shrink-0">{previewData.icon}</span>
+                    )}
 
+                    {/* TEXT */}
                     <span
                       className={cn(
+                        "text-xs text-muted-foreground truncate block min-w-0 pr-1",
+                        previewData?.isSystem &&
+                          "italic text-muted-foreground/80",
                         !isGroup &&
                           item.unread > 0 &&
                           "text-primary font-medium",
@@ -185,7 +216,7 @@ export default function ConversationItem({
                     </span>
                   </>
                 )}
-              </p>
+              </div>
             </div>
 
             {/* Badges */}

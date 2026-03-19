@@ -45,6 +45,7 @@ import {
 import { Button } from "../../../../../shared/components/ui/button";
 import CallMessagePreview from "./CallMessagePreview";
 import useCallStore from "../../store/call.store";
+import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -221,7 +222,7 @@ export default function MessageBubble({
         <div
           className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}
         >
-          <div className="bg-muted/50 px-3 py-2 rounded-xl italic text-sm text-muted-foreground flex items-center gap-2">
+          <div className="bg-muted/50 px-3 py-2 rounded-lg italic text-sm text-muted-foreground flex items-center gap-2">
             <Trash2 className="w-4 h-4" />
             This message was deleted
           </div>
@@ -368,54 +369,59 @@ export default function MessageBubble({
 
                 {attachments.length > 0 && (
                   <div className={cn(attachmentLayoutClass, "gap-1.5")}>
-                    {isSending && (
-                      <div className="absolute z-10 inset-0 mb-5 m-1 bg-black/40 rounded-xl flex items-center justify-center">
-                        <Clock className="w-5 h-5 animate-pulse text-white/80" />
-                      </div>
-                    )}
                     {attachments.map((file, index) => {
                       const url = getFileUrl(file.url);
-                      if (file.mime.startsWith("image/"))
-                        return (
-                          <MessageImage
-                            message={message}
-                            key={index}
-                            file={file}
-                            url={url}
-                            onClick={handleImageClick}
-                            single={!isMediaGrid}
-                          />
-                        );
-                      if (file.mime.startsWith("video/"))
-                        return (
-                          <MessageVideo
-                            message={message}
-                            key={index}
-                            file={file}
-                            url={url}
-                            single={!isMediaGrid}
-                          />
-                        );
-                      if (file.mime.startsWith("audio/"))
-                        return (
-                          <MessageAudio
-                            message={message}
-                            key={index}
-                            file={file}
-                            url={url}
-                            single={!isMediaGrid}
-                            isOwn={isOwn}
-                          />
-                        );
+
                       return (
-                        <MessageFile
-                          message={message}
-                          key={index}
-                          file={file}
-                          url={url}
-                          single={!isMediaGrid}
-                          isOwn={isOwn}
-                        />
+                        <div key={index} className="relative">
+                          {/* ⏳ Sending overlay ONLY for this attachment */}
+                          {isSending && (
+                            <div className="absolute inset-0 z-10 bg-black/40 rounded-lg flex items-center justify-center">
+                              <Clock className="w-5 h-5 animate-pulse text-white/80" />
+                            </div>
+                          )}
+
+                          {file.mime.startsWith("image/") && (
+                            <MessageImage
+                              message={message}
+                              file={file}
+                              url={url}
+                              onClick={handleImageClick}
+                              single={!isMediaGrid}
+                            />
+                          )}
+
+                          {file.mime.startsWith("video/") && (
+                            <MessageVideo
+                              message={message}
+                              file={file}
+                              url={url}
+                              single={!isMediaGrid}
+                            />
+                          )}
+
+                          {file.mime.startsWith("audio/") && (
+                            <MessageAudio
+                              message={message}
+                              file={file}
+                              url={url}
+                              single={!isMediaGrid}
+                              isOwn={isOwn}
+                            />
+                          )}
+
+                          {!file.mime.startsWith("image/") &&
+                            !file.mime.startsWith("video/") &&
+                            !file.mime.startsWith("audio/") && (
+                              <MessageFile
+                                message={message}
+                                file={file}
+                                url={url}
+                                single={!isMediaGrid}
+                                isOwn={isOwn}
+                              />
+                            )}
+                        </div>
                       );
                     })}
                   </div>
@@ -544,7 +550,7 @@ export default function MessageBubble({
             />
             <ActionButton
               icon={Star}
-              tooltip={isFavorited ? "Unstar" : "Star"}
+              tooltip={isFavorited ? "Remove from Favorites" : "Favorite"}
               disabled={isSending}
               className={isFavorited ? "text-yellow-500" : ""}
               onClick={(e) => {
@@ -579,7 +585,6 @@ export default function MessageBubble({
                 icon={Edit2}
                 tooltip="Edit"
                 disabled={isSending}
-                className="text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(message);
@@ -602,7 +607,7 @@ export default function MessageBubble({
         {showReactionPicker === message.id && (
           <div
             className={cn(
-              "flex gap-1.5 mt-2 p-2 bg-card border rounded-xl shadow-lg z-10 transition-all duration-200 ease-out",
+              "flex gap-1.5 mt-2 p-2 bg-card border rounded-lg shadow-lg z-10 transition-all duration-200 ease-out",
               isOwn ? "flex-row-reverse" : "flex-row",
             )}
             onClick={(e) => e.stopPropagation()}
@@ -653,20 +658,21 @@ export default function MessageBubble({
 
 function ActionButton({ icon: Icon, tooltip, className, onClick, disabled }) {
   return (
-    <button
-      title={tooltip}
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      className={cn(
-        "p-1.5 rounded-xl bg-muted/80 transition-all duration-200",
-        disabled
-          ? "opacity-40 cursor-not-allowed"
-          : "hover:bg-muted hover:scale-110 active:scale-95",
-        className,
-      )}
-    >
-      <Icon className="w-3.5 h-3.5" />
-    </button>
+    <InfoTooltip content={tooltip} side={"bottom"}>
+      <button
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        className={cn(
+          "p-1.5 rounded-lg bg-muted/80 transition-all duration-200",
+          disabled
+            ? "opacity-40 cursor-not-allowed"
+            : "hover:bg-muted hover:scale-110 active:scale-95",
+          className,
+        )}
+      >
+        <Icon className="w-3.5 h-3.5" />
+      </button>
+    </InfoTooltip>
   );
 }
 
@@ -728,7 +734,7 @@ function MessageVideo({ file, url, single = true }) {
       <video
         src={url}
         controls
-        className={`rounded-xl  w-full  bg-muted/90 ${single ? "max-w-[260px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
+        className={`rounded-lg  w-full  bg-muted/90 ${single ? "max-w-[260px]" : "aspect-square min-w-[160px] max-w-[160px] max-h-[160px]"}`}
       >
         Your browser does not support the video tag.
       </video>
@@ -924,7 +930,7 @@ function MessageAudio({ message, file, url, single = true, isOwn }) {
           rel="noopener noreferrer"
           download
           onClick={() => toast.info("Downloading Audio File")}
-          className="p-2 hover:bg-muted rounded-xl"
+          className="p-2 hover:bg-muted rounded-lg"
         >
           <Download className="w-4 h-4" />
         </a>
@@ -952,7 +958,7 @@ function MessageFile({ file, url, single, isOwn }) {
     <div
       className={`flex items-center gap-1 w-full col-span-2 ${single ? "min-w-[260px] max-w-[260px]" : "min-w-[260px] max-w-[260px]"} ${isOwn ? "bg-muted/90 ml-auto" : "bg-primary/10"} p-3 px-2 rounded-md`}
     >
-      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
         <FileText className="w-4 h-4 text-primary" />
       </div>
 
@@ -972,7 +978,7 @@ function MessageFile({ file, url, single, isOwn }) {
         rel="noopener noreferrer"
         download
         onClick={() => toast.info("Downloading Document")}
-        className="p-2 hover:bg-muted rounded-xl"
+        className="p-2 hover:bg-muted rounded-lg"
       >
         <Download className="w-4 h-4" />
       </a>

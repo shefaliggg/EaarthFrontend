@@ -3,7 +3,7 @@ import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
 import { Button } from "../../../../../shared/components/ui/button";
 import { cn } from "../../../../../shared/config/utils";
 
-function TopBar({
+function CallTopBar({
   callType,
   callState,
   participantCount,
@@ -174,4 +174,4 @@ function TopBar({
   );
 }
 
-export default TopBar;
+export default CallTopBar;

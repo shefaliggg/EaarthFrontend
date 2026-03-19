@@ -96,13 +96,19 @@ const MessageInput = React.memo(
 
     // ───── SET EDITING MESSAGE ─────
     useEffect(() => {
-      if (editingMessage) {
+      if (editingMessage && !replyTo) {
         setMessageInput(editingMessage.content);
         textareaRef.current?.focus();
       } else {
         setMessageInput("");
       }
     }, [editingMessage]);
+
+    useEffect(() => {
+      if (replyTo && !editingMessage) {
+        textareaRef.current?.focus();
+      }
+    }, [replyTo, editingMessage]);
 
     // ───── CLOSE PICKERS ON OUTSIDE CLICK ─────
     useEffect(() => {
