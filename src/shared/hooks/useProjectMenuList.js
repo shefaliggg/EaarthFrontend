@@ -84,88 +84,9 @@ export function useProjectMenus(allProjects = []) {
     ],
   };
 
-  const projectSettings = {
-    id: "project-settings",
-    triggerLabel: "Project Settings",
-    triggerIcon: Icon.Settings,
-    items: [
-      {
-        id: "detail",
-        label: "Project Detail",
-        icon: Icon.FileText,
-        route: `/projects/${projectName}/settings/detail`,
-      },
-      {
-        id: "general",
-        label: "General Settings",
-        icon: Icon.Settings2,
-        route: `/projects/${projectName}/settings/general`,
-      },
-      {
-        id: "construction",
-        label: "Construction Settings",
-        icon: Icon.Settings2,
-        route: `/projects/${projectName}/settings/construction`,
-      },
-      {
-        id: "onboarding",
-        label: "Onboarding Settings",
-        icon: Icon.UserPlus,
-        route: `/projects/${projectName}/settings/onboarding`,
-      },
-      {
-        id: "contracts", // 🆕 ADD THIS
-        label: "Contracts",
-        icon: Icon.FileText,
-        route: `/projects/${projectName}/contractss`,
-      },
-      {
-        id: "calendar",
-        label: "Calendar Settings",
-        icon: Icon.Calendar,
-        route: `/projects/${projectName}/calendar/settings`,
-      },
-      {
-        id: "timecard",
-        label: "Timesheets Settings",
-        icon: Icon.Clock,
-        route: `/projects/${projectName}/settings/timesheet`,
-      },
-      {
-        id: "roles",
-        label: "Roles Settings",
-        icon: Icon.User,
-        route: `/projects/${projectName}/settings/roles`,
-      },
-      {
-        id: "notifications",
-        label: "Notifications Settings",
-        icon: Icon.Bell,
-        route: `/projects/${projectName}/settings/notifications`,
-      },
-      {
-        id: "signers-recipients",
-        label: "Signers & Recipients Settings",
-        icon: Icon.Users,
-        route: `/projects/${projectName}/settings/signers-recipients`,
-      },
-      {
-        id: "approval-workflows",
-        label: "Approval Workflows",
-        icon: Icon.GitBranch,
-        route: `/projects/${projectName}/settings/approval-workflows`,
-      },
-      {
-        id: "billing",
-        label: "Billing",
-        icon: Icon.CreditCard,
-        route: `/projects/${projectName}/settings/billing`,
-      },
-    ],
-  };
 
   const projectDropdownList = isProjectSubRoute
-    ? [allProjectsDropdown, ProjectApplicationMenu, projectSettings]
+    ? [allProjectsDropdown, ProjectApplicationMenu, ]
     : [allProjectsDropdown];
 
   return projectDropdownList;
