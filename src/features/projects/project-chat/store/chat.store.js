@@ -154,14 +154,65 @@ const useChatStore = create(
           }
         });
 
-        socket.on("message:edited", ({ messageId, text, editedAt }) => {
-          console.log("✏️ Message edited:", { messageId, text });
-          get().updateMessageInConversation(messageId, {
-            content: text,
-            editedAt,
+        socket.on("message:edited", ({ message, conversationId }) => {
+          console.log("✏️ Message edited:", {
+            messageId: message._id,
+            text: message.content?.text,
+          });
+          socket.emit("message:delivered", {
+            messageId: message._id,
+          });
+
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members || 2;
+          get().updateMessageInConversation(message._id, {
+            content: message.content.text,
+            editedAt: message.status.editedAt,
+            state: computeMessageState(message, memberCount),
+            seenBy: message?.seenBy || [],
+            deliveredTo: message?.deliveredTo || [],
             edited: true,
           });
         });
+
+        socket.on(
+          "message:delivery-update",
+          ({ messageId, userId, conversationId }) => {
+            console.log("🚚 Delivery update received:", { messageId, userId });
+            const state = get();
+            const messages =
+              state.messagesByConversation[conversationId]?.messages || [];
+            const existingMsg = messages.find((m) => m.id === messageId);
+
+            if (existingMsg) {
+              const deliveredTo = [...(existingMsg.deliveredTo || [])];
+              const exists = deliveredTo.some((d) => d.userId === userId);
+
+              if (!exists) {
+                deliveredTo.push({
+                  userId,
+                  deliveredAt: new Date().toISOString(),
+                });
+
+                const conversation = state.conversations.find(
+                  (c) => c.id === conversationId,
+                );
+                const memberCount = conversation?.members?.length || 2;
+
+                get().updateMessageInConversation(messageId, {
+                  deliveredTo,
+                  state: computeMessageState(
+                    { ...existingMsg, deliveredTo },
+                    memberCount,
+                  ),
+                });
+              }
+            }
+          },
+        );
 
         socket.on("message:deleted", ({ conversationId, messageId }) => {
           console.log("🗑️ Message deleted:", messageId);
@@ -837,6 +888,7 @@ const useChatStore = create(
         get().updateMessageInConversation(messageId, {
           content: newText,
           edited: true,
+          state: "sending",
           editedAt: new Date().toISOString(),
         });
 

@@ -47,12 +47,16 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     }
     return true;
   });
-
   const sortedConversations = [...filteredConversations].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    if (a.mentions > 0 && b.mentions === 0) return -1;
-    if (a.mentions === 0 && b.mentions > 0) return 1;
+
+    const aHasUnread = a.unread > 0 || a.mentions > 0;
+    const bHasUnread = b.unread > 0 || b.mentions > 0;
+
+    if (aHasUnread && !bHasUnread) return -1;
+    if (!aHasUnread && bHasUnread) return 1;
+
     return b.timestamp - a.timestamp;
   });
 
@@ -116,7 +120,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
       case "all":
       default:
-        return [...groups, ...teamMembers];
+        return sortedConversations;
     }
   })();
 
@@ -162,44 +166,6 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   return (
     <>
       <div className="flex flex-col gap-4">
-        {/* Tab Selection */}
-        {/* <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <h3 className="font-bold mb-3">Conversations</h3>
-          <div className="space-y-2">
-            <button
-              className={cn(
-                "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-                activeTab === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-              onClick={() => onTabChange?.("all")}
-            >
-              <Hash className="w-4 h-4" />
-              <div className="flex-1">
-                <p className="text-sm font-bold">Chat</p>
-                <p className="text-xs opacity-80">
-                  department and direct chats
-                </p>
-              </div>
-            </button>
-
-            <button
-              className={cn(
-                "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-                "cursor-not-allowed bg-muted opacity-50",
-              )}
-              disabled
-            >
-              <Mail className="w-5 h-5" />
-              <div className="flex-1">
-                <p className="text-sm font-bold">Email</p>
-                <p className="text-xs opacity-80">External Contacts</p>
-              </div>
-            </button>
-          </div>
-        </div> */}
-
         {/* Conversations List */}
         <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[924px]">
           {/* Header */}

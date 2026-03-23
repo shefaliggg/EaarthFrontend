@@ -110,8 +110,6 @@ export default function ConversationItem({
   const isTyping = currentTypingUsers.length > 0;
   const previewData = getLastMessagePreview(item, isGroup);
 
-  console.log("conversation:", item);
-
   return (
     <button
       onClick={onClick}
