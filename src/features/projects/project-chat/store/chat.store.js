@@ -39,18 +39,24 @@ const useChatStore = create(
         socket.removeAllListeners();
 
         socket.on("conversation:new", (conversation) => {
-          console.log("📥 New conversation received:", conversation);
-
           const currentUserId = getCurrentUserId();
-
           const formatted = transformConversation(conversation, currentUserId);
 
           set((state) => {
-            // Prevent duplicates
-            if (state.conversations.some((c) => c.id === formatted.id)) {
-              return state;
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
+
+            if (exists) {
+              // ✅ Replace existing (ensures fresh data)
+              return {
+                conversations: state.conversations.map((c) =>
+                  c.id === formatted.id ? formatted : c,
+                ),
+              };
             }
 
+            // ✅ Add new
             return {
               conversations: [formatted, ...state.conversations],
             };
@@ -511,10 +517,18 @@ const useChatStore = create(
           const formatted = transformConversation(conv, currentUserId);
 
           // 🔥 Add to conversation list immediately
-          set((state) => ({
-            conversations: [formatted, ...state.conversations],
-          }));
+          set((state) => {
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
 
+            if (exists) return state;
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
+          
           return formatted;
         } catch (error) {
           console.error("❌ Failed to create direct conversation:", error);

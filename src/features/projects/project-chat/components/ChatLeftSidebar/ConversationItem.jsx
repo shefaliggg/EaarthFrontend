@@ -104,7 +104,7 @@ export default function ConversationItem({
   onContextMenu,
 }) {
   const { onlineUsers, typingUsers } = useChatStore();
-  const isGroup = type === "group" || type === "all";
+  const isGroup = type === "group";
   const isOnline = item?.userId && onlineUsers.has(item.userId);
   const currentTypingUsers = typingUsers[item.id] || [];
   const isTyping = currentTypingUsers.length > 0;
@@ -125,12 +125,12 @@ export default function ConversationItem({
           <div
             className={cn(
               "p-2.5 rounded-full text-primary-foreground flex-shrink-0",
-              type === "all"
+              item.category === "announcement"
                 ? "bg-gradient-to-br from-primary/10 to-primary/20 border"
                 : "bg-gradient-to-br from-primary to-primary/70",
             )}
           >
-            {type === "all" ? (
+            {item.category === "announcement" ? (
               <Megaphone className="w-4 h-4 text-primary" />
             ) : (
               <Clapperboard className="w-4 h-4" />

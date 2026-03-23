@@ -375,22 +375,16 @@ export const transformConversation = (conv, currentUserId) => {
   return {
     id: conv._id,
     type: frontendType,
+    category: conv.category?.toLowerCase(),
     projectId: conv.projectId,
-    name:
-      conv.type === "PROJECT_ALL"
-        ? "Announcements"
-        : conv.type === "DEPARTMENT"
-          ? conv.department?.name || "Department"
-          : otherUser?.userId?.displayName || "Unknown User",
+    name: conv.type === "DIRECT" ? otherUser?.userId?.displayName : conv.title || "Unknow Chat",
     department: conv.department?._id,
     departmentName:
-      conv.type === "DIRECT"
-        ? otherUser?.userId?.departmentName
-        : conv.departmentName,
+      conv.type === "DIRECT" ? otherUser?.userId?.departmentName : null,
     userId: otherUser?.userId?._id,
     avatar: otherUser
       ? getAvatarFallback(otherUser?.userId?.displayName) || "U"
-      : conv.department?.name?.charAt(0)?.toUpperCase() || "U",
+      : conv.title?.charAt(0)?.toUpperCase() || "U",
     role: otherUser?.userId?.roleName || "Member",
     members: Array.isArray(conv.members) ? conv.members : [],
     unread: unreadCount,

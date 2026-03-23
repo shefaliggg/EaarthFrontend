@@ -48,6 +48,8 @@ export default function DirectMessageCreationDialog({
     if (existing) return setSelectedChat(existing);
     setIsCreating(true);
 
+    console.log("is Creating in direct:", isCreating)
+
     try {
       const chat = await createDirectConversation(DEFAULT_PROJECT_ID, userId);
 
