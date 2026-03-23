@@ -1,15 +1,5 @@
 /**
  * offer.api.js
- *
- * Root cause of preview not working:
- *   getContractPreview was using .then(unwrap) which does res.data.data
- *   But backend sends raw HTML — there is no .data wrapper.
- *   So unwrap() was returning undefined.
- *
- * Fix: use responseType: "text" + .then((res) => res.data) for preview
- *
- * Route:   GET /api/v1/signatures/:contractId/preview
- * Returns: text/html string — rendered Handlebars template with current sigs
  */
 
 import axiosConfig from "../../auth/config/axiosConfig";
@@ -22,7 +12,6 @@ const roleHeaders = () => ({
   "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN",
 });
 
-// Standard JSON unwrap — for endpoints that return { success, data: {...} }
 const unwrap = (res) => res.data.data;
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
@@ -71,6 +60,14 @@ export const moveToAccountsCheck = (id) =>
 export const moveToPendingCrewSignature = (id) =>
   axiosConfig.patch(`${BASE}/${id}/pending-crew-signature`, {}, { headers: roleHeaders() }).then(unwrap);
 
+// ── FIX: returnToProduction — accounts sends notes back to production ─────────
+// PATCH /offers/:id/return-to-production
+// Backend: status → PRODUCTION_CHECK + creates ChangeRequest with accounts notes
+export const returnToProduction = (id, reason) =>
+  axiosConfig
+    .patch(`${BASE}/${id}/return-to-production`, { reason }, { headers: roleHeaders() })
+    .then(unwrap);
+
 // ─── SIGNING ──────────────────────────────────────────────────────────────────
 
 const signAs = (contractId, signature) =>
@@ -83,22 +80,14 @@ export const upmSign    = (contractId, signature) => signAs(contractId, signatur
 export const fcSign     = (contractId, signature) => signAs(contractId, signature);
 export const studioSign = (contractId, signature) => signAs(contractId, signature);
 
-// ─── SIGNING STATUS ───────────────────────────────────────────────────────────
-
-
-
 // ─── CONTRACT PREVIEW ─────────────────────────────────────────────────────────
-// ⚠️  CRITICAL — DO NOT USE unwrap() HERE
-// Backend returns raw HTML text, not JSON. responseType: "text" prevents axios
-// from trying to JSON-parse the response. .then((res) => res.data) returns
-// the raw HTML string directly.
 
 export const getContractPreview = (contractId) =>
   axiosConfig
     .get(`${SIG_BASE}/${contractId}/preview`, {
       headers:      roleHeaders(),
       responseType: "text",
-      params: { _t: Date.now() },  // ← ADD THIS
+      params: { _t: Date.now() },
     })
     .then((res) => res.data);
 
@@ -106,9 +95,10 @@ export const getSigningStatus = (contractId) =>
   axiosConfig
     .get(`${SIG_BASE}/${contractId}/status`, {
       headers: roleHeaders(),
-      params: { _t: Date.now() },  // ← ADD THIS
+      params: { _t: Date.now() },
     })
     .then(unwrap);
+
 // ─── CONTRACT PDF DOWNLOAD URL ────────────────────────────────────────────────
 
 export const getContractPdfUrl = (contractId) =>
@@ -131,10 +121,7 @@ export const resolveChangeRequest = (offerId, changeRequestId, status, notes) =>
     .then(unwrap);
 
 // ─── CONTRACT INSTANCES ───────────────────────────────────────────────────────
-// FIX: was using undefined `api` — must use `axiosConfig` throughout this file.
 
-// GET /offers/:offerId/contract-instances
-// Returns list metadata (no htmlContent).
 export const getContractInstances = (offerId) =>
   axiosConfig
     .get(`${BASE}/${offerId}/contract-instances`, {
@@ -143,11 +130,6 @@ export const getContractInstances = (offerId) =>
     })
     .then((res) => res.data);
 
-// GET /contract-instances/:instanceId/html
-// Returns raw HTML string — responseType: "text" is REQUIRED.
-
-
-// GET /contract-instances/:instanceId/html
 export const getContractInstanceHtml = (instanceId) =>
   axiosConfig
     .get(`/contract-instances/${instanceId}/html`, {
@@ -156,17 +138,11 @@ export const getContractInstanceHtml = (instanceId) =>
     })
     .then((res) => res.data);
 
-
-// GET /contract-instances/:instanceId
 export const getContractInstance = (instanceId) =>
   axiosConfig
-    .get(`/contract-instances/${instanceId}`, {
-      headers: roleHeaders(),
-    })
+    .get(`/contract-instances/${instanceId}`, { headers: roleHeaders() })
     .then((res) => res.data.data);
 
-
-// PATCH /contract-instances/:instanceId/status
 export const updateContractInstanceStatus = (instanceId, status) =>
   axiosConfig
     .patch(
@@ -176,8 +152,7 @@ export const updateContractInstanceStatus = (instanceId, status) =>
     )
     .then((res) => res.data.data);
 
-
 export const productionEditOffer = (id, data) =>
   axiosConfig
     .patch(`/offers/${id}/production-edit`, data, { headers: roleHeaders() })
-    .then(unwrap);    
+    .then(unwrap);

@@ -1,3 +1,15 @@
+/**
+ * ContractInstancesPanel.jsx
+ *
+ * FIX 1: clearHtmlCache() is now called alongside clearInstances() in the
+ * main fetch useEffect. This ensures stale HTML from previous instance
+ * generations is never served from the Redux cache after a v2 regeneration.
+ *
+ * FIX 2: offerStatus prop dependency — re-fetches instances whenever the
+ * offer status changes so each workflow stage gets fresh instances.
+ * Pass offerStatus={offer?.status} from every parent layout component.
+ */
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,13 +23,20 @@ import {
   getContractInstancesThunk,
   getContractInstanceHtmlThunk,
   clearInstances,
+  clearHtmlCache,          // FIX: import clearHtmlCache
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
   selectCurrentOfferId,
 } from "../store/contractInstances.slice";
 
-import { ContractStepper, isSignedStatus } from "../components/viewoffer/layouts/ContractStepper";
+import { selectViewRole } from "../store/viewrole.slice";
+
+import {
+  ContractStepper,
+  isSignedForRole,
+  isSignedStatus,
+} from "../components/viewoffer/layouts/ContractStepper";
 
 // ── Type badge config ─────────────────────────────────────────────────────────
 
@@ -60,7 +79,7 @@ const STATUS_COLOR = {
 function dedupByFormKey(instances) {
   const map = new Map();
   for (const inst of instances) {
-    const key = inst.formKey || inst.formName || inst._id;
+    const key      = inst.formKey || inst.formName || inst._id;
     const existing = map.get(key);
     if (!existing || (inst.generation ?? 1) > (existing.generation ?? 1)) {
       map.set(key, inst);
@@ -80,7 +99,7 @@ function AutoIframe({ html, title }) {
     if (!html || !ref.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
 
-    const blob = new Blob([html], { type: "text/html; charset=utf-8" });
+    const blob    = new Blob([html], { type: "text/html; charset=utf-8" });
     blobRef.current = URL.createObjectURL(blob);
     ref.current.src = blobRef.current;
 
@@ -139,13 +158,13 @@ function StatusBadge({ status }) {
 
 // ── Single document view ──────────────────────────────────────────────────────
 
-function DocumentView({ instance, index, total }) {
+function DocumentView({ instance, index, total, viewRole }) {
   const dispatch  = useDispatch();
   const [html,    setHtml   ] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError  ] = useState(null);
 
-  const signed  = isSignedStatus(instance.status);
+  const signed  = isSignedForRole(instance.status, viewRole);
   const typeCfg = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
   useEffect(() => {
@@ -176,8 +195,6 @@ function DocumentView({ instance, index, total }) {
         "rounded-xl overflow-hidden border",
         signed ? "border-emerald-200" : "border-neutral-200"
       )}>
-
-        {/* Header */}
         <div className={cn(
           "flex items-center gap-3 px-4 py-3",
           signed ? "bg-emerald-600" : "bg-violet-700"
@@ -207,7 +224,6 @@ function DocumentView({ instance, index, total }) {
           <StatusBadge status={instance.status} />
         </div>
 
-        {/* Signature row */}
         <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/60 flex items-center gap-3">
           <div className={cn(
             "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
@@ -231,7 +247,6 @@ function DocumentView({ instance, index, total }) {
           </div>
         </div>
 
-        {/* Document body */}
         <div className="bg-[#f0eef8]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
@@ -282,65 +297,45 @@ function EmptyState({ onRefresh, loading }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ContractInstancesPanel({ offerId, className }) {
+export default function ContractInstancesPanel({ offerId, offerStatus, className }) {
   const dispatch       = useDispatch();
   const instances      = useSelector(selectInstances);
   const loading        = useSelector(selectInstancesLoading);
   const error          = useSelector(selectInstancesError);
-  const currentOfferId = useSelector(selectCurrentOfferId);   // ← key selector
+  const currentOfferId = useSelector(selectCurrentOfferId);
+  const viewRole       = useSelector(selectViewRole);
+
   const [activeIdx, setActiveIdx] = useState(0);
   const retryDoneRef = useRef(false);
 
-  // ── Manual refresh (button click) ──────────────────────────────────────────
-  // Only this clears the store — never the auto-fetch on mount.
   const handleRefresh = useCallback(() => {
     retryDoneRef.current = false;
     dispatch(clearInstances());
+    dispatch(clearHtmlCache());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
-  // ── Initial fetch ──────────────────────────────────────────────────────────
-  // KEY FIX: Do NOT call clearInstances() here.
-  // ViewOffer already fetches instances when offer status is in
-  // INSTANCE_FETCH_STATUSES and calls clearInstances() before doing so.
-  // Calling clearInstances() here races with that fetch and wipes the data.
-  //
-  // Only fetch if:
-  //  a) offerId changed (navigated to different offer), OR
-  //  b) store is empty and not already loading
+  // FIX: clearHtmlCache alongside clearInstances so stale HTML from previous
+  // instance generations is never served from Redux cache after v2 regeneration.
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
+    dispatch(clearInstances());   // clears instance list + htmlCache in slice
+    dispatch(clearHtmlCache());   // belt-and-suspenders: explicit HTML cache clear
+    dispatch(getContractInstancesThunk(offerId));
+  }, [offerId, offerStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const alreadyLoaded = currentOfferId === offerId && instances.length > 0;
-    if (alreadyLoaded) return;   // ViewOffer already fetched — use store data
-
-    if (!loading) {
-      dispatch(getContractInstancesThunk(offerId));
-    }
-  }, [offerId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Intentionally only re-run when offerId changes, not on every store update.
-
-  // ── One-time retry after 2s if still empty ─────────────────────────────────
-  // Handles race where backend is still generating instances after crew accept.
+  // Retry once after 2s if still empty (handles race on first load)
   useEffect(() => {
-    if (!offerId) return;
-    if (loading) return;
-    if (instances.length > 0) return;
-    if (retryDoneRef.current) return;
-
+    if (!offerId || loading || instances.length > 0 || retryDoneRef.current) return;
     const t = setTimeout(() => {
       retryDoneRef.current = true;
       dispatch(getContractInstancesThunk(offerId));
     }, 2000);
-
     return () => clearTimeout(t);
   }, [offerId, loading, instances.length, dispatch]);
 
-  // Reset active tab when switching offers
-  useEffect(() => {
-    setActiveIdx(0);
-  }, [offerId]);
+  useEffect(() => { setActiveIdx(0); }, [offerId]);
 
   // ── Derived list ───────────────────────────────────────────────────────────
   const activeInstances = dedupByFormKey(
@@ -350,18 +345,16 @@ export default function ContractInstancesPanel({ offerId, className }) {
   );
 
   const safeIdx     = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
-  const signedCount = activeInstances.filter((i) => isSignedStatus(i.status)).length;
   const total       = activeInstances.length;
+  const signedCount = activeInstances.filter((i) => isSignedForRole(i.status, viewRole)).length;
   const progress    = total ? Math.round((signedCount / total) * 100) : 0;
 
   const steps = activeInstances.map((inst) => ({
     id:     inst._id,
     label:  inst.formName,
     status: inst.status,
-    signed: isSignedStatus(inst.status),
   }));
 
-  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading && instances.length === 0) {
     return (
       <div className={cn("flex items-center justify-center py-20", className)}>
@@ -373,7 +366,6 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className={cn(
@@ -389,7 +381,6 @@ export default function ContractInstancesPanel({ offerId, className }) {
     );
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
   if (!loading && total === 0) {
     return <EmptyState onRefresh={handleRefresh} loading={loading} />;
   }
@@ -437,7 +428,12 @@ export default function ContractInstancesPanel({ offerId, className }) {
       </div>
 
       {/* Stepper */}
-      <ContractStepper steps={steps} activeIndex={safeIdx} onSelect={setActiveIdx} />
+      <ContractStepper
+        steps={steps}
+        activeIndex={safeIdx}
+        onSelect={setActiveIdx}
+        viewRole={viewRole}
+      />
 
       {/* Active document */}
       {current && (
@@ -446,6 +442,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
           instance={current}
           index={safeIdx}
           total={total}
+          viewRole={viewRole}
         />
       )}
 
@@ -453,7 +450,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
       {total > 1 && (
         <div className="flex items-center justify-between">
           <button
-            onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
+            onClick={() => setActiveIdx((i) => Math.max(0, i - 1))}
             disabled={safeIdx === 0}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
@@ -461,7 +458,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
           </button>
           <span className="text-[11px] text-neutral-400">{safeIdx + 1} of {total}</span>
           <button
-            onClick={() => setActiveIdx(i => Math.min(total - 1, i + 1))}
+            onClick={() => setActiveIdx((i) => Math.min(total - 1, i + 1))}
             disabled={safeIdx === total - 1}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >

@@ -113,6 +113,14 @@ export const moveToPendingCrewSignatureThunk = createAsyncThunk("offers/pendingC
   }
 );
 
+// ── FIX: uses offerApi.returnToProduction — no axiosConfig needed here ────────
+export const returnToProductionThunk = createAsyncThunk("offers/returnToProduction",
+  async ({ offerId, reason }, { rejectWithValue }) => {
+    try { return await offerApi.returnToProduction(offerId, reason); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
 // ─── Signing ─────────────────────────────────────────────────────────────────
 
 const makeSignThunk = (name, apiFn) =>
@@ -178,6 +186,7 @@ export const workflowThunks = [
   moveToProductionCheckThunk,
   moveToAccountsCheckThunk,
   moveToPendingCrewSignatureThunk,
+  returnToProductionThunk,        // ← added
 ];
 
 export const signThunks = [

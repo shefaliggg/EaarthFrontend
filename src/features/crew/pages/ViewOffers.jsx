@@ -1,4 +1,24 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+/**
+ * ViewOffer.jsx — FIXED
+ *
+ * KEY FIXES:
+ * 1. offerToAllowances() — robust key normalization handles camelCase, snake_case,
+ *    UPPER_SNAKE_CASE from backend (v1 vs v2 offers may store differently).
+ *
+ * 2. calculatedRates memo — ALWAYS prefers offer.calculatedRates snapshot when
+ *    salary/overtime rows exist. Falls back to live calc only when truly empty.
+ *    This ensures v2 contract edits show the AGREED rates, not a recalculation.
+ *
+ * 3. offerToContractData() — reads allowances budget codes from offer correctly.
+ *
+ * 4. useEffect for instance fetch — depends on offer._id AND offer.status AND
+ *    offer.version so any re-acceptance of v2 triggers a fresh fetch.
+ *
+ * 5. After crewAccept thunk resolves, immediately refetch offer so memos get
+ *    fresh calculatedRates + allowances without waiting for a page reload.
+ */
+
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate }    from "react-router-dom";
 import { useDispatch, useSelector }  from "react-redux";
 import { toast }                     from "sonner";
@@ -57,9 +77,9 @@ const ROLES = [
 // ── Statuses where contract instances should be fetched ───────────────────────
 
 const INSTANCE_FETCH_STATUSES = [
-  "SENT_TO_CREW",            // crew views offer — ContractInstancesPanel shown
-  "NEEDS_REVISION",          // crew reviews revised offer
-  "CREW_ACCEPTED",           // after crew accepts, instances exist
+  "SENT_TO_CREW",
+  "NEEDS_REVISION",
+  "CREW_ACCEPTED",
   "PRODUCTION_CHECK",
   "ACCOUNTS_CHECK",
   "PENDING_CREW_SIGNATURE",
@@ -97,6 +117,7 @@ function offerToContractData(offer) {
     dailyOrWeekly:                  offer.dailyOrWeekly     || "daily",
     engagementType:                 offer.engagementType    || "paye",
     category:                       offer.category          || "",
+    categoryId:                     offer.categoryId        ? String(offer.categoryId) : "",
     workingWeek:                    offer.workingWeek       || "5",
     currency:                       offer.currency          || "GBP",
     feePerDay:                      offer.feePerDay         || "",
@@ -107,15 +128,104 @@ function offerToContractData(offer) {
     cameraOTCWD:  offer.cameraOTCWD  || "",
     otherDealProvisions: offer.notes?.otherDealProvisions || "",
     additionalNotes:     offer.notes?.additionalNotes     || "",
+    // Pass through for layout components that read notes directly
+    notes: {
+      otherDealProvisions: offer.notes?.otherDealProvisions || "",
+      additionalNotes:     offer.notes?.additionalNotes     || "",
+    },
   };
 }
 
+// ── FIX: Robust allowance normalization ────────────────────────────────────────
+// Backend may store allowance keys as:
+//   camelCase:      "boxRental"   (v1 offers, most common)
+//   UPPER_SNAKE:    "BOX_RENTAL"  (some legacy paths)
+//   lower_snake:    "box_rental"  (rare)
+//
+// defaultAllowances uses camelCase keys. We normalize ALL variants to camelCase
+// before merging so the UI always gets the right data regardless of version.
+
+function toCamelCase(str) {
+  if (!str) return str;
+  // Already camelCase with no separators — return as-is
+  if (!/[_\s-]/.test(str) && str === str.toLowerCase().replace(/./g, (c, i) => i === 0 ? c : c)) {
+    return str;
+  }
+  return str
+    .toLowerCase()
+    .replace(/[_\s-]([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// Map of all known backend key variants → canonical camelCase key used by UI
+const ALLOWANCE_KEY_MAP = {
+  // camelCase (canonical)
+  boxRental: "boxRental",
+  computer:  "computer",
+  software:  "software",
+  equipment: "equipment",
+  vehicle:   "vehicle",
+  mobile:    "mobile",
+  living:    "living",
+  perDiem1:  "perDiem1",
+  perDiem2:  "perDiem2",
+  breakfast: "breakfast",
+  lunch:     "lunch",
+  dinner:    "dinner",
+  fuel:      "fuel",
+  mileage:   "mileage",
+  // UPPER_SNAKE variants
+  BOX_RENTAL:        "boxRental",
+  COMPUTER:          "computer",
+  SOFTWARE:          "software",
+  EQUIPMENT:         "equipment",
+  EQUIPMENT_RENTAL:  "equipment",
+  VEHICLE:           "vehicle",
+  MOBILE:            "mobile",
+  MOBILE_PHONE:      "mobile",
+  LIVING:            "living",
+  PER_DIEM:          "perDiem1",
+  PER_DIEM_1:        "perDiem1",
+  PER_DIEM_2:        "perDiem2",
+  // lower_snake variants
+  box_rental:        "boxRental",
+  equipment_rental:  "equipment",
+  mobile_phone:      "mobile",
+  per_diem:          "perDiem1",
+  per_diem_1:        "perDiem1",
+  per_diem_2:        "perDiem2",
+};
+
 function offerToAllowances(offer) {
-  if (!offer?.allowances?.length) return defaultAllowances;
-  const result = { ...defaultAllowances };
+  if (!offer?.allowances?.length) return { ...defaultAllowances };
+
+  // Start from a full copy of defaults so every UI key always exists
+  const result = JSON.parse(JSON.stringify(defaultAllowances));
+
   offer.allowances.forEach((a) => {
-    if (a.key && result[a.key] !== undefined) result[a.key] = { ...result[a.key], ...a };
+    if (!a?.key) return;
+
+    const raw = a.key;
+
+    // Resolve to canonical camelCase key
+    const canonical =
+      ALLOWANCE_KEY_MAP[raw] ||       // exact map lookup first
+      ALLOWANCE_KEY_MAP[toCamelCase(raw)] || // try after camelCase conversion
+      (result[raw] !== undefined ? raw : null); // direct match in defaults
+
+    if (!canonical) {
+      // Unknown key — still add it so nothing is lost
+      result[raw] = { ...a, key: raw };
+      return;
+    }
+
+    result[canonical] = {
+      ...result[canonical], // keep default shape
+      ...a,                 // overlay stored values
+      key: canonical,       // always use canonical key
+      enabled: !!a.enabled, // ensure boolean
+    };
   });
+
   return result;
 }
 
@@ -166,7 +276,8 @@ export default function ViewOffer() {
   const contractId     = useSelector(selectContractId);
 
   const [signRole, setSignRole] = useState(null);
-  const prevSignRef = useRef(null);
+  const prevSignRef    = useRef(null);
+  const prevVersionRef = useRef(null);
   const proj = projectName || "demo-project";
 
   // ── Fetch offer on mount ───────────────────────────────────────────────────
@@ -187,14 +298,28 @@ export default function ViewOffer() {
     dispatch(getContractPreviewThunk(contractId));
   }, [contractId, dispatch]);
 
-  // ── Fetch contract instances when offer reaches review/signing stages ──────
+  // ── FIX: Fetch contract instances on offer._id, status AND version change ──
+  // Previously only depended on offer._id + status. Adding offer.version ensures
+  // that when crew accepts v2 (new version), instances are re-fetched even if
+  // the status didn't change from the Redux store's perspective.
   useEffect(() => {
     if (!offer?._id) return;
     if (!INSTANCE_FETCH_STATUSES.includes(offer.status)) return;
-
     dispatch(clearInstances());
     dispatch(getContractInstancesThunk(offer._id));
-  }, [offer?._id, offer?.status, dispatch]);
+  }, [offer?._id, offer?.status, offer?.version, dispatch]); // ← added offer.version
+
+  // ── FIX: Re-fetch offer when version changes (e.g. after v2 crew accept) ──
+  // This ensures calculatedRates and allowances memos get fresh data from the
+  // server rather than the potentially stale Redux state.
+  useEffect(() => {
+    if (!offer?.version || !id) return;
+    if (prevVersionRef.current !== null && prevVersionRef.current !== offer.version) {
+      // Version changed — re-fetch to get latest calculatedRates & allowances
+      dispatch(getOfferThunk(id));
+    }
+    prevVersionRef.current = offer.version;
+  }, [offer?.version, id, dispatch]);
 
   // ── Refresh preview after each signature ──────────────────────────────────
   useEffect(() => {
@@ -203,7 +328,6 @@ export default function ViewOffer() {
     if (prevSignRef.current && prevSignRef.current !== curr) {
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
-      // Also refresh instances so signature images appear
       if (offer?._id) {
         dispatch(clearInstances());
         dispatch(getContractInstancesThunk(offer._id));
@@ -226,11 +350,39 @@ export default function ViewOffer() {
 
   // ── Derived state ──────────────────────────────────────────────────────────
   const contractData = useMemo(() => offerToContractData(offer), [offer]);
-  const allowances   = useMemo(() => offerToAllowances(offer),   [offer]);
-  const calculatedRates = useMemo(
-    () => calculateRates(parseFloat(contractData.feePerDay) || 0, defaultEngineSettings),
-    [contractData.feePerDay]
-  );
+
+  // FIX: Use the robust normalizer — handles all key variants from any offer version
+  const allowances = useMemo(() => offerToAllowances(offer), [offer]);
+
+  // FIX: ALWAYS prefer the stored calculatedRates snapshot when it has data.
+  // This is critical for v2+ offers where the agreed rates must not be
+  // recalculated (recalculation can drift due to rounding or setting changes).
+  // Only fall back to live calculation when snapshot is genuinely empty
+  // (e.g. very old offers created before snapshot was implemented).
+  const calculatedRates = useMemo(() => {
+    const stored = offer?.calculatedRates;
+    const hasStoredSalary    = stored?.salary?.length > 0;
+    const hasStoredOvertime  = stored?.overtime?.length > 0;
+
+    if (hasStoredSalary || hasStoredOvertime) {
+      // Use the snapshot — this is the agreed rate at time of offer creation/edit
+      return {
+        salary:   stored.salary   || [],
+        overtime: stored.overtime || [],
+      };
+    }
+
+    // Fallback: live calculation (only for legacy offers without snapshots)
+    const fee = parseFloat(contractData.feePerDay) || 0;
+    return calculateRates(fee, defaultEngineSettings);
+  }, [offer?.calculatedRates, offer?.version, contractData.feePerDay]);
+
+  // ── Budget codes — read directly from offer (not contractData) ─────────────
+  // These are top-level arrays on the offer document, not inside contractData.
+  const salaryBudgetCodes   = useMemo(() => offer?.salaryBudgetCodes   || [], [offer]);
+  const salaryTags          = useMemo(() => offer?.salaryTags          || [], [offer]);
+  const overtimeBudgetCodes = useMemo(() => offer?.overtimeBudgetCodes || [], [offer]);
+  const overtimeTags        = useMemo(() => offer?.overtimeTags        || [], [offer]);
 
   // ── Action handler ─────────────────────────────────────────────────────────
   const handleAction = async (action, payload = {}) => {
@@ -266,7 +418,8 @@ export default function ViewOffer() {
       };
       toast.success(MSG[action] || "Done");
 
-      // Refresh offer
+      // FIX: Always re-fetch the full offer after any action so memos
+      // (calculatedRates, allowances, budget codes) get fresh server data.
       const fresh = await dispatch(getOfferThunk(oid));
       const cid   = fresh.payload?.contractId ?? contractId;
 
@@ -276,15 +429,9 @@ export default function ViewOffer() {
         dispatch(getContractPreviewThunk(cid));
       }
 
-      // After crew accepts → fetch instances immediately
-      // (backend creates them synchronously before returning)
-      if (action === "accept") {
-        dispatch(clearInstances());
-        dispatch(getContractInstancesThunk(oid));
-      }
-
-      // After accounts approves → refresh instances (status changes to PENDING_CREW_SIGNATURE)
-      if (action === "accountsCheck" || action === "pendingCrewSignature") {
+      // FIX: Always clear + refetch instances after accept or any status move
+      // This covers v2 crew accept where the offer version changes.
+      if (["accept", "accountsCheck", "pendingCrewSignature", "productionCheck"].includes(action)) {
         dispatch(clearInstances());
         dispatch(getContractInstancesThunk(oid));
       }
@@ -315,14 +462,11 @@ export default function ViewOffer() {
 
     if (!result.error) {
       toast.success(`${signRole} signature recorded!`);
-
+      // FIX: Re-fetch full offer so allowances/rates memos update
       await dispatch(getOfferThunk(offer._id));
       await dispatch(getSigningStatusThunk(contractId));
-
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
-
-      // Refresh instances so signature images appear in document viewer
       dispatch(clearInstances());
       dispatch(getContractInstancesThunk(offer._id));
     } else {
@@ -341,6 +485,7 @@ export default function ViewOffer() {
   };
 
   const handleRefresh = async () => {
+    // FIX: Re-fetch offer first so memos get fresh data, then fetch instances
     const r   = await dispatch(getOfferThunk(id));
     const cid = r.payload?.contractId ?? contractId;
     if (cid) {
@@ -348,9 +493,8 @@ export default function ViewOffer() {
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(cid));
     }
-    // Always refresh instances on manual refresh
     dispatch(clearInstances());
-    dispatch(getContractInstancesThunk(id));
+    if (id) dispatch(getContractInstancesThunk(id));
   };
 
   // ── Layout routing ─────────────────────────────────────────────────────────
@@ -365,9 +509,18 @@ export default function ViewOffer() {
   const tl     = offer?.timeline || {};
   const hasPdf = !!(signingStatus?.pdfS3Key);
 
+  // FIX: Build sharedProps using the memoized values derived from the CURRENT offer.
+  // All layout components receive the same set of props so allowances, budget codes,
+  // and calculatedRates are always consistent across Production Review, Accounts Review,
+  // Crew view, and signing stages regardless of offer version.
   const sharedProps = {
-    offer, contractData, allowances, calculatedRates,
-    isSubmitting, onAction: handleAction, dispatch,
+    offer,
+    contractData,
+    allowances,       // ← from robust offerToAllowances()
+    calculatedRates,  // ← always snapshot-first
+    isSubmitting,
+    onAction: handleAction,
+    dispatch,
   };
 
   // ── Loading / not found ────────────────────────────────────────────────────
@@ -420,6 +573,11 @@ export default function ViewOffer() {
                 {offer.offerCode}
               </span>
             )}
+            {offer?.version > 1 && (
+              <span className="text-xs font-mono text-violet-600 bg-violet-50 border border-violet-200 px-2 py-1 rounded">
+                v{offer.version}
+              </span>
+            )}
             {hasPdf && (
               <Button
                 size="sm"
@@ -463,16 +621,32 @@ export default function ViewOffer() {
 
         {/* Layout routing */}
         {isProdReview && (
-          <LayoutProductionReview {...sharedProps} />
+          <LayoutProductionReview
+            {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
+          />
         )}
 
         {isAcctReview && (
-          <LayoutAccountsReview {...sharedProps} />
+          <LayoutAccountsReview
+            {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
+          />
         )}
 
         {isProdAdmin && !isProdReview && (
           <LayoutProductionAdmin
             {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
             signingStatus={signingStatus}
             previewHtml={previewHtml}
             isLoadingPrev={isLoadingPrev}
@@ -483,6 +657,10 @@ export default function ViewOffer() {
         {isCrew && (
           <LayoutCrew
             {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
             signingStatus={signingStatus}
             previewHtml={previewHtml}
             isLoadingPrev={isLoadingPrev}
@@ -493,6 +671,10 @@ export default function ViewOffer() {
         {isAcctAdmin && !isAcctReview && (
           <LayoutAccountsReadOnly
             {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
             previewHtml={previewHtml}
             isLoadingPrev={isLoadingPrev}
           />
@@ -501,6 +683,10 @@ export default function ViewOffer() {
         {isSignatory && (
           <LayoutSignatory
             {...sharedProps}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
             role={viewRole}
             signingStatus={signingStatus}
             previewHtml={previewHtml}

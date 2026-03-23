@@ -1,14 +1,70 @@
+/**
+ * layouts/LayoutProductionReview.jsx — PRODUCTION_CHECK stage.
+ * FIX: ContractInstancesPanel now receives offerStatus={offer?.status}
+ * so it re-fetches fresh instances on every status transition.
+ */
+
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ClipboardCheck, Send, Loader2, CheckCircle2, X,
   FileText, ShieldCheck, Building, Package, Monitor, Car,
-  BadgeCheck, Shield, FileCheck,
+  BadgeCheck, Shield, FileCheck, Edit2,
 } from "lucide-react";
 
-import CrewIdentityHeader      from "../../../components/viewoffer/layouts/CrewIdentityHeader";
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
+
+function getInitials(name = "") {
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
+}
+
+function OfferTopBar({ offer, contractData, onEdit }) {
+  const name     = contractData?.fullName || offer?.recipient?.fullName || "—";
+  const jobTitle = offer?.createOwnJobTitle && offer?.newJobTitle
+    ? offer.newJobTitle
+    : contractData?.jobTitle || offer?.jobTitle || "—";
+  const dept  = contractData?.department || offer?.department || "";
+  const email = contractData?.email || offer?.recipient?.email || "";
+
+  return (
+    <div className="bg-white rounded-xl border border-neutral-200 px-4 py-3 flex items-center gap-3 w-full">
+      <div className="h-9 w-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-[12px] font-bold shrink-0 select-none">
+        {getInitials(name)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[13px] font-bold text-neutral-900 truncate">{name}</span>
+          {jobTitle && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-violet-50 text-violet-700 border-violet-200 uppercase tracking-wide">
+              {jobTitle}
+            </span>
+          )}
+          {dept && <span className="text-[11px] text-neutral-400">{dept}</span>}
+        </div>
+        {email && <p className="text-[10px] text-neutral-400 mt-0.5 truncate">{email}</p>}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {offer?.offerCode && (
+          <span className="text-[9px] font-mono text-neutral-400 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded">
+            {offer.offerCode}
+          </span>
+        )}
+        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide text-violet-600 bg-violet-50 border-violet-200">
+          Production Check
+        </span>
+        <button
+          onClick={onEdit}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[11px] font-semibold hover:bg-orange-600 transition-colors"
+        >
+          <Edit2 className="w-3 h-3" /> Edit Offer
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 
 const PROD_CHECKLIST = [
   { key: "documentsUploaded",      label: "All required documents uploaded", Icon: FileCheck,   cat: "Identity",  always: true    },
@@ -34,24 +90,18 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
       <div className="bg-violet-600 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ClipboardCheck className="h-3.5 w-3.5 text-white" />
-          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">
-            Verification Checklist
-          </span>
+          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">Verification Checklist</span>
         </div>
-        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
-          allDone ? "bg-emerald-400 text-emerald-900" : "bg-white/20 text-white"
-        }`}>
+        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${allDone ? "bg-emerald-400 text-emerald-900" : "bg-white/20 text-white"}`}>
           {done}/{total} verified
         </span>
       </div>
-
       <div className="h-1 bg-neutral-100">
         <div
           className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`}
           style={{ width: `${total ? (done / total) * 100 : 0}%` }}
         />
       </div>
-
       <div className="px-3 py-3 space-y-3">
         {cats.map((cat) => {
           const catItems = items.filter((c) => c.cat === cat);
@@ -59,9 +109,7 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
           return (
             <div key={cat}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">
-                  {cat}
-                </span>
+                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">{cat}</span>
                 <span className="text-[8px] text-neutral-400">{catDone}/{catItems.length}</span>
               </div>
               <div className="space-y-1">
@@ -74,27 +122,18 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
                       disabled={disabled}
                       onClick={() => onChange(item.key, !on)}
                       className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all
-                        ${on
-                          ? "bg-emerald-50 border border-emerald-200"
-                          : "bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-white"
-                        }
+                        ${on ? "bg-emerald-50 border border-emerald-200" : "bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-white"}
                         ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
                     >
-                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                        on ? "bg-emerald-500 border-emerald-500" : "border-neutral-300 bg-white"
-                      }`}>
+                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${on ? "bg-emerald-500 border-emerald-500" : "border-neutral-300 bg-white"}`}>
                         {on && (
                           <svg className="w-2 h-2 text-white" viewBox="0 0 8 8" fill="none">
                             <path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                       </div>
-                      {ItemIcon && (
-                        <ItemIcon className={`h-3 w-3 shrink-0 ${on ? "text-emerald-400" : "text-neutral-300"}`} />
-                      )}
-                      <span className={`text-[10px] leading-tight flex-1 ${on ? "text-emerald-700" : "text-neutral-600"}`}>
-                        {item.label}
-                      </span>
+                      {ItemIcon && <ItemIcon className={`h-3 w-3 shrink-0 ${on ? "text-emerald-400" : "text-neutral-300"}`} />}
+                      <span className={`text-[10px] leading-tight flex-1 ${on ? "text-emerald-700" : "text-neutral-600"}`}>{item.label}</span>
                     </button>
                   );
                 })}
@@ -102,7 +141,6 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
             </div>
           );
         })}
-
         {allDone && (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 mt-1">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -127,6 +165,10 @@ export default function LayoutProductionReview({
   const [showApprove, setShowApprove] = useState(false);
   const [approved,    setApproved   ] = useState(false);
 
+  const handleEdit = () => {
+    if (offerId) navigate(`/projects/${proj}/offers/${offerId}/edit?redirectTo=onboarding`);
+  };
+
   const visibleItems = PROD_CHECKLIST.filter((item) => {
     if (item.always)    return true;
     if (item.loanOut)   return offer?.engagementType === "loan_out";
@@ -141,37 +183,33 @@ export default function LayoutProductionReview({
   return (
     <div className="space-y-4">
 
-      <CrewIdentityHeader
-        contractData={contractData}
-        offer={offer}
-        showEdit={false}
-        onToggleEdit={() => navigate(`/projects/${proj}/offers/${offerId}/edit`)}
-      />
+      <OfferTopBar offer={offer} contractData={contractData} onEdit={handleEdit} />
 
       <div className="flex gap-4 items-start">
 
-        {/* Centre column */}
         <div className="flex-1 min-w-0 space-y-4">
-
           <SubmittedDocumentsPanel offerId={offer?._id} offer={offer} />
 
+          {/* FIX: offerStatus prop added so panel re-fetches on status change */}
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
               <FileText className="w-3.5 h-3.5 text-violet-500" />
               <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
+              <span className="ml-auto text-[9px] text-violet-500 font-mono">PRODUCTION REVIEW</span>
             </div>
             <div className="p-4">
               {offer?._id && (
-                <ContractInstancesPanel offerId={offer._id} />
+                <ContractInstancesPanel
+                  offerId={offer._id}
+                  offerStatus={offer?.status}
+                />
               )}
             </div>
           </div>
 
         </div>
 
-        {/* Right sidebar */}
         <div className="w-[260px] shrink-0 space-y-3">
-
           <ChecklistWidget
             items={visibleItems}
             checked={checklist}
@@ -190,13 +228,15 @@ export default function LayoutProductionReview({
                     : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                 }`}
               >
-                {isSubmitting
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <ClipboardCheck className="h-3.5 w-3.5" />
-                }
+                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
                 Approve &amp; Send to Accounts
               </button>
-
+              <button
+                onClick={handleEdit}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-medium hover:bg-orange-100 transition-colors"
+              >
+                <Edit2 className="h-3 w-3" /> Edit &amp; Resend to Crew
+              </button>
               <button
                 onClick={() => onAction("sendToCrew")}
                 disabled={isSubmitting}
@@ -204,11 +244,8 @@ export default function LayoutProductionReview({
               >
                 <Send className="h-3 w-3" /> Return to Crew
               </button>
-
               {!allDone && (
-                <p className="text-[9px] text-neutral-400 text-center">
-                  Complete all checklist items to approve
-                </p>
+                <p className="text-[9px] text-neutral-400 text-center">Complete all checklist items to approve</p>
               )}
             </div>
           ) : (
@@ -218,11 +255,9 @@ export default function LayoutProductionReview({
               <p className="text-[10px] text-emerald-600 mt-0.5">Sent to Accounts for review</p>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* Approve modal */}
       {showApprove && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
@@ -231,39 +266,24 @@ export default function LayoutProductionReview({
                 <ClipboardCheck className="h-5 w-5 text-white" />
                 <h3 className="text-white font-semibold">Approve &amp; Send to Accounts?</h3>
               </div>
-              <button
-                onClick={() => setShowApprove(false)}
-                className="text-violet-300 hover:text-white"
-              >
+              <button onClick={() => setShowApprove(false)} className="text-violet-300 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6">
               <p className="text-[13px] text-neutral-600 mb-5">
-                Production checks complete for{" "}
-                <strong>{contractData?.fullName}</strong>.
-                Send to Accounts for financial review?
+                Production checks complete for <strong>{contractData?.fullName}</strong>. Send to Accounts for financial review?
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowApprove(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50"
-                >
+                <button onClick={() => setShowApprove(false)} className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    await onAction("accountsCheck");
-                    setApproved(true);
-                    setShowApprove(false);
-                  }}
+                  onClick={async () => { await onAction("accountsCheck"); setApproved(true); setShowApprove(false); }}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {isSubmitting
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : <ClipboardCheck className="h-4 w-4" />
-                  }
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
                   Approve &amp; Send
                 </button>
               </div>

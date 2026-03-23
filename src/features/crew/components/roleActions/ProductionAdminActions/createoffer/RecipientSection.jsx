@@ -3,6 +3,18 @@ import { Field } from "../shared/Field";
 import { HighlightField } from "../shared/HighlightField";
 
 export function RecipientSection({ data, activeField, onFieldClick }) {
+  // ── FIX: recipient fields are nested under data.recipient.*
+  // ContractForm writes: data.recipient.fullName, data.recipient.email, etc.
+  // But representation (isViaAgent, agentEmail) lives under data.representation.*
+  const recipient       = data.recipient       || {};
+  const representation  = data.representation  || {};
+
+  const fullName    = recipient.fullName    || data.fullName    || "—";
+  const email       = recipient.email       || data.email       || "—";
+  const mobileNumber = recipient.mobileNumber || data.mobileNumber || "—";
+  const isViaAgent  = representation.isViaAgent ?? data.isViaAgent ?? false;
+  const agentEmail  = representation.agentEmail  || data.agentEmail  || "";
+
   return (
     <div className="bg-white rounded-xl border border-neutral-200/80 p-2 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <SectionHeader title="Recipient" />
@@ -11,11 +23,14 @@ export function RecipientSection({ data, activeField, onFieldClick }) {
         {/* Full name */}
         <Field label="Full name">
           <HighlightField
-            fieldName="fullName"
-            active={activeField === "fullName"}
+            fieldName="recipient.fullName"
+            active={
+              activeField === "recipient.fullName" ||
+              activeField === "fullName"
+            }
             onClick={onFieldClick}
           >
-            <span className="font-semibold text-[12px]">{data.fullName || "—"}</span>
+            <span className="font-semibold text-[12px]">{fullName}</span>
           </HighlightField>
         </Field>
 
@@ -23,33 +38,42 @@ export function RecipientSection({ data, activeField, onFieldClick }) {
         <div className="grid grid-cols-2 gap-x-2">
           <Field label="Email">
             <HighlightField
-              fieldName="email"
-              active={activeField === "email"}
+              fieldName="recipient.email"
+              active={
+                activeField === "recipient.email" ||
+                activeField === "email"
+              }
               onClick={onFieldClick}
             >
-              <span>{data.email || "—"}</span>
+              <span>{email}</span>
             </HighlightField>
           </Field>
           <Field label="Phone number">
             <HighlightField
-              fieldName="mobileNumber"
-              active={activeField === "mobileNumber"}
+              fieldName="recipient.mobileNumber"
+              active={
+                activeField === "recipient.mobileNumber" ||
+                activeField === "mobileNumber"
+              }
               onClick={onFieldClick}
             >
-              <span>{data.mobileNumber || "—"}</span>
+              <span>{mobileNumber}</span>
             </HighlightField>
           </Field>
         </div>
 
         {/* Agent email — only shown when via agent */}
-        {data.isViaAgent && data.agentEmail && (
+        {isViaAgent && agentEmail && (
           <Field label="Agent email">
             <HighlightField
-              fieldName="agentEmail"
-              active={activeField === "agentEmail"}
+              fieldName="representation.agentEmail"
+              active={
+                activeField === "representation.agentEmail" ||
+                activeField === "agentEmail"
+              }
               onClick={onFieldClick}
             >
-              <span>{data.agentEmail}</span>
+              <span>{agentEmail}</span>
             </HighlightField>
           </Field>
         )}
