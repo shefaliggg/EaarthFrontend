@@ -1,19 +1,10 @@
 /**
- * layouts/LayoutAccountsReview.jsx
+ * layouts/LayoutAccountsReview.jsx — FIXED
  *
- * ACCOUNTS_CHECK stage.
- *
- * "Return to Production":
- *   → Calls returnToProductionThunk → PATCH /offers/:id/return-to-production
- *   → Backend sets status = NEEDS_REVISION + creates ChangeRequest (fieldName=ACCOUNTS_REVIEW)
- *   → Production admin sees ViewOffer with:
- *       - Indigo ChangeRequestBanner "Accounts Flagged Issues" (same as Image 2 orange banner)
- *       - Edit Offer button (orange)
- *       - Resend to Crew button (purple)
- *   → Navigates to /onboarding — offer shows NEEDS_REVISION in the pipeline table
- *
- * "Approve & Send for Signatures":
- *   → onAction("pendingCrewSignature") → PENDING_CREW_SIGNATURE
+ * FIX: OfferDocumentPanel now receives salaryBudgetCodes, salaryTags,
+ * overtimeBudgetCodes, overtimeTags as explicit props from ViewOffer
+ * (which memoizes them from the freshly-fetched offer) instead of reading
+ * offer?.salaryBudgetCodes directly (which may be stale for v2+ offers).
  */
 
 import { useState }               from "react";
@@ -23,10 +14,13 @@ import {
   ClipboardCheck, Send, Loader2, CheckCircle2, X,
   FileText, ShieldCheck, FileCheck, PenLine,
   TrendingUp, DollarSign, Receipt, BarChart2, MessageSquare,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
+import { CreateOfferLayout }   from "../../roleActions/ProductionAdminActions/createoffer/CreateOfferLayout";
+import { defaultEngineSettings } from "../../../utils/rateCalculations";
 
 import {
   getProjectOffersThunk,
@@ -48,6 +42,60 @@ const ACCT_CHECKLIST = [
   { key: "readyForSignature",     label: "Ready for crew signature",            Icon: PenLine,     cat: "Final"   },
 ];
 
+// ── FIX: Accept budget code props explicitly ──────────────────────────────────
+
+function OfferDocumentPanel({
+  offer, contractData, allowances, calculatedRates,
+  salaryBudgetCodes, salaryTags, overtimeBudgetCodes, overtimeTags,
+}) {
+  const [open, setOpen] = useState(false);
+  const [af, setAf]     = useState(null);
+
+  return (
+    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 hover:bg-neutral-50 transition-colors text-left"
+      >
+        <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+        <span className="text-[12px] font-semibold text-neutral-800 flex-1">
+          Offer Details — Fee Structure &amp; Allowances
+        </span>
+        <span className="text-[9px] text-indigo-400 font-mono mr-2">READ ONLY</span>
+        {open
+          ? <ChevronUp className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+          : <ChevronDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+        }
+      </button>
+      {open && (
+        <CreateOfferLayout
+          data={contractData}
+          offer={offer}
+          activeField={af}
+          onFieldFocus={setAf}
+          onFieldBlur={() => setAf(null)}
+          calculatedRates={calculatedRates}
+          engineSettings={defaultEngineSettings}
+          // FIX: use props, not offer?.salaryBudgetCodes (may be stale)
+          salaryBudgetCodes={salaryBudgetCodes}
+          setSalaryBudgetCodes={() => {}}
+          salaryTags={salaryTags}
+          setSalaryTags={() => {}}
+          overtimeBudgetCodes={overtimeBudgetCodes}
+          setOvertimeBudgetCodes={() => {}}
+          overtimeTags={overtimeTags}
+          setOvertimeTags={() => {}}
+          allowances={allowances}
+          hideOfferSections={false}
+          hideContractDocument={true}
+          isDocumentLocked={true}
+          initialOfferCollapsed={false}
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── Return to Production dialog ──────────────────────────────────────────────
 
 function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
@@ -57,7 +105,6 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
       <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-
         <div className="bg-indigo-600 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -74,8 +121,6 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Body — textarea only, no info box */}
         <div className="px-5 py-5 space-y-3">
           <p className="text-[13px] text-neutral-600 leading-relaxed">
             Describe the financial issues found for{" "}
@@ -84,7 +129,6 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
             </strong>.
             Production will see your notes and can edit and resend to crew.
           </p>
-
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -93,7 +137,6 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
             className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[13px] uppercase placeholder:normal-case placeholder:text-neutral-400 text-neutral-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-500 transition-colors"
           />
         </div>
-
         <div className="flex gap-3 px-5 pb-5">
           <button
             onClick={onClose}
@@ -107,10 +150,7 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
             disabled={isLoading || !notes.trim()}
             className="flex-1 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Send className="w-4 h-4" />
-            }
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Return to Production
           </button>
         </div>
@@ -140,14 +180,12 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
           {done}/{total} verified
         </span>
       </div>
-
       <div className="h-1 bg-neutral-100">
         <div
           className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`}
           style={{ width: `${total ? (done / total) * 100 : 0}%` }}
         />
       </div>
-
       <div className="px-3 py-3 space-y-3">
         {cats.map((cat) => {
           const catItems = items.filter((c) => c.cat === cat);
@@ -203,11 +241,16 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN
+// MAIN — FIX: accept budget code props
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function LayoutAccountsReview({
   offer, contractData, allowances, calculatedRates,
+  // FIX: receive budget codes as explicit props from ViewOffer
+  salaryBudgetCodes = [],
+  salaryTags = [],
+  overtimeBudgetCodes = [],
+  overtimeTags = [],
   isSubmitting, onAction, dispatch,
 }) {
   const navigate            = useNavigate();
@@ -223,45 +266,23 @@ export default function LayoutAccountsReview({
 
   const allDone = ACCT_CHECKLIST.every((c) => checklist[c.key]);
 
-  // ── Return to Production ────────────────────────────────────────────────────
-  // Calls returnToProductionThunk:
-  //   PATCH /offers/:id/return-to-production
-  //   Backend: status → NEEDS_REVISION + ChangeRequest (fieldName=ACCOUNTS_REVIEW)
-  //
-  // Result on production admin ViewOffer:
-  //   - Status badge: NEEDS_REVISION
-  //   - Indigo ChangeRequestBanner: "Accounts Flagged Issues" with the accounts notes
-  //   - Actions sidebar: Edit Offer (orange) + Resend to Crew (purple) + Cancel
-  //   → Same layout as Image 2 (crew request changes page)
-  //
-  // After success: refresh list → navigate to onboarding
   const handleReturnConfirm = async (notes) => {
     setShowReturn(false);
     setReturning(true);
     toast.loading("Returning to production…", { id: "return-prod" });
-
     try {
       const result = await dispatch(returnToProductionThunk({
         offerId,
         reason: notes.toUpperCase(),
       }));
-
       toast.dismiss("return-prod");
-
       if (!result.error) {
         toast.success("Returned to production. Offer set to Needs Revision.");
-
-        // Refresh the onboarding list so NEEDS_REVISION stage is visible
         const projectId = offer?.projectId || APP_CONFIG.PROJECT_ID;
         await dispatch(getProjectOffersThunk({ projectId }));
-
-        // Navigate to onboarding — production sees NEEDS_REVISION row,
-        // clicks it → ViewOffer → indigo ChangeRequestBanner + Edit Offer button
         setTimeout(() => navigate(`/projects/${proj}/onboarding`), 500);
       } else {
-        toast.error(
-          result.payload?.message || "Failed to return to production. Please try again."
-        );
+        toast.error(result.payload?.message || "Failed to return to production. Please try again.");
       }
     } catch (err) {
       toast.dismiss("return-prod");
@@ -273,7 +294,6 @@ export default function LayoutAccountsReview({
 
   return (
     <div className="space-y-4">
-
       <div className="flex gap-4 items-start">
 
         {/* Left — documents */}
@@ -281,6 +301,7 @@ export default function LayoutAccountsReview({
 
           <SubmittedDocumentsPanel offerId={offer?._id} offer={offer} />
 
+          {/* Contract documents */}
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
               <FileText className="w-3.5 h-3.5 text-violet-500" />
@@ -288,15 +309,31 @@ export default function LayoutAccountsReview({
               <span className="ml-auto text-[9px] text-indigo-500 font-mono">ACCOUNTS REVIEW</span>
             </div>
             <div className="p-4">
-              {offer?._id && <ContractInstancesPanel offerId={offer._id} />}
+              {offer?._id && (
+                <ContractInstancesPanel
+                  offerId={offer._id}
+                  offerStatus={offer?.status}
+                />
+              )}
             </div>
           </div>
+
+          {/* FIX: pass budget code props explicitly */}
+          <OfferDocumentPanel
+            offer={offer}
+            contractData={contractData}
+            allowances={allowances}
+            calculatedRates={calculatedRates}
+            salaryBudgetCodes={salaryBudgetCodes}
+            salaryTags={salaryTags}
+            overtimeBudgetCodes={overtimeBudgetCodes}
+            overtimeTags={overtimeTags}
+          />
 
         </div>
 
         {/* Right sidebar */}
         <div className="w-[260px] shrink-0 space-y-3">
-
           <ChecklistWidget
             items={ACCT_CHECKLIST}
             checked={checklist}
@@ -306,8 +343,6 @@ export default function LayoutAccountsReview({
 
           {!approved ? (
             <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
-
-              {/* Approve → PENDING_CREW_SIGNATURE */}
               <button
                 onClick={() => allDone && setShowApprove(true)}
                 disabled={!allDone || isSubmitting}
@@ -324,7 +359,6 @@ export default function LayoutAccountsReview({
                 Approve &amp; Send for Signatures
               </button>
 
-              {/* Return to Production → NEEDS_REVISION + ChangeRequest */}
               <button
                 onClick={() => setShowReturn(true)}
                 disabled={isSubmitting || returning}
@@ -350,7 +384,6 @@ export default function LayoutAccountsReview({
               <p className="text-[10px] text-emerald-600 mt-0.5">Sent for crew signature</p>
             </div>
           )}
-
         </div>
       </div>
 
@@ -369,14 +402,10 @@ export default function LayoutAccountsReview({
             </div>
             <div className="p-6">
               <p className="text-[13px] text-neutral-600 mb-5">
-                Financial checks complete for <strong>{contractData?.fullName}</strong>.
-                Send for crew signature?
+                Financial checks complete for <strong>{contractData?.fullName}</strong>. Send for crew signature?
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowApprove(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50"
-                >
+                <button onClick={() => setShowApprove(false)} className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
                   Cancel
                 </button>
                 <button
@@ -400,7 +429,6 @@ export default function LayoutAccountsReview({
         </div>
       )}
 
-      {/* Return to Production dialog */}
       {showReturn && (
         <ReturnToProductionDialog
           offer={offer}

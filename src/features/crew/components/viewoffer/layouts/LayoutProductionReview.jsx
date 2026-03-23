@@ -1,11 +1,7 @@
 /**
- * layouts/LayoutProductionReview.jsx
- *
- * PRODUCTION_CHECK stage.
- *
- * "Edit Offer" → /offers/:id/edit?redirectTo=onboarding  (CreateOffer edit page)
- * "Approve & Send to Accounts" → onAction("accountsCheck") → ACCOUNTS_CHECK
- * "Return to Crew" → onAction("sendToCrew") → SENT_TO_CREW
+ * layouts/LayoutProductionReview.jsx — PRODUCTION_CHECK stage.
+ * FIX: ContractInstancesPanel now receives offerStatus={offer?.status}
+ * so it re-fetches fresh instances on every status transition.
  */
 
 import { useState } from "react";
@@ -18,7 +14,6 @@ import {
 
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
-
 
 function getInitials(name = "") {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
@@ -69,6 +64,8 @@ function OfferTopBar({ offer, contractData, onEdit }) {
   );
 }
 
+
+
 const PROD_CHECKLIST = [
   { key: "documentsUploaded",      label: "All required documents uploaded", Icon: FileCheck,   cat: "Identity",  always: true    },
   { key: "passportValid",          label: "Passport valid & not expired",    Icon: Shield,      cat: "Identity",  always: true    },
@@ -100,7 +97,10 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
         </span>
       </div>
       <div className="h-1 bg-neutral-100">
-        <div className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`} style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        <div
+          className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`}
+          style={{ width: `${total ? (done / total) * 100 : 0}%` }}
+        />
       </div>
       <div className="px-3 py-3 space-y-3">
         {cats.map((cat) => {
@@ -165,14 +165,8 @@ export default function LayoutProductionReview({
   const [showApprove, setShowApprove] = useState(false);
   const [approved,    setApproved   ] = useState(false);
 
-  // ── FIX: go directly to CreateOffer edit page ─────────────────────────────
-  // Previously navigated to /view which re-rendered THIS layout (loop).
-  // Now goes straight to /edit?redirectTo=onboarding.
-  // After save in CreateOffer → navigates to /onboarding.
   const handleEdit = () => {
-    if (offerId) {
-      navigate(`/projects/${proj}/offers/${offerId}/edit?redirectTo=onboarding`);
-    }
+    if (offerId) navigate(`/projects/${proj}/offers/${offerId}/edit?redirectTo=onboarding`);
   };
 
   const visibleItems = PROD_CHECKLIST.filter((item) => {
@@ -195,6 +189,8 @@ export default function LayoutProductionReview({
 
         <div className="flex-1 min-w-0 space-y-4">
           <SubmittedDocumentsPanel offerId={offer?._id} offer={offer} />
+
+          {/* FIX: offerStatus prop added so panel re-fetches on status change */}
           <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
               <FileText className="w-3.5 h-3.5 text-violet-500" />
@@ -202,9 +198,15 @@ export default function LayoutProductionReview({
               <span className="ml-auto text-[9px] text-violet-500 font-mono">PRODUCTION REVIEW</span>
             </div>
             <div className="p-4">
-              {offer?._id && <ContractInstancesPanel offerId={offer._id} />}
+              {offer?._id && (
+                <ContractInstancesPanel
+                  offerId={offer._id}
+                  offerStatus={offer?.status}
+                />
+              )}
             </div>
           </div>
+
         </div>
 
         <div className="w-[260px] shrink-0 space-y-3">
@@ -229,15 +231,12 @@ export default function LayoutProductionReview({
                 {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
                 Approve &amp; Send to Accounts
               </button>
-
-              {/* FIX: now goes to CreateOffer edit page directly */}
               <button
                 onClick={handleEdit}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-medium hover:bg-orange-100 transition-colors"
               >
                 <Edit2 className="h-3 w-3" /> Edit &amp; Resend to Crew
               </button>
-
               <button
                 onClick={() => onAction("sendToCrew")}
                 disabled={isSubmitting}
@@ -245,7 +244,6 @@ export default function LayoutProductionReview({
               >
                 <Send className="h-3 w-3" /> Return to Crew
               </button>
-
               {!allDone && (
                 <p className="text-[9px] text-neutral-400 text-center">Complete all checklist items to approve</p>
               )}
@@ -281,11 +279,7 @@ export default function LayoutProductionReview({
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    await onAction("accountsCheck");
-                    setApproved(true);
-                    setShowApprove(false);
-                  }}
+                  onClick={async () => { await onAction("accountsCheck"); setApproved(true); setShowApprove(false); }}
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
                 >

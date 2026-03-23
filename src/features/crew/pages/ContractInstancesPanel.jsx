@@ -1,13 +1,13 @@
 /**
  * ContractInstancesPanel.jsx
  *
- * FIX: Role-aware signing display throughout.
+ * FIX 1: clearHtmlCache() is now called alongside clearInstances() in the
+ * main fetch useEffect. This ensures stale HTML from previous instance
+ * generations is never served from the Redux cache after a v2 regeneration.
  *
- * Each role only sees green ticks for signatures that INCLUDE their own.
- * e.g. Studio viewing docs that are FC_SIGNED sees them as "unsigned" (waiting)
- *      until Studio has also signed (STUDIO_SIGNED / COMPLETED).
- *
- * Uses isSignedForRole(status, viewRole) from ContractStepper.
+ * FIX 2: offerStatus prop dependency — re-fetches instances whenever the
+ * offer status changes so each workflow stage gets fresh instances.
+ * Pass offerStatus={offer?.status} from every parent layout component.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -23,6 +23,7 @@ import {
   getContractInstancesThunk,
   getContractInstanceHtmlThunk,
   clearInstances,
+  clearHtmlCache,          // FIX: import clearHtmlCache
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
@@ -78,7 +79,7 @@ const STATUS_COLOR = {
 function dedupByFormKey(instances) {
   const map = new Map();
   for (const inst of instances) {
-    const key = inst.formKey || inst.formName || inst._id;
+    const key      = inst.formKey || inst.formName || inst._id;
     const existing = map.get(key);
     if (!existing || (inst.generation ?? 1) > (existing.generation ?? 1)) {
       map.set(key, inst);
@@ -98,7 +99,7 @@ function AutoIframe({ html, title }) {
     if (!html || !ref.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
 
-    const blob = new Blob([html], { type: "text/html; charset=utf-8" });
+    const blob    = new Blob([html], { type: "text/html; charset=utf-8" });
     blobRef.current = URL.createObjectURL(blob);
     ref.current.src = blobRef.current;
 
@@ -140,7 +141,7 @@ function AutoIframe({ html, title }) {
   );
 }
 
-// ── Status badge (uses raw status label, not role-aware) ──────────────────────
+// ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
   const cfg  = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
@@ -163,7 +164,6 @@ function DocumentView({ instance, index, total, viewRole }) {
   const [loading, setLoading] = useState(true);
   const [error,   setError  ] = useState(null);
 
-  // Role-aware: is this doc signed FROM THIS ROLE'S PERSPECTIVE?
   const signed  = isSignedForRole(instance.status, viewRole);
   const typeCfg = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
@@ -195,8 +195,6 @@ function DocumentView({ instance, index, total, viewRole }) {
         "rounded-xl overflow-hidden border",
         signed ? "border-emerald-200" : "border-neutral-200"
       )}>
-
-        {/* Header */}
         <div className={cn(
           "flex items-center gap-3 px-4 py-3",
           signed ? "bg-emerald-600" : "bg-violet-700"
@@ -223,11 +221,9 @@ function DocumentView({ instance, index, total, viewRole }) {
               )}
             </div>
           </div>
-          {/* Always show raw status badge so admin can see real state */}
           <StatusBadge status={instance.status} />
         </div>
 
-        {/* Signature row — role-aware message */}
         <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/60 flex items-center gap-3">
           <div className={cn(
             "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
@@ -251,7 +247,6 @@ function DocumentView({ instance, index, total, viewRole }) {
           </div>
         </div>
 
-        {/* Document body */}
         <div className="bg-[#f0eef8]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
@@ -302,13 +297,13 @@ function EmptyState({ onRefresh, loading }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ContractInstancesPanel({ offerId, className }) {
+export default function ContractInstancesPanel({ offerId, offerStatus, className }) {
   const dispatch       = useDispatch();
   const instances      = useSelector(selectInstances);
   const loading        = useSelector(selectInstancesLoading);
   const error          = useSelector(selectInstancesError);
   const currentOfferId = useSelector(selectCurrentOfferId);
-  const viewRole       = useSelector(selectViewRole);  // ← role-aware
+  const viewRole       = useSelector(selectViewRole);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const retryDoneRef = useRef(false);
@@ -316,17 +311,21 @@ export default function ContractInstancesPanel({ offerId, className }) {
   const handleRefresh = useCallback(() => {
     retryDoneRef.current = false;
     dispatch(clearInstances());
+    dispatch(clearHtmlCache());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
+  // FIX: clearHtmlCache alongside clearInstances so stale HTML from previous
+  // instance generations is never served from Redux cache after v2 regeneration.
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
-    const alreadyLoaded = currentOfferId === offerId && instances.length > 0;
-    if (alreadyLoaded) return;
-    if (!loading) dispatch(getContractInstancesThunk(offerId));
-  }, [offerId]); // eslint-disable-line react-hooks/exhaustive-deps
+    dispatch(clearInstances());   // clears instance list + htmlCache in slice
+    dispatch(clearHtmlCache());   // belt-and-suspenders: explicit HTML cache clear
+    dispatch(getContractInstancesThunk(offerId));
+  }, [offerId, offerStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Retry once after 2s if still empty (handles race on first load)
   useEffect(() => {
     if (!offerId || loading || instances.length > 0 || retryDoneRef.current) return;
     const t = setTimeout(() => {
@@ -345,10 +344,8 @@ export default function ContractInstancesPanel({ offerId, className }) {
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   );
 
-  const safeIdx = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
-  const total   = activeInstances.length;
-
-  // Role-aware progress: count docs THIS role has "signed"
+  const safeIdx     = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
+  const total       = activeInstances.length;
   const signedCount = activeInstances.filter((i) => isSignedForRole(i.status, viewRole)).length;
   const progress    = total ? Math.round((signedCount / total) * 100) : 0;
 
@@ -356,7 +353,6 @@ export default function ContractInstancesPanel({ offerId, className }) {
     id:     inst._id,
     label:  inst.formName,
     status: inst.status,
-    // signed prop not needed — ContractStepper will call isSignedForRole internally
   }));
 
   if (loading && instances.length === 0) {
@@ -431,7 +427,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
         </div>
       </div>
 
-      {/* Stepper — passes viewRole so each role sees correct green ticks */}
+      {/* Stepper */}
       <ContractStepper
         steps={steps}
         activeIndex={safeIdx}
@@ -454,7 +450,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
       {total > 1 && (
         <div className="flex items-center justify-between">
           <button
-            onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
+            onClick={() => setActiveIdx((i) => Math.max(0, i - 1))}
             disabled={safeIdx === 0}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
@@ -462,7 +458,7 @@ export default function ContractInstancesPanel({ offerId, className }) {
           </button>
           <span className="text-[11px] text-neutral-400">{safeIdx + 1} of {total}</span>
           <button
-            onClick={() => setActiveIdx(i => Math.min(total - 1, i + 1))}
+            onClick={() => setActiveIdx((i) => Math.min(total - 1, i + 1))}
             disabled={safeIdx === total - 1}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >

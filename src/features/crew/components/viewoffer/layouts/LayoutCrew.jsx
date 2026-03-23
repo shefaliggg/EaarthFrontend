@@ -4,24 +4,17 @@
  * CREW role only.
  *
  * SENT_TO_CREW / NEEDS_REVISION:
- *   Left:  Offer document preview (same as production sees)
- *   Right: Action box — Accept Offer, Request Changes, Decline Offer
- *          → real backend calls
+ *   Left:  Offer document preview
+ *   Right: Accept Offer, Request Changes, Decline Offer
  *
- * PENDING_CREW_SIGNATURE:
+ * PENDING_CREW_SIGNATURE (and beyond — UPM/FC/STUDIO signing stages):
  *   Left:  ContractInstancesPanel
- *   Right: Sign button
+ *   Right: Sign button (if crew's turn) + Request Changes to Production button
  *
- * Other statuses:
- *   Left:  Offer doc preview (read-only)
- *   Right: Status info
- *
- * Backend:
- *   accept         → PATCH /offers/:id/accept          → CREW_ACCEPTED → auto PRODUCTION_CHECK
- *   requestChanges → PATCH /offers/:id/request-changes → NEEDS_REVISION + ChangeRequest created
- *   decline        → PATCH /offers/:id/request-changes → NEEDS_REVISION + ChangeRequest
- *                     (crew cannot cancel — PRODUCTION_ADMIN only)
- *                     production sees the decline reason and cancels manually
+ * "Request Changes" during signing:
+ *   → Same RequestChangesDialog → PATCH /offers/:id/request-changes
+ *   → NEEDS_REVISION + ChangeRequest created
+ *   → Production Admin sees banner + Edit Offer button
  */
 
 import { useState } from "react";
@@ -76,7 +69,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ── Top identity bar (no edit button) ─────────────────────────────────────────
+// ── Top identity bar ──────────────────────────────────────────────────────────
 
 function OfferTopBar({ offer, contractData }) {
   const name     = contractData?.fullName || offer?.recipient?.fullName || "—";
@@ -212,9 +205,11 @@ function AcceptDialog({ offer, onConfirm, onClose, isLoading }) {
   );
 }
 
-// ── Request Changes dialog ────────────────────────────────────────────────────
+// ── Request Changes dialog ─────────────────────────────────────────────────────
+// Used BOTH at SENT_TO_CREW stage AND during signing stages.
+// Always calls PATCH /offers/:id/request-changes → NEEDS_REVISION
 
-function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
+function RequestChangesDialog({ offer, onConfirm, onClose, isLoading, isDuringSigning = false }) {
   const [reason, setReason] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -225,21 +220,40 @@ function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
               <MessageSquare className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-[15px] font-bold text-white">Request Changes</h2>
+            <div>
+              <h2 className="text-[15px] font-bold text-white">Request Changes</h2>
+              {offer?.offerCode && (
+                <p className="text-[9px] text-white/60 font-mono mt-0.5">{offer.offerCode}</p>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white"><XCircle className="w-5 h-5" /></button>
         </div>
         <div className="px-5 py-5 space-y-3">
           <p className="text-[13px] text-neutral-600 leading-relaxed">
-            Describe the changes needed. Be as specific as possible so production can action them quickly.
+            {isDuringSigning
+              ? "Something incorrect in the contract? Describe the issue below. Production Admin will be notified and will update and resend the offer."
+              : "Describe the changes needed. Be as specific as possible so production can action them quickly."}
           </p>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="E.G., THE DAILY RATE DISCUSSED WAS £850, NOT £750. ALSO, I REQUIRE A BOX RENTAL ALLOWANCE OF £400/WK..."
+            placeholder={isDuringSigning
+              ? "E.G., MY DAILY RATE ON THE CONTRACT IS £750 BUT SHOULD BE £850. ALSO MY START DATE IS WRONG — SHOULD BE 20 JAN NOT 14 JAN…"
+              : "E.G., THE DAILY RATE DISCUSSED WAS £850, NOT £750. ALSO, I REQUIRE A BOX RENTAL ALLOWANCE OF £400/WK..."}
             rows={5}
             className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-[13px] uppercase placeholder:normal-case placeholder:text-neutral-400 text-neutral-800 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400/40 focus:border-orange-400 transition-colors"
           />
+          {isDuringSigning && (
+            <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+              <svg className="w-3.5 h-3.5 text-amber-500 shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a.75.75 0 110 1.5A.75.75 0 018 4zm.75 7.25h-1.5v-4h1.5v4z"/>
+              </svg>
+              <p className="text-[10px] text-amber-700 leading-tight">
+                This will set the offer to <strong>Needs Revision</strong>. The signing process will pause while production makes corrections.
+              </p>
+            </div>
+          )}
           <p className="text-[10px] text-neutral-400">All text stored in uppercase. Production notified immediately.</p>
         </div>
         <div className="flex gap-3 px-5 pb-5">
@@ -252,7 +266,7 @@ function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
             disabled={isLoading || !reason.trim()}
             className="flex-1 h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
-            Submit Request
+            {isDuringSigning ? "Send to Production" : "Submit Request"}
           </button>
         </div>
       </div>
@@ -313,7 +327,7 @@ function DeclineDialog({ offer, onConfirm, onClose, isLoading }) {
   );
 }
 
-// ── Crew action box (right sidebar) ──────────────────────────────────────────
+// ── Crew action box — pre-signing ─────────────────────────────────────────────
 
 function CrewActionBox({ status, isSubmitting, onAccept, onRequestChanges, onDecline, onSign }) {
   const canRespond = status === "SENT_TO_CREW" || status === "NEEDS_REVISION";
@@ -324,7 +338,6 @@ function CrewActionBox({ status, isSubmitting, onAccept, onRequestChanges, onDec
         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Your Response</p>
       </div>
       <div className="p-3 space-y-2">
-
         {canRespond && (
           <>
             <button disabled={isSubmitting} onClick={onAccept}
@@ -342,7 +355,6 @@ function CrewActionBox({ status, isSubmitting, onAccept, onRequestChanges, onDec
             </button>
           </>
         )}
-
         {status === "CREW_ACCEPTED" && (
           <InfoBox icon={ClipboardCheck} color="blue">You accepted this offer. Under production review.</InfoBox>
         )}
@@ -402,6 +414,69 @@ function OfferDocumentPane({ offer, contractData, allowances, calculatedRates })
   );
 }
 
+// ── Signing stage sidebar — sign + request changes ────────────────────────────
+
+function SigningSidebar({
+  status, isSubmitting, onSign, onRequestChanges, signingStatus,
+}) {
+  const canSign     = status === "PENDING_CREW_SIGNATURE";
+  const hasSigned   = ["PENDING_UPM_SIGNATURE","PENDING_FC_SIGNATURE","PENDING_STUDIO_SIGNATURE","COMPLETED"].includes(status);
+  const isCompleted = status === "COMPLETED";
+
+  return (
+    <div className="space-y-3">
+
+      {/* Sign / status card */}
+      <div className="bg-white rounded-xl border border-neutral-200 p-4 space-y-2.5">
+        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Your Action</p>
+
+        {canSign && (
+          <>
+            <InfoBox icon={PenLine} color="purple">
+              Please review all documents before signing.
+            </InfoBox>
+            <button
+              disabled={isSubmitting}
+              onClick={() => onSign("CREW")}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-[12px] font-semibold hover:bg-purple-700 disabled:opacity-60 transition-colors"
+            >
+              {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
+              Sign All Documents
+            </button>
+          </>
+        )}
+
+        {hasSigned && !isCompleted && (
+          <InfoBox icon={PenLine} color="purple">
+            You have signed. Awaiting further signatories.
+          </InfoBox>
+        )}
+
+        {isCompleted && (
+          <InfoBox icon={Lock} color="green">
+            Contract fully executed. Welcome to the production!
+          </InfoBox>
+        )}
+
+        {/* ── Request Changes button — always shown during all signing stages ── */}
+        {!isCompleted && (
+          <button
+            disabled={isSubmitting}
+            onClick={onRequestChanges}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 border-orange-300 text-orange-600 text-[11px] font-semibold hover:bg-orange-50 disabled:opacity-60 transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Request Changes
+          </button>
+        )}
+      </div>
+
+      {/* Signature status */}
+      {signingStatus && <SignatureStatusCard signingStatus={signingStatus} />}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -410,23 +485,26 @@ export default function LayoutCrew({
   offer, contractData, allowances, calculatedRates,
   signingStatus, isSubmitting, onAction, onSign,
 }) {
-  const [dialog, setDialog] = useState(null); // "accept" | "requestChanges" | "decline"
+  // "accept" | "requestChanges" | "decline" | "signingRequestChanges"
+  const [dialog, setDialog] = useState(null);
 
   const status = offer?.status;
 
   const isSigningStage = [
-    "PENDING_CREW_SIGNATURE","PENDING_UPM_SIGNATURE",
-    "PENDING_FC_SIGNATURE","PENDING_STUDIO_SIGNATURE","COMPLETED",
+    "PENDING_CREW_SIGNATURE",
+    "PENDING_UPM_SIGNATURE",
+    "PENDING_FC_SIGNATURE",
+    "PENDING_STUDIO_SIGNATURE",
+    "COMPLETED",
   ].includes(status);
 
   return (
     <>
       <div className="space-y-4">
 
-        {/* Top bar — avatar, name, job, status, offer code. No edit button. */}
         <OfferTopBar offer={offer} contractData={contractData} />
 
-        {/* ── Non-signing: offer doc + action box ── */}
+        {/* ── Pre-signing: offer doc + response actions ── */}
         {!isSigningStage && (
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
@@ -448,7 +526,7 @@ export default function LayoutCrew({
           </div>
         )}
 
-        {/* ── Signing stage: contract docs + sign sidebar ── */}
+        {/* ── Signing stage: contract docs + sign / request changes ── */}
         {isSigningStage && (
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
@@ -472,52 +550,57 @@ export default function LayoutCrew({
                 </div>
               </div>
             </div>
-            <div className="w-[240px] shrink-0 space-y-3">
-              <div className="bg-white rounded-xl border border-neutral-200 p-4 space-y-2.5">
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Your Action</p>
-                {status === "PENDING_CREW_SIGNATURE" && (
-                  <>
-                    <InfoBox icon={PenLine} color="purple">Please review all documents before signing.</InfoBox>
-                    <button disabled={isSubmitting} onClick={() => onSign("CREW")}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-[12px] font-semibold hover:bg-purple-700 disabled:opacity-60 transition-colors">
-                      {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
-                      Sign All Documents
-                    </button>
-                  </>
-                )}
-                {["PENDING_UPM_SIGNATURE","PENDING_FC_SIGNATURE","PENDING_STUDIO_SIGNATURE"].includes(status) && (
-                  <InfoBox icon={PenLine} color="purple">You have signed. Awaiting further signatories.</InfoBox>
-                )}
-                {status === "COMPLETED" && (
-                  <InfoBox icon={Lock} color="green">Contract fully executed. Welcome to the production!</InfoBox>
-                )}
-              </div>
-              {signingStatus && <SignatureStatusCard signingStatus={signingStatus} />}
+
+            {/* Right sidebar — sign + request changes */}
+            <div className="w-[240px] shrink-0">
+              <SigningSidebar
+                status={status}
+                isSubmitting={isSubmitting}
+                onSign={onSign}
+                onRequestChanges={() => setDialog("signingRequestChanges")}
+                signingStatus={signingStatus}
+              />
             </div>
           </div>
         )}
 
       </div>
 
-      {/* ── Dialogs — real backend calls ── */}
+      {/* ── Dialogs ── */}
 
-      {/* Accept → PATCH /offers/:id/accept → CREW_ACCEPTED → auto PRODUCTION_CHECK */}
       {dialog === "accept" && (
         <AcceptDialog offer={offer} isLoading={isSubmitting}
           onConfirm={async () => { setDialog(null); await onAction("accept"); }}
           onClose={() => setDialog(null)} />
       )}
 
-      {/* Request Changes → PATCH /offers/:id/request-changes → NEEDS_REVISION + ChangeRequest */}
       {dialog === "requestChanges" && (
-        <RequestChangesDialog offer={offer} isLoading={isSubmitting}
+        <RequestChangesDialog
+          offer={offer}
+          isLoading={isSubmitting}
+          isDuringSigning={false}
           onConfirm={async (payload) => { setDialog(null); await onAction("requestChanges", payload); }}
-          onClose={() => setDialog(null)} />
+          onClose={() => setDialog(null)}
+        />
       )}
 
-      {/* Decline → PATCH /offers/:id/request-changes → NEEDS_REVISION */}
-      {/* Crew cannot call /cancel (PRODUCTION_ADMIN only). Instead we submit  */}
-      {/* a change request with the decline reason so production is notified.  */}
+      {/* Request Changes during signing — same API, slightly different wording */}
+      {dialog === "signingRequestChanges" && (
+        <RequestChangesDialog
+          offer={offer}
+          isLoading={isSubmitting}
+          isDuringSigning={true}
+          onConfirm={async (payload) => {
+            setDialog(null);
+            await onAction("requestChanges", {
+              ...payload,
+              fieldName: "CREW_SIGNING_REQUEST_CHANGES",
+            });
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
       {dialog === "decline" && (
         <DeclineDialog offer={offer} isLoading={isSubmitting}
           onConfirm={async (payload) => {
