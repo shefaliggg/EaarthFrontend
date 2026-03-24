@@ -13,7 +13,6 @@ function EditableTextDataField({
     multiline = false,
     placeholder = "Enter value",
     type,
-    required,
     inputClassName,
 }) {
 

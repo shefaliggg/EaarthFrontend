@@ -1,24 +1,28 @@
 import React, { useState } from "react";
-import useChatStore, { DEFAULT_PROJECT_ID } from "../store/chat.store";
-import { toast } from "sonner";
+import { Loader } from "lucide-react";
 import RecipientSelectorDialog from "./RecipientSelectorDialog";
+import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
+import useChatStore, { DEFAULT_PROJECT_ID } from "../store/chat.store";
+import { useSelector } from "react-redux";
 import {
   convertToPrettyText,
   getAvatarFallback,
 } from "../../../../shared/config/utils";
-import { useSelector } from "react-redux";
-import { Loader } from "lucide-react";
+import { toast } from "sonner";
+import { isSameSubjectConversation } from "../utils/messageHelpers";
 
-export default function DirectMessageCreationDialog({
+export default function SubjectCreationDialog({
   open,
   onOpenChange,
   projectMembers,
+  onCreate,
 }) {
-  const { createDirectConversation, setSelectedChat, conversations } =
+  const { createSubjectConversation, setSelectedChat, conversations } =
     useChatStore();
   const { currentUser } = useSelector((state) => state.user);
-  const [isCreating, setIsCreating] = useState(false);
+  const [title, setTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const filteredMembers = projectMembers
     .filter((user) => user.userId !== currentUser._id)
@@ -41,9 +45,11 @@ export default function DirectMessageCreationDialog({
     )}`,
   }));
 
-  const handleConfirm = async ([userId]) => {
-    const existing = conversations.find(
-      (c) => c.type === "dm" && c.userId?.toString() === userId.toString(),
+  const handleConfirm = async (selectedUserIds) => {
+    if (!title.trim()) return;
+
+    const existing = conversations.find((c) =>
+      isSameSubjectConversation(c, title, selectedUserIds, currentUser._id),
     );
 
     if (existing) {
@@ -51,18 +57,23 @@ export default function DirectMessageCreationDialog({
       onOpenChange(false);
       return;
     }
+
     setIsCreating(true);
 
-    console.log("is Creating in direct:", isCreating);
-
     try {
-      const chat = await createDirectConversation(DEFAULT_PROJECT_ID, userId);
+      const chat = await createSubjectConversation(
+        DEFAULT_PROJECT_ID,
+        title,
+        selectedUserIds,
+      );
 
       setSelectedChat(chat);
 
+      setTitle("");
       onOpenChange(false);
     } catch (err) {
-      toast.error("Failed to create direct conversation");
+      toast.error("Failed to create Subject conversation");
+      console.error("Failed to create subject conversation", err);
     } finally {
       setIsCreating(false);
     }
@@ -77,8 +88,8 @@ export default function DirectMessageCreationDialog({
       items={items}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
-      mode="direct"
-      selectionType="single"
+      mode="subject"
+      selectionType="multiple"
       onConfirm={handleConfirm}
       confirmLabel={
         isCreating ? (
@@ -87,10 +98,20 @@ export default function DirectMessageCreationDialog({
             Creating...
           </>
         ) : (
-          "Create"
+          "Create Subject Group"
         )
       }
-      disableConfirm={isCreating}
+      disableConfirm={isCreating || !title.trim()}
+      renderTopContent={
+        <EditableTextDataField
+          label="Subject Title"
+          value={title}
+          isEditing={true}
+          onChange={setTitle}
+          placeholder="Eg: Camera Team Discussion"
+          inputClassName={"border-border border-2 rounded-3xl py-4.5"}
+        />
+      }
     />
   );
 }

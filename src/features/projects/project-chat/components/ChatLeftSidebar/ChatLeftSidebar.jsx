@@ -9,6 +9,7 @@ import {
   MessageCircleOff,
   SearchX,
   MessageCircleX,
+  EllipsisVertical,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Input } from "@/shared/components/ui/input";
@@ -16,19 +17,27 @@ import useChatStore, { DEFAULT_PROJECT_ID } from "../../store/chat.store";
 import ConversationItem from "../ChatLeftSidebar/ConversationItem";
 import ContextMenu from "../ChatLeftSidebar/ContextMenu";
 import SkeletonItem from "../ChatLeftSidebar/SkeletonItem";
-import { toast } from "sonner";
 import FilterPillTabs from "../../../../../shared/components/FilterPillTabs";
 import { Button } from "../../../../../shared/components/ui/button";
 import DirectMessageCreationDialog from "../../Dialogs/DirectMessageCreationDialog";
 import { useDispatch, useSelector } from "react-redux";
 import { getProjectMembersThunk } from "../../../store";
 import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import SubjectCreationDialog from "../../Dialogs/SubjectCreationDialog";
 
 export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState(null);
-  const [showDirectMessageCreationDialog, setShowDirectMessageCreationDialog] =
-    useState(false);
+  const [showDirectDialog, setShowDirectDialog] = useState(false);
+  const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const dispatch = useDispatch();
 
   const {
@@ -47,19 +56,26 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     }
     return true;
   });
-
   const sortedConversations = [...filteredConversations].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    if (a.mentions > 0 && b.mentions === 0) return -1;
-    if (a.mentions === 0 && b.mentions > 0) return 1;
+
+    const aHasUnread = a.unread > 0 || a.mentions > 0;
+    const bHasUnread = b.unread > 0 || b.mentions > 0;
+
+    if (aHasUnread && !bHasUnread) return -1;
+    if (!aHasUnread && bHasUnread) return 1;
+
     return b.timestamp - a.timestamp;
   });
 
   const categorizedConversations = sortedConversations.reduce(
     (acc, conv) => {
-      if (conv.type === "all" || conv.type === "group") {
+      if (conv.type === "group") {
         acc.groups.push(conv);
+        if (conv.category === "subject") {
+          acc.subjects.push(conv);
+        }
       }
 
       if (conv.type === "dm") {
@@ -77,24 +93,26 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     },
     {
       groups: [],
+      subjects: [],
       teamMembers: [],
       unread: [],
       favorite: [],
     },
   );
 
-  const { groups, teamMembers, unread, favorite } = categorizedConversations;
+  const { groups, subjects, teamMembers, unread, favorite } =
+    categorizedConversations;
 
   const renderConversationList = (list) => {
     return list.map((item) => (
       <ConversationItem
         key={item.id}
         item={item}
-        type={item.type === "dm" ? "direct" : item.type}
+        type={item.type === "dm" ? "direct" : "group"}
         isSelected={selectedChat?.id === item.id}
         onClick={() => handleChatClick(item)}
         onContextMenu={(e) =>
-          handleContextMenu(e, item, item.type === "dm" ? "direct" : "team")
+          handleContextMenu(e, item, item.type === "dm" ? "direct" : "group")
         }
       />
     ));
@@ -104,6 +122,9 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     switch (activeTab) {
       case "groups":
         return groups;
+
+      case "subjects":
+        return subjects;
 
       case "direct":
         return teamMembers;
@@ -116,7 +137,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
       case "all":
       default:
-        return [...groups, ...teamMembers];
+        return sortedConversations;
     }
   })();
 
@@ -128,6 +149,8 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     switch (activeTab) {
       case "groups":
         return "No groups found";
+      case "subjects":
+        return "No subjects groups found";
 
       case "direct":
         return "No direct conversations yet";
@@ -162,44 +185,6 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   return (
     <>
       <div className="flex flex-col gap-4">
-        {/* Tab Selection */}
-        {/* <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <h3 className="font-bold mb-3">Conversations</h3>
-          <div className="space-y-2">
-            <button
-              className={cn(
-                "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-                activeTab === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-              onClick={() => onTabChange?.("all")}
-            >
-              <Hash className="w-4 h-4" />
-              <div className="flex-1">
-                <p className="text-sm font-bold">Chat</p>
-                <p className="text-xs opacity-80">
-                  department and direct chats
-                </p>
-              </div>
-            </button>
-
-            <button
-              className={cn(
-                "w-full p-3 rounded-lg text-left flex items-center gap-3 transition-all",
-                "cursor-not-allowed bg-muted opacity-50",
-              )}
-              disabled
-            >
-              <Mail className="w-5 h-5" />
-              <div className="flex-1">
-                <p className="text-sm font-bold">Email</p>
-                <p className="text-xs opacity-80">External Contacts</p>
-              </div>
-            </button>
-          </div>
-        </div> */}
-
         {/* Conversations List */}
         <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[924px]">
           {/* Header */}
@@ -208,18 +193,60 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               <h2 className="text-lg font-bold">
                 {activeTab === "Email" ? "Email" : "Chats"}
               </h2>
-              <InfoTooltip
-                content={"Start Direct Conversation"}
-                // side={"bottom"}
-              >
-                <Button
-                  variant="ghost"
-                  size={"icon"}
-                  onClick={() => setShowDirectMessageCreationDialog(true)}
-                >
-                  <MessageCirclePlus className="text-primary w-5! h-5!" />
-                </Button>
-              </InfoTooltip>
+
+              <div className="flex items-center">
+                <DropdownMenu>
+                  <InfoTooltip content={"New Conversation"}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MessageCirclePlus className="text-primary w-5! h-5!" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </InfoTooltip>
+                  <DropdownMenuContent align="end" className="min-w-48">
+                    <DropdownMenuLabel>New Conversation</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem onClick={() => setShowDirectDialog(true)}>
+                      <MessageCirclePlus className="h-4 w-4" />
+                      Direct Chat
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setShowSubjectDialog(true)}
+                    >
+                      <Users className="h-4 w-4" />
+                      Subject Group
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <InfoTooltip content={"Menu"}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <EllipsisVertical className="text-primary w-5! h-5!" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </InfoTooltip>
+                  <DropdownMenuContent align="end" className="min-w-48">
+                    {/* <DropdownMenuLabel>New Conversation</DropdownMenuLabel> */}
+                    {/* <DropdownMenuSeparator /> */}
+
+                    <DropdownMenuItem onClick={() => setShowDirectDialog(true)}>
+                      <MessageCirclePlus className="h-4 w-4" />
+                      Archive Chat
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setShowSubjectDialog(true)}
+                    >
+                      <Users className="h-4 w-4" />
+                      Unread All Chats
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -251,6 +278,11 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                   label: "Groups",
                   value: "groups",
                   badge: groups.length,
+                },
+                {
+                  label: "Subject",
+                  value: "subjects",
+                  badge: subjects.length,
                 },
                 {
                   label: "Direct",
@@ -316,8 +348,14 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
       </div>
 
       <DirectMessageCreationDialog
-        open={showDirectMessageCreationDialog}
-        onOpenChange={setShowDirectMessageCreationDialog}
+        open={showDirectDialog}
+        onOpenChange={setShowDirectDialog}
+        projectMembers={projectMembers}
+      />
+
+      <SubjectCreationDialog
+        open={showSubjectDialog}
+        onOpenChange={setShowSubjectDialog}
         projectMembers={projectMembers}
       />
     </>

@@ -282,6 +282,24 @@ const chatApi = {
     }
   },
 
+  createSubjectConversation: async (projectId, title, targetUserIds) => {
+    try {
+      const response = await axiosConfig.post("/chats/subject", {
+        projectId,
+        title,
+        targetUserIds,
+      });
+
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ create Subject Conversation failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
   // Initiate call
   initiateCall: async ({ conversationId, callType, clientTempId }) => {
     try {

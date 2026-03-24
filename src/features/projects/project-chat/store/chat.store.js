@@ -7,6 +7,7 @@ import { store } from "../../../../app/store";
 import {
   computeMessageState,
   generateConversationLastMessagePreview,
+  isSameSubjectConversation,
   transformConversation,
   transformMessage,
 } from "../utils/messageHelpers";
@@ -39,18 +40,24 @@ const useChatStore = create(
         socket.removeAllListeners();
 
         socket.on("conversation:new", (conversation) => {
-          console.log("📥 New conversation received:", conversation);
-
           const currentUserId = getCurrentUserId();
-
           const formatted = transformConversation(conversation, currentUserId);
 
           set((state) => {
-            // Prevent duplicates
-            if (state.conversations.some((c) => c.id === formatted.id)) {
-              return state;
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
+
+            if (exists) {
+              // ✅ Replace existing (ensures fresh data)
+              return {
+                conversations: state.conversations.map((c) =>
+                  c.id === formatted.id ? formatted : c,
+                ),
+              };
             }
 
+            // ✅ Add new
             return {
               conversations: [formatted, ...state.conversations],
             };
@@ -154,14 +161,65 @@ const useChatStore = create(
           }
         });
 
-        socket.on("message:edited", ({ messageId, text, editedAt }) => {
-          console.log("✏️ Message edited:", { messageId, text });
-          get().updateMessageInConversation(messageId, {
-            content: text,
-            editedAt,
+        socket.on("message:edited", ({ message, conversationId }) => {
+          console.log("✏️ Message edited:", {
+            messageId: message._id,
+            text: message.content?.text,
+          });
+          socket.emit("message:delivered", {
+            messageId: message._id,
+          });
+
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members || 2;
+          get().updateMessageInConversation(message._id, {
+            content: message.content.text,
+            editedAt: message.status.editedAt,
+            state: computeMessageState(message, memberCount),
+            seenBy: message?.seenBy || [],
+            deliveredTo: message?.deliveredTo || [],
             edited: true,
           });
         });
+
+        socket.on(
+          "message:delivery-update",
+          ({ messageId, userId, conversationId }) => {
+            console.log("🚚 Delivery update received:", { messageId, userId });
+            const state = get();
+            const messages =
+              state.messagesByConversation[conversationId]?.messages || [];
+            const existingMsg = messages.find((m) => m.id === messageId);
+
+            if (existingMsg) {
+              const deliveredTo = [...(existingMsg.deliveredTo || [])];
+              const exists = deliveredTo.some((d) => d.userId === userId);
+
+              if (!exists) {
+                deliveredTo.push({
+                  userId,
+                  deliveredAt: new Date().toISOString(),
+                });
+
+                const conversation = state.conversations.find(
+                  (c) => c.id === conversationId,
+                );
+                const memberCount = conversation?.members?.length || 2;
+
+                get().updateMessageInConversation(messageId, {
+                  deliveredTo,
+                  state: computeMessageState(
+                    { ...existingMsg, deliveredTo },
+                    memberCount,
+                  ),
+                });
+              }
+            }
+          },
+        );
 
         socket.on("message:deleted", ({ conversationId, messageId }) => {
           console.log("🗑️ Message deleted:", messageId);
@@ -460,9 +518,58 @@ const useChatStore = create(
           const formatted = transformConversation(conv, currentUserId);
 
           // 🔥 Add to conversation list immediately
-          set((state) => ({
-            conversations: [formatted, ...state.conversations],
-          }));
+          set((state) => {
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
+
+            if (exists) return state;
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
+
+          return formatted;
+        } catch (error) {
+          console.error("❌ Failed to create direct conversation:", error);
+          throw error;
+        }
+      },
+
+      createSubjectConversation: async (projectId, title, targetUserIds) => {
+        try {
+          const currentUserId = getCurrentUserId();
+
+          const existing = get().conversations.find((c) =>
+            isSameSubjectConversation(c, title, targetUserIds, currentUserId),
+          );
+          if (existing) {
+            return existing;
+          }
+
+          const response = await chatApi.createSubjectConversation(
+            projectId,
+            title,
+            targetUserIds,
+          );
+
+          const conv = response;
+
+          const formatted = transformConversation(conv, currentUserId);
+
+          // 🔥 Add to conversation list immediately
+          set((state) => {
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
+
+            if (exists) return state;
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
 
           return formatted;
         } catch (error) {
@@ -837,6 +944,7 @@ const useChatStore = create(
         get().updateMessageInConversation(messageId, {
           content: newText,
           edited: true,
+          state: "sending",
           editedAt: new Date().toISOString(),
         });
 

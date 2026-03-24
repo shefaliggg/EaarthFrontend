@@ -46,6 +46,7 @@ import { Button } from "../../../../../shared/components/ui/button";
 import CallMessagePreview from "./CallMessagePreview";
 import useCallStore from "../../store/call.store";
 import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
+import { canUserSendMessage } from "../../utils/chatPermissions";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -105,6 +106,8 @@ export default function MessageBubble({
   const isFavorited = message.isStarred;
   const isForwarded = message.isForwarded;
   const isSending = message.state === "sending";
+
+  const { canSend } = canUserSendMessage(selectedChat, getCurrentUserId());
 
   useEffect(() => {
     if (isPlaying && message.type === "voice") {
@@ -514,61 +517,64 @@ export default function MessageBubble({
               "group-hover:max-h-20 group-hover:opacity-100 group-hover:scale-100 group-hover:mt-0.5 group-hover:mb-2",
             )}
           >
-            <ActionButton
-              icon={Reply}
-              tooltip="Reply"
-              disabled={isSending}
-              onClick={(e) => {
-                e.stopPropagation();
-                onReply(message);
-              }}
-            />
-            {message?.type !== "call" && (
+            {canSend && (
               <>
                 <ActionButton
-                  icon={Forward}
-                  tooltip="Forward"
+                  icon={Reply}
+                  tooltip="Reply"
                   disabled={isSending}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleForward();
+                    onReply(message);
+                  }}
+                />
+                {message?.type !== "call" && (
+                  <>
+                    <ActionButton
+                      icon={Forward}
+                      tooltip="Forward"
+                      disabled={isSending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleForward();
+                      }}
+                    />
+                  </>
+                )}
+
+                <ActionButton
+                  icon={Smile}
+                  tooltip="React"
+                  disabled={isSending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowReactionPicker(
+                      showReactionPicker === message.id ? null : message.id,
+                    );
+                  }}
+                />
+                <ActionButton
+                  icon={Star}
+                  tooltip={isFavorited ? "Remove from Favorites" : "Favorite"}
+                  disabled={isSending}
+                  className={isFavorited ? "text-yellow-500" : ""}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite();
+                  }}
+                />
+
+                <ActionButton
+                  icon={Pin}
+                  tooltip="Pin"
+                  disabled={isSending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePin();
                   }}
                 />
               </>
             )}
-
-            <ActionButton
-              icon={Smile}
-              tooltip="React"
-              disabled={isSending}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowReactionPicker(
-                  showReactionPicker === message.id ? null : message.id,
-                );
-              }}
-            />
-            <ActionButton
-              icon={Star}
-              tooltip={isFavorited ? "Remove from Favorites" : "Favorite"}
-              disabled={isSending}
-              className={isFavorited ? "text-yellow-500" : ""}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleFavorite();
-              }}
-            />
-
-            <ActionButton
-              icon={Pin}
-              tooltip="Pin"
-              disabled={isSending}
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePin();
-              }}
-            />
-
             {message?.type !== "call" && (
               <ActionButton
                 icon={Copy}
@@ -580,27 +586,31 @@ export default function MessageBubble({
                 }}
               />
             )}
-            {isOwn && canEdit && message.type !== "call" && (
-              <ActionButton
-                icon={Edit2}
-                tooltip="Edit"
-                disabled={isSending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(message);
-                }}
-              />
+            {canSend && (
+              <>
+                {isOwn && canEdit && message.type !== "call" && (
+                  <ActionButton
+                    icon={Edit2}
+                    tooltip="Edit"
+                    disabled={isSending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(message);
+                    }}
+                  />
+                )}
+                <ActionButton
+                  icon={Trash2}
+                  tooltip="Delete"
+                  disabled={isSending}
+                  className="text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                />
+              </>
             )}
-            <ActionButton
-              icon={Trash2}
-              tooltip="Delete"
-              disabled={isSending}
-              className="text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-            />
           </div>
         </div>
 

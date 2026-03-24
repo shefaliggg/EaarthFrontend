@@ -1,11 +1,10 @@
 export const mapConversationType = (backendType) => {
   const typeMap = {
-    PROJECT_ALL: "all",
-    DEPARTMENT: "group",
+    GROUP: "group",
     DIRECT: "dm",
   };
 
-  const result = typeMap[backendType] || "all";
+  const result = typeMap[backendType] || "group";
   return result;
 };
 
