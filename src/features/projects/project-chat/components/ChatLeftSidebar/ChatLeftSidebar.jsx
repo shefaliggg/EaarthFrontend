@@ -9,6 +9,7 @@ import {
   MessageCircleOff,
   SearchX,
   MessageCircleX,
+  EllipsisVertical,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Input } from "@/shared/components/ui/input";
@@ -16,19 +17,27 @@ import useChatStore, { DEFAULT_PROJECT_ID } from "../../store/chat.store";
 import ConversationItem from "../ChatLeftSidebar/ConversationItem";
 import ContextMenu from "../ChatLeftSidebar/ContextMenu";
 import SkeletonItem from "../ChatLeftSidebar/SkeletonItem";
-import { toast } from "sonner";
 import FilterPillTabs from "../../../../../shared/components/FilterPillTabs";
 import { Button } from "../../../../../shared/components/ui/button";
 import DirectMessageCreationDialog from "../../Dialogs/DirectMessageCreationDialog";
 import { useDispatch, useSelector } from "react-redux";
 import { getProjectMembersThunk } from "../../../store";
 import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import SubjectCreationDialog from "../../Dialogs/SubjectCreationDialog";
 
 export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [contextMenu, setContextMenu] = useState(null);
-  const [showDirectMessageCreationDialog, setShowDirectMessageCreationDialog] =
-    useState(false);
+  const [showDirectDialog, setShowDirectDialog] = useState(false);
+  const [showSubjectDialog, setShowSubjectDialog] = useState(false);
   const dispatch = useDispatch();
 
   const {
@@ -62,8 +71,11 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
 
   const categorizedConversations = sortedConversations.reduce(
     (acc, conv) => {
-      if (conv.type === "all" || conv.type === "group") {
+      if (conv.type === "group") {
         acc.groups.push(conv);
+        if (conv.category === "subject") {
+          acc.subjects.push(conv);
+        }
       }
 
       if (conv.type === "dm") {
@@ -81,24 +93,26 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     },
     {
       groups: [],
+      subjects: [],
       teamMembers: [],
       unread: [],
       favorite: [],
     },
   );
 
-  const { groups, teamMembers, unread, favorite } = categorizedConversations;
+  const { groups, subjects, teamMembers, unread, favorite } =
+    categorizedConversations;
 
   const renderConversationList = (list) => {
     return list.map((item) => (
       <ConversationItem
         key={item.id}
         item={item}
-        type={item.type === "dm" ? "direct" : item.type}
+        type={item.type === "dm" ? "direct" : "group"}
         isSelected={selectedChat?.id === item.id}
         onClick={() => handleChatClick(item)}
         onContextMenu={(e) =>
-          handleContextMenu(e, item, item.type === "dm" ? "direct" : "team")
+          handleContextMenu(e, item, item.type === "dm" ? "direct" : "group")
         }
       />
     ));
@@ -108,6 +122,9 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     switch (activeTab) {
       case "groups":
         return groups;
+
+      case "subjects":
+        return subjects;
 
       case "direct":
         return teamMembers;
@@ -132,6 +149,8 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
     switch (activeTab) {
       case "groups":
         return "No groups found";
+      case "subjects":
+        return "No subjects groups found";
 
       case "direct":
         return "No direct conversations yet";
@@ -174,18 +193,60 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
               <h2 className="text-lg font-bold">
                 {activeTab === "Email" ? "Email" : "Chats"}
               </h2>
-              <InfoTooltip
-                content={"Start Direct Conversation"}
-                // side={"bottom"}
-              >
-                <Button
-                  variant="ghost"
-                  size={"icon"}
-                  onClick={() => setShowDirectMessageCreationDialog(true)}
-                >
-                  <MessageCirclePlus className="text-primary w-5! h-5!" />
-                </Button>
-              </InfoTooltip>
+
+              <div className="flex items-center">
+                <DropdownMenu>
+                  <InfoTooltip content={"New Conversation"}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MessageCirclePlus className="text-primary w-5! h-5!" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </InfoTooltip>
+                  <DropdownMenuContent align="end" className="min-w-48">
+                    <DropdownMenuLabel>New Conversation</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem onClick={() => setShowDirectDialog(true)}>
+                      <MessageCirclePlus className="h-4 w-4" />
+                      Direct Chat
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setShowSubjectDialog(true)}
+                    >
+                      <Users className="h-4 w-4" />
+                      Subject Group
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <InfoTooltip content={"New Conversation"}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <EllipsisVertical className="text-primary w-5! h-5!" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </InfoTooltip>
+                  <DropdownMenuContent align="end" className="min-w-48">
+                    {/* <DropdownMenuLabel>New Conversation</DropdownMenuLabel> */}
+                    {/* <DropdownMenuSeparator /> */}
+
+                    <DropdownMenuItem onClick={() => setShowDirectDialog(true)}>
+                      <MessageCirclePlus className="h-4 w-4" />
+                      Archive Chat
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => setShowSubjectDialog(true)}
+                    >
+                      <Users className="h-4 w-4" />
+                      Unread All Chats
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -217,6 +278,11 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                   label: "Groups",
                   value: "groups",
                   badge: groups.length,
+                },
+                {
+                  label: "Subject",
+                  value: "subjects",
+                  badge: subjects.length,
                 },
                 {
                   label: "Direct",
@@ -282,8 +348,14 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
       </div>
 
       <DirectMessageCreationDialog
-        open={showDirectMessageCreationDialog}
-        onOpenChange={setShowDirectMessageCreationDialog}
+        open={showDirectDialog}
+        onOpenChange={setShowDirectDialog}
+        projectMembers={projectMembers}
+      />
+
+      <SubjectCreationDialog
+        open={showSubjectDialog}
+        onOpenChange={setShowSubjectDialog}
         projectMembers={projectMembers}
       />
     </>

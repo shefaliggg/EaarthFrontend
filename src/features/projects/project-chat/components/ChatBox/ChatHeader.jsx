@@ -22,6 +22,7 @@ import {
   convertToPrettyText,
   getCurrentUserId,
 } from "../../../../../shared/config/utils";
+import { getGroupCategoryUI } from "../../utils/messageHelpers";
 
 export default function ChatHeader() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -35,6 +36,11 @@ export default function ChatHeader() {
   const { canSend } = canUserSendMessage(selectedChat, getCurrentUserId());
 
   const isGroup = selectedChat.type === "group";
+  const {
+    icon: Icon,
+    containerClass,
+    iconClass,
+  } = getGroupCategoryUI(selectedChat.category);
 
   const isOnline = selectedChat?.userId && onlineUsers.has(selectedChat.userId);
   const onlineCount = getGroupOnlineCount(selectedChat);
@@ -50,17 +56,13 @@ export default function ChatHeader() {
                 <AvatarFallback
                   className={cn(
                     "text-primary-foreground font-bold text-sm",
-                    selectedChat.category === "announcement"
-                      ? "bg-gradient-to-br from-primary/10 to-primary/20 border"
+                    isGroup
+                      ? containerClass
                       : "bg-gradient-to-br from-primary to-primary/70",
                   )}
                 >
                   {isGroup ? (
-                    selectedChat.category === "announcement" ? (
-                      <Megaphone className="w-4 h-4 text-primary" />
-                    ) : (
-                      <Clapperboard className="w-4 h-4" />
-                    )
+                    <Icon className={cn("w-4 h-4", iconClass)}/>
                   ) : (
                     selectedChat.avatar
                   )}

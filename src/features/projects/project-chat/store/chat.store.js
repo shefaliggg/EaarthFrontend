@@ -7,6 +7,7 @@ import { store } from "../../../../app/store";
 import {
   computeMessageState,
   generateConversationLastMessagePreview,
+  isSameSubjectConversation,
   transformConversation,
   transformMessage,
 } from "../utils/messageHelpers";
@@ -528,7 +529,48 @@ const useChatStore = create(
               conversations: [formatted, ...state.conversations],
             };
           });
-          
+
+          return formatted;
+        } catch (error) {
+          console.error("❌ Failed to create direct conversation:", error);
+          throw error;
+        }
+      },
+
+      createSubjectConversation: async (projectId, title, targetUserIds) => {
+        try {
+          const currentUserId = getCurrentUserId();
+
+          const existing = get().conversations.find((c) =>
+            isSameSubjectConversation(c, title, targetUserIds, currentUserId),
+          );
+          if (existing) {
+            return existing;
+          }
+
+          const response = await chatApi.createSubjectConversation(
+            projectId,
+            title,
+            targetUserIds,
+          );
+
+          const conv = response;
+
+          const formatted = transformConversation(conv, currentUserId);
+
+          // 🔥 Add to conversation list immediately
+          set((state) => {
+            const exists = state.conversations.find(
+              (c) => c.id === formatted.id,
+            );
+
+            if (exists) return state;
+
+            return {
+              conversations: [formatted, ...state.conversations],
+            };
+          });
+
           return formatted;
         } catch (error) {
           console.error("❌ Failed to create direct conversation:", error);

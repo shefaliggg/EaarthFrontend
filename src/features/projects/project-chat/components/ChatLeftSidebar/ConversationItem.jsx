@@ -20,6 +20,7 @@ import {
   getCurrentUserId,
 } from "../../../../../shared/config/utils";
 import useChatStore from "../../store/chat.store";
+import { getGroupCategoryUI } from "../../utils/messageHelpers";
 
 const formatTime = (timestamp) => {
   const now = Date.now();
@@ -108,7 +109,15 @@ export default function ConversationItem({
   const isOnline = item?.userId && onlineUsers.has(item.userId);
   const currentTypingUsers = typingUsers[item.id] || [];
   const isTyping = currentTypingUsers.length > 0;
-  const previewData = getLastMessagePreview(item, isGroup);
+  const previewData = item.lastMessage
+    ? getLastMessagePreview(item, isGroup)
+    : null;
+
+  const {
+    icon: Icon,
+    containerClass,
+    iconClass,
+  } = getGroupCategoryUI(item.category);
 
   return (
     <button
@@ -123,18 +132,9 @@ export default function ConversationItem({
         {/* Icon/Avatar */}
         {isGroup ? (
           <div
-            className={cn(
-              "p-2.5 rounded-full text-primary-foreground flex-shrink-0",
-              item.category === "announcement"
-                ? "bg-gradient-to-br from-primary/10 to-primary/20 border"
-                : "bg-gradient-to-br from-primary to-primary/70",
-            )}
+            className={cn("p-2.5 rounded-full flex-shrink-0", containerClass)}
           >
-            {item.category === "announcement" ? (
-              <Megaphone className="w-4 h-4 text-primary" />
-            ) : (
-              <Clapperboard className="w-4 h-4" />
-            )}
+            <Icon className={cn("w-4 h-4", iconClass)} />
           </div>
         ) : (
           <div className="relative flex-shrink-0">

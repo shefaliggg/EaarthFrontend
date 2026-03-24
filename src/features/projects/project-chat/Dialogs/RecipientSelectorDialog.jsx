@@ -23,6 +23,7 @@ export default function RecipientSelectorDialog({
   onConfirm,
   confirmLabel = "Confirm",
   disableConfirm = false,
+  renderTopContent,
 }) {
   const [selected, setSelected] = useState([]);
 
@@ -41,22 +42,24 @@ export default function RecipientSelectorDialog({
   const handleConfirm = () => {
     if (selected.length === 0) return;
     onConfirm(selected);
-    if (!disableConfirm) {
-      setSelected([]);
-      onOpenChange(false);
-    }
   };
 
   const titleMap = {
     forward: "Forward Message",
     direct: "Start Direct Conversation",
-    group: "Create Group",
+    subject: "Create Subject Group",
   };
 
   const descriptionMap = {
     forward: "Select conversations to forward this message to.",
     direct: "Select a project member to start chatting.",
-    group: "Select members for your group.",
+    subject: "Select members for your subject group.",
+  };
+
+  const searchMap = {
+    forward: "Search for Project members or Conversations",
+    direct: "Search for Project members.",
+    subject: "Search for Project members.",
   };
 
   return (
@@ -66,12 +69,20 @@ export default function RecipientSelectorDialog({
           <DialogTitle>{titleMap[mode]}</DialogTitle>
           <DialogDescription>{descriptionMap[mode]}</DialogDescription>
         </DialogHeader>
-        <SearchBar
-          value={searchQuery}
-          onValueChange={(e) => onSearchChange(e.target.value)}
-          placeholder={`Search for ${mode === "direct" ? "Project members" : "Conversations"}`}
-        />
-        <div className="space-y-1 min-h-[40vh] max-h-[90vh] overflow-y-auto mt-2">
+        {renderTopContent && <div className="mt-2">{renderTopContent}</div>}
+        <div className="space-y-1.5 mt-2">
+          {renderTopContent && (
+            <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
+              <span>Project Members</span>
+            </div>
+          )}
+          <SearchBar
+            value={searchQuery}
+            onValueChange={(e) => onSearchChange(e.target.value)}
+            placeholder={searchMap[mode]}
+          />
+        </div>
+        <div className="space-y-1 min-h-[40vh] max-h-[90vh] overflow-y-auto">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
@@ -143,7 +154,9 @@ export default function RecipientSelectorDialog({
         <div className="flex gap-2 pt-4">
           <Button
             variant="outline"
+            disabled={disableConfirm}
             onClick={() => {
+              if (disableConfirm) return;
               setSelected([]);
               onOpenChange(false);
             }}
@@ -154,7 +167,7 @@ export default function RecipientSelectorDialog({
 
           <Button
             onClick={handleConfirm}
-            disabled={selected.length === 0}
+            disabled={selected.length === 0 || disableConfirm}
             className="flex-1"
           >
             {mode === "forward" ? `Forward (${selected.length})` : confirmLabel}

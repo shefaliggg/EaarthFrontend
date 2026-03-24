@@ -1,5 +1,12 @@
 import { getAvatarFallback } from "../../../../shared/config/utils";
 import { mapConversationType } from "./Chattypemapper";
+import {
+  Megaphone,
+  Clapperboard,
+  Users,
+  Building2,
+  Users2,
+} from "lucide-react";
 
 /**
  * Format timestamp to readable time
@@ -377,19 +384,22 @@ export const transformConversation = (conv, currentUserId) => {
     type: frontendType,
     category: conv.category?.toLowerCase(),
     projectId: conv.projectId,
-    name: conv.type === "DIRECT" ? otherUser?.userId?.displayName : conv.title || "Unknow Chat",
+    name:
+      conv.type === "DIRECT"
+        ? otherUser?.userId?.displayName
+        : conv.title || "Unknow Chat",
     department: conv.department?._id,
     departmentName:
       conv.type === "DIRECT" ? otherUser?.userId?.departmentName : null,
     userId: otherUser?.userId?._id,
     avatar: otherUser
-      ? getAvatarFallback(otherUser?.userId?.displayName) || "U"
-      : conv.title?.charAt(0)?.toUpperCase() || "U",
+      ? getAvatarFallback(otherUser?.userId?.displayName) || "D"
+      : getAvatarFallback(conv.title) || "G",
     role: otherUser?.userId?.roleName || "Member",
     members: Array.isArray(conv.members) ? conv.members : [],
     unread: unreadCount,
     mentions: 0,
-    lastMessage: conv.lastMessage
+    lastMessage: conv.lastMessage?.messageId
       ? {
           id: conv.lastMessage.messageId,
           text: conv.lastMessage.preview,
@@ -573,4 +583,61 @@ export const insertDateSeparators = (messages = []) => {
   }
 
   return result;
+};
+
+export function getGroupCategoryUI(category) {
+  const map = {
+    ANNOUNCEMENT: {
+      icon: Megaphone,
+      containerClass:
+        "bg-gradient-to-br from-purple-500/10 to-purple-500/20 border border-purple-500/20 shadow-sm",
+      iconClass: "text-purple-600",
+    },
+
+    DEPARTMENT: {
+      icon: Building2,
+      containerClass:
+        "bg-gradient-to-br from-purple-500/20 to-purple-500/30 border border-purple-500/30 shadow-sm",
+      iconClass: "text-purple-700",
+    },
+
+    SUBJECT: {
+      icon: Users2,
+      containerClass:
+        "bg-gradient-to-br from-purple-600 to-purple-700 shadow-sm",
+      iconClass: "text-white",
+    },
+  };
+
+  const key = category?.toUpperCase();
+
+  return map[key] || map.SUBJECT;
+}
+
+export const isSameSubjectConversation = (conv, title, memberIds, currentUserId) => {
+  if (conv.type !== "group" || conv.category !== "subject") return false;
+
+  const normalizeTitle = (title) => title.trim().toLowerCase();
+
+  const normalizeMembers = (members, currentUserId) => {
+    const ids = [currentUserId, ...members.map((id) => id.toString())];
+
+    return [...new Set(ids)].sort();
+  };
+
+  const convTitle = normalizeTitle(conv.name);
+  const inputTitle = normalizeTitle(title);
+
+  if (convTitle !== inputTitle) return false;
+
+  const convMembers = (conv.members || [])
+    .map((m) => m.userId?._id || m.userId)
+    .map((id) => id.toString())
+    .sort();
+
+  const inputMembers = normalizeMembers(memberIds, currentUserId);
+
+  if (convMembers.length !== inputMembers.length) return false;
+
+  return convMembers.every((id, i) => id === inputMembers[i]);
 };
