@@ -222,7 +222,7 @@ export default function ChatLeftSidebar({ activeTab = "all", onTabChange }) {
                 </DropdownMenu>
 
                 <DropdownMenu>
-                  <InfoTooltip content={"New Conversation"}>
+                  <InfoTooltip content={"Menu"}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <EllipsisVertical className="text-primary w-5! h-5!" />

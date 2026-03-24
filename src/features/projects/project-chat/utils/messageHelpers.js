@@ -470,9 +470,9 @@ export const generateConversationLastMessagePreview = (
 };
 
 export const formatSystemMessage = (msg, members = [], mode = "full") => {
-  console.log("system message:", msg, "mode:", mode);
   const action = msg?.system?.action;
   const targetIds = msg?.system?.targetUserIds || [];
+  const actorName = msg?.system?.actorName || "Someone";
 
   // 🧠 Resolve names
   const names = targetIds
@@ -521,14 +521,20 @@ export const formatSystemMessage = (msg, members = [], mode = "full") => {
       mode === "preview" ? "Members rejoined" : `${subject} rejoined the chat`,
 
     MESSAGE_PINNED:
-      mode === "preview"
-        ? "Message pinned"
-        : `${subject || "Someone"} pinned a message`,
+      mode === "preview" ? "Message pinned" : `${actorName} pinned a message`,
 
     MESSAGE_UNPINNED:
       mode === "preview"
         ? "Message unpinned"
-        : `${subject || "Someone"} unpinned a message`,
+        : `${actorName} unpinned a message`,
+
+    // 🆕 NEW
+    CONVERSATION_CREATED:
+      mode === "preview"
+        ? "Conversation created"
+        : targetIds.length > 0
+          ? `${actorName} created this group with ${subject}`
+          : `${actorName} created this conversation`,
   };
 
   return map[action] || "System update";
@@ -614,7 +620,12 @@ export function getGroupCategoryUI(category) {
   return map[key] || map.SUBJECT;
 }
 
-export const isSameSubjectConversation = (conv, title, memberIds, currentUserId) => {
+export const isSameSubjectConversation = (
+  conv,
+  title,
+  memberIds,
+  currentUserId,
+) => {
   if (conv.type !== "group" || conv.category !== "subject") return false;
 
   const normalizeTitle = (title) => title.trim().toLowerCase();
