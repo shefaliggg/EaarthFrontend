@@ -26,6 +26,7 @@ import {
   Pin,
   Video,
   Phone,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -460,7 +461,7 @@ export default function MessageBubble({
                     </span>
                   )}
                   {isFavorited && (
-                    <Star fill="orange" className="w-3 h-3 text-amber-500" />
+                    <Heart fill="red" className="w-3 h-3 text-red-500" />
                   )}
                   <span
                     className={cn(
@@ -554,10 +555,10 @@ export default function MessageBubble({
                   }}
                 />
                 <ActionButton
-                  icon={Star}
+                  icon={Heart}
                   tooltip={isFavorited ? "Remove from Favorites" : "Favorite"}
                   disabled={isSending}
-                  className={isFavorited ? "text-yellow-500" : ""}
+                  className={isFavorited ? "text-red-500" : ""}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleToggleFavorite();

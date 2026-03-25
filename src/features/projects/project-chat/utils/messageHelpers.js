@@ -422,8 +422,11 @@ export const transformConversation = (conv, currentUserId) => {
       conv.pinnedFor?.some(
         (id) => id.toString() === currentUserId.toString(),
       ) || false,
+    isFavorite:
+      conv.favoritedFor?.some(
+        (id) => id.toString() === currentUserId.toString(),
+      ) || false,
     isMuted: false,
-    isFavorite: false,
     canSendMessage,
     _raw: conv,
   };

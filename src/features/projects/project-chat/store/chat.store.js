@@ -1428,6 +1428,72 @@ const useChatStore = create(
         }
       },
 
+      togglePinConversation: async (conversationId) => {
+        const state = get();
+
+        const previousConversations = state.conversations;
+
+        const isUnpin = state.conversations.find(
+          (c) => c.id === conversationId,
+        )?.isPinned;
+
+        const optimisticPinned = isUnpin ? false : true;
+
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId ? { ...c, isPinned: optimisticPinned } : c,
+          ),
+        }));
+
+        const promise = chatApi.pinConversation(
+          conversationId,
+          isUnpin ? false : true,
+        );
+
+        return toast.promise(promise, {
+          error: (err) => {
+            set({
+              conversations: previousConversations,
+            });
+
+            return err?.response?.data?.message || "Failed to Pin Conversation";
+          },
+        });
+      },
+
+      toggleFavoriteConversation: async (conversationId) => {
+        const state = get();
+
+        const previousConversations = state.conversations;
+
+        const isUnFavorite = state.conversations.find(
+          (c) => c.id === conversationId,
+        )?.isFavorite;
+
+        const optimisticPinned = isUnFavorite ? false : true;
+
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId ? { ...c, isFavorite: optimisticPinned } : c,
+          ),
+        }));
+
+        const promise = chatApi.favoriteConversation(
+          conversationId,
+          isUnFavorite ? false : true,
+        );
+
+        return toast.promise(promise, {
+          error: (err) => {
+            set({
+              conversations: previousConversations,
+            });
+
+            return err?.response?.data?.message || `Failed to ${isUnFavorite ? "remove" : "Add"} Conversation ${isUnFavorite ? "from" : "to"} Favorites`;
+          },
+        });
+      },
+
       downloadAttachment: async (conversationId, messageId, attachment) => {
         const downloadPromise = chatApi.downloadMessageAttachments(
           conversationId,

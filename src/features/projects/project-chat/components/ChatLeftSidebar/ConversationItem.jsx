@@ -12,6 +12,7 @@ import {
   Ban,
   DotSquareIcon,
   CircleDot,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { Badge } from "@/shared/components/ui/badge";
@@ -71,7 +72,7 @@ const getLastMessagePreview = (item, isGroup) => {
       };
     case "SYSTEM":
       return {
-        icon: <CircleDot className="w-3 h-3 text-muted-foreground" />,
+        icon: null,
         text: msg.text || "",
         isSystem: true,
       };
@@ -130,27 +131,34 @@ export default function ConversationItem({
     >
       <div className="flex items-center gap-2.5">
         {/* Icon/Avatar */}
-        {isGroup ? (
-          <div
-            className={cn("p-2.5 rounded-full flex-shrink-0", containerClass)}
-          >
-            <Icon className={cn("w-4 h-4", iconClass)} />
-          </div>
-        ) : (
-          <div className="relative flex-shrink-0">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
-              {item.avatar}
+        <div className="relative flex-shrink-0">
+          {isGroup ? (
+            <div
+              className={cn(
+                "p-2.5 rounded-full flex items-center justify-center",
+                containerClass,
+              )}
+            >
+              <Icon className={cn("w-4 h-4", iconClass)} />
             </div>
-            {isOnline && (
-              <span
-                className={cn(
-                  "absolute top-0 right-0 w-3 h-3 rounded-full border-1 border-card",
-                  "bg-green-500",
-                )}
-              />
-            )}
-          </div>
-        )}
+          ) : (
+            <div className="relative">
+              {/* Avatar */}
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
+                {item.avatar}
+              </div>
+
+              {/* Online indicator */}
+              {isOnline && (
+                <span
+                  className={cn(
+                    "absolute top-0 right-0 w-3 h-3 rounded-full border border-card bg-green-500",
+                  )}
+                />
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -160,7 +168,7 @@ export default function ConversationItem({
                 <p className="text-sm font-semibold truncate">
                   {convertToPrettyText(item.name)}
                 </p>
-
+               
                 {/* {!isGroup && (
                   <>
                     <p className="text-[9px] text-muted-foreground truncate">
@@ -169,10 +177,11 @@ export default function ConversationItem({
                   </>
                 )} */}
               </div>
-              {item.isFavorite && (
-                <Star className="w-3 h-3 fill-yellow-500 text-yellow-500 flex-shrink-0" />
-              )}
+               {item.isFavorite && (
+                  <Heart className="w-3.5 h-3.5 fill-red-500 text-red-500 flex-shrink-0" />
+                )}
             </div>
+
             <span className="text-[10px] text-muted-foreground flex-shrink-0">
               {formatTime(item.timestamp)}
             </span>
@@ -219,7 +228,13 @@ export default function ConversationItem({
 
             {/* Badges */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {item.isPinned && <Pin className="w-3 h-3 text-primary" />}
+              {item.isPinned && (
+                <Pin
+                  fill="#9333ea"
+                  className="w-3.5 h-3.5 text-primary rotate-45"
+                />
+              )}
+
               {item.mentions > 0 && (
                 <Badge className="bg-purple-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
                   <span className="text-xs mb-0.5">@</span>

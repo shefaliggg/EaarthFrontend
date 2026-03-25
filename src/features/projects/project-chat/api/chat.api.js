@@ -165,6 +165,21 @@ const chatApi = {
     }
   },
 
+  favoriteConversation: async (conversationId, favorite) => {
+    try {
+      const response = await axiosConfig.patch(`/chats/${conversationId}/favorite`, {
+        favorite,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ pinConversation failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
   // Add/remove favorite
   toggleFavorite: async (conversationId, messageId, addToFavorite) => {
     try {

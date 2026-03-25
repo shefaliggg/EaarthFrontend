@@ -77,7 +77,7 @@ function ProjectChat() {
         acc.unread.push(conv);
       }
       if (conv.isFavorite) {
-        acc.favorited.push(conv);
+        acc.favorite.push(conv);
       }
 
       return acc;
