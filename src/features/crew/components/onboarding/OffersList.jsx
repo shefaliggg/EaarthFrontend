@@ -113,7 +113,7 @@ export function OffersList({
         <SearchBar
           placeholder="Search by name, role or department…"
           value={search}
-          onValueChange={e => setSearch(e.target.value)}
+          onValueChange={setSearch}
         />
 
         {/* Filter button */}

@@ -78,7 +78,7 @@ export default function RecipientSelectorDialog({
           )}
           <SearchBar
             value={searchQuery}
-            onValueChange={(e) => onSearchChange(e.target.value)}
+            onValueChange={onSearchChange}
             placeholder={searchMap[mode]}
           />
         </div>

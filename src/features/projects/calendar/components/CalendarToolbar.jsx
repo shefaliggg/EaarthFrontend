@@ -22,7 +22,7 @@ import {
   Settings,
   Eye,
   Filter,
-  X
+  X,
 } from "lucide-react";
 
 import SearchBar from "@/shared/components/SearchBar";
@@ -45,18 +45,26 @@ function CalendarToolbar({
 }) {
   const navigate = useNavigate();
   const { projectName } = useParams();
-  
+
   const calendarState = useSelector((state) => state.calendar);
   const rawEvents = calendarState?.events || [];
 
   const uniqueCategories = useMemo(() => {
-    const coreCategories = ["general", "travel", "meeting", "hod meeting", "rehearsal"];
+    const coreCategories = [
+      "general",
+      "travel",
+      "meeting",
+      "hod meeting",
+      "rehearsal",
+    ];
     const dynamicCategories = rawEvents
       .map((e) => (e.eventCategory || "general").toLowerCase().trim())
       .filter(Boolean);
 
     // Set automatically removes duplicates!
-    return Array.from(new Set([...coreCategories, ...dynamicCategories])).sort();
+    return Array.from(
+      new Set([...coreCategories, ...dynamicCategories]),
+    ).sort();
   }, [rawEvents]);
 
   const getTitle = () => {
@@ -81,18 +89,21 @@ function CalendarToolbar({
   const handleArrayFilter = (key, value) => {
     const currentList = filters[key] || [];
     if (currentList.includes(value)) {
-      updateFilter(key, currentList.filter(item => item !== value));
+      updateFilter(
+        key,
+        currentList.filter((item) => item !== value),
+      );
     } else {
       updateFilter(key, [...currentList, value]);
     }
   };
 
-  const activeFilterCount = 
-    (filters.eventTypes?.length || 0) + 
-    (filters.eventCategories?.length || 0) + 
-    (filters.statuses?.length || 0) + 
-    (filters.departments?.length || 0) + 
-    (filters.crewMembers?.length || 0) + 
+  const activeFilterCount =
+    (filters.eventTypes?.length || 0) +
+    (filters.eventCategories?.length || 0) +
+    (filters.statuses?.length || 0) +
+    (filters.departments?.length || 0) +
+    (filters.crewMembers?.length || 0) +
     (filters.location ? 1 : 0);
 
   return (
@@ -123,131 +134,207 @@ function CalendarToolbar({
         <SearchBar
           placeholder="Search events..."
           value={filters.search}
-          onValueChange={(e) => updateFilter("search", e.target.value)}
+          onValueChange={(value) => updateFilter("search", value)}
         />
 
         <Popover>
           <PopoverTrigger asChild>
-             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/90">
-                <Filter className="w-4 h-4" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 bg-primary/20 text-primary">{activeFilterCount}</Badge>
-                )}
-             </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-primary/20 hover:bg-primary/90"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-primary/20 text-primary"
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0 border-primary/20 shadow-xl" align="start">
-            
+          <PopoverContent
+            className="w-80 p-0 border-primary/20 shadow-xl"
+            align="start"
+          >
             <div className="p-4 border-b border-primary/20 flex justify-between items-center bg-muted/30">
-               <h4 className="font-semibold text-sm">Filter Events</h4>
-               {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive">
-                     <X className="w-3 h-3 mr-1" /> Clear All
-                  </Button>
-               )}
+              <h4 className="font-semibold text-sm">Filter Events</h4>
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                >
+                  <X className="w-3 h-3 mr-1" /> Clear All
+                </Button>
+              )}
             </div>
 
             <div className="p-4 space-y-6 max-h-[50vh] overflow-y-auto custom-scrollbar">
-               
-               <div className="space-y-3">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Production Phase</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                     {["prep", "shoot", "wrap"].map(type => (
-                        <div key={type} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
-                           <Checkbox
-                              id={`type-${type}`}
-                              checked={filters.eventTypes?.includes(type)}
-                              onCheckedChange={() => handleArrayFilter("eventTypes", type)}
-                           />
-                           <Label htmlFor={`type-${type}`} className="text-sm capitalize font-medium cursor-pointer">{type}</Label>
-                        </div>
-                     ))}
-                  </div>
-               </div>
+              <div className="space-y-3">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Production Phase
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["prep", "shoot", "wrap"].map((type) => (
+                    <div
+                      key={type}
+                      className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md"
+                    >
+                      <Checkbox
+                        id={`type-${type}`}
+                        checked={filters.eventTypes?.includes(type)}
+                        onCheckedChange={() =>
+                          handleArrayFilter("eventTypes", type)
+                        }
+                      />
+                      <Label
+                        htmlFor={`type-${type}`}
+                        className="text-sm capitalize font-medium cursor-pointer"
+                      >
+                        {type}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-               <div className="space-y-3">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Event Category</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                     {uniqueCategories.map(category => (
-                        <div key={category} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
-                           <Checkbox
-                              id={`cat-${category}`}
-                              checked={filters.eventCategories?.includes(category)}
-                              onCheckedChange={() => handleArrayFilter("eventCategories", category)}
-                           />
-                           <Label htmlFor={`cat-${category}`} className="text-sm capitalize font-medium cursor-pointer line-clamp-1" title={category}>{category}</Label>
-                        </div>
-                     ))}
-                  </div>
-               </div>
+              <div className="space-y-3">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Event Category
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {uniqueCategories.map((category) => (
+                    <div
+                      key={category}
+                      className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md"
+                    >
+                      <Checkbox
+                        id={`cat-${category}`}
+                        checked={filters.eventCategories?.includes(category)}
+                        onCheckedChange={() =>
+                          handleArrayFilter("eventCategories", category)
+                        }
+                      />
+                      <Label
+                        htmlFor={`cat-${category}`}
+                        className="text-sm capitalize font-medium cursor-pointer line-clamp-1"
+                        title={category}
+                      >
+                        {category}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-               <div className="space-y-3">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                     {["confirmed", "tentative", "cancelled", "completed"].map(status => (
-                        <div key={status} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md">
-                           <Checkbox
-                              id={`status-${status}`}
-                              checked={filters.statuses?.includes(status)}
-                              onCheckedChange={() => handleArrayFilter("statuses", status)}
-                           />
-                           <Label htmlFor={`status-${status}`} className="text-sm capitalize font-medium cursor-pointer">{status}</Label>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-
-               <div className="space-y-3">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</Label>
-                  <Input
-                     placeholder="Filter by location name..."
-                     value={filters.location}
-                     onChange={(e) => updateFilter("location", e.target.value)}
-                     className="h-9 text-sm"
-                  />
-               </div>
-
-               {departments?.length > 0 && (
-                   <div className="space-y-3">
-                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Departments</Label>
-                      <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
-                         {departments.map(dept => (
-                            <div key={dept._id} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded">
-                               <Checkbox
-                                  id={`dept-${dept._id}`}
-                                  checked={filters.departments?.includes(dept._id)}
-                                  onCheckedChange={() => handleArrayFilter("departments", dept._id)}
-                               />
-                               <Label htmlFor={`dept-${dept._id}`} className="text-sm font-medium leading-none cursor-pointer">
-                                  {dept.name}
-                               </Label>
-                            </div>
-                         ))}
+              <div className="space-y-3">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Status
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["confirmed", "tentative", "cancelled", "completed"].map(
+                    (status) => (
+                      <div
+                        key={status}
+                        className="flex items-center space-x-2 bg-muted/30 p-2 rounded-md"
+                      >
+                        <Checkbox
+                          id={`status-${status}`}
+                          checked={filters.statuses?.includes(status)}
+                          onCheckedChange={() =>
+                            handleArrayFilter("statuses", status)
+                          }
+                        />
+                        <Label
+                          htmlFor={`status-${status}`}
+                          className="text-sm capitalize font-medium cursor-pointer"
+                        >
+                          {status}
+                        </Label>
                       </div>
-                   </div>
-               )}
+                    ),
+                  )}
+                </div>
+              </div>
 
-               {crewMembers?.length > 0 && (
-                   <div className="space-y-3">
-                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Crew Members</Label>
-                      <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
-                         {crewMembers.map(crew => {
-                            const crewId = crew._id || crew.id;
-                            return (
-                            <div key={crewId} className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded">
-                               <Checkbox
-                                  id={`crew-${crewId}`}
-                                  checked={filters.crewMembers?.includes(crewId)}
-                                  onCheckedChange={() => handleArrayFilter("crewMembers", crewId)}
-                               />
-                               <Label htmlFor={`crew-${crewId}`} className="text-sm font-medium leading-none cursor-pointer">
-                                  {crew.displayName || crew.name || "Unknown"}
-                               </Label>
-                            </div>
-                         )})}
+              <div className="space-y-3">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Location
+                </Label>
+                <Input
+                  placeholder="Filter by location name..."
+                  value={filters.location}
+                  onChange={(e) => updateFilter("location", e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {departments?.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Departments
+                  </Label>
+                  <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
+                    {departments.map((dept) => (
+                      <div
+                        key={dept._id}
+                        className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded"
+                      >
+                        <Checkbox
+                          id={`dept-${dept._id}`}
+                          checked={filters.departments?.includes(dept._id)}
+                          onCheckedChange={() =>
+                            handleArrayFilter("departments", dept._id)
+                          }
+                        />
+                        <Label
+                          htmlFor={`dept-${dept._id}`}
+                          className="text-sm font-medium leading-none cursor-pointer"
+                        >
+                          {dept.name}
+                        </Label>
                       </div>
-                   </div>
-               )}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {crewMembers?.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Crew Members
+                  </Label>
+                  <div className="space-y-2 border rounded-md p-2 bg-card max-h-[150px] overflow-y-auto custom-scrollbar">
+                    {crewMembers.map((crew) => {
+                      const crewId = crew._id || crew.id;
+                      return (
+                        <div
+                          key={crewId}
+                          className="flex items-center space-x-2 p-1 hover:bg-muted/50 rounded"
+                        >
+                          <Checkbox
+                            id={`crew-${crewId}`}
+                            checked={filters.crewMembers?.includes(crewId)}
+                            onCheckedChange={() =>
+                              handleArrayFilter("crewMembers", crewId)
+                            }
+                          />
+                          <Label
+                            htmlFor={`crew-${crewId}`}
+                            className="text-sm font-medium leading-none cursor-pointer"
+                          >
+                            {crew.displayName || crew.name || "Unknown"}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>
@@ -270,25 +357,47 @@ function CalendarToolbar({
         </div>
 
         <InfoTooltip content="Shooting Calendar">
-          <Button variant="default" size="icon" onClick={() => navigate(`/projects/${projectName}/calendar/shooting`)}>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() =>
+              navigate(`/projects/${projectName}/calendar/shooting`)
+            }
+          >
             <Clapperboard className="w-4 h-4" />
           </Button>
         </InfoTooltip>
 
         <InfoTooltip content="TMO">
-          <Button variant="default" size="icon" onClick={() => navigate(`/projects/${projectName}/calendar/tmo`)}>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() => navigate(`/projects/${projectName}/calendar/tmo`)}
+          >
             <Plane className="w-4 h-4" />
           </Button>
         </InfoTooltip>
 
         <InfoTooltip content="Settings">
-          <Button variant="default" size="icon" onClick={() => navigate(`/projects/${projectName}/calendar/settings`)}>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() =>
+              navigate(`/projects/${projectName}/calendar/settings`)
+            }
+          >
             <Settings className="w-4 h-4" />
           </Button>
         </InfoTooltip>
 
         <InfoTooltip content="PDF Preview">
-          <Button variant="default" size="icon" onClick={() => navigate(`/projects/${projectName}/calendar/preview`)}>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() =>
+              navigate(`/projects/${projectName}/calendar/preview`)
+            }
+          >
             <Eye className="w-4 h-4" />
           </Button>
         </InfoTooltip>

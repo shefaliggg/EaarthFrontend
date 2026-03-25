@@ -46,7 +46,9 @@ export default function SubjectCreationDialog({
   }));
 
   const handleConfirm = async (selectedUserIds) => {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      return toast.error("Please provide a Subject Title");
+    }
 
     const existing = conversations.find((c) =>
       isSameSubjectConversation(c, title, selectedUserIds, currentUser._id),

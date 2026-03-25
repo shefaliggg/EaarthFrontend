@@ -12,7 +12,7 @@ const SIZE_STYLES = {
   },
   md: {
     list: "p-1 gap-2",
-    trigger: "px-3.5 py-1.5 text-sm",
+    trigger: "px-3.5 pr-2 py-1.5 text-sm",
     icon: "w-4 h-4",
   },
   lg: {

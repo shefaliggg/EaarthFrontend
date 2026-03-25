@@ -49,7 +49,7 @@ function TmoSidebar({
         <SearchBar
           placeholder="Search name, dept…"
           value={searchText}
-          onValueChange={(e) => onSearchChange(e.target.value)}
+          onValueChange={onSearchChange}
         />
       </div>
 

@@ -213,7 +213,7 @@ function ProjectList() {
               <SearchBar
                 placeholder="SEARCH PROJECTS OR ROLES..."
                 value={searchQuery}
-                onValueChange={(e) => setSearchQuery(e.target.value)}
+                onValueChange={setSearchQuery}
                 autoFocus
               />
             </div>

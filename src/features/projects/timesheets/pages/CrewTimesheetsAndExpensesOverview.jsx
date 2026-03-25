@@ -536,7 +536,7 @@ function CrewTimesheetsOverview() {
 
       <AutoHeight>
         <div className='grid grid-cols-[1fr_auto_auto] items-center gap-3'>
-          <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={(e) => setSearchQuery(e.target.value)} className={"w-full"} />
+          <SearchBar placeholder={"Search weeks"} value={searchQuery} onValueChange={setSearchQuery} className={"w-full"} />
           <FilterPillTabs
             options={[
               {
