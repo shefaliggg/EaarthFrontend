@@ -23,11 +23,13 @@ import {
   MessageSquare,
   MessagesSquare,
   Phone,
+  Pin,
   Search,
   UserCircle,
   UserRound,
   Users,
   Users2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { Button } from "../../../../shared/components/ui/button";
@@ -89,6 +91,12 @@ function ProjectChat() {
       if (conv.isFavorite) {
         acc.favorite.push(conv);
       }
+      if (conv.isMuted) {
+        acc.muted.push(conv);
+      }
+      if (conv.isPinned) {
+        acc.pinned.push(conv);
+      }
 
       return acc;
     },
@@ -98,10 +106,12 @@ function ProjectChat() {
       teamMembers: [],
       unread: [],
       favorite: [],
+      muted: [],
+      pinned: [],
     },
   );
 
-  const { groups, subjects, teamMembers, unread, favorite } =
+  const { groups, subjects, teamMembers, unread, favorite, muted, pinned } =
     categorizedConversations;
 
   const chatFilterItems = [
@@ -121,25 +131,37 @@ function ProjectChat() {
       label: "Subjects",
       value: "subjects",
       badge: subjects.length,
-      icon: Users2
+      icon: Users2,
     },
     {
       label: "Direct",
       value: "direct",
       badge: teamMembers.length,
-      icon: UserRound
+      icon: UserRound,
     },
     {
       label: "Unread",
       value: "unread",
       badge: unread.length,
-      icon: Eye
+      icon: Eye,
     },
     {
       label: "Favorites",
       value: "favorite",
       badge: favorite.length,
-      icon: Heart
+      icon: Heart,
+    },
+    {
+      label: "Pinned",
+      value: "pinned",
+      badge: pinned.length,
+      icon: Pin,
+    },
+    {
+      label: "Muted",
+      value: "muted",
+      badge: muted.length,
+      icon: VolumeX,
     },
     // {
     //   label: "Calls",
@@ -151,7 +173,7 @@ function ProjectChat() {
       label: "Archived",
       value: "archive",
       badge: 0,
-      icon: Archive
+      icon: Archive,
     },
   ];
 
@@ -231,7 +253,7 @@ function ProjectChat() {
             </>
           }
         />
-        <div className="mb-5 space-y-3 flex">
+        <div className="mb-4 space-y-3 flex">
           <FilterPillTabs
             options={chatFilterItems}
             value={activeTab}

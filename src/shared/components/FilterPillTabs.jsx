@@ -46,15 +46,14 @@ const VARIANT_STYLES = {
 
   modern: {
     list: ({ fullWidth }) => `
-      h-auto bg-background shadow-md border border-2 border-muted rounded-xl p-1.5
+      h-auto bg-background shadow-md border border-2 border-muted rounded-xl p-1
       ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start gap-1.5"}
     `,
     trigger: () => `
       flex flex-col items-center gap-1
-      relative
       rounded-md
       border-none shadow-none
-      px-5 py-2
+      px-5 py-2.5
       min-w-20
       text-xs font-medium
       transition-all
@@ -64,16 +63,17 @@ const VARIANT_STYLES = {
       hover:bg-background hover:text-foreground
 
      data-[state=active]:bg-primary
+     data-[state=active]:relative
       data-[state=active]:text-white
       data-[state=active]:shadow-sm
     `,
     badge: `
-    absolute top-1 right-1
     font-bold!
     size-4.5!
       bg-primary text-background
       group-data-[state=active]:bg-white
       group-data-[state=active]:text-primary
+      group-data-[state=active]:scale-110 transition-colors transition-transform duration-150
     `,
   },
 };
@@ -106,7 +106,11 @@ function FilterPillTabs({
   };
 
   return (
-    <Tabs value={value} onValueChange={handleChange} className={cn(fullWidth ? "w-full" : "w-fit")}>
+    <Tabs
+      value={value}
+      onValueChange={handleChange}
+      className={cn(fullWidth ? "w-full" : "w-fit")}
+    >
       <TabsList
         className={`
           ${styles.list}
@@ -115,6 +119,7 @@ function FilterPillTabs({
       >
         {options.map((option) => {
           const tabValue = navigatable ? option.route : option.value;
+          const isActive = value === tabValue;
 
           return (
             <TabsTrigger
@@ -126,18 +131,40 @@ function FilterPillTabs({
                 group
               `}
             >
-              {option.icon && (
-                <SmartIcon icon={option.icon} className={styles.icon} />
+              {variant === "modern" ? (
+                <div className={cn(!isActive && "relative")}>
+                  {option.icon && (
+                    <SmartIcon icon={option.icon} className={styles.icon} />
+                  )}
+
+                  {option.badge !== undefined && (
+                    <span
+                      className={cn(
+                        "absolute size-4 flex items-center justify-center text-[10px] rounded-full",
+                        variantStyles.badge,
+                        isActive ? "top-1 right-1" : "-top-2 -right-6",
+                      )}
+                    >
+                      {option.badge}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {option.icon && (
+                    <SmartIcon icon={option.icon} className={styles.icon} />
+                  )}
+                </>
               )}
+
               {option.label}
-              {option.badge !== undefined && (
+
+              {variant !== "modern" && option.badge !== undefined && (
                 <span
-                  className={`
-                    size-4 flex items-center justify-center
-                    text-[10px] font-medium
-                    rounded-full
-                    ${variantStyles.badge}
-                  `}
+                  className={cn(
+                    "size-4 flex items-center justify-center text-[10px] font-medium rounded-full",
+                    variantStyles.badge,
+                  )}
                 >
                   {option.badge}
                 </span>

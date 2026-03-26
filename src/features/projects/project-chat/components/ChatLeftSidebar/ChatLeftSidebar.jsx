@@ -21,7 +21,7 @@ export default function ChatLeftSidebar({
   const { isLoadingConversations, selectedChat, setSelectedChat } =
     useChatStore();
 
-  const { groups, subjects, teamMembers, unread, favorite } =
+  const { groups, subjects, teamMembers, unread, favorite, muted, pinned } =
     categorizedConversations;
 
   const renderConversationList = (list) => {
@@ -55,6 +55,12 @@ export default function ChatLeftSidebar({
 
       case "favorite":
         return favorite;
+
+      case "pinned":
+        return pinned;
+
+      case "muted":
+        return muted;
 
       case "all":
       default:
