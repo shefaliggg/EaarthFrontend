@@ -30,6 +30,7 @@ const MessageInput = React.memo(
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
     const videoInputRef = useRef(null);
+    const audioInputRef = useRef(null);
     const documentInputRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
@@ -368,6 +369,7 @@ const MessageInput = React.memo(
             <FileAttachmentMenu
               onImageClick={() => fileInputRef.current?.click()}
               onVideoClick={() => videoInputRef.current?.click()}
+              onAudioClick={() => audioInputRef.current?.click()}
               onFileClick={() => documentInputRef.current?.click()}
             />
           )}
@@ -387,6 +389,14 @@ const MessageInput = React.memo(
             multiple
             hidden
             onChange={(e) => handleFileUpload(e, "video")}
+          />
+          <input
+            ref={audioInputRef}
+            type="file"
+            accept="audio/*"
+            multiple
+            hidden
+            onChange={(e) => handleFileUpload(e, "audio")}
           />
           <input
             ref={documentInputRef}

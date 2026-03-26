@@ -71,7 +71,7 @@ const VARIANT_STYLES = {
     font-bold!
     size-4.5!
       bg-primary text-background
-      group-data-[state=active]:bg-white
+      group-data-[state=active]:bg-background
       group-data-[state=active]:text-primary
       group-data-[state=active]:scale-110 transition-colors transition-transform duration-150
     `,

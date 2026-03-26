@@ -1,4 +1,10 @@
-import { Image as ImageIcon, Video as VideoIcon, FileText, MapPin } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Video as VideoIcon,
+  FileText,
+  MapPin,
+  Headphones,
+} from "lucide-react";
 import { toast } from "sonner";
 
 function AttachmentButton({ icon: Icon, label, onClick }) {
@@ -16,12 +22,26 @@ function AttachmentButton({ icon: Icon, label, onClick }) {
   );
 }
 
-export default function FileAttachmentMenu({ onImageClick, onVideoClick, onFileClick }) {
+export default function FileAttachmentMenu({
+  onImageClick,
+  onVideoClick,
+  onAudioClick,
+  onFileClick,
+}) {
   return (
     <div className="absolute bottom-14 left-0 bg-card border rounded-xl shadow-xl p-2 flex gap-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
       <AttachmentButton icon={ImageIcon} label="Photo" onClick={onImageClick} />
       <AttachmentButton icon={VideoIcon} label="Video" onClick={onVideoClick} />
-      <AttachmentButton icon={FileText} label="Documents" onClick={onFileClick} />
+      <AttachmentButton
+        icon={Headphones}
+        label="Audio"
+        onClick={onAudioClick}
+      />
+      <AttachmentButton
+        icon={FileText}
+        label="Documents"
+        onClick={onFileClick}
+      />
       <AttachmentButton
         icon={MapPin}
         label="Location"

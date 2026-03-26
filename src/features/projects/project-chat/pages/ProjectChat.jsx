@@ -52,14 +52,7 @@ function ProjectChat() {
     name: "Default Project",
   };
 
-  const filteredConversations = conversations.filter((conv) => {
-    if (!conv.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    return true;
-  });
-
-  const sortedConversations = [...filteredConversations].sort((a, b) => {
+  const sortedConversations = [...conversations].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
 
@@ -129,69 +122,64 @@ function ProjectChat() {
     archived,
   } = categorizedConversations;
 
+  const getBadge = (count) => (count > 0 ? count : undefined);
+
   const chatFilterItems = [
     {
       label: "All",
       value: "all",
-      badge: groups.length + teamMembers.length,
+      badge: getBadge(groups.length + teamMembers.length),
       icon: MessageSquare,
     },
     {
       label: "Groups",
       value: "groups",
-      badge: groups.length,
+      badge: getBadge(groups.length),
       icon: MessagesSquare,
     },
     {
       label: "Subjects",
       value: "subjects",
-      badge: subjects.length,
+      badge: getBadge(subjects.length),
       icon: Users2,
     },
     {
       label: "Direct",
       value: "direct",
-      badge: teamMembers.length,
+      badge: getBadge(teamMembers.length),
       icon: UserRound,
     },
     {
       label: "Unread",
       value: "unread",
-      badge: unread.length,
+      badge: getBadge(unread.length),
       icon: Eye,
     },
     {
       label: "Favorites",
       value: "favorite",
-      badge: favorite.length,
+      badge: getBadge(favorite.length),
       icon: Heart,
     },
     {
       label: "Pinned",
       value: "pinned",
-      badge: pinned.length,
+      badge: getBadge(pinned.length),
       icon: Pin,
     },
     {
       label: "Muted",
       value: "muted",
-      badge: muted.length,
+      badge: getBadge(muted.length),
       icon: VolumeX,
     },
-    // {
-    //   label: "Calls",
-    //   value: "calls",
-    //   badge: favorite.length,
-    //   icon: Phone
-    // },
     {
       label: "Archived",
       value: "archived",
-      badge: archived.length,
+      badge: getBadge(archived.length),
       icon: Archive,
     },
   ];
-
   useEffect(() => {
     if (currentProject?._id && currentUser?._id) {
       loadConversations(currentProject._id, activeTab);

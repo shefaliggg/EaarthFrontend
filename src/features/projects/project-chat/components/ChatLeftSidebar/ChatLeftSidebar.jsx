@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Search, X, SearchX, MessageCircleX } from "lucide-react";
+import {
+  Search,
+  X,
+  SearchX,
+  MessageCircleX,
+  EllipsisVertical,
+} from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import useChatStore, { DEFAULT_PROJECT_ID } from "../../store/chat.store";
 import ConversationItem from "../ChatLeftSidebar/ConversationItem";
@@ -7,6 +13,8 @@ import ContextMenu from "../ChatLeftSidebar/ContextMenu";
 import SkeletonItem from "../ChatLeftSidebar/SkeletonItem";
 import { useDispatch, useSelector } from "react-redux";
 import { getProjectMembersThunk } from "../../../store";
+import { cn } from "../../../../../shared/config/utils";
+import { Button } from "../../../../../shared/components/ui/button";
 export default function ChatLeftSidebar({
   activeTab = "all",
   searchQuery,
@@ -15,6 +23,7 @@ export default function ChatLeftSidebar({
   categorizedConversations,
 }) {
   const [contextMenu, setContextMenu] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
   const dispatch = useDispatch();
   const projectId = DEFAULT_PROJECT_ID;
 
@@ -79,6 +88,13 @@ export default function ChatLeftSidebar({
     }
   })();
 
+  const filteredConversations = activeList.filter((conv) => {
+    if (!conv.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
   const getEmptyMessage = () => {
     if (searchQuery) {
       return (
@@ -133,6 +149,11 @@ export default function ChatLeftSidebar({
   const handleChatClick = (chat) => {
     setSelectedChat(chat);
   };
+  useEffect(() => {
+    if (isSearching) {
+      document.getElementById("chat-search")?.focus();
+    }
+  }, [isSearching]);
 
   return (
     <>
@@ -140,27 +161,54 @@ export default function ChatLeftSidebar({
         {/* Conversations List */}
         <div className="flex flex-col rounded-3xl border bg-card shadow-sm overflow-hidden h-[calc(100vh-38px)] max-h-[924px]">
           <div className="bg-card p-3 border-b">
-            <div className="flex items-center justify-between mb-2 pl-1.5">
+            <div className="flex items-center justify-between mt-0.5 pl-1.5">
               <h2 className="text-lg font-bold">Conversations</h2>
+              <div className="flex items-center">
+                {isSearching ? (
+                  <Button
+                    variant={"ghost"}
+                    size={"icon"}
+                    onClick={() => {
+                      setIsSearching(false);
+                      setSearchQuery("");
+                    }}
+                  >
+                    <X className="w-4 h-4 stroke-2! text-muted-foreground" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant={"ghost"}
+                    size={"icon"}
+                    onClick={() => setIsSearching(true)}
+                  >
+                    <Search className="w-4 h-4 stroke-2! text-muted-foreground" />
+                  </Button>
+                )}
+                <Button variant={"ghost"} size={"icon"}>
+                  <EllipsisVertical className="w-4 h-4 stroke-2! text-muted-foreground" />
+                </Button>
+              </div>
             </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                className="pl-9 pr-6 h-9 bg-muted/50 border rounded-3xl text-xs placeholder:text-muted-foreground"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted/80"
-                >
-                  <X className="w-3 h-3 text-destructive" />
-                </button>
+            <div
+              className={cn(
+                "relative overflow-hidden transform transition-all duration-300 ease-in-out",
+                isSearching ? "max-h-14 opacity-100 mt-2" : "max-h-0 opacity-0",
+                isSearching
+                  ? "translate-y-0 opacity-100 max-h-14 mt-2"
+                  : "-translate-y-2 opacity-0 max-h-0",
               )}
+            >
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary" />
+                <Input
+                  id="chat-search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search"
+                  className="pl-9 pr-6 h-9 bg-muted/50 border rounded-3xl text-xs placeholder:text-muted-foreground"
+                />
+              </div>
             </div>
           </div>
           {/* Scrollable Content */}
@@ -173,8 +221,8 @@ export default function ChatLeftSidebar({
               </div>
             ) : (
               <div className="p-1 space-y-1">
-                {activeList.length > 0 ? (
-                  renderConversationList(activeList)
+                {filteredConversations.length > 0 ? (
+                  renderConversationList(filteredConversations)
                 ) : (
                   <div className="text-center py-12">
                     <p className="text-sm text-muted-foreground flex flex-col items-center gap-4">
