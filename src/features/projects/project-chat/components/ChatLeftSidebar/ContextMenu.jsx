@@ -19,6 +19,9 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
   const toggleFavoriteConversation = useChatStore(
     (s) => s.toggleFavoriteConversation,
   );
+  const toggleArchiveConversation = useChatStore(
+    (s) => s.toggleArchiveConversation,
+  );
   const pinnedCount = useChatStore(
     (s) => s.conversations.filter((c) => c.isPinned).length,
   );
@@ -29,7 +32,6 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
 
     // TODO: Implement actual actions
     // - Mute/Unmute
-    // - Archive
     // - Delete
     if (action === "read") {
       emitConversationRead(item?.id);
@@ -39,6 +41,9 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
     }
     if (action === "favorite") {
       toggleFavoriteConversation(item?.id);
+    }
+    if (action === "archive") {
+      toggleArchiveConversation(item?.id);
     }
 
     handleClose();
@@ -54,6 +59,13 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
 
   const menuItems = [
     {
+      icon: Archive,
+      label: item.isArchived
+        ? "Unarchive conversation"
+        : "Archive conversation",
+      action: "archive",
+    },
+    {
       icon: Pin,
       label: item.isPinned
         ? "Unpin conversation"
@@ -65,7 +77,7 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
     },
     {
       icon: Heart,
-      label: item.isFavorite ? "Remove from favorites" : "Add to Favorites",
+      label: item.isFavorite ? "Remove from favorites" : "Add to favorites",
       action: "favorite",
     },
     {

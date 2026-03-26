@@ -74,28 +74,34 @@ function ProjectChat() {
 
   const categorizedConversations = sortedConversations.reduce(
     (acc, conv) => {
-      if (conv.type === "group") {
-        acc.groups.push(conv);
-        if (conv.category === "subject") {
-          acc.subjects.push(conv);
+      if (!conv.isArchived) {
+        if (conv.type === "group") {
+          acc.groups.push(conv);
+          if (conv.category === "subject") {
+            acc.subjects.push(conv);
+          }
+        }
+
+        if (conv.type === "dm") {
+          acc.teamMembers.push(conv);
+        }
+
+        if (conv.unread > 0) {
+          acc.unread.push(conv);
+        }
+        if (conv.isFavorite) {
+          acc.favorite.push(conv);
+        }
+        if (conv.isMuted) {
+          acc.muted.push(conv);
+        }
+        if (conv.isPinned) {
+          acc.pinned.push(conv);
         }
       }
 
-      if (conv.type === "dm") {
-        acc.teamMembers.push(conv);
-      }
-
-      if (conv.unread > 0) {
-        acc.unread.push(conv);
-      }
-      if (conv.isFavorite) {
-        acc.favorite.push(conv);
-      }
-      if (conv.isMuted) {
-        acc.muted.push(conv);
-      }
-      if (conv.isPinned) {
-        acc.pinned.push(conv);
+      if (conv.isArchived) {
+        acc.archived.push(conv);
       }
 
       return acc;
@@ -108,11 +114,20 @@ function ProjectChat() {
       favorite: [],
       muted: [],
       pinned: [],
+      archived: [],
     },
   );
 
-  const { groups, subjects, teamMembers, unread, favorite, muted, pinned } =
-    categorizedConversations;
+  const {
+    groups,
+    subjects,
+    teamMembers,
+    unread,
+    favorite,
+    muted,
+    pinned,
+    archived,
+  } = categorizedConversations;
 
   const chatFilterItems = [
     {
@@ -171,8 +186,8 @@ function ProjectChat() {
     // },
     {
       label: "Archived",
-      value: "archive",
-      badge: 0,
+      value: "archived",
+      badge: archived.length,
       icon: Archive,
     },
   ];

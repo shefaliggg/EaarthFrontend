@@ -158,7 +158,7 @@ const chatApi = {
       return response.data.data;
     } catch (error) {
       console.error(
-        "❌ pinConversation failed:",
+        "❌ pin Conversation failed:",
         error.response?.data || error.message,
       );
       throw error;
@@ -167,13 +167,34 @@ const chatApi = {
 
   favoriteConversation: async (conversationId, favorite) => {
     try {
-      const response = await axiosConfig.patch(`/chats/${conversationId}/favorite`, {
-        favorite,
-      });
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/favorite`,
+        {
+          favorite,
+        },
+      );
       return response.data.data;
     } catch (error) {
       console.error(
-        "❌ pinConversation failed:",
+        "❌ add conversation to favorites failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
+  archiveConversation: async (conversationId, archive) => {
+    try {
+      const response = await axiosConfig.patch(
+        `/chats/${conversationId}/archive`,
+        {
+          archive,
+        },
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ archive Conversation failed:",
         error.response?.data || error.message,
       );
       throw error;

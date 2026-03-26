@@ -21,8 +21,16 @@ export default function ChatLeftSidebar({
   const { isLoadingConversations, selectedChat, setSelectedChat } =
     useChatStore();
 
-  const { groups, subjects, teamMembers, unread, favorite, muted, pinned } =
-    categorizedConversations;
+  const {
+    groups,
+    subjects,
+    teamMembers,
+    unread,
+    favorite,
+    muted,
+    pinned,
+    archived,
+  } = categorizedConversations;
 
   const renderConversationList = (list) => {
     return list.map((item) => (
@@ -62,9 +70,12 @@ export default function ChatLeftSidebar({
       case "muted":
         return muted;
 
+      case "archived":
+        return archived;
+
       case "all":
       default:
-        return sortedConversations;
+        return sortedConversations.filter((conv) => !conv.isArchived);
     }
   })();
 
@@ -92,6 +103,15 @@ export default function ChatLeftSidebar({
 
       case "favorite":
         return "No Favorite conversations";
+
+      case "pinned":
+        return "No Pinned conversations";
+
+      case "muted":
+        return "No Muted conversations";
+
+      case "archived":
+        return "No Archived conversations";
 
       default:
         return "No conversations yet";
@@ -131,12 +151,12 @@ export default function ChatLeftSidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search"
-                className="pl-9 pr-3 h-9 bg-muted/50 border rounded-3xl text-xs placeholder:text-muted-foreground"
+                className="pl-9 pr-6 h-9 bg-muted/50 border rounded-3xl text-xs placeholder:text-muted-foreground"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted/80"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted/80"
                 >
                   <X className="w-3 h-3 text-destructive" />
                 </button>
@@ -159,9 +179,9 @@ export default function ChatLeftSidebar({
                   <div className="text-center py-12">
                     <p className="text-sm text-muted-foreground flex flex-col items-center gap-4">
                       {searchQuery ? (
-                        <SearchX className="w-8 h-8 text-primary" />
+                        <SearchX className="w-6 h-6 text-primary" />
                       ) : (
-                        <MessageCircleX className="w-8 h-8 text-primary" />
+                        <MessageCircleX className="w-6 h-6 text-primary" />
                       )}
                       {getEmptyMessage()}
                     </p>

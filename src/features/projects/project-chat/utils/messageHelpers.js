@@ -426,6 +426,10 @@ export const transformConversation = (conv, currentUserId) => {
       conv.favoritedFor?.some(
         (id) => id.toString() === currentUserId.toString(),
       ) || false,
+    isArchived:
+      conv.archivedFor?.some(
+        (id) => id.toString() === currentUserId.toString(),
+      ) || false,
     isMuted: false,
     canSendMessage,
     _raw: conv,

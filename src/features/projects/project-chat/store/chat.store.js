@@ -1470,11 +1470,13 @@ const useChatStore = create(
           (c) => c.id === conversationId,
         )?.isFavorite;
 
-        const optimisticPinned = isUnFavorite ? false : true;
+        const optimisticFavorited = isUnFavorite ? false : true;
 
         set((state) => ({
           conversations: state.conversations.map((c) =>
-            c.id === conversationId ? { ...c, isFavorite: optimisticPinned } : c,
+            c.id === conversationId
+              ? { ...c, isFavorite: optimisticFavorited }
+              : c,
           ),
         }));
 
@@ -1489,7 +1491,48 @@ const useChatStore = create(
               conversations: previousConversations,
             });
 
-            return err?.response?.data?.message || `Failed to ${isUnFavorite ? "remove" : "Add"} Conversation ${isUnFavorite ? "from" : "to"} Favorites`;
+            return (
+              err?.response?.data?.message ||
+              `Failed to ${isUnFavorite ? "remove" : "Add"} Conversation ${isUnFavorite ? "from" : "to"} Favorites`
+            );
+          },
+        });
+      },
+
+      toggleArchiveConversation: async (conversationId) => {
+        const state = get();
+
+        const previousConversations = state.conversations;
+
+        const isUnArchived = state.conversations.find(
+          (c) => c.id === conversationId,
+        )?.isArchived;
+
+        const optimisticArchived = isUnArchived ? false : true;
+
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? { ...c, isArchived: optimisticArchived }
+              : c,
+          ),
+        }));
+
+        const promise = chatApi.archiveConversation(
+          conversationId,
+          isUnArchived ? false : true,
+        );
+
+        return toast.promise(promise, {
+          error: (err) => {
+            set({
+              conversations: previousConversations,
+            });
+
+            return (
+              err?.response?.data?.message ||
+              `Failed to ${isUnArchived ? "Unarchive" : "Archive"} Conversation`
+            );
           },
         });
       },
