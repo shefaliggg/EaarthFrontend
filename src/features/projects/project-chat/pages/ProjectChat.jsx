@@ -14,10 +14,20 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
+  Archive,
   EllipsisVertical,
+  Eye,
+  Heart,
+  MessageCircle,
   MessageCirclePlus,
+  MessageSquare,
+  MessagesSquare,
+  Phone,
   Search,
+  UserCircle,
+  UserRound,
   Users,
+  Users2,
   X,
 } from "lucide-react";
 import { Button } from "../../../../shared/components/ui/button";
@@ -99,31 +109,49 @@ function ProjectChat() {
       label: "All",
       value: "all",
       badge: groups.length + teamMembers.length,
+      icon: MessageSquare,
     },
     {
       label: "Groups",
       value: "groups",
       badge: groups.length,
+      icon: MessagesSquare,
     },
     {
-      label: "Subject",
+      label: "Subjects",
       value: "subjects",
       badge: subjects.length,
+      icon: Users2
     },
     {
       label: "Direct",
       value: "direct",
       badge: teamMembers.length,
+      icon: UserRound
     },
     {
       label: "Unread",
       value: "unread",
       badge: unread.length,
+      icon: Eye
     },
     {
       label: "Favorites",
       value: "favorite",
       badge: favorite.length,
+      icon: Heart
+    },
+    // {
+    //   label: "Calls",
+    //   value: "calls",
+    //   badge: favorite.length,
+    //   icon: Phone
+    // },
+    {
+      label: "Archived",
+      value: "archive",
+      badge: 0,
+      icon: Archive
     },
   ];
 
@@ -174,7 +202,7 @@ function ProjectChat() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <DropdownMenu>
+                {/* <DropdownMenu>
                   <InfoTooltip content={"Menu"}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon">
@@ -198,17 +226,20 @@ function ProjectChat() {
                       Unread All Chats
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
               </div>
             </>
           }
         />
-        <div className="mb-4 space-y-3">
+        <div className="mb-5 space-y-3 flex">
           <FilterPillTabs
             options={chatFilterItems}
             value={activeTab}
             onChange={handleTabChange}
             size="md"
+            transparentBg={false}
+            fullWidth
+            variant="modern"
           />
         </div>
 

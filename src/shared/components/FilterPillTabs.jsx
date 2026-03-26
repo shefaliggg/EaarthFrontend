@@ -3,6 +3,7 @@ import * as Icons from "lucide-react";
 import { Circle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SmartIcon } from "./SmartIcon";
+import { cn } from "../config/utils";
 
 const SIZE_STYLES = {
   sm: {
@@ -13,12 +14,67 @@ const SIZE_STYLES = {
   md: {
     list: "p-1 gap-2",
     trigger: "px-3.5 pr-2 py-1.5 text-sm",
-    icon: "w-4 h-4",
+    icon: "w-4 h-4 stroke-2!",
   },
   lg: {
     list: "p-1.5 gap-3",
     trigger: "px-5 py-2.5 text-base",
-    icon: "w-5 h-5",
+    icon: "w-5 h-5 stroke-2!",
+  },
+};
+
+const VARIANT_STYLES = {
+  default: {
+    list: ({ transparentBg, fullWidth }) => `
+      h-auto
+      ${transparentBg ? "bg-transparent" : "bg-background rounded-3xl border shadow-sm border-muted"}
+      ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start"}
+    `,
+    trigger: () => `
+      bg-background/60
+      data-[state=active]:bg-primary
+      data-[state=active]:text-white
+    `,
+    badge: `
+      bg-primary/10 text-primary
+      group-data-[state=active]:bg-purple-500
+      group-data-[state=active]:text-background
+      dark:group-data-[state=active]:bg-purple-900
+      dark:group-data-[state=active]:text-foreground
+    `,
+  },
+
+  modern: {
+    list: ({ fullWidth }) => `
+      h-auto bg-background shadow-md border border-2 border-muted rounded-xl p-1.5
+      ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start gap-1.5"}
+    `,
+    trigger: () => `
+      flex flex-col items-center gap-1
+      relative
+      rounded-md
+      border-none shadow-none
+      px-5 py-2
+      min-w-20
+      text-xs font-medium
+      transition-all
+      bg-transparent
+      text-muted-foreground
+
+      hover:bg-background hover:text-foreground
+
+     data-[state=active]:bg-primary
+      data-[state=active]:text-white
+      data-[state=active]:shadow-sm
+    `,
+    badge: `
+    absolute top-1 right-1
+    font-bold!
+    size-4.5!
+      bg-primary text-background
+      group-data-[state=active]:bg-white
+      group-data-[state=active]:text-primary
+    `,
   },
 };
 
@@ -31,9 +87,12 @@ function FilterPillTabs({
   navigatable = false,
   readOnly = false,
   size = "md",
+  variant = "default",
 }) {
   const navigate = useNavigate();
+
   const styles = SIZE_STYLES[size] || SIZE_STYLES.md;
+  const variantStyles = VARIANT_STYLES[variant] || VARIANT_STYLES.default;
 
   const handleChange = (newValue) => {
     if (readOnly) return;
@@ -47,17 +106,12 @@ function FilterPillTabs({
   };
 
   return (
-    <Tabs value={value} onValueChange={handleChange} className="w-full">
+    <Tabs value={value} onValueChange={handleChange} className={cn(fullWidth ? "w-full" : "w-fit")}>
       <TabsList
-        className={`h-auto ${styles.list} ${
-          transparentBg
-            ? "bg-transparent"
-            : "bg-background rounded-3xl border shadow-sm border-muted"
-        } ${
-          fullWidth
-            ? "grid grid-flow-col auto-cols-fr w-full"
-            : "flex flex-wrap justify-start"
-        }`}
+        className={`
+          ${styles.list}
+          ${variantStyles.list({ transparentBg, fullWidth })}
+        `}
       >
         {options.map((option) => {
           const tabValue = navigatable ? option.route : option.value;
@@ -66,7 +120,11 @@ function FilterPillTabs({
             <TabsTrigger
               key={tabValue}
               value={tabValue}
-              className={`bg-background/60 ${styles.trigger} group`}
+              className={`
+                ${styles.trigger}
+                ${variantStyles.trigger()}
+                group
+              `}
             >
               {option.icon && (
                 <SmartIcon icon={option.icon} className={styles.icon} />
@@ -74,16 +132,12 @@ function FilterPillTabs({
               {option.label}
               {option.badge !== undefined && (
                 <span
-                  className="
-                    py-0.5 px-1.5
+                  className={`
+                    size-4 flex items-center justify-center
                     text-[10px] font-medium
                     rounded-full
-                    bg-primary/10 text-primary
-                    group-data-[state=active]:bg-purple-500
-                    dark:group-data-[state=active]:bg-purple-900
-                    group-data-[state=active]:text-background
-                    dark:group-data-[state=active]:text-foreground
-                    "
+                    ${variantStyles.badge}
+                  `}
                 >
                   {option.badge}
                 </span>

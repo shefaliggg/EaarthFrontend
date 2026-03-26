@@ -125,7 +125,7 @@ export default function ConversationItem({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        "w-full px-2.5 pl-1.5 py-1.5 text-left transition-all hover:bg-primary/20 relative rounded-md border border-transparent hover:border-border/50",
+        "w-full px-2 pl-1 py-1.5 text-left transition-all hover:bg-primary/20 relative rounded-md border border-transparent hover:border-border/50",
         isSelected && "bg-primary/10 ring-2 ring-primary/20",
       )}
     >
@@ -139,12 +139,12 @@ export default function ConversationItem({
                 containerClass,
               )}
             >
-              <Icon className={cn("w-4 h-4", iconClass)} />
+              <Icon className={cn("w-5 h-5", iconClass)} />
             </div>
           ) : (
             <div className="relative">
               {/* Avatar */}
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-xs font-bold">
+              <div className={cn("h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-sm font-bold")}>
                 {item.avatar}
               </div>
 
@@ -152,7 +152,7 @@ export default function ConversationItem({
               {isOnline && (
                 <span
                   className={cn(
-                    "absolute top-0 right-0 w-3 h-3 rounded-full border border-card bg-green-500",
+                    "absolute top-0 right-0 w-3 h-3 rounded-full bg-green-500 shadow",
                   )}
                 />
               )}
@@ -168,7 +168,7 @@ export default function ConversationItem({
                 <p className="text-sm font-semibold truncate">
                   {convertToPrettyText(item.name)}
                 </p>
-               
+
                 {/* {!isGroup && (
                   <>
                     <p className="text-[9px] text-muted-foreground truncate">
@@ -177,9 +177,6 @@ export default function ConversationItem({
                   </>
                 )} */}
               </div>
-               {item.isFavorite && (
-                  <Heart className="w-3.5 h-3.5 fill-red-500 text-red-500 flex-shrink-0" />
-                )}
             </div>
 
             <span className="text-[10px] text-muted-foreground flex-shrink-0">
@@ -228,13 +225,15 @@ export default function ConversationItem({
 
             {/* Badges */}
             <div className="flex items-center gap-1 flex-shrink-0">
+              {item.isFavorite && (
+                <Heart className="w-3.5 h-3.5 fill-red-500 text-red-500 flex-shrink-0" />
+              )}
               {item.isPinned && (
                 <Pin
                   fill="#9333ea"
                   className="w-3.5 h-3.5 text-primary rotate-45"
                 />
               )}
-
               {item.mentions > 0 && (
                 <Badge className="bg-purple-500 text-white text-[10px] h-4 min-w-4 px-1 flex items-center justify-center rounded-full">
                   <span className="text-xs mb-0.5">@</span>
