@@ -18,6 +18,7 @@ import {
   Video,
   Slash,
   SeparatorVertical,
+  Loader,
 } from "lucide-react";
 import useChatStore from "../../store/chat.store";
 import ChatHeader from "./ChatHeader";
@@ -29,6 +30,8 @@ import ReplyToMessagePreview from "./ReplyToMessagePreview";
 import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 import TypingIndicator from "./TypingIndicator";
 import { insertDateSeparators } from "../../utils/messageHelpers";
+import useMessageNavigation from "../../hooks/useMessageNavigation";
+import { cn } from "../../../../../shared/config/utils";
 
 function ChatBox() {
   const scrollContainerRef = useRef(null);
@@ -58,6 +61,9 @@ function ChatBox() {
   const isLoadingMessages = useChatStore((s) => s.isLoadingMessages);
   const typingUsers = useChatStore((s) => s.typingUsers);
   const togglePinMessage = useChatStore((s) => s.togglePinMessage);
+  const isJumpingToMessages = useChatStore((s) => s.isJumpingToMessages);
+
+  const { scrollToMessage } = useMessageNavigation();
 
   const messagesData = useMemo(() => {
     if (!selectedChat?.id || !messagesByConversation[selectedChat.id]) {
@@ -216,13 +222,6 @@ function ChatBox() {
     emitConversationRead(selectedChat?.id);
   }, [scrollToBottom, selectedChat?.id, emitConversationRead]);
 
-  const scrollToMessage = (messageClientId) => {
-    const element = document.getElementById(`message-${messageClientId}`);
-    if (element && scrollContainerRef.current) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
-
   const handleUnpin = async (messageId) => {
     await togglePinMessage(selectedChat.id, messageId);
   };
@@ -251,14 +250,14 @@ function ChatBox() {
   }
 
   return (
-    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] flex flex-col mx-auto">
+    <div className="rounded-3xl border bg-card shadow-sm h-[calc(100vh-38px)] max-h-[924px] flex flex-col mx-auto relative">
       <ChatHeader />
 
       <div className="relative w-full">
-        {pinnedMessage?.messageId && (
+        {pinnedMessage?.messageId && !isLoadingMessages && (
           <button
             onClick={() => scrollToMessage(pinnedMessage.messageId)}
-            className="absolute top-2 left-3 z-5 w-[calc(100%-24px)] bg-card/50 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border border-muted shadow-xl transition-all hover:bg-muted/60 backdrop-blur-2xl"
+            className="absolute top-2 left-3 z-5 w-[calc(100%-24px)] bg-card/50 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border border-muted shadow-xl transition-all transform fade-in-out hover:bg-muted/60 backdrop-blur-2xl"
           >
             {/* Pin icon */}
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary mr-1">
@@ -306,6 +305,18 @@ function ChatBox() {
         )}
       </div>
 
+      {isJumpingToMessages && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-20">
+          <div
+            className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full 
+                    bg-card/80 backdrop-blur-md border shadow-lg 
+                    text-sm text-muted-foreground animate-in fade-in zoom-in-95"
+          >
+            <Loader className="w-4 h-4 animate-spin text-primary" />
+            <span>Finding message...</span>
+          </div>
+        </div>
+      )}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
@@ -322,12 +333,16 @@ function ChatBox() {
         )}
 
         {!loadError && isLoadingMessages && messages.length === 0 && (
-          <ChatLoaderSkeleton count={6} />
+          <ChatLoaderSkeleton count={2} />
         )}
 
         {isLoadingMessages && messagesData.hasMore && (
-          <div ref={topLoaderRef}>
-            <ChatLoaderSkeleton count={2} />
+          <div
+            ref={topLoaderRef}
+            className="text-muted-foreground/70 flex items-center justify-center text-sm gap-2 py-6 transform transition-all"
+          >
+            <Loader className="size-6 animate-spin" />
+            Loading older messages
           </div>
         )}
 

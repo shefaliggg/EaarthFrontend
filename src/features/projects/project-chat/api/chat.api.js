@@ -99,6 +99,32 @@ const chatApi = {
     }
   },
 
+  getMessageContext: async (conversationId, messageId) => {
+    try {
+      console.log("📡 API: Fetching messages", {
+        conversationId,
+        messageId,
+      });
+
+      const response = await axiosConfig.get(
+        `/chats/${conversationId}/messages/${messageId}`,
+      );
+
+      console.log(
+        "✅ API: Messages fetched:",
+        response.data.data.messages?.length || 0,
+        "items",
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error(
+        "❌ getMessageContext failed:",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  },
+
   // Send message - handles both JSON and FormData
   sendMessage: async (conversationId, messageData) => {
     const isFormData = messageData instanceof FormData;

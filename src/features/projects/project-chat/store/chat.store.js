@@ -28,8 +28,10 @@ const useChatStore = create(
       onlineUsers: new Set(),
       messagesByConversation: {},
       selectedChat: null,
+      selectedMessage: null,
       isLoadingConversations: false,
       isLoadingMessages: false,
+      isJumpingToMessages: false,
       isSendingMessage: false,
       typingUsers: {},
 
@@ -443,6 +445,12 @@ const useChatStore = create(
         }));
       },
 
+      setSelectedMessage: (message) => {
+        set(() => ({
+          selectedMessage: message,
+        }));
+      },
+
       loadConversations: async (projectId, type, search) => {
         if (!projectId) {
           console.error("❌ No projectId provided");
@@ -635,6 +643,49 @@ const useChatStore = create(
         } catch (error) {
           console.error("❌ Failed to load messages:", error);
           set({ isLoadingMessages: false });
+        }
+      },
+
+      jumpToMessage: async (conversationId, messageId) => {
+        if (!conversationId) return;
+        const currentUserId = getCurrentUserId();
+
+        set({ isJumpingToMessages: true });
+
+        try {
+          const result = await chatApi.getMessageContext(
+            conversationId,
+            messageId,
+          );
+
+          const conversation = get().conversations.find(
+            (c) => c.id === conversationId,
+          );
+
+          const memberCount = conversation?.members || 2;
+
+          const transformed = result.messages.map((msg) =>
+            transformMessage(msg, {
+              currentUserId,
+              conversationMembersCount: memberCount,
+            }),
+          );
+
+          set({
+            messagesByConversation: {
+              ...get().messagesByConversation,
+              [conversationId]: {
+                messages: transformed,
+                hasMore: result.hasMoreBefore,
+                cursor: result.beforeCursor,
+                messagesLoaded: true,
+              },
+            },
+            isJumpingToMessages: false,
+          });
+        } catch (error) {
+          console.error("❌ Failed to load messages:", error);
+          set({ isJumpingToMessages: false });
         }
       },
 

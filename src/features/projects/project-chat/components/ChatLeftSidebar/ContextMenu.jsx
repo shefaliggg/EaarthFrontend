@@ -104,7 +104,7 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
       {/* Menu */}
       <div
         className={`
-    fixed z-50 bg-card border rounded-lg shadow-xl py-1 min-w-[200px]
+    fixed z-50 bg-card border rounded-lg shadow-xl p-1 min-w-[200px]
     transition-all duration-200 ease-out
     ${
       isClosing
@@ -125,7 +125,7 @@ export default function ContextMenu({ x, y, item, type, onClose }) {
             onClick={() => !menuItem.disabled && handleAction(menuItem.action)}
             disabled={menuItem.disabled}
             className={`
-                w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm transition-colors
+                w-full px-3 py-2.5 text-left flex rounded-lg items-center gap-2 text-sm transition-colors
                 ${
                   menuItem.disabled
                     ? "opacity-50 cursor-not-allowed"

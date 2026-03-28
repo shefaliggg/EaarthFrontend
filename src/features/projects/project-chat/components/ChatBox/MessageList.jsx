@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { AlertCircle } from "lucide-react";
-import MessageBubble from "./Messagebubble";
+import MessageBubble from "./messageBubble/Messagebubble";
 import TypingIndicator from "./TypingIndicator";
 import useChatStore from "../../store/chat.store";
 import ChatLoaderSkeleton from "../skeltons/ChatLoaderSkeleton";
 import { formatSystemMessage } from "../../utils/messageHelpers";
+import useMessageNavigation from "../../hooks/useMessageNavigation";
 
 export default function MessageList({
   messages,
@@ -13,18 +14,12 @@ export default function MessageList({
   onReaction,
   onToggleFavorite,
 }) {
-  const [selectedMessage, setSelectedMessage] = useState(null);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [searchQuery] = useState("");
-  const { selectedChat } = useChatStore();
+  const { selectedChat, selectedMessage, setSelectedMessage } = useChatStore();
 
-  const scrollToMessage = (messageId) => {
-    const element = document.getElementById(`message-${messageId}`);
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
-    setSelectedMessage(messageId);
-    setTimeout(() => setSelectedMessage(null), 2000);
-  };
+  const { scrollToMessage } = useMessageNavigation();
 
   const canEditMessage = (message) => {
     if (!message.isOwn) return false;
@@ -59,7 +54,7 @@ export default function MessageList({
         if (msg.type === "date-separator") {
           return (
             <div
-              key={msg.id}
+              key={msg.id + index}
               className="flex justify-center my-3"
               role="separator"
             >
@@ -76,7 +71,7 @@ export default function MessageList({
 
           return (
             <div
-              key={msg.id}
+              key={msg.id + index}
               className="flex justify-center my-3"
               role="status"
             >
@@ -92,12 +87,12 @@ export default function MessageList({
         // Regular message
         return (
           <MessageBubble
-            key={msg.clientTempId || msg.id}
+            key={msg.id + index}
             message={msg}
             isGroupStart={isGroupStart}
             isGroupEnd={isGroupEnd}
-            isSelected={selectedMessage === msg.clientTempId}
-            onSelect={() => setSelectedMessage(msg.clientTempId)}
+            isSelected={selectedMessage === msg.id}
+            onSelect={() => setSelectedMessage(msg.id)}
             hoveredMessageId={hoveredMessageId}
             setHoveredMessageId={setHoveredMessageId}
             showReactionPicker={showReactionPicker}

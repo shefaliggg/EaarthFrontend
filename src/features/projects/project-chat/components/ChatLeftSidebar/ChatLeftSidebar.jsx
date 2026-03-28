@@ -173,7 +173,7 @@ export default function ChatLeftSidebar({
                       setSearchQuery("");
                     }}
                   >
-                    <X className="w-4 h-4 stroke-2! text-muted-foreground" />
+                    <X className="w-4 h-4 stroke-2! text-destructive" />
                   </Button>
                 ) : (
                   <Button
@@ -192,9 +192,8 @@ export default function ChatLeftSidebar({
             <div
               className={cn(
                 "relative overflow-hidden transform transition-all duration-300 ease-in-out",
-                isSearching ? "max-h-14 opacity-100 mt-2" : "max-h-0 opacity-0",
                 isSearching
-                  ? "translate-y-0 opacity-100 max-h-14 mt-2"
+                  ? "translate-y-0 opacity-100 max-h-14 mt-3"
                   : "-translate-y-2 opacity-0 max-h-0",
               )}
             >
