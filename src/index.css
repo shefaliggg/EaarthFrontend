@@ -357,12 +357,12 @@ a svg {
   body {
     /* background: #fafafa; */
     background: linear-gradient(135deg,
-        #f3ebeb,
-        #fcf9f0,
+        #ffecec,
+        #fff8e7,
         #e9ffe9,
         #e7f7ff,
         #f3e9ff,
-        #f8edf2);
+        #ffe8f4);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -457,6 +457,29 @@ a svg {
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  .topbar-tabs-scrollbar {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(147, 51, 234, 0.18) transparent;
+  }
+
+  .topbar-tabs-scrollbar::-webkit-scrollbar {
+    height: 1px;
+  }
+
+  .topbar-tabs-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .topbar-tabs-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.18);
+    border-radius: 9999px;
+  }
+
+  .topbar-tabs-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.28);
   }
 
   @keyframes pulseRing {
