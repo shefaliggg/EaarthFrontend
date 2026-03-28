@@ -133,6 +133,11 @@ function offerToContractData(offer) {
       otherDealProvisions: offer.notes?.otherDealProvisions || "",
       additionalNotes:     offer.notes?.additionalNotes     || "",
     },
+
+        workingHours: offer.workingHours ?? 11,  // also add this if missing
+    specialStipulations: Array.isArray(offer.specialStipulations)
+      ? offer.specialStipulations
+      : [],
   };
 }
 
