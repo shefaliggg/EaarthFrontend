@@ -37,11 +37,11 @@ function ChatBox() {
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastMessageIdRef = useRef(null);
-  const topLoaderRef = useRef(null);
+  const isPaginatingRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
 
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const audioStreamRef = useRef(null);
+  const wasJumpingRef = useRef(false);
+  const suppressPaginationRef = useRef(false);
 
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
   const [unreadNewMessages, setUnreadNewMessages] = useState(0);
@@ -67,7 +67,12 @@ function ChatBox() {
 
   const messagesData = useMemo(() => {
     if (!selectedChat?.id || !messagesByConversation[selectedChat.id]) {
-      return { messages: [], hasMore: false, messagesLoaded: false };
+      return {
+        messages: [],
+        hasMoreBefore: true,
+        hasMoreAfter: false,
+        messagesLoaded: false,
+      };
     }
     return messagesByConversation[selectedChat.id];
   }, [selectedChat?.id, messagesByConversation]);
@@ -79,7 +84,7 @@ function ChatBox() {
     return insertDateSeparators(messages);
   }, [messages]);
 
-  const NEAR_BOTTOM_THRESHOLD = 100; // px from bottom considered "near"
+  const NEAR_BOTTOM_THRESHOLD = 250; // px from bottom considered "near"
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (scrollContainerRef.current) {
@@ -104,6 +109,13 @@ function ChatBox() {
 
   const handleScroll = useCallback(
     (e) => {
+      if (suppressPaginationRef.current) {
+        suppressPaginationRef.current = false;
+        const nearBottom = isUserNearBottom();
+        setIsUserAtBottom(nearBottom);
+        return;
+      }
+
       const { scrollTop } = e.target;
 
       const container = scrollContainerRef.current;
@@ -117,14 +129,15 @@ function ChatBox() {
       }
 
       // load older messages when scrollTop is near top
-      if (scrollTop < 80 && messagesData.hasMore && !isLoadingMessages) {
-        const container = scrollContainerRef.current;
+      if (scrollTop < 300 && messagesData.hasMoreBefore && !isLoadingMessages) {
+        isPaginatingRef.current = true;
 
+        const container = scrollContainerRef.current;
         const firstVisible = container.querySelector("[data-message-id]");
         const anchorId = firstVisible?.dataset?.messageId;
         const anchorOffset = firstVisible?.getBoundingClientRect().top;
 
-        loadMessages(selectedChat.id, true).then(() => {
+        loadMessages(selectedChat.id, "backward").then(() => {
           requestAnimationFrame(() => {
             const anchor = container.querySelector(
               `[data-message-id="${anchorId}"]`,
@@ -133,15 +146,29 @@ function ChatBox() {
             if (!anchor) return;
 
             const newOffset = anchor.getBoundingClientRect().top;
-            const diff = newOffset - anchorOffset;
+            container.scrollTop += newOffset - anchorOffset;
 
-            container.scrollTop += diff;
+            isPaginatingRef.current = false;
           });
+        });
+      }
+
+      if (
+        !isInitialLoadRef.current &&
+        nearBottom &&
+        messagesData.hasMoreAfter &&
+        !isLoadingMessages
+      ) {
+        isPaginatingRef.current = true;
+
+        loadMessages(selectedChat.id, "forward").then(() => {
+          isPaginatingRef.current = false;
         });
       }
     },
     [
-      messagesData.hasMore,
+      messagesData.hasMoreBefore,
+      messagesData.hasMoreAfter,
       isLoadingMessages,
       selectedChat?.id,
       loadMessages,
@@ -166,22 +193,38 @@ function ChatBox() {
 
     // only load if conversation not already loaded
     if (!messagesData.messagesLoaded) {
-      loadMessages(selectedChat.id).catch((err) => {
+      loadMessages(selectedChat.id, "backward").catch((err) => {
         setLoadError(err.message || "Failed to load messages");
       });
     }
   }, [selectedChat?.id, messagesData.messagesLoaded]);
+
+  useEffect(() => {
+    if (!isLoadingMessages && messages.length > 0) {
+      isInitialLoadRef.current = false;
+    }
+  }, [isLoadingMessages, messages.length]);
 
   useLayoutEffect(() => {
     if (!selectedChat?.id) return;
     if (isLoadingMessages) return;
     if (!messages.length) return;
 
+    if (isJumpingToMessages) {
+      wasJumpingRef.current = true;
+      return;
+    }
+
+    if (wasJumpingRef.current) {
+      wasJumpingRef.current = false;
+      suppressPaginationRef.current = true;
+      return;
+    }
+
     const container = scrollContainerRef.current;
     if (!container) return;
-
     container.scrollTop = container.scrollHeight;
-  }, [isLoadingMessages, selectedChat?.id]);
+  }, [isLoadingMessages, selectedChat?.id, isJumpingToMessages]);
 
   useEffect(() => {
     if (!messages.length) return;
@@ -191,6 +234,8 @@ function ChatBox() {
 
     if (id === lastMessageIdRef.current) return;
     lastMessageIdRef.current = id;
+
+    if (isPaginatingRef.current) return;
 
     if (last.isOwn || isUserNearBottom()) {
       emitConversationRead?.(selectedChat?.id);
@@ -242,7 +287,7 @@ function ChatBox() {
             Select a chat to start messaging
           </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Choose a department group or individual member from the sidebar
+            Choose a group or individual member from the sidebar
           </p>
         </div>
       </div>
@@ -254,10 +299,10 @@ function ChatBox() {
       <ChatHeader />
 
       <div className="relative w-full">
-        {pinnedMessage?.messageId && !isLoadingMessages && (
+        {pinnedMessage?.messageId && messagesData?.messagesLoaded && (
           <button
             onClick={() => scrollToMessage(pinnedMessage.messageId)}
-            className="absolute top-2 left-3 z-5 w-[calc(100%-24px)] bg-card/50 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border border-muted shadow-xl transition-all transform fade-in-out hover:bg-muted/60 backdrop-blur-2xl"
+            className="absolute top-2 left-3 z-5 w-[calc(100%-24px)] bg-card/50 group flex items-center gap-2 text-left cursor-pointer p-2 pl-3 rounded-3xl border border-muted shadow transition-all transform fade-in-out hover:bg-muted/60 backdrop-blur-2xl"
           >
             {/* Pin icon */}
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary mr-1">
@@ -320,7 +365,10 @@ function ChatBox() {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1 relative"
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1 relative",
+          pinnedMessage?.messageId && "pt-16",
+        )}
       >
         {loadError && (
           <div className="flex items-center justify-center h-full">
@@ -336,15 +384,14 @@ function ChatBox() {
           <ChatLoaderSkeleton count={2} />
         )}
 
-        {isLoadingMessages && messagesData.hasMore && (
-          <div
-            ref={topLoaderRef}
-            className="text-muted-foreground/70 flex items-center justify-center text-sm gap-2 py-6 transform transition-all"
-          >
-            <Loader className="size-6 animate-spin" />
-            Loading older messages
-          </div>
-        )}
+        {isLoadingMessages &&
+          messagesData.hasMoreBefore &&
+          messages.length > 0 && (
+            <div className="text-muted-foreground/70 flex items-center justify-center text-xs gap-2 py-6 transform transition-all">
+              <Loader className="size-4 animate-spin" />
+              Loading older messages
+            </div>
+          )}
 
         {messagesWithDates.length > 0 && (
           <MessageList
@@ -361,6 +408,14 @@ function ChatBox() {
             }}
           />
         )}
+
+        {isLoadingMessages &&
+          messagesData.hasMoreAfter &&
+          messages.length > 0 && (
+            <div className="text-muted-foreground/70 flex items-center justify-center text-sm gap-2 py-6 transform transition-all">
+              <Loader className="size-4 animate-spin" />
+            </div>
+          )}
 
         {!isLoadingMessages && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full -m-2 gap-2">

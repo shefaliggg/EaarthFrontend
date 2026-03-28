@@ -594,24 +594,36 @@ const useChatStore = create(
         });
       },
 
-      loadMessages: async (conversationId, loadMore = false) => {
+      loadMessages: async (conversationId, direction = "backward") => {
         if (!conversationId) return;
-        const currentUserId = getCurrentUserId();
+
+        const state = get();
+        if (state.isLoadingMessages) return;
 
         set({ isLoadingMessages: true });
 
         try {
-          const existing = get().messagesByConversation[conversationId] || {
+          const existing = state.messagesByConversation[conversationId] || {
             messages: [],
-            hasMore: true,
-            cursor: null,
-            messagesLoaded: false,
+            hasMoreBefore: true,
+            hasMoreAfter: true,
+            beforeCursor: null,
+            afterCursor: null,
           };
 
-          const cursor = loadMore ? existing.cursor : null;
-          const result = await chatApi.getMessages(conversationId, 20, cursor);
+          const cursor =
+            direction === "backward"
+              ? existing.beforeCursor
+              : existing.afterCursor;
 
-          const conversation = get().conversations.find(
+          const result = await chatApi.getMessages(
+            conversationId,
+            20,
+            cursor,
+            direction,
+          );
+
+          const conversation = state.conversations.find(
             (c) => c.id === conversationId,
           );
 
@@ -619,29 +631,69 @@ const useChatStore = create(
 
           const transformed = result.messages.map((msg) =>
             transformMessage(msg, {
-              currentUserId,
+              currentUserId: getCurrentUserId(),
               conversationMembersCount: memberCount,
             }),
           );
 
-          const updatedMessages = loadMore
-            ? [...transformed, ...existing.messages]
-            : transformed;
+          // ✅ DEDUP using Map
+          const map = new Map();
+
+          const merge = (msgs) => {
+            msgs.forEach((m) => {
+              const key = m.id || m.clientTempId;
+              map.set(key, m);
+            });
+          };
+
+          if (direction === "backward") {
+            merge(transformed);
+            merge(existing.messages);
+          } else {
+            merge(existing.messages);
+            merge(transformed);
+          }
+
+          const updatedMessages = Array.from(map.values()).sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+          );
+
+          // Detect initial load: no cursors yet and no existing messages
+          const isInitialLoad =
+            direction === "backward" &&
+            !existing.beforeCursor &&
+            !existing.afterCursor &&
+            existing.messages.length === 0;
 
           set({
             messagesByConversation: {
-              ...get().messagesByConversation,
+              ...state.messagesByConversation,
               [conversationId]: {
                 messages: updatedMessages,
-                hasMore: result.hasMore,
-                cursor: result.nextCursor,
+                hasMoreBefore:
+                  direction === "backward"
+                    ? result.hasMore
+                    : existing.hasMoreBefore,
+                hasMoreAfter: isInitialLoad
+                  ? false
+                  : direction === "forward"
+                    ? result.hasMore
+                    : existing.hasMoreAfter,
+                beforeCursor:
+                  direction === "backward"
+                    ? result.nextCursor
+                    : existing.beforeCursor,
+                afterCursor:
+                  direction === "forward"
+                    ? result.nextCursor
+                    : existing.afterCursor,
                 messagesLoaded: true,
               },
             },
             isLoadingMessages: false,
           });
-        } catch (error) {
-          console.error("❌ Failed to load messages:", error);
+        } catch (err) {
+          console.error(err);
           set({ isLoadingMessages: false });
         }
       },
@@ -676,13 +728,18 @@ const useChatStore = create(
               ...get().messagesByConversation,
               [conversationId]: {
                 messages: transformed,
-                hasMore: result.hasMoreBefore,
-                cursor: result.beforeCursor,
+                hasMoreBefore: result.hasMoreBefore,
+                beforeCursor: result.beforeCursor,
+                hasMoreAfter: result.hasMoreAfter,
+                afterCursor: result.afterCursor,
                 messagesLoaded: true,
               },
             },
-            isJumpingToMessages: false,
           });
+
+          // Keep loader visible for a moment to show progress
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          set({ isJumpingToMessages: false });
         } catch (error) {
           console.error("❌ Failed to load messages:", error);
           set({ isJumpingToMessages: false });

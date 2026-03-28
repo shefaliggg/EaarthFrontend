@@ -68,16 +68,23 @@ const chatApi = {
   },
 
   // Get messages for a conversation
-  getMessages: async (conversationId, limit = 20, cursor = null) => {
+  getMessages: async (
+    conversationId,
+    limit = 20,
+    cursor = null,
+    direction = "backward",
+  ) => {
     try {
       console.log("📡 API: Fetching messages", {
         conversationId,
         limit,
         cursor,
+        direction,
       });
 
       const params = { limit };
       if (cursor) params.cursor = cursor;
+      if (direction) params.direction = direction;
 
       const response = await axiosConfig.get(
         `/chats/${conversationId}/messages`,

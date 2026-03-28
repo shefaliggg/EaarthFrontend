@@ -46,7 +46,7 @@ const VARIANT_STYLES = {
 
   modern: {
     list: ({ fullWidth }) => `
-      h-auto bg-background shadow-md border border-2 border-muted rounded-xl p-1
+      h-auto bg-background shadow-md border rounded-xl p-1 px-1.5
       ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start gap-1.5"}
     `,
     trigger: () => `
