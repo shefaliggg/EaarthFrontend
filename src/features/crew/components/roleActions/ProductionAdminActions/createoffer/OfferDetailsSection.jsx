@@ -10,33 +10,19 @@ function formatShortDate(dateString) {
   });
 }
 
-function getUnitLabel(val) {
-  switch (val) {
-    case "main": return "Main";
-    case "splinter_camera": return "Splinter Camera";
-    case "vfx_elements": return "VFX Elements";
-    default: return val || "—";
-  }
-}
-
-function getDepartmentLabel(val) {
-  if (!val) return "—";
-  return val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function getSiteOfWorkLabel(val) {
   switch (val) {
-    case "on_set": return "On set";
+    case "on_set":  return "On set";
     case "off_set": return "Off set";
-    default: return val || "—";
+    default:        return val || "—";
   }
 }
 
 function getShootDuration(startDate, endDate) {
   if (!startDate || !endDate) return "—";
   const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const end   = new Date(endDate);
+  const diff  = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   return `${diff} days`;
 }
 
@@ -46,35 +32,53 @@ export function OfferDetailsSection({ data, activeField, onFieldClick }) {
     return data.jobTitle || "—";
   };
 
-  // jobTitle field is active if any of these are focused
   const jobTitleActive =
     activeField === "jobTitle" ||
     activeField === "newJobTitle" ||
     activeField === "jobTitleSuffix";
+
+  // department is stored as the display name string (e.g. "Camera", "Art")
+  // subDepartment is a plain string typed by production (e.g. "Drone Operator")
+  const departmentLabel = data.department || "—";
+  const subDepartmentLabel = data.subDepartment || null;
+  const unitLabel = data.unit || "—";
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200/80 p-2 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <SectionHeader title="Offer Details" />
       <div className="space-y-1">
 
-        {/* Unit + Department */}
-        <div className="grid grid-cols-2 gap-x-2">
+        {/* Unit + Department + Sub-department */}
+        <div className="grid grid-cols-3 gap-x-2">
           <Field label="Unit">
             <HighlightField
               fieldName="unit"
               active={activeField === "unit"}
               onClick={onFieldClick}
             >
-              <span className="font-medium">{getUnitLabel(data.unit)}</span>
+              <span className="font-medium">{unitLabel}</span>
             </HighlightField>
           </Field>
+
           <Field label="Department">
             <HighlightField
               fieldName="department"
               active={activeField === "department"}
               onClick={onFieldClick}
             >
-              <span className="font-medium">{getDepartmentLabel(data.department)}</span>
+              <span className="font-medium">{departmentLabel}</span>
+            </HighlightField>
+          </Field>
+
+          <Field label="Sub-department">
+            <HighlightField
+              fieldName="subDepartment"
+              active={activeField === "subDepartment"}
+              onClick={onFieldClick}
+            >
+              <span className="font-medium text-[10px]">
+                {subDepartmentLabel || <span className="text-neutral-300">—</span>}
+              </span>
             </HighlightField>
           </Field>
         </div>
@@ -105,7 +109,6 @@ export function OfferDetailsSection({ data, activeField, onFieldClick }) {
             </HighlightField>
           </Field>
           <Field label="Duration">
-            {/* Duration is derived — highlight when either date is focused */}
             <HighlightField
               fieldName="startDate"
               active={activeField === "startDate" || activeField === "endDate"}

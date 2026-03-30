@@ -1,14 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { format } from "date-fns";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { format, eachDayOfInterval, isWithinInterval, parseISO, isValid } from "date-fns";
 import {
   Printer, HelpCircle, Search,
   Package, Monitor, Code, Wrench, Car, Smartphone, UtensilsCrossed, Home,
-  CalendarIcon, ChevronDown, ChevronRight,
+  CalendarIcon, ChevronDown, ChevronRight, Plus, Trash2, FileText,
 } from "lucide-react";
 import { cn } from "../../../../../../shared/config/utils";
 import { formatCurrency, formatRateHol } from "../../../../utils/rateCalculations";
 
-// ── shadcn/ui imports ──────────────────────────────────────────────────────
 import { Button }           from "../../../../../../shared/components/ui/button";
 import { Input }            from "../../../../../../shared/components/ui/input";
 import { Label }            from "../../../../../../shared/components/ui/label";
@@ -24,14 +23,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "../../../../../../shared/components/ui/select";
 
-// ── Bundle resolver (single source of truth for preview only) ─────────────
 import {
   resolveContractBundle,
   canResolveBundle,
 } from "../../../../utils/bundleResolver";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Static fallbacks (used only when parent has not supplied API data yet)
+// Static fallbacks
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_DEPARTMENTS = [
@@ -103,12 +101,27 @@ const DEFAULT_JOB_TITLES = [
   "Wardrobe Supervisor (SELF-EMPLOYED)","Orchestrator and Conductor (SELF-EMPLOYED)",
 ];
 
-// ── Shared className shorthands ────────────────────────────────────────────
 const SI = "rounded-lg mx-1 my-px cursor-pointer hover:bg-accent/30 focus:bg-accent/30 data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary data-[state=checked]:font-semibold";
 const ST = "w-full h-9 bg-input border-border hover:border-primary/50 focus:ring-2 focus:ring-primary/30 focus:border-primary [&>svg]:text-primary transition-all";
 const SC = "border-border rounded-xl shadow-lg shadow-primary/10 z-[200] bg-popover";
 
-// ── CollapsibleSection ─────────────────────────────────────────────────────
+// ── Default schedule — one hiatus + one block pre-seeded (NO workingHours) ──
+const DEFAULT_SCHEDULE = {
+  hiatus: [{ start: "", end: "", reason: "" }],
+  prePrep: { start: "", end: "", notes: "" },
+  blocks: [
+    {
+      name: "BLOCK 1",
+      prep: { start: "", end: "", notes: "" },
+      start: "",
+      end: "",
+      notes: "",
+    },
+  ],
+  wrap: { start: "", end: "", notes: "" },
+  totalDays: 0,
+};
+
 function CollapsibleSection({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -133,28 +146,22 @@ function CollapsibleSection({ title, children, defaultOpen = true }) {
   );
 }
 
-// ── TooltipLabel ───────────────────────────────────────────────────────────
 function TooltipLabel({ htmlFor, label, tooltip }) {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-1.5">
-        <Label htmlFor={htmlFor} className="text-xs font-medium text-foreground/80">
-          {label}
-        </Label>
+        <Label htmlFor={htmlFor} className="text-xs font-medium text-foreground/80">{label}</Label>
         <Tooltip>
           <TooltipTrigger asChild>
             <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[220px] text-xs">
-            {tooltip}
-          </TooltipContent>
+          <TooltipContent side="top" className="max-w-[220px] text-xs">{tooltip}</TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>
   );
 }
 
-// ── DatePicker ─────────────────────────────────────────────────────────────
 function DatePicker({ id, value, onChange, onFocus, onBlur, placeholder = "Pick a date" }) {
   const date = value ? new Date(value + "T00:00:00") : undefined;
   return (
@@ -170,30 +177,79 @@ function DatePicker({ id, value, onChange, onFocus, onBlur, placeholder = "Pick 
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 border-border z-[200]" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
+        <Calendar mode="single" selected={date}
           onSelect={(d) => { onChange(d ? format(d, "yyyy-MM-dd") : ""); onBlur?.(); }}
-          initialFocus
-        />
+          initialFocus />
       </PopoverContent>
     </Popover>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Transform allowances object → array before submitting to backend.
-// Call this in your CreateOffer submit handler:
-//   payload.allowances = transformAllowancesForApi(allowances);
-// ─────────────────────────────────────────────────────────────────────────────
+function ScheduleDatePicker({ id, value, onChange, onFocus, onBlur, placeholder = "DD MM YYYY" }) {
+  const parsed = value ? parseISO(value) : undefined;
+  const validDate = parsed && isValid(parsed) ? parsed : undefined;
+  return (
+    <Popover onOpenChange={(open) => { if (open) onFocus?.(); else onBlur?.(); }}>
+      <PopoverTrigger asChild>
+        <Button id={id} variant="outline"
+          className={cn(
+            "w-full h-9 justify-start text-left font-normal bg-input border-border hover:border-primary/50 hover:bg-input text-sm",
+            !validDate && "text-muted-foreground"
+          )}>
+          <CalendarIcon className="mr-2 h-3.5 w-3.5 text-primary shrink-0" />
+          {validDate ? format(validDate, "dd MMM yyyy") : placeholder}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 border-border z-[200]" align="start">
+        <Calendar mode="single" selected={validDate}
+          onSelect={(d) => { onChange(d ? format(d, "yyyy-MM-dd") : ""); onBlur?.(); }}
+          initialFocus />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function DateRangeRow({ startValue, endValue, onStartChange, onEndChange, onFocus, onBlur }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-1">
+        <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Start</Label>
+        <ScheduleDatePicker value={startValue} onChange={onStartChange} onFocus={onFocus} onBlur={onBlur} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">End</Label>
+        <ScheduleDatePicker value={endValue} onChange={onEndChange} onFocus={onFocus} onBlur={onBlur} />
+      </div>
+    </div>
+  );
+}
+
+function calcTotalDays(sched) {
+  const { blocks = [], hiatus = [] } = sched;
+  const hiatusIntervals = hiatus
+    .filter((h) => h.start && h.end)
+    .map((h) => ({ start: parseISO(h.start), end: parseISO(h.end) }))
+    .filter((iv) => isValid(iv.start) && isValid(iv.end));
+
+  let total = 0;
+  for (const block of blocks) {
+    if (!block.start || !block.end) continue;
+    const s = parseISO(block.start);
+    const e = parseISO(block.end);
+    if (!isValid(s) || !isValid(e) || e < s) continue;
+    for (const day of eachDayOfInterval({ start: s, end: e })) {
+      if (!hiatusIntervals.some((iv) => isWithinInterval(day, iv))) total += 1;
+    }
+  }
+  return total;
+}
+
 export function transformAllowancesForApi(allowancesObj) {
   return Object.entries(allowancesObj)
     .filter(([, value]) => value.enabled)
     .map(([key, value]) => ({ key, ...value }));
 }
 
-// ── BundlePreviewBar ───────────────────────────────────────────────────────
-// Preview only — real bundle resolution happens on the backend.
 function BundlePreviewBar({ offer }) {
   if (!canResolveBundle(offer)) {
     return (
@@ -208,16 +264,10 @@ function BundlePreviewBar({ offer }) {
       <p className="text-xs font-semibold text-primary">{bundleName}</p>
       <div className="flex flex-wrap gap-1">
         {contractForms.map((f) => (
-          <span key={f.key}
-            className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-            {f.label}
-          </span>
+          <span key={f.key} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{f.label}</span>
         ))}
         {allowanceForms.map((f) => (
-          <span key={f.key}
-            className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            {f.label}
-          </span>
+          <span key={f.key} className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">{f.label}</span>
         ))}
       </div>
       <p className="text-[10px] text-muted-foreground">
@@ -248,49 +298,60 @@ export function ContractForm({
   setOvertimeTags,
   allowances,
   setAllowances,
-  // Accept categories from parent (API response: [{ _id, name, slug }])
-  // Falls back to bundleResolver CATEGORIES if not supplied
-  categories = null,
-  // Accept departments and job titles from parent API response
+  schedule,
+  setSchedule,
+  categories  = null,
   departments = DEFAULT_DEPARTMENTS,
   jobTitles   = DEFAULT_JOB_TITLES,
 }) {
-  // Fields that must NOT be uppercased
   const NO_UPPER = new Set([
     "overtime","allowSelfEmployed","workingInUK","statusDeterminationReason",
     "engagementType","dailyOrWeekly","unit","department","subDepartment",
     "currency","categoryId","startDate","endDate","isViaAgent",
-    "createOwnJobTitle","searchAllDepartments",
+    "createOwnJobTitle","searchAllDepartments","workingHours",
   ]);
 
-  // ── Top-level flat setter ────────────────────────────────────────────────
   const set = (field, value) => {
-    const v = typeof value === "string" && !NO_UPPER.has(field)
-      ? value.toUpperCase() : value;
+    const v = typeof value === "string" && !NO_UPPER.has(field) ? value.toUpperCase() : value;
     onChange({ ...data, [field]: v });
   };
 
-  // ── FIX: nested setter for data.recipient.* ──────────────────────────────
   const setRecipient = (field, value) => {
-    const v = field !== "email" && typeof value === "string"
-      ? value.toUpperCase() : value;
+    const v = field !== "email" && typeof value === "string" ? value.toUpperCase() : value;
     onChange({ ...data, recipient: { ...data.recipient, [field]: v } });
   };
 
-  // ── FIX: nested setter for data.representation.* ────────────────────────
-  const setRepresentation = (field, value) => {
+  const setRepresentation = (field, value) =>
     onChange({ ...data, representation: { ...data.representation, [field]: value } });
-  };
 
-  // ── FIX: nested setter for data.taxStatus.* (matches offer.model.js) ────
-  const setTaxStatus = (field, value) => {
+  const setTaxStatus = (field, value) =>
     onChange({ ...data, taxStatus: { ...data.taxStatus, [field]: value } });
-  };
 
-  // ── FIX: nested setter for data.notes.* (matches offer.model.js) ────────
   const setNotes = (field, value) => {
     const v = typeof value === "string" ? value.toUpperCase() : value;
     onChange({ ...data, notes: { ...data.notes, [field]: v } });
+  };
+
+  // ── Special Stipulations helpers ───────────────────────────────────────────
+  const stipulations = data.specialStipulations || [];
+
+  const addStipulation = () => {
+    onChange({
+      ...data,
+      specialStipulations: [...stipulations, { title: "", body: "" }],
+    });
+  };
+
+  const removeStipulation = (i) => {
+    const next = [...stipulations];
+    next.splice(i, 1);
+    onChange({ ...data, specialStipulations: next });
+  };
+
+  const setStipulation = (i, field, value) => {
+    const next = [...stipulations];
+    next[i] = { ...next[i], [field]: typeof value === "string" ? value.toUpperCase() : value };
+    onChange({ ...data, specialStipulations: next });
   };
 
   const updateArr = (setter, i, value) =>
@@ -303,14 +364,10 @@ export function ContractForm({
 
   const cs = { GBP:"£", USD:"$", EUR:"€", AUD:"A$", CAD:"C$", NZD:"NZ$", DKK:"kr", ISK:"kr" }[data.currency] ?? "£";
 
-  // ── FIX: read from correct nested paths ─────────────────────────────────
-  const taxStatus        = data.taxStatus        || {};
-  const notes            = data.notes            || {};
-  const representation   = data.representation   || {};
+  const taxStatus      = data.taxStatus      || {};
+  const notes          = data.notes          || {};
+  const representation = data.representation || {};
 
-  // Build category options:
-  // If parent passes real API categories ([{ _id, name }]), use those.
-  // Otherwise fall back to bundleResolver static list.
   const categoryOptions = categories
     ? categories.map((c) => ({ value: c._id, label: c.name }))
     : [
@@ -323,42 +380,79 @@ export function ContractForm({
         { value: "transport",      label: "Transport"       },
       ];
 
+  // ── Schedule helpers ───────────────────────────────────────────────────────
+  const sched = schedule || DEFAULT_SCHEDULE;
+
+  const updateSched = (patch) => {
+    const next = { ...sched, ...patch };
+    next.totalDays = calcTotalDays(next);
+    setSchedule(next);
+  };
+
+  const setPrePrep = (field, val) => updateSched({ prePrep: { ...sched.prePrep, [field]: val } });
+  const setWrap    = (field, val) => updateSched({ wrap:    { ...sched.wrap,    [field]: val } });
+
+  const addHiatus    = () => updateSched({ hiatus: [...(sched.hiatus || []), { start: "", end: "", reason: "" }] });
+  const removeHiatus = (i) => { const n = [...(sched.hiatus||[])]; n.splice(i,1); updateSched({ hiatus: n }); };
+  const setHiatus    = (i, field, val) => {
+    const n = [...(sched.hiatus||[])];
+    n[i] = { ...n[i], [field]: typeof val === "string" ? val.toUpperCase() : val };
+    updateSched({ hiatus: n });
+  };
+
+  const addBlock    = () => {
+    const idx = (sched.blocks||[]).length + 1;
+    updateSched({ blocks: [...(sched.blocks||[]), { name:`BLOCK ${idx}`, prep:{ start:"", end:"", notes:"" }, start:"", end:"", notes:"" }] });
+  };
+  const removeBlock = (i) => { const n = [...(sched.blocks||[])]; n.splice(i,1); updateSched({ blocks: n }); };
+  const setBlock    = (i, field, val) => {
+    const n = [...(sched.blocks||[])];
+    n[i] = { ...n[i], [field]: typeof val === "string" ? val.toUpperCase() : val };
+    updateSched({ blocks: n });
+  };
+  const setBlockPrep = (i, field, val) => {
+    const n = [...(sched.blocks||[])];
+    n[i] = { ...n[i], prep: { ...n[i].prep, [field]: val } };
+    updateSched({ blocks: n });
+  };
+
+  const schedTotalDays = useMemo(() => calcTotalDays(sched), [sched]);
+
+  const prePrepDays = useMemo(() => {
+    const s = sched.prePrep?.start ? parseISO(sched.prePrep.start) : null;
+    const e = sched.prePrep?.end   ? parseISO(sched.prePrep.end)   : null;
+    return s && e && isValid(s) && isValid(e) && e >= s
+      ? eachDayOfInterval({ start: s, end: e }).length : null;
+  }, [sched.prePrep?.start, sched.prePrep?.end]);
+
   return (
     <div className="py-0">
       <div className="space-y-2">
 
-        {/* ── Recipient ────────────────────────────────────────────────── */}
-        {/* FIX: all fields write to data.recipient.* */}
+        {/* ── Recipient ── */}
         <CollapsibleSection title="Recipient">
           <div className="space-y-1.5">
             <Label htmlFor="fullName" className="text-xs text-foreground/80">Full name</Label>
-            <Input id="fullName"
-              value={data.recipient?.fullName ?? ""}
+            <Input id="fullName" value={data.recipient?.fullName ?? ""}
               onChange={(e) => setRecipient("fullName", e.target.value)}
               onFocus={() => onFieldFocus?.("recipient.fullName")} onBlur={onFieldBlur}
               placeholder="FULL NAME" className="h-9 bg-input text-sm uppercase" />
           </div>
-
           <div className="space-y-1.5">
             <TooltipLabel htmlFor="email" label="Email"
               tooltip="Ensure this is the recipient's preferred email address for use on their engine account." />
-            <Input id="email" type="email"
-              value={data.recipient?.email ?? ""}
+            <Input id="email" type="email" value={data.recipient?.email ?? ""}
               onChange={(e) => setRecipient("email", e.target.value)}
               onFocus={() => onFieldFocus?.("recipient.email")} onBlur={onFieldBlur}
               placeholder="email@example.com" className="h-9 bg-input text-sm" />
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="mobileNumber" className="text-xs text-foreground/80">Mobile number</Label>
-            <Input id="mobileNumber"
-              value={data.recipient?.mobileNumber ?? ""}
+            <Input id="mobileNumber" value={data.recipient?.mobileNumber ?? ""}
               onChange={(e) => setRecipient("mobileNumber", e.target.value)}
               onFocus={() => onFieldFocus?.("recipient.mobileNumber")} onBlur={onFieldBlur}
               placeholder="MOBILE NUMBER" className="h-9 bg-input text-sm" />
           </div>
-
-          {/* FIX: isViaAgent lives under data.representation.isViaAgent */}
           <div className="flex items-center gap-2 pt-1">
             <Checkbox id="isViaAgent" checked={!!representation.isViaAgent}
               onCheckedChange={(v) => setRepresentation("isViaAgent", v)} />
@@ -366,13 +460,10 @@ export function ContractForm({
               Check the box if this deal is via an agent
             </Label>
           </div>
-
-          {/* FIX: agentEmail lives under data.representation.agentEmail */}
           {representation.isViaAgent && (
             <div className="space-y-1.5">
               <Label htmlFor="agentEmail" className="text-xs text-foreground/80">Agent email</Label>
-              <Input id="agentEmail" type="email"
-                value={representation.agentEmail ?? ""}
+              <Input id="agentEmail" type="email" value={representation.agentEmail ?? ""}
                 onChange={(e) => setRepresentation("agentEmail", e.target.value)}
                 onFocus={() => onFieldFocus?.("representation.agentEmail")} onBlur={onFieldBlur}
                 placeholder="agent@example.com" className="h-9 bg-input text-sm" />
@@ -384,8 +475,7 @@ export function ContractForm({
         <CollapsibleSection title="Alternative Contract" defaultOpen={false}>
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Contract type</Label>
-            <Select value={data.alternativeContract ?? ""}
-              onValueChange={(v) => set("alternativeContract", v)}>
+            <Select value={data.alternativeContract ?? ""} onValueChange={(v) => set("alternativeContract", v)}>
               <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
               <SelectContent className={SC}>
                 <SelectItem className={SI} value="hod">HoD</SelectItem>
@@ -398,38 +488,54 @@ export function ContractForm({
 
         {/* ── Unit and Department ── */}
         <CollapsibleSection title="Unit and Department">
+          {/* Unit — plain text input, production types it */}
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Unit</Label>
-            <Select value={data.unit ?? ""} onValueChange={(v) => set("unit", v)}>
-              <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent className={SC}>
-                <SelectItem className={SI} value="main">Main</SelectItem>
-                <SelectItem className={SI} value="splinter_camera">Splinter Camera</SelectItem>
-                <SelectItem className={SI} value="vfx_elements">VFX Elements</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              value={data.unit ?? ""}
+              onChange={(e) => set("unit", e.target.value)}
+              onFocus={() => onFieldFocus?.("unit")}
+              onBlur={onFieldBlur}
+              placeholder="e.g. MAIN UNIT, SECOND UNIT"
+              className="h-9 bg-input text-sm uppercase"
+            />
           </div>
 
+          {/* Department — dropdown from global list */}
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Department</Label>
-            <Select value={data.department ?? ""} onValueChange={(v) => set("department", v)}>
-              <SelectTrigger className={ST}><SelectValue placeholder="Select department..." /></SelectTrigger>
+            <Select
+              value={data.department ?? ""}
+              onValueChange={(v) => set("department", v)}
+            >
+              <SelectTrigger className={ST}>
+                <SelectValue placeholder="Select department..." />
+              </SelectTrigger>
               <SelectContent className={SC}>
                 {departments.map((d) => (
-                  <SelectItem className={SI} key={d} value={d.toLowerCase().replace(/\s+/g, "_")}>{d}</SelectItem>
+                  <SelectItem className={SI} key={d} value={d}>{d}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Sub-department — plain text input, manually typed per project */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-foreground/80">Sub-department</Label>
-            <Select value={data.subDepartment ?? ""} onValueChange={(v) => set("subDepartment", v)}>
-              <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
-              <SelectContent className={SC}>
-                <SelectItem className={SI} value="new">New</SelectItem>
-              </SelectContent>
-            </Select>
+            <TooltipLabel
+              label="Sub-department"
+              tooltip="Manually type the sub-department for this crew member on this project. e.g. Drone Operator, Steadicam, DIT"
+            />
+            <Input
+              value={data.subDepartment ?? ""}
+              onChange={(e) => set("subDepartment", e.target.value)}
+              onFocus={() => onFieldFocus?.("subDepartment")}
+              onBlur={onFieldBlur}
+              placeholder="e.g. DRONE OPERATOR, STEADICAM, DIT"
+              className="h-9 bg-input text-sm uppercase"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Sub-departments are specific to this project and entered manually.
+            </p>
           </div>
         </CollapsibleSection>
 
@@ -437,15 +543,9 @@ export function ContractForm({
         <CollapsibleSection title="Role">
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Job title</Label>
-            <JobTitleCombobox
-              value={data.jobTitle ?? ""}
-              onChange={(v) => set("jobTitle", v)}
-              onFocus={() => onFieldFocus?.("jobTitle")}
-              onBlur={onFieldBlur}
-              jobTitles={jobTitles}
-            />
+            <JobTitleCombobox value={data.jobTitle ?? ""} onChange={(v) => set("jobTitle", v)}
+              onFocus={() => onFieldFocus?.("jobTitle")} onBlur={onFieldBlur} jobTitles={jobTitles} />
           </div>
-
           <div className="flex items-center gap-2">
             <Checkbox id="searchAllDepts" checked={!!data.searchAllDepartments}
               onCheckedChange={(v) => set("searchAllDepartments", v)} />
@@ -453,11 +553,9 @@ export function ContractForm({
               Search job titles from all departments?
             </Label>
           </div>
-
           <p className="text-xs text-muted-foreground">
             Engagement type (e.g. PAYE) is shown as guidance only, can be amended later, and won't appear in the chosen job title.
           </p>
-
           <div className="flex items-center gap-2">
             <Checkbox id="createOwnTitle" checked={!!data.createOwnJobTitle}
               onCheckedChange={(v) => set("createOwnJobTitle", v)} />
@@ -465,17 +563,14 @@ export function ContractForm({
               Create your own job title (only available to this project)
             </Label>
           </div>
-
           {data.createOwnJobTitle && (
             <div className="space-y-1.5">
               <Label className="text-xs text-foreground/80">New job title</Label>
-              <Input value={data.newJobTitle ?? ""}
-                onChange={(e) => set("newJobTitle", e.target.value)}
+              <Input value={data.newJobTitle ?? ""} onChange={(e) => set("newJobTitle", e.target.value)}
                 onFocus={() => onFieldFocus?.("newJobTitle")} onBlur={onFieldBlur}
                 placeholder="Add your own job title" className="h-9 bg-input text-sm uppercase" />
             </div>
           )}
-
           <div className="space-y-1.5">
             <Label htmlFor="jobTitleSuffix" className="text-xs text-foreground/80">Job title suffix</Label>
             <Input id="jobTitleSuffix" value={data.jobTitleSuffix ?? ""}
@@ -486,14 +581,11 @@ export function ContractForm({
         </CollapsibleSection>
 
         {/* ── Tax Status ── */}
-        {/* FIX: all fields write to data.taxStatus.* */}
         <CollapsibleSection title="Tax Status" defaultOpen={false}>
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Allow as self-employed or loan out?</Label>
-            <RadioGroup
-              value={taxStatus.allowSelfEmployed ?? ""}
-              onValueChange={(v) => setTaxStatus("allowSelfEmployed", v)}
-              className="flex gap-4">
+            <RadioGroup value={taxStatus.allowSelfEmployed ?? ""}
+              onValueChange={(v) => setTaxStatus("allowSelfEmployed", v)} className="flex gap-4">
               {["yes","no"].map((v) => (
                 <div key={v} className="flex items-center gap-2">
                   <RadioGroupItem value={v} id={`se_${v}`} />
@@ -502,11 +594,9 @@ export function ContractForm({
               ))}
             </RadioGroup>
           </div>
-
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Status determination reason</Label>
-            <Select
-              value={taxStatus.statusDeterminationReason ?? ""}
+            <Select value={taxStatus.statusDeterminationReason ?? ""}
               onValueChange={(v) => setTaxStatus("statusDeterminationReason", v)}>
               <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
               <SelectContent className={SC}>
@@ -517,16 +607,13 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
           {taxStatus.statusDeterminationReason === "other" && (
             <div className="space-y-1.5">
               <Label className="text-xs text-foreground/80">Other reason</Label>
-              <Input
-                value={taxStatus.otherStatusDeterminationReason ?? ""}
+              <Input value={taxStatus.otherStatusDeterminationReason ?? ""}
                 onChange={(e) => setTaxStatus("otherStatusDeterminationReason", e.target.value)}
                 onFocus={() => onFieldFocus?.("taxStatus.otherStatusDeterminationReason")}
-                onBlur={onFieldBlur}
-                className="h-9 bg-input text-sm uppercase" />
+                onBlur={onFieldBlur} className="h-9 bg-input text-sm uppercase" />
             </div>
           )}
         </CollapsibleSection>
@@ -534,8 +621,7 @@ export function ContractForm({
         {/* ── Place of Work ── */}
         <CollapsibleSection title="Place of Work" defaultOpen={false}>
           <div className="space-y-1.5">
-            <TooltipLabel
-              label="Regular site of work (on Shoot days)"
+            <TooltipLabel label="Regular site of work (on Shoot days)"
               tooltip="On set = crew whose overtime is calculated based on the shooting day. Off set = crew whose overtime is always based on a SWD." />
             <Select value={data.regularSiteOfWork ?? ""} onValueChange={(v) => set("regularSiteOfWork", v)}>
               <SelectTrigger className={ST}><SelectValue placeholder="Select..." /></SelectTrigger>
@@ -545,14 +631,10 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1.5">
-            <TooltipLabel
-              label="Working in the UK?"
+            <TooltipLabel label="Working in the UK?"
               tooltip="Yes = recipient will be required to submit proof of Right to Work in the UK." />
-            <RadioGroup value={data.workingInUK ?? ""}
-              onValueChange={(v) => set("workingInUK", v)}
-              className="flex gap-4">
+            <RadioGroup value={data.workingInUK ?? ""} onValueChange={(v) => set("workingInUK", v)} className="flex gap-4">
               {[{v:"yes",l:"Yes"},{v:"never",l:"Never"}].map(({v,l}) => (
                 <div key={v} className="flex items-center gap-2">
                   <RadioGroupItem value={v} id={`uk_${v}`} />
@@ -565,51 +647,31 @@ export function ContractForm({
 
         {/* ── Engagement ── */}
         <CollapsibleSection title="Engagement">
-
-          {/* FIX: category uses real ObjectIds from API (or slug fallback) */}
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">
               Contract category <span className="text-destructive">*</span>
             </Label>
-            <Select
-              value={data.categoryId ?? ""}
-              onValueChange={(v) => set("categoryId", v)}
-            >
-              <SelectTrigger className={ST}>
-                <SelectValue placeholder="Select category..." />
-              </SelectTrigger>
+            <Select value={data.categoryId ?? ""} onValueChange={(v) => set("categoryId", v)}>
+              <SelectTrigger className={ST}><SelectValue placeholder="Select category..." /></SelectTrigger>
               <SelectContent className={SC}>
                 {categoryOptions.map(({ value, label }) => (
-                  <SelectItem className={SI} key={value} value={value}>
-                    {label}
-                  </SelectItem>
+                  <SelectItem className={SI} key={value} value={value}>{label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Determines which contract bundle is assigned to this offer.
-            </p>
+            <p className="text-xs text-muted-foreground">Determines which contract bundle is assigned to this offer.</p>
           </div>
-
           <div className="space-y-1.5">
-            <Label className="text-xs text-foreground/80">
-              Start date <span className="text-destructive">*</span>
-            </Label>
-            <DatePicker id="startDate" value={data.startDate}
-              onChange={(v) => set("startDate", v)}
-              onFocus={() => onFieldFocus?.("startDate")} onBlur={onFieldBlur}
-              placeholder="Pick start date" />
+            <Label className="text-xs text-foreground/80">Start date <span className="text-destructive">*</span></Label>
+            <DatePicker id="startDate" value={data.startDate} onChange={(v) => set("startDate", v)}
+              onFocus={() => onFieldFocus?.("startDate")} onBlur={onFieldBlur} placeholder="Pick start date" />
           </div>
-
           <div className="space-y-1.5">
             <TooltipLabel label="End date (optional)"
               tooltip="The End date will appear in the contract if your templates have a slot for it." />
-            <DatePicker id="endDate" value={data.endDate}
-              onChange={(v) => set("endDate", v)}
-              onFocus={() => onFieldFocus?.("endDate")} onBlur={onFieldBlur}
-              placeholder="Pick end date" />
+            <DatePicker id="endDate" value={data.endDate} onChange={(v) => set("endDate", v)}
+              onFocus={() => onFieldFocus?.("endDate")} onBlur={onFieldBlur} placeholder="Pick end date" />
           </div>
-
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Daily or weekly</Label>
             <Select value={data.dailyOrWeekly ?? ""} onValueChange={(v) => set("dailyOrWeekly", v)}>
@@ -620,7 +682,6 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Engagement type</Label>
             <Select value={data.engagementType ?? ""} onValueChange={(v) => set("engagementType", v)}>
@@ -633,7 +694,6 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Working week</Label>
             <Select value={data.workingWeek ?? ""} onValueChange={(v) => set("workingWeek", v)}>
@@ -646,13 +706,140 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
-          {/* Live bundle preview (UI only — backend is authoritative) */}
           <BundlePreviewBar offer={data} />
+        </CollapsibleSection>
+
+        {/* ── Schedule (NO workingHours here — it lives in Rates) ── */}
+        <CollapsibleSection title="Schedule" defaultOpen={false}>
+
+          {/* Hiatus */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-foreground/80">Hiatus periods</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addHiatus}
+                className="h-7 text-[10px] gap-1 border-primary/30 text-primary hover:bg-primary/10">
+                <Plus className="h-3 w-3" /> Add hiatus
+              </Button>
+            </div>
+            {(sched.hiatus || []).map((h, i) => (
+              <div key={i} className="border border-border rounded-lg p-2 space-y-2 bg-accent/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">Hiatus {i + 1}</span>
+                  <button type="button" onClick={() => removeHiatus(i)}
+                    className="text-destructive/60 hover:text-destructive transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <DateRangeRow
+                  startValue={h.start} onStartChange={(v) => setHiatus(i, "start", v)}
+                  endValue={h.end}     onEndChange={(v) => setHiatus(i, "end", v)}
+                  onFocus={() => onFieldFocus?.(`schedule.hiatus[${i}]`)} onBlur={onFieldBlur} />
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Reason (optional)</Label>
+                  <Input value={h.reason ?? ""}
+                    onChange={(e) => setHiatus(i, "reason", e.target.value)}
+                    onFocus={() => onFieldFocus?.(`schedule.hiatus[${i}].reason`)} onBlur={onFieldBlur}
+                    placeholder="e.g. CHRISTMAS BREAK" className="h-8 bg-input text-xs uppercase" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pre-Prep */}
+          <div className="border border-border rounded-lg p-2 space-y-2 bg-accent/5">
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wide block">Pre Prep</span>
+            <DateRangeRow
+              startValue={sched.prePrep?.start ?? ""} onStartChange={(v) => setPrePrep("start", v)}
+              endValue={sched.prePrep?.end ?? ""}     onEndChange={(v) => setPrePrep("end", v)}
+              onFocus={() => onFieldFocus?.("schedule.prePrep")} onBlur={onFieldBlur} />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">Total days</span>
+              <span className="text-[10px] font-mono bg-muted px-2 py-0.5 rounded text-foreground/70">
+                {prePrepDays ?? "—"}
+              </span>
+            </div>
+            <Input value={sched.prePrep?.notes ?? ""} onChange={(e) => setPrePrep("notes", e.target.value)}
+              onFocus={() => onFieldFocus?.("schedule.prePrep.notes")} onBlur={onFieldBlur}
+              placeholder="PRE PREP NOTES..." className="h-8 bg-input text-xs uppercase" />
+          </div>
+
+          {/* Blocks */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-foreground/80">Shoot / work blocks</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addBlock}
+                className="h-7 text-[10px] gap-1 border-primary/30 text-primary hover:bg-primary/10">
+                <Plus className="h-3 w-3" /> Add block
+              </Button>
+            </div>
+            {(sched.blocks || []).map((block, i) => (
+              <div key={i} className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <Input value={block.name ?? `BLOCK ${i + 1}`}
+                      onChange={(e) => setBlock(i, "name", e.target.value)}
+                      className="h-6 bg-transparent border-transparent text-[11px] font-semibold text-primary p-0 focus:border-primary/40 w-28 uppercase" />
+                  </div>
+                  <button type="button" onClick={() => removeBlock(i)}
+                    className="text-destructive/60 hover:text-destructive transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="p-2 space-y-2">
+                  <div className="space-y-1.5 pl-2 border-l-2 border-primary/20">
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Prep {i + 1}</span>
+                    <DateRangeRow
+                      startValue={block.prep?.start ?? ""} onStartChange={(v) => setBlockPrep(i, "start", v)}
+                      endValue={block.prep?.end ?? ""}     onEndChange={(v) => setBlockPrep(i, "end", v)}
+                      onFocus={() => onFieldFocus?.(`schedule.blocks[${i}].prep`)} onBlur={onFieldBlur} />
+                    <Input value={block.prep?.notes ?? ""}
+                      onChange={(e) => setBlockPrep(i, "notes", e.target.value)}
+                      onFocus={() => onFieldFocus?.(`schedule.blocks[${i}].prep.notes`)} onBlur={onFieldBlur}
+                      placeholder={`PREP ${i + 1} NOTES...`} className="h-8 bg-input text-xs uppercase" />
+                  </div>
+                  <div className="space-y-1.5 pl-2 border-l-2 border-primary/40">
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Block {i + 1}</span>
+                    <DateRangeRow
+                      startValue={block.start ?? ""} onStartChange={(v) => setBlock(i, "start", v)}
+                      endValue={block.end ?? ""}     onEndChange={(v) => setBlock(i, "end", v)}
+                      onFocus={() => onFieldFocus?.(`schedule.blocks[${i}]`)} onBlur={onFieldBlur} />
+                    <Input value={block.notes ?? ""}
+                      onChange={(e) => setBlock(i, "notes", e.target.value)}
+                      onFocus={() => onFieldFocus?.(`schedule.blocks[${i}].notes`)} onBlur={onFieldBlur}
+                      placeholder={`BLOCK ${i + 1} NOTES...`} className="h-8 bg-input text-xs uppercase" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Wrap */}
+          <div className="border border-border rounded-lg p-2 space-y-2 bg-accent/5">
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wide block">Wrap</span>
+            <DateRangeRow
+              startValue={sched.wrap?.start ?? ""} onStartChange={(v) => setWrap("start", v)}
+              endValue={sched.wrap?.end ?? ""}     onEndChange={(v) => setWrap("end", v)}
+              onFocus={() => onFieldFocus?.("schedule.wrap")} onBlur={onFieldBlur} />
+            <Input value={sched.wrap?.notes ?? ""} onChange={(e) => setWrap("notes", e.target.value)}
+              onFocus={() => onFieldFocus?.("schedule.wrap.notes")} onBlur={onFieldBlur}
+              placeholder="WRAP NOTES..." className="h-8 bg-input text-xs uppercase" />
+          </div>
+
+          {/* Total Days */}
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+            <span className="text-xs font-medium text-foreground/80">
+              Total working days
+              <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(excl. hiatus)</span>
+            </span>
+            <span className="text-sm font-bold text-primary tabular-nums">
+              {schedTotalDays > 0 ? schedTotalDays : "—"}
+            </span>
+          </div>
 
         </CollapsibleSection>
 
-        {/* ── Rates ── */}
+        {/* ── Rates (workingHours lives HERE) ── */}
         <CollapsibleSection title="Rates">
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Currency</Label>
@@ -665,7 +852,6 @@ export function ContractForm({
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="feePerDay" className="text-xs text-foreground/80">
               Fee per day including holiday <span className="text-destructive">*</span>
@@ -679,11 +865,35 @@ export function ContractForm({
             </div>
           </div>
 
+          {/* ── Standard working hours — MOVED HERE from Schedule ── */}
+          <div className="space-y-1.5">
+            <TooltipLabel
+              htmlFor="workingHours"
+              label="Standard working hours / day"
+              tooltip="Sets the overtime threshold. Hours beyond this in a single day trigger overtime pay. This is a rate concept, not a schedule concept."
+            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="workingHours"
+                type="number"
+                min={1}
+                max={24}
+                value={data.workingHours ?? 11}
+                onChange={(e) => set("workingHours", Number(e.target.value))}
+                onFocus={() => onFieldFocus?.("workingHours")}
+                onBlur={onFieldBlur}
+                className="h-9 bg-input text-sm w-24"
+              />
+              <span className="text-xs text-muted-foreground">hrs / day</span>
+              <span className="ml-auto text-[10px] text-muted-foreground bg-accent/20 px-2 py-1 rounded-md whitespace-nowrap">
+                Overtime threshold
+              </span>
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label className="text-xs text-foreground/80">Overtime</Label>
-            <RadioGroup value={data.overtime ?? "calculated"}
-              onValueChange={(v) => set("overtime", v)}
-              className="flex flex-col gap-1.5">
+            <RadioGroup value={data.overtime ?? "calculated"} onValueChange={(v) => set("overtime", v)} className="flex flex-col gap-1.5">
               {[{v:"calculated",l:"Calculated per agreement"},{v:"custom",l:"Custom overtime rates"}].map(({v,l}) => (
                 <div key={v} className="flex items-center gap-2">
                   <RadioGroupItem value={v} id={`ot_${v}`} />
@@ -692,14 +902,13 @@ export function ContractForm({
               ))}
             </RadioGroup>
           </div>
-
           {data.overtime === "custom" && (
             <div className="space-y-2 pt-1">
               {[
-                {id:"otherOT",       label:"Other O/T"},
-                {id:"cameraOTSWD",   label:"Camera O/T (SWD)"},
-                {id:"cameraOTSCWD",  label:"Camera O/T (SCWD)"},
-                {id:"cameraOTCWD",   label:"Camera O/T (CWD)"},
+                {id:"otherOT",      label:"Other O/T"},
+                {id:"cameraOTSWD",  label:"Camera O/T (SWD)"},
+                {id:"cameraOTSCWD", label:"Camera O/T (SCWD)"},
+                {id:"cameraOTCWD",  label:"Camera O/T (CWD)"},
               ].map(({id, label}) => (
                 <div key={id} className="space-y-1.5">
                   <Label htmlFor={id} className="text-xs text-foreground/80">
@@ -791,15 +1000,12 @@ export function ContractForm({
         </CollapsibleSection>
 
         {/* ── Allowances ── */}
-        {/* UI state stays as object for ease of editing.
-            Call transformAllowancesForApi(allowances) before the API call. */}
         <CollapsibleSection title="Allowances">
           <p className="text-xs text-muted-foreground">
             Enable allowances below.{" "}
             <span className="font-medium text-foreground/80">Budget Code</span> and{" "}
             <span className="font-medium text-foreground/80">Tag</span> are editable and hidden from print.
           </p>
-
           <div className="space-y-2">
           {[
             {key:"boxRental",  label:"BOX RENTAL",            icon:Package,         type:"feeWeekWithCap", hasDescription:true  },
@@ -830,67 +1036,56 @@ export function ContractForm({
                     {a.enabled ? "ENABLED" : "DISABLED"}
                   </Badge>
                 </div>
-
                 {a.enabled && (
                   <div className="px-3 py-2 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Budget Code</Label>
-                        <Input value={a.budgetCode ?? ""}
-                          onChange={(e) => updateAllowance(key, "budgetCode", e.target.value)}
+                        <Input value={a.budgetCode ?? ""} onChange={(e) => updateAllowance(key, "budgetCode", e.target.value)}
                           onFocus={() => onFieldFocus?.(`allowance_${key}`)} onBlur={onFieldBlur}
                           className="h-8 bg-input text-xs font-mono uppercase" />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Tag</Label>
-                        <Input value={a.tag ?? ""}
-                          onChange={(e) => updateAllowance(key, "tag", e.target.value)}
+                        <Input value={a.tag ?? ""} onChange={(e) => updateAllowance(key, "tag", e.target.value)}
                           onFocus={() => onFieldFocus?.(`allowance_${key}`)} onBlur={onFieldBlur}
                           className="h-8 bg-input text-xs font-mono uppercase" />
                       </div>
                     </div>
-
                     {hasDescription && (
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Description</Label>
-                        <Input value={a.description ?? ""}
-                          onChange={(e) => updateAllowance(key, "description", e.target.value)}
+                        <Input value={a.description ?? ""} onChange={(e) => updateAllowance(key, "description", e.target.value)}
                           onFocus={() => onFieldFocus?.(`allowance_${key}`)} onBlur={onFieldBlur}
                           className="h-8 bg-muted text-xs uppercase" />
                       </div>
                     )}
-
                     {(type === "feeWeekWithCap" || type === "feeWeek") && (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Fee Per Week</Label>
                           <div className="relative">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">£</span>
-                            <Input value={a.feePerWeek ?? ""}
-                              onChange={(e) => updateAllowance(key, "feePerWeek", e.target.value)}
+                            <Input value={a.feePerWeek ?? ""} onChange={(e) => updateAllowance(key, "feePerWeek", e.target.value)}
                               onFocus={() => onFieldFocus?.(`allowance_${key}`)} onBlur={onFieldBlur}
                               className="h-8 bg-input pl-5 text-xs" />
                           </div>
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Terms</Label>
-                          <Input value={a.terms ?? ""}
-                            onChange={(e) => updateAllowance(key, "terms", e.target.value)}
+                          <Input value={a.terms ?? ""} onChange={(e) => updateAllowance(key, "terms", e.target.value)}
                             onFocus={() => onFieldFocus?.(`allowance_${key}`)} onBlur={onFieldBlur}
                             className="h-8 bg-muted text-xs uppercase" />
                         </div>
                       </div>
                     )}
-
                     {type === "perDiem" && (
                       <>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">Currency</Label>
                             <Select value={a.currency ?? "GBP"} onValueChange={(v) => updateAllowance(key, "currency", v)}>
-                              <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary">
-                                <SelectValue />
-                              </SelectTrigger>
+                              <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary"><SelectValue /></SelectTrigger>
                               <SelectContent className={SC}>
                                 <SelectItem className={SI} value="GBP">GBP (£)</SelectItem>
                                 <SelectItem className={SI} value="USD">USD ($)</SelectItem>
@@ -902,38 +1097,29 @@ export function ContractForm({
                             <Label className="text-xs text-muted-foreground">Shoot Day</Label>
                             <div className="relative">
                               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">{a.currency==="USD"?"$":"£"}</span>
-                              <Input value={a.shootDayRate ?? ""}
-                                onChange={(e) => updateAllowance(key, "shootDayRate", e.target.value)}
-                                className="h-8 bg-input pl-5 text-xs" />
+                              <Input value={a.shootDayRate ?? ""} onChange={(e) => updateAllowance(key, "shootDayRate", e.target.value)} className="h-8 bg-input pl-5 text-xs" />
                             </div>
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">Non-Shoot</Label>
                             <div className="relative">
                               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">{a.currency==="USD"?"$":"£"}</span>
-                              <Input value={a.nonShootDayRate ?? ""}
-                                onChange={(e) => updateAllowance(key, "nonShootDayRate", e.target.value)}
-                                className="h-8 bg-input pl-5 text-xs" />
+                              <Input value={a.nonShootDayRate ?? ""} onChange={(e) => updateAllowance(key, "nonShootDayRate", e.target.value)} className="h-8 bg-input pl-5 text-xs" />
                             </div>
                           </div>
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Terms</Label>
-                          <Input value={a.terms ?? ""}
-                            onChange={(e) => updateAllowance(key, "terms", e.target.value)}
-                            className="h-8 bg-muted text-xs uppercase" />
+                          <Input value={a.terms ?? ""} onChange={(e) => updateAllowance(key, "terms", e.target.value)} className="h-8 bg-muted text-xs uppercase" />
                         </div>
                       </>
                     )}
-
                     {type === "living" && (
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Currency</Label>
                           <Select value={a.currency ?? "GBP"} onValueChange={(v) => updateAllowance(key, "currency", v)}>
-                            <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary">
-                              <SelectValue />
-                            </SelectTrigger>
+                            <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary"><SelectValue /></SelectTrigger>
                             <SelectContent className={SC}>
                               <SelectItem className={SI} value="GBP">GBP (£)</SelectItem>
                               <SelectItem className={SI} value="USD">USD ($)</SelectItem>
@@ -945,27 +1131,20 @@ export function ContractForm({
                           <Label className="text-xs text-muted-foreground">Weekly Rate</Label>
                           <div className="relative">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground select-none">£</span>
-                            <Input value={a.weeklyRate ?? ""}
-                              onChange={(e) => updateAllowance(key, "weeklyRate", e.target.value)}
-                              className="h-8 bg-input pl-5 text-xs" />
+                            <Input value={a.weeklyRate ?? ""} onChange={(e) => updateAllowance(key, "weeklyRate", e.target.value)} className="h-8 bg-input pl-5 text-xs" />
                           </div>
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Terms</Label>
-                          <Input value={a.terms ?? ""}
-                            onChange={(e) => updateAllowance(key, "terms", e.target.value)}
-                            className="h-8 bg-muted text-xs uppercase" />
+                          <Input value={a.terms ?? ""} onChange={(e) => updateAllowance(key, "terms", e.target.value)} className="h-8 bg-muted text-xs uppercase" />
                         </div>
                       </div>
                     )}
-
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Cap Calculated As</Label>
                         <Select value={a.capCalculatedAs ?? ""} onValueChange={(v) => updateAllowance(key, "capCalculatedAs", v)}>
-                          <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary">
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
+                          <SelectTrigger className="h-8 bg-input border-border text-xs [&>svg]:text-primary"><SelectValue placeholder="Select..." /></SelectTrigger>
                           <SelectContent className={SC}>
                             <SelectItem className={SI} value="flat_figure">FLAT FIGURE</SelectItem>
                             <SelectItem className={SI} value="weekly">WEEKLY</SelectItem>
@@ -983,7 +1162,6 @@ export function ContractForm({
                         </div>
                       </div>
                     </div>
-
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Payable In</Label>
                       <div className="flex items-center gap-4">
@@ -1004,8 +1182,75 @@ export function ContractForm({
           </div>
         </CollapsibleSection>
 
+        {/* ── Special Stipulations ── */}
+        <CollapsibleSection title="Special Stipulations" defaultOpen={false}>
+          <p className="text-xs text-muted-foreground">
+            Special stipulations override standard contract terms. Add custom legal clauses specific to this deal.
+            <span className="block mt-0.5 text-[10px] text-amber-500/80 font-medium">
+              ⚠ In the event of a conflict, Deal Terms / Special Stipulations shall prevail over Standard Terms.
+            </span>
+          </p>
+          <div className="space-y-2">
+            {stipulations.map((s, i) => (
+              <div key={i} className="border border-border rounded-lg p-2.5 space-y-2 bg-accent/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">
+                      Stipulation {i + 1}
+                    </span>
+                  </div>
+                  <button type="button" onClick={() => removeStipulation(i)}
+                    className="text-destructive/60 hover:text-destructive transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Title (optional)</Label>
+                  <Input
+                    value={s.title ?? ""}
+                    onChange={(e) => setStipulation(i, "title", e.target.value)}
+                    onFocus={() => onFieldFocus?.(`specialStipulations[${i}].title`)}
+                    onBlur={onFieldBlur}
+                    placeholder="e.g. EXCLUSIVITY CLAUSE"
+                    className="h-8 bg-input text-xs uppercase"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">
+                    Clause text <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    value={s.body ?? ""}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 2000) setStipulation(i, "body", e.target.value);
+                    }}
+                    onFocus={() => onFieldFocus?.(`specialStipulations[${i}].body`)}
+                    onBlur={onFieldBlur}
+                    placeholder="Enter the clause text here..."
+                    rows={3}
+                    className="bg-input text-xs resize-none uppercase"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {(s.body ?? "").length}/2000
+                  </p>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addStipulation}
+              className="w-full h-8 text-[11px] gap-1.5 border-dashed border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Special Stipulation
+            </Button>
+          </div>
+        </CollapsibleSection>
+
         {/* ── Other ── */}
-        {/* FIX: writes to data.notes.otherDealProvisions and data.notes.additionalNotes */}
         <CollapsibleSection title="Other" defaultOpen={false}>
           <div className="space-y-1.5">
             <Label htmlFor="otherDealProvisions" className="text-xs text-foreground/80">Other deal provisions</Label>
@@ -1017,7 +1262,6 @@ export function ContractForm({
               className="bg-input text-sm resize-none uppercase" />
             <p className="text-xs text-muted-foreground text-right">{(notes.otherDealProvisions ?? "").length}/300</p>
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="additionalNotes" className="text-xs text-foreground/80">Internal notes</Label>
             <Textarea id="additionalNotes"
@@ -1037,22 +1281,18 @@ export function ContractForm({
 
       {/* ── Footer ── */}
       <div className="flex gap-2 pt-1">
-        <Button onClick={onSave} className="flex-1 text-sm">
-          Save Offer
-        </Button>
+        <Button onClick={onSave} className="flex-1 text-sm">Save Offer</Button>
         <Button onClick={onPrint} variant="outline"
           className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary">
           <Printer className="h-3.5 w-3.5" />
           Print
         </Button>
       </div>
-
     </div>
   );
 }
 
 // ── Job Title Combobox ─────────────────────────────────────────────────────
-
 function JobTitleCombobox({ value, onChange, onFocus, onBlur, jobTitles = DEFAULT_JOB_TITLES }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -1083,7 +1323,6 @@ function JobTitleCombobox({ value, onChange, onFocus, onBlur, jobTitles = DEFAUL
           className="h-9 bg-input pl-9 text-sm"
         />
       </div>
-
       {open && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-xl shadow-xl shadow-primary/10 max-h-[220px] overflow-auto">
           {filtered.length === 0 ? (

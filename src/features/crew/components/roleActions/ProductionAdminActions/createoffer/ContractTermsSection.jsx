@@ -29,32 +29,36 @@ function getStatusDeterminationReason(data) {
 
 function getWorkingWeekLabel(val) {
   switch (val) {
-    case "5": return "5 days";
+    case "5":   return "5 days";
     case "5.5": return "5.5 days";
     case "5_6": return "5/6 days";
-    case "6": return "6 days";
-    default: return val ? `${val} days` : "—";
+    case "6":   return "6 days";
+    default:    return val ? `${val} days` : "—";
   }
 }
 
-export function ContractTermsSection({ data, activeField, onFieldClick, engineSettings }) {
+export function ContractTermsSection({ data, activeField, onFieldClick }) {
   const getCurrencySymbol = () => {
     switch (data.currency) {
       case "GBP": return "£";
       case "USD": return "$";
       case "EUR": return "€";
-      default: return "£";
+      default:    return "£";
     }
   };
   const cs = getCurrencySymbol();
 
-  // engagementType is active if allowSelfEmployed or engagementType is focused
   const engagementActive =
     activeField === "engagementType" || activeField === "allowSelfEmployed";
 
   const statusActive =
     activeField === "statusDeterminationReason" ||
-    activeField === "otherStatusDeterminationReason";
+    activeField === "taxStatus.statusDeterminationReason" ||
+    activeField === "otherStatusDeterminationReason" ||
+    activeField === "taxStatus.otherStatusDeterminationReason";
+
+  // workingHours now comes from data (offer-level rate field), not engineSettings
+  const workingHours = data.workingHours ?? 11;
 
   return (
     <div className="bg-white rounded-xl border border-purple-100/80 p-2 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -95,9 +99,19 @@ export function ContractTermsSection({ data, activeField, onFieldClick, engineSe
           </HighlightField>
         </Field>
 
+        {/*
+          FIX: workingHours is now read from data (the offer's rate field),
+          NOT from engineSettings. It's an offer-level overtime threshold.
+          Highlight activates when the "workingHours" field is focused in ContractForm.
+        */}
         <Field label="Std hours / day">
-          {/* Derived from engineSettings — no direct field focus */}
-          <span className="font-medium">{engineSettings.standardHoursPerDay}h</span>
+          <HighlightField
+            fieldName="workingHours"
+            active={activeField === "workingHours"}
+            onClick={onFieldClick}
+          >
+            <span className="font-medium">{workingHours}h</span>
+          </HighlightField>
         </Field>
 
         <Field label="Fee per day (inc. hol)">
@@ -122,7 +136,7 @@ export function ContractTermsSection({ data, activeField, onFieldClick, engineSe
             active={activeField === "currency"}
             onClick={onFieldClick}
           >
-            <span className="font-medium">{data.currency}</span>
+            <span className="font-medium">{data.currency || "—"}</span>
           </HighlightField>
         </Field>
 
@@ -136,7 +150,7 @@ export function ContractTermsSection({ data, activeField, onFieldClick, engineSe
             onClick={onFieldClick}
           >
             <span className="text-[10px] text-neutral-500 italic">
-              {getStatusDeterminationReason(data)}
+              {getStatusDeterminationReason(data.taxStatus || data)}
             </span>
           </HighlightField>
         </Field>

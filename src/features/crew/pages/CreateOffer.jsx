@@ -1,12 +1,13 @@
 ﻿/**
  * CreateOffer.jsx — Unified Create + Edit page
  *
- * REDIRECT LOGIC:
- *   Edit from ViewOffer (NEEDS_REVISION monitoring) → ?redirectTo=view  → back to ViewOffer
- *   Edit from ProductionAdmin (PRODUCTION_CHECK)    → ?redirectTo=onboarding → Onboarding
- *   Accounts return → production edits              → ?redirectTo=onboarding → Onboarding
- *
- * Default (no param) = "view"
+ * CHANGES:
+ *   - workingHours moved from schedule to contractData (rates level)
+ *   - subDepartment is now a plain string, no longer mapped from a fixed value
+ *   - department stored as display name string (e.g. "Camera")
+ *   - specialStipulations included in API payload
+ *   - offerToFormData reads offer.workingHours (top-level, not offer.schedule.workingHours)
+ *   - offerToSchedule no longer includes workingHours
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -43,7 +44,6 @@ import { APP_CONFIG } from "../config/appConfig";
 const STUDIO_ID  = APP_CONFIG.STUDIO_ID;
 const PROJECT_ID = APP_CONFIG.PROJECT_ID;
 
-// ─── Role header helper ────────────────────────────────────────────────────────
 const rh = () => ({
   "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN",
 });
@@ -53,9 +53,10 @@ const defaultContractData = {
   recipient:      { fullName: "", email: "", mobileNumber: "" },
   representation: { isViaAgent: false, agentName: "", agentEmail: "" },
   alternativeContract:  "",
-  unit:                 "main",
+  // unit / department / subDepartment — all plain strings
+  unit:                 "",
   department:           "",
-  subDepartment:        "new",
+  subDepartment:        "",
   jobTitle:             "",
   searchAllDepartments: false,
   createOwnJobTitle:    false,
@@ -76,12 +77,33 @@ const defaultContractData = {
   categoryId:     "",
   currency:    "GBP",
   feePerDay:   "",
+  // workingHours is a RATE field (overtime threshold), NOT in schedule
+  workingHours: 11,
   overtime:    "calculated",
   otherOT:     "",
   cameraOTSWD: "",
   cameraOTSCWD:"",
   cameraOTCWD: "",
+  // Special stipulations — free-text legal clauses per deal
+  specialStipulations: [],
   notes: { otherDealProvisions: "", additionalNotes: "" },
+};
+
+// ─── Default schedule — NO workingHours ──────────────────────────────────────
+const defaultSchedule = {
+  hiatus: [{ start: "", end: "", reason: "" }],
+  prePrep: { start: "", end: "", notes: "" },
+  blocks: [
+    {
+      name: "BLOCK 1",
+      prep: { start: "", end: "", notes: "" },
+      start: "",
+      end: "",
+      notes: "",
+    },
+  ],
+  wrap: { start: "", end: "", notes: "" },
+  totalDays: 0,
 };
 
 // ─── Transform existing offer → ContractForm shape ────────────────────────────
@@ -98,10 +120,13 @@ function offerToFormData(offer) {
       agentName:  offer.representation?.agentName  || "",
       agentEmail: offer.representation?.agentEmail || "",
     },
-    alternativeContract:  offer.alternativeContract  || "",
-    unit:                 offer.unit                 || "main",
-    department:           offer.department           || "",
-    subDepartment:        offer.subDepartment        || "new",
+    alternativeContract: offer.alternativeContract || "",
+
+    // unit / department / subDepartment — plain strings from the offer
+    unit:          offer.unit          || "",
+    department:    offer.department    || "",
+    subDepartment: offer.subDepartment || "",
+
     jobTitle:             offer.jobTitle             || "",
     searchAllDepartments: false,
     createOwnJobTitle:    offer.createOwnJobTitle    || false,
@@ -122,15 +147,39 @@ function offerToFormData(offer) {
     categoryId:     offer.categoryId     ? String(offer.categoryId) : "",
     currency:    offer.currency    || "GBP",
     feePerDay:   offer.feePerDay   || "",
+    // FIX: read from offer.workingHours (top-level rate field), NOT offer.schedule.workingHours
+    workingHours: offer.workingHours ?? 11,
     overtime:    offer.overtime    || "calculated",
     otherOT:     offer.otherOT     || "",
     cameraOTSWD: offer.cameraOTSWD || "",
     cameraOTSCWD:offer.cameraOTSCWD|| "",
     cameraOTCWD: offer.cameraOTCWD || "",
+    // Special stipulations — carry over from existing offer
+    specialStipulations: Array.isArray(offer.specialStipulations)
+      ? offer.specialStipulations
+      : [],
     notes: {
       otherDealProvisions: offer.notes?.otherDealProvisions || "",
       additionalNotes:     offer.notes?.additionalNotes     || "",
     },
+  };
+}
+
+// ─── Transform existing offer → schedule shape ────────────────────────────────
+// NOTE: workingHours is NOT included here — it lives in contractData now.
+function offerToSchedule(offer) {
+  if (!offer?.schedule) return defaultSchedule;
+  const s = offer.schedule;
+  return {
+    hiatus:  Array.isArray(s.hiatus) && s.hiatus.length > 0
+      ? s.hiatus
+      : [{ start: "", end: "", reason: "" }],
+    prePrep: s.prePrep ?? { start: "", end: "", notes: "" },
+    blocks:  Array.isArray(s.blocks) && s.blocks.length > 0
+      ? s.blocks
+      : [{ name: "BLOCK 1", prep: { start: "", end: "", notes: "" }, start: "", end: "", notes: "" }],
+    wrap:    s.wrap    ?? { start: "", end: "", notes: "" },
+    totalDays: s.totalDays ?? 0,
   };
 }
 
@@ -153,10 +202,6 @@ export default function CreateOfferPage() {
   const [searchParams]      = useSearchParams();
 
   const isEditMode = Boolean(id);
-
-  // Where to navigate after a successful edit save:
-  //   "view"       → back to ViewOffer (default — used from NEEDS_REVISION monitoring)
-  //   "onboarding" → back to onboarding list (used from PRODUCTION_CHECK edit)
   const redirectAfterSave = searchParams.get("redirectTo") || "view";
 
   const isSubmitting  = useSelector(selectSubmitting);
@@ -172,8 +217,8 @@ export default function CreateOfferPage() {
   const savedOfferIdRef = useRef(null);
   const proj = projectName || "demo-project";
 
-  // ── Form state ─────────────────────────────────────────────────────────────
   const [contractData,        setContractData       ] = useState(defaultContractData);
+  const [schedule,            setSchedule           ] = useState(defaultSchedule);
   const [allowances,          setAllowances         ] = useState(defaultAllowances);
   const [salaryBudgetCodes,   setSalaryBudgetCodes  ] = useState([]);
   const [salaryTags,          setSalaryTags         ] = useState([]);
@@ -181,18 +226,17 @@ export default function CreateOfferPage() {
   const [overtimeTags,        setOvertimeTags       ] = useState([]);
   const [engineSettings]                              = useState(defaultEngineSettings);
 
-  // ── EDIT MODE: load existing offer ────────────────────────────────────────
   useEffect(() => {
     if (!isEditMode) return;
     dispatch(getOfferThunk(id));
   }, [id, isEditMode, dispatch]);
 
-  // ── EDIT MODE: pre-fill form once offer is loaded ─────────────────────────
   useEffect(() => {
     if (!isEditMode || !existingOffer || editInitialized) return;
     if (existingOffer._id !== id) return;
 
     setContractData(offerToFormData(existingOffer));
+    setSchedule(offerToSchedule(existingOffer));
     setAllowances(offerToAllowances(existingOffer));
     setSalaryBudgetCodes(existingOffer.salaryBudgetCodes     || []);
     setSalaryTags(existingOffer.salaryTags                   || []);
@@ -201,7 +245,6 @@ export default function CreateOfferPage() {
     setEditInitialized(true);
   }, [existingOffer, id, isEditMode, editInitialized]);
 
-  // ── Fetch categories ──────────────────────────────────────────────────────
   useEffect(() => {
     axiosConfig
       .get(`/studio/${STUDIO_ID}/categories`, { headers: rh() })
@@ -209,7 +252,6 @@ export default function CreateOfferPage() {
       .catch(() => {});
   }, []);
 
-  // ── Fetch project settings ────────────────────────────────────────────────
   useEffect(() => {
     axiosConfig
       .get(`/project/${PROJECT_ID}/settings`, { headers: rh() })
@@ -217,7 +259,6 @@ export default function CreateOfferPage() {
       .catch(() => {});
   }, []);
 
-  // ── API error toast ────────────────────────────────────────────────────────
   useEffect(() => {
     if (apiError) {
       const msg = apiError.errors?.length
@@ -257,13 +298,16 @@ export default function CreateOfferPage() {
       },
 
       alternativeContract: cd.alternativeContract || "",
-      unit:                cd.unit                || "",
-      department:          cd.department          || "",
-      subDepartment:       cd.subDepartment       || "",
-      jobTitle:            cd.jobTitle            || "",
-      newJobTitle:         cd.newJobTitle         || "",
-      createOwnJobTitle:   !!cd.createOwnJobTitle,
-      jobTitleSuffix:      cd.jobTitleSuffix      || "",
+
+      // unit / department / subDepartment — plain strings
+      unit:          cd.unit          || "",
+      department:    cd.department    || "",
+      subDepartment: cd.subDepartment || "",
+
+      jobTitle:          cd.jobTitle          || "",
+      newJobTitle:       cd.newJobTitle       || "",
+      createOwnJobTitle: !!cd.createOwnJobTitle,
+      jobTitleSuffix:    cd.jobTitleSuffix    || "",
 
       taxStatus: {
         allowSelfEmployed:              cd.taxStatus?.allowSelfEmployed              || "",
@@ -280,14 +324,26 @@ export default function CreateOfferPage() {
       workingWeek:       cd.workingWeek       || "5",
       categoryId:        cd.categoryId        || undefined,
 
-      currency:    cd.currency    || "GBP",
-      feePerDay:   (cd.feePerDay !== "" && cd.feePerDay !== undefined)
+      currency:  cd.currency  || "GBP",
+      feePerDay: (cd.feePerDay !== "" && cd.feePerDay !== undefined)
         ? cd.feePerDay : (isDraft ? undefined : ""),
+
+      // workingHours = top-level rate field on the offer (overtime threshold)
+      workingHours: cd.workingHours ?? 11,
+
       overtime:    cd.overtime    || "calculated",
       otherOT:     cd.otherOT     || "",
       cameraOTSWD: cd.cameraOTSWD || "",
       cameraOTSCWD:cd.cameraOTSCWD|| "",
       cameraOTCWD: cd.cameraOTCWD || "",
+
+      // schedule does NOT include workingHours
+      schedule,
+
+      // special stipulations
+      specialStipulations: Array.isArray(cd.specialStipulations)
+        ? cd.specialStipulations.filter((s) => s.body?.trim())
+        : [],
 
       calculatedRates,
       salaryBudgetCodes,
@@ -304,11 +360,6 @@ export default function CreateOfferPage() {
   };
 
   // ── EDIT: Save & Resend ────────────────────────────────────────────────────
-  //
-  // After saving + sending to crew, navigate based on redirectAfterSave param:
-  //   "view"       → /offers/:id/view  (default — came from monitoring ViewOffer)
-  //   "onboarding" → /onboarding       (came from ProductionReview or AccountsReview edit)
-  //
   const handleEditSave = async () => {
     if (isSubmitting) return;
 
@@ -319,11 +370,9 @@ export default function CreateOfferPage() {
     toast.loading("Saving changes…", { id: "edit-save" });
 
     try {
-      // ── Step 1: Save the offer ────────────────────────────────────────────
       let saveOk = false;
 
       if (useStandardPut) {
-        // NEEDS_REVISION / DRAFT → standard PUT
         const res = await axiosConfig.put(
           `/offers/${id}`,
           { ...buildPayload(false), version: currentVersion + 1 },
@@ -331,7 +380,6 @@ export default function CreateOfferPage() {
         );
         saveOk = !!res.data?.success;
       } else {
-        // PRODUCTION_CHECK / ACCOUNTS_CHECK / PENDING_* → production-edit
         const res = await axiosConfig.patch(
           `/offers/${id}/production-edit`,
           buildPayload(false),
@@ -342,18 +390,10 @@ export default function CreateOfferPage() {
 
       toast.dismiss("edit-save");
 
-      if (!saveOk) {
-        toast.error("Failed to save offer.");
-        return;
-      }
+      if (!saveOk) { toast.error("Failed to save offer."); return; }
 
-      // ── Step 2: Resend to crew ─────────────────────────────────────────────
       toast.loading("Sending to crew…", { id: "edit-send" });
-      const sendRes = await axiosConfig.patch(
-        `/offers/${id}/send`,
-        {},
-        { headers: rh() }
-      );
+      const sendRes = await axiosConfig.patch(`/offers/${id}/send`, {}, { headers: rh() });
       toast.dismiss("edit-send");
 
       if (!sendRes.data?.success) {
@@ -362,28 +402,19 @@ export default function CreateOfferPage() {
       }
 
       toast.success(`✅ Offer v${currentVersion + 1} sent to crew for review!`);
-
-      // Refresh current offer in Redux
       dispatch(getOfferThunk(id));
-
-      // Always refresh the onboarding list so status row updates
       dispatch(getProjectOffersThunk({ projectId: PROJECT_ID }));
 
-      // ── Step 3: Navigate based on who triggered the edit ──────────────────
-      //   "view"       → back to ViewOffer (NEEDS_REVISION flow from monitoring)
-      //   "onboarding" → back to onboarding list (PRODUCTION_CHECK / ACCOUNTS flow)
-      const destination =
-        redirectAfterSave === "onboarding"
-          ? `/projects/${proj}/onboarding`
-          : `/projects/${proj}/offers/${id}/view`;
+      const destination = redirectAfterSave === "onboarding"
+        ? `/projects/${proj}/onboarding`
+        : `/projects/${proj}/offers/${id}/view`;
 
       setTimeout(() => navigate(destination), 600);
 
     } catch (err) {
       toast.dismiss("edit-save");
       toast.dismiss("edit-send");
-      const msg = err.response?.data?.message || err.message || "Failed to save";
-      toast.error(msg);
+      toast.error(err.response?.data?.message || err.message || "Failed to save");
     }
   };
 
@@ -478,7 +509,6 @@ export default function CreateOfferPage() {
         clickAction: handleSendToCrewClick,
       };
 
-  // ── Loading state (edit mode only) ─────────────────────────────────────────
   if (isEditMode && !editInitialized) {
     return (
       <div className="min-h-screen bg-purple-50/40 flex items-center justify-center">
@@ -512,14 +542,12 @@ export default function CreateOfferPage() {
           primaryAction={primaryAction}
         />
 
-        {/* Change request banner — shown when editing a NEEDS_REVISION offer */}
         {isRevisionEdit && (
           <div className="mt-4">
             <ChangeRequestBanner offerId={id} />
           </div>
         )}
 
-        {/* Edit mode info banner */}
         {isEditMode && (
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
@@ -540,6 +568,8 @@ export default function CreateOfferPage() {
               <ContractForm
                 data={contractData}
                 onChange={setContractData}
+                schedule={schedule}
+                setSchedule={setSchedule}
                 calculatedRates={calculatedRates}
                 engineSettings={engineSettings}
                 salaryBudgetCodes={salaryBudgetCodes}
@@ -582,6 +612,7 @@ export default function CreateOfferPage() {
                 allowances={allowances}
                 projectSettings={projectSettings}
                 offer={isEditMode ? existingOffer : null}
+                schedule={schedule}
                 hideOfferSections={false}
                 hideContractDocument={false}
               />
@@ -591,7 +622,6 @@ export default function CreateOfferPage() {
         </div>
       </div>
 
-      {/* Send to Crew dialog — CREATE mode only */}
       {!isEditMode && (
         <OfferActionDialog
           type="sendToCrew"

@@ -1,13 +1,11 @@
 /**
  * ContractInstancesPanel.jsx
  *
- * FIX 1: clearHtmlCache() is now called alongside clearInstances() in the
- * main fetch useEffect. This ensures stale HTML from previous instance
- * generations is never served from the Redux cache after a v2 regeneration.
+ * THEMING: All colors use CSS variables from index.css.
+ *   No hardcoded Tailwind color classes (emerald-*, violet-*, neutral-*, teal-*, etc.)
  *
- * FIX 2: offerStatus prop dependency — re-fetches instances whenever the
- * offer status changes so each workflow stage gets fresh instances.
- * Pass offerStatus={offer?.status} from every parent layout component.
+ * FIX 1: clearHtmlCache() called alongside clearInstances().
+ * FIX 2: offerStatus prop dependency — re-fetches on status change.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -23,7 +21,7 @@ import {
   getContractInstancesThunk,
   getContractInstanceHtmlThunk,
   clearInstances,
-  clearHtmlCache,          // FIX: import clearHtmlCache
+  clearHtmlCache,
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
@@ -41,11 +39,11 @@ import {
 // ── Type badge config ─────────────────────────────────────────────────────────
 
 const TYPE_CFG = {
-  contract:  { cls: "bg-violet-100 text-violet-700 border-violet-200",    label: "CONTRACT"  },
-  allowance: { cls: "bg-sky-100 text-sky-700 border-sky-200",             label: "ALLOWANCE" },
-  standard:  { cls: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "STANDARD"  },
-  optional:  { cls: "bg-orange-100 text-orange-700 border-orange-200",    label: "OPTIONAL"  },
-  tax:       { cls: "bg-pink-100 text-pink-700 border-pink-200",          label: "TAX"       },
+  contract:  { label: "CONTRACT",  bg: "var(--lavender-100)", color: "var(--lavender-700)", border: "var(--lavender-200)" },
+  allowance: { label: "ALLOWANCE", bg: "var(--sky-100)",      color: "var(--sky-700)",      border: "var(--sky-200)"      },
+  standard:  { label: "STANDARD",  bg: "var(--mint-100)",     color: "var(--mint-700)",     border: "var(--mint-200)"     },
+  optional:  { label: "OPTIONAL",  bg: "var(--peach-100)",    color: "var(--peach-700)",    border: "var(--peach-200)"    },
+  tax:       { label: "TAX",       bg: "var(--pastel-pink-100)", color: "var(--pastel-pink-700)", border: "var(--pastel-pink-200)" },
 };
 
 const STATUS_CFG = {
@@ -61,20 +59,20 @@ const STATUS_CFG = {
   VOIDED:                 { label: "Voided",        Icon: XCircle       },
 };
 
-const STATUS_COLOR = {
-  COMPLETED:              "bg-emerald-50 text-emerald-600 border-emerald-200",
-  CREW_SIGNED:            "bg-teal-50 text-teal-600 border-teal-200",
-  UPM_SIGNED:             "bg-teal-50 text-teal-600 border-teal-200",
-  FC_SIGNED:              "bg-teal-50 text-teal-600 border-teal-200",
-  STUDIO_SIGNED:          "bg-teal-50 text-teal-600 border-teal-200",
-  PENDING_CREW_SIGNATURE: "bg-sky-50 text-sky-600 border-sky-200",
-  PENDING_REVIEW:         "bg-amber-50 text-amber-600 border-amber-200",
-  DRAFT:                  "bg-zinc-100 text-zinc-500 border-zinc-200",
-  VOIDED:                 "bg-red-50 text-red-500 border-red-200",
-  SUPERSEDED:             "bg-zinc-100 text-zinc-400 border-zinc-200",
+const STATUS_STYLE = {
+  COMPLETED:              { bg: "var(--mint-50)",       color: "var(--mint-600)",         border: "var(--mint-200)"       },
+  CREW_SIGNED:            { bg: "var(--mint-50)",       color: "var(--mint-600)",         border: "var(--mint-200)"       },
+  UPM_SIGNED:             { bg: "var(--mint-50)",       color: "var(--mint-600)",         border: "var(--mint-200)"       },
+  FC_SIGNED:              { bg: "var(--mint-50)",       color: "var(--mint-600)",         border: "var(--mint-200)"       },
+  STUDIO_SIGNED:          { bg: "var(--mint-50)",       color: "var(--mint-600)",         border: "var(--mint-200)"       },
+  PENDING_CREW_SIGNATURE: { bg: "var(--sky-50)",        color: "var(--sky-600)",          border: "var(--sky-200)"        },
+  PENDING_REVIEW:         { bg: "var(--peach-50)",      color: "var(--peach-600)",        border: "var(--peach-200)"      },
+  DRAFT:                  { bg: "var(--muted)",         color: "var(--muted-foreground)", border: "var(--border)"         },
+  VOIDED:                 { bg: "#fff1f1",              color: "#dc2626",                 border: "#fecaca"               },
+  SUPERSEDED:             { bg: "var(--muted)",         color: "var(--muted-foreground)", border: "var(--border)"         },
 };
 
-// ── Dedup — keeps highest-generation instance per formKey ─────────────────────
+// ── Dedup ─────────────────────────────────────────────────────────────────────
 
 function dedupByFormKey(instances) {
   const map = new Map();
@@ -98,41 +96,29 @@ function AutoIframe({ html, title }) {
   useEffect(() => {
     if (!html || !ref.current) return;
     if (blobRef.current) URL.revokeObjectURL(blobRef.current);
-
-    const blob    = new Blob([html], { type: "text/html; charset=utf-8" });
+    const blob = new Blob([html], { type: "text/html; charset=utf-8" });
     blobRef.current = URL.createObjectURL(blob);
     ref.current.src = blobRef.current;
-
     const onLoad = () => {
       try {
         const doc = ref.current?.contentDocument || ref.current?.contentWindow?.document;
         if (doc) {
-          setHeight(
-            Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0, 400) + 24
-          );
+          setHeight(Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0, 400) + 24);
         }
-      } catch {
-        setHeight(900);
-      }
+      } catch { setHeight(900); }
     };
-
     ref.current.addEventListener("load", onLoad);
     const t = setTimeout(onLoad, 500);
-
     return () => {
       ref.current?.removeEventListener("load", onLoad);
       clearTimeout(t);
-      if (blobRef.current) {
-        URL.revokeObjectURL(blobRef.current);
-        blobRef.current = null;
-      }
+      if (blobRef.current) { URL.revokeObjectURL(blobRef.current); blobRef.current = null; }
     };
   }, [html]);
 
   return (
     <iframe
-      ref={ref}
-      title={title}
+      ref={ref} title={title}
       className="w-full border-0 block"
       style={{ height: `${height}px` }}
       sandbox="allow-same-origin allow-scripts"
@@ -144,13 +130,14 @@ function AutoIframe({ html, title }) {
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
-  const cfg  = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
-  const Icon = cfg.Icon;
+  const cfg   = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
+  const style = STATUS_STYLE[status] ?? STATUS_STYLE.DRAFT;
+  const Icon  = cfg.Icon;
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide",
-      STATUS_COLOR[status] ?? STATUS_COLOR.DRAFT
-    )}>
+    <span
+      className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide"
+      style={{ background: style.bg, color: style.color, borderColor: style.border }}
+    >
       <Icon className="w-2.5 h-2.5" />{cfg.label}
     </span>
   );
@@ -169,37 +156,31 @@ function DocumentView({ instance, index, total, viewRole }) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setHtml(null);
-
+    setLoading(true); setError(null); setHtml(null);
     dispatch(getContractInstanceHtmlThunk(instance._id)).then((res) => {
       if (cancelled) return;
-      if (res.error) {
-        setError(res.payload?.message || "Failed to load");
-      } else if (res.payload?.html) {
-        setHtml(res.payload.html);
-      } else {
-        setError("No content returned");
-      }
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-
+      if (res.error)            setError(res.payload?.message || "Failed to load");
+      else if (res.payload?.html) setHtml(res.payload.html);
+      else                      setError("No content returned");
+    }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [instance._id, dispatch]);
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-200">
-      <div className={cn(
-        "rounded-xl overflow-hidden border",
-        signed ? "border-emerald-200" : "border-neutral-200"
-      )}>
-        <div className={cn(
-          "flex items-center gap-3 px-4 py-3",
-          signed ? "bg-emerald-600" : "bg-violet-700"
-        )}>
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ border: `1px solid ${signed ? "var(--mint-200)" : "var(--border)"}` }}
+      >
+        {/* Doc header */}
+        <div
+          className="flex items-center gap-3 px-4 py-3"
+          style={{ background: signed ? "var(--mint-600)" : "var(--primary)" }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
             {signed
               ? <CheckCircle2 className="w-4 h-4 text-white" />
               : <FileText className="w-4 h-4 text-white" />
@@ -208,14 +189,24 @@ function DocumentView({ instance, index, total, viewRole }) {
           <div className="flex-1 min-w-0">
             <p className="text-white text-[13px] font-semibold truncate">{instance.formName}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[8px] font-bold px-1.5 py-px rounded border bg-white/20 text-white border-white/30 uppercase tracking-wider">
+              <span
+                className="text-[8px] font-bold px-1.5 py-px rounded border uppercase tracking-wider"
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  color: "white",
+                  borderColor: "rgba(255,255,255,0.3)",
+                }}
+              >
                 {typeCfg.label}
               </span>
-              <span className="text-[8px] text-white/70 font-mono uppercase tracking-wider">
+              <span className="text-[8px] font-mono uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>
                 DOC {index + 1} OF {total}
               </span>
               {(instance.generation ?? 1) > 1 && (
-                <span className="text-[8px] font-mono text-white/70 bg-white/10 px-1.5 py-px rounded border border-white/20">
+                <span
+                  className="text-[8px] font-mono px-1.5 py-px rounded"
+                  style={{ color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
                   GEN {instance.generation}
                 </span>
               )}
@@ -224,43 +215,51 @@ function DocumentView({ instance, index, total, viewRole }) {
           <StatusBadge status={instance.status} />
         </div>
 
-        <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/60 flex items-center gap-3">
-          <div className={cn(
-            "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
-            signed ? "bg-emerald-100" : "bg-neutral-100"
-          )}>
+        {/* Signature bar */}
+        <div
+          className="px-4 py-3 flex items-center gap-3"
+          style={{ borderBottom: "1px solid var(--border)", background: signed ? "var(--mint-50)" : "var(--muted)" }}
+        >
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: signed ? "var(--mint-100)" : "var(--card)" }}
+          >
             {signed
-              ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-              : <PenLine className="w-3.5 h-3.5 text-neutral-400" />
+              ? <Check className="w-3.5 h-3.5" style={{ color: "var(--mint-600)", strokeWidth: 2.5 }} />
+              : <PenLine className="w-3.5 h-3.5" style={{ color: "var(--muted-foreground)" }} />
             }
           </div>
           <div className="flex-1 min-w-0">
-            <p className={cn(
-              "text-[11px] font-semibold",
-              signed ? "text-emerald-700" : "text-neutral-600"
-            )}>
+            <p
+              className="text-[11px] font-semibold"
+              style={{ color: signed ? "var(--mint-700)" : "var(--foreground)" }}
+            >
               {signed ? "Signature recorded" : "Signature pending"}
             </p>
-            <p className="text-[10px] text-neutral-400">
+            <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
               {STATUS_CFG[instance.status]?.label ?? "Draft"}
             </p>
           </div>
         </div>
 
-        <div className="bg-[#f0eef8]">
+        {/* Document content */}
+        <div style={{ background: "var(--lavender-50)" }}>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
-              <p className="text-[11px] text-neutral-500">Loading document…</p>
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--primary)" }} />
+              <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Loading document…</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <AlertCircle className="w-4 h-4 text-neutral-400" />
-              <p className="text-[11px] text-neutral-400">{error}</p>
+              <AlertCircle className="w-4 h-4" style={{ color: "var(--muted-foreground)" }} />
+              <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{error}</p>
             </div>
           ) : html ? (
             <div className="px-5 py-4">
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-neutral-200/60">
+              <div
+                className="rounded-lg overflow-hidden"
+                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              >
                 <AutoIframe html={html} title={instance.formName} />
               </div>
             </div>
@@ -276,17 +275,22 @@ function DocumentView({ instance, index, total, viewRole }) {
 function EmptyState({ onRefresh, loading }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center mb-4">
-        <Shield className="w-6 h-6 text-violet-300" />
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ background: "var(--lavender-50)", border: "1px solid var(--lavender-100)" }}
+      >
+        <Shield className="w-6 h-6" style={{ color: "var(--lavender-300)" }} />
       </div>
-      <p className="text-sm font-semibold text-neutral-500">No contracts generated yet</p>
-      <p className="text-[11px] text-neutral-400 mt-1.5 max-w-xs leading-relaxed">
+      <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>
+        No contracts generated yet
+      </p>
+      <p className="text-[11px] mt-1.5 max-w-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
         Documents are generated when the crew accepts the offer.
       </p>
       <button
-        onClick={onRefresh}
-        disabled={loading}
-        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 text-[11px] text-neutral-500 hover:bg-neutral-50 transition-colors disabled:opacity-50"
+        onClick={onRefresh} disabled={loading}
+        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors disabled:opacity-50"
+        style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", background: "var(--card)" }}
       >
         <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
         Refresh
@@ -302,7 +306,6 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
   const instances      = useSelector(selectInstances);
   const loading        = useSelector(selectInstancesLoading);
   const error          = useSelector(selectInstancesError);
-  const currentOfferId = useSelector(selectCurrentOfferId);
   const viewRole       = useSelector(selectViewRole);
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -315,17 +318,14 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
 
-  // FIX: clearHtmlCache alongside clearInstances so stale HTML from previous
-  // instance generations is never served from Redux cache after v2 regeneration.
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
-    dispatch(clearInstances());   // clears instance list + htmlCache in slice
-    dispatch(clearHtmlCache());   // belt-and-suspenders: explicit HTML cache clear
+    dispatch(clearInstances());
+    dispatch(clearHtmlCache());
     dispatch(getContractInstancesThunk(offerId));
   }, [offerId, offerStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Retry once after 2s if still empty (handles race on first load)
   useEffect(() => {
     if (!offerId || loading || instances.length > 0 || retryDoneRef.current) return;
     const t = setTimeout(() => {
@@ -337,7 +337,6 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
 
   useEffect(() => { setActiveIdx(0); }, [offerId]);
 
-  // ── Derived list ───────────────────────────────────────────────────────────
   const activeInstances = dedupByFormKey(
     instances
       .filter((i) => i.status !== "SUPERSEDED" && i.status !== "VOIDED")
@@ -359,8 +358,8 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
     return (
       <div className={cn("flex items-center justify-center py-20", className)}>
         <div className="flex flex-col items-center gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
-          <p className="text-[11px] text-neutral-500">Loading contract documents…</p>
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--primary)" }} />
+          <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Loading contract documents…</p>
         </div>
       </div>
     );
@@ -368,13 +367,13 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
 
   if (error) {
     return (
-      <div className={cn(
-        "bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2",
-        className
-      )}>
-        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-        <p className="text-[11px] text-red-600">{error}</p>
-        <button onClick={handleRefresh} className="ml-auto text-[10px] text-red-500 underline">
+      <div
+        className={cn("rounded-xl px-4 py-3 flex items-center gap-2", className)}
+        style={{ background: "#fff1f1", border: "1px solid #fecaca" }}
+      >
+        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#dc2626" }} />
+        <p className="text-[11px]" style={{ color: "#dc2626" }}>{error}</p>
+        <button onClick={handleRefresh} className="ml-auto text-[10px] underline" style={{ color: "#dc2626" }}>
           Retry
         </button>
       </div>
@@ -391,36 +390,51 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
     <div className={cn("space-y-5", className)}>
 
       {/* Bundle bar */}
-      <div className="bg-white rounded-xl border border-neutral-200 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+      <div
+        className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
+        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
-            <Layers className="w-4 h-4 text-white" />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "var(--primary)" }}
+          >
+            <Layers className="w-4 h-4" style={{ color: "var(--primary-foreground)" }} />
           </div>
           <div>
-            <p className="text-[13px] font-bold text-neutral-800">Contract Bundle</p>
+            <p className="text-[13px] font-bold" style={{ color: "var(--foreground)" }}>
+              Contract Bundle
+            </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-neutral-400">{total} documents</span>
+              <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                {total} documents
+              </span>
               {signedCount > 0 && (
-                <span className="text-[10px] text-emerald-600 font-semibold">
+                <span className="text-[10px] font-semibold" style={{ color: "var(--mint-600)" }}>
                   · {signedCount} signed
                 </span>
               )}
             </div>
           </div>
         </div>
+
         <div className="flex items-center gap-3">
-          <div className="w-28 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+          <div
+            className="w-28 h-1.5 rounded-full overflow-hidden"
+            style={{ background: "var(--muted)" }}
+          >
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%`, background: "var(--mint-500)" }}
             />
           </div>
-          <span className="text-[10px] text-neutral-400 shrink-0">{signedCount}/{total}</span>
+          <span className="text-[10px] shrink-0" style={{ color: "var(--muted-foreground)" }}>
+            {signedCount}/{total}
+          </span>
           <button
-            onClick={handleRefresh}
-            disabled={loading}
-            title="Refresh"
-            className="p-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-50 transition-colors"
+            onClick={handleRefresh} disabled={loading} title="Refresh"
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", background: "var(--card)" }}
           >
             <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
           </button>
@@ -452,15 +466,19 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
           <button
             onClick={() => setActiveIdx((i) => Math.max(0, i - 1))}
             disabled={safeIdx === 0}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}
           >
             <ChevronLeft className="w-3.5 h-3.5" /> Previous
           </button>
-          <span className="text-[11px] text-neutral-400">{safeIdx + 1} of {total}</span>
+          <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            {safeIdx + 1} of {total}
+          </span>
           <button
             onClick={() => setActiveIdx((i) => Math.min(total - 1, i + 1))}
             disabled={safeIdx === total - 1}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 text-[12px] text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}
           >
             Next <ChevronRight className="w-3.5 h-3.5" />
           </button>

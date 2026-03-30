@@ -1,83 +1,33 @@
-/**
- * layouts/LayoutProductionReview.jsx — PRODUCTION_CHECK stage.
- * FIX: ContractInstancesPanel now receives offerStatus={offer?.status}
- * so it re-fetches fresh instances on every status transition.
- */
 
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ClipboardCheck, Send, Loader2, CheckCircle2, X,
+  ClipboardCheck, Loader2, CheckCircle2,
   FileText, ShieldCheck, Building, Package, Monitor, Car,
   BadgeCheck, Shield, FileCheck, Edit2,
 } from "lucide-react";
 
+import CrewIdentityHeader      from "../../../components/viewoffer/layouts/CrewIdentityHeader";
 import ContractInstancesPanel  from "../../../pages/ContractInstancesPanel";
 import SubmittedDocumentsPanel from "../../../components/viewoffer/layouts/SubmittedDocumentsPanel";
+import OfferActionDialog       from "../../../components/onboarding/OfferActionDialog";
 
-function getInitials(name = "") {
-  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
-}
-
-function OfferTopBar({ offer, contractData, onEdit }) {
-  const name     = contractData?.fullName || offer?.recipient?.fullName || "—";
-  const jobTitle = offer?.createOwnJobTitle && offer?.newJobTitle
-    ? offer.newJobTitle
-    : contractData?.jobTitle || offer?.jobTitle || "—";
-  const dept  = contractData?.department || offer?.department || "";
-  const email = contractData?.email || offer?.recipient?.email || "";
-
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 px-4 py-3 flex items-center gap-3 w-full">
-      <div className="h-9 w-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-[12px] font-bold shrink-0 select-none">
-        {getInitials(name)}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[13px] font-bold text-neutral-900 truncate">{name}</span>
-          {jobTitle && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-violet-50 text-violet-700 border-violet-200 uppercase tracking-wide">
-              {jobTitle}
-            </span>
-          )}
-          {dept && <span className="text-[11px] text-neutral-400">{dept}</span>}
-        </div>
-        {email && <p className="text-[10px] text-neutral-400 mt-0.5 truncate">{email}</p>}
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {offer?.offerCode && (
-          <span className="text-[9px] font-mono text-neutral-400 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded">
-            {offer.offerCode}
-          </span>
-        )}
-        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide text-violet-600 bg-violet-50 border-violet-200">
-          Production Check
-        </span>
-        <button
-          onClick={onEdit}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-[11px] font-semibold hover:bg-orange-600 transition-colors"
-        >
-          <Edit2 className="w-3 h-3" /> Edit Offer
-        </button>
-      </div>
-    </div>
-  );
-}
-
-
+// ── Checklist config ──────────────────────────────────────────────────────────
 
 const PROD_CHECKLIST = [
-  { key: "documentsUploaded",      label: "All required documents uploaded", Icon: FileCheck,   cat: "Identity",  always: true    },
-  { key: "passportValid",          label: "Passport valid & not expired",    Icon: Shield,      cat: "Identity",  always: true    },
-  { key: "drivingLicenceValid",    label: "Driving licence valid",           Icon: BadgeCheck,  cat: "Identity",  always: true    },
-  { key: "rightToWorkVerified",    label: "Right to work verified",          Icon: ShieldCheck, cat: "Identity",  always: true    },
-  { key: "companyDocsMatch",       label: "Company docs match contract",     Icon: Building,    cat: "Company",   loanOut: true   },
-  { key: "vatCertValid",           label: "VAT certificate valid",           Icon: FileCheck,   cat: "Company",   loanOut: true   },
-  { key: "boxInventoryComplete",   label: "Box inventory complete",          Icon: Package,     cat: "Equipment", boxRental: true },
-  { key: "softwareDetailsOk",      label: "Software subscriptions provided", Icon: Monitor,     cat: "Equipment", software: true  },
-  { key: "vehicleRequirementsMet", label: "Vehicle requirements met",        Icon: Car,         cat: "Equipment", vehicle: true   },
-  { key: "noMissingExpiredDocs",   label: "No missing or expired documents", Icon: ShieldCheck, cat: "Final",     always: true    },
+  { key: "documentsUploaded",      label: "All required documents uploaded",  Icon: FileCheck,   cat: "Identity",  always: true    },
+  { key: "passportValid",          label: "Passport valid & not expired",     Icon: Shield,      cat: "Identity",  always: true    },
+  { key: "drivingLicenceValid",    label: "Driving licence valid",            Icon: BadgeCheck,  cat: "Identity",  always: true    },
+  { key: "rightToWorkVerified",    label: "Right to work verified",           Icon: ShieldCheck, cat: "Identity",  always: true    },
+  { key: "companyDocsMatch",       label: "Company docs match contract",      Icon: Building,    cat: "Company",   loanOut: true   },
+  { key: "vatCertValid",           label: "VAT certificate valid",            Icon: FileCheck,   cat: "Company",   loanOut: true   },
+  { key: "boxInventoryComplete",   label: "Box inventory complete",           Icon: Package,     cat: "Equipment", boxRental: true },
+  { key: "softwareDetailsOk",      label: "Software subscriptions provided",  Icon: Monitor,     cat: "Equipment", software: true  },
+  { key: "vehicleRequirementsMet", label: "Vehicle requirements met",         Icon: Car,         cat: "Equipment", vehicle: true   },
+  { key: "noMissingExpiredDocs",   label: "No missing or expired documents",  Icon: ShieldCheck, cat: "Final",     always: true    },
 ];
+
+// ── ChecklistWidget ───────────────────────────────────────────────────────────
 
 function ChecklistWidget({ items, checked, onChange, disabled }) {
   const cats    = [...new Set(items.map((c) => c.cat))];
@@ -86,22 +36,48 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
   const allDone = done === total;
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-      <div className="bg-violet-600 px-4 py-2.5 flex items-center justify-between">
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+    >
+      {/* Header — single row */}
+      <div
+        className="px-4 py-2.5 flex items-center justify-between"
+        style={{ background: "var(--primary)" }}
+      >
         <div className="flex items-center gap-2">
-          <ClipboardCheck className="h-3.5 w-3.5 text-white" />
-          <span className="text-white text-[11px] font-semibold uppercase tracking-wide">Verification Checklist</span>
+          <ClipboardCheck className="h-3.5 w-3.5" style={{ color: "var(--primary-foreground)" }} />
+          <span
+            className="text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap"
+            style={{ color: "var(--primary-foreground)" }}
+          >
+            Verification Checklist
+          </span>
         </div>
-        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${allDone ? "bg-emerald-400 text-emerald-900" : "bg-white/20 text-white"}`}>
+        <span
+          className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+          style={
+            allDone
+              ? { background: "var(--mint-400)", color: "var(--mint-900)" }
+              : { background: "rgba(255,255,255,0.2)", color: "var(--primary-foreground)" }
+          }
+        >
           {done}/{total} verified
         </span>
       </div>
-      <div className="h-1 bg-neutral-100">
+
+      {/* Progress bar */}
+      <div className="h-1" style={{ background: "var(--muted)" }}>
         <div
-          className={`h-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-violet-500"}`}
-          style={{ width: `${total ? (done / total) * 100 : 0}%` }}
+          className="h-full transition-all duration-500"
+          style={{
+            width: `${total ? (done / total) * 100 : 0}%`,
+            background: allDone ? "var(--mint-500)" : "var(--primary)",
+          }}
         />
       </div>
+
+      {/* Category groups */}
       <div className="px-3 py-3 space-y-3">
         {cats.map((cat) => {
           const catItems = items.filter((c) => c.cat === cat);
@@ -109,8 +85,15 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
           return (
             <div key={cat}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[9px] font-bold text-violet-500 uppercase tracking-widest">{cat}</span>
-                <span className="text-[8px] text-neutral-400">{catDone}/{catItems.length}</span>
+                <span
+                  className="text-[9px] font-bold uppercase tracking-widest"
+                  style={{ color: "var(--lavender-500)" }}
+                >
+                  {cat}
+                </span>
+                <span className="text-[8px]" style={{ color: "var(--muted-foreground)" }}>
+                  {catDone}/{catItems.length}
+                </span>
               </div>
               <div className="space-y-1">
                 {catItems.map((item) => {
@@ -121,19 +104,59 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
                       key={item.key}
                       disabled={disabled}
                       onClick={() => onChange(item.key, !on)}
-                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all
-                        ${on ? "bg-emerald-50 border border-emerald-200" : "bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-white"}
-                        ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all"
+                      style={
+                        on
+                          ? {
+                              background: "var(--mint-50)",
+                              border: "1px solid var(--mint-200)",
+                              opacity: disabled ? 0.6 : 1,
+                              cursor: disabled ? "not-allowed" : "pointer",
+                            }
+                          : {
+                              background: "var(--muted)",
+                              border: "1px solid var(--border)",
+                              opacity: disabled ? 0.6 : 1,
+                              cursor: disabled ? "not-allowed" : "pointer",
+                            }
+                      }
                     >
-                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${on ? "bg-emerald-500 border-emerald-500" : "border-neutral-300 bg-white"}`}>
+                      {/* Checkbox */}
+                      <div
+                        className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 transition-colors"
+                        style={
+                          on
+                            ? { background: "var(--mint-500)", border: "1px solid var(--mint-500)" }
+                            : { background: "var(--card)", border: "1.5px dashed var(--primary)", opacity: 0.5 }
+                        }
+                      >
                         {on && (
-                          <svg className="w-2 h-2 text-white" viewBox="0 0 8 8" fill="none">
-                            <path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <svg className="w-2 h-2" viewBox="0 0 8 8" fill="none">
+                            <path
+                              d="M1.5 4l2 2 3-3"
+                              stroke="white"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         )}
                       </div>
-                      {ItemIcon && <ItemIcon className={`h-3 w-3 shrink-0 ${on ? "text-emerald-400" : "text-neutral-300"}`} />}
-                      <span className={`text-[10px] leading-tight flex-1 ${on ? "text-emerald-700" : "text-neutral-600"}`}>{item.label}</span>
+
+                      {/* Icon — primary when unchecked, mint when checked */}
+                      {ItemIcon && (
+                        <ItemIcon
+                          className="h-3 w-3 shrink-0"
+                          style={{ color: on ? "var(--mint-400)" : "var(--primary)" }}
+                        />
+                      )}
+
+                      <span
+                        className="text-[10px] leading-tight flex-1"
+                        style={{ color: on ? "var(--mint-700)" : "var(--foreground)" }}
+                      >
+                        {item.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -141,16 +164,24 @@ function ChecklistWidget({ items, checked, onChange, disabled }) {
             </div>
           );
         })}
+
         {allDone && (
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-2 mt-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-            <span className="text-[10px] font-semibold text-emerald-700">All checks complete</span>
+          <div
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 mt-1"
+            style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+          >
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--mint-500)" }} />
+            <span className="text-[10px] font-semibold" style={{ color: "var(--mint-700)" }}>
+              All checks complete
+            </span>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function LayoutProductionReview({
   offer, contractData, allowances, calculatedRates,
@@ -178,24 +209,39 @@ export default function LayoutProductionReview({
     return false;
   });
 
-  const allDone = visibleItems.every((c) => checklist[c.key]);
+  const allDone       = visibleItems.every((c) => checklist[c.key]);
+  const verifiedItems = visibleItems.filter((c) => checklist[c.key]);
 
   return (
     <div className="space-y-4">
 
-      <OfferTopBar offer={offer} contractData={contractData} onEdit={handleEdit} />
+      {/* Reuses CrewIdentityHeader — avatar, name, title, rate, dates, status badge */}
+      <CrewIdentityHeader contractData={contractData} offer={offer} />
 
       <div className="flex gap-4 items-start">
 
+        {/* ── Left: submitted docs + contract documents */}
         <div className="flex-1 min-w-0 space-y-4">
           <SubmittedDocumentsPanel offerId={offer?._id} offer={offer} />
 
-          {/* FIX: offerStatus prop added so panel re-fetches on status change */}
-          <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
-              <FileText className="w-3.5 h-3.5 text-violet-500" />
-              <h3 className="text-[12px] font-semibold text-neutral-800">Contract Documents</h3>
-              <span className="ml-auto text-[9px] text-violet-500 font-mono">PRODUCTION REVIEW</span>
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+          >
+            <div
+              className="flex items-center gap-2 px-4 py-2.5"
+              style={{ borderBottom: "1px solid var(--border)" }}
+            >
+              <FileText className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
+              <h3 className="text-[12px] font-semibold" style={{ color: "var(--foreground)" }}>
+                Contract Documents
+              </h3>
+              <span
+                className="ml-auto text-[9px] font-mono"
+                style={{ color: "var(--primary)" }}
+              >
+                PRODUCTION REVIEW
+              </span>
             </div>
             <div className="p-4">
               {offer?._id && (
@@ -206,10 +252,10 @@ export default function LayoutProductionReview({
               )}
             </div>
           </div>
-
         </div>
 
-        <div className="w-[260px] shrink-0 space-y-3">
+        {/* ── Right: checklist + action buttons */}
+        <div className="w-[320px] shrink-0 space-y-3">
           <ChecklistWidget
             items={visibleItems}
             checked={checklist}
@@ -218,79 +264,88 @@ export default function LayoutProductionReview({
           />
 
           {!approved ? (
-            <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+            <div
+              className="rounded-xl p-3 space-y-2"
+              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            >
               <button
                 onClick={() => allDone && setShowApprove(true)}
                 disabled={!allDone || isSubmitting}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all ${
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all"
+                style={
                   allDone && !isSubmitting
-                    ? "bg-violet-600 text-white hover:bg-violet-700"
-                    : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                }`}
+                    ? { background: "var(--primary)", color: "var(--primary-foreground)" }
+                    : {
+                        background: "var(--muted)",
+                        color: "var(--muted-foreground)",
+                        cursor: "not-allowed",
+                      }
+                }
               >
-                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardCheck className="h-3.5 w-3.5" />}
+                {isSubmitting
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <ClipboardCheck className="h-3.5 w-3.5" />
+                }
                 Approve &amp; Send to Accounts
               </button>
+
               <button
                 onClick={handleEdit}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-medium hover:bg-orange-100 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[11px] font-medium transition-colors"
+                style={{
+                  background: "var(--peach-50)",
+                  border: "1px solid var(--peach-200)",
+                  color: "var(--peach-600)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--peach-100)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--peach-50)")}
               >
                 <Edit2 className="h-3 w-3" /> Edit &amp; Resend to Crew
               </button>
-              <button
-                onClick={() => onAction("sendToCrew")}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-600 text-[11px] font-medium hover:bg-neutral-50 transition-colors"
-              >
-                <Send className="h-3 w-3" /> Return to Crew
-              </button>
+
               {!allDone && (
-                <p className="text-[9px] text-neutral-400 text-center">Complete all checklist items to approve</p>
+                <p
+                  className="text-[9px] text-center"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Complete all checklist items to approve
+                </p>
               )}
             </div>
           ) : (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto mb-1.5" />
-              <p className="text-[12px] font-semibold text-emerald-800">Production Approved</p>
-              <p className="text-[10px] text-emerald-600 mt-0.5">Sent to Accounts for review</p>
+            <div
+              className="rounded-xl p-4 text-center"
+              style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+            >
+              <CheckCircle2
+                className="h-6 w-6 mx-auto mb-1.5"
+                style={{ color: "var(--mint-500)" }}
+              />
+              <p className="text-[12px] font-semibold" style={{ color: "var(--mint-800)" }}>
+                Production Approved
+              </p>
+              <p className="text-[10px] mt-0.5" style={{ color: "var(--mint-600)" }}>
+                Sent to Accounts for review
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {showApprove && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="bg-violet-700 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-white" />
-                <h3 className="text-white font-semibold">Approve &amp; Send to Accounts?</h3>
-              </div>
-              <button onClick={() => setShowApprove(false)} className="text-violet-300 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-[13px] text-neutral-600 mb-5">
-                Production checks complete for <strong>{contractData?.fullName}</strong>. Send to Accounts for financial review?
-              </p>
-              <div className="flex gap-3">
-                <button onClick={() => setShowApprove(false)} className="flex-1 px-4 py-2.5 rounded-lg border text-[13px] text-neutral-600 hover:bg-neutral-50">
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => { await onAction("accountsCheck"); setApproved(true); setShowApprove(false); }}
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-700 flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
-                  Approve &amp; Send
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Approve dialog */}
+      <OfferActionDialog
+        type="approveOffer"
+        open={showApprove}
+        offer={offer}
+        verifiedItems={verifiedItems}
+        isLoading={isSubmitting}
+        onClose={() => setShowApprove(false)}
+        onConfirm={async () => {
+          await onAction("accountsCheck");
+          setApproved(true);
+          setShowApprove(false);
+        }}
+      />
     </div>
   );
 }
