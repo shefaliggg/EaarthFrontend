@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   Bell,
   Check,
@@ -74,6 +74,10 @@ export default function Header({
   const [currentTheme, setCurrentTheme] = useState(getInitialTheme);
   const [notificationCount] = useState(5);
   const [messageCount] = useState(3);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
+
+  const scrollRef = useRef(null);
 
   const showHeader = useScrollHeaderTracker();
   const navigate = useNavigate();
@@ -86,12 +90,14 @@ export default function Header({
   const fullName = getFullName(currentUser) || "Not Available";
   const role = currentUser?.userType || "Not Available";
   const onlineCount = useChatStore((state) => state.onlineUsers.size);
-  const activeWorkspaceTab = workspaceTabs.find((tab) => tab.id === activeWorkspaceTabId);
+  const activeWorkspaceTab = workspaceTabs.find(
+    (tab) => tab.id === activeWorkspaceTabId,
+  );
   const currentProject =
     projectCatalog.find(
       (project) =>
         project.id === routeProjectKey ||
-        convertTitleToUrl(project.name) === routeProjectKey
+        convertTitleToUrl(project.name) === routeProjectKey,
     ) || projectCatalog[0];
   const currentProjectApps = currentProject?.apps || [];
   const filteredLauncherApps = currentProjectApps.filter((app) => {
@@ -108,7 +114,8 @@ export default function Header({
   const firstName = nameParts[0] || "";
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
 
-  const displayName = lastName && firstName ? `${lastName}, ${firstName}` : fullName;
+  const displayName =
+    lastName && firstName ? `${lastName}, ${firstName}` : fullName;
   const initials = `${lastName.charAt(0)}${firstName.charAt(0)}`.toUpperCase();
   const avatar = currentUser?.avatar;
   const projectInitials = (currentProject?.name || routeProjectKey || "PROJECT")
@@ -205,7 +212,7 @@ export default function Header({
   useEffect(() => {
     document.body.classList.toggle(
       "overflow-hidden",
-      showMessages || showNotifications
+      showMessages || showNotifications,
     );
 
     return () => {
@@ -213,35 +220,63 @@ export default function Header({
     };
   }, [showMessages, showNotifications]);
 
+  useEffect(() => {
+    const activeTab = document.querySelector("#active-tab");
+    activeTab?.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }, [activeWorkspaceTabId]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateFade = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+
+      setShowLeftFade(scrollLeft > 0);
+      setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
+    };
+
+    updateFade();
+    el.addEventListener("scroll", updateFade);
+
+    return () => el.removeEventListener("scroll", updateFade);
+  }, []);
   return (
     <>
       <div
-        className={`sticky top-0 z-40 bg-transparent transition-transform duration-300 ${
+        className={`sticky top-0 z-40 bg-background/40 backdrop-blur-xs transition-transform duration-300 ${
           showHeader ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="border-b border-border/60 bg-transparent">
-          <div className="flex h-10 items-end gap-3 px-6 md:pl-56">
+        <div className="">
+          <div className="flex h-12 items-end gap-3 px-6 pl-0 border border-border/60 border-l-0 bg-background/40">
             {workspaceTabs.length > 0 && (
-              <div className="min-w-0 flex-1 self-stretch">
-                <div className="topbar-tabs-scrollbar flex h-full items-center gap-px overflow-x-auto overflow-y-hidden pr-2">
+              <div className="min-w-0 flex-1 self-stretch relative">
+                <div
+                  ref={scrollRef}
+                  className="scrollbar-none flex h-full items-end bg-transparent gap-0.5 overflow-x-auto overflow-y-hidden px-2"
+                >
                   {workspaceTabs.map((tab) => {
                     const isActive = tab.id === activeWorkspaceTabId;
 
                     return (
                       <div
+                        id="active-tab"
                         key={tab.id}
-                        className={cn("group relative shrink-0", isActive ? "z-10" : "z-0")}
+                        className={cn(
+                          "group relative shrink-0",
+                          isActive ? "z-10" : "z-0",
+                        )}
                       >
                         <button
                           type="button"
                           onClick={() => onWorkspaceTabSelect?.(tab.id)}
                           className={cn(
-                            "relative flex h-9 min-w-[8.5rem] max-w-[14rem] items-center gap-2 border border-border/40 border-b-transparent px-3 pr-8 text-left text-[13px] backdrop-blur-sm transition-colors",
+                            "relative flex min-w-[8.5rem] max-w-[14rem] items-center gap-2 border border-border/40 px-3 pr-8 text-left text-[13px] backdrop-blur-sm transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             isActive
-                              ? "rounded-t-[6px] bg-primary/10 text-primary"
-                              : "rounded-t-[6px] bg-background/30 text-muted-foreground hover:bg-background/40 hover:text-foreground"
+                              ? "rounded-t-[10px] h-10 border-b-transparent bg-primary/10 text-primary"
+                              : "rounded-[10px] h-9 mb-1 shadow bg-background/30 text-muted-foreground hover:bg-background/40 hover:text-foreground",
                           )}
                           title={tab.label}
                         >
@@ -259,7 +294,7 @@ export default function Header({
                             "text-muted-foreground/80 hover:bg-muted hover:text-foreground",
                             isActive
                               ? "opacity-100"
-                              : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                              : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
                           )}
                         >
                           <X className="h-3 w-3" strokeWidth={2} />
@@ -267,8 +302,16 @@ export default function Header({
                       </div>
                     );
                   })}
-                  <div aria-hidden="true" className="shrink-0 w-40" />
+                  <div aria-hidden="true" className="shrink-0 w-10" />
                 </div>
+
+                {showLeftFade && (
+                  <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-foreground/5 to-transparent" />
+                )}
+
+                {showRightFade && (
+                  <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-foreground/5 to-transparent" />
+                )}
               </div>
             )}
 
@@ -282,9 +325,13 @@ export default function Header({
                 <div className="h-5 w-px bg-border/70" />
 
                 <span className="min-w-0 truncate text-muted-foreground">
-                  <span className="font-medium text-foreground">{firstName || "You"}</span>{" "}
-                  editing{" "}
-                  <span className="font-semibold text-primary">{activeWorkspaceLabel}</span>
+                  <span className="font-medium text-foreground">
+                    {firstName || "You"}
+                  </span>{" "}
+                  In{" "}
+                  <span className="font-semibold text-primary">
+                    {activeWorkspaceLabel}
+                  </span>
                 </span>
               </div>
 
@@ -316,7 +363,7 @@ export default function Header({
                     variant="ghost"
                     className={cn(
                       "h-9 w-9 rounded-full text-muted-foreground hover:bg-background/50 hover:text-foreground",
-                      isAppLauncherOpen && "bg-background/50 text-foreground"
+                      isAppLauncherOpen && "bg-background/50 text-foreground",
                     )}
                     aria-label="Open app launcher"
                     title="Apps"
@@ -348,14 +395,18 @@ export default function Header({
                         <div className="flex min-w-0 items-center gap-2.5">
                           <div
                             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] text-base font-semibold text-white shadow-sm"
-                            style={{ backgroundColor: currentProject?.color || "#7c3aed" }}
+                            style={{
+                              backgroundColor:
+                                currentProject?.color || "#7c3aed",
+                            }}
                           >
                             {projectInitials}
                           </div>
 
                           <div className="min-w-0 space-y-1">
                             <div className="truncate text-[17px] font-semibold tracking-tight text-foreground">
-                              {currentProject?.name || convertToPrettyText(routeProjectKey)}
+                              {currentProject?.name ||
+                                convertToPrettyText(routeProjectKey)}
                             </div>
 
                             <div
@@ -363,7 +414,8 @@ export default function Header({
                               style={{
                                 color: currentProject?.color || "#7c3aed",
                                 backgroundColor:
-                                  currentProject?.colorLight || "rgba(124, 58, 237, 0.12)",
+                                  currentProject?.colorLight ||
+                                  "rgba(124, 58, 237, 0.12)",
                               }}
                             >
                               <span className="truncate">
@@ -378,7 +430,7 @@ export default function Header({
                           variant="ghost"
                           onClick={() =>
                             setLauncherPanelView((current) =>
-                              current === "projects" ? "apps" : "projects"
+                              current === "projects" ? "apps" : "projects",
                             )
                           }
                           className="h-8 rounded-full px-2 text-[11px] font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground"
@@ -401,7 +453,9 @@ export default function Header({
                               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                               <Input
                                 value={appLauncherQuery}
-                                onChange={(event) => setAppLauncherQuery(event.target.value)}
+                                onChange={(event) =>
+                                  setAppLauncherQuery(event.target.value)
+                                }
                                 placeholder={`Search ${currentProjectApps.length} apps...`}
                                 className="h-7 border-0 bg-transparent px-0 text-[13px] font-medium shadow-none focus-visible:ring-0"
                               />
@@ -415,7 +469,8 @@ export default function Header({
                                 onClick={() => setAppLauncherView("grid")}
                                 className={cn(
                                   "h-7 w-7 rounded-[10px] text-muted-foreground hover:bg-background/80 hover:text-foreground",
-                                  appLauncherView === "grid" && "bg-background text-primary shadow-sm"
+                                  appLauncherView === "grid" &&
+                                    "bg-background text-primary shadow-sm",
                                 )}
                                 aria-label="Grid view"
                               >
@@ -429,7 +484,8 @@ export default function Header({
                                 onClick={() => setAppLauncherView("list")}
                                 className={cn(
                                   "h-7 w-7 rounded-[10px] text-muted-foreground hover:bg-background/80 hover:text-foreground",
-                                  appLauncherView === "list" && "bg-background text-primary shadow-sm"
+                                  appLauncherView === "list" &&
+                                    "bg-background text-primary shadow-sm",
                                 )}
                                 aria-label="List view"
                               >
@@ -447,13 +503,16 @@ export default function Header({
                                   <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
                                     {filteredLauncherApps.map((app) => {
                                       const AppIcon = app.icon;
-                                      const hasNotifications = (app.notifications || 0) > 0;
+                                      const hasNotifications =
+                                        (app.notifications || 0) > 0;
 
                                       return (
                                         <button
                                           key={app.id}
                                           type="button"
-                                          onClick={() => handleLauncherSelect(app.id)}
+                                          onClick={() =>
+                                            handleLauncherSelect(app.id)
+                                          }
                                           className="group flex flex-col items-center gap-2 rounded-[16px] p-1 text-center transition-transform hover:-translate-y-0.5"
                                           title={app.description}
                                         >
@@ -462,15 +521,22 @@ export default function Header({
                                               className="flex h-14 w-14 items-center justify-center rounded-[18px] text-primary shadow-sm transition-colors group-hover:shadow-md"
                                               style={{
                                                 backgroundColor: `${currentProject?.color || "#7c3aed"}14`,
-                                                color: currentProject?.color || "#7c3aed",
+                                                color:
+                                                  currentProject?.color ||
+                                                  "#7c3aed",
                                               }}
                                             >
-                                              <AppIcon className="h-6 w-6" strokeWidth={2} />
+                                              <AppIcon
+                                                className="h-6 w-6"
+                                                strokeWidth={2}
+                                              />
                                             </div>
 
                                             {hasNotifications && (
                                               <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white shadow-sm">
-                                                {app.notifications > 9 ? "9+" : app.notifications}
+                                                {app.notifications > 9
+                                                  ? "9+"
+                                                  : app.notifications}
                                               </span>
                                             )}
                                           </div>
@@ -488,13 +554,16 @@ export default function Header({
                                   <div className="space-y-2">
                                     {filteredLauncherApps.map((app) => {
                                       const AppIcon = app.icon;
-                                      const hasNotifications = (app.notifications || 0) > 0;
+                                      const hasNotifications =
+                                        (app.notifications || 0) > 0;
 
                                       return (
                                         <button
                                           key={app.id}
                                           type="button"
-                                          onClick={() => handleLauncherSelect(app.id)}
+                                          onClick={() =>
+                                            handleLauncherSelect(app.id)
+                                          }
                                           className="flex w-full items-center gap-2.5 rounded-[14px] border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-muted/60"
                                           title={app.description}
                                         >
@@ -502,14 +571,21 @@ export default function Header({
                                             className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px]"
                                             style={{
                                               backgroundColor: `${currentProject?.color || "#7c3aed"}14`,
-                                              color: currentProject?.color || "#7c3aed",
+                                              color:
+                                                currentProject?.color ||
+                                                "#7c3aed",
                                             }}
                                           >
-                                            <AppIcon className="h-[18px] w-[18px]" strokeWidth={2} />
+                                            <AppIcon
+                                              className="h-[18px] w-[18px]"
+                                              strokeWidth={2}
+                                            />
 
                                             {hasNotifications && (
                                               <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white shadow-sm">
-                                                {app.notifications > 9 ? "9+" : app.notifications}
+                                                {app.notifications > 9
+                                                  ? "9+"
+                                                  : app.notifications}
                                               </span>
                                             )}
                                           </div>
@@ -529,7 +605,9 @@ export default function Header({
                                 )
                               ) : (
                                 <div className="flex flex-col items-center justify-center rounded-[18px] border border-dashed border-border/70 py-8 text-center">
-                                  <div className="text-[11px] font-medium text-foreground">No apps found</div>
+                                  <div className="text-[11px] font-medium text-foreground">
+                                    No apps found
+                                  </div>
                                   <div className="mt-1 text-[10px] text-muted-foreground">
                                     Try a different search term.
                                   </div>
@@ -548,10 +626,12 @@ export default function Header({
                         <ScrollArea className="min-h-0 flex-1">
                           <div className="space-y-2 pr-1">
                             {projectCatalog.map((project) => {
-                              const isSelected = project.id === currentProject?.id;
+                              const isSelected =
+                                project.id === currentProject?.id;
                               const projectNotifications = project.apps.reduce(
-                                (count, app) => count + (app.notifications || 0),
-                                0
+                                (count, app) =>
+                                  count + (app.notifications || 0),
+                                0,
                               );
                               const projectAppsCount = project.apps.length;
                               const projectAvatarInitials = (project.name || "")
@@ -571,20 +651,26 @@ export default function Header({
                                     "relative flex w-full items-center gap-2.5 rounded-[22px] border border-transparent px-3 py-2.5 text-left transition-colors",
                                     isSelected
                                       ? "border-primary/10 bg-primary/5 shadow-[0_12px_24px_-24px_rgba(124,58,237,0.55)]"
-                                      : "hover:bg-muted/50"
+                                      : "hover:bg-muted/50",
                                   )}
                                   title={project.name}
                                 >
                                   {isSelected && (
                                     <span
                                       className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
-                                      style={{ backgroundColor: project.color || "#7c3aed" }}
+                                      style={{
+                                        backgroundColor:
+                                          project.color || "#7c3aed",
+                                      }}
                                     />
                                   )}
 
                                   <div
                                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-sm font-semibold text-white shadow-sm"
-                                    style={{ backgroundColor: project.color || "#7c3aed" }}
+                                    style={{
+                                      backgroundColor:
+                                        project.color || "#7c3aed",
+                                    }}
                                   >
                                     {projectAvatarInitials}
                                   </div>
@@ -597,7 +683,9 @@ export default function Header({
                                     <div className="mt-1 flex items-center gap-2">
                                       <span
                                         className="truncate text-[11px] font-medium"
-                                        style={{ color: project.color || "#7c3aed" }}
+                                        style={{
+                                          color: project.color || "#7c3aed",
+                                        }}
                                       >
                                         {project.subtitle}
                                       </span>
@@ -608,7 +696,8 @@ export default function Header({
                                             className="h-full rounded-full"
                                             style={{
                                               width: `${project.progress}%`,
-                                              backgroundColor: project.color || "#7c3aed",
+                                              backgroundColor:
+                                                project.color || "#7c3aed",
                                             }}
                                           />
                                         </div>
@@ -621,7 +710,9 @@ export default function Header({
 
                                   <div className="flex shrink-0 items-center gap-1.5">
                                     <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-red-500 px-2 text-[11px] font-semibold leading-none text-white shadow-sm">
-                                      {projectNotifications > 99 ? "99+" : projectNotifications}
+                                      {projectNotifications > 99
+                                        ? "99+"
+                                        : projectNotifications}
                                     </span>
 
                                     <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-muted px-2 text-[11px] font-semibold leading-none text-muted-foreground shadow-sm">
@@ -631,9 +722,15 @@ export default function Header({
                                     {isSelected ? (
                                       <span
                                         className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm"
-                                        style={{ backgroundColor: project.color || "#7c3aed" }}
+                                        style={{
+                                          backgroundColor:
+                                            project.color || "#7c3aed",
+                                        }}
                                       >
-                                        <Check className="h-4 w-4" strokeWidth={3} />
+                                        <Check
+                                          className="h-4 w-4"
+                                          strokeWidth={3}
+                                        />
                                       </span>
                                     ) : null}
                                   </div>
@@ -656,12 +753,18 @@ export default function Header({
                         </div>
 
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-muted-foreground">{currentProjectApps.length} apps</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {currentProjectApps.length} apps
+                          </span>
 
                           <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => handleOpenLauncherRoute(`/projects/${routeProjectKey}/settings`)}
+                            onClick={() =>
+                              handleOpenLauncherRoute(
+                                `/projects/${routeProjectKey}/settings`,
+                              )
+                            }
                             className="h-8 rounded-full px-2.5 text-[10px] font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                           >
                             <Settings className="h-3 w-3" />
@@ -670,7 +773,11 @@ export default function Header({
 
                           <Button
                             type="button"
-                            onClick={() => handleOpenLauncherRoute(`/projects/${routeProjectKey}/settings`)}
+                            onClick={() =>
+                              handleOpenLauncherRoute(
+                                `/projects/${routeProjectKey}/settings`,
+                              )
+                            }
                             className="h-8 rounded-full px-2.5 text-[10px] font-semibold"
                           >
                             Manage Apps
@@ -694,9 +801,7 @@ export default function Header({
                         alt={displayName}
                         className="h-full w-full rounded-full object-cover"
                       />
-                      <AvatarFallback>
-                        {initials}
-                      </AvatarFallback>
+                      <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -724,14 +829,18 @@ export default function Header({
                                 return (
                                   <DropdownMenuItem
                                     key={child.id}
-                                    onClick={() => actionHandlers[child.action](child.id)}
-                                    className={cn(isActive && "bg-accent text-background")}
+                                    onClick={() =>
+                                      actionHandlers[child.action](child.id)
+                                    }
+                                    className={cn(
+                                      isActive && "bg-accent text-background",
+                                    )}
                                   >
                                     <SmartIcon
                                       icon={child.icon}
                                       className={cn(
                                         "mr-2",
-                                        isActive && "text-background"
+                                        isActive && "text-background",
                                       )}
                                     />
                                     {child.label}
@@ -755,7 +864,10 @@ export default function Header({
                             if (item.action) actionHandlers[item.action]?.();
                           }}
                         >
-                          <SmartIcon icon={item.icon} className="mr-2 h-4 w-4" />
+                          <SmartIcon
+                            icon={item.icon}
+                            className="mr-2 h-4 w-4"
+                          />
                           {item.label}
 
                           {item.badge && messageCount > 0 && (

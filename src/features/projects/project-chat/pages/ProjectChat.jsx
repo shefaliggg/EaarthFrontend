@@ -268,8 +268,9 @@ function ProjectChat() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
-          <div className="lg:col-span-1">
+        <div className="flex h-full gap-3">
+          {/* Sidebar */}
+          <div className="w-full sm:w-[280px] lg:w-[320px] xl:w-[320px] 2xl:[360px] flex-shrink-0">
             <ChatLeftSidebar
               activeTab={activeTab}
               searchQuery={searchQuery}
@@ -279,7 +280,8 @@ function ProjectChat() {
             />
           </div>
 
-          <div className="lg:col-span-3">
+          {/* Chat Area */}
+          <div className="flex-1 min-w-0">
             <ChatBox />
           </div>
         </div>

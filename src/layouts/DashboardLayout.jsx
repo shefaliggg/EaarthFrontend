@@ -22,9 +22,14 @@ import Header from "@/shared/components/header/Header";
 import AiChatWidget from "../features/ai/components/AIChatWidget";
 import SuspenseOutlet from "../shared/components/SuspenseOutlet";
 import { Footer } from "../shared/components/Footer";
-import { cn, convertTitleToUrl, convertToPrettyText } from "../shared/config/utils";
+import {
+  cn,
+  convertTitleToUrl,
+  convertToPrettyText,
+} from "../shared/config/utils";
 import { projects as projectCatalog } from "../features/projects/pages/ProjectSettings/data.js";
 import { useAuth } from "../features/auth/context/AuthContext";
+import { useScrollHeaderTracker } from "../shared/hooks/useScrollHeaderTracker.js";
 
 const DASHBOARD_PROJECTS = [
   {
@@ -61,10 +66,20 @@ const DASHBOARD_PROJECTS = [
 
 const DASHBOARD_APPLICATIONS = [
   { id: "onboarding", label: "Onboarding", icon: Users, route: "onboarding" },
-  { id: "timesheets", label: "Timesheets", icon: ClipboardList, route: "timesheets" },
+  {
+    id: "timesheets",
+    label: "Timesheets",
+    icon: ClipboardList,
+    route: "timesheets",
+  },
   { id: "calendar", label: "Calendar", icon: CalendarDays, route: "calendar" },
   { id: "chat", label: "Chat", icon: MessageSquare, route: "chat" },
-  { id: "call-sheets", label: "Call Sheets", icon: Video, route: "call-sheets" },
+  {
+    id: "call-sheets",
+    label: "Call Sheets",
+    icon: Video,
+    route: "call-sheets",
+  },
 ];
 
 const createWorkspaceTabId = () =>
@@ -80,7 +95,9 @@ const normalizeDashboardPath = (path) => {
 };
 
 const getProjectBySlug = (projectSlug) =>
-  DASHBOARD_PROJECTS.find((item) => convertTitleToUrl(item.name) === projectSlug) ||
+  DASHBOARD_PROJECTS.find(
+    (item) => convertTitleToUrl(item.name) === projectSlug,
+  ) ||
   projectCatalog.find((item) => convertTitleToUrl(item.name) === projectSlug);
 
 const resolveWorkspaceTabMeta = (path) => {
@@ -124,7 +141,11 @@ const resolveWorkspaceTabMeta = (path) => {
     const projectLabel = project?.name ?? convertToPrettyText(projectSlug);
 
     if (segments.length === 2) {
-      return { label: projectLabel, icon: UserRound, accent: project?.accent ?? null };
+      return {
+        label: projectLabel,
+        icon: UserRound,
+        accent: project?.accent ?? null,
+      };
     }
 
     const appSlug = segments[2];
@@ -186,9 +207,11 @@ const DashboardLayout = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const activeProjectId = getProjectIdFromPath(pathname);
-  const activeProjectSlugs = new Set(DASHBOARD_PROJECTS.map((project) => convertTitleToUrl(project.name)));
+  const activeProjectSlugs = new Set(
+    DASHBOARD_PROJECTS.map((project) => convertTitleToUrl(project.name)),
+  );
   const archivedSidebarProjects = projectCatalog.filter(
-    (project) => !activeProjectSlugs.has(convertTitleToUrl(project.name))
+    (project) => !activeProjectSlugs.has(convertTitleToUrl(project.name)),
   );
   const canCreateProject = user?.userType === "studio_admin";
 
@@ -202,6 +225,7 @@ const DashboardLayout = () => {
   });
 
   const { tabs: workspaceTabs, activeTabId } = workspaceState;
+  const showHeader = useScrollHeaderTracker();
 
   const handleOpenWorkspaceTab = (path) => {
     const nextPath = normalizeDashboardPath(path);
@@ -292,15 +316,6 @@ const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen">
-      <Header
-        workspaceTabs={workspaceTabs}
-        activeWorkspaceTabId={activeTabId}
-        onWorkspaceTabSelect={handleActivateWorkspaceTab}
-        onWorkspaceTabClose={handleCloseWorkspaceTab}
-        onWorkspaceTabOpen={handleOpenWorkspaceTab}
-        projectCount={DASHBOARD_PROJECTS.length}
-      />
-
       {isMobileSidebarOpen && (
         <button
           type="button"
@@ -313,11 +328,17 @@ const DashboardLayout = () => {
       <div className="flex">
         <aside
           className={cn(
-            "fixed top-0 left-0 z-50 flex h-screen w-56 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out",
-            isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            "fixed top-0 left-0 z-50 flex h-screen w-50 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out",
+            isMobileSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0",
           )}
         >
-          <div className="flex h-10 items-center justify-center border-b border-sidebar-border">
+          <div
+            className={cn(
+              "flex h-12 items-center justify-center border-b border-r border-sidebar-border",
+            )}
+          >
             <img
               src={eaarthLogo}
               alt="EAARTH"
@@ -342,14 +363,16 @@ const DashboardLayout = () => {
             </div>
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-r border-sidebar-border">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <div className="space-y-3">
                 {DASHBOARD_PROJECTS.map((project) => {
                   const slug = convertTitleToUrl(project.name);
                   const projectPath = `/projects/${slug}`;
                   const isActive = pathname.startsWith(`/projects/${slug}`);
-                  const isOpen = activeProjectId === project.id || expandedProjectId === project.id;
+                  const isOpen =
+                    activeProjectId === project.id ||
+                    expandedProjectId === project.id;
 
                   return (
                     <div key={project.id} className="space-y-1">
@@ -360,27 +383,36 @@ const DashboardLayout = () => {
                           className={cn(
                             "flex-1 flex items-center rounded-md px-3 py-2 text-sm transition-colors",
                             "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                            isActive && "bg-sidebar-primary text-sidebar-primary-foreground"
+                            isActive &&
+                              "bg-sidebar-primary text-sidebar-primary-foreground",
                           )}
                           title={project.name}
                         >
-                          <span className="flex-1 text-left font-medium">{project.name}</span>
+                          <span className="flex-1 text-left font-medium">
+                            {project.name}
+                          </span>
                         </button>
 
                         <button
                           type="button"
                           aria-label={`${isOpen ? "Collapse" : "Expand"} ${project.name}`}
                           onClick={() =>
-                            setExpandedProjectId((prev) => (prev === project.id ? null : project.id))
+                            setExpandedProjectId((prev) =>
+                              prev === project.id ? null : project.id,
+                            )
                           }
                           className={cn(
                             "inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors",
                             "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                            isActive && "bg-sidebar-primary text-sidebar-primary-foreground"
+                            isActive &&
+                              "bg-sidebar-primary text-sidebar-primary-foreground",
                           )}
                         >
                           <ChevronDown
-                            className={cn("w-4 h-4 shrink-0 transition-transform", isOpen && "rotate-180")}
+                            className={cn(
+                              "w-4 h-4 shrink-0 transition-transform",
+                              isOpen && "rotate-180",
+                            )}
                           />
                         </button>
                       </div>
@@ -394,7 +426,10 @@ const DashboardLayout = () => {
                             const isAppActive = pathname === to;
 
                             return (
-                              <div key={`${project.id}-${item.id}`} className="relative">
+                              <div
+                                key={`${project.id}-${item.id}`}
+                                className="relative"
+                              >
                                 <span className="absolute -left-5 top-[calc(50%-12px)] h-9 w-5 border-l border-b border-sidebar-border/70 rounded-bl-[22px]" />
                                 <button
                                   type="button"
@@ -402,7 +437,8 @@ const DashboardLayout = () => {
                                   className={cn(
                                     "relative flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
                                     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                                    isAppActive && "bg-sidebar-primary text-sidebar-primary-foreground"
+                                    isAppActive &&
+                                      "bg-sidebar-primary text-sidebar-primary-foreground",
                                   )}
                                   title={item.label}
                                 >
@@ -427,7 +463,7 @@ const DashboardLayout = () => {
                   onClick={() => setIsArchivedSidebarOpen((prev) => !prev)}
                   className={cn(
                     "flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors",
-                    "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   )}
                   aria-expanded={isArchivedSidebarOpen}
                   aria-label="Toggle archived projects"
@@ -442,7 +478,7 @@ const DashboardLayout = () => {
                     <ChevronDown
                       className={cn(
                         "h-3.5 w-3.5 shrink-0 transition-transform",
-                        isArchivedSidebarOpen && "rotate-180"
+                        isArchivedSidebarOpen && "rotate-180",
                       )}
                     />
                   </span>
@@ -468,19 +504,23 @@ const DashboardLayout = () => {
                           onClick={() => handleOpenWorkspaceTab(projectPath)}
                           className={cn(
                             "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition-colors",
-                            "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                           )}
                           title={project.name}
                         >
                           <span
                             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold text-white shadow-sm"
-                            style={{ backgroundColor: project.color || "#7c3aed" }}
+                            style={{
+                              backgroundColor: project.color || "#7c3aed",
+                            }}
                           >
                             {projectInitials}
                           </span>
 
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-medium">{project.name}</span>
+                            <span className="block truncate text-[12px] font-medium">
+                              {project.name}
+                            </span>
                             <span className="block truncate text-[10px] text-sidebar-foreground/45">
                               {project.subtitle}
                             </span>
@@ -499,7 +539,7 @@ const DashboardLayout = () => {
           </div>
         </aside>
 
-        <div className="flex-1 min-w-0 md:pl-56">
+        <div className="flex-1 min-w-0 md:pl-50">
           <button
             type="button"
             aria-label="Open sidebar"
@@ -508,8 +548,15 @@ const DashboardLayout = () => {
           >
             <Menu className="w-5 h-5" />
           </button>
-
-          <div className="p-6 min-h-[calc(100svh-68px-68px)]">
+          <Header
+            workspaceTabs={workspaceTabs}
+            activeWorkspaceTabId={activeTabId}
+            onWorkspaceTabSelect={handleActivateWorkspaceTab}
+            onWorkspaceTabClose={handleCloseWorkspaceTab}
+            onWorkspaceTabOpen={handleOpenWorkspaceTab}
+            projectCount={DASHBOARD_PROJECTS.length}
+          />
+          <div className="p-6 pl-3 min-h-[calc(100svh-68px-68px)]">
             <SuspenseOutlet />
             <AiChatWidget />
           </div>
@@ -521,14 +568,3 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
-
-
-
-
-
-
-
-
-
-
-
