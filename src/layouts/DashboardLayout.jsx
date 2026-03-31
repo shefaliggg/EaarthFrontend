@@ -27,7 +27,7 @@ import {
   convertTitleToUrl,
   convertToPrettyText,
 } from "../shared/config/utils";
-import { projects as projectCatalog } from "../features/projects/pages/ProjectSettings/data.js";
+import { projects as projectCatalog } from "@/constants/data.js";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { useScrollHeaderTracker } from "../shared/hooks/useScrollHeaderTracker.js";
 
