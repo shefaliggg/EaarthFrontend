@@ -43,7 +43,7 @@ import { SmartIcon } from "../SmartIcon";
 import { adminDropdownConfig } from "../../config/adminDropdownNavList";
 import { useScrollHeaderTracker } from "../../hooks/useScrollHeaderTracker";
 import useChatStore from "../../../features/projects/project-chat/store/chat.store";
-import { projects as projectCatalog } from "../../../features/projects/pages/ProjectSettings/data.js";
+import { projects as projectCatalog } from "@/constants/data.js";
 
 const getInitialTheme = () => {
   if (typeof window === "undefined") return "system";
