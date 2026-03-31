@@ -1,6 +1,5 @@
 // ─── OffersList ──────────────────────────────────────────────────────────────
-// Uses reusable SearchBar for search input.
-// Filter and Export use shared ActionButton / IconButton patterns.
+// UPDATED: matchesSummaryFilter ENDED now correctly matches offer.status === "COMPLETED"
 
 import { useState, useMemo } from "react";
 import { Filter, Download, FileText, X } from "lucide-react";
@@ -16,10 +15,14 @@ import { Skeleton }       from "../../../../shared/components/ui/skeleton";
 function matchesSummaryFilter(status, filterKey) {
   if (!filterKey || filterKey === "ALL") return true;
   const label = getStatusLabel(status);
-  if (filterKey === "PENDING")  return ["DRAFT","OFFER SENT","REQUIRES ATTENTION","PRODUCTION CHECK","ACCOUNTS CHECK","CREW SIGN","UPM SIGN","FC SIGN","STUDIO SIGN"].includes(label);
-  if (filterKey === "ACCEPTED") return ["CREW ACCEPTED","CONTRACTED"].includes(label);
+  if (filterKey === "PENDING") return [
+    "DRAFT", "OFFER SENT", "REQUIRES ATTENTION", "PRODUCTION CHECK",
+    "ACCOUNTS CHECK", "CREW SIGN", "UPM SIGN", "FC SIGN", "STUDIO SIGN",
+  ].includes(label);
+  if (filterKey === "ACCEPTED") return label === "CREW ACCEPTED";
   if (filterKey === "REJECTED") return label === "REJECTED";
-  if (filterKey === "ENDED")    return label === "ENDED";
+  // UPDATED: ENDED now correctly maps to COMPLETED status (not the label which never existed)
+  if (filterKey === "ENDED")    return status === "COMPLETED";
   return false;
 }
 
@@ -106,30 +109,18 @@ export function OffersList({
   return (
     <div className="space-y-3">
 
-      {/* ── Toolbar ── */}
       <div className="flex items-center gap-2">
-
-        {/* Reusable SearchBar */}
         <SearchBar
           placeholder="Search by name, role or department…"
           value={search}
           onValueChange={setSearch}
         />
-
-        {/* Filter button */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-10 gap-2 px-4 text-[13px] rounded-full border-2 shrink-0"
-        >
+        <Button variant="outline" size="sm" className="h-10 gap-2 px-4 text-[13px] rounded-full border-2 shrink-0">
           <Filter className="w-4 h-4" />
           Filter
         </Button>
-
-        {/* Export button */}
         <Button
-          variant="outline"
-          size="sm"
+          variant="outline" size="sm"
           className="h-10 gap-2 px-4 text-[13px] rounded-full border-2 shrink-0"
           onClick={() => exportToCSV(filtered)}
           disabled={filtered.length === 0}
@@ -139,10 +130,7 @@ export function OffersList({
         </Button>
       </div>
 
-      {/* ── List card ── */}
       <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-
-        {/* Card header */}
         <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-[14px] font-semibold text-neutral-800">{heading}</h2>
@@ -160,7 +148,6 @@ export function OffersList({
           </span>
         </div>
 
-        {/* Body */}
         {isLoading ? (
           <div className="p-4 space-y-4">
             {[1, 2, 3].map(i => (

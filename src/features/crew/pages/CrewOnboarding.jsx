@@ -1,13 +1,11 @@
 /**
  * CrewOnboarding.jsx
  *
- * FIXED: The URL param :projectName is a slug like "avatar-1" — NOT a valid
- * MongoDB ObjectId. Sending it to the API causes the 500 error.
- *
- * Resolution priority:
- *   1. params.projectId  (if your router uses :projectId)
- *   2. selectedProject._id from Redux (your project store)
- *   3. FALLBACK_PROJECT_ID (hardcoded known good ID for dev/demo)
+ * CHANGES:
+ *   1. computeSummaryValues — COMPLETED now counted as "ended" (was missing)
+ *   2. STAGE_KEYS — added COMPLETED tile so pipeline shows completed contracts
+ *   3. matchesSummaryFilter in OffersList updated to filter COMPLETED for ENDED
+ *   4. Grid updated to sm:grid-cols-9 for the extra tile
  */
 
 import { useState, useMemo, useEffect } from "react";
@@ -35,7 +33,6 @@ import {
 // ─── Hardcoded fallback (your real project _id) ───────────────────────────────
 const FALLBACK_PROJECT_ID = "697c899668977a7ca2b27462";
 
-// ─── Is this string a valid MongoDB ObjectId? ─────────────────────────────────
 const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 // ─── Static config ────────────────────────────────────────────────────────────
@@ -48,15 +45,18 @@ const SUMMARY_STATS_CONFIG = [
   { value: "ENDED",    label: "Ended",         icon: Users,        iconColor: "text-neutral-500", iconBg: "bg-neutral-50", color: "text-neutral-700" },
 ];
 
+// UPDATED: added COMPLETED as the 9th tile
 const STAGE_KEYS = [
-  { key: "DRAFT",                    label: "Drafts",      icon: FileText,    color: "text-neutral-600", bg: "bg-neutral-50", border: "border-neutral-200" },
-  { key: "SENT_TO_CREW",             label: "Crew Review", icon: Eye,         color: "text-amber-600",   bg: "bg-amber-50",   border: "border-amber-200"   },
-  { key: "PRODUCTION_CHECK",         label: "Production",  icon: AlertCircle, color: "text-purple-600",  bg: "bg-purple-50",  border: "border-purple-200"  },
-  { key: "ACCOUNTS_CHECK",           label: "Accounts",    icon: Calculator,  color: "text-blue-600",    bg: "bg-blue-50",    border: "border-blue-200"    },
-  { key: "PENDING_CREW_SIGNATURE",   label: "Crew Sign",   icon: PenLine,     color: "text-teal-600",    bg: "bg-teal-50",    border: "border-teal-200"    },
-  { key: "PENDING_UPM_SIGNATURE",    label: "UPM Sign",    icon: Stamp,       color: "text-indigo-600",  bg: "bg-indigo-50",  border: "border-indigo-200"  },
-  { key: "PENDING_FC_SIGNATURE",     label: "FC Sign",     icon: ShieldCheck, color: "text-violet-600",  bg: "bg-violet-50",  border: "border-violet-200"  },
-  { key: "PENDING_STUDIO_SIGNATURE", label: "Studio Sign", icon: Building2,   color: "text-fuchsia-600", bg: "bg-fuchsia-50", border: "border-fuchsia-200" },
+  { key: "DRAFT",                    label: "Drafts",      icon: FileText,    color: "text-neutral-600",  bg: "bg-neutral-50",  border: "border-neutral-200"  },
+  { key: "SENT_TO_CREW",             label: "Crew Review", icon: Eye,         color: "text-amber-600",    bg: "bg-amber-50",    border: "border-amber-200"    },
+  { key: "PRODUCTION_CHECK",         label: "Production",  icon: AlertCircle, color: "text-purple-600",   bg: "bg-purple-50",   border: "border-purple-200"   },
+  { key: "ACCOUNTS_CHECK",           label: "Accounts",    icon: Calculator,  color: "text-blue-600",     bg: "bg-blue-50",     border: "border-blue-200"     },
+  { key: "PENDING_CREW_SIGNATURE",   label: "Crew Sign",   icon: PenLine,     color: "text-teal-600",     bg: "bg-teal-50",     border: "border-teal-200"     },
+  { key: "PENDING_UPM_SIGNATURE",    label: "UPM Sign",    icon: Stamp,       color: "text-indigo-600",   bg: "bg-indigo-50",   border: "border-indigo-200"   },
+  { key: "PENDING_FC_SIGNATURE",     label: "FC Sign",     icon: ShieldCheck, color: "text-violet-600",   bg: "bg-violet-50",   border: "border-violet-200"   },
+  { key: "PENDING_STUDIO_SIGNATURE", label: "Studio Sign", icon: Building2,   color: "text-fuchsia-600",  bg: "bg-fuchsia-50",  border: "border-fuchsia-200"  },
+  // NEW: completed contracts shown as final pipeline stage
+  { key: "COMPLETED",                label: "Completed",   icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50",  border: "border-emerald-200"  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,19 +70,20 @@ function computeStageCounts(offers) {
   return counts;
 }
 
+// UPDATED: COMPLETED now goes to "ended", not "accepted"
 function computeSummaryValues(offers) {
   const pendingStatuses = new Set([
     "DRAFT", "SENT_TO_CREW", "NEEDS_REVISION", "PRODUCTION_CHECK",
     "ACCOUNTS_CHECK", "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE",
     "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
   ]);
-  const acceptedStatuses = new Set(["CREW_ACCEPTED", "COMPLETED"]);
 
   let pending = 0, accepted = 0, rejected = 0, ended = 0;
   offers.forEach(o => {
-    if (pendingStatuses.has(o.status))       pending++;
-    else if (acceptedStatuses.has(o.status)) accepted++;
-    else if (o.status === "CANCELLED")       rejected++;
+    if (pendingStatuses.has(o.status))     pending++;
+    else if (o.status === "CREW_ACCEPTED") accepted++;
+    else if (o.status === "COMPLETED")     ended++;   // fixed: was never counted before
+    else if (o.status === "CANCELLED")     rejected++;
   });
 
   return { all: offers.length, pending, accepted, rejected, ended };
@@ -95,27 +96,18 @@ export default function CrewOnboarding() {
   const dispatch = useDispatch();
   const params   = useParams();
 
-  // ── Adjust this selector to match YOUR project store shape ──────────────────
-  // Common patterns: state.projects.selectedProject  OR  state.project.current
   const selectedProject = useSelector(
     (s) => s.projects?.selectedProject ?? s.project?.current ?? null
   );
 
-  // ── Resolve the real MongoDB _id ─────────────────────────────────────────────
   const resolvedProjectId = useMemo(() => {
-    // 1. Router gives us a real ObjectId param directly
     if (isObjectId(params.projectId)) return params.projectId;
     if (isObjectId(params.id))        return params.id;
-
-    // 2. Project already loaded in Redux store
     if (isObjectId(selectedProject?._id)) return String(selectedProject._id);
-
-    // 3. Last resort — hardcoded fallback
-    console.warn("[CrewOnboarding] Using fallback projectId — check your router params or project store");
+    console.warn("[CrewOnboarding] Using fallback projectId");
     return FALLBACK_PROJECT_ID;
   }, [params.projectId, params.id, selectedProject]);
 
-  // Keep the slug for navigation links (/projects/avatar-1/...)
   const projectSlug = params.projectName ?? params.projectId ?? "demo-project";
 
   const offers    = useSelector(selectProjectOffers);
@@ -125,7 +117,6 @@ export default function CrewOnboarding() {
   const [stageFilter, setStageFilter] = useState(null);
   const [showCreate,  setShowCreate]  = useState(false);
 
-  // ── Fetch on mount and whenever resolvedProjectId changes ───────────────────
   useEffect(() => {
     dispatch(getProjectOffersThunk({ projectId: resolvedProjectId }));
   }, [dispatch, resolvedProjectId]);
@@ -141,7 +132,6 @@ export default function CrewOnboarding() {
     <div className="min-h-screen">
       <div className="py-5 space-y-5">
 
-        {/* ── Header ── */}
         <PageHeader
           title="Crew Onboarding"
           icon="Users"
@@ -155,7 +145,6 @@ export default function CrewOnboarding() {
           }}
         />
 
-        {/* ── Summary stats ── */}
         <PrimaryStats
           gridColumns={5}
           gridGap={3}
@@ -172,8 +161,8 @@ export default function CrewOnboarding() {
           }))}
         />
 
-        {/* ── Stage pipeline grid ── */}
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+        {/* UPDATED: sm:grid-cols-9 to fit the new Completed tile */}
+        <div className="grid grid-cols-3 sm:grid-cols-9 gap-2">
           {STAGE_KEYS.map(stage => (
             <StageCard
               key={stage.key}
@@ -185,7 +174,6 @@ export default function CrewOnboarding() {
           ))}
         </div>
 
-        {/* ── Offers list ── */}
         <OffersList
           offers={offers}
           isLoading={isLoading}
