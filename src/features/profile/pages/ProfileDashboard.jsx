@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import ProfileSummary from "../components/ProfileSummary";
-import ProfileTabs from "../components/ProfileTabs";
 import IdentityDetails from "../components/tabs/IdentityDetails";
 import ContactDetails from "../components/tabs/ContactDetails";
 import FinanceDetails from "../components/tabs/FinancialDetails";
 import AllowanceDetails from "../components/tabs/AllowancesDetails";
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
+import FilterPillTabs from "../../../shared/components/FilterPillTabs";
+import { set } from "date-fns/set";
+import { Car, DollarSign, Heart, MapPin, PenTool, User } from "lucide-react";
 
 export default function ProfileDashboard() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -99,7 +101,7 @@ export default function ProfileDashboard() {
     // Health
     dietaryRequirements: "",
     allergies: "",
-    
+
     // Signature
     signature: null,
   });
@@ -117,6 +119,15 @@ export default function ProfileDashboard() {
     setIsEditing(false);
   };
 
+  const tabs = [
+    { value: "identity", label: "Identity", icon: User },
+    { value: "contact", label: "Contact", icon: MapPin },
+    { value: "financial", label: "Financial", icon: DollarSign },
+    { value: "allowances", label: "Allowances", icon: Car },
+    { value: "health", label: "Health", icon: Heart },
+    { value: "signature", label: "My Signature", icon: PenTool },
+  ];
+
   return (
     <div className="container mx-auto space-y-6">
       {/* HEADER + SUMMARY */}
@@ -129,11 +140,14 @@ export default function ProfileDashboard() {
         handleCancel={handleCancel}
       />
 
-      {/* TABS */}
-      <ProfileTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isDarkMode={isDarkMode}
+      <FilterPillTabs
+        options={tabs}
+        value={activeTab}
+        onChange={(value) => setActiveTab(value)}
+        size="md"
+        // transparentBg={false}
+        // fullWidth
+        // variant="modern"
       />
 
       {/* TAB CONTENTS */}

@@ -75,7 +75,7 @@ export function PageHeader({
   return (
     <div>
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 ">
-        <div className="flex items-start gap-6">
+        <div className="flex items-start gap-4">
           {renderIdentity()}
 
           <div className="flex flex-col gap-1">

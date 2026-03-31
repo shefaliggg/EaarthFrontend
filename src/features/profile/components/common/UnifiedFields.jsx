@@ -213,7 +213,7 @@ export function FileUpload({
   return (
     <div
       onClick={handleFileSelect}
-      className={`border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-muted/20 ${!isEditing ? "opacity-50 cursor-not-allowed" : ""
+      className={`border-2 flex flex-col justify-center items-center border-dashed min-h-60 border-border rounded-lg p-4 text-center cursor-pointer transition-all duration-300 hover:border-primary hover:bg-muted/20 ${!isEditing ? "opacity-50 cursor-not-allowed" : ""
         }`}
     >
       <Upload className="w-6 h-6 mx-auto mb-2 text-primary" />

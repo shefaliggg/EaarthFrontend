@@ -30,10 +30,11 @@ const VARIANT_STYLES = {
       ${transparentBg ? "bg-transparent" : "bg-background rounded-3xl border shadow-sm border-muted"}
       ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start"}
     `,
-    trigger: () => `
+    trigger: ({ badge }) => `
       bg-background/60
       data-[state=active]:bg-primary
       data-[state=active]:text-white
+      ${badge ? "pr-3!" : ""}
     `,
     badge: `
       bg-primary/10 text-primary
@@ -114,7 +115,7 @@ function FilterPillTabs({
       <TabsList
         className={`
           ${styles.list}
-          ${variantStyles.list({ transparentBg, fullWidth })}
+          ${variantStyles.list({ transparentBg, fullWidth})}
         `}
       >
         {options.map((option) => {
@@ -127,7 +128,7 @@ function FilterPillTabs({
               value={tabValue}
               className={`
                 ${styles.trigger}
-                ${variantStyles.trigger()}
+                ${variantStyles.trigger({ badge: option.badge === undefined})}
                 group
               `}
             >
