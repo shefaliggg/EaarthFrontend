@@ -1,7 +1,6 @@
 import { PageHeader } from "@/shared/components/PageHeader";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { projects } from "@/features/projects/pages/ProjectSettings/data.js";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -39,8 +38,7 @@ function ProjectDashboard() {
   const { projectName } = useParams();
   const MotionLink = motion.create(Link);
   const navigate = useNavigate();
-  const project = projects.find((p) => p.id === projectName);
-  const color = project?.color || "#7c3aed"
+  const color = "#7c3aed"
   const applications = [
     {
       id: "project-calendar",
