@@ -1,6 +1,9 @@
 /**
  * offer.thunks.js
- * All async thunks for the offers feature — separated from the slice.
+ *
+ * NEW: extendContractThunk     — calls PATCH /offers/:id/extend
+ * NEW: cloneOfferThunk         — calls POST  /offers/:id/clone
+ * NEW: toggleContractLockThunk — calls PATCH /offers/:id/toggle-lock
  */
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -113,10 +116,38 @@ export const moveToPendingCrewSignatureThunk = createAsyncThunk("offers/pendingC
   }
 );
 
-// ── FIX: uses offerApi.returnToProduction — no axiosConfig needed here ────────
 export const returnToProductionThunk = createAsyncThunk("offers/returnToProduction",
   async ({ offerId, reason }, { rejectWithValue }) => {
     try { return await offerApi.returnToProduction(offerId, reason); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+// ─── Extend Contract ──────────────────────────────────────────────────────────
+
+export const extendContractThunk = createAsyncThunk("offers/extend",
+  async ({ offerId, newEndDate, note }, { rejectWithValue }) => {
+    try { return await offerApi.extendContract(offerId, { newEndDate, note }); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+// ─── Clone Offer ──────────────────────────────────────────────────────────────
+
+export const cloneOfferThunk = createAsyncThunk("offers/clone",
+  async (offerId, { rejectWithValue }) => {
+    try { return await offerApi.cloneOffer(offerId); }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+// ─── Toggle Contract Lock ─────────────────────────────────────────────────────
+// Returns { isLocked: boolean } — NOT the full offer.
+// The slice handles this separately via its own fulfilled case.
+
+export const toggleContractLockThunk = createAsyncThunk("offers/toggleLock",
+  async (offerId, { rejectWithValue }) => {
+    try { return await offerApi.toggleContractLock(offerId); }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
 );
@@ -176,6 +207,8 @@ export const resolveChangeRequestThunk = createAsyncThunk("offers/resolveChangeR
 );
 
 // ─── Grouped exports for slice builders ──────────────────────────────────────
+// NOTE: toggleContractLockThunk is NOT in workflowThunks because it returns
+// { isLocked } not a full offer — it has its own extraReducer case in the slice.
 
 export const workflowThunks = [
   sendToCrewThunk,
@@ -186,7 +219,9 @@ export const workflowThunks = [
   moveToProductionCheckThunk,
   moveToAccountsCheckThunk,
   moveToPendingCrewSignatureThunk,
-  returnToProductionThunk,        // ← added
+  returnToProductionThunk,
+  extendContractThunk,
+  cloneOfferThunk,
 ];
 
 export const signThunks = [

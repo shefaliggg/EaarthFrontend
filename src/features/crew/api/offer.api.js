@@ -1,5 +1,9 @@
 /**
  * offer.api.js
+ *
+ * NEW: extendContract      — PATCH /offers/:id/extend
+ * NEW: cloneOffer          — POST  /offers/:id/clone
+ * NEW: toggleContractLock  — PATCH /offers/:id/toggle-lock
  */
 
 import axiosConfig from "../../auth/config/axiosConfig";
@@ -23,7 +27,9 @@ export const getOffer = (id) =>
   axiosConfig.get(`${BASE}/${id}`, { headers: roleHeaders() }).then(unwrap);
 
 export const getProjectOffers = (projectId, filters = {}) =>
-  axiosConfig.get(`${BASE}/project/${projectId}`, { params: filters, headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .get(`${BASE}/project/${projectId}`, { params: filters, headers: roleHeaders() })
+    .then(unwrap);
 
 export const getMyOffers = () =>
   axiosConfig.get(`${BASE}/my-offers`, { headers: roleHeaders() }).then(unwrap);
@@ -46,26 +52,50 @@ export const crewAccept = (id) =>
   axiosConfig.patch(`${BASE}/${id}/accept`, {}, { headers: roleHeaders() }).then(unwrap);
 
 export const crewRequestChanges = (id, payload) =>
-  axiosConfig.patch(`${BASE}/${id}/request-changes`, payload, { headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .patch(`${BASE}/${id}/request-changes`, payload, { headers: roleHeaders() })
+    .then(unwrap);
 
 export const cancelOffer = (id) =>
   axiosConfig.patch(`${BASE}/${id}/cancel`, {}, { headers: roleHeaders() }).then(unwrap);
 
 export const moveToProductionCheck = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/production-check`, {}, { headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .patch(`${BASE}/${id}/production-check`, {}, { headers: roleHeaders() })
+    .then(unwrap);
 
 export const moveToAccountsCheck = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/accounts-check`, {}, { headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .patch(`${BASE}/${id}/accounts-check`, {}, { headers: roleHeaders() })
+    .then(unwrap);
 
 export const moveToPendingCrewSignature = (id) =>
-  axiosConfig.patch(`${BASE}/${id}/pending-crew-signature`, {}, { headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .patch(`${BASE}/${id}/pending-crew-signature`, {}, { headers: roleHeaders() })
+    .then(unwrap);
 
-// ── FIX: returnToProduction — accounts sends notes back to production ─────────
-// PATCH /offers/:id/return-to-production
-// Backend: status → PRODUCTION_CHECK + creates ChangeRequest with accounts notes
 export const returnToProduction = (id, reason) =>
   axiosConfig
     .patch(`${BASE}/${id}/return-to-production`, { reason }, { headers: roleHeaders() })
+    .then(unwrap);
+
+// ─── EXTEND CONTRACT ──────────────────────────────────────────────────────────
+
+export const extendContract = (id, { newEndDate, note }) =>
+  axiosConfig
+    .patch(`${BASE}/${id}/extend`, { newEndDate, note }, { headers: roleHeaders() })
+    .then(unwrap);
+
+// ─── CLONE OFFER ──────────────────────────────────────────────────────────────
+
+export const cloneOffer = (id) =>
+  axiosConfig.post(`${BASE}/${id}/clone`, {}, { headers: roleHeaders() }).then(unwrap);
+
+// ─── TOGGLE CONTRACT LOCK ─────────────────────────────────────────────────────
+
+export const toggleContractLock = (id) =>
+  axiosConfig
+    .patch(`${BASE}/${id}/toggle-lock`, {}, { headers: roleHeaders() })
     .then(unwrap);
 
 // ─── SIGNING ──────────────────────────────────────────────────────────────────
@@ -87,7 +117,7 @@ export const getContractPreview = (contractId) =>
     .get(`${SIG_BASE}/${contractId}/preview`, {
       headers:      roleHeaders(),
       responseType: "text",
-      params: { _t: Date.now() },
+      params:       { _t: Date.now() },
     })
     .then((res) => res.data);
 
@@ -95,7 +125,7 @@ export const getSigningStatus = (contractId) =>
   axiosConfig
     .get(`${SIG_BASE}/${contractId}/status`, {
       headers: roleHeaders(),
-      params: { _t: Date.now() },
+      params:  { _t: Date.now() },
     })
     .then(unwrap);
 
@@ -109,7 +139,9 @@ export const getContractPdfUrl = (contractId) =>
 // ─── CHANGE REQUESTS ──────────────────────────────────────────────────────────
 
 export const getChangeRequests = (offerId) =>
-  axiosConfig.get(`${BASE}/${offerId}/change-requests`, { headers: roleHeaders() }).then(unwrap);
+  axiosConfig
+    .get(`${BASE}/${offerId}/change-requests`, { headers: roleHeaders() })
+    .then(unwrap);
 
 export const resolveChangeRequest = (offerId, changeRequestId, status, notes) =>
   axiosConfig
@@ -133,7 +165,7 @@ export const getContractInstances = (offerId) =>
 export const getContractInstanceHtml = (instanceId) =>
   axiosConfig
     .get(`/contract-instances/${instanceId}/html`, {
-      headers: roleHeaders(),
+      headers:      roleHeaders(),
       responseType: "text",
     })
     .then((res) => res.data);

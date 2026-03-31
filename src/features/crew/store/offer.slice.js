@@ -18,6 +18,7 @@ import {
   getContractPdfUrlThunk,
   getChangeRequestsThunk,
   resolveChangeRequestThunk,
+  toggleContractLockThunk,
   workflowThunks,
   signThunks,
 } from "./offer.thunks";
@@ -55,6 +56,7 @@ const initialState = {
   isLoadingList:        false,
   isLoadingOffer:       false,
   isSubmitting:         false,
+  isTogglingLock:       false,
   error:                null,
   successMessage:       null,
   statusFilter:         "ALL",
@@ -190,6 +192,29 @@ const offerSlice = createSlice({
         });
     });
 
+    // ── Toggle contract lock ─────────────────────────────────────────────────
+    // Returns { isLocked: boolean } — updates signingStatus.isLocked in place.
+    builder
+      .addCase(toggleContractLockThunk.pending, (state) => {
+        state.isTogglingLock = true;
+        state.error = null;
+      })
+      .addCase(toggleContractLockThunk.fulfilled, (state, { payload }) => {
+        state.isTogglingLock = false;
+        // Patch signingStatus so the UI reflects the new lock state immediately
+        if (state.signingStatus) {
+          state.signingStatus = {
+            ...state.signingStatus,
+            isLocked: payload.isLocked,
+          };
+        }
+        state.successMessage = payload.isLocked ? "Contract locked" : "Contract unlocked";
+      })
+      .addCase(toggleContractLockThunk.rejected, (state, { payload }) => {
+        state.isTogglingLock = false;
+        state.error = payload;
+      });
+
     // ── Signing status ───────────────────────────────────────────────────────
     builder
       .addCase(getSigningStatusThunk.pending,   (state) => { state.error = null; })
@@ -275,6 +300,7 @@ export const selectIsLoadingPdfUrl     = (s) => s.offers.isLoadingPdfUrl;
 export const selectOfferLoading        = (s) => s.offers.isLoadingOffer;
 export const selectListLoading         = (s) => s.offers.isLoadingList;
 export const selectSubmitting          = (s) => s.offers.isSubmitting;
+export const selectIsTogglingLock      = (s) => s.offers.isTogglingLock;
 export const selectOfferError          = (s) => s.offers.error;
 export const selectOfferSuccess        = (s) => s.offers.successMessage;
 export const selectStatusFilter        = (s) => s.offers.statusFilter;
