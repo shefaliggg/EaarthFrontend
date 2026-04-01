@@ -1,20 +1,53 @@
 import React from "react";
 import { Field, FileUpload } from "../common/UnifiedFields";
-import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
-import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
-import EditableDateField from "../../../../shared/components/wrappers/EditableDateField";
-import EditableRadioField from "../../../../shared/components/wrappers/EditableRadioField";
+import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
+import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
+import EditableDateField from "@/shared/components/wrappers/EditableDateField";
+import EditableRadioField from "@/shared/components/wrappers/EditableRadioField";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import { Button } from "@/shared/components/ui/button";
+import { Check, Pen, X } from "lucide-react";
+import { cn } from "@/shared/config/utils";
 
 export default function IdentityDetails({
   profile,
   setProfile,
   isEditing,
-  isDarkMode,
+  setIsEditing,
   uploads,
   setUploads,
 }) {
   return (
-    <div className="rounded-3xl border shadow-md p-6 bg-card border-border">
+    <CardWrapper
+      title={"Personal Details"}
+      icon={"User2"}
+      actions={
+        <>
+          {isEditing && (
+            <Button
+              size="icon"
+              variant={"outline"}
+              onClick={() => setIsEditing((prev) => !prev)}
+              className={"hover:bg-red-200 dark:hover:bg-red-800"}
+            >
+              <X className="text-red-500" />
+            </Button>
+          )}
+          <Button
+            size="icon"
+            variant={"outline"}
+            onClick={() => setIsEditing((prev) => !prev)}
+            className={cn(isEditing ? "hover:bg-green-200 dark:hover:bg-green-800" :  "hover:bg-purple-200 dark:hover:bg-purple-800")}
+          >
+            {isEditing ? (
+              <Check className="text-green-500" />
+            ) : (
+              <Pen className="text-primary" />
+            )}
+          </Button>
+        </>
+      }
+    >
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <EditableSelectField
@@ -34,10 +67,10 @@ export default function IdentityDetails({
           <EditableTextDataField
             label="LEGAL FIRST NAME"
             value={profile.firstName}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                firstName: e.target.value.toUpperCase(),
+                firstName: value.toUpperCase(),
               })
             }
             isEditing={isEditing}
@@ -46,10 +79,10 @@ export default function IdentityDetails({
           <EditableTextDataField
             label="LEGAL LAST NAME"
             value={profile.lastName}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                lastName: e.target.value.toUpperCase(),
+                lastName: value.toUpperCase(),
               })
             }
             isEditing={isEditing}
@@ -58,10 +91,10 @@ export default function IdentityDetails({
           <EditableTextDataField
             label="MIDDLE NAMES"
             value={profile.middleNames}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                middleNames: e.target.value.toUpperCase(),
+                middleNames: value.toUpperCase(),
               })
             }
             placeholder="OPTIONAL"
@@ -71,10 +104,10 @@ export default function IdentityDetails({
           <EditableTextDataField
             label="ALSO KNOWN AS"
             value={profile.alsoKnownAs}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                alsoKnownAs: e.target.value.toUpperCase(),
+                alsoKnownAs: value.toUpperCase(),
               })
             }
             isEditing={isEditing}
@@ -83,10 +116,10 @@ export default function IdentityDetails({
           <EditableTextDataField
             label="SCREEN CREDIT NAME"
             value={profile.screenCreditName}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                screenCreditName: e.target.value.toUpperCase(),
+                screenCreditName: value.toUpperCase(),
               })
             }
             isEditing={isEditing}
@@ -119,8 +152,8 @@ export default function IdentityDetails({
           <EditableDateField
             label="DATE OF BIRTH"
             value={profile.dateOfBirth}
-            onChange={(e) =>
-              setProfile({ ...profile, dateOfBirth: e.target.value })
+            onChange={(value) =>
+              setProfile({ ...profile, dateOfBirth: value })
             }
             isEditing={isEditing}
           />
@@ -147,10 +180,10 @@ export default function IdentityDetails({
           <EditableSelectField
             label="NATIONALITY"
             value={profile.countryOfLegalNationality}
-            onChange={(e) =>
+            onChange={(value) =>
               setProfile({
                 ...profile,
-                countryOfLegalNationality: e.target.value,
+                countryOfLegalNationality: value,
               })
             }
             items={[
@@ -194,10 +227,10 @@ export default function IdentityDetails({
                   <EditableTextDataField
                     label="PASSPORT FIRST NAME"
                     value={profile.passportFirstName}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportFirstName: e.target.value.toUpperCase(),
+                        passportFirstName: value.toUpperCase(),
                       })
                     }
                     isEditing={isEditing}
@@ -206,10 +239,10 @@ export default function IdentityDetails({
                   <EditableTextDataField
                     label="PASSPORT LAST NAME"
                     value={profile.passportLastName}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportLastName: e.target.value.toUpperCase(),
+                        passportLastName: value.toUpperCase(),
                       })
                     }
                     isEditing={isEditing}
@@ -218,10 +251,10 @@ export default function IdentityDetails({
                   <EditableTextDataField
                     label="PLACE OF BIRTH"
                     value={profile.passportPlaceOfBirth}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportPlaceOfBirth: e.target.value.toUpperCase(),
+                        passportPlaceOfBirth: value.toUpperCase(),
                       })
                     }
                     isEditing={isEditing}
@@ -230,10 +263,10 @@ export default function IdentityDetails({
                   <EditableSelectField
                     label="PASSPORT ISSUING COUNTRY"
                     value={profile.passportIssuingCountry}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportIssuingCountry: e.target.value,
+                        passportIssuingCountry: value,
                       })
                     }
                     items={[
@@ -249,10 +282,10 @@ export default function IdentityDetails({
                   <EditableTextDataField
                     label="PASSPORT NUMBER"
                     value={profile.passportNumber}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportNumber: e.target.value.toUpperCase(),
+                        passportNumber: value.toUpperCase(),
                       })
                     }
                     isEditing={isEditing}
@@ -261,10 +294,10 @@ export default function IdentityDetails({
                   <EditableDateField
                     label="PASSPORT EXPIRY DATE"
                     value={profile.passportExpiryDate}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setProfile({
                         ...profile,
-                        passportExpiryDate: e.target.value,
+                        passportExpiryDate: value,
                       })
                     }
                     isEditing={isEditing}
@@ -288,9 +321,7 @@ export default function IdentityDetails({
 
             {/* Birth Certificate Fields */}
             {profile.proofOfNationality === "BIRTH CERTIFICATE" && (
-              <div
-                className={`mt-6  grid grid-cols-2 gap-4 p-6 rounded-2xl bg-background`}
-              >
+              <div className={`mt-6  grid grid-cols-2 gap-4`}>
                 <FileUpload
                   fieldLabel="Birth Certificate"
                   fileName="Birth_Certificate.pdf"
@@ -361,6 +392,6 @@ export default function IdentityDetails({
           </div>
         </div>
       </div>
-    </div>
+    </CardWrapper>
   );
 }

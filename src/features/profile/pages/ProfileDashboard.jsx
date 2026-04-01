@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ProfileSummary from "../components/ProfileSummary";
 import IdentityDetails from "../components/tabs/IdentityDetails";
 import ContactDetails from "../components/tabs/ContactDetails";
-import FinanceDetails from "../components/tabs/FinancialDetails";
+import FinancialDetails from "../components/tabs/FinancialDetails";
 import AllowanceDetails from "../components/tabs/AllowancesDetails";
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
@@ -11,7 +11,6 @@ import { set } from "date-fns/set";
 import { Car, DollarSign, Heart, MapPin, PenTool, User } from "lucide-react";
 
 export default function ProfileDashboard() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("identity");
 
@@ -133,7 +132,6 @@ export default function ProfileDashboard() {
       {/* HEADER + SUMMARY */}
       <ProfileSummary
         profile={profile}
-        isDarkMode={isDarkMode}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         handleSave={handleSave}
@@ -145,9 +143,6 @@ export default function ProfileDashboard() {
         value={activeTab}
         onChange={(value) => setActiveTab(value)}
         size="md"
-        // transparentBg={false}
-        // fullWidth
-        // variant="modern"
       />
 
       {/* TAB CONTENTS */}
@@ -156,7 +151,7 @@ export default function ProfileDashboard() {
           profile={profile}
           setProfile={setProfile}
           isEditing={isEditing}
-          isDarkMode={isDarkMode}
+          setIsEditing={setIsEditing}
           uploads={uploads}
           setUploads={setUploads}
         />
@@ -167,16 +162,16 @@ export default function ProfileDashboard() {
           profile={profile}
           setProfile={setProfile}
           isEditing={isEditing}
-          isDarkMode={isDarkMode}
+          setIsEditing={setIsEditing}
         />
       )}
 
       {activeTab === "financial" && (
-        <FinanceDetails
+        <FinancialDetails
           profile={profile}
           setProfile={setProfile}
           isEditing={isEditing}
-          isDarkMode={isDarkMode}
+          setIsEditing={setIsEditing}
         />
       )}
 

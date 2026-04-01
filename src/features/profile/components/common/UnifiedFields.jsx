@@ -113,6 +113,7 @@ export function PhoneField({
           onChange={onCodeChange}
           options={countryCodes}
           className="w-24"
+          placeholder="Code"
         />
 
         <EditableInput
