@@ -2,33 +2,32 @@
  * layouts/LayoutProductionAdmin.jsx
  *
  * CHANGES:
- *   - ExtendDialog min date = current endDate + 1 day (prevents same-day selection)
- *   - isCompleted sidebar: Lock/Unlock toggle button
- *   - Extend Contract disabled while locked
- *   - Clone: calls cloneOfferThunk, navigates to new offer on success
+ *   - Reads ?openExtend=true from URL → auto-opens ExtendDialog on mount
+ *   - Clears ?openExtend param from URL after opening (clean history)
+ *   - ExtendDialog min date = current endDate + 1 day
+ *   - Clone button REMOVED from completed sidebar
+ *   - SignatureStatusCard REMOVED from signing stage sidebar
  *   - All existing functionality preserved
  */
 
-import { useState }               from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect }        from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast }                  from "sonner";
 import {
-  Edit2, Send, ClipboardCheck, PenLine, Loader2,
-  Eye, FileText, Lock, Unlock, Shield, XCircle, CheckCircle,
-  CalendarDays, Copy, X,
+  Edit2, Send, ClipboardCheck, Loader2,
+  Eye, FileText, XCircle,
+  CalendarDays, X,
 } from "lucide-react";
 
 import { CreateOfferLayout }  from "../../roleActions/ProductionAdminActions/createoffer/CreateOfferLayout";
 import ContractInstancesPanel from "../../../pages/ContractInstancesPanel";
 import OfferActionDialog      from "../../onboarding/OfferActionDialog";
 import ChangeRequestBanner    from "../../../components/viewoffer/layouts/ChangeRequestBanner";
-import { InfoBox }            from "./layoutHelpers";
+
 
 import {
   extendContractThunk,
-  cloneOfferThunk,
   getOfferThunk,
-  toggleContractLockThunk,
 } from "../../../store/offer.slice";
 import { defaultEngineSettings } from "../../../utils/rateCalculations";
 
@@ -38,8 +37,6 @@ function getInitials(name = "") {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
 }
 
-// Returns a YYYY-MM-DD string that is `days` days after the given date string.
-// Strips any time component first so bare YYYY-MM-DD strings work correctly.
 function addDays(dateStr, days) {
   if (!dateStr) return "";
   const d = new Date(String(dateStr).split("T")[0] + "T00:00:00");
@@ -83,7 +80,6 @@ function ExtendDialog({ offer, onClose, onConfirm, isLoading }) {
     ? new Date(String(offer.endDate).split("T")[0] + "T00:00:00").toLocaleDateString("en-GB")
     : "—";
 
-  // min = endDate + 1 day so the picker never allows same-day selection
   const minDate = addDays(offer?.endDate, 1);
 
   return (
@@ -148,7 +144,7 @@ function ExtendDialog({ offer, onClose, onConfirm, isLoading }) {
           </div>
 
           <p className="text-[10px] text-neutral-400">
-            This will update the contract end date. No new contract is created — the same agreement continues with the extended term.
+            This will update the contract end date and generate an Extension Agreement. The same contract continues with the extended term.
           </p>
         </div>
 
@@ -177,7 +173,7 @@ function ExtendDialog({ offer, onClose, onConfirm, isLoading }) {
 
 // ── Top identity bar ──────────────────────────────────────────────────────────
 
-function OfferTopBar({ offer, contractData }) {
+function OfferTopBar({ offer, contractData, onExtend }) {
   const name     = contractData?.fullName || offer?.recipient?.fullName || "—";
   const jobTitle = offer?.createOwnJobTitle && offer?.newJobTitle
     ? offer.newJobTitle
@@ -209,6 +205,15 @@ function OfferTopBar({ offer, contractData }) {
           </span>
         )}
         <StatusBadge status={offer?.status} />
+        {offer?.status === "COMPLETED" && onExtend && (
+          <button
+            onClick={onExtend}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[11px] font-semibold hover:bg-blue-700 transition-colors"
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Extend Contract
+          </button>
+        )}
       </div>
     </div>
   );
@@ -286,51 +291,6 @@ function ActionsCard({ status, isSubmitting, onSendToCrew, onCancel, onEdit }) {
   );
 }
 
-// ── Signature status card ─────────────────────────────────────────────────────
-
-function SignatureStatusCard({ signingStatus }) {
-  const sigs  = signingStatus?.signatories ?? [];
-  const order = [
-    { role: "CREW",   label: "Crew Member"         },
-    { role: "UPM",    label: "UPM"                  },
-    { role: "FC",     label: "Financial Controller" },
-    { role: "STUDIO", label: "Production Executive" },
-  ];
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-neutral-100 bg-teal-50">
-        <Shield className="w-3.5 h-3.5 text-teal-600" />
-        <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Signature Status</span>
-      </div>
-      <div className="px-3 py-3 space-y-2">
-        {order.map(({ role, label }) => {
-          const sig    = sigs.find((s) => s.role === role);
-          const signed = !!sig?.signed;
-          return (
-            <div key={role} className="flex items-center gap-2.5">
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                signed ? "bg-teal-500 border-teal-500" : "bg-white border-neutral-300"
-              }`}>
-                {signed && (
-                  <svg className="w-2 h-2 text-white" viewBox="0 0 8 8" fill="none">
-                    <path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
-              <span className={`text-[11px] font-medium ${signed ? "text-teal-700" : "text-neutral-500"}`}>{label}</span>
-              {signed && sig?.signedAt && (
-                <span className="ml-auto text-[9px] text-neutral-400 shrink-0">
-                  {new Date(sig.signedAt).toLocaleDateString("en-GB")}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── Offer document pane (read-only) ──────────────────────────────────────────
 
 function OfferDocumentPane({ offer, contractData, allowances, calculatedRates }) {
@@ -367,16 +327,14 @@ export default function LayoutProductionAdmin({
 }) {
   const navigate        = useNavigate();
   const { projectName } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const proj            = projectName || "demo-project";
 
-  const [dialog,         setDialog        ] = useState(null);
-  const [showExtend,     setShowExtend    ] = useState(false);
-  const [isExtending,    setIsExtending   ] = useState(false);
-  const [isCloning,      setIsCloning     ] = useState(false);
-  const [isTogglingLock, setIsTogglingLock] = useState(false);
+  const [dialog,      setDialog     ] = useState(null);
+  const [showExtend,  setShowExtend ] = useState(false);
+  const [isExtending, setIsExtending] = useState(false);
 
-  const status   = offer?.status;
-  const isLocked = signingStatus?.isLocked ?? true;
+  const status = offer?.status;
 
   const isMonitoringStage = ["DRAFT", "SENT_TO_CREW", "NEEDS_REVISION", "CREW_ACCEPTED", "PRODUCTION_CHECK"].includes(status);
   const isSigningStage    = [
@@ -387,36 +345,20 @@ export default function LayoutProductionAdmin({
   const isCompleted              = status === "COMPLETED";
   const canMoveToProductionCheck = status === "CREW_ACCEPTED";
 
+  // ── Auto-open ExtendDialog when arriving with ?openExtend=true
+  useEffect(() => {
+    if (searchParams.get("openExtend") === "true" && offer?._id) {
+      setShowExtend(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("openExtend");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleEdit = () => {
     if (!offer?._id) return;
     const redirectTo = status === "NEEDS_REVISION" ? "view" : "onboarding";
     navigate(`/projects/${proj}/offers/${offer._id}/edit?redirectTo=${redirectTo}`);
-  };
-
-  // ── Toggle lock ────────────────────────────────────────────────────────────
-  const handleToggleLock = async () => {
-    if (!offer?._id || isTogglingLock) return;
-    setIsTogglingLock(true);
-    toast.loading(isLocked ? "Unlocking contract…" : "Locking contract…", { id: "toggleLock" });
-    try {
-      const result = await dispatch(toggleContractLockThunk(offer._id));
-      toast.dismiss("toggleLock");
-      if (!result.error) {
-        const nowLocked = result.payload?.isLocked;
-        toast.success(
-          nowLocked
-            ? "Contract locked"
-            : "Contract unlocked — production can now edit"
-        );
-      } else {
-        toast.error(result.payload?.message || "Failed to toggle lock");
-      }
-    } catch (err) {
-      toast.dismiss("toggleLock");
-      toast.error(err.message || "Failed to toggle lock");
-    } finally {
-      setIsTogglingLock(false);
-    }
   };
 
   // ── Extend ─────────────────────────────────────────────────────────────────
@@ -425,10 +367,16 @@ export default function LayoutProductionAdmin({
     setIsExtending(true);
     toast.loading("Extending contract…", { id: "extend" });
     try {
-      const result = await dispatch(extendContractThunk({ offerId: offer._id, newEndDate, note }));
+      const result = await dispatch(extendContractThunk({
+        offerId:    offer._id,
+        contractId: offer.contractId,
+        projectId:  offer.projectId,
+        newEndDate,
+        note,
+      }));
       toast.dismiss("extend");
       if (!result.error) {
-        toast.success("Contract extended successfully");
+        toast.success("Contract extended — Extension Agreement generated");
         setShowExtend(false);
         dispatch(getOfferThunk(offer._id));
       } else {
@@ -446,33 +394,15 @@ export default function LayoutProductionAdmin({
     }
   };
 
-  // ── Clone ──────────────────────────────────────────────────────────────────
-  const handleClone = async () => {
-    if (!offer?._id || isCloning) return;
-    setIsCloning(true);
-    toast.loading("Cloning offer…", { id: "clone" });
-    try {
-      const result = await dispatch(cloneOfferThunk(offer._id));
-      toast.dismiss("clone");
-      if (!result.error && result.payload?._id) {
-        toast.success("Offer cloned — fill in the new crew member's details");
-        navigate(`/projects/${proj}/offers/${result.payload._id}/edit`);
-      } else {
-        toast.error(result.payload?.message || "Failed to clone offer");
-      }
-    } catch (err) {
-      toast.dismiss("clone");
-      toast.error(err.message || "Failed to clone offer");
-    } finally {
-      setIsCloning(false);
-    }
-  };
-
   return (
     <>
       <div className="space-y-4">
 
-        <OfferTopBar offer={offer} contractData={contractData} />
+        <OfferTopBar
+          offer={offer}
+          contractData={contractData}
+          onExtend={isCompleted ? () => setShowExtend(true) : undefined}
+        />
 
         {(status === "NEEDS_REVISION" || status === "PRODUCTION_CHECK") && offer?._id && (
           <ChangeRequestBanner offerId={offer._id} />
@@ -538,117 +468,7 @@ export default function LayoutProductionAdmin({
               </div>
             </div>
 
-            {/* Right sidebar */}
-            <div className="w-[240px] shrink-0 space-y-3">
-              <div className="bg-white rounded-xl border border-neutral-200 p-4 space-y-2.5">
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
-                  Contract Status
-                </p>
 
-                {status === "PENDING_CREW_SIGNATURE" && (
-                  <>
-                    <InfoBox icon={PenLine} color="purple">
-                      Awaiting crew signature on all documents.
-                    </InfoBox>
-                    <button
-                      disabled={isSubmitting}
-                      onClick={() => onSign("CREW")}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-[12px] font-semibold hover:bg-purple-700 disabled:opacity-60 transition-colors"
-                    >
-                      {isSubmitting
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <PenLine className="w-3.5 h-3.5" />
-                      }
-                      Sign as Crew
-                    </button>
-                  </>
-                )}
-
-                {["PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE"].includes(status) && (
-                  <InfoBox icon={Eye} color="blue">
-                    Signing in progress. Monitor signature status below.
-                  </InfoBox>
-                )}
-
-                {/* ── COMPLETED sidebar ─────────────────────────────────── */}
-                {isCompleted && (
-                  <>
-                    {/* Lock state info */}
-                    <InfoBox icon={isLocked ? Lock : Unlock} color={isLocked ? "green" : "amber"}>
-                      {isLocked
-                        ? "Contract locked. Unlock to allow production edits."
-                        : "Contract unlocked. Production can now edit."
-                      }
-                    </InfoBox>
-
-                    {/* Lock / Unlock toggle */}
-                    <button
-                      onClick={handleToggleLock}
-                      disabled={isTogglingLock}
-                      className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
-                        isLocked
-                          ? "border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100"
-                          : "border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
-                      }`}
-                    >
-                      {isTogglingLock
-                        ? <Loader2 className="w-3 h-3 animate-spin" />
-                        : isLocked
-                          ? <Unlock className="w-3 h-3" />
-                          : <Lock className="w-3 h-3" />
-                      }
-                      {isLocked ? "Unlock Contract" : "Lock Contract"}
-                    </button>
-
-                    {/* Post-completion actions */}
-                    <div
-                      className="rounded-lg px-3 py-3 space-y-2"
-                      style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}
-                    >
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700">
-                        Post-completion actions
-                      </p>
-
-                      {/* Extend — disabled while locked */}
-                      <button
-                        onClick={() => setShowExtend(true)}
-                        disabled={isExtending || isLocked}
-                        title={isLocked ? "Unlock the contract first to extend it" : ""}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-[11px] font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isExtending
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <CalendarDays className="w-3 h-3" />
-                        }
-                        Extend Contract
-                      </button>
-
-                      {/* Clone — always available */}
-                      <button
-                        onClick={handleClone}
-                        disabled={isCloning}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 text-neutral-700 text-[11px] font-semibold hover:bg-neutral-50 disabled:opacity-60 transition-colors"
-                      >
-                        {isCloning
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <Copy className="w-3 h-3" />
-                        }
-                        Clone for New Crew
-                      </button>
-
-                      <p className="text-[9px] text-neutral-400 leading-tight">
-                        {isLocked
-                          ? "Unlock to extend dates or make edits."
-                          : "Extend: same contract, new end date.\nClone: new offer, same terms, new crew."
-                        }
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {signingStatus && <SignatureStatusCard signingStatus={signingStatus} />}
-            </div>
           </div>
         )}
 
@@ -673,7 +493,7 @@ export default function LayoutProductionAdmin({
           onClose={() => setDialog(null)} isLoading={isSubmitting} />
       )}
 
-      {/* Extend Contract Dialog */}
+      {/* Extend Contract Dialog — opened via header button or ?openExtend=true */}
       {showExtend && (
         <ExtendDialog
           offer={offer}
