@@ -5,6 +5,7 @@ import { cn } from "@/shared/config/utils";
 function EditableSelectField({
   label,
   icon,
+  placeholder = "Select",
   value,
   items,
   isEditing,
@@ -12,7 +13,7 @@ function EditableSelectField({
   selectClassName,
 }) {
   const Icon = icon && LucideIcons[icon];
-  const selectedItem = items.find(i => i.value === value);
+  const selectedItem = items.find((i) => i.value === value);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -25,6 +26,7 @@ function EditableSelectField({
         <SelectMenu
           items={items}
           selected={value}
+          label={placeholder}
           onSelect={onChange}
           className={cn("w-full shadow-none", selectClassName)}
         />

@@ -20,9 +20,11 @@ export function AutoHeight({ children, className = "" }) {
         duration: 0.25,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className={`overflow-hidden ${className}`}
+      className="overflow-hidden"
     >
-      <div ref={ref}>{children}</div>
+      <div ref={ref} className={className}>
+        {children}
+      </div>
     </motion.div>
   );
 }

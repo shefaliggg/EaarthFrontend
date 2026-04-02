@@ -1,44 +1,49 @@
-import React from 'react';
-import { Field } from '../common/UnifiedFields';
-import { Heart } from 'lucide-react';
+import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
+import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
+import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
 
-export default function HealthDetails({ profile, setProfile, isEditing, isDarkMode }) {
+export default function HealthDetails({
+  profile,
+  setProfile,
+  isEditing,
+  setIsEditing,
+}) {
   return (
-    <div className={`rounded-xl border shadow-md p-6 ${isDarkMode ? 'bg-card border-border' : 'bg-card border-border'}`}>
-      <div className="space-y-6">
-        <h4 className={`font-medium mb-4 flex items-center gap-2 ${isDarkMode ? 'text-foreground' : 'text-foreground'}`}>
-          <Heart className="w-5 h-5" /> HEALTH & DIETARY
-        </h4>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field 
-            label="DIETARY REQUIREMENTS" 
-            value={profile.dietaryRequirements} 
-            onChange={(e) => setProfile({ ...profile, dietaryRequirements: e.target.value.toUpperCase() })} 
-            type="textarea" 
-            placeholder="E.G. VEGETARIAN, VEGAN, HALAL, KOSHER" 
-            isEditing={isEditing} 
-            isDarkMode={isDarkMode} 
-          />
-          
-          <Field 
-            label="ALLERGIES" 
-            value={profile.allergies} 
-            onChange={(e) => setProfile({ ...profile, allergies: e.target.value.toUpperCase() })} 
-            type="textarea" 
-            placeholder="E.G. PEANUTS, SHELLFISH, DAIRY" 
-            isEditing={isEditing} 
-            isDarkMode={isDarkMode} 
-          />
-        </div>
+    <CardWrapper
+      title={"Health $ Dietary"}
+      icon={"Heart"}
+      actions={
+        <EditToggleButtons isEditing={isEditing} setIsEditing={setIsEditing} />
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <EditableTextDataField
+          label="Dietary requirements"
+          value={profile.dietaryRequirements}
+          onChange={(value) =>
+            setProfile({
+              ...profile,
+              dietaryRequirements: value.toUpperCase(),
+            })
+          }
+          multiline
+          placeholder="Eg. Vegetarian, Vegan, Halal, Kosher"
+          isEditing={isEditing}
+          inputClassName={"min-h-[100px]"}
+        />
+
+        <EditableTextDataField
+          label="Allergies"
+          value={profile.allergies}
+          onChange={(value) =>
+            setProfile({ ...profile, allergies: value.toUpperCase() })
+          }
+          multiline
+          placeholder="Eg. Peanuts, Shellfish, Pollen"
+          isEditing={isEditing}
+          inputClassName={"min-h-[100px]"}
+        />
       </div>
-    </div>
+    </CardWrapper>
   );
 }
-
-
-
-
-
-
-

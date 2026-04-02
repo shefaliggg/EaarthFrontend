@@ -4,38 +4,42 @@ import { SmartIcon } from "../SmartIcon";
 import { cn } from "../../config/utils";
 
 export default function CardWrapper({
-    title,
-    icon: Icon,
-    iconColor = "text-primary",
-    description = "",
-    children,
-    actions,
-    variant="default",
-    showLabel = true
+  title,
+  icon: Icon,
+  iconColor = "text-primary",
+  description = "",
+  children,
+  actions,
+  variant = "default",
+  showLabel = true,
+  className,
 }) {
-    return (
-        <div className={`${variant === "ghost" ? "border-transparent bg-transparent space-y-6" : "bg-background p-6 rounded-3xl border space-y-2"}`}>
-            {showLabel &&
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold mb-2 flex items-center gap-2 text-muted-foreground">
-                            <SmartIcon icon={Icon} size="lg" className={cn(iconColor)} />
-                            {title}
-                        </h3>
+  return (
+    <div
+      className={cn(
+        variant === "ghost"
+          ? "border-transparent bg-transparent space-y-6"
+          : "bg-background p-6 rounded-3xl border space-y-2",
+        className,
+      )}
+    >
+      {showLabel && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold mb-2 flex items-center gap-2 text-muted-foreground">
+              <SmartIcon icon={Icon} size="lg" className={cn(iconColor)} />
+              {title}
+            </h3>
 
-                        {description && (
-                            <p className="text-xs text-muted-foreground">{description}</p>
-                        )}
-                    </div>
-                    {actions &&
-                        <div className="flex items-center gap-2">
-                            {actions}
-                        </div>
-                    }
-                </div>
-            }
-
-            {children}
+            {description && (
+              <p className="text-xs text-muted-foreground">{description}</p>
+            )}
+          </div>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
-    );
+      )}
+
+      {children}
+    </div>
+  );
 }

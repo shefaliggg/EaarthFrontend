@@ -8,6 +8,7 @@ import CardWrapper from "@/shared/components/wrappers/CardWrapper";
 import { Button } from "@/shared/components/ui/button";
 import { Check, Pen, X } from "lucide-react";
 import { cn } from "@/shared/config/utils";
+import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
 
 export default function IdentityDetails({
   profile,
@@ -22,30 +23,7 @@ export default function IdentityDetails({
       title={"Personal Details"}
       icon={"User2"}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              size="icon"
-              variant={"outline"}
-              onClick={() => setIsEditing((prev) => !prev)}
-              className={"hover:bg-red-200 dark:hover:bg-red-800"}
-            >
-              <X className="text-red-500" />
-            </Button>
-          )}
-          <Button
-            size="icon"
-            variant={"outline"}
-            onClick={() => setIsEditing((prev) => !prev)}
-            className={cn(isEditing ? "hover:bg-green-200 dark:hover:bg-green-800" :  "hover:bg-purple-200 dark:hover:bg-purple-800")}
-          >
-            {isEditing ? (
-              <Check className="text-green-500" />
-            ) : (
-              <Pen className="text-primary" />
-            )}
-          </Button>
-        </>
+        <EditToggleButtons isEditing={isEditing} setIsEditing={setIsEditing} />
       }
     >
       <div className="space-y-6">
@@ -152,9 +130,7 @@ export default function IdentityDetails({
           <EditableDateField
             label="DATE OF BIRTH"
             value={profile.dateOfBirth}
-            onChange={(value) =>
-              setProfile({ ...profile, dateOfBirth: value })
-            }
+            onChange={(value) => setProfile({ ...profile, dateOfBirth: value })}
             isEditing={isEditing}
           />
 

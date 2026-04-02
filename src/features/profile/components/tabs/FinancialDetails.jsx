@@ -17,6 +17,7 @@ import EditableTextDataField from "@/shared/components/wrappers/EditableTextData
 import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
 import EditableCheckboxField from "@/shared/components/wrappers/EditableCheckboxField";
 import { FileUpload } from "../common/UnifiedFields";
+import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
 
 export default function FinanceDetails({
   profile,
@@ -29,44 +30,18 @@ export default function FinanceDetails({
   const [useLoanOutCompany, setUseLoanOutCompany] = useState(true);
   const [isVATRegistered, setIsVATRegistered] = useState(true);
 
-  const actionButtons = (
-    <>
-      {isEditing && (
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => setIsEditing(false)}
-          className="hover:bg-red-200 dark:hover:bg-red-800"
-        >
-          <X className="text-red-500" />
-        </Button>
-      )}
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => setIsEditing((prev) => !prev)}
-        className={cn(
-          isEditing
-            ? "hover:bg-green-200 dark:hover:bg-green-800"
-            : "hover:bg-purple-200 dark:hover:bg-purple-800",
-        )}
-      >
-        {isEditing ? (
-          <Check className="text-green-500" />
-        ) : (
-          <Pen className="text-primary" />
-        )}
-      </Button>
-    </>
-  );
-
   return (
     <>
       {/* TAX & NI */}
       <CardWrapper
         title="Tax & National Insurance"
         icon="Shield"
-        actions={actionButtons}
+        actions={
+          <EditToggleButtons
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        }
       >
         <div className="grid md:grid-cols-2 gap-4">
           <EditableTextDataField
@@ -179,7 +154,12 @@ export default function FinanceDetails({
       <CardWrapper
         title="Personal Bank Details"
         icon="Wallet"
-        actions={actionButtons}
+        actions={
+          <EditToggleButtons
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        }
       >
         <div className="grid md:grid-cols-2 gap-4">
           <EditableTextDataField
@@ -268,7 +248,12 @@ export default function FinanceDetails({
       <CardWrapper
         title="Loan-Out Company"
         icon="Briefcase"
-        actions={actionButtons}
+        actions={
+          <EditToggleButtons
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        }
       >
         <EditableCheckboxField
           label="Use Loan-Out Company"
