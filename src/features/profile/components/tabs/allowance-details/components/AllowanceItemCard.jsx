@@ -14,7 +14,7 @@ export default function AllowanceItemCard({
   },
   onDelete,
   isDisableDelete,
-  isEditing,
+  isEditing = false,
 }) {
   const handleChange = (field, value) => {
     onChange({

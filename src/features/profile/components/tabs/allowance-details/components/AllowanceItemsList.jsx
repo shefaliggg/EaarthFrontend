@@ -45,7 +45,7 @@ export const ALLOWANCE_CONFIG = {
 
 export default function AllowanceItemsList({
   allowanceType = "equipment",
-  isEditing,
+  isEditing = false,
 }) {
   const [items, setItems] = useState([
     {

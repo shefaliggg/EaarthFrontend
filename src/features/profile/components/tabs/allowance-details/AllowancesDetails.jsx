@@ -169,7 +169,7 @@ export default function AllowanceDetails({
           />
         }
       >
-        <AllowanceItemsList allowanceType="mobile" />
+        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing}  />
       </CardWrapper>
       <CardWrapper
         title={"Software"}
@@ -181,7 +181,7 @@ export default function AllowanceDetails({
           />
         }
       >
-        <AllowanceItemsList allowanceType="software" />
+        <AllowanceItemsList allowanceType="software" isEditing={isEditing}  />
       </CardWrapper>
       <CardWrapper
         title={"Equipment"}
@@ -193,7 +193,7 @@ export default function AllowanceDetails({
           />
         }
       >
-        <AllowanceItemsList allowanceType="equipment" />
+        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing}  />
       </CardWrapper>
       <CardWrapper
         title={"Box Rental"}
@@ -205,7 +205,7 @@ export default function AllowanceDetails({
           />
         }
       >
-        <AllowanceItemsList allowanceType="box_rentals" />
+        <AllowanceItemsList allowanceType="box_rentals" isEditing={isEditing} />
       </CardWrapper>
     </>
   );
