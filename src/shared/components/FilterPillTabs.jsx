@@ -85,6 +85,7 @@ function FilterPillTabs({
   onChange,
   transparentBg = true,
   fullWidth = false,
+  showActiveIndicator = true,
   navigatable = false,
   readOnly = false,
   size = "md",
@@ -115,7 +116,7 @@ function FilterPillTabs({
       <TabsList
         className={`
           ${styles.list}
-          ${variantStyles.list({ transparentBg, fullWidth})}
+          ${variantStyles.list({ transparentBg, fullWidth })}
         `}
       >
         {options.map((option) => {
@@ -128,10 +129,13 @@ function FilterPillTabs({
               value={tabValue}
               className={`
                 ${styles.trigger}
-                ${variantStyles.trigger({ badge: option.badge === undefined})}
-                group
+                ${variantStyles.trigger({ badge: option.badge === undefined })}
+                group relative
               `}
             >
+              {isActive && showActiveIndicator && (
+                <div className="absolute -bottom-[5px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary rounded-[3px] rotate-45" />
+              )}
               {variant === "modern" ? (
                 <div className={cn(!isActive && "relative")}>
                   {option.icon && (

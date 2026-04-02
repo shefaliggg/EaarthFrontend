@@ -128,7 +128,7 @@ export default function ProfileDashboard() {
   ];
 
   return (
-    <div className="container mx-auto space-y-6">
+    <div className="mx-auto space-y-6">
       {/* HEADER + SUMMARY */}
       <ProfileSummary
         profile={profile}
@@ -137,70 +137,73 @@ export default function ProfileDashboard() {
         handleSave={handleSave}
         handleCancel={handleCancel}
       />
-
-      <FilterPillTabs
-        options={tabs}
-        value={activeTab}
-        onChange={(value) => setActiveTab(value)}
-        size="md"
-      />
-
-      {/* TAB CONTENTS */}
-      {activeTab === "identity" && (
-        <IdentityDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          uploads={uploads}
-          setUploads={setUploads}
+      <div className="space-y-3">
+        <FilterPillTabs
+          options={tabs}
+          value={activeTab}
+          onChange={(value) => setActiveTab(value)}
+          size="md"
+          fullWidth
+          showActiveIndicator
         />
-      )}
 
-      {activeTab === "contact" && (
-        <ContactDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-        />
-      )}
+        {/* TAB CONTENTS */}
+        {activeTab === "identity" && (
+          <IdentityDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            uploads={uploads}
+            setUploads={setUploads}
+          />
+        )}
 
-      {activeTab === "financial" && (
-        <FinancialDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-        />
-      )}
+        {activeTab === "contact" && (
+          <ContactDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "allowances" && (
-        <AllowanceDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "financial" && (
+          <FinancialDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "health" && (
-        <HealthDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "allowances" && (
+          <AllowanceDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "signature" && (
-        <MySignature
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "health" && (
+          <HealthDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+
+        {activeTab === "signature" && (
+          <MySignature
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+      </div>
     </div>
   );
 }

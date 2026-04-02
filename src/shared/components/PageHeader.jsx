@@ -22,7 +22,7 @@ export function PageHeader({
     // 1️⃣ Image
     if (image) {
       return (
-        <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg shrink-0">
+        <div className="w-18 h-18 rounded-full overflow-hidden shadow-lg shrink-0">
           <img
             src={image}
             alt={title}
@@ -37,7 +37,7 @@ export function PageHeader({
       return (
         <div
           className={cn(
-            "w-14 h-14 rounded-full flex items-center justify-center",
+            "w-18 h-18 rounded-full flex items-center justify-center",
             "bg-primary text-background font-bold text-lg shadow-lg shrink-0"
           )}
         >
@@ -84,7 +84,7 @@ export function PageHeader({
             </h1>
 
             {subtitle && (
-              <p className="text-muted-foreground mb-2">{subtitle}</p>
+              <p className="text-muted-foreground mb-1">{subtitle}</p>
             )}
 
             <UrlBasedBreadcrumbs />
