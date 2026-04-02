@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Outfit:wght@100..900&family=Festive&family=Sacramento&family=Qwitcher+Grypen:wght@400;700&family=Inspiration&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -14,7 +14,7 @@
   --accent: #9333ea;
   --accent-foreground: #ffffff;
 
-  --background: #FAFAFA;
+  --background: #fafafa;
   --foreground: oklch(0.145 0 0);
 
   --card: #ffffff;
@@ -83,49 +83,49 @@ a svg {
   --lavender-800: #9333ea;
   --lavender-900: #9333ea;
 
-  --pastel-pink-50: #FFF1F8;
-  --pastel-pink-100: #FFE4F1;
-  --pastel-pink-200: #FFCCE5;
-  --pastel-pink-300: #FFA3D1;
-  --pastel-pink-400: #FF7AB8;
-  --pastel-pink-500: #F9529F;
-  --pastel-pink-600: #E6308A;
-  --pastel-pink-700: #C41F6F;
-  --pastel-pink-800: #A31C5C;
-  --pastel-pink-900: #881C50;
+  --pastel-pink-50: #fff1f8;
+  --pastel-pink-100: #ffe4f1;
+  --pastel-pink-200: #ffcce5;
+  --pastel-pink-300: #ffa3d1;
+  --pastel-pink-400: #ff7ab8;
+  --pastel-pink-500: #f9529f;
+  --pastel-pink-600: #e6308a;
+  --pastel-pink-700: #c41f6f;
+  --pastel-pink-800: #a31c5c;
+  --pastel-pink-900: #881c50;
 
-  --mint-50: #ECFDF5;
-  --mint-100: #D1FAE5;
-  --mint-200: #A7F3D0;
-  --mint-300: #6EE7B7;
-  --mint-400: #34D399;
-  --mint-500: #10B981;
+  --mint-50: #ecfdf5;
+  --mint-100: #d1fae5;
+  --mint-200: #a7f3d0;
+  --mint-300: #6ee7b7;
+  --mint-400: #34d399;
+  --mint-500: #10b981;
   --mint-600: #059669;
   --mint-700: #047857;
-  --mint-800: #065F46;
-  --mint-900: #064E3B;
+  --mint-800: #065f46;
+  --mint-900: #064e3b;
 
-  --peach-50: #FFF7ED;
-  --peach-100: #FFEDD5;
-  --peach-200: #FED7AA;
-  --peach-300: #FDBA74;
-  --peach-400: #FB923C;
-  --peach-500: #F97316;
-  --peach-600: #EA580C;
-  --peach-700: #C2410C;
-  --peach-800: #9A3412;
-  --peach-900: #7C2D12;
+  --peach-50: #fff7ed;
+  --peach-100: #ffedd5;
+  --peach-200: #fed7aa;
+  --peach-300: #fdba74;
+  --peach-400: #fb923c;
+  --peach-500: #f97316;
+  --peach-600: #ea580c;
+  --peach-700: #c2410c;
+  --peach-800: #9a3412;
+  --peach-900: #7c2d12;
 
-  --sky-50: #F0F9FF;
-  --sky-100: #E0F2FE;
-  --sky-200: #BAE6FD;
-  --sky-300: #7DD3FC;
-  --sky-400: #38BDF8;
-  --sky-500: #0EA5E9;
-  --sky-600: #0284C7;
-  --sky-700: #0369A1;
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
   --sky-800: #075985;
-  --sky-900: #0C4A6E;
+  --sky-900: #0c4a6e;
 }
 
 .dark {
@@ -280,7 +280,14 @@ a svg {
 
   html {
     scroll-behavior: smooth;
-    font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family:
+      "Outfit",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
@@ -310,8 +317,14 @@ a svg {
   }
 
   .outfit-font {
-    font-family: "Outfit", -apple-system, BlinkMacSystemFont,
-      "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family:
+      "Outfit",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
   }
 
   button,
@@ -340,8 +353,12 @@ a svg {
 
   /* Minimal shadow */
   .shadow-md {
-    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color, #0000001a), 0 2px 4px -2px var(--tw-shadow-color, #0000001a);
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-shadow:
+      0 4px 6px -1px var(--tw-shadow-color, #0000001a),
+      0 2px 4px -2px var(--tw-shadow-color, #0000001a);
+    box-shadow:
+      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
   html,
@@ -356,23 +373,22 @@ a svg {
 
   body {
     /* background: #fafafa; */
-    background: linear-gradient(135deg,
-        #fdf0f0,
-        #fff8e7,
-        #e9ffe9,
-        #e7f7ff,
-        #f3e9ff,
-        #ffe8f4);
+    background: linear-gradient(
+      135deg,
+      #fdf0f0,
+      #fff8e7,
+      #e9ffe9,
+      #e7f7ff,
+      #f3e9ff,
+      #ffe8f4
+    );
     background-attachment: fixed;
     min-height: 100vh;
   }
 
   body.dark {
     /* background: #0f0f0f; */
-    background: linear-gradient(135deg,
-        #07001c,
-        #000000,
-        #100016);
+    background: linear-gradient(135deg, #07001c, #000000, #100016);
     /* background: linear-gradient(135deg,
         #1a1625,
         #1c1a15,
@@ -483,13 +499,18 @@ a svg {
   }
 
   @keyframes pulseRing {
-  0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-  70% { box-shadow: 0 0 0 15px rgba(74, 222, 128, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-}
+    0% {
+      box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 15px rgba(74, 222, 128, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+    }
+  }
 
-.pulseRing {
+  .pulseRing {
     animation: pulseRing 1.5s infinite;
-  
-}
+  }
 }

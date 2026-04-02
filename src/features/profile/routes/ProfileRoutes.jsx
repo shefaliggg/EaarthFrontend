@@ -1,33 +1,36 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
-// import PersonalCalendar from "../pages/PersonalCalender";
 
 const ProfileLayout = lazy(() => import("../components/ProfileLayout"));
 const ProfileDashboard = lazy(() => import("../pages/ProfileDashboard"));
+const IdentityDetails = lazy(
+  () => import("../components/tabs/IdentityDetails"),
+);
+const ContactDetails = lazy(() => import("../components/tabs/ContactDetails"));
+const FinancialDetails = lazy(
+  () => import("../components/tabs/FinancialDetails"),
+);
+const AllowanceDetails = lazy(
+  () => import("../components/tabs/allowance-details/AllowancesDetails"),
+);
+const HealthDetails = lazy(() => import("../components/tabs/HealthDetails"));
+const MySignature = lazy(() => import("../components/tabs/MySignature"));
 
-// Placeholder components for other pages
-const ProfileDocuments = lazy(() => import("../pages/ProfileDocuments"));
-const PersonalCalendar = lazy(() => import("../pages/PersonalCalender"));
-const AccountSettings = lazy(() => import("../pages/AccountSettings"));
 const NotFound = lazy(() => import("@/shared/pages/NotFound"));
 
 const ProfileRoutes = {
   path: "/profile",
-  element: <ProfileLayout />,
+  element: <ProfileDashboard />,
   children: [
-    { index: true, element: <ProfileDashboard /> },
-    { path: "documents", element: <ProfileDocuments /> },
-    { path: "calendar", element: <PersonalCalendar /> },
-    { path: "settings", element: <AccountSettings /> },
+    // { index: true, element: <ProfileDashboard /> },
+    // { path: true, element: <IdentityDetails /> },
+    // { path: "contact", element: <ContactDetails /> },
+    // { path: "financial", element: <FinancialDetails /> },
+    // { path: "allowance", element: <AllowanceDetails /> },
+    // { path: "health", element: <HealthDetails /> },
+    // { path: "signature", element: <MySignature /> },
     { path: "*", element: <NotFound /> },
   ],
 };
 
 export default ProfileRoutes;
-
-
-
-
-
-
-

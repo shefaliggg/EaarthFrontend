@@ -43,7 +43,7 @@ export default function ProfileSummary({
             {isVerified && (
               <span className="inline-flex items-center gap-1 px-0.5 py-0.5 rounded-full bg-green-600 text-white text-xs font-bold">
                 <div className="bg-green-600 rounded-full p-0.5">
-                  <ShieldCheck className="w-4 h-4 text-white" />
+                  <BadgeCheck className="w-4 h-4 text-white" />
                 </div>
                 {/* Verified */}
               </span>
