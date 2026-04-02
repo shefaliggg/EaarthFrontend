@@ -30,10 +30,11 @@ const VARIANT_STYLES = {
       ${transparentBg ? "bg-transparent" : "bg-background rounded-3xl border shadow-sm border-muted"}
       ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start"}
     `,
-    trigger: () => `
+    trigger: ({ badge }) => `
       bg-background/60
       data-[state=active]:bg-primary
       data-[state=active]:text-white
+      ${badge ? "pr-3!" : ""}
     `,
     badge: `
       bg-primary/10 text-primary
@@ -84,6 +85,7 @@ function FilterPillTabs({
   onChange,
   transparentBg = true,
   fullWidth = false,
+  showActiveIndicator = true,
   navigatable = false,
   readOnly = false,
   size = "md",
@@ -127,10 +129,13 @@ function FilterPillTabs({
               value={tabValue}
               className={`
                 ${styles.trigger}
-                ${variantStyles.trigger()}
-                group
+                ${variantStyles.trigger({ badge: option.badge === undefined })}
+                group relative
               `}
             >
+              {isActive && showActiveIndicator && (
+                <div className="absolute -bottom-[5px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-primary rounded-[3px] rotate-45" />
+              )}
               {variant === "modern" ? (
                 <div className={cn(!isActive && "relative")}>
                   {option.icon && (

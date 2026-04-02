@@ -23,10 +23,14 @@ export function SelectMenu({
 
   return (
     <Select value={selected} onValueChange={onSelect}>
-      <SelectTrigger textCase={textCase} className={cn("w-full min-w-0", className)}>
-        <SelectValue className={"text-muted-foreground!"}>
-          {selectedItem ? selectedItem.label : label}
-        </SelectValue>
+      <SelectTrigger
+        textCase={textCase}
+        className={cn(
+          "w-full min-w-0 data-[placeholder]:text-muted-foreground",
+          className,
+        )}
+      >
+        <SelectValue placeholder={label} />
       </SelectTrigger>
 
       <SelectContent textCase={textCase}>
@@ -46,11 +50,7 @@ export function SelectMenu({
               className="flex items-center justify-between"
             >
               <span className="flex items-center gap-2">
-                {Icon ? (
-                  <Icon className="w-3 h-3" />
-                ) : (
-                  <span className="w-0" />
-                )}
+                {Icon ? <Icon className="w-3 h-3" /> : <span className="w-0" />}
                 {item.label}
               </span>
 

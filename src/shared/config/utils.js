@@ -73,3 +73,13 @@ export function getAvatarFallback(name) {
   // Multiple words → first letter of first two words
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
+
+export function formatDate(date) {
+  return new Date(date)
+    .toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+    .toLowerCase();
+}

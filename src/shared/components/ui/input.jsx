@@ -13,6 +13,7 @@ function Input({ className, type = "text", ...props }) {
         border
         bg-muted dark:bg-muted
         text-foreground
+        dark:text-foreground
         placeholder:text-muted-foreground
 
         shadow-none

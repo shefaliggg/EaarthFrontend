@@ -556,7 +556,7 @@ const DashboardLayout = () => {
             onWorkspaceTabOpen={handleOpenWorkspaceTab}
             projectCount={DASHBOARD_PROJECTS.length}
           />
-          <div className="p-6 pl-3 min-h-[calc(100svh-68px-68px)]">
+          <div className="p-6 pl-3 min-h-[calc(100svh-68px-52px)]">
             <SuspenseOutlet />
             <AiChatWidget />
           </div>

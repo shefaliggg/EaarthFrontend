@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import ProfileSummary from "../components/ProfileSummary";
-import ProfileTabs from "../components/ProfileTabs";
 import IdentityDetails from "../components/tabs/IdentityDetails";
 import ContactDetails from "../components/tabs/ContactDetails";
-import FinanceDetails from "../components/tabs/FinancialDetails";
-import AllowanceDetails from "../components/tabs/AllowancesDetails";
+import FinancialDetails from "../components/tabs/FinancialDetails";
+import AllowanceDetails from "../components/tabs/allowance-details/AllowancesDetails";
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
+import FilterPillTabs from "../../../shared/components/FilterPillTabs";
+import { set } from "date-fns/set";
+import { Car, DollarSign, Heart, MapPin, PenTool, User } from "lucide-react";
 
 export default function ProfileDashboard() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("identity");
 
@@ -99,7 +100,7 @@ export default function ProfileDashboard() {
     // Health
     dietaryRequirements: "",
     allergies: "",
-    
+
     // Signature
     signature: null,
   });
@@ -117,81 +118,92 @@ export default function ProfileDashboard() {
     setIsEditing(false);
   };
 
+  const tabs = [
+    { value: "identity", label: "Identity", icon: User },
+    { value: "contact", label: "Contact", icon: MapPin },
+    { value: "financial", label: "Financial", icon: DollarSign },
+    { value: "allowances", label: "Allowances", icon: Car },
+    { value: "health", label: "Health", icon: Heart },
+    { value: "signature", label: "My Signature", icon: PenTool },
+  ];
+
   return (
-    <div className="container mx-auto space-y-6">
+    <div className="mx-auto space-y-6">
       {/* HEADER + SUMMARY */}
       <ProfileSummary
         profile={profile}
-        isDarkMode={isDarkMode}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         handleSave={handleSave}
         handleCancel={handleCancel}
       />
-
-      {/* TABS */}
-      <ProfileTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isDarkMode={isDarkMode}
-      />
-
-      {/* TAB CONTENTS */}
-      {activeTab === "identity" && (
-        <IdentityDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-          uploads={uploads}
-          setUploads={setUploads}
+      <div className="space-y-3">
+        <FilterPillTabs
+          options={tabs}
+          value={activeTab}
+          onChange={(value) => setActiveTab(value)}
+          size="md"
+          fullWidth
+          showActiveIndicator
         />
-      )}
 
-      {activeTab === "contact" && (
-        <ContactDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {/* TAB CONTENTS */}
+        {activeTab === "identity" && (
+          <IdentityDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            uploads={uploads}
+            setUploads={setUploads}
+          />
+        )}
 
-      {activeTab === "financial" && (
-        <FinanceDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "contact" && (
+          <ContactDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "allowances" && (
-        <AllowanceDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "financial" && (
+          <FinancialDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "health" && (
-        <HealthDetails
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "allowances" && (
+          <AllowanceDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
 
-      {activeTab === "signature" && (
-        <MySignature
-          profile={profile}
-          setProfile={setProfile}
-          isEditing={isEditing}
-          isDarkMode={isDarkMode}
-        />
-      )}
+        {activeTab === "health" && (
+          <HealthDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+
+        {activeTab === "signature" && (
+          <MySignature
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+      </div>
     </div>
   );
 }

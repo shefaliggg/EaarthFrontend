@@ -36,10 +36,6 @@ function EditableRadioField({
         <RadioGroup
           value={value}
           onValueChange={onChange}
-          className={cn(
-            "flex flex-col gap-2 rounded-md p-2.5 shadow-none",
-            "bg-gray-100 dark:bg-gray-800"
-          )}
         >
           {options.map(option => (
             <label
