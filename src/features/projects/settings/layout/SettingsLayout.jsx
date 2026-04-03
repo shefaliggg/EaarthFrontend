@@ -1,13 +1,15 @@
 import SettingsHeader from "@/features/projects/settings/components/SettingsHeader";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { PageHeader } from "../../../../shared/components/PageHeader";
+import AnimatedCircularProgress from "../components/AnimatedCircularProgress";
 
 function SettingsLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const projectColor = "#2563eb";
+  const projectColor = "#7c3aed";
 
   const pages = [
     { path: "details", label: "Details" },
@@ -33,8 +35,11 @@ function SettingsLayout() {
     { path: "ai-knowledge-base", label: "AI Knowledge Base" },
   ];
 
-  const currentPath = location.pathname.split("/").pop();
-  const currentIndex = pages.findIndex((p) => p.path === currentPath);
+  const segments = location.pathname.split("/");
+
+  const currentPath =
+    pages.find((page) => segments.includes(page.path))?.path || "details";
+  const currentIndex = pages.findIndex((page) => page.path === currentPath);
   const currentPage = pages[currentIndex] || pages[0];
 
   const MotionNavLink = motion(NavLink);
@@ -53,7 +58,28 @@ function SettingsLayout() {
   return (
     <>
       <div className="flex flex-col gap-5 overflow-hidden">
-        <SettingsHeader />
+        <PageHeader
+          title="Project Settings"
+          subtitle="AVATAR 1 • 0 / 21"
+          icon="Settings"
+          extraActions={
+            <div className="flex items-center gap-3">
+              <AnimatedCircularProgress
+                progressPercentage={50}
+                projectColor={projectColor}
+                size={40}
+              />
+
+              <motion.button
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.76rem] bg-muted text-muted-foreground border border-border opacity-80 cursor-not-allowed"
+                disabled
+              >
+                <Lock className="w-3.5 h-3.5" />
+                50% — Lock all to Go Live
+              </motion.button>
+            </div>
+          }
+        />
         <div className="rounded-xl bg-card border border-gray-100/80 dark:border-gray-800/50 shadow-sm">
           <div className="flex items-center justify-center py-2 gap-2">
             <motion.button
