@@ -1,9 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import {
-  getProjectSettings,
-  initProjectSettings,
-} from "@/features/projects/settings/service/settings.service.js";
+import { getProjectSettings } from "@/features/projects/settings/service/settings.service.js";
 import { APP_CONFIG } from "@/features/crew/config/appConfig.js";
 import {
   ChevronDown,
@@ -16,33 +13,25 @@ import {
   Shield,
   Unlock,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function ContractsFormsSettings() {
   const [categories, setCategories] = useState([]);
-  const [formGroups, setFormGroups] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
-  console.log(categories);
+  const [formGroups, setFormGroups] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await initProjectSettings(APP_CONFIG.PROJECT_ID);
-
-        const response = await getProjectSettings(APP_CONFIG.PROJECT_ID);
-
-        setCategories(response.categories || []);
-        setFormGroups(response.formGroups || []); // 👈 ADD THIS
-
-        console.log(response);
-      } catch (err) {
-        console.error("Error fetching settings:", err);
-      }
+    const fetchSettings = async () => {
+      const response = await getProjectSettings(APP_CONFIG.PROJECT_ID);
+      setCategories(response.categories);
+      setFormGroups(response.formGroups);
+      console.log(response);
     };
-
-    fetchData();
+    fetchSettings();
   }, []);
-
   const accentColor = "#7c3aed";
+
   return (
     <>
       <motion.div
@@ -101,7 +90,7 @@ function ContractsFormsSettings() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 {categories.map((category) => (
                   <div
-                    key={category.categoryId}
+                    key={category.id}
                     className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/20 hover:border-purple-200 dark:hover:border-purple-800 transition-colors group/card"
                   >
                     {/* Category card header */}
@@ -110,7 +99,7 @@ function ContractsFormsSettings() {
                         <span
                           className={`truncate text-gray-800 dark:text-gray-200 uppercase`}
                         >
-                          {category.categoryName}
+                          {category.name}
                         </span>
                         <button className="shrink-0 opacity-0 group-hover/name:opacity-100 transition-opacity text-gray-400 hover:text-purple-600">
                           <Pencil className="h-2.5 w-2.5" />
@@ -128,22 +117,22 @@ function ContractsFormsSettings() {
                       }}
                     />
                     <div className="px-3 py-2 space-y-0.5">
-                      {category.bundles.map((bundle, bundleIndex) => (
+                      {category.bundleOverrides.map((override, index) => (
                         <div
-                          key={bundle.overrideId}
+                          key={override.id}
                           className="flex items-center justify-between py-1 group/row"
                         >
                           <div className="flex items-center gap-1 min-w-0">
                             <div className="flex flex-col shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
                               <button
-                                disabled={bundleIndex === 0}
+                                disabled={index === 0}
                                 className="text-gray-400 hover:text-purple-600 disabled:opacity-20"
                               >
                                 <ChevronUp className="h-2.5 w-2.5" />
                               </button>
                               <button
                                 disabled={
-                                  bundleIndex === category.bundles.length - 1
+                                  index === category.bundleOverrides.length - 1
                                 }
                                 className="text-gray-400 hover:text-purple-600 disabled:opacity-20"
                               >
@@ -154,15 +143,20 @@ function ContractsFormsSettings() {
                               className="truncate text-gray-600 dark:text-gray-400"
                               style={{ fontSize: "0.52rem" }}
                             >
-                              {bundle.bundleName}
+                              {override.bundle.name}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <span
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer hover:bg-amber-100 transition-colors"
                               style={{ fontSize: "0.4rem" }}
+                              onClick={() =>
+                                navigate("preview", {
+                                  state: { override },
+                                })
+                              }
+                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer hover:bg-amber-100 transition-colors"
                             >
-                              <Eye className="h-2.5 w-2.5" /> Review
+                              <Eye className="h-2.5 w-2.5" /> preview
                             </span>
                             <button
                               className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
@@ -396,11 +390,6 @@ function ContractsFormsSettings() {
                 <h3 className="text-gray-900 dark:text-gray-100 text-sm">
                   Contract Template Bundles
                 </h3>
-
-                <p className="text-gray-400 dark:text-gray-500 text-[0.6rem] mt-0.5">
-                  Auto-generated from categories × form types — bundle.length
-                  bundles
-                </p>
               </div>
             </div>
             <div className="p-4">
@@ -427,14 +416,14 @@ function ContractsFormsSettings() {
                   All
                 </button>
 
-                {/* One pill per department */}
+                {/* One pill per category */}
                 {categories.map((cat) => (
                   <button
-                    key={cat.categoryId}
-                    onClick={() => setActiveCategory(cat.categoryId)}
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
                     className="px-2.5 py-1 rounded-full transition-all"
                     style={
-                      activeCategory === cat.categoryId
+                      activeCategory === cat.id
                         ? {
                             background: accentColor,
                             color: "white",
@@ -447,7 +436,7 @@ function ContractsFormsSettings() {
                           }
                     }
                   >
-                    {cat.categoryName}
+                    {cat.name}
                   </button>
                 ))}
               </div>
@@ -455,9 +444,22 @@ function ContractsFormsSettings() {
               {/* Bundles grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {(activeCategory === "all"
-                  ? categories.flatMap((cat) => cat.bundles)
-                  : (categories.find((cat) => cat.categoryId === activeCategory)
-                      ?.bundles ?? [])
+                  ? categories.flatMap((cat) =>
+                      cat.bundleOverrides.map((override) => ({
+                        overrideId: override.id,
+                        bundleName: override.bundle?.name || "No Name",
+                        engagementType: override.engagementType,
+                        forms: override.bundle?.forms || [],
+                      })),
+                    )
+                  : (categories
+                      .find((cat) => cat.id === activeCategory)
+                      ?.bundleOverrides.map((override) => ({
+                        overrideId: override.id,
+                        bundleName: override.bundle?.name || "No Name",
+                        engagementType: override.engagementType,
+                        forms: override.bundle?.forms || [],
+                      })) ?? [])
                 ).map((bundle) => (
                   <div
                     key={bundle.overrideId}
@@ -487,6 +489,7 @@ function ContractsFormsSettings() {
                         {bundle.engagementType}
                       </span>
                     </div>
+
                     {/* Divider */}
                     <div
                       className="h-px mx-3"
@@ -494,21 +497,21 @@ function ContractsFormsSettings() {
                         background: `linear-gradient(to right, ${accentColor}60, ${accentColor}20, transparent)`,
                       }}
                     />
+
                     <div className="px-3 py-2.5">
                       <div className="flex flex-wrap gap-1 mb-1.5">
                         {(bundle.forms || []).map((form) => (
                           <div
                             key={form.formKey}
                             className="flex items-center gap-0.5 px-1.5 py-1 rounded-md 
-                   bg-indigo-50 dark:bg-indigo-900/20 
-                   border border-indigo-200 dark:border-indigo-800"
+                  bg-indigo-50 dark:bg-indigo-900/20 
+                  border border-indigo-200 dark:border-indigo-800"
                           >
                             {form.isLocked ? (
                               <Lock className="h-2 w-2 text-amber-500" />
                             ) : (
                               <Shield className="h-2 w-2 text-indigo-400" />
                             )}
-
                             <span
                               className="text-indigo-700 dark:text-indigo-400 uppercase tracking-wide"
                               style={{ fontSize: "0.38rem" }}

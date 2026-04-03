@@ -71,7 +71,12 @@ const CalendarSettings = lazy(
   () => import("@/features/projects/settings/pages/calendar/CalendarSettings"),
 );
 const AiKnowledgeBaseSettings = lazy(
-  () => import("@/features/projects/settings/pages/ai-knowledge-base/AiKnowledgeBaseSettings"),
+  () =>
+    import("@/features/projects/settings/pages/ai-knowledge-base/AiKnowledgeBaseSettings"),
+);
+const Preview = lazy(
+  () =>
+    import("@/features/projects/settings/pages/contracts-forms/Preview"),
 );
 
 const NotFound = lazy(() => import("@/shared/pages/NotFound"));
@@ -90,7 +95,14 @@ const SettingsRoutes = {
     { path: "places", element: <PlacesSettings /> },
     { path: "departments", element: <DepartmentSettings /> },
     { path: "signatures-workflows", element: <SignaturesWorkflowsSettings /> },
-    { path: "contracts-forms", element: <ContractsFormsSettings /> },
+    {
+      path: "contracts-forms",
+      children: [
+        { index: true, element: <ContractsFormsSettings /> },
+        { path: "preview", element: <Preview /> },
+      ],
+    },
+
     { path: "admin", element: <AdminSettings /> },
     { path: "custom", element: <CustomSettings /> },
     { path: "notifications", element: <NotificationsSettings /> },
