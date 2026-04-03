@@ -61,7 +61,7 @@ export default function MySignature({
       icon={"PenTool"}
       actions={
         <>
-          {signatureImage && (
+          {signatureImage && !isEditing &&  (
             <>
               <Button variant={"outline"} disabled>
                 <Eye />
