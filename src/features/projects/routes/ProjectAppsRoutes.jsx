@@ -10,7 +10,7 @@ import CrewReview           from '../../crew/pages/CrewReview';
 import BulkOfferCreate      from '../../crew/pages/BulkOfferCreate';
 import CreateOfferDialog    from '../../crew/components/CreateOfferDialog';
 import CreateOffer          from '../../crew/pages/CreateOffer';
-import CrewSearch           from '../pages/CrewSearch';
+import CrewSearch           from '../../crew/pages/CrewSearch';
 import CrewOnboarding       from '../../crew/pages/CrewOnboarding';
 // import ProductionReview from '../../crew/components/roleActions/ProductionAdminActions/ProductionReview';
 

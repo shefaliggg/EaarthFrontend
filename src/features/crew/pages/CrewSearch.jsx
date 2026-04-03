@@ -1,0 +1,283 @@
+
+import { useState, useMemo, useEffect } from 'react';
+import { useDispatch, useSelector }              from 'react-redux';
+import { useParams, useNavigate }                from 'react-router-dom';
+import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import { toast }                                 from 'sonner';
+
+import { PageHeader }    from '@/shared/components/PageHeader';
+import CrewTable         from '../components/CrewMangemant/CrewTable';
+import OfferActionDialog from '../components/onboarding/OfferActionDialog';
+
+import {
+  getProjectOffersThunk,
+  selectProjectOffers,
+  selectListLoading,
+  cloneOfferThunk,
+} from '../../crew/store/offer.slice';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FALLBACK_PROJECT_ID = '697c899668977a7ca2b27462';
+const isObjectId          = (s) => /^[a-f\d]{24}$/i.test(String(s ?? ''));
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  const date = new Date(String(d).split('T')[0] + 'T00:00:00');
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+};
+
+const fmtDateRange = (start, end) => {
+  if (!start && !end) return '—';
+  return `${fmtDate(start)} – ${fmtDate(end)}`;
+};
+
+const fmtCurrency = (val) => {
+  if (!val && val !== 0) return '—';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('en-GB');
+};
+
+// ─── Map offer → flat crew row ────────────────────────────────────────────────
+
+export function offerToCrew(offer) {
+  const name =
+    offer.recipient?.fullName ||
+    offer.recipient?.userId?.displayName ||
+    '—';
+
+  const jobTitle =
+    offer.createOwnJobTitle && offer.newJobTitle
+      ? offer.newJobTitle
+      : offer.jobTitle || '—';
+
+  // Derive "notice" from contract terms — placeholder logic (adjust as needed)
+  // typically stored in specialStipulations or a dedicated field
+  const noticeDays = offer.noticePeriod || null;
+
+  // Cam O/T — camera-specific OT fields
+  const camOT =
+    offer.cameraOTSWD || offer.cameraOTSCWD || offer.cameraOTCWD || null;
+
+  // Other O/T
+  const otherOT = offer.otherOT || null;
+
+  // Workplace: unit + regularSiteOfWork
+  const unit     = offer.unit || 'Main';
+  const siteText =
+    offer.regularSiteOfWork === 'on_set'  ? 'On set'  :
+    offer.regularSiteOfWork === 'off_set' ? 'Off set' : '—';
+
+  // Travel allowance presence
+  const hasTravel = offer.allowances?.some?.(
+    (a) => (a.key === 'vehicle' || a.key === 'mileage' || a.key === 'fuel') && a.enabled
+  ) || false;
+
+  return {
+    _id:        offer._id ?? offer.id ?? '',
+    offerCode:  offer.offerCode || '',
+    name,
+    jobTitle,
+    department: offer.department || 'OTHER',
+    unit,
+    siteText,
+    hasTravel,
+    camOT,
+    otherOT,
+    startDate:  offer.startDate ? String(offer.startDate).split('T')[0] : null,
+    endDate:    offer.endDate   ? String(offer.endDate).split('T')[0]   : null,
+    noticeDays,
+    feePerDay:  offer.feePerDay,
+    contractId: offer.contractId ? String(offer.contractId) : null,
+    projectId:  offer.projectId  ? String(offer.projectId)  : null,
+    status:     offer.status,
+    email:      offer.recipient?.email || '',
+  };
+}
+
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+export default function CrewSearch() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const params   = useParams();
+
+  // ── Resolve project ID ────────────────────────────────────────────────────
+  const resolvedProjectId = useMemo(() => {
+    if (isObjectId(params.projectId)) return params.projectId;
+    if (isObjectId(params.id))        return params.id;
+    return FALLBACK_PROJECT_ID;
+  }, [params]);
+
+  const proj = params.projectName ?? params.projectId ?? 'demo-project';
+
+  // ── Redux ─────────────────────────────────────────────────────────────────
+  const allOffers = useSelector(selectProjectOffers);
+  const isLoading = useSelector(selectListLoading);
+
+  // Fetch ONLY completed offers from the backend (status filter sent to API)
+  useEffect(() => {
+    dispatch(
+      getProjectOffersThunk({
+        projectId: resolvedProjectId,
+        filters:   { status: 'COMPLETED' },
+      })
+    );
+  }, [dispatch, resolvedProjectId]);
+
+  // Only render COMPLETED offers that:
+  //  1. Have a contractId (genuinely signed)
+  //  2. Have a real recipient name (not the clone placeholder "New Recipient")
+  //  3. Have a real job title
+  const completedCrew = useMemo(
+    () =>
+      allOffers
+        .filter((o) => {
+          if (o.status !== 'COMPLETED') return false;
+          if (!o.contractId)            return false;
+          const name = o.recipient?.fullName?.trim() ?? '';
+          // Exclude clone placeholders
+          if (!name || name.toUpperCase() === 'NEW RECIPIENT') return false;
+          return true;
+        })
+        .map(offerToCrew),
+    [allOffers]
+  );
+
+  // ── Search ───────────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // ── Search filter ────────────────────────────────────────────────────────
+  const filteredSorted = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return completedCrew.filter((c) =>
+      !q ||
+      c.name.toLowerCase().includes(q)       ||
+      c.jobTitle.toLowerCase().includes(q)   ||
+      c.department.toLowerCase().includes(q) ||
+      c.offerCode.toLowerCase().includes(q)  ||
+      c.email.toLowerCase().includes(q)
+    );
+  }, [searchQuery, completedCrew]);
+
+  // ── Group by department ──────────────────────────────────────────────────
+  const grouped = useMemo(() => {
+    const map = {};
+    for (const crew of filteredSorted) {
+      const dept = crew.department?.trim() || 'OTHER';
+      if (!map[dept]) map[dept] = [];
+      map[dept].push(crew);
+    }
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredSorted]);
+
+  // ── Dialog state ──────────────────────────────────────────────────────────
+  const [dialog,    setDialog   ] = useState(null);
+  const [isCloning, setIsCloning] = useState(false);
+
+  const openDialog  = (type, crew) => setDialog({ type, crew });
+  const closeDialog = ()            => setDialog(null);
+
+  const handleViewContract = (crew) => {
+    if (!crew.contractId) { toast.error('No contract linked to this offer'); return; }
+    navigate(`/projects/${proj}/offers/${crew._id}/view`);
+  };
+
+  const handleExtendConfirm = (crew) => {
+    closeDialog();
+    navigate(`/projects/${proj}/offers/${crew._id}/view?openExtend=true`);
+  };
+
+  const handleCloneConfirm = async (crew) => {
+    if (!crew._id) return;
+    setIsCloning(true);
+    toast.loading('Cloning offer…', { id: 'clone' });
+    try {
+      const result = await dispatch(cloneOfferThunk(crew._id));
+      toast.dismiss('clone');
+      if (!result.error && result.payload?._id) {
+        toast.success("Offer cloned — fill in the new crew member's details");
+        closeDialog();
+        navigate(`/projects/${proj}/offers/${result.payload._id}/edit`);
+      } else {
+        toast.error(result.payload?.message || 'Failed to clone offer');
+      }
+    } catch (err) {
+      toast.dismiss('clone');
+      toast.error(err.message || 'Failed to clone offer');
+    } finally {
+      setIsCloning(false);
+    }
+  };
+
+  const handleDialogConfirm = () => {
+    if (!dialog) return;
+    if (dialog.type === 'extendContract') handleExtendConfirm(dialog.crew);
+    if (dialog.type === 'cloneOffer')     handleCloneConfirm(dialog.crew);
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-4">
+      <PageHeader title="Crew Search" icon="Users" />
+
+      {/* ── Controls bar ─────────────────────────────────────────────────── */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-3 flex items-center gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-400"
+          />
+        </div>
+
+        {/* Filter — placeholder button only */}
+        <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <Filter className="w-3.5 h-3.5" />
+          Filter
+          <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* Sort — placeholder button only */}
+        <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <ArrowUpDown className="w-3.5 h-3.5" />
+          Sort
+          <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ── Table — delegated to CrewTable ───────────────────────────────── */}
+      <CrewTable
+        crew={filteredSorted}
+        grouped={grouped}
+        isLoading={isLoading}
+        isEmpty={completedCrew.length === 0}
+        onViewContract={handleViewContract}
+        onExtend={(c)  => openDialog('extendContract', c)}
+        onClone={(c)   => openDialog('cloneOffer', c)}
+      />
+
+      {/* ── Dialog ───────────────────────────────────────────────────────── */}
+      <OfferActionDialog
+        type={dialog?.type}
+        offer={dialog?.crew}
+        open={!!dialog}
+        onClose={closeDialog}
+        onConfirm={handleDialogConfirm}
+        isLoading={dialog?.type === 'cloneOffer' ? isCloning : false}
+      />
+    </div>
+  );
+}
