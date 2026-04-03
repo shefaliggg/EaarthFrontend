@@ -37,9 +37,11 @@ export default function FinanceDetails({
         title="Tax & National Insurance"
         icon="Shield"
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -155,9 +157,11 @@ export default function FinanceDetails({
         title="Personal Bank Details"
         icon="Wallet"
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -249,9 +253,11 @@ export default function FinanceDetails({
         title="Loan-Out Company"
         icon="Briefcase"
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >

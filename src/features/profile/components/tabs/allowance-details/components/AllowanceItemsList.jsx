@@ -115,9 +115,9 @@ export default function AllowanceItemsList({
     items[0].description === ""
   ) {
     return (
-      <div className="border rounded-xl bg-card shadow-sm p-8 flex flex-col items-center justify-center text-center gap-4">
+      <div className="p-8 pt-2 flex flex-col items-center justify-center text-center gap-4">
         {/* Icon */}
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center">
           <SmartIcon icon={config.icon} className="text-primary" size="lg" />
         </div>
 

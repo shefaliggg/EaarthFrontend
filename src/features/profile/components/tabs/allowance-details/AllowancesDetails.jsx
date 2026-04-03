@@ -26,9 +26,11 @@ export default function AllowanceDetails({
         title={"Personal Vehicle"}
         icon={"Car"}
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -151,9 +153,11 @@ export default function AllowanceDetails({
         title={"Computer"}
         icon={"Laptop"}
         actions={
-          <EditToggleButtons
+            <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -163,9 +167,11 @@ export default function AllowanceDetails({
         title={"Mobile Phone"}
         icon={"Smartphone"}
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -175,9 +181,11 @@ export default function AllowanceDetails({
         title={"Software"}
         icon={"AppWindow"}
         actions={
-          <EditToggleButtons
+  <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -187,9 +195,11 @@ export default function AllowanceDetails({
         title={"Equipment"}
         icon={"Camera"}
         actions={
-          <EditToggleButtons
+            <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -199,9 +209,11 @@ export default function AllowanceDetails({
         title={"Box Rental"}
         icon={"Package"}
         actions={
-          <EditToggleButtons
+           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >

@@ -85,7 +85,7 @@ function FilterPillTabs({
   onChange,
   transparentBg = true,
   fullWidth = false,
-  showActiveIndicator = true,
+  showActiveIndicator = false,
   navigatable = false,
   readOnly = false,
   size = "md",

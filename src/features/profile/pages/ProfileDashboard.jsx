@@ -127,6 +127,15 @@ export default function ProfileDashboard() {
     { value: "signature", label: "My Signature", icon: PenTool },
   ];
 
+  //   const tabs = [
+  //   { route: "/profile", label: "Identity", icon: User },
+  //   { route: "/profile/contact", label: "Contact", icon: MapPin },
+  //   { route: "/profile/financial", label: "Financial", icon: DollarSign },
+  //   { route: "/profile/allowances", label: "Allowances", icon: Car },
+  //   { route: "/profile/health", label: "Health", icon: Heart },
+  //   { route: "/profile/signature", label: "My Signature", icon: PenTool },
+  // ];
+
   return (
     <div className="mx-auto space-y-6">
       {/* HEADER + SUMMARY */}
@@ -137,7 +146,7 @@ export default function ProfileDashboard() {
         handleSave={handleSave}
         handleCancel={handleCancel}
       />
-      <div className="space-y-3">
+      <div className="space-y-4">
         <FilterPillTabs
           options={tabs}
           value={activeTab}
@@ -146,6 +155,8 @@ export default function ProfileDashboard() {
           fullWidth
           showActiveIndicator
         />
+
+        {/* <Outlet /> */}
 
         {/* TAB CONTENTS */}
         {activeTab === "identity" && (

@@ -37,7 +37,9 @@ export default function ContactDetails({
         actions={
           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -113,7 +115,9 @@ export default function ContactDetails({
         actions={
           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -209,10 +213,12 @@ export default function ContactDetails({
       <CardWrapper
         title={"Emergency Contact"}
         icon={"AlertCircle"}
-         actions={
+        actions={
           <EditToggleButtons
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
+            onEdit={setIsEditing}
+            onSave={setIsEditing}
+            onCancel={setIsEditing}
           />
         }
       >
@@ -282,11 +288,13 @@ export default function ContactDetails({
           title={"Agency Details"}
           icon={"BriefcaseBusiness"}
           actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        }
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={setIsEditing}
+              onSave={setIsEditing}
+              onCancel={setIsEditing}
+            />
+          }
         >
           <div className="grid grid-cols-1 gap-4">
             <EditableTextDataField

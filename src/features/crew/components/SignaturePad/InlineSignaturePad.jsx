@@ -1,13 +1,3 @@
-/**
- * InlineSignaturePad.jsx
- *
- * Renders INSIDE the contract document view — not a popup dialog.
- * Shows:
- *   - If already signed: signature image + date
- *   - If awaiting prior role: locked waiting state
- *   - If my turn: live canvas to sign directly
- */
-
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import {

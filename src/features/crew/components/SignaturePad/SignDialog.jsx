@@ -1,21 +1,3 @@
-/**
- * SignDialog.jsx
- *
- * A signature canvas modal used by Crew, UPM, FC, and Studio.
- * Uses react-signature-canvas (install: yarn add react-signature-canvas).
- *
- * Props:
- *   open          — boolean
- *   onOpenChange  — (open: boolean) => void
- *   roleName      — display string e.g. "Crew Member", "UPM"
- *   offerCode     — shown in the modal header
- *   onSign        — async (base64DataUrl: string) => void
- *   isSubmitting  — boolean
- *
- * Place at:
- *   src/features/offers/components/SignaturePad/SignDialog.jsx
- */
-
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import {
@@ -94,7 +76,7 @@ export default function SignDialog({
               ref={sigRef}
               canvasProps={{
                 width:     396,
-                height:    130,
+                height:    160,
                 className: "block w-full",
                 style:     { touchAction: "none" },
               }}

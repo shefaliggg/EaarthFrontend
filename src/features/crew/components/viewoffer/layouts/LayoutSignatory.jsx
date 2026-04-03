@@ -1,10 +1,3 @@
-/**
- * layouts/LayoutSignatory.jsx
- *
- * THEMING: All colors use CSS variables from index.css.
- *   No hardcoded Tailwind color classes (violet-*, neutral-*, amber-*, teal-*, etc.)
- */
-
 import { useState }           from "react";
 import { useParams }          from "react-router-dom";
 import { toast }              from "sonner";
@@ -21,8 +14,6 @@ import {
   crewRequestChangesThunk,
   getOfferThunk,
 } from "../../../store/offer.slice";
-
-// ── Role config ───────────────────────────────────────────────────────────────
 
 const ROLE_CFG = {
   UPM: {

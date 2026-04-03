@@ -1,13 +1,10 @@
 import React from "react";
-import { Field, FileUpload } from "../common/UnifiedFields";
+import { FileUpload } from "../common/UnifiedFields";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
 import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
 import EditableDateField from "@/shared/components/wrappers/EditableDateField";
 import EditableRadioField from "@/shared/components/wrappers/EditableRadioField";
 import CardWrapper from "@/shared/components/wrappers/CardWrapper";
-import { Button } from "@/shared/components/ui/button";
-import { Check, Pen, X } from "lucide-react";
-import { cn } from "@/shared/config/utils";
 import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
 
 export default function IdentityDetails({
@@ -23,7 +20,12 @@ export default function IdentityDetails({
       title={"Personal Details"}
       icon={"User2"}
       actions={
-        <EditToggleButtons isEditing={isEditing} setIsEditing={setIsEditing} />
+        <EditToggleButtons
+          isEditing={isEditing}
+          onEdit={setIsEditing}
+          onSave={setIsEditing}
+          onCancel={setIsEditing}
+        />
       }
     >
       <div className="space-y-6">
