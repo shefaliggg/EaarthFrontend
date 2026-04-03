@@ -126,8 +126,10 @@ export const returnToProductionThunk = createAsyncThunk("offers/returnToProducti
 // ─── Extend Contract ──────────────────────────────────────────────────────────
 
 export const extendContractThunk = createAsyncThunk("offers/extend",
-  async ({ offerId, newEndDate, note }, { rejectWithValue }) => {
-    try { return await offerApi.extendContract(offerId, { newEndDate, note }); }
+  async ({ offerId, contractId, projectId, newEndDate, note }, { rejectWithValue }) => {
+    try {
+      return await offerApi.extendContract(offerId, { contractId, projectId, newEndDate, note });
+    }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
 );

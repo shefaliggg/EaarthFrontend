@@ -81,9 +81,9 @@ export const returnToProduction = (id, reason) =>
 
 // ─── EXTEND CONTRACT ──────────────────────────────────────────────────────────
 
-export const extendContract = (id, { newEndDate, note }) =>
+export const extendContract = (id, { contractId, projectId, newEndDate, note }) =>
   axiosConfig
-    .patch(`${BASE}/${id}/extend`, { newEndDate, note }, { headers: roleHeaders() })
+    .patch(`${BASE}/${id}/extend`, { contractId, projectId, newEndDate, note }, { headers: roleHeaders() })
     .then(unwrap);
 
 // ─── CLONE OFFER ──────────────────────────────────────────────────────────────

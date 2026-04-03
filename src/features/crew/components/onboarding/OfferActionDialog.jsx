@@ -9,13 +9,16 @@
  *   "sendToProduction"   — primary/lavender — any role sends edit request to production
  *   "approveOffer"       — mint/green       — production approves & sends to accounts
  *   "returnToProduction" — peach/orange     — accounts returns offer to production review
+ *   "extendContract"     — sky/blue         — confirm before navigating to contract extension
+ *   "cloneOffer"         — lavender/violet  — clone offer with same terms, clear recipient
  *
  * ALL colors use CSS variables from index.css — no hardcoded Tailwind color classes.
  */
 
 import { useState } from "react";
 import {
-  X, Send, CheckCircle, AlertTriangle, Loader2, Edit2, XCircle, ClipboardCheck, MessageSquare,
+  X, Send, CheckCircle, AlertTriangle, Loader2, Edit2, XCircle,
+  ClipboardCheck, MessageSquare, CalendarDays, Copy,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -30,7 +33,7 @@ const fmtMoney = (n, currency = "GBP") => {
 
 const fmtDate = (d) =>
   d
-    ? new Date(d).toLocaleDateString("en-GB", {
+    ? new Date(String(d).split("T")[0] + "T00:00:00").toLocaleDateString("en-GB", {
         day: "numeric", month: "short", year: "numeric",
       })
     : "—";
@@ -249,13 +252,6 @@ function AcceptOfferDialog({ offer, onConfirm, onClose, isLoading }) {
 }
 
 // ─── 3. Request Changes ───────────────────────────────────────────────────────
-// Matches screenshot exactly:
-//   Header  : destructive red, AlertTriangle icon, "Request Changes"
-//   Body    : "Please describe the changes you would like made to this offer.
-//              Be as specific as possible so the production team can address
-//              your concerns."
-//   Textarea: tall, uppercase, placeholder matches screenshot
-//   Footer  : small italic note + Cancel | Submit Request (disabled until typed)
 
 function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
   const [reason, setReason] = useState("");
@@ -269,15 +265,11 @@ function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
         title="Request Changes"
         onClose={onClose}
       />
-
       <div className="px-5 pt-5 pb-2 space-y-4">
-        {/* Body — matches screenshot wording exactly */}
         <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
           Please describe the changes you would like made to this offer. Be as specific as possible
           so the production team can address your concerns.
         </p>
-
-        {/* Textarea — tall, uppercase input */}
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -290,13 +282,10 @@ function RequestChangesDialog({ offer, onConfirm, onClose, isLoading }) {
             color: "var(--foreground)",
           }}
         />
-
-        {/* Footer note — matches screenshot exactly */}
         <p className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>
           Your comments will be sent to the production team. All text is stored in uppercase.
         </p>
       </div>
-
       <DialogFooter
         onClose={onClose}
         onConfirm={() => {
@@ -463,12 +452,6 @@ function SendToProductionDialog({ role = "CREW", offer, onConfirm, onClose, isLo
 }
 
 // ─── 6. Approve Offer ─────────────────────────────────────────────────────────
-// Matches screenshot:
-//   Header  : mint-600, ClipboardCheck, "Approve & Send for Signatures?"
-//   Body    : "You have verified all budget and payroll items for NAME.
-//              This will move the offer to the Crew Signing stage."
-//   Section : VERIFIED ITEMS — green tick + label per checked item
-//   Footer  : Cancel | ✓ Approve  (mint-600)
 
 function ApproveOfferDialog({ offer, verifiedItems = [], onConfirm, onClose, isLoading }) {
   const name = offer?.recipient?.fullName
@@ -483,14 +466,12 @@ function ApproveOfferDialog({ offer, verifiedItems = [], onConfirm, onClose, isL
         title="Approve & Send for Signatures?"
         onClose={onClose}
       />
-
       <div className="px-5 pt-5 pb-2 space-y-4">
         <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
           You have verified all budget and payroll items for{" "}
           <strong style={{ color: "var(--foreground)" }}>{name}</strong>.{" "}
           This will move the offer to the Crew Signing stage.
         </p>
-
         {verifiedItems.length > 0 && (
           <div
             className="rounded-xl p-4 space-y-2"
@@ -513,7 +494,6 @@ function ApproveOfferDialog({ offer, verifiedItems = [], onConfirm, onClose, isL
           </div>
         )}
       </div>
-
       <DialogFooter
         onClose={onClose}
         onConfirm={() => onConfirm({})}
@@ -527,7 +507,7 @@ function ApproveOfferDialog({ offer, verifiedItems = [], onConfirm, onClose, isL
   );
 }
 
-// ─── 7. Return to Production (Accounts → Production) ─────────────────────────
+// ─── 7. Return to Production ──────────────────────────────────────────────────
 
 function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
   const [notes, setNotes] = useState("");
@@ -578,6 +558,146 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
   );
 }
 
+// ─── 8. Extend Contract ───────────────────────────────────────────────────────
+// Used by Crew Management — all colours from --primary / --lavender-* only.
+
+function ExtendContractDialog({ offer, onConfirm, onClose, isLoading }) {
+  return (
+    <DialogShell onClose={onClose}>
+      <DialogHeader
+        bg="var(--primary)"
+        icon={CalendarDays}
+        title="Extend Contract"
+        offerCode={offer?.offerCode}
+        onClose={onClose}
+      />
+      <div className="px-5 pt-5 pb-2 space-y-4">
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          You're about to extend the contract for{" "}
+          <strong style={{ color: "var(--foreground)" }}>
+            {offer?.name || offer?.recipient?.fullName}
+          </strong>{" "}
+          ({offer?.role || getJobTitle(offer)}).
+        </p>
+
+        {/* Current end date — lavender tint */}
+        <div
+          className="rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: "var(--lavender-50)", border: "1px solid var(--lavender-200)" }}
+        >
+          <CalendarDays className="w-4 h-4 shrink-0" style={{ color: "var(--primary)" }} />
+          <div>
+            <p
+              className="text-[10px] font-bold uppercase tracking-wide"
+              style={{ color: "var(--lavender-500)" }}
+            >
+              Current End Date
+            </p>
+            <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--foreground)" }}>
+              {fmtDate(offer?.endDate)}
+            </p>
+          </div>
+        </div>
+
+        {/* Advisory — muted, no extra brand colour */}
+        <div
+          className="rounded-xl px-4 py-3 flex items-start gap-2.5"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--muted-foreground)" }} />
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+            You'll be taken to the contract page where you can set the new end date and add notes
+            before confirming the extension.
+          </p>
+        </div>
+      </div>
+      <DialogFooter
+        onClose={onClose}
+        onConfirm={() => onConfirm(offer)}
+        isLoading={isLoading}
+        confirmLabel="Go to Contract"
+        confirmBg="var(--primary)"
+        confirmHoverBg="var(--lavender-400)"
+        confirmIcon={CalendarDays}
+      />
+    </DialogShell>
+  );
+}
+
+// ─── 9. Clone Offer ───────────────────────────────────────────────────────────
+// Used by Crew Management — all colours from --primary / --lavender-* only.
+
+function CloneOfferDialog({ offer, onConfirm, onClose, isLoading }) {
+  const WHAT_COPIES = [
+    "Rates & Allowances",
+    "Schedule",
+    "Stipulations",
+    "Contract type",
+  ];
+
+  return (
+    <DialogShell onClose={onClose}>
+      <DialogHeader
+        bg="var(--primary)"
+        icon={Copy}
+        title="Clone Offer"
+        offerCode={offer?.offerCode}
+        onClose={onClose}
+      />
+      <div className="px-5 pt-5 pb-2 space-y-4">
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          Clone{" "}
+          <strong style={{ color: "var(--foreground)" }}>
+            {offer?.name || offer?.recipient?.fullName}'s
+          </strong>{" "}
+          offer ({offer?.role || getJobTitle(offer)}) into a new Draft with the same terms —
+          recipient cleared for a new crew member.
+        </p>
+
+        {/* What gets copied */}
+        <div
+          className="rounded-xl p-4 space-y-2"
+          style={{ background: "var(--lavender-50)", border: "1px solid var(--lavender-100)" }}
+        >
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: "var(--lavender-700)" }}
+          >
+            What gets copied
+          </p>
+          {WHAT_COPIES.map((item) => (
+            <div key={item} className="flex items-center gap-2">
+              <CheckCircle className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--primary)" }} />
+              <span className="text-[12px]" style={{ color: "var(--foreground)" }}>
+                {item}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Advisory — muted, no extra brand colour */}
+        <div
+          className="rounded-xl px-4 py-3"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            Recipient details will be blank — fill them in before sending.
+          </p>
+        </div>
+      </div>
+      <DialogFooter
+        onClose={onClose}
+        onConfirm={() => onConfirm(offer)}
+        isLoading={isLoading}
+        confirmLabel="Clone Offer"
+        confirmBg="var(--primary)"
+        confirmHoverBg="var(--lavender-700)"
+        confirmIcon={Copy}
+      />
+    </DialogShell>
+  );
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function OfferActionDialog({
@@ -601,6 +721,8 @@ export default function OfferActionDialog({
       {type === "sendToProduction"   && <SendToProductionDialog   role={role}   offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "approveOffer"       && <ApproveOfferDialog       offer={offer} verifiedItems={verifiedItems} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "returnToProduction" && <ReturnToProductionDialog offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
+      {type === "extendContract"     && <ExtendContractDialog     offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
+      {type === "cloneOffer"         && <CloneOfferDialog         offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
     </>
   );
 }

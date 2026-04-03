@@ -1,17 +1,20 @@
 /**
  * CrewIdentityHeader.jsx
  *
- * Fully themed via CSS variables from index.css.
- * No hardcoded Tailwind color classes (violet-*, neutral-*, amber-*, etc.)
- * All colors reference --primary, --lavender-*, --mint-*, --peach-*, --muted-*, etc.
+ * CHANGES:
+ *   - Added `onExtend` prop — when provided and status is COMPLETED,
+ *     shows an "Extend Contract" button that triggers the ExtendDialog
+ *     in the parent (LayoutProductionAdmin).
+ *   - All colors remain via CSS variables from index.css.
  *
  * Props:
  *   contractData : object  — fullName, jobTitle, department, engagementType,
  *                            dailyOrWeekly, feePerDay, currency, startDate, endDate, email
  *   offer        : object  — for status badge + jobTitle override (createOwnJobTitle / newJobTitle)
+ *   onExtend     : fn      — optional; called when Extend Contract button is clicked
  */
 
-import { Calendar, User } from "lucide-react";
+import { Calendar, User, CalendarDays } from "lucide-react";
 
 const ENG_LABELS   = { paye: "PAYE", loan_out: "Loan Out", schd: "Schedule D", long_form: "Direct Hire" };
 const CURRENCY_SYM = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$" };
@@ -72,7 +75,7 @@ export function fmtDate(dateStr) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CrewIdentityHeader({ contractData = {}, offer }) {
+export default function CrewIdentityHeader({ contractData = {}, offer, onExtend }) {
   const jobTitle  = offer?.createOwnJobTitle && offer?.newJobTitle
     ? offer.newJobTitle
     : contractData.jobTitle || offer?.jobTitle || "";
@@ -85,11 +88,14 @@ export default function CrewIdentityHeader({ contractData = {}, offer }) {
   const dateRange = (contractData.startDate || contractData.endDate)
     ? `${fmtDate(contractData.startDate)} – ${fmtDate(contractData.endDate)}` : "";
 
+  const isCompleted = offer?.status === "COMPLETED";
+
   return (
     <div
       className="rounded-xl px-4 py-3 flex items-center justify-between gap-4 w-full"
       style={{ background: "var(--card)", border: "1px solid var(--border)" }}
     >
+      {/* Left — avatar + details */}
       <div className="flex items-center gap-3 min-w-0">
 
         {/* Avatar */}
@@ -189,8 +195,23 @@ export default function CrewIdentityHeader({ contractData = {}, offer }) {
         </div>
       </div>
 
-      {/* Status badge */}
-      <StatusBadge status={offer?.status} />
+      {/* Right — Extend button (COMPLETED only) + Status badge */}
+      <div className="flex items-center gap-2 shrink-0">
+        {isCompleted && onExtend && (
+          <button
+            onClick={onExtend}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+            style={{
+              background: "var(--primary)",
+              color: "var(--primary-foreground)",
+            }}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Extend Contract
+          </button>
+        )}
+        <StatusBadge status={offer?.status} />
+      </div>
     </div>
   );
 }
