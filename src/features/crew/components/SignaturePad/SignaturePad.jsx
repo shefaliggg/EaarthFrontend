@@ -1,145 +1,158 @@
-import { useState, useRef } from "react";
+import { useState, useRef, forwardRef, useImperativeHandle } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/config/utils";
 import FilterPillTabs from "../../../../shared/components/FilterPillTabs";
 import { Upload, Type, PenTool, X, Trash2, Trash, Eraser } from "lucide-react";
 
-export default function SignaturePad({ defaultValue, onSave, onCancel }) {
-  const [activeTab, setActiveTab] = useState("draw");
-  const [typedValue, setTypedValue] = useState("");
-  const [font, setFont] = useState("Pacifico");
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [drawnSignature, setDrawnSignature] = useState(null);
+const SignaturePad = forwardRef(
+  ({ onSave, onCancel, showActions = true }, ref) => {
+    const [activeTab, setActiveTab] = useState("draw");
+    const [typedValue, setTypedValue] = useState("");
+    const [font, setFont] = useState("Festive");
+    const [uploadedImage, setUploadedImage] = useState(null);
+    const [drawnSignature, setDrawnSignature] = useState(null);
 
-  const sigRef = useRef(null);
+    const sigRef = useRef(null);
 
-  const getSignatureData = async () => {
-    if (activeTab === "draw") {
-      return {
-        type: "drawn",
-        data: sigRef.current?.toDataURL(),
-      };
+    useImperativeHandle(ref, () => ({
+      async getData() {
+        return await getSignatureData();
+      },
+    }));
+
+    const getSignatureData = async () => {
+      if (activeTab === "draw") {
+        return {
+          type: "drawn",
+          data: sigRef.current?.toDataURL(),
+        };
+      }
+
+      if (activeTab === "type") {
+        await document.fonts.ready;
+
+        return {
+          type: "typed",
+          data: generateSignatureImage({
+            text: typedValue,
+            font,
+          }),
+        };
+      }
+
+      if (activeTab === "upload") {
+        return {
+          type: "uploaded",
+          data: uploadedImage,
+        };
+      }
+    };
+
+    function generateSignatureImage({ text, font }) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const padding = 20;
+      const fontSize = 48;
+
+      ctx.font = `${font === "Qwitcher Grypen" ? "700" : "400"} ${fontSize}px "${font}"`;
+
+      const textWidth = ctx.measureText(text).width;
+
+      canvas.width = textWidth + padding * 2;
+      canvas.height = fontSize + padding * 2;
+
+      // Reapply font after resizing (important!)
+      ctx.font = `${font === "Qwitcher Grypen" ? "700" : "400"} ${fontSize}px "${font}"`;
+      ctx.fillStyle = "#111827"; // dark ink
+      ctx.textBaseline = "middle";
+
+      ctx.fillText(text, padding, canvas.height / 2);
+
+      return canvas.toDataURL("image/png");
     }
 
-    if (activeTab === "type") {
-      await document.fonts.ready;
+    const handleSave = async () => {
+      const data = await getSignatureData();
+      onSave(data);
+    };
 
-      return {
-        type: "typed",
-        data: generateSignatureImage({
-          text: typedValue,
-          font,
-        }),
-      };
-    }
-
-    if (activeTab === "upload") {
-      return {
-        type: "uploaded",
-        data: uploadedImage,
-      };
-    }
-  };
-
-  function generateSignatureImage({ text, font }) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    const padding = 20;
-    const fontSize = 48;
-
-    ctx.font = `${font === "Qwitcher Grypen" ? "700" : "400"} ${fontSize}px "${font}"`;
-
-    const textWidth = ctx.measureText(text).width;
-
-    canvas.width = textWidth + padding * 2;
-    canvas.height = fontSize + padding * 2;
-
-    // Reapply font after resizing (important!)
-    ctx.font = `${font === "Qwitcher Grypen" ? "700" : "400"} ${fontSize}px "${font}"`;
-    ctx.fillStyle = "#111827"; // dark ink
-    ctx.textBaseline = "middle";
-
-    ctx.fillText(text, padding, canvas.height / 2);
-
-    return canvas.toDataURL("image/png");
-  }
-
-  return (
-    <div className="w-full overflow-hidden">
-      {/* Tabs */}
-      <div className="px-4 pt-4">
-        <FilterPillTabs
-          options={[
-            { value: "draw", label: "Draw", icon: PenTool },
-            { value: "type", label: "Type", icon: Type },
-            { value: "upload", label: "Upload", icon: Upload },
-          ]}
-          value={activeTab}
-          onChange={(value) => setActiveTab(value)}
-          size="md"
-          transparentBg={false}
-        />
-      </div>
-
-      <div className="grid grid-cols-[2fr_1fr]">
-        {/* Content Area */}
-        <div className="p-6 min-h-[240px] flex items-center justify-center bg-gray-50/30">
-          {activeTab === "draw" && (
-            <DrawSignature sigRef={sigRef} onChange={setDrawnSignature} />
-          )}
-
-          {activeTab === "type" && (
-            <TypeSignature
-              value={typedValue}
-              setValue={setTypedValue}
-              font={font}
-              setFont={setFont}
-            />
-          )}
-
-          {activeTab === "upload" && (
-            <UploadSignature
-              setUploadedImage={setUploadedImage}
-              image={uploadedImage}
-            />
-          )}
+    return (
+      <div className="w-full overflow-hidden">
+        {/* Tabs */}
+        <div className="px-4 pt-4">
+          <FilterPillTabs
+            options={[
+              { value: "draw", label: "Draw", icon: PenTool },
+              { value: "type", label: "Type", icon: Type },
+              { value: "upload", label: "Upload", icon: Upload },
+            ]}
+            value={activeTab}
+            onChange={(value) => setActiveTab(value)}
+            size="md"
+            transparentBg={false}
+          />
         </div>
 
-        {/* Preview Section */}
-        <SignaturePreview
-          type={activeTab}
-          drawnSignature={drawnSignature}
-          typedValue={typedValue}
-          font={font}
-          uploadedImage={uploadedImage}
-        />
-      </div>
+        <div className="grid grid-cols-[2fr_1fr]">
+          {/* Content Area */}
+          <div className="p-6 min-h-[240px] flex items-center justify-center bg-gray-50/30">
+            {activeTab === "draw" && (
+              <DrawSignature sigRef={sigRef} onChange={setDrawnSignature} />
+            )}
 
-      {/* Actions */}
-      <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          className="px-6 hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </Button>
+            {activeTab === "type" && (
+              <TypeSignature
+                value={typedValue}
+                setValue={setTypedValue}
+                font={font}
+                setFont={setFont}
+              />
+            )}
 
-        <Button
-          onClick={async () => {
-            const data = await getSignatureData();
-            onSave(data);
-          }}
-          className="px-6 bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all duration-200"
-        >
-          Save Signature
-        </Button>
+            {activeTab === "upload" && (
+              <UploadSignature
+                setUploadedImage={setUploadedImage}
+                image={uploadedImage}
+              />
+            )}
+          </div>
+
+          {/* Preview Section */}
+          <SignaturePreview
+            type={activeTab}
+            drawnSignature={drawnSignature}
+            typedValue={typedValue}
+            font={font}
+            uploadedImage={uploadedImage}
+          />
+        </div>
+
+        {showActions && (
+          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="px-6 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={handleSave}
+              className="px-6 bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all duration-200"
+            >
+              Save Signature
+            </Button>
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
+    );
+  },
+);
+
+export default SignaturePad;
 
 function DrawSignature({ sigRef, onChange }) {
   const [hasSignature, setHasSignature] = useState(false);
@@ -190,7 +203,7 @@ function DrawSignature({ sigRef, onChange }) {
   );
 }
 
-function TypeSignature({ value, setValue, font, setFont }) {
+function TypeSignature({ value, setValue, font = "Festive", setFont }) {
   const fonts = [
     { name: "Festive", label: "Artistic Signature" },
     { name: "Sacramento", label: "Clean Signature" },
@@ -241,21 +254,6 @@ function TypeSignature({ value, setValue, font, setFont }) {
           );
         })}
       </div>
-
-      {/* Live Preview */}
-      <div className="pt-4 border-t border-gray-100">
-        <p className="text-xs text-gray-500 mb-2">Live preview</p>
-        <div
-          style={{
-            fontFamily: font,
-            fontWeight: font === "Qwitcher Grypen" ? 700 : 400,
-            letterSpacing: font === "Sacramento" ? "1px" : "0.5px",
-          }}
-          className="text-4xl text-gray-900"
-        >
-          {value || "Your Signature"}
-        </div>
-      </div>
     </div>
   );
 }
@@ -277,7 +275,7 @@ function UploadSignature({ setUploadedImage, image }) {
   return (
     <div className="text-center space-y-4 w-full">
       {!image ? (
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-purple-400 transition-all duration-200 bg-white">
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 min-h-54 flex items-center justify-center hover:border-purple-400 transition-all duration-200 bg-white">
           <input
             type="file"
             accept="image/*"

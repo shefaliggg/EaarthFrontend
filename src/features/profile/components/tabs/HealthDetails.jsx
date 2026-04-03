@@ -13,7 +13,7 @@ export default function HealthDetails({
       title={"Health $ Dietary"}
       icon={"Heart"}
       actions={
-        <EditToggleButtons isEditing={isEditing} setIsEditing={setIsEditing} />
+        <EditToggleButtons isEditing={isEditing} onEdit={setIsEditing} onSave={setIsEditing} onCancel={setIsEditing} />
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-68">

@@ -7,12 +7,14 @@ import {
   Fingerprint,
   Calendar,
   User,
+  Eye,
 } from "lucide-react";
 import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
 import SignaturePad from "../../../crew/components/SignaturePad/SignaturePad";
 import { formatDate } from "../../../../shared/config/utils";
 import { Button } from "../../../../shared/components/ui/button";
+import SignatureCertificate from "./SignatureCertificate";
 
 export default function MySignature({
   profile,
@@ -23,17 +25,26 @@ export default function MySignature({
   const [signatureImage, setSignatureImage] = useState(
     profile.signature || null,
   );
-  const handleSaveSignature = (signatureData) => {
-    if (!signatureData?.data) return;
 
-    setSignatureImage(signatureData.data);
+  const padRef = useRef();
+
+  const handleSave = async () => {
+    const data = await padRef.current?.getData();
+
+    if (!data?.data) return;
+
+    setSignatureImage(data.data);
 
     setProfile({
       ...profile,
-      signature: signatureData.data,
+      signature: data.data,
     });
 
-    setIsEditing(false); // optional but nice UX
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
   };
 
   const downloadSignature = () => {
@@ -49,18 +60,36 @@ export default function MySignature({
       title={"My Signature"}
       icon={"PenTool"}
       actions={
-        <EditToggleButtons
-          isEditing={isEditing}
-          setIsEditing={() => setIsEditing(!isEditing)}
-        />
+        <>
+          {signatureImage && (
+            <>
+              <Button variant={"outline"} disabled>
+                <Eye />
+                <span className="text-sm font-medium">View Certificate</span>
+              </Button>
+              <Button onClick={downloadSignature} variant={"outline"}>
+                <Download />
+                <span className="text-sm font-medium">Download Signature</span>
+              </Button>
+            </>
+          )}
+          <EditToggleButtons
+            isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
+        </>
       }
     >
       <div className="space-y-4">
         {/* Canvas for drawing signature */}
         {isEditing ? (
           <SignaturePad
-            onSave={handleSaveSignature}
-            onCancel={() => setIsEditing(false)}
+            ref={padRef}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            showActions={false}
           />
         ) : (
           <>
@@ -68,27 +97,9 @@ export default function MySignature({
             {signatureImage ? (
               <div className="space-y-6">
                 {/* Signature Card */}
-                <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-6">
-                  {/* Signature Header */}
-                  <div className="px-5 pt-5 pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-purple-50 rounded-lg">
-                          <Fingerprint className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Official Signature
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-gray-400">Active</span>
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-4">
                   {/* Signature Image */}
-                  <div className="p-6 flex justify-center items-center">
+                  <div className="p-6 pt-12 pb-8 flex justify-center items-center">
                     <div className="relative group">
                       <img
                         src={signatureImage}
@@ -99,7 +110,7 @@ export default function MySignature({
                   </div>
 
                   {/* Signature Footer */}
-                  <div className="px-5 py-3 border-t border-gray-100">
+                  <div className="px-5 pb-3">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5">
@@ -115,39 +126,24 @@ export default function MySignature({
                           </span>
                         </div>
                       </div>
-                      <div className="text-purple-600 text-[10px] font-mono">
-                        ✓ Verified
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-gray-400">Currently Active</span>
+                        </div>
+                        <div className="text-purple-600 text-[10px] font-mono">
+                          ✓ Verified
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    onClick={downloadSignature}
-                    variant={"outline"}
-                  >
-                    <Download />
-                    <span className="text-sm font-medium">Download</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <PenTool />
-                    <span className="text-sm font-medium">
-                      Replace Signature
-                    </span>
-                  </Button>
                 </div>
               </div>
             ) : (
               /* Empty State - Premium Design */
               <div className="relative overflow-hidden">
-
                 {/* Content */}
-                <div className="relative border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center bg-white/50 backdrop-blur-sm">
+                <div className="relative rounded-2xl p-10 pt-4 text-center backdrop-blur-sm">
                   <div className="relative z-10">
                     {/* Animated Icon Container */}
                     <div className="relative inline-block mb-4">
