@@ -2,14 +2,18 @@
  * ViewOffer.jsx — FIXED
  *
  * KEY FIXES:
- * 1. offerToAllowances() — robust key normalization handles camelCase, snake_case,
+ * 1. offerToAllowances() — base defaults built with enabled: false so only
+ *    allowances actually stored on the offer are shown as enabled.
+ *    Previously defaultAllowances had enabled: true, causing ALL allowances
+ *    to appear enabled in ViewOffer even when only a few were selected
+ *    (most visible on Bulk-created offers).
+ *
+ * 2. offerToAllowances() — robust key normalization handles camelCase, snake_case,
  *    UPPER_SNAKE_CASE from backend (v1 vs v2 offers may store differently).
  *
- * 2. calculatedRates memo — ALWAYS prefers offer.calculatedRates snapshot when
+ * 3. calculatedRates memo — ALWAYS prefers offer.calculatedRates snapshot when
  *    salary/overtime rows exist. Falls back to live calc only when truly empty.
  *    This ensures v2 contract edits show the AGREED rates, not a recalculation.
- *
- * 3. offerToContractData() — reads allowances budget codes from offer correctly.
  *
  * 4. useEffect for instance fetch — depends on offer._id AND offer.status AND
  *    offer.version so any re-acceptance of v2 triggers a fresh fetch.
@@ -128,40 +132,45 @@ function offerToContractData(offer) {
     cameraOTCWD:  offer.cameraOTCWD  || "",
     otherDealProvisions: offer.notes?.otherDealProvisions || "",
     additionalNotes:     offer.notes?.additionalNotes     || "",
-    // Pass through for layout components that read notes directly
     notes: {
       otherDealProvisions: offer.notes?.otherDealProvisions || "",
       additionalNotes:     offer.notes?.additionalNotes     || "",
     },
-
-        workingHours: offer.workingHours ?? 11,  // also add this if missing
+    workingHours: offer.workingHours ?? 11,
     specialStipulations: Array.isArray(offer.specialStipulations)
       ? offer.specialStipulations
       : [],
   };
 }
 
-// ── FIX: Robust allowance normalization ────────────────────────────────────────
+// ── FIX: Robust allowance normalization ───────────────────────────────────────
+//
+// ROOT CAUSE of the bug:
+//   defaultAllowances (Defaultallowance.js) sets enabled: true on every entry.
+//   The old code did:
+//     const result = JSON.parse(JSON.stringify(defaultAllowances)); // all enabled: true
+//     offer.allowances.forEach(a => { result[key] = { ...result[key], ...a }; });
+//   So only the 2–3 allowances actually saved on the offer got their enabled flag
+//   overwritten with the stored value; all OTHER allowances kept enabled: true
+//   from the defaults, making them appear selected in ViewOffer.
+//
+// FIX:
+//   Build the base from defaultAllowances but force enabled: false on every
+//   entry. Only allowances explicitly stored on the offer get enabled: true
+//   (because they were filtered by `a.enabled` in buildPayload before saving).
+//
 // Backend may store allowance keys as:
 //   camelCase:      "boxRental"   (v1 offers, most common)
 //   UPPER_SNAKE:    "BOX_RENTAL"  (some legacy paths)
 //   lower_snake:    "box_rental"  (rare)
-//
-// defaultAllowances uses camelCase keys. We normalize ALL variants to camelCase
-// before merging so the UI always gets the right data regardless of version.
 
 function toCamelCase(str) {
   if (!str) return str;
-  // Already camelCase with no separators — return as-is
-  if (!/[_\s-]/.test(str) && str === str.toLowerCase().replace(/./g, (c, i) => i === 0 ? c : c)) {
-    return str;
-  }
   return str
     .toLowerCase()
     .replace(/[_\s-]([a-z])/g, (_, c) => c.toUpperCase());
 }
 
-// Map of all known backend key variants → canonical camelCase key used by UI
 const ALLOWANCE_KEY_MAP = {
   // camelCase (canonical)
   boxRental: "boxRental",
@@ -201,21 +210,26 @@ const ALLOWANCE_KEY_MAP = {
 };
 
 function offerToAllowances(offer) {
-  if (!offer?.allowances?.length) return { ...defaultAllowances };
+  // FIX: Start from defaultAllowances shape but with ALL enabled: false.
+  // This ensures allowances not stored on the offer never appear enabled.
+  const result = Object.fromEntries(
+    Object.entries(defaultAllowances).map(([k, v]) => [
+      k,
+      { ...v, enabled: false },
+    ])
+  );
 
-  // Start from a full copy of defaults so every UI key always exists
-  const result = JSON.parse(JSON.stringify(defaultAllowances));
+  if (!offer?.allowances?.length) return result;
 
   offer.allowances.forEach((a) => {
     if (!a?.key) return;
 
     const raw = a.key;
 
-    // Resolve to canonical camelCase key
     const canonical =
-      ALLOWANCE_KEY_MAP[raw] ||       // exact map lookup first
-      ALLOWANCE_KEY_MAP[toCamelCase(raw)] || // try after camelCase conversion
-      (result[raw] !== undefined ? raw : null); // direct match in defaults
+      ALLOWANCE_KEY_MAP[raw] ||
+      ALLOWANCE_KEY_MAP[toCamelCase(raw)] ||
+      (result[raw] !== undefined ? raw : null);
 
     if (!canonical) {
       // Unknown key — still add it so nothing is lost
@@ -224,10 +238,10 @@ function offerToAllowances(offer) {
     }
 
     result[canonical] = {
-      ...result[canonical], // keep default shape
+      ...result[canonical], // keep default shape (field definitions)
       ...a,                 // overlay stored values
-      key: canonical,       // always use canonical key
-      enabled: !!a.enabled, // ensure boolean
+      key:     canonical,   // always use canonical key
+      enabled: !!a.enabled, // ensure boolean (stored allowances are always enabled)
     };
   });
 
@@ -303,24 +317,18 @@ export default function ViewOffer() {
     dispatch(getContractPreviewThunk(contractId));
   }, [contractId, dispatch]);
 
-  // ── FIX: Fetch contract instances on offer._id, status AND version change ──
-  // Previously only depended on offer._id + status. Adding offer.version ensures
-  // that when crew accepts v2 (new version), instances are re-fetched even if
-  // the status didn't change from the Redux store's perspective.
+  // ── Fetch contract instances on offer._id, status AND version change ──────
   useEffect(() => {
     if (!offer?._id) return;
     if (!INSTANCE_FETCH_STATUSES.includes(offer.status)) return;
     dispatch(clearInstances());
     dispatch(getContractInstancesThunk(offer._id));
-  }, [offer?._id, offer?.status, offer?.version, dispatch]); // ← added offer.version
+  }, [offer?._id, offer?.status, offer?.version, dispatch]);
 
-  // ── FIX: Re-fetch offer when version changes (e.g. after v2 crew accept) ──
-  // This ensures calculatedRates and allowances memos get fresh data from the
-  // server rather than the potentially stale Redux state.
+  // ── Re-fetch offer when version changes ───────────────────────────────────
   useEffect(() => {
     if (!offer?.version || !id) return;
     if (prevVersionRef.current !== null && prevVersionRef.current !== offer.version) {
-      // Version changed — re-fetch to get latest calculatedRates & allowances
       dispatch(getOfferThunk(id));
     }
     prevVersionRef.current = offer.version;
@@ -356,34 +364,28 @@ export default function ViewOffer() {
   // ── Derived state ──────────────────────────────────────────────────────────
   const contractData = useMemo(() => offerToContractData(offer), [offer]);
 
-  // FIX: Use the robust normalizer — handles all key variants from any offer version
+  // FIX: uses updated offerToAllowances that starts with all enabled: false
   const allowances = useMemo(() => offerToAllowances(offer), [offer]);
 
-  // FIX: ALWAYS prefer the stored calculatedRates snapshot when it has data.
-  // This is critical for v2+ offers where the agreed rates must not be
-  // recalculated (recalculation can drift due to rounding or setting changes).
-  // Only fall back to live calculation when snapshot is genuinely empty
-  // (e.g. very old offers created before snapshot was implemented).
+  // Always prefer stored calculatedRates snapshot; fall back to live calc
+  // only for legacy offers that predate the snapshot feature.
   const calculatedRates = useMemo(() => {
     const stored = offer?.calculatedRates;
-    const hasStoredSalary    = stored?.salary?.length > 0;
-    const hasStoredOvertime  = stored?.overtime?.length > 0;
+    const hasStoredSalary   = stored?.salary?.length > 0;
+    const hasStoredOvertime = stored?.overtime?.length > 0;
 
     if (hasStoredSalary || hasStoredOvertime) {
-      // Use the snapshot — this is the agreed rate at time of offer creation/edit
       return {
         salary:   stored.salary   || [],
         overtime: stored.overtime || [],
       };
     }
 
-    // Fallback: live calculation (only for legacy offers without snapshots)
     const fee = parseFloat(contractData.feePerDay) || 0;
     return calculateRates(fee, defaultEngineSettings);
   }, [offer?.calculatedRates, offer?.version, contractData.feePerDay]);
 
-  // ── Budget codes — read directly from offer (not contractData) ─────────────
-  // These are top-level arrays on the offer document, not inside contractData.
+  // ── Budget codes — read directly from offer ────────────────────────────────
   const salaryBudgetCodes   = useMemo(() => offer?.salaryBudgetCodes   || [], [offer]);
   const salaryTags          = useMemo(() => offer?.salaryTags          || [], [offer]);
   const overtimeBudgetCodes = useMemo(() => offer?.overtimeBudgetCodes || [], [offer]);
@@ -423,8 +425,6 @@ export default function ViewOffer() {
       };
       toast.success(MSG[action] || "Done");
 
-      // FIX: Always re-fetch the full offer after any action so memos
-      // (calculatedRates, allowances, budget codes) get fresh server data.
       const fresh = await dispatch(getOfferThunk(oid));
       const cid   = fresh.payload?.contractId ?? contractId;
 
@@ -434,8 +434,6 @@ export default function ViewOffer() {
         dispatch(getContractPreviewThunk(cid));
       }
 
-      // FIX: Always clear + refetch instances after accept or any status move
-      // This covers v2 crew accept where the offer version changes.
       if (["accept", "accountsCheck", "pendingCrewSignature", "productionCheck"].includes(action)) {
         dispatch(clearInstances());
         dispatch(getContractInstancesThunk(oid));
@@ -467,7 +465,6 @@ export default function ViewOffer() {
 
     if (!result.error) {
       toast.success(`${signRole} signature recorded!`);
-      // FIX: Re-fetch full offer so allowances/rates memos update
       await dispatch(getOfferThunk(offer._id));
       await dispatch(getSigningStatusThunk(contractId));
       dispatch(clearContractPreview());
@@ -490,7 +487,6 @@ export default function ViewOffer() {
   };
 
   const handleRefresh = async () => {
-    // FIX: Re-fetch offer first so memos get fresh data, then fetch instances
     const r   = await dispatch(getOfferThunk(id));
     const cid = r.payload?.contractId ?? contractId;
     if (cid) {
@@ -514,15 +510,11 @@ export default function ViewOffer() {
   const tl     = offer?.timeline || {};
   const hasPdf = !!(signingStatus?.pdfS3Key);
 
-  // FIX: Build sharedProps using the memoized values derived from the CURRENT offer.
-  // All layout components receive the same set of props so allowances, budget codes,
-  // and calculatedRates are always consistent across Production Review, Accounts Review,
-  // Crew view, and signing stages regardless of offer version.
   const sharedProps = {
     offer,
     contractData,
-    allowances,       // ← from robust offerToAllowances()
-    calculatedRates,  // ← always snapshot-first
+    allowances,
+    calculatedRates,
     isSubmitting,
     onAction: handleAction,
     dispatch,
