@@ -156,7 +156,7 @@ function ContractsFormsSettings() {
                               }
                               className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer hover:bg-amber-100 transition-colors"
                             >
-                              <Eye className="h-2.5 w-2.5" /> preview
+                              <Eye className="h-2.5 w-2.5" /> review
                             </span>
                             <button
                               className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
