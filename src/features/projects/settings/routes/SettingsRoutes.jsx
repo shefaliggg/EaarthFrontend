@@ -74,12 +74,11 @@ const AiKnowledgeBaseSettings = lazy(
   () =>
     import("@/features/projects/settings/pages/ai-knowledge-base/AiKnowledgeBaseSettings"),
 );
-const Preview = lazy(
+const Review = lazy(
   () =>
-    import("@/features/projects/settings/pages/contracts-forms/Preview"),
+    import("@/features/projects/settings/pages/contracts-forms/Review"),
 );
 
-const NotFound = lazy(() => import("@/shared/pages/NotFound"));
 
 const SettingsRoutes = {
   path: "settings",
@@ -99,7 +98,7 @@ const SettingsRoutes = {
       path: "contracts-forms",
       children: [
         { index: true, element: <ContractsFormsSettings /> },
-        { path: "preview", element: <Preview /> },
+        { path: "review-edit", element: <Review /> },
       ],
     },
 

@@ -58,8 +58,8 @@ function ContractsFormsSettings() {
             }}
           />
           <div className="rounded-2xl bg-card border border-gray-100/80 dark:border-gray-800/50 shadow-sm transition-shadow duration-300">
-            <div className="flex items-center p-4 gap-3 border-b border-gray-50/80 dark:border-gray-800/40">
-              {/* Colored accent bar on the left */}
+            <div className="flex items-center p-4 gap-3 border-b border-gray-100 dark:border-gray-800">
+              {/* Colored accent bar */}
               <div
                 className="w-1.5 h-5 rounded-full origin-center transition-transform duration-300 ease-out group-hover:scale-y-125"
                 style={{
@@ -81,34 +81,23 @@ function ContractsFormsSettings() {
               <div className="flex items-center justify-end mb-3">
                 <span
                   className="text-gray-400 dark:text-gray-500"
-                  style={{ fontSize: "0.48rem" }}
+                  style={{ fontSize: "0.5rem" }}
                 >
                   {categories.length} department
                   {categories.length !== 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
                 {categories.map((category) => (
                   <div
                     key={category.id}
-                    className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/20 hover:border-purple-200 dark:hover:border-purple-800 transition-colors group/card"
+                    className="rounded-xl border border-gray-100 dark:border-gray-800 bg-card hover:border-purple-200 dark:hover:border-purple-800 transition-colors group/card"
                   >
-                    {/* Category card header */}
-                    <div className="flex items-center justify-between px-3 pt-3 pb-2 gap-1">
-                      <div className="flex items-center gap-1.5 min-w-0 group/name">
-                        <span
-                          className={`truncate text-gray-800 dark:text-gray-200 uppercase`}
-                        >
-                          {category.name}
-                        </span>
-                        <button className="shrink-0 opacity-0 group-hover/name:opacity-100 transition-opacity text-gray-400 hover:text-purple-600">
-                          <Pencil className="h-2.5 w-2.5" />
-                        </button>
-                      </div>
-                      <button className="shrink-0 text-purple-600 hover:text-purple-700 transition-colors">
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
+                    <h1
+                      className={`truncate mx-3 mt-3 mb-2 text-gray-800 dark:text-gray-200 uppercase`}
+                    >
+                      {category.name}
+                    </h1>
                     {/* Divider */}
                     <div
                       className="h-px mx-3"
@@ -116,57 +105,38 @@ function ContractsFormsSettings() {
                         background: `linear-gradient(to right, ${accentColor}40, ${accentColor}15, transparent)`,
                       }}
                     />
-                    <div className="px-3 py-2 space-y-0.5">
-                      {category.bundleOverrides.map((override, index) => (
+                    <div className="pl-4 pr-3 py-2 space-y-1">
+                      {category.bundleOverrides.map((override) => (
                         <div
                           key={override.id}
-                          className="flex items-center justify-between py-1 group/row"
+                          className="flex items-center justify-between px-2 py-1"
                         >
-                          <div className="flex items-center gap-1 min-w-0">
-                            <div className="flex flex-col shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                              <button
-                                disabled={index === 0}
-                                className="text-gray-400 hover:text-purple-600 disabled:opacity-20"
-                              >
-                                <ChevronUp className="h-2.5 w-2.5" />
-                              </button>
-                              <button
-                                disabled={
-                                  index === category.bundleOverrides.length - 1
-                                }
-                                className="text-gray-400 hover:text-purple-600 disabled:opacity-20"
-                              >
-                                <ChevronDown className="h-2.5 w-2.5" />
-                              </button>
-                            </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Lock className="h-3 w-3 text-amber-500 shrink-0" />
                             <span
                               className="truncate text-gray-600 dark:text-gray-400"
-                              style={{ fontSize: "0.52rem" }}
+                              style={{ fontSize: "0.65rem" }}
                             >
                               {override.bundle.name}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
+
+                          <div className="flex items-center gap-1">
                             <span
-                              style={{ fontSize: "0.4rem" }}
                               onClick={() =>
-                                navigate("preview", {
+                                navigate("review-edit", {
                                   state: { override },
                                 })
                               }
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer hover:bg-amber-100 transition-colors"
+                              className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer dark:hover:bg-amber-800/30 hover:bg-amber-100 transition-colors"
+                              style={{ fontSize: "0.55rem" }}
                             >
-                              <Eye className="h-2.5 w-2.5" /> review
+                              <Eye className="h-3 w-3" />
+                              Review/Edit
                             </span>
-                            <button
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
-                              style={{
-                                backgroundColor: "#f3f4f6",
-                                color: "#9ca3af",
-                                fontSize: "0.4rem",
-                              }}
-                            >
-                              <Unlock className="h-2.5 w-2.5" />
+
+                            <button className="flex items-center justify-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 hover:bg-gray-200 transition-colors">
+                              <Unlock className="h-3 w-3" />
                             </button>
                           </div>
                         </div>
@@ -175,12 +145,6 @@ function ContractsFormsSettings() {
                   </div>
                 ))}
               </div>
-              <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed text-gray-500 hover:text-purple-600 hover:border-purple-300 transition-colors"
-                style={{ fontSize: "0.56rem", borderColor: `${accentColor}40` }}
-              >
-                <Plus className="h-3.5 w-3.5" /> Add Category
-              </button>
             </div>
           </div>
         </motion.section>
@@ -203,7 +167,7 @@ function ContractsFormsSettings() {
           />
           <div className="rounded-2xl bg-card border border-gray-100/80 dark:border-gray-800/50 shadow-sm transition-shadow duration-300">
             <div className="flex items-center p-4 gap-3 border-b border-gray-50/80 dark:border-gray-800/40">
-              {/* Colored accent bar on the left */}
+              {/* Colored accent bar */}
               <div
                 className="w-1.5 h-5 rounded-full origin-center transition-transform duration-300 ease-out group-hover:scale-y-125"
                 style={{
@@ -225,138 +189,113 @@ function ContractsFormsSettings() {
               <div className="flex items-center justify-end mb-3">
                 <span
                   className="text-gray-400 dark:text-gray-500"
-                  style={{ fontSize: "0.48rem" }}
+                  style={{ fontSize: "0.5rem" }}
                 >
                   {formGroups.length} group{formGroups.length !== 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                {formGroups.map((group) => (
-                  <div
-                    key={group._id}
-                    className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white/40 dark:bg-gray-900/20 hover:border-purple-200 dark:hover:border-purple-800 transition-colors group/card"
-                  >
-                    {/* Group card header */}
-                    <div className="flex items-center justify-between px-3 pt-3 pb-2 gap-1">
-                      <div className="flex items-center gap-1.5 min-w-0 group/name">
-                        <span
-                          className={`truncate text-gray-800 dark:text-gray-200 uppercase`}
-                        >
-                          {group.name}
-                        </span>
-                        <button className="shrink-0 opacity-0 group-hover/name:opacity-100 transition-opacity text-gray-400 hover:text-purple-600">
-                          <Pencil className="h-2.5 w-2.5" />
-                        </button>
-                      </div>
-                      <button className="shrink-0 text-purple-600 hover:text-purple-700 transition-colors">
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-
-                    {/* Divider */}
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+                  {formGroups.map((group) => (
                     <div
-                      className="h-px mx-3"
-                      style={{
-                        background: `linear-gradient(to right, ${accentColor}40, ${accentColor}15, transparent)`,
-                      }}
-                    />
-                    <div className="px-3 py-2 space-y-0.5">
-                      {group.forms.map((form, formIndex) => (
-                        <div
-                          key={form.key}
-                          className="flex items-center justify-between py-1 group/row"
-                        >
-                          <div className="flex items-center gap-1 min-w-0">
-                            <div className="flex flex-col shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                              <button
-                                disabled={formIndex === group.forms.length - 1}
-                                className="text-gray-400 hover:text-purple-600 disabled:opacity-20"
+                      key={group._id}
+                      className="rounded-xl border border-gray-100 dark:border-gray-800 bg-card hover:border-purple-200 dark:hover:border-purple-800 transition-colors group/card"
+                    >
+                      <h1
+                        className={`truncate mx-3 mt-3 mb-2 text-gray-800 dark:text-gray-200 uppercase`}
+                      >
+                        {group.name}
+                      </h1>
+                      {/* Divider */}
+                      <div
+                        className="h-px mx-3"
+                        style={{
+                          background: `linear-gradient(to right, ${accentColor}40, ${accentColor}15, transparent)`,
+                        }}
+                      />
+                      <div className="pl-4 pr-3 py-2 space-y-1">
+                        {group.forms.map((form) => (
+                          <div
+                            key={form.key}
+                            className="flex items-center justify-between px-2 py-1"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Lock className="h-3 w-3 text-amber-500 shrink-0" />
+                              <span
+                                className="truncate text-gray-600 dark:text-gray-400"
+                                style={{ fontSize: "0.65rem" }}
                               >
-                                <ChevronDown className="h-2.5 w-2.5" />
+                                {form.name}
+                              </span>
+                              <span
+                                className="px-1 mr-1 py-px rounded uppercase tracking-wider text-white"
+                                style={{
+                                  fontSize: "0.36rem",
+                                  background: accentColor,
+                                }}
+                              >
+                                Default
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer dark:hover:bg-amber-800/30 hover:bg-amber-100 transition-colors"
+                                style={{ fontSize: "0.55rem" }}
+                              >
+                                <Eye className="h-3 w-3" />
+                                Review/Edit
+                              </span>
+
+                              <button
+                                className="flex items-center gap-0.5 px-2 py-0.5 rounded transition-colors"
+                                style={
+                                  form.isDefault
+                                    ? {
+                                        backgroundColor: `${accentColor}25`,
+                                        color: accentColor,
+                                        fontSize: "0.4rem",
+                                      }
+                                    : {
+                                        backgroundColor: "#f3f4f6",
+                                        color: "#9ca3af",
+                                        fontSize: "0.4rem",
+                                      }
+                                }
+                              >
+                                <Shield className="h-3 w-3" />
+                                {form.isDefault ? "Unset" : "Default"}
+                              </button>
+                              <button
+                                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
+                                style={
+                                  form.isLocked
+                                    ? {
+                                        backgroundColor: "#fef3c7",
+                                        color: "#b45309",
+                                        fontSize: "0.4rem",
+                                      }
+                                    : {
+                                        backgroundColor: "#f3f4f6",
+                                        color: "#9ca3af",
+                                        fontSize: "0.4rem",
+                                      }
+                                }
+                              >
+                                {form.isLocked ? (
+                                  <Lock className="h-3 w-3" />
+                                ) : (
+                                  <Unlock className="h-3 w-3" />
+                                )}
                               </button>
                             </div>
-                            <Lock className="h-2.5 w-2.5 text-amber-500 shrink-0" />
-                            <span
-                              className="truncate text-gray-600 dark:text-gray-400"
-                              style={{ fontSize: "0.52rem" }}
-                            >
-                              {form.name}
-                            </span>
-                            <span
-                              className="shrink-0 px-1 py-px rounded uppercase tracking-wider text-white"
-                              style={{
-                                fontSize: "0.36rem",
-                                background: accentColor,
-                              }}
-                            >
-                              Default
-                            </span>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {/* Review button */}
-                            <span
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 cursor-pointer hover:bg-amber-100 transition-colors"
-                              style={{ fontSize: "0.4rem" }}
-                            >
-                              <Eye className="h-2.5 w-2.5" /> Review
-                            </span>
-                            <button
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
-                              style={
-                                form.isDefault
-                                  ? {
-                                      backgroundColor: `${accentColor}25`,
-                                      color: accentColor,
-                                      fontSize: "0.4rem",
-                                    }
-                                  : {
-                                      backgroundColor: "#f3f4f6",
-                                      color: "#9ca3af",
-                                      fontSize: "0.4rem",
-                                    }
-                              }
-                            >
-                              <Shield className="h-2.5 w-2.5" />
-                              {form.isDefault ? "Unset" : "Default"}
-                            </button>
-                            <button
-                              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded transition-colors"
-                              style={
-                                form.isLocked
-                                  ? {
-                                      backgroundColor: "#fef3c7",
-                                      color: "#b45309",
-                                      fontSize: "0.4rem",
-                                    }
-                                  : {
-                                      backgroundColor: "#f3f4f6",
-                                      color: "#9ca3af",
-                                      fontSize: "0.4rem",
-                                    }
-                              }
-                            >
-                              {form.isLocked ? (
-                                <Lock className="h-2.5 w-2.5" />
-                              ) : (
-                                <Unlock className="h-2.5 w-2.5" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-
-                    {/* Form rows */}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-
-              <button
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed text-gray-500 hover:text-purple-600 hover:border-purple-300 transition-colors"
-                style={{ fontSize: "0.56rem", borderColor: `${accentColor}40` }}
-              >
-                <Plus className="h-3.5 w-3.5" /> Add Group
-              </button>
             </div>
           </div>
         </motion.section>
@@ -442,7 +381,7 @@ function ContractsFormsSettings() {
               </div>
 
               {/* Bundles grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-3">
                 {(activeCategory === "all"
                   ? categories.flatMap((cat) =>
                       cat.bundleOverrides.map((override) => ({
@@ -473,7 +412,7 @@ function ContractsFormsSettings() {
                         />
                         <span
                           className="text-gray-800 dark:text-gray-200 truncate"
-                          style={{ fontSize: "0.52rem" }}
+                          style={{ fontSize: "0.65rem" }}
                         >
                           {bundle.bundleName}
                         </span>
@@ -483,7 +422,7 @@ function ContractsFormsSettings() {
                         style={{
                           borderColor: `${accentColor}50`,
                           color: accentColor,
-                          fontSize: "0.38rem",
+                          fontSize: "0.4rem",
                         }}
                       >
                         {bundle.engagementType}
@@ -503,9 +442,7 @@ function ContractsFormsSettings() {
                         {(bundle.forms || []).map((form) => (
                           <div
                             key={form.formKey}
-                            className="flex items-center gap-0.5 px-1.5 py-1 rounded-md 
-                  bg-indigo-50 dark:bg-indigo-900/20 
-                  border border-indigo-200 dark:border-indigo-800"
+                            className="flex items-center gap-0.5 px-1.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800"
                           >
                             {form.isLocked ? (
                               <Lock className="h-2 w-2 text-amber-500" />
@@ -514,7 +451,7 @@ function ContractsFormsSettings() {
                             )}
                             <span
                               className="text-indigo-700 dark:text-indigo-400 uppercase tracking-wide"
-                              style={{ fontSize: "0.38rem" }}
+                              style={{ fontSize: "0.4rem" }}
                             >
                               {form.formName}
                             </span>
