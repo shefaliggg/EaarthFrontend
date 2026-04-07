@@ -2,6 +2,10 @@
  * CreateOffer.jsx — Unified Create + Edit page
  *
  * CHANGES:
+ *   - offerToAllowances() — FIX: base built with enabled: false so only
+ *     allowances stored on the offer are shown as enabled. Previously
+ *     defaultAllowances had enabled: true, causing all allowances to appear
+ *     selected when editing an offer that only had a few enabled.
  *   - workingHours moved from schedule to contractData (rates level)
  *   - subDepartment is now a plain string, no longer mapped from a fixed value
  *   - department stored as display name string (e.g. "Camera")
@@ -53,7 +57,6 @@ const defaultContractData = {
   recipient:      { fullName: "", email: "", mobileNumber: "" },
   representation: { isViaAgent: false, agentName: "", agentEmail: "" },
   alternativeContract:  "",
-  // unit / department / subDepartment — all plain strings
   unit:                 "",
   department:           "",
   subDepartment:        "",
@@ -77,19 +80,17 @@ const defaultContractData = {
   categoryId:     "",
   currency:    "GBP",
   feePerDay:   "",
-  // workingHours is a RATE field (overtime threshold), NOT in schedule
   workingHours: 11,
   overtime:    "calculated",
   otherOT:     "",
   cameraOTSWD: "",
   cameraOTSCWD:"",
   cameraOTCWD: "",
-  // Special stipulations — free-text legal clauses per deal
   specialStipulations: [],
   notes: { otherDealProvisions: "", additionalNotes: "" },
 };
 
-// ─── Default schedule — NO workingHours ──────────────────────────────────────
+// ─── Default schedule ─────────────────────────────────────────────────────────
 const defaultSchedule = {
   hiatus: [{ start: "", end: "", reason: "" }],
   prePrep: { start: "", end: "", notes: "" },
@@ -121,12 +122,9 @@ function offerToFormData(offer) {
       agentEmail: offer.representation?.agentEmail || "",
     },
     alternativeContract: offer.alternativeContract || "",
-
-    // unit / department / subDepartment — plain strings from the offer
     unit:          offer.unit          || "",
     department:    offer.department    || "",
     subDepartment: offer.subDepartment || "",
-
     jobTitle:             offer.jobTitle             || "",
     searchAllDepartments: false,
     createOwnJobTitle:    offer.createOwnJobTitle    || false,
@@ -147,14 +145,12 @@ function offerToFormData(offer) {
     categoryId:     offer.categoryId     ? String(offer.categoryId) : "",
     currency:    offer.currency    || "GBP",
     feePerDay:   offer.feePerDay   || "",
-    // FIX: read from offer.workingHours (top-level rate field), NOT offer.schedule.workingHours
     workingHours: offer.workingHours ?? 11,
     overtime:    offer.overtime    || "calculated",
     otherOT:     offer.otherOT     || "",
     cameraOTSWD: offer.cameraOTSWD || "",
     cameraOTSCWD:offer.cameraOTSCWD|| "",
     cameraOTCWD: offer.cameraOTCWD || "",
-    // Special stipulations — carry over from existing offer
     specialStipulations: Array.isArray(offer.specialStipulations)
       ? offer.specialStipulations
       : [],
@@ -166,7 +162,6 @@ function offerToFormData(offer) {
 }
 
 // ─── Transform existing offer → schedule shape ────────────────────────────────
-// NOTE: workingHours is NOT included here — it lives in contractData now.
 function offerToSchedule(offer) {
   if (!offer?.schedule) return defaultSchedule;
   const s = offer.schedule;
@@ -183,13 +178,41 @@ function offerToSchedule(offer) {
   };
 }
 
-// ─── Transform allowances array → object for ContractForm ─────────────────────
+// ─── FIX: Transform allowances array → object ─────────────────────────────────
+//
+// ROOT CAUSE: defaultAllowances has enabled: true on every entry.
+// Old code:   const result = { ...defaultAllowances }  → all enabled: true
+//             offer.allowances.forEach(a => result[a.key] = { ...result[a.key], ...a })
+//             → only stored allowances get overwritten; all others stay enabled: true
+//
+// FIX: Build base with ALL enabled: false, then overlay only the stored ones.
+// Stored allowances were filtered by `a.enabled` in buildPayload, so they are
+// always truly enabled — we set enabled: !!a.enabled just to be safe.
+
 function offerToAllowances(offer) {
-  if (!offer?.allowances?.length) return defaultAllowances;
-  const result = { ...defaultAllowances };
+  // Start from defaultAllowances shape but force every entry to enabled: false
+  const result = Object.fromEntries(
+    Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
+  );
+
+  if (!offer?.allowances?.length) return result;
+
   offer.allowances.forEach((a) => {
-    if (a.key && result[a.key] !== undefined) result[a.key] = { ...result[a.key], ...a };
+    if (!a?.key) return;
+    const key = a.key;
+    if (result[key] !== undefined) {
+      result[key] = {
+        ...result[key], // keep default shape
+        ...a,           // overlay stored values
+        key,
+        enabled: !!a.enabled,
+      };
+    } else {
+      // Unknown key — add it so nothing is lost
+      result[key] = { ...a, key, enabled: !!a.enabled };
+    }
   });
+
   return result;
 }
 
@@ -219,7 +242,12 @@ export default function CreateOfferPage() {
 
   const [contractData,        setContractData       ] = useState(defaultContractData);
   const [schedule,            setSchedule           ] = useState(defaultSchedule);
-  const [allowances,          setAllowances         ] = useState(defaultAllowances);
+  const [allowances,          setAllowances         ] = useState(() =>
+    // New offer: start with all disabled — user explicitly enables what they want
+    Object.fromEntries(
+      Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
+    )
+  );
   const [salaryBudgetCodes,   setSalaryBudgetCodes  ] = useState([]);
   const [salaryTags,          setSalaryTags         ] = useState([]);
   const [overtimeBudgetCodes, setOvertimeBudgetCodes] = useState([]);
@@ -237,7 +265,7 @@ export default function CreateOfferPage() {
 
     setContractData(offerToFormData(existingOffer));
     setSchedule(offerToSchedule(existingOffer));
-    setAllowances(offerToAllowances(existingOffer));
+    setAllowances(offerToAllowances(existingOffer)); // ← uses fixed version
     setSalaryBudgetCodes(existingOffer.salaryBudgetCodes     || []);
     setSalaryTags(existingOffer.salaryTags                   || []);
     setOvertimeBudgetCodes(existingOffer.overtimeBudgetCodes || []);
@@ -299,7 +327,6 @@ export default function CreateOfferPage() {
 
       alternativeContract: cd.alternativeContract || "",
 
-      // unit / department / subDepartment — plain strings
       unit:          cd.unit          || "",
       department:    cd.department    || "",
       subDepartment: cd.subDepartment || "",
@@ -328,7 +355,6 @@ export default function CreateOfferPage() {
       feePerDay: (cd.feePerDay !== "" && cd.feePerDay !== undefined)
         ? cd.feePerDay : (isDraft ? undefined : ""),
 
-      // workingHours = top-level rate field on the offer (overtime threshold)
       workingHours: cd.workingHours ?? 11,
 
       overtime:    cd.overtime    || "calculated",
@@ -337,10 +363,8 @@ export default function CreateOfferPage() {
       cameraOTSCWD:cd.cameraOTSCWD|| "",
       cameraOTCWD: cd.cameraOTCWD || "",
 
-      // schedule does NOT include workingHours
       schedule,
 
-      // special stipulations
       specialStipulations: Array.isArray(cd.specialStipulations)
         ? cd.specialStipulations.filter((s) => s.body?.trim())
         : [],
