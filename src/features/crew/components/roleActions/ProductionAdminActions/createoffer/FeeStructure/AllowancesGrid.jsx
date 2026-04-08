@@ -1,12 +1,44 @@
-export function AllowancesGrid({ enabledAllowances, allowances, activeField, currencySymbol }) {
+export function AllowancesGrid({ enabledAllowances, allowances, activeField, currencySymbol, categoryTotals = { box: 120000, software: 80000, equipment: 60000 } }) {
   const cs = currencySymbol || "£";
+
+  const PAYMENT_LABEL_MAP = {
+    daily: "Day", weekly: "Week", monthly: "Month", yearly: "Year",
+  };
 
   const getPayableLabel = (a) => {
     const parts = [];
-    if (a.payablePrep) parts.push("Prep");
+    if (a.payablePrep)  parts.push("Prep");
     if (a.payableShoot) parts.push("Shoot");
-    if (a.payableWrap) parts.push("Wrap");
+    if (a.payableWrap)  parts.push("Wrap");
     return parts.length > 0 ? parts.join(", ") : "—";
+  };
+
+  const resolveCategoryTotal = (key) => {
+    if (key === "boxRental") return categoryTotals.box       ?? 0;
+    if (key === "software")  return categoryTotals.software  ?? 0;
+    if (key === "equipment") return categoryTotals.equipment ?? 0;
+    return 0;
+  };
+
+  const fmt = (n) =>
+    parseFloat(n).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const getCapDisplay = (a, key) => {
+    const capType = a.capType || "flat";
+    if (capType === "na") return { label: "N/A", capValue: null };
+    if (capType === "percentage" && a.capPercentage != null) {
+      const total    = resolveCategoryTotal(key);
+      const computed = total > 0 ? (total * parseFloat(a.capPercentage)) / 100 : null;
+const combined = computed != null
+  ? `${cs}${fmt(computed)} (${a.capPercentage}% of total value)`
+  : `${a.capPercentage}% of total value`;
+  
+      return { label: combined, capValue: null };
+    }
+    if (capType === "flat" && a.rateCap) {
+      return { label: `${cs}${fmt(a.rateCap)}`, capValue: null };
+    }
+    return { label: null, capValue: null };
   };
 
   if (enabledAllowances.length === 0) return null;
@@ -23,17 +55,21 @@ export function AllowancesGrid({ enabledAllowances, allowances, activeField, cur
         "grid-cols-3"
       }`}>
         {enabledAllowances.map(({ key, label }) => {
-          const a = allowances[key];
+          const a        = allowances[key];
           const isActive = activeField === `allowance_${key}`;
 
+          const payLabel           = PAYMENT_LABEL_MAP[a.paymentType || "weekly"];
+          const amount             = parseFloat(a.amount || "0").toFixed(2);
+          const { label: capLabel } = getCapDisplay(a, key);
+
           const rows = [];
-          if (a.description) rows.push({ field: "Description", value: a.description });
-          rows.push({ field: "Fee / week", value: `${cs}${parseFloat(a.feePerWeek || "0").toFixed(2)}`, highlight: true });
-          if (a.rateCap) rows.push({ field: "Cap", value: a.rateCap });
-          if (a.terms) rows.push({ field: "Terms", value: a.terms });
-          if (a.budgetCode) rows.push({ field: "Budget code", value: a.budgetCode });
-          if (a.tag) rows.push({ field: "Tag", value: a.tag });
-          rows.push({ field: "Payable in", value: getPayableLabel(a) });
+          if (a.description) rows.push({ field: "Description",  value: a.description });
+          rows.push({          field: `Fee / ${payLabel}`,       value: `${cs}${amount}`, highlight: true });
+          if (capLabel)        rows.push({ field: "Cap",         value: capLabel, highlight: true });
+          if (a.terms)         rows.push({ field: "Terms",       value: a.terms });
+          if (a.budgetCode)    rows.push({ field: "Budget code", value: a.budgetCode });
+          if (a.tag)           rows.push({ field: "Tag",         value: a.tag });
+          rows.push({          field: "Payable in",              value: getPayableLabel(a) });
 
           return (
             <div
@@ -43,7 +79,7 @@ export function AllowancesGrid({ enabledAllowances, allowances, activeField, cur
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[9px] font-semibold text-purple-800 uppercase tracking-wider">{label}</p>
                 <span className="text-[8px] font-semibold text-emerald-600">
-                  {cs}{parseFloat(a.feePerWeek || "0").toFixed(2)}/wk
+                  {cs}{amount}/{(a.paymentType || "weekly").slice(0, 2)}
                 </span>
               </div>
               <div className="space-y-px">
