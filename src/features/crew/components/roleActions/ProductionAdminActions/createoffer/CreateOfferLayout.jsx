@@ -336,6 +336,7 @@ export function CreateOfferLayout({
   activeSigningRole = null,
   onSignatureClick,
   schedule = null,
+  categoryTotals = { box: 120000, software: 80000, equipment: 60000 } 
 }) {
   const [offerCollapsed, setOfferCollapsed] = useState(initialOfferCollapsed);
 
@@ -462,6 +463,7 @@ export function CreateOfferLayout({
                 allowances={allowances}
                 activeField={activeField}
                 currencySymbol={cs}
+                categoryTotals={categoryTotals}
               />
             </div>
             {/* ── Special Stipulations Preview ── */}

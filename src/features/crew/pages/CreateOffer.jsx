@@ -2,16 +2,17 @@
  * CreateOffer.jsx — Unified Create + Edit page
  *
  * CHANGES:
- *   - offerToAllowances() — FIX: base built with enabled: false so only
- *     allowances stored on the offer are shown as enabled. Previously
- *     defaultAllowances had enabled: true, causing all allowances to appear
- *     selected when editing an offer that only had a few enabled.
- *   - workingHours moved from schedule to contractData (rates level)
- *   - subDepartment is now a plain string, no longer mapped from a fixed value
- *   - department stored as display name string (e.g. "Camera")
+ *   - totalProductValue removed — replaced by categoryTotals
+ *   - categoryTotals computed from inventoryItems grouped by item.category:
+ *       { box: number, software: number, equipment: number }
+ *     Each allowance uses its own category total for % cap calculations.
+ *   - categoryTotals passed to ContractForm → AllowanceRow for live cap preview
+ *   - categoryTotals + inventoryItems stored in API payload for edit-mode restore
+ *   - offerToAllowances() — base built with enabled: false
+ *   - workingHours at contractData level (not schedule)
+ *   - subDepartment is a plain string
+ *   - department stored as display name string
  *   - specialStipulations included in API payload
- *   - offerToFormData reads offer.workingHours (top-level, not offer.schedule.workingHours)
- *   - offerToSchedule no longer includes workingHours
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -178,19 +179,10 @@ function offerToSchedule(offer) {
   };
 }
 
-// ─── FIX: Transform allowances array → object ─────────────────────────────────
+// ─── Transform allowances array → object ─────────────────────────────────────
 //
-// ROOT CAUSE: defaultAllowances has enabled: true on every entry.
-// Old code:   const result = { ...defaultAllowances }  → all enabled: true
-//             offer.allowances.forEach(a => result[a.key] = { ...result[a.key], ...a })
-//             → only stored allowances get overwritten; all others stay enabled: true
-//
-// FIX: Build base with ALL enabled: false, then overlay only the stored ones.
-// Stored allowances were filtered by `a.enabled` in buildPayload, so they are
-// always truly enabled — we set enabled: !!a.enabled just to be safe.
-
+// Build base with ALL enabled: false, then overlay only the stored (enabled) ones.
 function offerToAllowances(offer) {
-  // Start from defaultAllowances shape but force every entry to enabled: false
   const result = Object.fromEntries(
     Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
   );
@@ -202,18 +194,37 @@ function offerToAllowances(offer) {
     const key = a.key;
     if (result[key] !== undefined) {
       result[key] = {
-        ...result[key], // keep default shape
-        ...a,           // overlay stored values
+        ...result[key],
+        ...a,
         key,
         enabled: !!a.enabled,
       };
     } else {
-      // Unknown key — add it so nothing is lost
       result[key] = { ...a, key, enabled: !!a.enabled };
     }
   });
 
   return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// computeCategoryTotals
+//
+// Groups inventoryItems by item.category and sums (quantity × amount) per group.
+//
+// inventoryItems shape: [{ category: "box"|"software"|"equipment", quantity: number, amount: number }]
+//
+// Returns: { box: number, software: number, equipment: number }
+// ─────────────────────────────────────────────────────────────────────────────
+function computeCategoryTotals(inventoryItems = []) {
+  const totals = { box: 0, software: 0, equipment: 0 };
+  inventoryItems.forEach((item) => {
+    const lineTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.amount) || 0);
+    if (item.category === "box")       totals.box       += lineTotal;
+    if (item.category === "software")  totals.software  += lineTotal;
+    if (item.category === "equipment") totals.equipment += lineTotal;
+  });
+  return totals;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -237,13 +248,17 @@ export default function CreateOfferPage() {
   const [dialog,          setDialog         ] = useState(null);
   const [editInitialized, setEditInitialized] = useState(false);
 
+  // ── Inventory items from the profile/box-rental section ───────────────────
+  // Shape: [{ category: "box"|"software"|"equipment", quantity: number, amount: number, ... }]
+  // Populated by CreateOfferLayout via the onInventoryChange callback.
+  const [inventoryItems, setInventoryItems] = useState([]);
+
   const savedOfferIdRef = useRef(null);
   const proj = projectName || "demo-project";
 
   const [contractData,        setContractData       ] = useState(defaultContractData);
   const [schedule,            setSchedule           ] = useState(defaultSchedule);
   const [allowances,          setAllowances         ] = useState(() =>
-    // New offer: start with all disabled — user explicitly enables what they want
     Object.fromEntries(
       Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
     )
@@ -253,6 +268,14 @@ export default function CreateOfferPage() {
   const [overtimeBudgetCodes, setOvertimeBudgetCodes] = useState([]);
   const [overtimeTags,        setOvertimeTags       ] = useState([]);
   const [engineSettings]                              = useState(defaultEngineSettings);
+
+  // ── categoryTotals: grouped sums per category ─────────────────────────────
+  // { box: number, software: number, equipment: number }
+  // Used by AllowanceRow to calculate live percentage cap per allowance type.
+  const categoryTotals = useMemo(
+    () => computeCategoryTotals(inventoryItems),
+    [inventoryItems]
+  );
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -265,11 +288,17 @@ export default function CreateOfferPage() {
 
     setContractData(offerToFormData(existingOffer));
     setSchedule(offerToSchedule(existingOffer));
-    setAllowances(offerToAllowances(existingOffer)); // ← uses fixed version
+    setAllowances(offerToAllowances(existingOffer));
     setSalaryBudgetCodes(existingOffer.salaryBudgetCodes     || []);
     setSalaryTags(existingOffer.salaryTags                   || []);
     setOvertimeBudgetCodes(existingOffer.overtimeBudgetCodes || []);
     setOvertimeTags(existingOffer.overtimeTags               || []);
+
+    // Restore inventory items if stored on the offer (so categoryTotals rehydrates)
+    if (Array.isArray(existingOffer.inventoryItems)) {
+      setInventoryItems(existingOffer.inventoryItems);
+    }
+
     setEditInitialized(true);
   }, [existingOffer, id, isEditMode, editInitialized]);
 
@@ -375,6 +404,12 @@ export default function CreateOfferPage() {
       overtimeBudgetCodes,
       overtimeTags,
       allowances: allowancesArr,
+
+      // ── Inventory / profile items ────────────────────────────────────────
+      // Stored so they can be restored on edit and categoryTotals rehydrated.
+      // Each item must carry a `category` field ("box" | "software" | "equipment").
+      inventoryItems,
+      categoryTotals,   // denormalised snapshot — useful for backend reporting
 
       notes: {
         otherDealProvisions: cd.notes?.otherDealProvisions || "",
@@ -611,6 +646,9 @@ export default function CreateOfferPage() {
                 onSave={isEditMode ? handleEditSave : handleSaveDraft}
                 onPrint={isEditMode ? handleEditSave : handleSaveDraft}
                 categories={categories}
+                // ← Pass category totals instead of a single totalProductValue.
+                //   AllowanceRow resolves the correct bucket per allowance key.
+                categoryTotals={categoryTotals}
               />
             </CardContent>
           </Card>
@@ -639,6 +677,12 @@ export default function CreateOfferPage() {
                 schedule={schedule}
                 hideOfferSections={false}
                 hideContractDocument={false}
+                // ── Inventory items: CreateOfferLayout calls onInventoryChange
+                //    whenever the profile section adds/removes/edits lines.
+                //    Each item MUST include a `category` field:
+                //      "box" | "software" | "equipment"
+                inventoryItems={inventoryItems}
+                onInventoryChange={setInventoryItems}
               />
             </CardContent>
           </Card>

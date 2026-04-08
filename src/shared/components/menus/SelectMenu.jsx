@@ -23,13 +23,13 @@ export function SelectMenu({
 
   return (
     <Select value={selected} onValueChange={onSelect}>
-      <SelectTrigger
-        textCase={textCase}
-        className={cn(
-          "w-full min-w-0 data-[placeholder]:text-muted-foreground",
-          className,
-        )}
-      >
+<SelectTrigger
+  textCase={textCase}
+  className={cn(
+    "w-full min-w-0 text-foreground data-[placeholder]:text-muted-foreground",
+    className,
+  )}
+>
         <SelectValue placeholder={label} />
       </SelectTrigger>
 
