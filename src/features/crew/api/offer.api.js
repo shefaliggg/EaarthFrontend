@@ -86,6 +86,13 @@ export const extendContract = (id, { contractId, projectId, newEndDate, note }) 
     .patch(`${BASE}/${id}/extend`, { contractId, projectId, newEndDate, note }, { headers: roleHeaders() })
     .then(unwrap);
 
+
+// ─── TERMINATE CONTRACT ───────────────────────────────────────────────────────
+
+export const terminateContract = (id, { noticePeriodDays, reason }) =>
+  axiosConfig
+    .patch(`${BASE}/${id}/terminate`, { noticePeriodDays, reason }, { headers: roleHeaders() })
+    .then(unwrap);    
 // ─── CLONE OFFER ──────────────────────────────────────────────────────────────
 
 export const cloneOffer = (id) =>

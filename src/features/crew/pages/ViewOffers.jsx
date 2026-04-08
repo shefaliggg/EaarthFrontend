@@ -20,6 +20,12 @@
  *
  * 5. After crewAccept thunk resolves, immediately refetch offer so memos get
  *    fresh calculatedRates + allowances without waiting for a page reload.
+ *
+ * 6. TERMINATED status added to INSTANCE_FETCH_STATUSES so contract documents
+ *    remain visible after termination.
+ *
+ * 7. EndContractCard removed from ViewOffer — banner is now rendered once
+ *    inside LayoutProductionAdmin (and equivalent layout components) only.
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
@@ -79,6 +85,7 @@ const ROLES = [
 ];
 
 // ── Statuses where contract instances should be fetched ───────────────────────
+// TERMINATED added — documents remain visible to admin after termination
 
 const INSTANCE_FETCH_STATUSES = [
   "SENT_TO_CREW",
@@ -91,6 +98,7 @@ const INSTANCE_FETCH_STATUSES = [
   "PENDING_FC_SIGNATURE",
   "PENDING_STUDIO_SIGNATURE",
   "COMPLETED",
+  "TERMINATED",
 ];
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
@@ -144,25 +152,6 @@ function offerToContractData(offer) {
 }
 
 // ── FIX: Robust allowance normalization ───────────────────────────────────────
-//
-// ROOT CAUSE of the bug:
-//   defaultAllowances (Defaultallowance.js) sets enabled: true on every entry.
-//   The old code did:
-//     const result = JSON.parse(JSON.stringify(defaultAllowances)); // all enabled: true
-//     offer.allowances.forEach(a => { result[key] = { ...result[key], ...a }; });
-//   So only the 2–3 allowances actually saved on the offer got their enabled flag
-//   overwritten with the stored value; all OTHER allowances kept enabled: true
-//   from the defaults, making them appear selected in ViewOffer.
-//
-// FIX:
-//   Build the base from defaultAllowances but force enabled: false on every
-//   entry. Only allowances explicitly stored on the offer get enabled: true
-//   (because they were filtered by `a.enabled` in buildPayload before saving).
-//
-// Backend may store allowance keys as:
-//   camelCase:      "boxRental"   (v1 offers, most common)
-//   UPPER_SNAKE:    "BOX_RENTAL"  (some legacy paths)
-//   lower_snake:    "box_rental"  (rare)
 
 function toCamelCase(str) {
   if (!str) return str;
@@ -172,7 +161,6 @@ function toCamelCase(str) {
 }
 
 const ALLOWANCE_KEY_MAP = {
-  // camelCase (canonical)
   boxRental: "boxRental",
   computer:  "computer",
   software:  "software",
@@ -187,7 +175,6 @@ const ALLOWANCE_KEY_MAP = {
   dinner:    "dinner",
   fuel:      "fuel",
   mileage:   "mileage",
-  // UPPER_SNAKE variants
   BOX_RENTAL:        "boxRental",
   COMPUTER:          "computer",
   SOFTWARE:          "software",
@@ -200,7 +187,6 @@ const ALLOWANCE_KEY_MAP = {
   PER_DIEM:          "perDiem1",
   PER_DIEM_1:        "perDiem1",
   PER_DIEM_2:        "perDiem2",
-  // lower_snake variants
   box_rental:        "boxRental",
   equipment_rental:  "equipment",
   mobile_phone:      "mobile",
@@ -210,8 +196,6 @@ const ALLOWANCE_KEY_MAP = {
 };
 
 function offerToAllowances(offer) {
-  // FIX: Start from defaultAllowances shape but with ALL enabled: false.
-  // This ensures allowances not stored on the offer never appear enabled.
   const result = Object.fromEntries(
     Object.entries(defaultAllowances).map(([k, v]) => [
       k,
@@ -223,25 +207,22 @@ function offerToAllowances(offer) {
 
   offer.allowances.forEach((a) => {
     if (!a?.key) return;
-
     const raw = a.key;
-
     const canonical =
       ALLOWANCE_KEY_MAP[raw] ||
       ALLOWANCE_KEY_MAP[toCamelCase(raw)] ||
       (result[raw] !== undefined ? raw : null);
 
     if (!canonical) {
-      // Unknown key — still add it so nothing is lost
       result[raw] = { ...a, key: raw };
       return;
     }
 
     result[canonical] = {
-      ...result[canonical], // keep default shape (field definitions)
-      ...a,                 // overlay stored values
-      key:     canonical,   // always use canonical key
-      enabled: !!a.enabled, // ensure boolean (stored allowances are always enabled)
+      ...result[canonical],
+      ...a,
+      key:     canonical,
+      enabled: !!a.enabled,
     };
   });
 
@@ -363,12 +344,8 @@ export default function ViewOffer() {
 
   // ── Derived state ──────────────────────────────────────────────────────────
   const contractData = useMemo(() => offerToContractData(offer), [offer]);
+  const allowances   = useMemo(() => offerToAllowances(offer), [offer]);
 
-  // FIX: uses updated offerToAllowances that starts with all enabled: false
-  const allowances = useMemo(() => offerToAllowances(offer), [offer]);
-
-  // Always prefer stored calculatedRates snapshot; fall back to live calc
-  // only for legacy offers that predate the snapshot feature.
   const calculatedRates = useMemo(() => {
     const stored = offer?.calculatedRates;
     const hasStoredSalary   = stored?.salary?.length > 0;
@@ -385,7 +362,6 @@ export default function ViewOffer() {
     return calculateRates(fee, defaultEngineSettings);
   }, [offer?.calculatedRates, offer?.version, contractData.feePerDay]);
 
-  // ── Budget codes — read directly from offer ────────────────────────────────
   const salaryBudgetCodes   = useMemo(() => offer?.salaryBudgetCodes   || [], [offer]);
   const salaryTags          = useMemo(() => offer?.salaryTags          || [], [offer]);
   const overtimeBudgetCodes = useMemo(() => offer?.overtimeBudgetCodes || [], [offer]);

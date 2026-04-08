@@ -11,6 +11,7 @@
  *   "returnToProduction" — peach/orange     — accounts returns offer to production review
  *   "extendContract"     — sky/blue         — confirm before navigating to contract extension
  *   "cloneOffer"         — lavender/violet  — clone offer with same terms, clear recipient
+ *   "endContract"        — destructive/red  — confirm before navigating to end contract
  *
  * ALL colors use CSS variables from index.css — no hardcoded Tailwind color classes.
  */
@@ -18,7 +19,7 @@
 import { useState } from "react";
 import {
   X, Send, CheckCircle, AlertTriangle, Loader2, Edit2, XCircle,
-  ClipboardCheck, MessageSquare, CalendarDays, Copy,
+  ClipboardCheck, MessageSquare, CalendarDays, Copy, OctagonX,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -559,7 +560,6 @@ function ReturnToProductionDialog({ offer, onConfirm, onClose, isLoading }) {
 }
 
 // ─── 8. Extend Contract ───────────────────────────────────────────────────────
-// Used by Crew Management — all colours from --primary / --lavender-* only.
 
 function ExtendContractDialog({ offer, onConfirm, onClose, isLoading }) {
   return (
@@ -599,7 +599,7 @@ function ExtendContractDialog({ offer, onConfirm, onClose, isLoading }) {
           </div>
         </div>
 
-        {/* Advisory — muted, no extra brand colour */}
+        {/* Advisory */}
         <div
           className="rounded-xl px-4 py-3 flex items-start gap-2.5"
           style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
@@ -625,7 +625,6 @@ function ExtendContractDialog({ offer, onConfirm, onClose, isLoading }) {
 }
 
 // ─── 9. Clone Offer ───────────────────────────────────────────────────────────
-// Used by Crew Management — all colours from --primary / --lavender-* only.
 
 function CloneOfferDialog({ offer, onConfirm, onClose, isLoading }) {
   const WHAT_COPIES = [
@@ -675,7 +674,7 @@ function CloneOfferDialog({ offer, onConfirm, onClose, isLoading }) {
           ))}
         </div>
 
-        {/* Advisory — muted, no extra brand colour */}
+        {/* Advisory */}
         <div
           className="rounded-xl px-4 py-3"
           style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
@@ -693,6 +692,76 @@ function CloneOfferDialog({ offer, onConfirm, onClose, isLoading }) {
         confirmBg="var(--primary)"
         confirmHoverBg="var(--lavender-700)"
         confirmIcon={Copy}
+      />
+    </DialogShell>
+  );
+}
+
+// ─── 10. End Contract ─────────────────────────────────────────────────────────
+// Shown in CrewSearch — confirms before navigating to the contract page
+// with ?openEndContract=true so LayoutProductionAdmin opens EndContractDialog.
+
+function EndContractDialog({ offer, onConfirm, onClose, isLoading }) {
+  const name     = offer?.name || offer?.recipient?.fullName || "this crew member";
+  const jobTitle = getJobTitle(offer);
+
+  return (
+    <DialogShell onClose={onClose}>
+      <DialogHeader
+        bg="var(--destructive)"
+        icon={OctagonX}
+        title="End Contract Early"
+        offerCode={offer?.offerCode}
+        onClose={onClose}
+      />
+      <div className="px-5 pt-5 pb-2 space-y-4">
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          You're about to end the contract early for{" "}
+          <strong style={{ color: "var(--foreground)" }}>{name}</strong>
+          {jobTitle !== "—" && (
+            <> ({jobTitle})</>
+          )}.
+        </p>
+
+        {/* Current end date */}
+        <div
+          className="rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}
+        >
+          <OctagonX className="w-4 h-4 shrink-0" style={{ color: "var(--destructive)" }} />
+          <div>
+            <p
+              className="text-[10px] font-bold uppercase tracking-wide"
+              style={{ color: "var(--destructive)" }}
+            >
+              Current End Date
+            </p>
+            <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--foreground)" }}>
+              {fmtDate(offer?.endDate)}
+            </p>
+          </div>
+        </div>
+
+        {/* Advisory */}
+        <div
+          className="rounded-xl px-4 py-3 flex items-start gap-2.5"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--muted-foreground)" }} />
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+            You'll be taken to the contract page where you can set the notice period and reason
+            before confirming the termination.
+          </p>
+        </div>
+      </div>
+      <DialogFooter
+        onClose={onClose}
+        onConfirm={() => onConfirm(offer)}
+        isLoading={isLoading}
+        confirmLabel="Go to Contract"
+        confirmBg="var(--destructive)"
+        confirmIcon={OctagonX}
+        cancelLabel="Keep Active"
       />
     </DialogShell>
   );
@@ -723,6 +792,7 @@ export default function OfferActionDialog({
       {type === "returnToProduction" && <ReturnToProductionDialog offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "extendContract"     && <ExtendContractDialog     offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "cloneOffer"         && <CloneOfferDialog         offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
+      {type === "endContract"        && <EndContractDialog        offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
     </>
   );
 }

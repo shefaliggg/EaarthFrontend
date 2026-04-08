@@ -1,7 +1,5 @@
-
-
 import { useRef, useEffect, useState } from 'react';
-import { Loader2, MoreVertical, Eye, CalendarDays, Copy, X } from 'lucide-react';
+import { Loader2, MoreVertical, Eye, CalendarDays, Copy, X, OctagonX } from 'lucide-react';
 import CardWrapper from '@/shared/components/wrappers/CardWrapper';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -65,7 +63,7 @@ function OTCell({ value }) {
 
 // ─── Three-dot action menu ────────────────────────────────────────────────────
 
-function ActionMenu({ crew, onViewContract, onExtend, onClone }) {
+function ActionMenu({ crew, onViewContract, onExtend, onClone, onEndContract }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -114,6 +112,16 @@ function ActionMenu({ crew, onViewContract, onExtend, onClone }) {
             <Copy className="w-3.5 h-3.5 shrink-0" />
             Clone for New Crew
           </button>
+
+          <div className="h-px bg-neutral-100 mx-2" />
+
+          <button
+            onClick={() => { setOpen(false); onEndContract(crew); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <OctagonX className="w-3.5 h-3.5 shrink-0" />
+            End Contract
+          </button>
         </div>
       )}
     </div>
@@ -122,7 +130,7 @@ function ActionMenu({ crew, onViewContract, onExtend, onClone }) {
 
 // ─── Single crew row ──────────────────────────────────────────────────────────
 
-function CrewRow({ crew, onViewContract, onExtend, onClone }) {
+function CrewRow({ crew, onViewContract, onExtend, onClone, onEndContract }) {
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors">
 
@@ -214,6 +222,7 @@ function CrewRow({ crew, onViewContract, onExtend, onClone }) {
           onViewContract={onViewContract}
           onExtend={onExtend}
           onClone={onClone}
+          onEndContract={onEndContract}
         />
       </td>
     </tr>
@@ -239,14 +248,14 @@ const HEADERS = [
 
 export default function CrewTable({
   crew = [],
-  grouped = [],        // preferred — pre-grouped by department
+  grouped = [],
   isLoading = false,
   isEmpty = false,
   onViewContract,
   onExtend,
   onClone,
+  onEndContract,
 }) {
-  // Fallback: if parent doesn't group, group here
   const departments = grouped.length
     ? grouped
     : (() => {
@@ -285,17 +294,14 @@ export default function CrewTable({
           {/* ── Body ── */}
           <tbody>
             {isLoading ? (
-              /* Skeleton */
-              <>
-                <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center">
-                    <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading crew…
-                    </div>
-                  </td>
-                </tr>
-              </>
+              <tr>
+                <td colSpan={11} className="px-4 py-10 text-center">
+                  <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading crew…
+                  </div>
+                </td>
+              </tr>
             ) : departments.length === 0 ? (
               <tr>
                 <td colSpan={11} className="px-4 py-16 text-center text-gray-400 text-sm">
@@ -307,19 +313,14 @@ export default function CrewTable({
             ) : (
               departments.map(([dept, rows]) => (
                 <>
-                  {/* Department label row */}
                   <tr key={`dept-${dept}`}>
-                    <td
-                      colSpan={11}
-                      className="px-4 pt-4 pb-1.5 bg-white"
-                    >
+                    <td colSpan={11} className="px-4 pt-4 pb-1.5 bg-white">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {dept}
                       </span>
                     </td>
                   </tr>
 
-                  {/* Crew rows */}
                   {rows.map((c) => (
                     <CrewRow
                       key={c._id}
@@ -327,6 +328,7 @@ export default function CrewTable({
                       onViewContract={onViewContract}
                       onExtend={onExtend}
                       onClone={onClone}
+                      onEndContract={onEndContract}
                     />
                   ))}
                 </>
@@ -336,7 +338,6 @@ export default function CrewTable({
         </table>
       </div>
 
-      {/* Footer count */}
       {!isLoading && totalCount > 0 && (
         <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50 mt-0">
           <span className="text-[11px] text-gray-400">

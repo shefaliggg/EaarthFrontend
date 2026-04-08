@@ -134,6 +134,17 @@ export const extendContractThunk = createAsyncThunk("offers/extend",
   }
 );
 
+// ─── Terminate Contract ───────────────────────────────────────────────────────
+
+export const terminateContractThunk = createAsyncThunk("offers/terminate",
+  async ({ offerId, noticePeriodDays, reason }, { rejectWithValue }) => {
+    try {
+      return await offerApi.terminateContract(offerId, { noticePeriodDays, reason });
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
 // ─── Clone Offer ──────────────────────────────────────────────────────────────
 
 export const cloneOfferThunk = createAsyncThunk("offers/clone",
@@ -224,6 +235,7 @@ export const workflowThunks = [
   returnToProductionThunk,
   extendContractThunk,
   cloneOfferThunk,
+  terminateContractThunk,
 ];
 
 export const signThunks = [
