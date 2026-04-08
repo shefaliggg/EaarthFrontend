@@ -2,11 +2,15 @@
  * layouts/LayoutProductionAdmin.jsx
  *
  * CHANGES:
- *   - OfferTopBar replaced with CrewIdentityHeader
- *   - ExtendDialog imported from ./ExtendDialog
- *   - All colors use Tailwind CSS variable classes (bg-primary, bg-card, etc.)
- *   - Reads ?openExtend=true from URL → auto-opens ExtendDialog on mount
- *   - Clears ?openExtend param from URL after opening (clean history)
+ *   - URL params (?openExtend / ?openEndContract) are now captured ONCE on
+ *     mount via useState lazy initializer — before the useEffects delete them.
+ *     These captured booleans are passed as showExtendBtn / showEndContractBtn
+ *     props to CrewIdentityHeader so it knows which button to hide.
+ *   - EndContractDialog imported — same pattern as ExtendDialog
+ *   - onEndContract handler wired: dispatches terminateContractThunk, refreshes offer
+ *   - CrewIdentityHeader receives onEndContract prop (COMPLETED only)
+ *   - ?openEndContract=true in URL auto-opens EndContractDialog on mount
+ *   - EndContractCard shown below identity header when status === "TERMINATED"
  */
 
 import { useState, useEffect }                     from "react";
@@ -23,18 +27,82 @@ import OfferActionDialog      from "../../onboarding/OfferActionDialog";
 import ChangeRequestBanner    from "../../../components/viewoffer/layouts/ChangeRequestBanner";
 import CrewIdentityHeader     from "../../../../crew/components/viewoffer/layouts/CrewIdentityHeader";
 import ExtendDialog           from "../../CrewMangemant/ExtendDialog";
+import EndContractDialog      from "../../CrewMangemant/EndContractDialog";
 
 import {
   extendContractThunk,
+  terminateContractThunk,
   getOfferThunk,
 } from "../../../store/offer.slice";
 import { defaultEngineSettings } from "../../../utils/rateCalculations";
+
+// ── Terminated contract info card ─────────────────────────────────────────────
+
+function EndContractCard({ offer }) {
+  const endDate     = offer?.endDate;
+  const terminatedAt = offer?.timeline?.terminatedAt;
+
+  const fmtDate = (d) => {
+    if (!d) return "—";
+    return new Date(String(d).split("T")[0] + "T00:00:00").toLocaleDateString("en-GB", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+  };
+
+  return (
+    <div
+      className="rounded-xl px-4 py-4 space-y-2"
+      style={{ background: "#fff1f1", border: "1px solid #fecaca" }}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: "#dc2626" }}
+        >
+          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
+            <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5"
+                  strokeLinecap="round" />
+          </svg>
+        </div>
+        <h3 className="text-[13px] font-bold" style={{ color: "#dc2626" }}>
+          Contract Terminated
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-1">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#b91c1c" }}>
+            Effective End Date
+          </p>
+          <p className="text-[13px] font-bold mt-0.5" style={{ color: "#7f1d1d" }}>
+            {fmtDate(endDate)}
+          </p>
+        </div>
+        {terminatedAt && (
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#b91c1c" }}>
+              Terminated On
+            </p>
+            <p className="text-[13px] font-bold mt-0.5" style={{ color: "#7f1d1d" }}>
+              {fmtDate(terminatedAt)}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="text-[11px] mt-1" style={{ color: "#991b1b" }}>
+        This contract has been ended early. All unsigned documents have been voided and the
+        contract is now locked.
+      </p>
+    </div>
+  );
+}
 
 // ── Actions sidebar card ──────────────────────────────────────────────────────
 
 function ActionsCard({ status, isSubmitting, onSendToCrew, onCancel, onEdit }) {
   const canSend       = status === "DRAFT" || status === "NEEDS_REVISION";
-  const canCancel     = !["COMPLETED", "CANCELLED"].includes(status);
+  const canCancel     = !["COMPLETED", "CANCELLED", "TERMINATED"].includes(status);
   const isSent        = status === "SENT_TO_CREW";
   const needsRevision = status === "NEEDS_REVISION";
   const showEdit      = needsRevision || status === "PRODUCTION_CHECK";
@@ -107,6 +175,16 @@ function ActionsCard({ status, isSubmitting, onSendToCrew, onCancel, onEdit }) {
           </div>
         )}
 
+        {status === "TERMINATED" && (
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border"
+            style={{ background: "#fff1f1", borderColor: "#fecaca" }}>
+            <XCircle className="w-3.5 h-3.5 shrink-0" style={{ color: "#dc2626" }} />
+            <p className="text-[11px] font-medium" style={{ color: "#dc2626" }}>
+              Contract terminated
+            </p>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -157,9 +235,18 @@ export default function LayoutProductionAdmin({
   const [searchParams, setSearchParams] = useSearchParams();
   const proj = projectName || "demo-project";
 
-  const [dialog,      setDialog     ] = useState(null);
-  const [showExtend,  setShowExtend ] = useState(false);
-  const [isExtending, setIsExtending] = useState(false);
+  // ── Capture URL params ONCE on mount (before useEffects delete them) ───────
+  // useState lazy initializer runs synchronously before any effects, so we
+  // safely read the params here even though the useEffects below will
+  // delete them on the first render cycle.
+  const [fromExtend]      = useState(() => searchParams.get("openExtend")      === "true");
+  const [fromEndContract] = useState(() => searchParams.get("openEndContract") === "true");
+
+  const [dialog,          setDialog         ] = useState(null);
+  const [showExtend,      setShowExtend     ] = useState(false);
+  const [showEndContract, setShowEndContract] = useState(false);
+  const [isExtending,     setIsExtending    ] = useState(false);
+  const [isTerminating,   setIsTerminating  ] = useState(false);
 
   const status = offer?.status;
 
@@ -173,14 +260,25 @@ export default function LayoutProductionAdmin({
   ].includes(status);
 
   const isCompleted              = status === "COMPLETED";
+  const isTerminated             = status === "TERMINATED";
   const canMoveToProductionCheck = status === "CREW_ACCEPTED";
 
-  // ── Auto-open ExtendDialog from URL param ───────────────────────────────────
+  // ── Auto-open ExtendDialog from URL param ──────────────────────────────────
   useEffect(() => {
     if (searchParams.get("openExtend") === "true" && offer?._id) {
       setShowExtend(true);
       const next = new URLSearchParams(searchParams);
       next.delete("openExtend");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-open EndContractDialog from URL param ─────────────────────────────
+  useEffect(() => {
+    if (searchParams.get("openEndContract") === "true" && offer?._id) {
+      setShowEndContract(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("openEndContract");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -191,7 +289,7 @@ export default function LayoutProductionAdmin({
     navigate(`/projects/${proj}/offers/${offer._id}/edit?redirectTo=${redirectTo}`);
   };
 
-  // ── Extend ──────────────────────────────────────────────────────────────────
+  // ── Extend ─────────────────────────────────────────────────────────────────
   const handleExtendConfirm = async ({ newEndDate, note }) => {
     if (!offer?._id) return;
     setIsExtending(true);
@@ -224,23 +322,58 @@ export default function LayoutProductionAdmin({
     }
   };
 
+  // ── End Contract (Terminate) ───────────────────────────────────────────────
+  const handleEndContractConfirm = async ({ noticePeriodDays, reason }) => {
+    if (!offer?._id) return;
+    setIsTerminating(true);
+    toast.loading("Ending contract…", { id: "terminate" });
+    try {
+      const result = await dispatch(
+        terminateContractThunk({ offerId: offer._id, noticePeriodDays, reason })
+      );
+      toast.dismiss("terminate");
+      if (!result.error) {
+        toast.success("Contract terminated successfully");
+        setShowEndContract(false);
+        dispatch(getOfferThunk(offer._id));
+      } else {
+        toast.error(
+          result.payload?.errors?.map(e => e.message).join(" · ") ||
+          result.payload?.message ||
+          "Failed to terminate contract"
+        );
+      }
+    } catch (err) {
+      toast.dismiss("terminate");
+      toast.error(err.message || "Failed to terminate contract");
+    } finally {
+      setIsTerminating(false);
+    }
+  };
+
   return (
     <>
       <div className="space-y-4">
 
-        {/* ── Identity header ─────────────────────────────────────────────── */}
+        {/* ── Identity header ──────────────────────────────────────────────── */}
         <CrewIdentityHeader
           contractData={contractData}
           offer={offer}
           onExtend={isCompleted ? () => setShowExtend(true) : undefined}
+          onEndContract={isCompleted ? () => setShowEndContract(true) : undefined}
+          showExtendBtn={!fromEndContract}
+          showEndContractBtn={!fromExtend}
         />
 
-        {/* ── Change request banner ────────────────────────────────────────── */}
+        {/* ── Terminated card (shown below header when contract ended) ──────── */}
+        {isTerminated && <EndContractCard offer={offer} />}
+
+        {/* ── Change request banner ─────────────────────────────────────────── */}
         {(status === "NEEDS_REVISION" || status === "PRODUCTION_CHECK") && offer?._id && (
           <ChangeRequestBanner offerId={offer._id} />
         )}
 
-        {/* ── MONITORING STAGE ─────────────────────────────────────────────── */}
+        {/* ── MONITORING STAGE ──────────────────────────────────────────────── */}
         {isMonitoringStage && (
           <div className="flex gap-4 items-start">
 
@@ -280,7 +413,7 @@ export default function LayoutProductionAdmin({
           </div>
         )}
 
-        {/* ── SIGNING STAGE ────────────────────────────────────────────────── */}
+        {/* ── SIGNING STAGE (includes COMPLETED) ──────────────────────────── */}
         {isSigningStage && (
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
@@ -311,7 +444,32 @@ export default function LayoutProductionAdmin({
           </div>
         )}
 
-        {/* ── CANCELLED ────────────────────────────────────────────────────── */}
+        {/* ── TERMINATED ───────────────────────────────────────────────────── */}
+        {isTerminated && (
+          <div className="flex gap-4 items-start">
+            <div className="flex-1 min-w-0">
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/40">
+                  <FileText className="w-3.5 h-3.5 text-primary" />
+                  <h3 className="text-[12px] font-semibold text-foreground">
+                    Contract Documents
+                  </h3>
+                  <span className="ml-auto text-[9px] font-mono font-semibold" style={{ color: "#dc2626" }}>
+                    TERMINATED
+                  </span>
+                </div>
+                <div className="p-4">
+                  {offer?._id
+                    ? <ContractInstancesPanel offerId={offer._id} offerStatus={offer?.status} />
+                    : null
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CANCELLED ──────────────────────────────────────────────────────── */}
         {status === "CANCELLED" && (
           <div className="bg-destructive/5 border border-destructive/20 rounded-xl px-4 py-6 text-center">
             <XCircle className="w-6 h-6 text-destructive mx-auto mb-2" />
@@ -339,12 +497,23 @@ export default function LayoutProductionAdmin({
         />
       )}
 
+      {/* Extend Contract dialog */}
       {showExtend && (
         <ExtendDialog
           offer={offer}
           onClose={() => setShowExtend(false)}
           onConfirm={handleExtendConfirm}
           isLoading={isExtending}
+        />
+      )}
+
+      {/* End Contract dialog */}
+      {showEndContract && (
+        <EndContractDialog
+          offer={offer}
+          onClose={() => setShowEndContract(false)}
+          onConfirm={handleEndContractConfirm}
+          isLoading={isTerminating}
         />
       )}
     </>

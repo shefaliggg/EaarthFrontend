@@ -2,19 +2,23 @@
  * CrewIdentityHeader.jsx
  *
  * CHANGES:
- *   - Added `onExtend` prop — when provided and status is COMPLETED,
- *     shows an "Extend Contract" button that triggers the ExtendDialog
- *     in the parent (LayoutProductionAdmin).
- *   - All colors remain via CSS variables from index.css.
+ *   - No longer reads URL search params directly (they get deleted by
+ *     LayoutProductionAdmin's useEffects before this component can read them).
+ *   - Instead accepts showExtendBtn / showEndContractBtn as props, which
+ *     LayoutProductionAdmin captures once on mount via useState initializer
+ *     before the params are cleaned from the URL.
  *
  * Props:
- *   contractData : object  — fullName, jobTitle, department, engagementType,
- *                            dailyOrWeekly, feePerDay, currency, startDate, endDate, email
- *   offer        : object  — for status badge + jobTitle override (createOwnJobTitle / newJobTitle)
- *   onExtend     : fn      — optional; called when Extend Contract button is clicked
+ *   contractData      : object  — fullName, jobTitle, department, engagementType,
+ *                                 dailyOrWeekly, feePerDay, currency, startDate, endDate, email
+ *   offer             : object  — for status badge + jobTitle override (createOwnJobTitle / newJobTitle)
+ *   onExtend          : fn      — optional; called when Extend Contract button is clicked
+ *   onEndContract     : fn      — optional; called when End Contract button is clicked
+ *   showExtendBtn     : bool    — default true; set false when arriving via ?openEndContract=true
+ *   showEndContractBtn: bool    — default true; set false when arriving via ?openExtend=true
  */
 
-import { Calendar, User, CalendarDays } from "lucide-react";
+import { Calendar, User, CalendarDays, OctagonX } from "lucide-react";
 
 const ENG_LABELS   = { paye: "PAYE", loan_out: "Loan Out", schd: "Schedule D", long_form: "Direct Hire" };
 const CURRENCY_SYM = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$" };
@@ -25,7 +29,7 @@ const DEPT_LABELS  = {
   construction: "Construction",
 };
 
-// ── Status badge — all colors from CSS vars ───────────────────────────────────
+// ── Status badge ──────────────────────────────────────────────────────────────
 
 const STATUS_MAP = {
   DRAFT:                    { label: "Draft",             bg: "var(--muted)",         color: "var(--muted-foreground)",  border: "var(--border)"         },
@@ -40,6 +44,9 @@ const STATUS_MAP = {
   PENDING_STUDIO_SIGNATURE: { label: "Studio Signature",  bg: "var(--lavender-50)",   color: "var(--lavender-500)",      border: "var(--lavender-200)"   },
   COMPLETED:                { label: "Completed",         bg: "var(--mint-50)",       color: "var(--mint-600)",          border: "var(--mint-200)"       },
   CANCELLED:                { label: "Cancelled",         bg: "#fff1f1",              color: "#dc2626",                  border: "#fecaca"               },
+  TERMINATED:               { label: "Terminated",        bg: "#fff1f1",              color: "#dc2626",                  border: "#fecaca"               },
+  VOIDED:                   { label: "Voided",            bg: "var(--muted)",         color: "var(--muted-foreground)",  border: "var(--border)"         },
+  REVISED:                  { label: "Revised",           bg: "var(--peach-50)",      color: "var(--peach-600)",         border: "var(--peach-200)"      },
 };
 
 function StatusBadge({ status }) {
@@ -75,7 +82,14 @@ export function fmtDate(dateStr) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CrewIdentityHeader({ contractData = {}, offer, onExtend }) {
+export default function CrewIdentityHeader({
+  contractData = {},
+  offer,
+  onExtend,
+  onEndContract,
+  showExtendBtn = true,       // false when arriving via ?openEndContract=true
+  showEndContractBtn = true,  // false when arriving via ?openExtend=true
+}) {
   const jobTitle  = offer?.createOwnJobTitle && offer?.newJobTitle
     ? offer.newJobTitle
     : contractData.jobTitle || offer?.jobTitle || "";
@@ -195,12 +209,14 @@ export default function CrewIdentityHeader({ contractData = {}, offer, onExtend 
         </div>
       </div>
 
-      {/* Right — Extend button (COMPLETED only) + Status badge */}
+      {/* Right — action buttons (COMPLETED only) + Status badge */}
       <div className="flex items-center gap-2 shrink-0">
-        {isCompleted && onExtend && (
+
+        {/* Extend Contract — shown when COMPLETED, handler provided, and showExtendBtn is true */}
+        {isCompleted && onExtend && showExtendBtn && (
           <button
             onClick={onExtend}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-90"
             style={{
               background: "var(--primary)",
               color: "var(--primary-foreground)",
@@ -210,6 +226,22 @@ export default function CrewIdentityHeader({ contractData = {}, offer, onExtend 
             Extend Contract
           </button>
         )}
+
+        {/* End Contract — shown when COMPLETED, handler provided, and showEndContractBtn is true */}
+        {isCompleted && onEndContract && showEndContractBtn && (
+          <button
+            onClick={onEndContract}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-90"
+            style={{
+              background: "var(--destructive)",
+              color: "white",
+            }}
+          >
+            <OctagonX className="w-3.5 h-3.5" />
+            End Contract
+          </button>
+        )}
+
         <StatusBadge status={offer?.status} />
       </div>
     </div>
