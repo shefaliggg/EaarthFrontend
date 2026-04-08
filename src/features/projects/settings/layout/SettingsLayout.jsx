@@ -184,8 +184,7 @@ function SettingsLayout() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="relative bg-card border border-gray-100/80 dark:border-gray-800/50 flex items-center justify-between p-4 rounded-2xl overflow-hidden"
-
+          className="p-4 rounded-2xl bg-card border border-gray-100/80 dark:border-gray-800/50 flex items-center justify-between  overflow-hidden"
         >
           <div className="flex items-center gap-4">
             <AnimatedCircularProgress
@@ -209,6 +208,62 @@ function SettingsLayout() {
           </div>
         </motion.div>
         <Outlet />
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="mb-2 rounded-2xl overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-5 py-3.5 bg-card border border-gray-100/80 dark:border-gray-800/60 rounded-2xl">
+            <motion.button
+              onClick={goToPrev}
+              disabled={!canGoPrev}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                fontSize: "0.7rem",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                background: "var(--card)",
+              }}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Previous
+            </motion.button>
+
+            {/* Lock + Next — grouped right */}
+            <div className="flex items-center gap-2">
+              <motion.button
+                disabled
+                whileHover={undefined}
+                whileTap={undefined}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                style={{ fontSize: "0.7rem" }}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Complete to Lock
+              </motion.button>
+
+              <motion.button
+                onClick={goToNext}
+                disabled={!canGoNext}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  fontSize: "0.7rem",
+                  border: "1px solid var(--border)",
+                  color: "var(--foreground)",
+                  background: "var(--card)",
+                }}
+              >
+                Next
+                <ChevronRight className="w-3.5 h-3.5" />
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </>
   );

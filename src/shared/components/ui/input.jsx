@@ -9,7 +9,7 @@ function Input({ className, type = "text", ...props }) {
         `
         w-full min-w-0
         placeholder:normal-case
-        rounded-md px-3 py-2
+        rounded-3xl px-3 py-1.5
         border
         bg-muted dark:bg-muted
         text-foreground
