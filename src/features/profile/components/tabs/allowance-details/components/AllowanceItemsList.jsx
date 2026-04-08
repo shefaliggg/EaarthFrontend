@@ -134,6 +134,12 @@ export default function AllowanceItemsList({
     );
   }
 
+  const grossTotal = items.reduce((total, item) => {
+    const qty = Number(item.qty) || 0;
+    const amount = Number(item.amount) || 0;
+    return total + qty * amount;
+  }, 0);
+
   return (
     <div className="space-y-4">
       <AutoHeight className="flex flex-col gap-3">
@@ -155,14 +161,26 @@ export default function AllowanceItemsList({
           ))}
       </AutoHeight>
 
-      {/* Add Button */}
-      <button
-        onClick={addItem}
-        className="w-full border-2 border-dashed border-border ursor-pointer transition-all text-primary duration-300 hover:border-primary hover:bg-muted/20 py-10 rounded-lg flex items-center justify-center gap-2"
-      >
-        <Plus size={16} />
-        {config.addButtonLabel}
-      </button>
+      {/* Total Summary */}
+      <div className="flex justify-end">
+        <div className="w-full px-3">
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Gross Total</span>
+            <span className="text-lg font-semibold text-primary">
+              £{grossTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div>
+      {isEditing && (
+        <button
+          onClick={addItem}
+          className="w-full border-2 border-dashed border-border ursor-pointer transition-all text-primary duration-300 hover:border-primary hover:bg-muted/20 py-10 rounded-lg flex items-center justify-center gap-2"
+        >
+          <Plus size={16} />
+          {config.addButtonLabel}
+        </button>
+      )}
     </div>
   );
 }

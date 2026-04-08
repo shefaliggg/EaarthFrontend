@@ -668,7 +668,6 @@ export default function MessageBubble({
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
-        message={message}
         imageFile={previewImageFile}
       />
     </div>

@@ -2,29 +2,13 @@ import { X, Download, ZoomIn, ZoomOut } from "lucide-react";
 import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import getApiUrl from "../../../../shared/config/enviroment";
-import chatApi from "../api/chat.api";
-import useChatStore from "../store/chat.store";
 
-export default function ImagePreviewDialog({
-  open,
-  onOpenChange,
-  message,
-  imageFile,
-}) {
+export default function ImagePreviewDialog({ open, onOpenChange, imageFile }) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const zoomPercentage = Math.round(zoom * 100);
-
-  const { downloadAttachment } = useChatStore();
-
-
-  const handleDownload = async () => {
-    if (!message?.id || !imageFile?._id) return;
-    downloadAttachment(message.conversationId, message.id, imageFile);
-  };
 
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 0.25, 5));
@@ -32,8 +16,8 @@ export default function ImagePreviewDialog({
 
   const handleZoomOut = () => {
     setZoom((prev) => {
-      const newZoom = Math.max(prev - 0.25, 1);
-      if (newZoom === 1) {
+      const newZoom = Math.max(prev - 0.25, 0.5);
+      if (newZoom <= 1) {
         setPosition({ x: 0, y: 0 });
       }
       return newZoom;
@@ -109,20 +93,23 @@ export default function ImagePreviewDialog({
           {/* Close button */}
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/70 transition-colors z-50"
             aria-label="Close preview"
           >
             <X className="w-6 h-6" />
           </button>
 
           {/* Download button */}
-          <button
-            onClick={handleDownload}
-            className="absolute top-4 right-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+          <a
+            href={imageFile?.url}
+            rel="noopener noreferrer"
+            download
+            onClick={() => toast.info("Downloading Image..")}
+            className="absolute top-4 right-20 p-2 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/70 transition-colors z-50"
             aria-label="Download image"
           >
             <Download className="w-6 h-6" />
-          </button>
+          </a>
 
           {/* Image */}
           {imageFile?.url && (
@@ -143,8 +130,8 @@ export default function ImagePreviewDialog({
                     : "cursor-default"
                 }`}
                 style={{
-                  maxWidth: zoom === 1 ? "95vw" : "none",
-                  maxHeight: zoom === 1 ? "90vh" : "none",
+                  maxWidth: "95vw",
+                  maxHeight: "90vh",
                   transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
                   transformOrigin: "center center",
                 }}

@@ -14,7 +14,7 @@ import EditToggleButtons from "../../../../shared/components/buttons/EditToggleB
 import SignaturePad from "../../../crew/components/SignaturePad/SignaturePad";
 import { formatDate } from "../../../../shared/config/utils";
 import { Button } from "../../../../shared/components/ui/button";
-import SignatureCertificate from "./SignatureCertificate";
+import SignatureCertificateModal from "./SignatureCertificateModal";
 
 export default function MySignature({
   profile,
@@ -25,6 +25,7 @@ export default function MySignature({
   const [signatureImage, setSignatureImage] = useState(
     profile.signature || null,
   );
+  const [isCertificateOpen, setIsCertificateOpen] = useState(false);
 
   const padRef = useRef();
 
@@ -61,9 +62,12 @@ export default function MySignature({
       icon={"PenTool"}
       actions={
         <>
-          {signatureImage && !isEditing &&  (
+          {signatureImage && !isEditing && (
             <>
-              <Button variant={"outline"} disabled>
+              <Button
+                variant={"outline"}
+                onClick={() => setIsCertificateOpen(true)}
+              >
                 <Eye />
                 <span className="text-sm font-medium">View Certificate</span>
               </Button>
@@ -95,50 +99,61 @@ export default function MySignature({
           <>
             {/* Display saved signature with premium styling */}
             {signatureImage ? (
-              <div className="space-y-6">
-                {/* Signature Card */}
-                <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-4">
-                  {/* Signature Image */}
-                  <div className="p-6 pt-12 pb-8 flex justify-center items-center">
-                    <div className="relative group">
-                      <img
-                        src={signatureImage}
-                        alt="Your signature"
-                        className="w-full max-h-32 object-contain relative z-10"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Signature Footer */}
-                  <div className="px-5 pb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-gray-500">
-                            Added on {formatDate(new Date())}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-gray-500">
-                            Digitally signed
-                          </span>
-                        </div>
+              <>
+                <div className="space-y-6">
+                  {/* Signature Card */}
+                  <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-4">
+                    {/* Signature Image */}
+                    <div className="p-6 pt-12 pb-8 flex justify-center items-center">
+                      <div className="relative group">
+                        <img
+                          src={signatureImage}
+                          alt="Your signature"
+                          className="w-full max-h-32 object-contain relative z-10"
+                        />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-gray-400">Currently Active</span>
+                    </div>
+
+                    {/* Signature Footer */}
+                    <div className="px-5 pb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-gray-500">
+                              Added on {formatDate(new Date())}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-gray-500">
+                              Digitally signed
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-purple-600 text-[10px] font-mono">
-                          ✓ Verified
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-xs text-gray-400">
+                              Currently Active
+                            </span>
+                          </div>
+                          <div className="text-purple-600 text-[10px] font-mono">
+                            ✓ Verified
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+
+                <SignatureCertificateModal
+                  profile={profile}
+                  open={isCertificateOpen}
+                  onOpenChange={setIsCertificateOpen}
+                  signatureImage={signatureImage}
+                />
+              </>
             ) : (
               /* Empty State - Premium Design */
               <div className="relative overflow-hidden">

@@ -26,11 +26,11 @@ export default function AllowanceDetails({
         title={"Personal Vehicle"}
         icon={"Car"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -153,11 +153,11 @@ export default function AllowanceDetails({
         title={"Computer"}
         icon={"Laptop"}
         actions={
-            <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -167,53 +167,53 @@ export default function AllowanceDetails({
         title={"Mobile Phone"}
         icon={"Smartphone"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Software"}
         icon={"AppWindow"}
         actions={
-  <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="software" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="software" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Equipment"}
         icon={"Camera"}
         actions={
-            <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Box Rental"}
         icon={"Package"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
