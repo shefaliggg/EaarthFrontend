@@ -474,12 +474,12 @@ const DashboardLayout = () => {
             </div>
 
             {archivedSidebarProjects.length > 0 && (
-              <div className="shrink-0 border-t border-sidebar-border bg-sidebar/95 px-3 py-3">
+              <div className="shrink-0 border-t border-sidebar-border bg-sidebar/95 px-3">
                 <button
                   type="button"
                   onClick={() => setIsArchivedSidebarOpen((prev) => !prev)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors",
+                    "flex h-12 w-full items-center justify-between rounded-md px-2 text-left transition-colors",
                     "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   )}
                   aria-expanded={isArchivedSidebarOpen}

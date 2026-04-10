@@ -295,9 +295,7 @@ export default function Header({
   return (
     <>
       <div
-        className={`sticky top-0 z-40 bg-background/40 backdrop-blur-xs transition-transform duration-300 ${
-          showHeader ? "translate-y-0" : "-translate-y-full"
-        }`}
+        className="sticky top-0 z-40 bg-background/40 backdrop-blur-xs"
       >
         <div className="">
           <div className="flex h-12 items-end gap-3 px-6 pl-0 border border-border/60 border-l-0 bg-background/40">
