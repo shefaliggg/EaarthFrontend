@@ -18,6 +18,7 @@ import EditableSelectField from "@/shared/components/wrappers/EditableSelectFiel
 import EditableCheckboxField from "@/shared/components/wrappers/EditableCheckboxField";
 import { FileUpload } from "../common/UnifiedFields";
 import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
+import EditableRadioField from "../../../../shared/components/wrappers/EditableRadioField";
 
 export default function FinanceDetails({
   profile,
@@ -34,8 +35,8 @@ export default function FinanceDetails({
     <>
       {/* TAX & NI */}
       <CardWrapper
-        title="Tax & National Insurance"
-        icon="Shield"
+        title="Financial Details"
+        icon="CreditCard"
         actions={
           <EditToggleButtons
             isEditing={isEditing}
@@ -47,7 +48,7 @@ export default function FinanceDetails({
       >
         <div className="grid md:grid-cols-2 gap-4">
           <EditableTextDataField
-            label="PPS NUMBER (IRELAND)"
+            label="PPS NUMBER"
             value={profile.ppsNumber}
             onChange={(v) =>
               setProfile({ ...profile, ppsNumber: v.toUpperCase() })
@@ -66,7 +67,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="KT NUMBER (NORWAY)"
+            label="KT NUMBER"
             value={profile.ktNumber}
             onChange={(v) =>
               setProfile({ ...profile, ktNumber: v.toUpperCase() })
@@ -90,37 +91,33 @@ export default function FinanceDetails({
             onChange={(v) => setProfile({ ...profile, vatNumber: v })}
             isEditing={isEditing}
           />
-
-          <EditableSelectField
-            label="STUDENT LOAN"
-            value={profile.studentLoan}
-            onChange={(v) => setProfile({ ...profile, studentLoan: v })}
-            items={[
-              { label: "No", value: "no" },
-              { label: "Plan 1", value: "Plan 1" },
-              { label: "Plan 2", value: "Plan 2" },
-              { label: "Plan 4", value: "Plan 4" },
-              { label: "Postgraduate Loan", value: "Postgraduate Loan" },
+          <EditableRadioField
+            label="Student Loan"
+            value={profile.payeStatus}
+            infoPillDescription={
+              "Do you have a student loan which is not fully repaid?"
+            }
+            options={[
+              {
+                value: true,
+                label: "Yes",
+              },
+              {
+                value: false,
+                label: "No",
+              },
             ]}
             isEditing={isEditing}
-          />
-
-          <EditableTextDataField
-            label="PAYE CONTRACT"
-            value={profile.payeContract}
-            onChange={(v) =>
-              setProfile({ ...profile, payeContract: v.toUpperCase() })
-            }
-            isEditing={isEditing}
+            onChange={(val) => setProfile({ ...profile, payeStatus: val })}
           />
         </div>
 
         {/* TAX DOCUMENTS */}
-        <div className="mt-6 border-t pt-4 grid md:grid-cols-1 gap-3">
+        <div className="my-6 grid md:grid-cols-1 gap-3">
           <FileUpload
             label="FS4 DOCUMENT"
             // icon="FileText"
-            infoPillDescription="Upload your FS4 form to confirm your tax registration and employment status."
+            infoPillDescription="Upload your complete FS4 form to confirm your tax registration and employment status."
             fileName="FS4.pdf"
             isUploaded={true}
             isEditing={isEditing}
@@ -130,7 +127,7 @@ export default function FinanceDetails({
           <FileUpload
             label="LATEST PAYSLIP"
             // icon="Receipt"
-            infoPillDescription="Upload your most recent payslip as proof of income and employment."
+            infoPillDescription="Upload your most recent payslip from previous job as proof of income and employment."
             fileName="Payslip.pdf"
             isUploaded={uploads?.payslip}
             isEditing={isEditing}
@@ -158,6 +155,30 @@ export default function FinanceDetails({
             onDelete={() => setUploads((p) => ({ ...p, vatCert: false }))}
           />
         </div>
+        <EditableRadioField
+          label="PAYE contract status"
+          value={profile.payeStatus}
+          infoPillDescription={"For PAYE contracts only"}
+          options={[
+            {
+              value: "first_job_since_april",
+              label:
+                "This is my first job since last 6th April. I have not been receiving taxable Jobseeker’s Allowance, Employment and Support Allowance, taxable Incapacity Benefit, state or occupational pension.",
+            },
+            {
+              value: "only_job_no_other_income",
+              label:
+                "This is now my only job, but since last 6 April I have had another job, or received taxable Jobseeker’s Allowance, Employment and Support Allowance or Incapacity Benefit. I do not receive a state or occupational pension.",
+            },
+            {
+              value: "has_other_job_or_pension",
+              label:
+                "I have another job or receive a state or occupational pension.",
+            },
+          ]}
+          isEditing={isEditing}
+          onChange={(val) => setProfile({ ...profile, payeStatus: val })}
+        />
       </CardWrapper>
 
       {/* PERSONAL BANK */}
@@ -175,7 +196,7 @@ export default function FinanceDetails({
       >
         <div className="grid md:grid-cols-2 gap-4">
           <EditableTextDataField
-            label="BANK NAME"
+            label="PERSONAL BANK NAME"
             value={profile.personalBankName}
             onChange={(v) =>
               setProfile({ ...profile, personalBankName: v.toUpperCase() })
@@ -183,7 +204,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="BANK BRANCH"
+            label="PERSONAL BANK BRANCH"
             value={profile.personalBankBranch}
             onChange={(v) =>
               setProfile({ ...profile, personalBankBranch: v.toUpperCase() })
@@ -191,7 +212,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="ACCOUNT NAME"
+            label="PERSONAL BANK ACCOUNT NAME"
             value={profile.personalBankAccountName}
             onChange={(v) =>
               setProfile({
@@ -202,7 +223,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="SORT CODE"
+            label="PERSONAL BANK SORT CODE"
             value={profile.personalBankSortCode}
             onChange={(v) =>
               setProfile({ ...profile, personalBankSortCode: v })
@@ -210,7 +231,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="ACCOUNT NUMBER"
+            label="PERSONAL BANK ACCOUNT NUMBER"
             value={profile.personalBankAccountNumber}
             onChange={(v) =>
               setProfile({ ...profile, personalBankAccountNumber: v })
@@ -218,19 +239,19 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="IBAN"
+            label="PERSONAL BANK IBAN"
             value={profile.personalBankIBAN}
             onChange={(v) => setProfile({ ...profile, personalBankIBAN: v })}
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="SWIFT/BIC"
+            label="PERSONAL BANK SWIFT/BIC"
             value={profile.personalBankSwift}
             onChange={(v) => setProfile({ ...profile, personalBankSwift: v })}
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="BANK NUMBER (ICELAND)"
+            label="PERSONAL BANK NUMBER (ICELAND)"
             value={profile.personalBankNumberIceland}
             onChange={(v) =>
               setProfile({ ...profile, personalBankNumberIceland: v })
@@ -238,7 +259,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="HB (ICELAND)"
+            label="PERSONAL BANK HB (ICELAND)"
             value={profile.personalBankHBIceland}
             onChange={(v) =>
               setProfile({ ...profile, personalBankHBIceland: v })
@@ -246,7 +267,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableTextDataField
-            label="ACCOUNT NUMBER (ICELAND)"
+            label="PERSONAL BANK ACCOUNT NUMBER (ICELAND)"
             value={profile.personalBankAccountNumberIceland}
             onChange={(v) =>
               setProfile({ ...profile, personalBankAccountNumberIceland: v })
@@ -254,280 +275,6 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
         </div>
-      </CardWrapper>
-
-      {/* LOAN OUT */}
-      <CardWrapper
-        title="Loan-Out Company"
-        icon="Briefcase"
-        actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
-        }
-      >
-        <EditableCheckboxField
-          label="Use Loan-Out Company"
-          checked={useLoanOutCompany}
-          onChange={setUseLoanOutCompany}
-          isEditing={isEditing}
-        />
-
-        {useLoanOutCompany && (
-          <div className="mt-4 space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <EditableTextDataField
-                label="Company Name"
-                value={profile.companyName}
-                onChange={(v) =>
-                  setProfile({ ...profile, companyName: v.toUpperCase() })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Registration Number"
-                value={profile.companyRegistrationNumber}
-                onChange={(v) =>
-                  setProfile({ ...profile, companyRegistrationNumber: v })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="KT Number"
-                value={profile.companyKtNumber}
-                onChange={(v) => setProfile({ ...profile, companyKtNumber: v })}
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Country of Incorporation"
-                value={profile.companyCountryOfIncorporation}
-                onChange={(v) =>
-                  setProfile({ ...profile, companyCountryOfIncorporation: v })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Tax Reg Number (Ireland)"
-                value={profile.taxRegistrationNumberIreland}
-                onChange={(v) =>
-                  setProfile({ ...profile, taxRegistrationNumberIreland: v })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Tax Clearance Access Number"
-                value={profile.taxClearanceAccessNumberIreland}
-                onChange={(v) =>
-                  setProfile({ ...profile, taxClearanceAccessNumberIreland: v })
-                }
-                isEditing={isEditing}
-              />
-            </div>
-
-            <EditableTextDataField
-              label="Company Address Line 1"
-              value={profile.companyAddressLine1}
-              onChange={(v) =>
-                setProfile({ ...profile, companyAddressLine1: v.toUpperCase() })
-              }
-              isEditing={isEditing}
-            />
-            <EditableTextDataField
-              label="Company Address Line 2"
-              value={profile.companyAddressLine2}
-              onChange={(v) =>
-                setProfile({ ...profile, companyAddressLine2: v.toUpperCase() })
-              }
-              isEditing={isEditing}
-            />
-            <EditableTextDataField
-              label="Company Address Line 3"
-              value={profile.companyAddressLine3}
-              onChange={(v) =>
-                setProfile({ ...profile, companyAddressLine3: v.toUpperCase() })
-              }
-              isEditing={isEditing}
-            />
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <EditableTextDataField
-                label="Postcode"
-                value={profile.companyAddressLine4}
-                onChange={(v) =>
-                  setProfile({
-                    ...profile,
-                    companyAddressLine4: v.toUpperCase(),
-                  })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Country"
-                value={profile.companyCountry}
-                onChange={(v) => setProfile({ ...profile, companyCountry: v })}
-                isEditing={isEditing}
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <EditableTextDataField
-                label="Representative Name"
-                value={profile.companyRepresentativeName}
-                onChange={(v) =>
-                  setProfile({
-                    ...profile,
-                    companyRepresentativeName: v.toUpperCase(),
-                  })
-                }
-                isEditing={isEditing}
-              />
-              <EditableTextDataField
-                label="Company Email"
-                value={profile.companyEmailAddress}
-                onChange={(v) =>
-                  setProfile({ ...profile, companyEmailAddress: v })
-                }
-                isEditing={isEditing}
-              />
-            </div>
-
-            <FileUpload
-              label="CERTIFICATE OF INCORPORATION"
-              // icon="Building2"
-              infoPillDescription="Upload your company’s certificate of incorporation to verify its legal registration."
-              fileName="certificate.pdf"
-              isUploaded={uploads?.companyCertificate}
-              isEditing={isEditing}
-              onUpload={() =>
-                setUploads((p) => ({ ...p, companyCertificate: true }))
-              }
-              onDelete={() =>
-                setUploads((p) => ({ ...p, companyCertificate: false }))
-              }
-            />
-
-            <EditableCheckboxField
-              label="VAT Registered"
-              checked={isVATRegistered}
-              onChange={setIsVATRegistered}
-              isEditing={isEditing}
-            />
-            {isVATRegistered && (
-              <FileUpload
-                label="VAT CERTIFICATE"
-                // icon="BadgePercent"
-                infoPillDescription="Upload your company VAT certificate to confirm VAT registration status."
-                fileName="vat.pdf"
-                isUploaded={uploads?.vatCert}
-                isEditing={isEditing}
-                onUpload={() => setUploads((p) => ({ ...p, vatCert: true }))}
-                onDelete={() => setUploads((p) => ({ ...p, vatCert: false }))}
-              />
-            )}
-
-            {/* COMPANY BANK */}
-            <div className="pt-4 border-t">
-              <h5 className="flex items-center gap-2 text-sm font-medium">
-                <Banknote className="size-4" /> Company Bank Details
-              </h5>
-
-              <div className="grid md:grid-cols-2 gap-4 mt-4">
-                <EditableTextDataField
-                  label="BANK NAME"
-                  value={profile.companyBankName}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankName: v.toUpperCase() })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="BANK BRANCH"
-                  value={profile.companyBankBranch}
-                  onChange={(v) =>
-                    setProfile({
-                      ...profile,
-                      companyBankBranch: v.toUpperCase(),
-                    })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="ACCOUNT NAME"
-                  value={profile.companyBankAccountName}
-                  onChange={(v) =>
-                    setProfile({
-                      ...profile,
-                      companyBankAccountName: v.toUpperCase(),
-                    })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="SORT CODE"
-                  value={profile.companyBankSortCode}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankSortCode: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="ACCOUNT NUMBER"
-                  value={profile.companyBankAccountNumber}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankAccountNumber: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="IBAN"
-                  value={profile.companyBankIBAN}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankIBAN: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="SWIFT/BIC"
-                  value={profile.companyBankSwift}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankSwift: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="BANK NUMBER (ICELAND)"
-                  value={profile.companyBankNumberIceland}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankNumberIceland: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="HB (ICELAND)"
-                  value={profile.companyBankHBIceland}
-                  onChange={(v) =>
-                    setProfile({ ...profile, companyBankHBIceland: v })
-                  }
-                  isEditing={isEditing}
-                />
-                <EditableTextDataField
-                  label="ACCOUNT NUMBER (ICELAND)"
-                  value={profile.companyBankAccountNumberIceland}
-                  onChange={(v) =>
-                    setProfile({
-                      ...profile,
-                      companyBankAccountNumberIceland: v,
-                    })
-                  }
-                  isEditing={isEditing}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </CardWrapper>
     </>
   );

@@ -53,7 +53,7 @@ function EditablePhoneField({
               items={codeOptions}
               isEditing={true}
               onChange={handleCodeChange}
-              selectClassName="h-8 text-sm"
+              selectClassName="h-8! text-sm"
             />
           </div>
 

@@ -9,6 +9,7 @@ import EditableDateField from "../../../../../shared/components/wrappers/Editabl
 import EditableTextDataField from "../../../../../shared/components/wrappers/EditableTextDataField";
 import EditToggleButtons from "../../../../../shared/components/buttons/EditToggleButtons";
 import AllowanceItemsList from "./components/AllowanceItemsList";
+import EditableSwitchField from "../../../../../shared/components/wrappers/EditableSwitchField";
 
 export default function AllowanceDetails({
   profile,
@@ -24,6 +25,7 @@ export default function AllowanceDetails({
     <>
       <CardWrapper
         title={"Personal Vehicle"}
+        subtitle={"Your vehivle details for site access and parking arrangements."}
         icon={"Car"}
         actions={
           <EditToggleButtons
@@ -34,16 +36,15 @@ export default function AllowanceDetails({
           />
         }
       >
-        <EditableCheckboxField
-          label="I Use My own Vehicle"
-          // description="Auto-generate meeting agendas."
+        <EditableSwitchField
+          label="I will use my own vehicle"
           checked={useOwnVehicle}
           isEditing={isEditing}
           onChange={setUseOwnVehicle}
         />
 
         {useOwnVehicle && (
-          <div className="mt-6 pt-6 border-t border-border">
+          <div className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <EditableTextDataField
                 label="VEHICLE MAKE"
@@ -85,7 +86,7 @@ export default function AllowanceDetails({
               />
 
               <EditableDateField
-                label="INSURANCE EXPIRY DATE"
+                label="VEHICLEINSURANCE EXPIRY DATE"
                 value={profile.vehicleInsuranceExpiryDate}
                 onChange={(val) =>
                   setProfile({
@@ -100,8 +101,7 @@ export default function AllowanceDetails({
             {/* Document Uploads for Vehicle */}
             <div className="grid grid-cols-1 gap-3 mt-4">
               <FileUpload
-                label="DRIVING LICENCE"
-                // icon="Car"
+                label="UPLOAD DRIVING LICENCE"
                 infoPillDescription="Upload a valid government-issued driving licence as proof of your legal authorization to operate a motor vehicle."
                 fileName="Driving_Licence.pdf"
                 isUploaded={uploads?.drivingLicence}
@@ -116,7 +116,6 @@ export default function AllowanceDetails({
 
               <FileUpload
                 label="VEHICLE INSURANCE CERTIFICATE"
-                // icon="Shield"
                 infoPillDescription="Upload a valid vehicle insurance certificate as proof of active insurance coverage for the registered vehicle."
                 fileName="Vehicle_Insurance.pdf"
                 isUploaded={uploads?.vehicleInsurance}

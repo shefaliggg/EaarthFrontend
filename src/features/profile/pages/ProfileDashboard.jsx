@@ -7,8 +7,10 @@ import AllowanceDetails from "../components/tabs/allowance-details/AllowancesDet
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
-import { Car, DollarSign, FileText, Heart, MapPin, PenTool, User } from "lucide-react";
+import { Briefcase, BriefcaseBusiness, Car, DollarSign, FileText, Heart, MapPin, PenTool, User } from "lucide-react";
 import DocumentsDetails from "../components/tabs/documents-details/DocumentsDetails";
+import AgencyDetails from "../components/tabs/AgencyDetails";
+import CompanyDetails from "../components/tabs/CompanyDetails";
 
 export default function ProfileDashboard() {
   const [isEditing, setIsEditing] = useState(false);
@@ -121,6 +123,8 @@ export default function ProfileDashboard() {
   const tabs = [
     { value: "identity", label: "Identity", icon: User },
     { value: "contact", label: "Contact", icon: MapPin },
+    { value: "agency", label: "Agency", icon: BriefcaseBusiness },
+    { value: "company", label: "Company", icon: Briefcase },
     { value: "financial", label: "Financial", icon: DollarSign },
     { value: "allowances", label: "Allowances", icon: Car },
     { value: "health", label: "Health", icon: Heart },
@@ -173,6 +177,22 @@ export default function ProfileDashboard() {
 
         {activeTab === "contact" && (
           <ContactDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+        {activeTab === "agency" && (
+          <AgencyDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+        {activeTab === "company" && (
+          <CompanyDetails
             profile={profile}
             setProfile={setProfile}
             isEditing={isEditing}
