@@ -28,7 +28,7 @@ const VARIANT_STYLES = {
     list: ({ transparentBg, fullWidth }) => `
       h-auto
       ${transparentBg ? "bg-transparent" : "bg-background rounded-3xl border shadow-sm border-muted"}
-      ${fullWidth ? "grid grid-flow-col auto-cols-fr w-full" : "flex flex-wrap justify-start"}
+      ${fullWidth ? "flex flex-nowrap items-center justify-start overflow-x-auto w-full scroll-smooth scrollbar-none py-2" : "flex flex-wrap justify-start"}
     `,
     trigger: ({ badge }) => `
       bg-background/60
@@ -128,6 +128,7 @@ function FilterPillTabs({
               key={tabValue}
               value={tabValue}
               className={`
+                min-w-max flex-shrink-0
                 ${styles.trigger}
                 ${variantStyles.trigger({ badge: option.badge === undefined })}
                 group relative
