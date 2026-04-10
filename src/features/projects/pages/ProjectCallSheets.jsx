@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useParams } from 'react-router-dom';
-import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import ViewToggleButton from '../../../shared/components/buttons/ViewToggleButton';
 import ProjectActionGridCard from '../components/ProjectActionGridCard';
 import ProjectActionListCard from '../components/ProjectActionListCard';
 import { useFavorites } from '../hooks/useFavorites';

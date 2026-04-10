@@ -1,6 +1,6 @@
 import { CheckSquare, Star } from 'lucide-react';
 import React, { useState } from 'react'
-import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import ViewToggleButton from '../../../shared/components/buttons/ViewToggleButton';
 import ProjectActionGridCard from './ProjectActionGridCard';
 import ProjectActionListCard from './ProjectActionListCard';
 
