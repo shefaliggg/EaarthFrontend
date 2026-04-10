@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   Check,
@@ -8,6 +8,8 @@ import {
   LayoutGrid,
   Search,
   Settings,
+  UserPlus,
+  Users,
   X,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -89,7 +91,37 @@ export default function Header({
 
   const fullName = getFullName(currentUser) || "Not Available";
   const role = currentUser?.userType || "Not Available";
-  const onlineCount = useChatStore((state) => state.onlineUsers.size);
+  const onlineUsers = useChatStore((state) => state.onlineUsers);
+  const chatConversations = useChatStore((state) => state.conversations);
+  const onlineCount = onlineUsers.size;
+
+  const onlineUserDetails = useMemo(() => {
+    const seen = new Set();
+    const users = [];
+    for (const conv of chatConversations) {
+      for (const member of conv.members || []) {
+        const uid = member.userId?._id?.toString();
+        if (uid && onlineUsers.has(uid) && !seen.has(uid)) {
+          seen.add(uid);
+          const name = member.userId?.displayName || "Unknown";
+          const initials = name
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((w) => w[0].toUpperCase())
+            .join("");
+          users.push({
+            id: uid,
+            name,
+            role: member.userId?.roleName || null,
+            department: member.userId?.departmentName || null,
+            initials,
+          });
+        }
+      }
+    }
+    return users;
+  }, [chatConversations, onlineUsers]);
   const activeWorkspaceTab = workspaceTabs.find(
     (tab) => tab.id === activeWorkspaceTabId,
   );
@@ -99,7 +131,26 @@ export default function Header({
         project.id === routeProjectKey ||
         convertTitleToUrl(project.name) === routeProjectKey,
     ) || projectCatalog[0];
-  const currentProjectApps = currentProject?.apps || [];
+  const SIDEBAR_APP_IDS = new Set([
+    "onboarding",
+    "crew-onboarding",
+    "timesheets",
+    "project-calendar",
+    "calendar",
+    "project-chat",
+    "chat",
+    "call-sheets",
+  ]);
+  const onboardingApp = {
+    id: "onboarding",
+    name: "ONBOARDING",
+    icon: UserPlus,
+    description: "Crew onboarding & start paperwork",
+  };
+  const currentProjectApps = [
+    onboardingApp,
+    ...(currentProject?.apps || []).filter((app) => SIDEBAR_APP_IDS.has(app.id)),
+  ];
   const filteredLauncherApps = currentProjectApps.filter((app) => {
     const query = appLauncherQuery.trim().toLowerCase();
     if (!query) return true;
@@ -138,7 +189,7 @@ export default function Header({
   const handleOpenLauncherRoute = (path) => {
     setIsAppLauncherOpen(false);
     setLauncherPanelView("apps");
-    onWorkspaceTabOpen?.(path);
+    navigate(path);
   };
 
   const handleAppLauncherOpenChange = (nextOpen) => {
@@ -280,6 +331,12 @@ export default function Header({
                           )}
                           title={tab.label}
                         >
+                          {tab.accent && (
+                            <span
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: tab.accent }}
+                            />
+                          )}
                           <span className="min-w-0 max-w-[10rem] truncate font-medium">
                             {tab.label}
                           </span>
@@ -316,23 +373,45 @@ export default function Header({
             )}
 
             <div className="ml-auto flex shrink-0 items-center gap-1.5 self-center">
-              <div className="hidden min-w-0 max-w-[34rem] items-center gap-2 rounded-full border border-border/60 bg-background/35 px-4 py-2 text-sm backdrop-blur-sm lg:flex">
-                <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-muted-foreground">
-                  <span className="size-2 rounded-full bg-emerald-500" />
-                  <span className="font-medium">{onlineCount} online</span>
-                </div>
-
+              <div className="hidden items-center gap-2.5 text-sm lg:flex">
                 <div className="h-5 w-px bg-border/70" />
-
-                <span className="min-w-0 truncate text-muted-foreground">
-                  <span className="font-medium text-foreground">
-                    {firstName || "You"}
-                  </span>{" "}
-                  In{" "}
-                  <span className="font-semibold text-primary">
-                    {activeWorkspaceLabel}
-                  </span>
-                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground">
+                      <span className="size-2 rounded-full bg-emerald-500" />
+                      <span className="font-medium">{onlineCount} online</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 p-0" sideOffset={8}>
+                    <div className="flex items-center gap-2 border-b px-4 py-3">
+                      <Users className="h-4 w-4 text-emerald-500" />
+                      <span className="text-sm font-semibold">{onlineCount} people online</span>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {onlineUserDetails.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-xs text-muted-foreground">No user details available</p>
+                      ) : (
+                        onlineUserDetails.map((u) => (
+                          <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50">
+                            <div className="relative flex-shrink-0">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                                {u.initials}
+                              </div>
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{u.name}</p>
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {[u.role, u.department].filter(Boolean).join(" · ") || "Online"}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <div className="h-5 w-px bg-border/70" />
               </div>
 
               <Button
@@ -518,7 +597,7 @@ export default function Header({
                                         >
                                           <div className="relative">
                                             <div
-                                              className="flex h-14 w-14 items-center justify-center rounded-[18px] text-primary shadow-sm transition-colors group-hover:shadow-md"
+                                              className="flex h-10 w-10 items-center justify-center rounded-[14px] text-primary shadow-sm transition-colors group-hover:shadow-md"
                                               style={{
                                                 backgroundColor: `${currentProject?.color || "#7c3aed"}14`,
                                                 color:
@@ -527,7 +606,7 @@ export default function Header({
                                               }}
                                             >
                                               <AppIcon
-                                                className="h-6 w-6"
+                                                className="h-5 w-5"
                                                 strokeWidth={2}
                                               />
                                             </div>
@@ -568,7 +647,7 @@ export default function Header({
                                           title={app.description}
                                         >
                                           <div
-                                            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[13px]"
+                                            className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px]"
                                             style={{
                                               backgroundColor: `${currentProject?.color || "#7c3aed"}14`,
                                               color:
@@ -577,7 +656,7 @@ export default function Header({
                                             }}
                                           >
                                             <AppIcon
-                                              className="h-[18px] w-[18px]"
+                                              className="h-[14px] w-[14px]"
                                               strokeWidth={2}
                                             />
 
@@ -648,7 +727,7 @@ export default function Header({
                                   type="button"
                                   onClick={() => handleProjectSwitch(project)}
                                   className={cn(
-                                    "relative flex w-full items-center gap-2.5 rounded-[22px] border border-transparent px-3 py-2.5 text-left transition-colors",
+                                    "relative flex w-full items-center gap-2 rounded-[14px] border border-transparent px-2.5 py-2 text-left transition-colors",
                                     isSelected
                                       ? "border-primary/10 bg-primary/5 shadow-[0_12px_24px_-24px_rgba(124,58,237,0.55)]"
                                       : "hover:bg-muted/50",
@@ -657,7 +736,7 @@ export default function Header({
                                 >
                                   {isSelected && (
                                     <span
-                                      className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+                                      className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
                                       style={{
                                         backgroundColor:
                                           project.color || "#7c3aed",
@@ -666,7 +745,7 @@ export default function Header({
                                   )}
 
                                   <div
-                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-sm font-semibold text-white shadow-sm"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] text-[11px] font-bold text-white shadow-sm"
                                     style={{
                                       backgroundColor:
                                         project.color || "#7c3aed",
@@ -676,48 +755,30 @@ export default function Header({
                                   </div>
 
                                   <div className="min-w-0 flex-1">
-                                    <div className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+                                    <div className="truncate text-[13px] font-semibold tracking-tight text-foreground">
                                       {project.name}
                                     </div>
 
-                                    <div className="mt-1 flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
                                       <span
-                                        className="truncate text-[11px] font-medium"
+                                        className="truncate text-[10px] font-medium"
                                         style={{
                                           color: project.color || "#7c3aed",
                                         }}
                                       >
                                         {project.subtitle}
                                       </span>
-
-                                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                                        <div className="h-2 w-16 overflow-hidden rounded-full bg-muted/80">
-                                          <div
-                                            className="h-full rounded-full"
-                                            style={{
-                                              width: `${project.progress}%`,
-                                              backgroundColor:
-                                                project.color || "#7c3aed",
-                                            }}
-                                          />
-                                        </div>
-                                        <span className="text-[11px] font-medium text-muted-foreground">
-                                          {project.progress}%
-                                        </span>
-                                      </div>
                                     </div>
                                   </div>
 
-                                  <div className="flex shrink-0 items-center gap-1.5">
-                                    <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-red-500 px-2 text-[11px] font-semibold leading-none text-white shadow-sm">
+                                  <div className="flex shrink-0 items-center gap-1">
+                                    {projectNotifications > 0 && (
+                                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-none text-white shadow-sm">
                                       {projectNotifications > 99
                                         ? "99+"
                                         : projectNotifications}
                                     </span>
-
-                                    <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-muted px-2 text-[11px] font-semibold leading-none text-muted-foreground shadow-sm">
-                                      {projectAppsCount}
-                                    </span>
+                                    )}
 
                                     {isSelected ? (
                                       <span
@@ -860,7 +921,7 @@ export default function Header({
                         <DropdownMenuItem
                           className={cn(item.danger && "text-red-600")}
                           onClick={() => {
-                            if (item.route) navigate(item.route);
+                            if (item.route) onWorkspaceTabOpen?.(item.route);
                             if (item.action) actionHandlers[item.action]?.();
                           }}
                         >

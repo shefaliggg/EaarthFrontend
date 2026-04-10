@@ -153,14 +153,14 @@ const resolveWorkspaceTabMeta = (path) => {
 
     if (app) {
       return {
-        label: `${projectLabel} - ${app.label}`,
+        label: app.label,
         icon: app.icon,
         accent: project?.accent ?? null,
       };
     }
 
     return {
-      label: `${projectLabel} - ${segments.slice(2).map(convertToPrettyText).join(" - ")}`,
+      label: segments.slice(2).map(convertToPrettyText).join(" - "),
       icon: FileText,
       accent: project?.accent ?? null,
     };
@@ -328,7 +328,7 @@ const DashboardLayout = () => {
       <div className="flex">
         <aside
           className={cn(
-            "fixed top-0 left-0 z-50 flex h-screen w-50 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out",
+            "fixed top-0 left-0 z-50 flex h-screen w-50 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-transform duration-300 ease-in-out",
             isMobileSidebarOpen
               ? "translate-x-0"
               : "-translate-x-full md:translate-x-0",
@@ -336,34 +336,37 @@ const DashboardLayout = () => {
         >
           <div
             className={cn(
-              "flex h-12 items-center justify-center border-b border-r border-sidebar-border",
+              "flex h-12 items-center justify-center border-b border-sidebar-border",
             )}
           >
             <img
               src={eaarthLogo}
               alt="EAARTH"
-              className="h-8 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </div>
 
           {canCreateProject && (
-            <div className="px-3 py-2">
-              <button
-                type="button"
-                onClick={() => handleOpenWorkspaceTab("/projects/create")}
-                className={cn(
-                  "flex h-9 w-full items-center gap-2 rounded-md bg-sidebar-primary px-3 text-sm font-medium text-sidebar-primary-foreground transition-colors",
-                  "hover:bg-sidebar-primary/90",
-                )}
-                title="Create Project"
-              >
-                <Plus className="h-4 w-4 shrink-0" />
-                <span>Create Project</span>
-              </button>
-            </div>
+            <>
+              <div className="px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenWorkspaceTab("/projects/create")}
+                  className={cn(
+                    "flex h-9 w-full items-center gap-2 rounded-md bg-sidebar-primary px-3 text-sm font-medium text-sidebar-primary-foreground transition-colors",
+                    "hover:bg-sidebar-primary/90",
+                  )}
+                  title="Create Project"
+                >
+                  <Plus className="h-4 w-4 shrink-0" />
+                  <span>Create Project</span>
+                </button>
+              </div>
+              <div className="border-b border-sidebar-border" />
+            </>
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-r border-sidebar-border">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <div className="space-y-3">
                 {DASHBOARD_PROJECTS.map((project) => {
@@ -374,6 +377,14 @@ const DashboardLayout = () => {
                     activeProjectId === project.id ||
                     expandedProjectId === project.id;
 
+                  const projectInitials = project.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join("")
+                    .toUpperCase();
+
                   return (
                     <div key={project.id} className="space-y-1">
                       <div className="flex items-center gap-1">
@@ -381,13 +392,19 @@ const DashboardLayout = () => {
                           type="button"
                           onClick={() => handleOpenWorkspaceTab(projectPath)}
                           className={cn(
-                            "flex-1 flex items-center rounded-md px-3 py-2 text-sm transition-colors",
+                            "flex-1 flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
                             "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                             isActive &&
                               "bg-sidebar-primary text-sidebar-primary-foreground",
                           )}
                           title={project.name}
                         >
+                          <span
+                            className="flex h-6 w-6 shrink-0 items-center justify-center border text-[10px] font-bold text-white shadow-sm"
+                            style={{ backgroundColor: project.accent || "#7c3aed", borderColor: `${project.accent || "#7c3aed"}80`, borderRadius: "8px" }}
+                          >
+                            {projectInitials}
+                          </span>
                           <span className="flex-1 text-left font-medium">
                             {project.name}
                           </span>
