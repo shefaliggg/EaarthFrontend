@@ -26,11 +26,11 @@ export default function AllowanceDetails({
         title={"Personal Vehicle"}
         icon={"Car"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -98,52 +98,42 @@ export default function AllowanceDetails({
             </div>
 
             {/* Document Uploads for Vehicle */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label
-                  className={`block text-xs font-medium mb-2  text-muted-foreground`}
-                >
-                  DRIVING LICENCE
-                </label>
-                <FileUpload
-                  fieldLabel="Driving Licence"
-                  fileName="Driving_Licence.pdf"
-                  isUploaded={uploads?.drivingLicence}
-                  isEditing={isEditing}
-                  onUpload={() =>
-                    setUploads((prev) => ({ ...prev, drivingLicence: true }))
-                  }
-                  onDelete={() =>
-                    setUploads((prev) => ({ ...prev, drivingLicence: false }))
-                  }
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-3 mt-4">
+              <FileUpload
+                label="DRIVING LICENCE"
+                // icon="Car"
+                infoPillDescription="Upload a valid government-issued driving licence as proof of your legal authorization to operate a motor vehicle."
+                fileName="Driving_Licence.pdf"
+                isUploaded={uploads?.drivingLicence}
+                isEditing={isEditing}
+                onUpload={() =>
+                  setUploads((prev) => ({ ...prev, drivingLicence: true }))
+                }
+                onDelete={() =>
+                  setUploads((prev) => ({ ...prev, drivingLicence: false }))
+                }
+              />
 
-              <div>
-                <label
-                  className={`block text-xs font-medium mb-2  text-muted-foreground`}
-                >
-                  VEHICLE INSURANCE
-                </label>
-                <FileUpload
-                  fieldLabel="Vehicle Insurance"
-                  fileName="Vehicle_Insurance.pdf"
-                  isUploaded={uploads?.vehicleInsurance}
-                  isEditing={isEditing}
-                  onUpload={() =>
-                    setUploads((prev) => ({
-                      ...prev,
-                      vehicleInsurance: true,
-                    }))
-                  }
-                  onDelete={() =>
-                    setUploads((prev) => ({
-                      ...prev,
-                      vehicleInsurance: false,
-                    }))
-                  }
-                />
-              </div>
+              <FileUpload
+                label="VEHICLE INSURANCE CERTIFICATE"
+                // icon="Shield"
+                infoPillDescription="Upload a valid vehicle insurance certificate as proof of active insurance coverage for the registered vehicle."
+                fileName="Vehicle_Insurance.pdf"
+                isUploaded={uploads?.vehicleInsurance}
+                isEditing={isEditing}
+                onUpload={() =>
+                  setUploads((prev) => ({
+                    ...prev,
+                    vehicleInsurance: true,
+                  }))
+                }
+                onDelete={() =>
+                  setUploads((prev) => ({
+                    ...prev,
+                    vehicleInsurance: false,
+                  }))
+                }
+              />
             </div>
           </div>
         )}
@@ -153,11 +143,11 @@ export default function AllowanceDetails({
         title={"Computer"}
         icon={"Laptop"}
         actions={
-            <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -167,53 +157,53 @@ export default function AllowanceDetails({
         title={"Mobile Phone"}
         icon={"Smartphone"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Software"}
         icon={"AppWindow"}
         actions={
-  <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="software" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="software" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Equipment"}
         icon={"Camera"}
         actions={
-            <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
-        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing}  />
+        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing} />
       </CardWrapper>
       <CardWrapper
         title={"Box Rental"}
         icon={"Package"}
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >

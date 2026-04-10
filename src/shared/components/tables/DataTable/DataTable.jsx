@@ -137,7 +137,8 @@ export default function DataTable({
                   className={cn(
                     col.align === "center" && "text-center",
                     col.align === "right" && "text-right",
-                    "h-15 last:pr-4 first:pl-4"
+                    "h-13 last:pr-4 first:pl-4 text-muted-foreground",
+                    !selectable && "first:pl-6!"
                   )}
                   style={{ width: col.width }}
                 >

@@ -37,9 +37,9 @@ export default function ContactDetails({
         actions={
           <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -115,9 +115,9 @@ export default function ContactDetails({
         actions={
           <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -216,9 +216,9 @@ export default function ContactDetails({
         actions={
           <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -288,12 +288,12 @@ export default function ContactDetails({
           title={"Agency Details"}
           icon={"BriefcaseBusiness"}
           actions={
-            <EditToggleButtons
-              isEditing={isEditing}
-              onEdit={setIsEditing}
-              onSave={setIsEditing}
-              onCancel={setIsEditing}
-            />
+           <EditToggleButtons
+            isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
+          />
           }
         >
           <div className="grid grid-cols-1 gap-4">

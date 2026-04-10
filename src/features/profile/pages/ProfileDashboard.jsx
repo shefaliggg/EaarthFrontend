@@ -7,8 +7,8 @@ import AllowanceDetails from "../components/tabs/allowance-details/AllowancesDet
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
-import { set } from "date-fns/set";
-import { Car, DollarSign, Heart, MapPin, PenTool, User } from "lucide-react";
+import { Car, DollarSign, FileText, Heart, MapPin, PenTool, User } from "lucide-react";
+import DocumentsDetails from "../components/tabs/documents-details/DocumentsDetails";
 
 export default function ProfileDashboard() {
   const [isEditing, setIsEditing] = useState(false);
@@ -124,6 +124,7 @@ export default function ProfileDashboard() {
     { value: "financial", label: "Financial", icon: DollarSign },
     { value: "allowances", label: "Allowances", icon: Car },
     { value: "health", label: "Health", icon: Heart },
+    { value: "documents", label: "Documents", icon: FileText },
     { value: "signature", label: "My Signature", icon: PenTool },
   ];
 
@@ -199,6 +200,14 @@ export default function ProfileDashboard() {
 
         {activeTab === "health" && (
           <HealthDetails
+            profile={profile}
+            setProfile={setProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+          />
+        )}
+        {activeTab === "documents" && (
+          <DocumentsDetails
             profile={profile}
             setProfile={setProfile}
             isEditing={isEditing}

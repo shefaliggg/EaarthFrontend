@@ -11,7 +11,7 @@ function SearchBar({ placeholder, value, onValueChange, className }) {
           placeholder={placeholder}
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
-          className="pl-10 rounded-full bg-background dark:bg-background border-2 border-border focus:bg-background focus:border-primary transition-all h-10 w-full placeholder:text-muted-foreground"
+          className="pl-10 rounded-full bg-background dark:bg-background border-border focus:bg-background focus:border-primary transition-all h-10 w-full placeholder:text-muted-foreground"
         />
         {value && (
           <button
