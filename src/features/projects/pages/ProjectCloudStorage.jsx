@@ -6,7 +6,7 @@ import {
   FolderPlus, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import ViewToggleButton from '../../../shared/components/buttons/ViewToggleButton';
 import { Button } from '../../../shared/components/ui/button';
 import ProjectActionListCard from '../components/ProjectActionListCard';
 import ProjectActionGridCard from '../components/ProjectActionGridCard';

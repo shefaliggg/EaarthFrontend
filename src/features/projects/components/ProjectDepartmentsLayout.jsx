@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Badge } from '../../../shared/components/ui/badge';
 import ProjectActionGridCard from './ProjectActionGridCard';
 import { Button } from '../../../shared/components/ui/button';
-import ViewToggleButton from '../../../shared/components/ViewToggleButton';
+import ViewToggleButton from '@/shared/components/buttons/ViewToggleButton';
 import ProjectActionListCard from './ProjectActionListCard';
 
 function ProjectDepartmentsLayout() {
