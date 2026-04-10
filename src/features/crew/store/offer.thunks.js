@@ -154,6 +154,14 @@ export const cloneOfferThunk = createAsyncThunk("offers/clone",
   }
 );
 
+export const voidAndReplaceThunk = createAsyncThunk("offers/voidAndReplace",
+  async ({ offerId, reason }, { rejectWithValue }) => {
+    try {
+      return await offerApi.voidAndReplace(offerId, { reason });
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
 // ─── Toggle Contract Lock ─────────────────────────────────────────────────────
 // Returns { isLocked: boolean } — NOT the full offer.
 // The slice handles this separately via its own fulfilled case.
@@ -236,6 +244,7 @@ export const workflowThunks = [
   extendContractThunk,
   cloneOfferThunk,
   terminateContractThunk,
+  voidAndReplaceThunk,
 ];
 
 export const signThunks = [

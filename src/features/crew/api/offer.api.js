@@ -95,6 +95,15 @@ export const terminateContract = (id, { noticePeriodDays, reason }) =>
     .then(unwrap);    
 // ─── CLONE OFFER ──────────────────────────────────────────────────────────────
 
+
+ 
+export const voidAndReplace = (id, { reason }) =>
+  axiosConfig
+    .post(`${BASE}/${id}/void-and-replace`, { reason }, { headers: roleHeaders() })
+    .then(unwrap);
+ 
+
+    
 export const cloneOffer = (id) =>
   axiosConfig.post(`${BASE}/${id}/clone`, {}, { headers: roleHeaders() }).then(unwrap);
 
