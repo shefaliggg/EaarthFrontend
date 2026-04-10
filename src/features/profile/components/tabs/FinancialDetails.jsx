@@ -37,11 +37,11 @@ export default function FinanceDetails({
         title="Tax & National Insurance"
         icon="Shield"
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -116,17 +116,21 @@ export default function FinanceDetails({
         </div>
 
         {/* TAX DOCUMENTS */}
-        <div className="mt-6 border-t pt-4 grid md:grid-cols-2 gap-4">
+        <div className="mt-6 border-t pt-4 grid md:grid-cols-1 gap-3">
           <FileUpload
-            fieldLabel="FS4 Document"
+            label="FS4 DOCUMENT"
+            // icon="FileText"
+            infoPillDescription="Upload your FS4 form to confirm your tax registration and employment status."
             fileName="FS4.pdf"
-            isUploaded={uploads?.fs4}
+            isUploaded={true}
             isEditing={isEditing}
             onUpload={() => setUploads((p) => ({ ...p, fs4: true }))}
             onDelete={() => setUploads((p) => ({ ...p, fs4: false }))}
           />
           <FileUpload
-            fieldLabel="Latest Payslip"
+            label="LATEST PAYSLIP"
+            // icon="Receipt"
+            infoPillDescription="Upload your most recent payslip as proof of income and employment."
             fileName="Payslip.pdf"
             isUploaded={uploads?.payslip}
             isEditing={isEditing}
@@ -134,7 +138,9 @@ export default function FinanceDetails({
             onDelete={() => setUploads((p) => ({ ...p, payslip: false }))}
           />
           <FileUpload
-            fieldLabel="P45 Document"
+            label="P45 DOCUMENT"
+            // icon="FileCheck"
+            infoPillDescription="Upload your P45 to provide details of your previous employment and tax contributions."
             fileName="P45.pdf"
             isUploaded={uploads?.p45}
             isEditing={isEditing}
@@ -142,7 +148,9 @@ export default function FinanceDetails({
             onDelete={() => setUploads((p) => ({ ...p, p45: false }))}
           />
           <FileUpload
-            fieldLabel="VAT Certificate"
+            label="VAT CERTIFICATE"
+            // icon="BadgePercent"
+            infoPillDescription="Upload your VAT registration certificate to confirm your VAT status."
             fileName="VAT.pdf"
             isUploaded={uploads?.vatCert}
             isEditing={isEditing}
@@ -157,11 +165,11 @@ export default function FinanceDetails({
         title="Personal Bank Details"
         icon="Wallet"
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -253,11 +261,11 @@ export default function FinanceDetails({
         title="Loan-Out Company"
         icon="Briefcase"
         actions={
-           <EditToggleButtons
+          <EditToggleButtons
             isEditing={isEditing}
-            onEdit={setIsEditing}
-            onSave={setIsEditing}
-            onCancel={setIsEditing}
+            onEdit={() => setIsEditing(true)}
+            onSave={() => setIsEditing(false)}
+            onCancel={() => setIsEditing(false)}
           />
         }
       >
@@ -386,15 +394,10 @@ export default function FinanceDetails({
               />
             </div>
 
-            <EditableCheckboxField
-              label="VAT Registered"
-              checked={isVATRegistered}
-              onChange={setIsVATRegistered}
-              isEditing={isEditing}
-            />
-
             <FileUpload
-              fieldLabel="Certificate of Incorporation"
+              label="CERTIFICATE OF INCORPORATION"
+              // icon="Building2"
+              infoPillDescription="Upload your company’s certificate of incorporation to verify its legal registration."
               fileName="certificate.pdf"
               isUploaded={uploads?.companyCertificate}
               isEditing={isEditing}
@@ -406,9 +409,17 @@ export default function FinanceDetails({
               }
             />
 
+            <EditableCheckboxField
+              label="VAT Registered"
+              checked={isVATRegistered}
+              onChange={setIsVATRegistered}
+              isEditing={isEditing}
+            />
             {isVATRegistered && (
               <FileUpload
-                fieldLabel="VAT Certificate"
+                label="VAT CERTIFICATE"
+                // icon="BadgePercent"
+                infoPillDescription="Upload your company VAT certificate to confirm VAT registration status."
                 fileName="vat.pdf"
                 isUploaded={uploads?.vatCert}
                 isEditing={isEditing}

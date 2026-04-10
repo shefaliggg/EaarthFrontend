@@ -98,52 +98,42 @@ export default function AllowanceDetails({
             </div>
 
             {/* Document Uploads for Vehicle */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label
-                  className={`block text-xs font-medium mb-2  text-muted-foreground`}
-                >
-                  DRIVING LICENCE
-                </label>
-                <FileUpload
-                  fieldLabel="Driving Licence"
-                  fileName="Driving_Licence.pdf"
-                  isUploaded={uploads?.drivingLicence}
-                  isEditing={isEditing}
-                  onUpload={() =>
-                    setUploads((prev) => ({ ...prev, drivingLicence: true }))
-                  }
-                  onDelete={() =>
-                    setUploads((prev) => ({ ...prev, drivingLicence: false }))
-                  }
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-3 mt-4">
+              <FileUpload
+                label="DRIVING LICENCE"
+                // icon="Car"
+                infoPillDescription="Upload a valid government-issued driving licence as proof of your legal authorization to operate a motor vehicle."
+                fileName="Driving_Licence.pdf"
+                isUploaded={uploads?.drivingLicence}
+                isEditing={isEditing}
+                onUpload={() =>
+                  setUploads((prev) => ({ ...prev, drivingLicence: true }))
+                }
+                onDelete={() =>
+                  setUploads((prev) => ({ ...prev, drivingLicence: false }))
+                }
+              />
 
-              <div>
-                <label
-                  className={`block text-xs font-medium mb-2  text-muted-foreground`}
-                >
-                  VEHICLE INSURANCE
-                </label>
-                <FileUpload
-                  fieldLabel="Vehicle Insurance"
-                  fileName="Vehicle_Insurance.pdf"
-                  isUploaded={uploads?.vehicleInsurance}
-                  isEditing={isEditing}
-                  onUpload={() =>
-                    setUploads((prev) => ({
-                      ...prev,
-                      vehicleInsurance: true,
-                    }))
-                  }
-                  onDelete={() =>
-                    setUploads((prev) => ({
-                      ...prev,
-                      vehicleInsurance: false,
-                    }))
-                  }
-                />
-              </div>
+              <FileUpload
+                label="VEHICLE INSURANCE CERTIFICATE"
+                // icon="Shield"
+                infoPillDescription="Upload a valid vehicle insurance certificate as proof of active insurance coverage for the registered vehicle."
+                fileName="Vehicle_Insurance.pdf"
+                isUploaded={uploads?.vehicleInsurance}
+                isEditing={isEditing}
+                onUpload={() =>
+                  setUploads((prev) => ({
+                    ...prev,
+                    vehicleInsurance: true,
+                  }))
+                }
+                onDelete={() =>
+                  setUploads((prev) => ({
+                    ...prev,
+                    vehicleInsurance: false,
+                  }))
+                }
+              />
             </div>
           </div>
         )}

@@ -1,4 +1,11 @@
-import { CheckCircle, CircleDashed, Clock, Info, XCircle } from "lucide-react";
+import {
+  CheckCircle,
+  CircleDashed,
+  Clock,
+  Info,
+  Lock,
+  XCircle,
+} from "lucide-react";
 import { convertToPrettyText } from "./utils";
 
 const STATUS_STYLES = {
@@ -10,6 +17,10 @@ const STATUS_STYLES = {
   neutral:
     "bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
   danger: "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+  highlight:
+    "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400",
+  protect:
+    "bg-teal-500/10 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
 };
 
 const STATUS_ICONS = {
@@ -18,6 +29,8 @@ const STATUS_ICONS = {
   warning: Clock,
   neutral: CircleDashed,
   danger: XCircle,
+  highlight: CheckCircle,
+  protect: Lock,
 };
 
 const STATUS_META = {
@@ -26,22 +39,33 @@ const STATUS_META = {
   active: "success",
   enabled: "success",
   synced: "success",
+
   information: "info",
+
+  highlight: "highlight",
+
+  secure: "protect",
+  private: "protect",
+  locked: "protect",
+  restricted: "protect",
 
   draft: "warning",
   pending: "warning",
   "pending-approval": "warning",
+  expiring: "warning",
 
   "not-started": "neutral",
+  inactive: "neutral",
   disabled: "neutral",
 
   rejected: "danger",
   suspended: "danger",
   "not-submitted": "danger",
+  expired: "danger",
 };
 
 export function getStatusBadge(status, label) {
-  console.log("status", status)
+  console.log("status", status);
   const group = STATUS_META[status];
 
   if (!group) {

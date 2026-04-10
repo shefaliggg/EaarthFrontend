@@ -4,41 +4,39 @@ import { getStatusBadge } from "../../config/statusBadgeConfig";
 import { SmartIcon } from "../SmartIcon";
 
 export function StatusBadge({
-    status,
-    label,
-    icon,
-    showIcon = true,
-    size = "md",
-    className,
+  status = "information",
+  label,
+  icon,
+  showIcon = true,
+  size = "md",
+  className,
 }) {
-    const { color, Icon, label: text } = getStatusBadge(status, label);
-    const sizes = {
-        xs: "px-1 py-0.5 text-[9px] rounded-md",
-        sm: "px-2 py-1 text-[10px] rounded-lg",
-        md: "px-3 py-1.5 text-xs rounded-xl",
-        lg: "px-4 py-2 text-sm rounded-xl",
-    };
+  const { color, Icon, label: text } = getStatusBadge(status, label);
+  const sizes = {
+    xs: "px-1 py-0.5 text-[9px] rounded-md",
+    sm: "px-2 py-1 text-[10px] rounded-lg",
+    md: "px-3 py-1.5 text-xs rounded-xl",
+    lg: "px-4 py-2 text-sm rounded-xl",
+  };
 
-    // console.log("icon from timesheet", icon)
-    const FinalIcon = icon ?? Icon
-    // console.log("final icon", FinalIcon)
+  // console.log("icon from timesheet", icon)
+  const FinalIcon = icon ?? Icon;
+  // console.log("final icon", FinalIcon)
 
-    return (
-        <Badge
-            className={cn(
-                "inline-flex items-center gap-1 font-medium",
-                sizes[size],
-                color,
-                className
-            )}
-        >
-            {showIcon && (icon || Icon) && (
-                <SmartIcon
-                    icon={FinalIcon}
-                    className="w-4 h-4"
-                />
-            )}
-            {text}
-        </Badge>
-    );
+  return (
+    <Badge
+      className={cn(
+        "inline-flex items-center justify-center gap-1 font-medium leading-none", // 👈 add leading-none
+        "[&>svg]:w-4 [&>svg]:h-4",
+        sizes[size],
+        color,
+        className,
+      )}
+    >
+      {showIcon && (icon || Icon) && (
+        <SmartIcon icon={FinalIcon} className="w-3! h-3!" />
+      )}
+      {text}
+    </Badge>
+  );
 }

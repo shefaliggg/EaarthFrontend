@@ -22,9 +22,9 @@ export default function IdentityDetails({
       actions={
         <EditToggleButtons
           isEditing={isEditing}
-          onEdit={setIsEditing}
-          onSave={setIsEditing}
-          onCancel={setIsEditing}
+          onEdit={() => setIsEditing(true)}
+          onSave={() => setIsEditing(false)}
+          onCancel={() => setIsEditing(false)}
         />
       }
     >
@@ -283,7 +283,9 @@ export default function IdentityDetails({
                 </div>
 
                 <FileUpload
-                  fieldLabel="Passport"
+                  label="PASSPORT DOCUMENT"
+                  // icon="FileText"
+                  infoPillDescription="Upload a clear copy of your passport. This is used to verify your identity and nationality."
                   fileName="Passport.pdf"
                   isUploaded={uploads?.passport}
                   isEditing={isEditing}
@@ -301,7 +303,9 @@ export default function IdentityDetails({
             {profile.proofOfNationality === "BIRTH CERTIFICATE" && (
               <div className={`mt-6  grid grid-cols-2 gap-4`}>
                 <FileUpload
-                  fieldLabel="Birth Certificate"
+                  label="BIRTH CERTIFICATE"
+                  // icon="FileBadge"
+                  infoPillDescription="Upload your birth certificate as proof of nationality."
                   fileName="Birth_Certificate.pdf"
                   isUploaded={uploads?.birthCertificate}
                   isEditing={isEditing}
@@ -314,7 +318,9 @@ export default function IdentityDetails({
                 />
 
                 <FileUpload
-                  fieldLabel="NI Proof"
+                  label="NATIONAL INSURANCE PROOF"
+                  // icon="ShieldCheck"
+                  infoPillDescription="Upload a valid NI document to support identity and employment verification."
                   fileName="NI_Proof.pdf"
                   isUploaded={uploads?.niProof}
                   isEditing={isEditing}
@@ -332,10 +338,12 @@ export default function IdentityDetails({
             {profile.proofOfNationality ===
               "CERTIFICATE OF REGISTRATION OR NATURALISATION" && (
               <div
-                className={`mt-6  grid grid-cols-2 gap-4 p-6 rounded-2xl bg-background`}
+                className={`mt-6  grid grid-cols-2 gap-4`}
               >
                 <FileUpload
-                  fieldLabel="Certificate of Naturalisation"
+                  label="CERTIFICATE OF NATURALISATION"
+                  // icon="Award"
+                  infoPillDescription="Upload your certificate of registration or naturalisation as proof of legal nationality."
                   fileName="Certificate_Naturalisation.pdf"
                   isUploaded={uploads?.certificateNaturalisation}
                   isEditing={isEditing}
@@ -354,7 +362,9 @@ export default function IdentityDetails({
                 />
 
                 <FileUpload
-                  fieldLabel="NI Proof"
+                  label="NATIONAL INSURANCE PROOF"
+                  // icon="ShieldCheck"
+                  infoPillDescription="Upload a valid NI document to support identity and employment verification."
                   fileName="NI_Proof.pdf"
                   isUploaded={uploads?.niProof}
                   isEditing={isEditing}
