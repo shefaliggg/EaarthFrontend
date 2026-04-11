@@ -14,10 +14,10 @@ function CompanyDetails({
   uploads,
   setUploads,
 }) {
-  const [useLoanOutCompany, setUseLoanOutCompany] = useState(true);
-  const [isVATRegistered, setIsVATRegistered] = useState(true);
+  const [useLoanOutCompany, setUseLoanOutCompany] = useState(false);
+  const [isVATRegistered, setIsVATRegistered] = useState(false);
   const [allowOtherToSignContract, setAllowOtherToSignContract] =
-    useState(true);
+    useState(false);
 
   return (
     <>

@@ -9,7 +9,7 @@ import EditablePhoneField from "../../../../shared/components/wrappers/EditableP
 import { Banknote } from "lucide-react";
 
 function AgencyDetails({ profile, setProfile, isEditing, setIsEditing }) {
-  const [haveAgent, setHaveAgent] = useState(true);
+  const [haveAgent, setHaveAgent] = useState(false);
   const [sendEmailToCrewMember, setSendEmailToCrewMember] = useState(false);
 
   return (

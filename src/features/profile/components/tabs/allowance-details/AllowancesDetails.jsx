@@ -19,7 +19,7 @@ export default function AllowanceDetails({
   uploads,
   setUploads,
 }) {
-  const [useOwnVehicle, setUseOwnVehicle] = useState(true);
+  const [useOwnVehicle, setUseOwnVehicle] = useState(false);
   const [allowanceTotal, setAllowanceTotal] = useState({
     computer: 0,
     mobile: 0,
