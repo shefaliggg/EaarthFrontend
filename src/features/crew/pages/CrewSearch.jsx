@@ -139,24 +139,27 @@ export default function CrewSearch() {
   };
 
   // Navigate → ?openExtend=true → LayoutProductionAdmin auto-opens ExtendDialog
-  // CrewIdentityHeader shows only "Extend Contract" button
   const handleExtendConfirm = (crew) => {
     closeDialog();
     navigate(`/projects/${proj}/offers/${crew._id}/view?openExtend=true`);
   };
 
   // Navigate → ?openEndContract=true → LayoutProductionAdmin auto-opens EndContractDialog
-  // CrewIdentityHeader shows only "End Contract" button
   const handleEndContractConfirm = (crew) => {
     closeDialog();
     navigate(`/projects/${proj}/offers/${crew._id}/view?openEndContract=true`);
   };
 
   // Navigate → ?openVoidReplace=true → LayoutProductionAdmin auto-opens VoidAndReplaceDialog
-  // CrewIdentityHeader shows only "Void & Replace" button
   const handleVoidAndReplaceConfirm = (crew) => {
     closeDialog();
     navigate(`/projects/${proj}/offers/${crew._id}/view?openVoidReplace=true`);
+  };
+
+  // NEW: Navigate → ?openEndAndRevise=true → LayoutProductionAdmin auto-opens EndAndReviseDialog
+  const handleEndAndReviseConfirm = (crew) => {
+    closeDialog();
+    navigate(`/projects/${proj}/offers/${crew._id}/view?openEndAndRevise=true`);
   };
 
   const handleCloneConfirm = async (crew) => {
@@ -187,6 +190,7 @@ export default function CrewSearch() {
     if (dialog.type === 'cloneOffer')      handleCloneConfirm(dialog.crew);
     if (dialog.type === 'endContract')     handleEndContractConfirm(dialog.crew);
     if (dialog.type === 'voidAndReplace')  handleVoidAndReplaceConfirm(dialog.crew);
+    if (dialog.type === 'endAndRevise')    handleEndAndReviseConfirm(dialog.crew);  // NEW
   };
 
   return (
@@ -228,6 +232,7 @@ export default function CrewSearch() {
         onClone={(c)           => openDialog('cloneOffer', c)}
         onEndContract={(c)     => openDialog('endContract', c)}
         onVoidAndReplace={(c)  => openDialog('voidAndReplace', c)}
+        onEndAndRevise={(c)    => openDialog('endAndRevise', c)}        
       />
 
       <OfferActionDialog

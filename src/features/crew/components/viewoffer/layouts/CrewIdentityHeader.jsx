@@ -1,28 +1,33 @@
 /**
  * CrewIdentityHeader.jsx
  *
+ * NEW: onEndAndRevise / showEndAndReviseBtn props added.
+ *
  * Button visibility is controlled by props from LayoutProductionAdmin,
  * which captures URL params ONCE on mount via useState lazy initializer
  * before the useEffects clean them from the URL.
  *
  * URL param → which button shows:
- *   ?openExtend=true      → only "Extend Contract"
- *   ?openEndContract=true → only "End Contract"
- *   ?openVoidReplace=true → only "Void & Replace"
- *   (none)                → all three buttons (direct navigation to ViewOffer)
+ *   ?openExtend=true       → only "Extend Contract"
+ *   ?openEndContract=true  → only "End Contract"
+ *   ?openVoidReplace=true  → only "Void & Replace"
+ *   ?openEndAndRevise=true → only "End & Revise"
+ *   (none)                 → all four buttons (direct navigation to ViewOffer)
  *
  * Props:
- *   contractData         : object
- *   offer                : object
- *   onExtend             : fn | undefined
- *   onEndContract        : fn | undefined
- *   onVoidAndReplace     : fn | undefined
- *   showExtendBtn        : bool  (default true)
- *   showEndContractBtn   : bool  (default true)
- *   showVoidReplaceBtn   : bool  (default true)
+ *   contractData          : object
+ *   offer                 : object
+ *   onExtend              : fn | undefined
+ *   onEndContract         : fn | undefined
+ *   onVoidAndReplace      : fn | undefined
+ *   onEndAndRevise        : fn | undefined   NEW
+ *   showExtendBtn         : bool  (default true)
+ *   showEndContractBtn    : bool  (default true)
+ *   showVoidReplaceBtn    : bool  (default true)
+ *   showEndAndReviseBtn   : bool  (default true)  NEW
  */
 
-import { Calendar, User, CalendarDays, OctagonX, ShieldAlert } from "lucide-react";
+import { Calendar, User, CalendarDays, OctagonX, ShieldAlert, GitBranch } from "lucide-react";
 
 const ENG_LABELS   = { paye: "PAYE", loan_out: "Loan Out", schd: "Schedule D", long_form: "Direct Hire" };
 const CURRENCY_SYM = { GBP: "£", USD: "$", EUR: "€", AUD: "A$", CAD: "C$" };
@@ -81,11 +86,11 @@ export default function CrewIdentityHeader({
   onExtend,
   onEndContract,
   onVoidAndReplace,
-  // Visibility props — set by LayoutProductionAdmin based on which URL param was present.
-  // Default true means "show when handler is provided" (normal direct navigation).
+  onEndAndRevise,           // NEW
   showExtendBtn      = true,
   showEndContractBtn = true,
   showVoidReplaceBtn = true,
+  showEndAndReviseBtn = true, // NEW
 }) {
   const jobTitle  = offer?.createOwnJobTitle && offer?.newJobTitle
     ? offer.newJobTitle
@@ -173,7 +178,7 @@ export default function CrewIdentityHeader({
       </div>
 
       {/* Right — action buttons (COMPLETED only) + Status badge */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
 
         {/* Extend Contract */}
         {isCompleted && onExtend && showExtendBtn && (
@@ -184,6 +189,19 @@ export default function CrewIdentityHeader({
           >
             <CalendarDays className="w-3.5 h-3.5" />
             Extend Contract
+          </button>
+        )}
+
+        {/* End & Revise — NEW */}
+        {isCompleted && onEndAndRevise && showEndAndReviseBtn && (
+          <button
+            onClick={onEndAndRevise}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-opacity hover:opacity-90"
+            style={{ background: "var(--lavender-600,#7c3aed)", color: "white" }}
+            title="End this contract and create a revised draft with updated terms"
+          >
+            <GitBranch className="w-3.5 h-3.5" />
+            End &amp; Revise
           </button>
         )}
 

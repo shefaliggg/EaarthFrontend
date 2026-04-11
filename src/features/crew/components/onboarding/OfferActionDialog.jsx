@@ -1,24 +1,17 @@
 /**
  * OfferActionDialog.jsx
  *
- * Dialog types:
- *   "sendToCrew"         — primary/lavender
- *   "acceptOffer"        — mint/green
- *   "requestChanges"     — destructive/red
- *   "cancelOffer"        — destructive/red
- *   "sendToProduction"   — primary/lavender
- *   "approveOffer"       — mint/green
- *   "returnToProduction" — peach/orange
- *   "extendContract"     — navigate → ?openExtend=true
- *   "cloneOffer"         — clone + navigate to edit
- *   "endContract"        — navigate → ?openEndContract=true
- *   "voidAndReplace"     — navigate → ?openVoidReplace=true
+ * NEW dialog type added:
+ *   "endAndRevise" — preview/info dialog that navigates → ?openEndAndRevise=true
+ *                    (same pattern as "extendContract", "endContract", "voidAndReplace")
+ *
+ * All other dialog types unchanged.
  */
 
 import { useState } from "react";
 import {
   X, Send, CheckCircle, AlertTriangle, Loader2, Edit2, XCircle,
-  ClipboardCheck, MessageSquare, CalendarDays, Copy, OctagonX, ShieldAlert,
+  ClipboardCheck, MessageSquare, CalendarDays, Copy, OctagonX, ShieldAlert, GitBranch,
 } from "lucide-react";
 
 const fmtMoney = (n, currency = "GBP") => {
@@ -387,8 +380,6 @@ function EndContractDialog({ offer, onConfirm, onClose, isLoading }) {
 }
 
 // ─── 11. Void & Replace (preview) ────────────────────────────────────────────
-// Shown in CrewSearch — lightweight info dialog that navigates to
-// ViewOffer?openVoidReplace=true where the actual VoidAndReplaceDialog opens.
 
 function VoidAndReplacePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
   const name = offer?.name || offer?.recipient?.fullName || "this crew member";
@@ -412,8 +403,6 @@ function VoidAndReplacePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
           {jobTitle !== "—" && <> ({jobTitle})</>}{" "}
           due to <strong style={{ color: "var(--foreground)" }}>incorrect data</strong>. A replacement draft will be created.
         </p>
-
-        {/* What happens */}
         <div className="rounded-xl p-4 space-y-2" style={{ background: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.2)" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--destructive)" }}>What happens</p>
           {WHAT_HAPPENS.map((item, i) => (
@@ -423,8 +412,6 @@ function VoidAndReplacePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
             </div>
           ))}
         </div>
-
-        {/* Advisory */}
         <div className="rounded-xl px-4 py-3 flex items-start gap-2.5" style={{ background: "var(--muted)", border: "1px solid var(--border)" }}>
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--muted-foreground)" }} />
           <p className="text-[11px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
@@ -435,6 +422,95 @@ function VoidAndReplacePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
       </div>
       <DialogFooter onClose={onClose} onConfirm={() => onConfirm(offer)} isLoading={isLoading}
         confirmLabel="Go to Contract" confirmBg="var(--destructive)" confirmIcon={ShieldAlert} cancelLabel="Keep Contract" />
+    </DialogShell>
+  );
+}
+
+// ─── 12. End & Revise (preview) ───────────────────────────────────────────── NEW
+// Lightweight info/navigation dialog — opened from CrewTable.
+// Takes the user to ViewOffer?openEndAndRevise=true where the full
+// EndAndReviseDialog (with date inputs + reason) opens automatically.
+
+function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
+  const name     = offer?.name || offer?.recipient?.fullName || "this crew member";
+  const jobTitle = getJobTitle(offer);
+
+  const WHAT_HAPPENS = [
+    "Current contract ended on the date you choose",
+    "Old contract marked as REVISED — preserved for full audit trail",
+    "New DRAFT offer created with all terms copied",
+
+  ];
+
+  return (
+    <DialogShell onClose={onClose}>
+      <DialogHeader
+        bg="var(--lavender-600,#7c3aed)"
+        icon={GitBranch}
+        title="End & Revise Contract"
+        offerCode={offer?.offerCode}
+        onClose={onClose}
+      />
+      <div className="px-5 pt-5 pb-2 space-y-4">
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          Use this when the contract for{" "}
+          <strong style={{ color: "var(--foreground)" }}>{name}</strong>
+          {jobTitle !== "—" && <> ({jobTitle})</>}{" "}
+          was <strong style={{ color: "var(--foreground)" }}>correct but the terms need to change</strong> — such as a rate increase, schedule change, or new agreement.
+        </p>
+
+        {/* Current dates info */}
+        <div
+          className="rounded-xl p-3 grid grid-cols-2 gap-x-6 gap-y-2"
+          style={{ background: "var(--lavender-50,#f5f3ff)", border: "1px solid var(--lavender-200,#ddd6fe)" }}
+        >
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--lavender-600,#7c3aed)" }}>Current Start</p>
+            <p className="text-[13px] font-bold" style={{ color: "var(--foreground)" }}>{fmtDate(offer?.startDate)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--lavender-600,#7c3aed)" }}>Current End</p>
+            <p className="text-[13px] font-bold" style={{ color: "var(--foreground)" }}>{fmtDate(offer?.endDate) || "Open"}</p>
+          </div>
+        </div>
+
+        {/* What happens list */}
+        <div
+          className="rounded-xl p-4 space-y-2"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>
+            What happens
+          </p>
+          {WHAT_HAPPENS.map((item, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--lavender-600,#7c3aed)" }} />
+              <span className="text-[11px]" style={{ color: "var(--foreground)" }}>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Advisory note */}
+        <div
+          className="rounded-xl px-4 py-3 flex items-start gap-2.5"
+          style={{ background: "var(--lavender-50,#f5f3ff)", border: "1px solid var(--lavender-200,#ddd6fe)" }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--lavender-600,#7c3aed)" }} />
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--lavender-700,#6d28d9)" }}>
+            You'll be taken to the contract page to set the end date, new effective date, and reason.
+            The revised offer will open for editing immediately after.
+          </p>
+        </div>
+      </div>
+      <DialogFooter
+        onClose={onClose}
+        onConfirm={() => onConfirm(offer)}
+        isLoading={isLoading}
+        confirmLabel="Go to Contract"
+        confirmBg="var(--lavender-600,#7c3aed)"
+        confirmIcon={GitBranch}
+        cancelLabel="Keep Contract"
+      />
     </DialogShell>
   );
 }
@@ -458,6 +534,7 @@ export default function OfferActionDialog({
       {type === "cloneOffer"         && <CloneOfferDialog             offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "endContract"        && <EndContractDialog            offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "voidAndReplace"     && <VoidAndReplacePreviewDialog  offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
+      {type === "endAndRevise"       && <EndAndRevisePreviewDialog    offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Loader2, MoreVertical, Eye, CalendarDays, Copy, X, OctagonX, ShieldAlert } from 'lucide-react';
+import { Loader2, MoreVertical, Eye, CalendarDays, Copy, X, OctagonX, ShieldAlert, GitBranch } from 'lucide-react';
 import CardWrapper from '@/shared/components/wrappers/CardWrapper';
 
 export const fmtDate = (d) => {
@@ -51,7 +51,15 @@ function OTCell({ value }) {
 
 // ─── Three-dot action menu ────────────────────────────────────────────────────
 
-function ActionMenu({ crew, onViewContract, onExtend, onClone, onEndContract, onVoidAndReplace }) {
+function ActionMenu({
+  crew,
+  onViewContract,
+  onExtend,
+  onClone,
+  onEndContract,
+  onVoidAndReplace,
+  onEndAndRevise,        // NEW
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -105,6 +113,15 @@ function ActionMenu({ crew, onViewContract, onExtend, onClone, onEndContract, on
             Clone for New Crew
           </button>
 
+          {/* End & Revise — NEW */}
+          <button
+            onClick={() => { setOpen(false); onEndAndRevise(crew); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-violet-700 hover:bg-violet-50 transition-colors font-medium"
+          >
+            <GitBranch className="w-3.5 h-3.5 shrink-0" />
+            End &amp; Revise
+          </button>
+
           <div className="h-px bg-neutral-100 mx-2" />
 
           {/* End Contract */}
@@ -122,7 +139,7 @@ function ActionMenu({ crew, onViewContract, onExtend, onClone, onEndContract, on
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-red-700 hover:bg-red-50 transition-colors font-semibold"
           >
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            Void & Replace
+            Void &amp; Replace
           </button>
 
         </div>
@@ -133,7 +150,15 @@ function ActionMenu({ crew, onViewContract, onExtend, onClone, onEndContract, on
 
 // ─── Single crew row ──────────────────────────────────────────────────────────
 
-function CrewRow({ crew, onViewContract, onExtend, onClone, onEndContract, onVoidAndReplace }) {
+function CrewRow({
+  crew,
+  onViewContract,
+  onExtend,
+  onClone,
+  onEndContract,
+  onVoidAndReplace,
+  onEndAndRevise,       // NEW
+}) {
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors">
       <td className="px-4 py-3">
@@ -177,6 +202,7 @@ function CrewRow({ crew, onViewContract, onExtend, onClone, onEndContract, onVoi
           onClone={onClone}
           onEndContract={onEndContract}
           onVoidAndReplace={onVoidAndReplace}
+          onEndAndRevise={onEndAndRevise}
         />
       </td>
     </tr>
@@ -200,6 +226,7 @@ const HEADERS = [
 export default function CrewTable({
   crew = [], grouped = [], isLoading = false, isEmpty = false,
   onViewContract, onExtend, onClone, onEndContract, onVoidAndReplace,
+  onEndAndRevise,   // NEW
 }) {
   const departments = grouped.length
     ? grouped
@@ -222,7 +249,10 @@ export default function CrewTable({
           <thead>
             <tr className="border-b-2 border-gray-200 bg-white">
               {HEADERS.map(({ label, center }) => (
-                <th key={label} className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap ${center ? 'text-center' : 'text-left'}`}>
+                <th
+                  key={label}
+                  className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap ${center ? 'text-center' : 'text-left'}`}
+                >
                   {label}
                 </th>
               ))}
@@ -241,7 +271,9 @@ export default function CrewTable({
             ) : departments.length === 0 ? (
               <tr>
                 <td colSpan={11} className="px-4 py-16 text-center text-gray-400 text-sm">
-                  {isEmpty ? 'No completed contracts found. Only fully signed contracts appear here.' : 'No crew members match your search.'}
+                  {isEmpty
+                    ? 'No completed contracts found. Only fully signed contracts appear here.'
+                    : 'No crew members match your search.'}
                 </td>
               </tr>
             ) : (
@@ -261,6 +293,7 @@ export default function CrewTable({
                       onClone={onClone}
                       onEndContract={onEndContract}
                       onVoidAndReplace={onVoidAndReplace}
+                      onEndAndRevise={onEndAndRevise}
                     />
                   ))}
                 </>
@@ -271,7 +304,9 @@ export default function CrewTable({
       </div>
       {!isLoading && totalCount > 0 && (
         <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50 mt-0">
-          <span className="text-[11px] text-gray-400">{totalCount} completed contract{totalCount !== 1 ? 's' : ''}</span>
+          <span className="text-[11px] text-gray-400">
+            {totalCount} completed contract{totalCount !== 1 ? 's' : ''}
+          </span>
         </div>
       )}
     </CardWrapper>

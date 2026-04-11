@@ -1,25 +1,13 @@
 /**
  * layouts/LayoutProductionAdmin.jsx
  *
- * CHANGES (void & replace addition):
- *   - fromVoidReplace captured on mount (same lazy useState pattern as fromExtend/fromEndContract)
- *   - showVoidReplaceBtn passed to CrewIdentityHeader
- *   - ?openVoidReplace=true in URL auto-opens VoidAndReplaceDialog on mount
- *   - handleVoidAndReplaceConfirm dispatches voidAndReplaceThunk, then navigates
- *     to the new replacement offer's edit page
- *   - VoidAndReplaceDialog imported from CrewMangemant/
- *
- * NOTE: voidAndReplaceThunk must be exported from offer.slice / offer.thunks.
- *   Add to offer.thunks.js:
- *     export const voidAndReplaceThunk = createAsyncThunk("offers/voidAndReplace",
- *       async ({ offerId, reason }, { rejectWithValue }) => {
- *         try { return await offerApi.voidAndReplace(offerId, { reason }); }
- *         catch (e) { return rejectWithValue(normalizeError(e)); }
- *       }
- *     );
- *   Add to offer.api.js:
- *     export const voidAndReplace = (id, { reason }) =>
- *       axiosConfig.post(`${BASE}/${id}/void-and-replace`, { reason }, { headers: roleHeaders() }).then(unwrap);
+ * End & Revise flow (updated):
+ *   - "End & Revise" button in CrewIdentityHeader opens EndAndReviseDialog directly.
+ *   - No URL param navigation needed for this action.
+ *   - On confirm: calls endAndReviseThunk → on success navigates to the new
+ *     offer's edit page (CreateOffer with prefilled data from the cloned offer).
+ *   - URL param ?openEndAndRevise=true is still supported for deep-linking
+ *     from CrewSearch (auto-opens dialog on arrival).
  */
 
 import { useState, useEffect }                     from "react";
@@ -38,13 +26,14 @@ import CrewIdentityHeader     from "../../../../crew/components/viewoffer/layout
 import ExtendDialog           from "../../CrewMangemant/ExtendDialog";
 import EndContractDialog      from "../../CrewMangemant/EndContractDialog";
 import VoidAndReplaceDialog   from "../../CrewMangemant/VoidAndReplaceDialog";
+import EndAndReviseDialog     from "../../CrewMangemant/EndAndReviseDialog";
 
 import {
   extendContractThunk,
   terminateContractThunk,
   getOfferThunk,
-  // ↓ import this from your offer.slice / offer.thunks (see note above)
   voidAndReplaceThunk,
+  endAndReviseThunk,
 } from "../../../store/offer.slice";
 import { defaultEngineSettings } from "../../../utils/rateCalculations";
 
@@ -192,19 +181,22 @@ export default function LayoutProductionAdmin({
   const proj = projectName || "demo-project";
 
   // ── Capture URL params ONCE on mount via lazy initializer ─────────────────
-  // This runs before useEffects delete the params from the URL, so the
-  // captured booleans remain stable for the lifetime of this component.
-  const [fromExtend]       = useState(() => searchParams.get("openExtend")      === "true");
-  const [fromEndContract]  = useState(() => searchParams.get("openEndContract") === "true");
-  const [fromVoidReplace]  = useState(() => searchParams.get("openVoidReplace") === "true");
+  const [fromExtend]      = useState(() => searchParams.get("openExtend")      === "true");
+  const [fromEndContract] = useState(() => searchParams.get("openEndContract") === "true");
+  const [fromVoidReplace] = useState(() => searchParams.get("openVoidReplace") === "true");
+  // NOTE: openEndAndRevise param is still supported for deep-link but the
+  // primary trigger is now direct button click — no URL param needed.
+  const [fromEndAndRevise] = useState(() => searchParams.get("openEndAndRevise") === "true");
 
-  const [dialog,            setDialog           ] = useState(null);
-  const [showExtend,        setShowExtend        ] = useState(false);
-  const [showEndContract,   setShowEndContract   ] = useState(false);
-  const [showVoidReplace,   setShowVoidReplace   ] = useState(false);
-  const [isExtending,       setIsExtending       ] = useState(false);
-  const [isTerminating,     setIsTerminating     ] = useState(false);
-  const [isVoidingReplace,  setIsVoidingReplace  ] = useState(false);
+  const [dialog,             setDialog            ] = useState(null);
+  const [showExtend,         setShowExtend         ] = useState(false);
+  const [showEndContract,    setShowEndContract    ] = useState(false);
+  const [showVoidReplace,    setShowVoidReplace    ] = useState(false);
+  const [showEndAndRevise,   setShowEndAndRevise   ] = useState(false);
+  const [isExtending,        setIsExtending        ] = useState(false);
+  const [isTerminating,      setIsTerminating      ] = useState(false);
+  const [isVoidingReplace,   setIsVoidingReplace   ] = useState(false);
+  const [isEndingAndRevising,setIsEndingAndRevising] = useState(false);
 
   const status       = offer?.status;
   const isCompleted  = status === "COMPLETED";
@@ -214,7 +206,7 @@ export default function LayoutProductionAdmin({
   const isSigningStage    = ["PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED"].includes(status);
   const canMoveToProductionCheck = status === "CREW_ACCEPTED";
 
-  // ── Auto-open ExtendDialog ─────────────────────────────────────────────────
+  // ── Auto-open dialogs from URL params (deep-link support) ─────────────────
   useEffect(() => {
     if (searchParams.get("openExtend") === "true" && offer?._id) {
       setShowExtend(true);
@@ -224,7 +216,6 @@ export default function LayoutProductionAdmin({
     }
   }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-open EndContractDialog ───────────────────────────────────────────
   useEffect(() => {
     if (searchParams.get("openEndContract") === "true" && offer?._id) {
       setShowEndContract(true);
@@ -234,12 +225,21 @@ export default function LayoutProductionAdmin({
     }
   }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-open VoidAndReplaceDialog ────────────────────────────────────────
   useEffect(() => {
     if (searchParams.get("openVoidReplace") === "true" && offer?._id) {
       setShowVoidReplace(true);
       const next = new URLSearchParams(searchParams);
       next.delete("openVoidReplace");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // End & Revise: also support URL param deep-link (from CrewSearch)
+  useEffect(() => {
+    if (searchParams.get("openEndAndRevise") === "true" && offer?._id) {
+      setShowEndAndRevise(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("openEndAndRevise");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, offer?._id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -297,8 +297,6 @@ export default function LayoutProductionAdmin({
   };
 
   // ── Void & Replace ────────────────────────────────────────────────────────
-  // 1. Dispatch voidAndReplaceThunk → backend voids old contract, creates new DRAFT offer
-  // 2. On success → navigate directly to the new offer's edit page
   const handleVoidAndReplaceConfirm = async ({ reason }) => {
     if (!offer?._id) return;
     setIsVoidingReplace(true);
@@ -311,7 +309,6 @@ export default function LayoutProductionAdmin({
         if (newOffer?._id) {
           toast.success("Contract voided — replacement draft created. Redirecting to edit…");
           setShowVoidReplace(false);
-          // Navigate to the new replacement offer's edit page so production can correct the data
           setTimeout(() => navigate(`/projects/${proj}/offers/${newOffer._id}/edit`), 600);
         } else {
           toast.success("Contract voided successfully");
@@ -329,12 +326,59 @@ export default function LayoutProductionAdmin({
     }
   };
 
+  // ── End & Revise ──────────────────────────────────────────────────────────
+  // Flow:
+  //   1. EndAndReviseDialog opened directly by button click (no URL navigation).
+  //   2. User fills in endCurrentOn, newEffectiveFrom, reason → confirms.
+  //   3. Calls endAndReviseThunk → backend marks old offer REVISED, creates new DRAFT.
+  //   4. Navigates to the new offer's EDIT page (CreateOffer with prefilled data).
+  const handleEndAndReviseConfirm = async ({ endCurrentOn, newEffectiveFrom, reason }) => {
+    if (!offer?._id) return;
+    setIsEndingAndRevising(true);
+    toast.loading("Creating revised contract…", { id: "end-revise" });
+    try {
+      const result = await dispatch(endAndReviseThunk({
+        offerId: offer._id,
+        endCurrentOn,
+        newEffectiveFrom,
+        reason,
+      }));
+      toast.dismiss("end-revise");
+      if (!result.error) {
+        const newOffer = result.payload?.newOffer;
+        if (newOffer?._id) {
+          toast.success("Contract revised — opening new offer for editing…");
+          setShowEndAndRevise(false);
+          // Navigate to the new offer's edit page — CreateOffer loads it prefilled
+          setTimeout(() => navigate(`/projects/${proj}/offers/${newOffer._id}/edit`), 400);
+        } else {
+          toast.success("Contract ended and revision created");
+          setShowEndAndRevise(false);
+          dispatch(getOfferThunk(offer._id));
+        }
+      } else {
+        toast.error(
+          result.payload?.errors?.map(e => e.message).join(" · ") ||
+          result.payload?.message ||
+          "Failed to end and revise contract"
+        );
+      }
+    } catch (err) {
+      toast.dismiss("end-revise");
+      toast.error(err.message || "Failed to end and revise contract");
+    } finally {
+      setIsEndingAndRevising(false);
+    }
+  };
+
   // ── Button visibility logic ───────────────────────────────────────────────
-  // When arriving via a specific URL param, show ONLY that button.
-  // When navigating directly to ViewOffer (no param), show all buttons.
-  const showExtendBtn      = fromExtend      ? true  : (!fromEndContract && !fromVoidReplace);
-  const showEndContractBtn = fromEndContract ? true  : (!fromExtend      && !fromVoidReplace);
-  const showVoidReplaceBtn = fromVoidReplace ? true  : (!fromExtend      && !fromEndContract);
+  // When a URL param was present on mount, show ONLY that button.
+  // Direct navigation (no param) → show all buttons.
+  const anyParam = fromExtend || fromEndContract || fromVoidReplace || fromEndAndRevise;
+  const showExtendBtn       = fromExtend       ? true : !anyParam || (!fromEndContract  && !fromVoidReplace && !fromEndAndRevise);
+  const showEndContractBtn  = fromEndContract  ? true : !anyParam || (!fromExtend       && !fromVoidReplace && !fromEndAndRevise);
+  const showVoidReplaceBtn  = fromVoidReplace  ? true : !anyParam || (!fromExtend       && !fromEndContract && !fromEndAndRevise);
+  const showEndAndReviseBtn = fromEndAndRevise ? true : !anyParam || (!fromExtend       && !fromEndContract && !fromVoidReplace);
 
   return (
     <>
@@ -347,9 +391,12 @@ export default function LayoutProductionAdmin({
           onExtend={isCompleted ? () => setShowExtend(true) : undefined}
           onEndContract={isCompleted ? () => setShowEndContract(true) : undefined}
           onVoidAndReplace={isCompleted ? () => setShowVoidReplace(true) : undefined}
+          // End & Revise: opens dialog directly — no URL navigation
+          onEndAndRevise={isCompleted ? () => setShowEndAndRevise(true) : undefined}
           showExtendBtn={showExtendBtn}
           showEndContractBtn={showEndContractBtn}
           showVoidReplaceBtn={showVoidReplaceBtn}
+          showEndAndReviseBtn={showEndAndReviseBtn}
         />
 
         {/* Terminated card */}
@@ -453,13 +500,21 @@ export default function LayoutProductionAdmin({
       {showExtend && (
         <ExtendDialog offer={offer} onClose={() => setShowExtend(false)} onConfirm={handleExtendConfirm} isLoading={isExtending} />
       )}
-
       {showEndContract && (
         <EndContractDialog offer={offer} onClose={() => setShowEndContract(false)} onConfirm={handleEndContractConfirm} isLoading={isTerminating} />
       )}
-
       {showVoidReplace && (
         <VoidAndReplaceDialog offer={offer} onClose={() => setShowVoidReplace(false)} onConfirm={handleVoidAndReplaceConfirm} isLoading={isVoidingReplace} />
+      )}
+
+      {/* End & Revise — opens directly, no intermediate navigation */}
+      {showEndAndRevise && (
+        <EndAndReviseDialog
+          offer={offer}
+          onClose={() => setShowEndAndRevise(false)}
+          onConfirm={handleEndAndReviseConfirm}
+          isLoading={isEndingAndRevising}
+        />
       )}
     </>
   );
