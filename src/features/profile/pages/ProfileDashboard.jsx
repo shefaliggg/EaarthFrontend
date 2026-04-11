@@ -7,7 +7,17 @@ import AllowanceDetails from "../components/tabs/allowance-details/AllowancesDet
 import HealthDetails from "../components/tabs/HealthDetails";
 import MySignature from "../components/tabs/MySignature";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
-import { Briefcase, BriefcaseBusiness, Car, DollarSign, FileText, Heart, MapPin, PenTool, User } from "lucide-react";
+import {
+  Briefcase,
+  BriefcaseBusiness,
+  Car,
+  DollarSign,
+  FileText,
+  Heart,
+  MapPin,
+  PenTool,
+  User,
+} from "lucide-react";
 import DocumentsDetails from "../components/tabs/documents-details/DocumentsDetails";
 import AgencyDetails from "../components/tabs/AgencyDetails";
 import CompanyDetails from "../components/tabs/CompanyDetails";
@@ -197,6 +207,8 @@ export default function ProfileDashboard() {
             setProfile={setProfile}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
+            uploads={uploads}
+            setUploads={setUploads}
           />
         )}
 
@@ -206,6 +218,8 @@ export default function ProfileDashboard() {
             setProfile={setProfile}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
+            uploads={uploads}
+            setUploads={setUploads}
           />
         )}
 
@@ -215,6 +229,8 @@ export default function ProfileDashboard() {
             setProfile={setProfile}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
+            uploads={uploads}
+            setUploads={setUploads}
           />
         )}
 

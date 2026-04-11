@@ -7,12 +7,14 @@ import {
   Download,
   BadgeQuestionMark,
   CircleQuestionMark,
+  Repeat,
 } from "lucide-react";
 import EditableSelect from "../../../../shared/components/forms/EditableSelect";
 import EditableTextarea from "../../../../shared/components/forms/EditableTextarea";
 import EditableInput from "../../../../shared/components/forms/EditableInput";
 import { InfoTooltip } from "../../../../shared/components/InfoTooltip";
 import { SmartIcon } from "../../../../shared/components/SmartIcon";
+import { Button } from "../../../../shared/components/ui/button";
 
 /* -------------------------------------------------
    FORM FIELD WRAPPER
@@ -196,36 +198,42 @@ export function FileUpload({
 
       {/* 🔹 Content */}
       {isUploaded ? (
-        <div className="border border-border rounded-lg p-3 flex items-center justify-between bg-card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted">
-              <FileText className="w-5 h-5 text-primary" />
+        <div className="space-y-4">
+          <div className="border border-border rounded-lg p-3 py-4 2xl:py-5 flex items-center justify-between bg-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-muted">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-card-foreground">
+                  {fileName}
+                </p>
+                <p className="text-xs text-accent flex items-center gap-1 font-medium">
+                  <CheckCircle className="w-3 h-3" /> AI VERIFIED
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-sm font-medium text-card-foreground">
-                {fileName}
-              </p>
-              <p className="text-xs text-accent flex items-center gap-1 font-medium">
-                <CheckCircle className="w-3 h-3" /> AI VERIFIED
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-md transition-all duration-300 hover:bg-muted/50">
-              <Download className="w-4 h-4 text-primary" />
-            </button>
-            {isEditing && (
-              <button
-                onClick={onDelete}
-                disabled={!isEditing}
-                className="p-2 rounded-md transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4 text-destructive" />
+            <div className="flex items-center gap-2">
+              <button className="p-2 rounded-md transition-all duration-300 hover:bg-muted/50">
+                <Download className="w-4 h-4 text-primary" />
               </button>
-            )}
+              {isEditing && (
+                <button
+                  onClick={onDelete}
+                  disabled={!isEditing}
+                  className="p-2 rounded-md transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </button>
+              )}
+            </div>
           </div>
+          <Button onClick={handleFileSelect} size={"lg"} className={"w-full"}>
+            <Repeat />
+            Change Uploaded Document
+          </Button>
         </div>
       ) : isScanning ? (
         <div className="border border-dashed border-primary rounded-lg p-6 text-center bg-primary/5">

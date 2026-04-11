@@ -5,7 +5,6 @@ import EditableCheckboxField from "../../../../shared/components/wrappers/Editab
 import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
 import EditableSwitchField from "../../../../shared/components/wrappers/EditableSwitchField";
 import { FileUpload } from "../common/UnifiedFields";
-import { Banknote } from "lucide-react";
 
 function CompanyDetails({
   profile,

@@ -92,7 +92,7 @@ export default function FinanceDetails({
             isEditing={isEditing}
           />
           <EditableRadioField
-            label="Student Loan"
+            label="Ongoing student loan"
             value={profile.payeStatus}
             infoPillDescription={
               "Do you have a student loan which is not fully repaid?"
@@ -113,13 +113,13 @@ export default function FinanceDetails({
         </div>
 
         {/* TAX DOCUMENTS */}
-        <div className="my-6 grid md:grid-cols-1 gap-3">
+        <div className="my-6 grid md:grid-cols-1 2xl:grid-cols-2 gap-3">
           <FileUpload
             label="FS4 DOCUMENT"
             // icon="FileText"
             infoPillDescription="Upload your complete FS4 form to confirm your tax registration and employment status."
             fileName="FS4.pdf"
-            isUploaded={true}
+            isUploaded={uploads?.fs4}
             isEditing={isEditing}
             onUpload={() => setUploads((p) => ({ ...p, fs4: true }))}
             onDelete={() => setUploads((p) => ({ ...p, fs4: false }))}

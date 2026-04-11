@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import AllowanceItemCard from "./AllowanceItemCard";
 import { AutoHeight } from "../../../../../../shared/components/wrappers/AutoHeight";
 import { SmartIcon } from "../../../../../../shared/components/SmartIcon";
+import { set } from "date-fns";
 
 // allowance.config.js
 
@@ -46,6 +47,7 @@ export const ALLOWANCE_CONFIG = {
 export default function AllowanceItemsList({
   allowanceType = "equipment",
   isEditing = false,
+  setAllowanceTotal,
 }) {
   const [items, setItems] = useState([
     {
@@ -108,6 +110,22 @@ export default function AllowanceItemsList({
       setItems((prev) => prev.filter((item) => item.id !== id));
     }
   };
+
+  const grossTotal = items.reduce((total, item) => {
+    const qty = Number(item.qty) || 0;
+    const amount = Number(item.amount) || 0;
+    return total + qty * amount;
+  }, 0);
+
+  useEffect(() => {
+    if (!setAllowanceTotal) return;
+
+    setAllowanceTotal((prev) => ({
+      ...prev,
+      [allowanceType]: grossTotal,
+    }));
+  }, [grossTotal, allowanceType, setAllowanceTotal]);
+
   if (
     !isEditing &&
     items.length === 1 &&
@@ -134,14 +152,19 @@ export default function AllowanceItemsList({
     );
   }
 
-  const grossTotal = items.reduce((total, item) => {
-    const qty = Number(item.qty) || 0;
-    const amount = Number(item.amount) || 0;
-    return total + qty * amount;
-  }, 0);
-
   return (
     <div className="space-y-4">
+      {/* Total Summary */}
+      {/* <div className="flex justify-end">
+        <div className="w-full px-3">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <span>Gross Total</span>
+            <span className="text-lg font-semibold text-primary">
+              £{grossTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div> */}
       <AutoHeight className="flex flex-col gap-3">
         {items.length > 0 &&
           items.map((item) => (
@@ -161,17 +184,6 @@ export default function AllowanceItemsList({
           ))}
       </AutoHeight>
 
-      {/* Total Summary */}
-      <div className="flex justify-end">
-        <div className="w-full px-3">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Gross Total</span>
-            <span className="text-lg font-semibold text-primary">
-              £{grossTotal.toFixed(2)}
-            </span>
-          </div>
-        </div>
-      </div>
       {isEditing && (
         <button
           onClick={addItem}

@@ -18,13 +18,12 @@ import EditableTextDataField from "../../../../shared/components/wrappers/Editab
 import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
 import EditablePhoneField from "../../../../shared/components/wrappers/EditablePhoneField";
 import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
+import EditableSwitchField from "../../../../shared/components/wrappers/EditableSwitchField";
 export default function ContactDetails({
   profile,
   setProfile,
   isEditing,
   setIsEditing,
-  uploads,
-  setUploads,
 }) {
   const [sendEmailsToCrewMember, setSendEmailsToCrewMember] = useState(true);
 
@@ -196,16 +195,13 @@ export default function ContactDetails({
             isEditing={isEditing}
           />
         </div>
-        <div className="mt-6 border-t border-border">
-          <div className="mt-4">
-            <EditableCheckboxField
-              label="Send Project Emails to Crew Member"
-              // description="Auto-generate meeting agendas."
-              checked={sendEmailsToCrewMember}
-              isEditing={isEditing}
-              onChange={setSendEmailsToCrewMember}
-            />
-          </div>
+        <div className="mt-4">
+          <EditableSwitchField
+            label="Send Project Emails to Crew Member"
+            checked={sendEmailsToCrewMember}
+            isEditing={isEditing}
+            onChange={setSendEmailsToCrewMember}
+          />
         </div>
       </CardWrapper>
 
@@ -271,7 +267,6 @@ export default function ContactDetails({
           />
         </div>
       </CardWrapper>
-      
     </>
   );
 }

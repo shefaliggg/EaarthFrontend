@@ -46,7 +46,7 @@ function EditableRadioField({
               className="flex items-center gap-2 cursor-pointer"
             >
               <RadioGroupItem value={option.value} />
-              <span className="text-sm font-medium">{option.label}</span>
+              <span className="text-sm font-medium tracking-wide">{option.label}</span>
             </label>
           ))}
         </RadioGroup>

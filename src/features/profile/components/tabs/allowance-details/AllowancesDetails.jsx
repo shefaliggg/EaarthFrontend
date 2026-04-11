@@ -20,12 +20,21 @@ export default function AllowanceDetails({
   setUploads,
 }) {
   const [useOwnVehicle, setUseOwnVehicle] = useState(true);
+  const [allowanceTotal, setAllowanceTotal] = useState({
+    computer: 0,
+    mobile: 0,
+    equipment: 0,
+    box_rentals: 0,
+    software: 0,
+  });
 
   return (
     <>
       <CardWrapper
         title={"Personal Vehicle"}
-        subtitle={"Your vehivle details for site access and parking arrangements."}
+        subtitle={
+          "Your vehivle details for site access and parking arrangements."
+        }
         icon={"Car"}
         actions={
           <EditToggleButtons
@@ -142,71 +151,165 @@ export default function AllowanceDetails({
         title={"Computer"}
         icon={"Laptop"}
         actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
+          <>
+            {(allowanceTotal?.computer || 0) > 0 && (
+              <div className="flex justify-end">
+                <div className="w-full px-3">
+                  <div className="flex justify-between gap-3 items-center text-sm text-muted-foreground">
+                    <span>Gross Total</span>
+                    <span className="text-[16px] font-semibold text-primary">
+                      {allowanceTotal?.computer.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={() => setIsEditing(false)}
+              onCancel={() => setIsEditing(false)}
+            />
+          </>
         }
       >
-        <AllowanceItemsList allowanceType="computer" isEditing={isEditing} />
+        <AllowanceItemsList
+          allowanceType="computer"
+          isEditing={isEditing}
+          setAllowanceTotal={setAllowanceTotal}
+        />
       </CardWrapper>
       <CardWrapper
         title={"Mobile Phone"}
         icon={"Smartphone"}
         actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
+          <>
+            {(allowanceTotal?.mobile || 0) > 0 && (
+              <div className="flex justify-end">
+                <div className="w-full px-3">
+                  <div className="flex justify-between gap-3 items-center text-sm text-muted-foreground">
+                    <span>Gross Total</span>
+                    <span className="text-[16px] font-semibold text-primary">
+                      {allowanceTotal?.mobile.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={() => setIsEditing(false)}
+              onCancel={() => setIsEditing(false)}
+            />
+          </>
         }
       >
-        <AllowanceItemsList allowanceType="mobile" isEditing={isEditing} />
+        <AllowanceItemsList
+          allowanceType="mobile"
+          isEditing={isEditing}
+          setAllowanceTotal={setAllowanceTotal}
+        />
       </CardWrapper>
       <CardWrapper
         title={"Software"}
         icon={"AppWindow"}
         actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
+          <>
+            {(allowanceTotal?.software || 0) > 0 && (
+              <div className="flex justify-end">
+                <div className="w-full px-3">
+                  <div className="flex justify-between gap-3 items-center text-sm text-muted-foreground">
+                    <span>Gross Total</span>
+                    <span className="text-[16px] font-semibold text-primary">
+                      {allowanceTotal?.software.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={() => setIsEditing(false)}
+              onCancel={() => setIsEditing(false)}
+            />
+          </>
         }
       >
-        <AllowanceItemsList allowanceType="software" isEditing={isEditing} />
+        <AllowanceItemsList
+          allowanceType="software"
+          isEditing={isEditing}
+          setAllowanceTotal={setAllowanceTotal}
+        />
       </CardWrapper>
       <CardWrapper
         title={"Equipment"}
         icon={"Camera"}
         actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
+          <>
+            {(allowanceTotal?.equipment || 0) > 0 && (
+              <div className="flex justify-end">
+                <div className="w-full px-3">
+                  <div className="flex justify-between gap-3 items-center text-sm text-muted-foreground">
+                    <span>Gross Total</span>
+                    <span className="text-[16px] font-semibold text-primary">
+                      {allowanceTotal?.equipment.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={() => setIsEditing(false)}
+              onCancel={() => setIsEditing(false)}
+            />
+          </>
         }
       >
-        <AllowanceItemsList allowanceType="equipment" isEditing={isEditing} />
+        <AllowanceItemsList
+          allowanceType="equipment"
+          isEditing={isEditing}
+          setAllowanceTotal={setAllowanceTotal}
+        />
       </CardWrapper>
       <CardWrapper
         title={"Box Rental"}
         icon={"Package"}
         actions={
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
-          />
+          <>
+            {(allowanceTotal?.box_rentals || 0) > 0 && (
+              <div className="flex justify-end">
+                <div className="w-full px-3">
+                  <div className="flex justify-between gap-3 items-center text-sm text-muted-foreground">
+                    <span>Gross Total</span>
+                    <span className="text-[16px] font-semibold text-primary">
+                      {allowanceTotal?.box_rentals.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={() => setIsEditing(false)}
+              onCancel={() => setIsEditing(false)}
+            />
+          </>
         }
       >
-        <AllowanceItemsList allowanceType="box_rentals" isEditing={isEditing} />
+        <AllowanceItemsList
+          allowanceType="box_rentals"
+          isEditing={isEditing}
+          setAllowanceTotal={setAllowanceTotal}
+        />
       </CardWrapper>
     </>
   );
