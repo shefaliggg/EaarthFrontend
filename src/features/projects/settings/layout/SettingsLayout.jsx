@@ -1,12 +1,22 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import * as FramerMotion from "framer-motion";
+import { ArrowRight, ChevronLeft, ChevronRight, Lock, Unlock } from "lucide-react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Progress } from "@/shared/components/ui/progress";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import { PageHeader } from "../../../../shared/components/PageHeader";
 import AnimatedCircularProgress from "../components/AnimatedCircularProgress";
 import PageRing from "../components/PageRing";
+import { APP_CONFIG } from "@/features/crew/config/appConfig";
+import { lockSettingsPageThunk } from "../store/settings.thunks";
+import {
+  selectContactsSettings,
+  selectDetailsSettings,
+} from "../store/settingsSlice";
+
 const PROJECT_COLOR = "#7c3aed";
+const LOCKED_TAB_PROGRESS = 100;
 const SETTINGS_PAGES = [
   { path: "details", label: "Details" },
   { path: "contacts", label: "Contacts" },
@@ -33,10 +43,11 @@ const SETTINGS_PAGES = [
 
 function SettingsLayout() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { pathname } = useLocation();
-  console.log(pathname);
 
   const [hoveredPage, setHoveredPage] = useState(null);
+  const pageLockHandlersRef = useRef({});
 
   const activeIndex = useMemo(() => {
     const pathSegments = new Set(pathname.split("/"));
@@ -52,6 +63,28 @@ function SettingsLayout() {
     : activeIndex;
   const canGoPrev = activeIndex > 0;
   const canGoNext = activeIndex < SETTINGS_PAGES.length - 1;
+  const detailsSettings = useSelector(selectDetailsSettings);
+  const contactsSettings = useSelector(selectContactsSettings);
+  const pageStateByPath = {
+    details: detailsSettings,
+    contacts: contactsSettings,
+  };
+  const activePageState = pageStateByPath[activePage.path];
+  const isSavingActivePage = activePageState?.isSaving ?? false;
+  const isActivePageLocked = activePageState?.isLocked ?? false;
+  const activePageProgress = activePageState?.progressPercentage ?? 0;
+  const previewPageProgress =
+    pageStateByPath[previewPage.path]?.progressPercentage ?? 0;
+  const lockedPageCount =
+    Number(detailsSettings.isLocked) + Number(contactsSettings.isLocked);
+  const overallSettingsProgress = Math.round(
+    (lockedPageCount / SETTINGS_PAGES.length) * 100,
+  );
+  const canLockActivePage =
+    Boolean(activePageState) &&
+    activePageState.isValid &&
+    activePageProgress === LOCKED_TAB_PROGRESS &&
+    !isActivePageLocked;
 
   const goToPrev = () => {
     if (canGoPrev) navigate(SETTINGS_PAGES[activeIndex - 1].path);
@@ -60,6 +93,48 @@ function SettingsLayout() {
   const goToNext = () => {
     if (canGoNext) navigate(SETTINGS_PAGES[activeIndex + 1].path);
   };
+
+  const handleLockAndContinue = async () => {
+    if (!canLockActivePage) {
+      return;
+    }
+
+    try {
+      const latestPagePayload =
+        pageLockHandlersRef.current[activePage.path]?.() || null;
+
+      await dispatch(
+        lockSettingsPageThunk({
+          pageKey: activePage.path,
+          projectId: APP_CONFIG.PROJECT_ID,
+          payloadOverride: latestPagePayload,
+        }),
+      ).unwrap();
+
+      toast.success(`${activePage.label} saved and locked successfully`);
+
+      if (canGoNext) {
+        goToNext();
+      }
+    } catch (error) {
+      console.error("Failed to lock and continue settings page", error);
+    }
+  };
+
+  const registerPageLockHandler = useCallback((pageKey, handler) => {
+    pageLockHandlersRef.current[pageKey] = handler;
+
+    return () => {
+      delete pageLockHandlersRef.current[pageKey];
+    };
+  }, []);
+
+  const outletContext = useMemo(() => {
+    return {
+      registerPageLockHandler,
+    };
+  }, [registerPageLockHandler]);
+
   return (
     <>
       <div className="flex flex-col gap-5 overflow-hidden">
@@ -70,23 +145,23 @@ function SettingsLayout() {
           extraActions={
             <div className="flex items-center gap-3">
               <AnimatedCircularProgress
-                progressPercentage={50}
+                progressPercentage={overallSettingsProgress}
                 projectColor={PROJECT_COLOR}
                 size={40}
               />
-              <motion.button
+              <FramerMotion.motion.button
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.76rem] bg-muted text-muted-foreground border border-border opacity-80 cursor-not-allowed"
                 disabled
               >
                 <Lock className="w-3.5 h-3.5" />
-                50% — Lock all to Go Live
-              </motion.button>
+                {overallSettingsProgress}% - Lock all to Go Live
+              </FramerMotion.motion.button>
             </div>
           }
         />
         <div className="rounded-xl bg-card border border-gray-100/80 dark:border-gray-800/50 shadow-sm">
           <div className="flex items-center justify-center py-2 gap-2">
-            <motion.button
+            <FramerMotion.motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={goToPrev}
@@ -94,9 +169,9 @@ function SettingsLayout() {
               aria-label="Previous page"
             >
               <ChevronLeft className="w-3 h-3 text-muted-foreground" />
-            </motion.button>
-            <AnimatePresence mode="wait">
-              <motion.div
+            </FramerMotion.motion.button>
+            <FramerMotion.AnimatePresence mode="wait">
+              <FramerMotion.motion.div
                 key={previewPage.label}
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -128,16 +203,16 @@ function SettingsLayout() {
                     color: `${PROJECT_COLOR}90`,
                   }}
                 >
-                  20%
+                  {previewPageProgress}%
                 </span>
 
                 <span className="text-muted-foreground text-[0.55rem]">
                   {previewIndex + 1}/{SETTINGS_PAGES.length}
                 </span>
-              </motion.div>
-            </AnimatePresence>
+              </FramerMotion.motion.div>
+            </FramerMotion.AnimatePresence>
 
-            <motion.button
+            <FramerMotion.motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={goToNext}
@@ -145,12 +220,12 @@ function SettingsLayout() {
               aria-label="Next page"
             >
               <ChevronRight className="w-3 h-3 text-gray-400" />
-            </motion.button>
+            </FramerMotion.motion.button>
           </div>
           <div className="flex flex-col px-5 pb-5 pt-1 gap-1">
             <div className="flex items-center justify-between">
               {SETTINGS_PAGES.map((page, index) => (
-                <motion.div
+                <FramerMotion.motion.div
                   key={page.path}
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.9 }}
@@ -163,7 +238,7 @@ function SettingsLayout() {
                       <PageRing isActive={isActive} pageNumber={index + 1} />
                     )}
                   </NavLink>
-                </motion.div>
+                </FramerMotion.motion.div>
               ))}
             </div>
             <div className="flex items-center gap-1">
@@ -172,7 +247,7 @@ function SettingsLayout() {
                   <Progress
                     progressColor="bg-green-600"
                     trackColor="bg-muted"
-                    value={60}
+                    value={pageStateByPath[page.path]?.progressPercentage ?? 0}
                     className="h-[5px]"
                   />
                 </div>
@@ -180,7 +255,7 @@ function SettingsLayout() {
             </div>
           </div>
         </div>
-        <motion.div
+        <FramerMotion.motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -188,7 +263,7 @@ function SettingsLayout() {
         >
           <div className="flex items-center gap-4">
             <AnimatedCircularProgress
-              progressPercentage={50}
+              progressPercentage={activePageProgress}
               projectColor={PROJECT_COLOR}
               size={40}
             />
@@ -197,25 +272,25 @@ function SettingsLayout() {
                 {activePage.label}
               </h2>
               <span className="inline-flex items-center gap-1.5 text-[0.6rem] text-muted-foreground">
-                <motion.div
+                <FramerMotion.motion.div
                   className="w-1.5 h-1.5 rounded-full bg-emerald-400"
                   animate={{ scale: [1, 1.4, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
-                Auto-saving changes
+                {activePageProgress}% complete
               </span>
             </div>
           </div>
-        </motion.div>
-        <Outlet />
-        <motion.div
+        </FramerMotion.motion.div>
+        <Outlet context={outletContext} />
+        <FramerMotion.motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
           className="mb-2 rounded-2xl overflow-hidden"
         >
           <div className="flex items-center justify-between px-5 py-3.5 bg-card border border-gray-100/80 dark:border-gray-800/60 rounded-2xl">
-            <motion.button
+            <FramerMotion.motion.button
               onClick={goToPrev}
               disabled={!canGoPrev}
               whileHover={{ scale: 1.02 }}
@@ -230,22 +305,50 @@ function SettingsLayout() {
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               Previous
-            </motion.button>
+            </FramerMotion.motion.button>
 
-            {/* Lock + Next — grouped right */}
             <div className="flex items-center gap-2">
-              <motion.button
-                disabled
-                whileHover={undefined}
-                whileTap={undefined}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                style={{ fontSize: "0.7rem" }}
-              >
-                <Lock className="w-3.5 h-3.5" />
-                Complete to Lock
-              </motion.button>
+              {isActivePageLocked ? (
+                <FramerMotion.motion.button
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 text-emerald-600 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  <Unlock className="w-3.5 h-3.5" />
+                  Unlock Tab
+                </FramerMotion.motion.button>
+              ) : canLockActivePage ? (
+                <FramerMotion.motion.button
+                  whileHover={{ scale: 1.02 }}
+                  onClick={handleLockAndContinue}
+                  disabled={isSavingActivePage}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 text-white shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #7c3aed 0%, #7c3aedcc 100%)",
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  {isSavingActivePage ? "Saving..." : "Lock & Continue"}
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </FramerMotion.motion.button>
+              ) : (
+                <FramerMotion.motion.button
+                  disabled
+                  whileHover={undefined}
+                  whileTap={undefined}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Complete to Lock
+                </FramerMotion.motion.button>
+              )}
 
-              <motion.button
+              <FramerMotion.motion.button
                 onClick={goToNext}
                 disabled={!canGoNext}
                 whileHover={{ scale: 1.02 }}
@@ -260,13 +363,15 @@ function SettingsLayout() {
               >
                 Next
                 <ChevronRight className="w-3.5 h-3.5" />
-              </motion.button>
+              </FramerMotion.motion.button>
             </div>
           </div>
-        </motion.div>
+        </FramerMotion.motion.div>
       </div>
     </>
   );
 }
 
 export default SettingsLayout;
+
+

@@ -1,573 +1,742 @@
-import { motion } from "framer-motion";
+import * as FramerMotion from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useDispatch, useSelector } from "react-redux";
+import { Building2, ChevronDown, HelpCircle, Plus, Trash2 } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
+import { APP_CONFIG } from "@/features/crew/config/appConfig";
 import { Label } from "@/shared/components/ui/label";
 import { Input } from "@/shared/components/ui/input";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/shared/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/components/ui/toggle-group";
 import { SettingsSection } from "@/features/projects/settings/components/shared/SettingsSection";
-import { useState } from "react";
 import { InfoTooltip } from "@/shared/components/InfoTooltip";
-import { HelpCircle, Plus, Trash2, Building2, ChevronDown } from "lucide-react";
 import { SelectMenu } from "@/shared/components/menus/SelectMenu";
+import {
+  loadContactsOptionsThunk,
+  loadContactsSettingsThunk,
+} from "@/features/projects/settings/store/settings.thunks";
+import {
+  DEFAULT_CONTACTS_FORM,
+  selectContactsSettings,
+  setContactsForm,
+  setContactsFormValidity,
+} from "@/features/projects/settings/store/settingsSlice";
+import { contactsSettingsSchema } from "./contactsSettingsSchema";
 
-const ALL_CURRENCIES = [
-  "GBP", "USD", "EUR", "CAD", "AUD", "NZD", "DKK", "SEK", "NOK",
-  "CHF", "JPY", "CNY", "INR", "ZAR", "AED", "SGD", "HKD", "MXN", "BRL",
-];
+const EMPTY_COMPANY = {
+  id: "",
+  name: "",
+  registrationNumber: "",
+  taxId: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  postcode: "",
+  country: "",
+  telephone: "",
+  email: "",
+  currencies: [],
+  isPrimary: true,
+};
 
-const COUNTRIES = [
-  "United Kingdom", "Ireland", "United States", "Canada", "Australia",
-  "New Zealand", "Germany", "France", "Spain", "Italy", "Netherlands",
-  "Belgium", "Switzerland", "Sweden", "Norway", "Denmark", "India",
-  "Singapore", "Hong Kong", "Japan", "United Arab Emirates", "South Africa",
-  "Brazil", "Mexico", "China", "South Korea", "Poland", "Portugal",
-  "Austria", "Czechia", "Iceland",
-];
+const createCompany = ({ defaultCountry, defaultCurrency, isPrimary }) => ({
+  ...EMPTY_COMPANY,
+  id: `company-${Date.now()}`,
+  country: defaultCountry,
+  currencies: defaultCurrency ? [defaultCurrency] : [],
+  isPrimary,
+});
 
-const DEFAULT_COMPANIES = [
-  {
-    id: "co1",
-    name: "",
-    registrationNumber: "",
-    taxId: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    postcode: "",
-    country: "United Kingdom",
-    telephone: "",
-    email: "",
-    currencies: ["GBP"],
-    isPrimary: true,
+const buildCompanies = (companies, defaults) => {
+  if (Array.isArray(companies) && companies.length > 0) {
+    return companies.map((company, index) => ({
+      ...EMPTY_COMPANY,
+      ...company,
+      id: company.id || `company-${index + 1}`,
+      country: company.country || defaults.country,
+      currencies:
+        Array.isArray(company.currencies) && company.currencies.length > 0
+          ? company.currencies
+          : defaults.currency
+            ? [defaults.currency]
+            : [],
+    }));
+  }
+
+  return [];
+};
+
+const buildContactsForm = (form, defaults) => ({
+  companies: buildCompanies(form?.companies, defaults),
+  productionBase: {
+    ...DEFAULT_CONTACTS_FORM.productionBase,
+    ...form?.productionBase,
+    country: form?.productionBase?.country || defaults.country,
   },
-];
+  projectCreator: {
+    ...DEFAULT_CONTACTS_FORM.projectCreator,
+    ...form?.projectCreator,
+  },
+  billing: {
+    ...DEFAULT_CONTACTS_FORM.billing,
+    ...form?.billing,
+    country: form?.billing?.country || defaults.country,
+  },
+});
+
+const isSavedCompany = (companyId) => {
+  return /^[0-9a-fA-F]{24}$/.test(String(companyId || ""));
+};
 
 function ContactsSettings() {
-  const [companies, setCompanies] = useState(DEFAULT_COMPANIES);
-  const [expandedCompany, setExpandedCompany] = useState(DEFAULT_COMPANIES[0]?.id || null);
+  const dispatch = useDispatch();
+  const { registerPageLockHandler } = useOutletContext();
+  const { form, hasLoaded, hasLoadedOptions, isLocked, options } =
+    useSelector(selectContactsSettings);
+  const didApplyLoadedContactsRef = useRef(false);
+  const [expandedCompanyId, setExpandedCompanyId] = useState(null);
 
-  const [base, setBase] = useState({
-    addr1: "", addr2: "", city: "", postcode: "",
-    country: "United Kingdom", telephone: "", email: "",
+  const defaultOptions = useMemo(() => {
+    return options?.defaults || { country: "", currency: "" };
+  }, [options]);
+  const countryItems = useMemo(() => {
+    return (options?.countries || []).map((country) => ({
+      label: country.label,
+      value: country.label,
+    }));
+  }, [options]);
+  const currencyCodes = useMemo(() => {
+    return (options?.currencies || []).map((currency) => currency.code);
+  }, [options]);
+  const countryByLabel = useMemo(() => {
+    return new Map(
+      (options?.countries || []).map((country) => [country.label, country]),
+    );
+  }, [options]);
+
+  const {
+    control,
+    formState: { errors, isValid },
+    getValues,
+    register,
+    reset,
+    setValue,
+  } = useForm({
+    resolver: zodResolver(contactsSettingsSchema),
+    defaultValues: DEFAULT_CONTACTS_FORM,
+    mode: "onChange",
   });
 
-  const [creator, setCreator] = useState({ name: "", email: "" });
-
-  const [billing, setBilling] = useState({
-    contactName: "", contactEmails: "", spvVatNumber: "",
-    sameAsSpv: "yes", addr1: "", addr2: "", city: "",
-    postcode: "", country: "United Kingdom",
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "companies",
   });
+  const contactsForm = useWatch({ control });
+  const billingSameAsSpv = useWatch({
+    control,
+    name: "billing.sameAsSpv",
+  });
+
+  useEffect(() => {
+    dispatch(loadContactsSettingsThunk(APP_CONFIG.PROJECT_ID));
+    dispatch(loadContactsOptionsThunk(APP_CONFIG.PROJECT_ID));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!hasLoaded || !hasLoadedOptions || didApplyLoadedContactsRef.current) {
+      return;
+    }
+
+    const nextForm = buildContactsForm(form, defaultOptions);
+    reset(nextForm);
+    didApplyLoadedContactsRef.current = true;
+  }, [defaultOptions, form, hasLoaded, hasLoadedOptions, reset]);
+
+  useEffect(() => {
+    if (contactsForm) {
+      dispatch(setContactsForm(contactsForm));
+    }
+  }, [contactsForm, dispatch]);
+
+  useEffect(() => {
+    dispatch(setContactsFormValidity(isValid));
+  }, [dispatch, isValid]);
+
+  useEffect(() => {
+    const unregisterPageLockHandler = registerPageLockHandler(
+      "contacts",
+      () => getValues(),
+    );
+
+    return unregisterPageLockHandler;
+  }, [getValues, registerPageLockHandler]);
 
   const addCompany = () => {
-    const newCo = {
-      id: `co${Date.now()}`,
-      name: "", registrationNumber: "", taxId: "",
-      addressLine1: "", addressLine2: "", city: "", postcode: "",
-      country: "United Kingdom", telephone: "", email: "",
-      currencies: ["GBP"], isPrimary: false,
-    };
-    setCompanies([...companies, newCo]);
-    setExpandedCompany(newCo.id);
+    const company = createCompany({
+      defaultCountry: defaultOptions.country,
+      defaultCurrency: defaultOptions.currency,
+      isPrimary: fields.length === 0,
+    });
+    append(company);
+    setExpandedCompanyId(company.id);
   };
 
-  const updateCompany = (id, patch) =>
-    setCompanies(companies.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const deleteCompany = (index) => {
+    if (fields.length === 1) {
+      return;
+    }
 
-  const deleteCompany = (id) => {
-    if (companies.length <= 1) return;
-    setCompanies(companies.filter((c) => c.id !== id));
+    const companies = getValues("companies");
+    const companyToDelete = companies[index];
+    const nextCompanies = companies.filter(
+      (_, companyIndex) => companyIndex !== index,
+    );
+
+    if (companyToDelete?.isPrimary && nextCompanies[0]) {
+      nextCompanies[0].isPrimary = true;
+      setValue("companies", nextCompanies, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setExpandedCompanyId(nextCompanies[0].id);
+      return;
+    }
+
+    remove(index);
+    setExpandedCompanyId(nextCompanies[0]?.id || null);
   };
 
-  const setPrimary = (id) =>
-    setCompanies(companies.map((c) => ({ ...c, isPrimary: c.id === id })));
+  const setPrimaryCompany = (index) => {
+    const nextCompanies = getValues("companies").map(
+      (company, companyIndex) => ({
+        ...company,
+        isPrimary: companyIndex === index,
+      }),
+    );
 
-  const toggleCurrency = (co, code) => {
-    const next = co.currencies.includes(code)
-      ? co.currencies.filter((c) => c !== code)
-      : [...co.currencies, code];
-    updateCompany(co.id, { currencies: next });
+    setValue("companies", nextCompanies, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
+
+  const handleCompanyCountryChange = (companyIndex, countryLabel) => {
+    const selectedCountry = countryByLabel.get(countryLabel);
+    const currentCurrencies =
+      getValues(`companies.${companyIndex}.currencies`) || [];
+    const defaultCurrency =
+      selectedCountry?.defaultCurrency || defaultOptions.currency;
+
+    setValue(`companies.${companyIndex}.country`, countryLabel, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (currentCurrencies.length === 0 && defaultCurrency) {
+      setValue(`companies.${companyIndex}.currencies`, [defaultCurrency], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
+  const toggleCurrency = (companyIndex, currency) => {
+    const currentCurrencies =
+      getValues(`companies.${companyIndex}.currencies`) || [];
+    const nextCurrencies = currentCurrencies.includes(currency)
+      ? currentCurrencies.filter((item) => item !== currency)
+      : [...currentCurrencies, currency];
+
+    setValue(`companies.${companyIndex}.currencies`, nextCurrencies, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const visibleExpandedCompanyId =
+    expandedCompanyId || getValues("companies.0.id") || null;
+  const companies = getValues("companies") || [];
+  const registeredCompanyCount = companies.filter((company) =>
+    isSavedCompany(company.id),
+  ).length;
+  const draftCompanyCount = companies.length - registeredCompanyCount;
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="flex flex-col gap-5"
+    <FramerMotion.motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="flex flex-col gap-5"
+    >
+      <SettingsSection
+        title="Companies"
+        subtitle="Add the company details used for this project."
       >
-        {/* ── Section 1: Companies ── */}
-        <SettingsSection
-          title="Companies"
-          subtitle="Add one or more companies operating on this project. Each can have its own address, contact details, and currencies."
-        >
-          <div className="flex flex-col gap-4 p-4">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">
-                {companies.length} {companies.length === 1 ? "company" : "companies"} registered
+                {registeredCompanyCount === 0
+                  ? "No registered company yet"
+                  : `${registeredCompanyCount} ${registeredCompanyCount === 1 ? "company" : "companies"} registered`}
               </Label>
-              <button
-                onClick={addCompany}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white shadow-sm text-xs bg-violet-600 hover:bg-violet-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Company
-              </button>
+              {draftCompanyCount > 0 ? (
+                <span className="text-[0.65rem] text-amber-500">
+                  {draftCompanyCount} draft {draftCompanyCount === 1 ? "company" : "companies"} not saved yet
+                </span>
+              ) : null}
             </div>
+            <button
+              type="button"
+              onClick={addCompany}
+              disabled={isLocked}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white shadow-sm text-xs bg-violet-600 hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Company
+            </button>
+          </div>
 
-            {companies.map((co, coIdx) => {
-              const isExpanded = expandedCompany === co.id;
-              return (
-                <div
-                  key={co.id}
-                  className="rounded-lg border overflow-hidden"
-                  style={{ borderColor: co.isPrimary ? "#8b5cf650" : undefined }}
+          {fields.map((field, companyIndex) => {
+            const companyId = getValues(`companies.${companyIndex}.id`);
+            const isExpanded = visibleExpandedCompanyId === companyId;
+            const isPrimary = getValues(`companies.${companyIndex}.isPrimary`);
+            const currencies =
+              getValues(`companies.${companyIndex}.currencies`) || [];
+            const companyName = getValues(`companies.${companyIndex}.name`);
+
+            return (
+              <div
+                key={field.id}
+                className="rounded-lg border overflow-hidden"
+                style={{ borderColor: isPrimary ? "#8b5cf650" : undefined }}
+              >
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                  onClick={() =>
+                    setExpandedCompanyId(isExpanded ? null : companyId)
+                  }
                 >
-                  {/* Header row */}
-                  <div
-                    className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => setExpandedCompany(isExpanded ? null : co.id)}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 ${co.isPrimary ? "bg-violet-600" : "bg-muted-foreground/40"}`}>
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground uppercase truncate">
-                            {co.name || `Company ${coIdx + 1} (Unnamed)`}
-                          </span>
-                          {co.isPrimary && (
-                            <span className="shrink-0 px-1.5 py-0.5 rounded-full text-white uppercase tracking-wider text-[0.55rem] bg-violet-600">
-                              Primary
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {co.city && (
-                            <span className="text-[0.65rem] text-muted-foreground">{co.city}, {co.country}</span>
-                          )}
-                          {co.taxId && (
-                            <span className="text-[0.6rem] text-muted-foreground">• VAT: {co.taxId}</span>
-                          )}
-                          {co.currencies.length > 0 && (
-                            <div className="flex gap-1">
-                              {co.currencies.map((cur) => (
-                                <span key={cur} className="px-1.5 py-px rounded-full text-white text-[0.55rem] bg-violet-400">
-                                  {cur}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 ${isPrimary ? "bg-violet-600" : "bg-muted-foreground/40"}`}
+                    >
+                      <Building2 className="w-4 h-4" />
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {!co.isPrimary && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPrimary(co.id); }}
-                          className="px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors text-[0.65rem]"
-                        >
-                          Set Primary
-                        </button>
-                      )}
-                      {companies.length > 1 && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteCompany(co.id); }}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-foreground uppercase truncate">
+                        {companyName || `Company ${companyIndex + 1}`}
+                      </span>
+                      {isPrimary ? (
+                        <span className="ml-2 px-1.5 py-0.5 rounded-full text-white uppercase tracking-wider text-[0.55rem] bg-violet-600">
+                          Primary
+                        </span>
+                      ) : null}
                     </div>
                   </div>
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                </button>
 
-                  {/* Expanded form */}
-                  {isExpanded && (
-                    <div className="px-4 py-4 border-t border-border">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {isExpanded ? (
+                  <div className="px-4 py-4 border-t border-border">
+                    <input
+                      type="hidden"
+                      {...register(`companies.${companyIndex}.id`)}
+                    />
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Company Name</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Company Name"
-                            value={co.name}
-                            onChange={(e) => updateCompany(co.id, { name: e.target.value })}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <TextInput
+                        label="Company Name"
+                        error={errors.companies?.[companyIndex]?.name?.message}
+                        inputProps={register(`companies.${companyIndex}.name`)}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="Email Address"
+                        type="email"
+                        error={errors.companies?.[companyIndex]?.email?.message}
+                        inputProps={register(`companies.${companyIndex}.email`)}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="Registration Number"
+                        inputProps={register(
+                          `companies.${companyIndex}.registrationNumber`,
+                        )}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="VAT / Tax ID"
+                        inputProps={register(`companies.${companyIndex}.taxId`)}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="Address Line 1"
+                        inputProps={register(
+                          `companies.${companyIndex}.addressLine1`,
+                        )}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="Address Line 2"
+                        inputProps={register(
+                          `companies.${companyIndex}.addressLine2`,
+                        )}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="City"
+                        inputProps={register(`companies.${companyIndex}.city`)}
+                        disabled={isLocked}
+                      />
+                      <TextInput
+                        label="Postcode"
+                        inputProps={register(
+                          `companies.${companyIndex}.postcode`,
+                        )}
+                        disabled={isLocked}
+                      />
+
+                      <Controller
+                        control={control}
+                        name={`companies.${companyIndex}.country`}
+                        render={({ field: countryField }) => (
+                          <SelectField
+                            disabled={isLocked}
+                            label="Country"
+                            error={
+                              errors.companies?.[companyIndex]?.country
+                                ?.message
+                            }
+                            selected={countryField.value}
+                            items={countryItems}
+                            onSelect={(value) =>
+                              handleCompanyCountryChange(companyIndex, value)
+                            }
                           />
-                        </div>
+                        )}
+                      />
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Company Registration Number</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Company Registration Number"
-                            value={co.registrationNumber}
-                            onChange={(e) => updateCompany(co.id, { registrationNumber: e.target.value })}
-                          />
-                        </div>
+                      <TextInput
+                        label="Telephone"
+                        inputProps={register(
+                          `companies.${companyIndex}.telephone`,
+                        )}
+                        disabled={isLocked}
+                      />
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">VAT / Tax ID Number</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="e.g. GB 123 4567 89"
-                            value={co.taxId}
-                            onChange={(e) => updateCompany(co.id, { taxId: e.target.value })}
-                          />
-                          <p className="text-[0.6rem] leading-relaxed text-muted-foreground">
-                            VAT or tax registration number for this company's jurisdiction.
-                          </p>
-                        </div>
+                      <FieldError
+                        className="lg:col-span-2"
+                        message={
+                          errors.companies?.[companyIndex]?.currencies?.message
+                        }
+                      >
+                        <Label className="text-xs font-medium">
+                          Currencies
+                        </Label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {currencyCodes.map((currency) => {
+                            const isSelected = currencies.includes(currency);
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Address Line 1</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Address Line 1"
-                            value={co.addressLine1}
-                            onChange={(e) => updateCompany(co.id, { addressLine1: e.target.value })}
-                          />
+                            return (
+                              <button
+                                key={currency}
+                                type="button"
+                                disabled={isLocked}
+                                onClick={() =>
+                                  toggleCurrency(companyIndex, currency)
+                                }
+                                className={`px-2.5 py-1 rounded-md border text-[0.65rem] transition-colors disabled:opacity-50 ${isSelected ? "bg-violet-600 text-white border-violet-600" : "border-border text-muted-foreground hover:border-violet-400 hover:text-foreground"}`}
+                              >
+                                {currency}
+                              </button>
+                            );
+                          })}
                         </div>
+                      </FieldError>
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Address Line 2</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Address Line 2"
-                            value={co.addressLine2}
-                            onChange={(e) => updateCompany(co.id, { addressLine2: e.target.value })}
-                          />
-                        </div>
+                      <div className="lg:col-span-2 flex items-center gap-2">
+                        {!isPrimary ? (
+                          <button
+                            type="button"
+                            disabled={isLocked}
+                            onClick={() => setPrimaryCompany(companyIndex)}
+                            className="px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors text-[0.65rem] disabled:opacity-50"
+                          >
+                            Set Primary
+                          </button>
+                        ) : null}
 
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">City</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="City"
-                            value={co.city}
-                            onChange={(e) => updateCompany(co.id, { city: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Postcode</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Postcode"
-                            value={co.postcode}
-                            onChange={(e) => updateCompany(co.id, { postcode: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Country</Label>
-                          <SelectMenu
-                            label="Select country"
-                            selected={co.country}
-                            onSelect={(v) => updateCompany(co.id, { country: v })}
-                            items={COUNTRIES.map((c) => ({ label: c, value: c }))}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Telephone Number</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Telephone Number"
-                            type="tel"
-                            value={co.telephone}
-                            onChange={(e) => updateCompany(co.id, { telephone: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-medium">Email Address</Label>
-                          <Input
-                            className="placeholder:text-xs"
-                            placeholder="Email Address"
-                            type="email"
-                            value={co.email}
-                            onChange={(e) => updateCompany(co.id, { email: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5 lg:col-span-2">
-                          <Label className="text-xs font-medium">Currencies</Label>
-                          <div className="flex flex-wrap gap-1.5">
-                            {ALL_CURRENCIES.map((code) => {
-                              const isSelected = co.currencies.includes(code);
-                              return (
-                                <button
-                                  key={code}
-                                  onClick={() => toggleCurrency(co, code)}
-                                  className={`px-2.5 py-1 rounded-md border text-[0.65rem] transition-colors ${
-                                    isSelected
-                                      ? "bg-violet-600 text-white border-violet-600"
-                                      : "border-border text-muted-foreground hover:border-violet-400 hover:text-foreground"
-                                  }`}
-                                >
-                                  {code}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
+                        {fields.length > 1 ? (
+                          <button
+                            type="button"
+                            disabled={isLocked}
+                            onClick={() => deleteCompany(companyIndex)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:text-destructive transition-colors text-[0.65rem] disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        ) : null}
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </SettingsSection>
-
-        {/* ── Section 2: Production Base ── */}
-        <SettingsSection
-          title="Production Base"
-          subtitle="Shown to crew in their offer so they can contact you for help, and possibly in documents regarding mileage."
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Address Line 1</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Address Line 1"
-                value={base.addr1}
-                onChange={(e) => setBase({ ...base, addr1: e.target.value })}
-              />
-              <p className="text-[0.6rem] leading-relaxed text-muted-foreground">
-                The address of the Production Base for this project (from which mileage might be charged).
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Address Line 2</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Address Line 2"
-                value={base.addr2}
-                onChange={(e) => setBase({ ...base, addr2: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">City</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="City"
-                value={base.city}
-                onChange={(e) => setBase({ ...base, city: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Postcode</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Postcode"
-                value={base.postcode}
-                onChange={(e) => setBase({ ...base, postcode: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5 lg:col-span-2">
-              <Label className="text-xs font-medium">Country</Label>
-              <SelectMenu
-                label="Select country"
-                selected={base.country}
-                onSelect={(v) => setBase({ ...base, country: v })}
-                items={COUNTRIES.map((c) => ({ label: c, value: c }))}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Telephone Number</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Telephone Number"
-                type="tel"
-                value={base.telephone}
-                onChange={(e) => setBase({ ...base, telephone: e.target.value })}
-              />
-              <p className="text-[0.6rem] leading-relaxed text-muted-foreground">
-                Helpful information shown to crew in their offer, so they can contact you with any questions.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Email Address</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Email Address"
-                type="email"
-                value={base.email}
-                onChange={(e) => setBase({ ...base, email: e.target.value })}
-              />
-              <p className="text-[0.6rem] leading-relaxed text-muted-foreground">
-                Helpful information shown to crew in their offer, so they can contact you with any questions.
-              </p>
-            </div>
-          </div>
-        </SettingsSection>
-
-        {/* ── Section 3: Project Creator ── */}
-        <SettingsSection
-          title="Project Creator"
-          subtitle="Contact details of who created this project."
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Project Creator Name</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Project Creator Name"
-                value={creator.name}
-                onChange={(e) => setCreator({ ...creator, name: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs font-medium">Project Creator Email Address</Label>
-              <Input
-                className="placeholder:text-xs"
-                placeholder="Project Creator Email Address"
-                type="email"
-                value={creator.email}
-                onChange={(e) => setCreator({ ...creator, email: e.target.value })}
-              />
-            </div>
-          </div>
-        </SettingsSection>
-
-        {/* ── Section 4: Billing ── */}
-        <SettingsSection
-          title="Billing"
-          subtitle="Contact details for EAARTH to send invoices to."
-        >
-          <div className="flex flex-col gap-5 p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-medium">Billing Contact Name</Label>
-                <Input
-                  className="placeholder:text-xs"
-                  placeholder="Billing Contact Name"
-                  value={billing.contactName}
-                  onChange={(e) => setBilling({ ...billing, contactName: e.target.value })}
-                />
+                  </div>
+                ) : null}
               </div>
+            );
+          })}
 
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-medium">Billing Contact Email(s)</Label>
-                <Input
-                  className="placeholder:text-xs"
-                  placeholder="Billing Contact Email(s)"
-                  type="email"
-                  value={billing.contactEmails}
-                  onChange={(e) => setBilling({ ...billing, contactEmails: e.target.value })}
-                />
-                <p className="text-[0.6rem] leading-relaxed text-muted-foreground">
-                  Enter one or more email addresses, separated by commas.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-1">
-                  <Label className="text-xs font-medium">SPV Company VAT Number</Label>
-                  <InfoTooltip content="The VAT number of the Special Purpose Vehicle company for this production.">
-                    <span className="text-foreground hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-help">
-                      <HelpCircle className="w-3.5 h-3.5" />
-                    </span>
-                  </InfoTooltip>
-                </div>
-                <Input
-                  className="placeholder:text-xs"
-                  placeholder="SPV Company VAT Number"
-                  value={billing.spvVatNumber}
-                  onChange={(e) => setBilling({ ...billing, spvVatNumber: e.target.value })}
-                />
-              </div>
+          {fields.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border px-4 py-6 text-xs text-muted-foreground">
+              Click <span className="font-medium text-foreground">Add Company</span> to create the first company for this project.
             </div>
+          ) : null}
+        </div>
+      </SettingsSection>
 
-            <div className="h-px bg-border/40" />
-
-            <div className="flex justify-between items-center">
-              <Label className="text-xs text-muted-foreground">
-                Billing address is same as SPV company?
-              </Label>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                size="sm"
-                spacing={0}
-                value={billing.sameAsSpv}
-                onValueChange={(val) => val && setBilling({ ...billing, sameAsSpv: val })}
-              >
-                <ToggleGroupItem value="yes" className="text-[0.6rem] px-2.5">YES</ToggleGroupItem>
-                <ToggleGroupItem value="no" className="text-[0.6rem] px-2.5">NO</ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-
-            {billing.sameAsSpv === "no" && (
-              <>
-                <div className="h-px bg-border/40" />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium">Billing Address Line 1</Label>
-                    <Input
-                      className="placeholder:text-xs"
-                      placeholder="Billing Address Line 1"
-                      value={billing.addr1}
-                      onChange={(e) => setBilling({ ...billing, addr1: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium">Billing Address Line 2</Label>
-                    <Input
-                      className="placeholder:text-xs"
-                      placeholder="Billing Address Line 2"
-                      value={billing.addr2}
-                      onChange={(e) => setBilling({ ...billing, addr2: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium">City</Label>
-                    <Input
-                      className="placeholder:text-xs"
-                      placeholder="City"
-                      value={billing.city}
-                      onChange={(e) => setBilling({ ...billing, city: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium">Postcode</Label>
-                    <Input
-                      className="placeholder:text-xs"
-                      placeholder="Postcode"
-                      value={billing.postcode}
-                      onChange={(e) => setBilling({ ...billing, postcode: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 lg:col-span-2">
-                    <Label className="text-xs font-medium">Country</Label>
-                    <SelectMenu
-                      label="Select country"
-                      selected={billing.country}
-                      onSelect={(v) => setBilling({ ...billing, country: v })}
-                      items={COUNTRIES.map((c) => ({ label: c, value: c }))}
-                    />
-                  </div>
-                </div>
-              </>
+      <SettingsSection
+        title="Production Base"
+        subtitle="Shown to crew so they can contact the production."
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+          <TextInput
+            label="Address Line 1"
+            error={errors.productionBase?.addressLine1?.message}
+            inputProps={register("productionBase.addressLine1")}
+            disabled={isLocked}
+          />
+          <TextInput
+            label="Address Line 2"
+            inputProps={register("productionBase.addressLine2")}
+            disabled={isLocked}
+          />
+          <TextInput
+            label="City"
+            error={errors.productionBase?.city?.message}
+            inputProps={register("productionBase.city")}
+            disabled={isLocked}
+          />
+          <TextInput
+            label="Postcode"
+            error={errors.productionBase?.postcode?.message}
+            inputProps={register("productionBase.postcode")}
+            disabled={isLocked}
+          />
+          <Controller
+            control={control}
+            name="productionBase.country"
+            render={({ field }) => (
+              <SelectField
+                disabled={isLocked}
+                label="Country"
+                error={errors.productionBase?.country?.message}
+                selected={field.value}
+                items={countryItems}
+                onSelect={field.onChange}
+              />
             )}
+          />
+          <TextInput
+            label="Telephone"
+            error={errors.productionBase?.telephone?.message}
+            inputProps={register("productionBase.telephone")}
+            disabled={isLocked}
+          />
+          <div className="lg:col-span-2">
+            <TextInput
+              label="Email"
+              type="email"
+              error={errors.productionBase?.email?.message}
+              inputProps={register("productionBase.email")}
+              disabled={isLocked}
+            />
           </div>
-        </SettingsSection>
-      </motion.div>
-    </>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Project Creator"
+        subtitle="Who created this project."
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+          <TextInput
+            label="Project Creator Name"
+            error={errors.projectCreator?.name?.message}
+            inputProps={register("projectCreator.name")}
+            disabled={isLocked}
+          />
+          <TextInput
+            label="Project Creator Email"
+            type="email"
+            error={errors.projectCreator?.email?.message}
+            inputProps={register("projectCreator.email")}
+            disabled={isLocked}
+          />
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Billing"
+        subtitle="Where EAARTH should send invoices."
+      >
+        <div className="flex flex-col gap-5 p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TextInput
+              label="Billing Contact Name"
+              error={errors.billing?.contactName?.message}
+              inputProps={register("billing.contactName")}
+              disabled={isLocked}
+            />
+            <TextInput
+              label="Billing Contact Email(s)"
+              error={errors.billing?.contactEmails?.message}
+              inputProps={register("billing.contactEmails")}
+              disabled={isLocked}
+            />
+            <FieldError>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs font-medium">
+                  SPV Company VAT Number
+                </Label>
+                <InfoTooltip content="The VAT number of the Special Purpose Vehicle company for this production.">
+                  <span className="text-foreground hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-help">
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </span>
+                </InfoTooltip>
+              </div>
+              <Input
+                {...register("billing.spvVatNumber")}
+                disabled={isLocked}
+                className="placeholder:text-xs"
+                placeholder="SPV Company VAT Number"
+              />
+              {errors.billing?.spvVatNumber?.message ? (
+                <p className="text-[0.65rem] text-red-500">
+                  {errors.billing.spvVatNumber.message}
+                </p>
+              ) : null}
+            </FieldError>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <Label className="text-xs text-muted-foreground">
+              Billing address is same as SPV company?
+            </Label>
+            <Controller
+              control={control}
+              name="billing.sameAsSpv"
+              render={({ field }) => (
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  size="sm"
+                  spacing={0}
+                  value={field.value}
+                  onValueChange={(value) => value && field.onChange(value)}
+                  disabled={isLocked}
+                >
+                  <ToggleGroupItem value="yes" className="text-[0.6rem] px-2.5">
+                    YES
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="no" className="text-[0.6rem] px-2.5">
+                    NO
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              )}
+            />
+          </div>
+
+          {billingSameAsSpv === "no" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <TextInput
+                label="Billing Address Line 1"
+                error={errors.billing?.addressLine1?.message}
+                inputProps={register("billing.addressLine1")}
+                disabled={isLocked}
+              />
+              <TextInput
+                label="Billing Address Line 2"
+                inputProps={register("billing.addressLine2")}
+                disabled={isLocked}
+              />
+              <TextInput
+                label="Billing City"
+                error={errors.billing?.city?.message}
+                inputProps={register("billing.city")}
+                disabled={isLocked}
+              />
+              <TextInput
+                label="Billing Postcode"
+                error={errors.billing?.postcode?.message}
+                inputProps={register("billing.postcode")}
+                disabled={isLocked}
+              />
+              <Controller
+                control={control}
+                name="billing.country"
+                render={({ field }) => (
+                  <SelectField
+                    disabled={isLocked}
+                    label="Billing Country"
+                    error={errors.billing?.country?.message}
+                    selected={field.value}
+                    items={countryItems}
+                    onSelect={field.onChange}
+                  />
+                )}
+              />
+            </div>
+          ) : null}
+        </div>
+      </SettingsSection>
+    </FramerMotion.motion.div>
+  );
+}
+
+function TextInput({ disabled, error, inputProps, label, type = "text" }) {
+  return (
+    <FieldError message={error}>
+      <Label className="text-xs font-medium">{label}</Label>
+      <Input
+        {...inputProps}
+        className="placeholder:text-xs"
+        disabled={disabled}
+        placeholder={label}
+        type={type}
+      />
+    </FieldError>
+  );
+}
+
+function SelectField({ disabled, error, items, label, onSelect, selected }) {
+  return (
+    <FieldError message={error}>
+      <Label className="text-xs font-medium">{label}</Label>
+      {disabled ? (
+        <Input value={selected || ""} disabled className="placeholder:text-xs" />
+      ) : (
+        <SelectMenu
+          label={`Select ${label.toLowerCase()}`}
+          selected={selected}
+          onSelect={onSelect}
+          items={items}
+        />
+      )}
+    </FieldError>
+  );
+}
+
+function FieldError({ children, className = "", message }) {
+  return (
+    <div className={`flex flex-col gap-1.5 ${className}`.trim()}>
+      {children}
+      {message ? <p className="text-[0.65rem] text-red-500">{message}</p> : null}
+    </div>
   );
 }
 

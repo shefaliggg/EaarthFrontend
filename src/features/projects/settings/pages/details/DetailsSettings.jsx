@@ -1,18 +1,35 @@
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useDispatch, useSelector } from "react-redux";
+import { APP_CONFIG } from "@/features/crew/config/appConfig";
 import { Label } from "@/shared/components/ui/label";
-import { Input } from "@/shared/components/ui/input";
+import { InfoTooltip } from "@/shared/components/InfoTooltip";
+import { HelpCircle } from "lucide-react";
+import { SelectMenu } from "@/shared/components/menus/SelectMenu";
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/shared/components/ui/toggle-group";
+import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { SettingsSection } from "@/features/projects/settings/components/shared/SettingsSection";
-import { useState } from "react";
-import { InfoTooltip } from "@/shared/components/InfoTooltip";
-import { HelpCircle } from "lucide-react";
-import { SelectMenu } from "@/shared/components/menus/SelectMenu";
+import { loadDetailsSettingsThunk } from "@/features/projects/settings/store/settings.thunks";
+import {
+  selectDetailsSettings,
+  setDetailsFormValidity,
+  setDetailsProjectName,
+} from "@/features/projects/settings/store/settingsSlice";
+import { detailsSettingsSchema } from "./detailsSettingsSchema";
 
 function DetailsSettings() {
+  const dispatch = useDispatch();
+  const { projectName, isLoading, isLocked } = useSelector(
+    selectDetailsSettings,
+  );
+  const loadedProjectNameRef = useRef(projectName);
+
   const [projectType, setProjectType] = useState("feature");
   const [showProjectTypeInOffers, setShowProjectTypeInOffers] = useState("yes");
   const [unionAgreement, setUnionAgreement] = useState("none");
@@ -35,6 +52,38 @@ function DetailsSettings() {
   const [showWeeklyInDocs, setShowWeeklyInDocs] = useState("yes");
   const [shareStatusWithCrew, setShareStatusWithCrew] = useState("yes");
 
+  const {
+    register,
+    reset,
+    trigger,
+    formState: { errors, isValid },
+  } = useForm({
+    resolver: zodResolver(detailsSettingsSchema),
+    defaultValues: {
+      projectName,
+    },
+    mode: "onChange",
+  });
+
+  useEffect(() => {
+    dispatch(loadDetailsSettingsThunk(APP_CONFIG.PROJECT_ID));
+  }, [dispatch]);
+
+  useEffect(() => {
+    loadedProjectNameRef.current = projectName;
+  }, [projectName]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      reset({ projectName: loadedProjectNameRef.current });
+      trigger("projectName");
+    }
+  }, [isLoading, reset, trigger]);
+
+  useEffect(() => {
+    dispatch(setDetailsFormValidity(isValid));
+  }, [dispatch, isValid]);
+
   return (
     <>
       <motion.div
@@ -54,10 +103,20 @@ function DetailsSettings() {
                 <Label className="text-xs font-medium">Project Name</Label>
               </div>
               <Input
+                {...register("projectName", {
+                  onChange: (event) =>
+                    dispatch(setDetailsProjectName(event.target.value)),
+                })}
                 className="placeholder:text-xs"
                 id="projectName"
                 placeholder="Project Name"
+                disabled={isLoading || isLocked}
               />
+              {errors.projectName && (
+                <p className="text-[0.65rem] text-red-500">
+                  {errors.projectName.message}
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-1">
