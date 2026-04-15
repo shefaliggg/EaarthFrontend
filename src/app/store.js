@@ -10,6 +10,9 @@ import viewRoleReducer from "../features/crew/store/viewrole.slice";
 import { notificationReducer } from "../features/notifications/store";
 import contractInstancesReducer from "../features/crew/store/contractInstances.slice";
 import settingsReducer from "@/features/projects/settings/store/settingsSlice";
+import { crewProfileReducer } from "../features/profile/store";
+import { userDocumentsReducer } from "../features/user-documents/store";
+import { signatureReducer } from "../features/signature/store";
 
 export const store = configureStore({
   reducer: {
@@ -25,5 +28,8 @@ export const store = configureStore({
     viewRole: viewRoleReducer,
     notification: notificationReducer,
     contractInstances: contractInstancesReducer,
+    crewProfile: crewProfileReducer,
+    userDocuments: userDocumentsReducer,
+    signature: signatureReducer,
   },
 });

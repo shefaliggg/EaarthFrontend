@@ -230,7 +230,7 @@ export function FileUpload({
               )}
             </div>
           </div>
-          <Button onClick={handleFileSelect} size={"lg"} className={"w-full"}>
+          <Button onClick={handleFileSelect} disabled={!isEditing} size={"lg"} className={"w-full"}>
             <Repeat />
             Change Uploaded Document
           </Button>
