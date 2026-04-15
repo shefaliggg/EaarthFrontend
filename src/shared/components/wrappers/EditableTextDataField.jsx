@@ -16,6 +16,8 @@ function EditableTextDataField({
   type,
   inputClassName,
   infoPillDescription,
+  isRequired = true,
+  error,
 }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl">
@@ -27,6 +29,9 @@ function EditableTextDataField({
           <InfoTooltip content={infoPillDescription}>
             <LucideIcons.CircleQuestionMark className="size-4" />
           </InfoTooltip>
+        )}
+        {isRequired && isEditing && (
+          <span className="text-destructive text-xs">*</span>
         )}
       </div>
 
@@ -44,31 +49,41 @@ function EditableTextDataField({
       ) : (
         <div>
           {multiline ? (
-            <Textarea
-              value={value ?? ""}
-              onChange={(e) => onChange?.(e.target.value)}
-              placeholder={placeholder}
-              className={cn(
-                "resize-none rounded-md shadow-none",
-                "border border-transparent",
-                "focus:outline-none",
-                "min-h-[80px]",
-                inputClassName,
+            <>
+              <Textarea
+                value={value ?? ""}
+                onChange={(e) => onChange?.(e.target.value)}
+                placeholder={placeholder}
+                className={cn(
+                  "resize-none rounded-md shadow-none",
+                  "border border-transparent",
+                  "focus:outline-none",
+                  "min-h-[80px]",
+                  inputClassName,
+                )}
+              />
+              {error && (
+                <span className="text-destructive text-xs pl-2">{error}</span>
               )}
-            />
+            </>
           ) : (
-            <Input
-              type={type}
-              value={value ?? ""}
-              onChange={(e) => onChange?.(e.target.value)}
-              placeholder={placeholder}
-              className={cn(
-                "rounded-md shadow-none h-8 text-sm font-medium text-gray-900",
-                "border border-transparent",
-                "focus:outline-none",
-                inputClassName,
+            <>
+              <Input
+                type={type}
+                value={value ?? ""}
+                onChange={(e) => onChange?.(e.target.value)}
+                placeholder={placeholder}
+                className={cn(
+                  "rounded-md shadow-none h-8 text-sm font-medium text-gray-900",
+                  "border border-transparent",
+                  "focus:outline-none",
+                  inputClassName,
+                )}
+              />
+              {error && (
+                <span className="text-destructive text-xs pl-2">{error}</span>
               )}
-            />
+            </>
           )}
         </div>
       )}

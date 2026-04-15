@@ -9,7 +9,8 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { SmartIcon } from "../SmartIcon";
-import { CalendarRange } from "lucide-react";
+import { CalendarRange, CircleQuestionMark } from "lucide-react";
+import { InfoTooltip } from "../InfoTooltip";
 
 function EditableDateField({
   label,
@@ -18,6 +19,9 @@ function EditableDateField({
   isEditing = false,
   onChange,
   placeholder = "Select date",
+  infoPillDescription,
+  isRequired = true,
+  error,
 }) {
   const dateValue = value ? new Date(value) : null;
 
@@ -27,6 +31,14 @@ function EditableDateField({
       <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
         {icon && <SmartIcon icon={icon} size="md" />}
         <span>{label}</span>
+        {infoPillDescription && (
+          <InfoTooltip content={infoPillDescription}>
+            <CircleQuestionMark className="size-4" />
+          </InfoTooltip>
+        )}
+        {isRequired && isEditing && (
+          <span className="text-destructive text-xs">*</span>
+        )}
       </div>
 
       {/* View Mode */}
@@ -40,38 +52,43 @@ function EditableDateField({
         </div>
       ) : (
         /* Edit Mode */
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              className={cn(
-                "justify-start h-9 px-2 text-sm font-medium",
-                "bg-gray-100 dark:bg-gray-800",
-                "border border-transparent",
-                "hover:bg-gray-200 dark:hover:bg-gray-700",
-              )}
-            >
-              {dateValue ? (
-                format(dateValue, "dd MMM yyyy")
-              ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
-              <CalendarRange className="ml-auto"/>
-            </Button>
-          </PopoverTrigger>
+        <>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "justify-start h-9 px-2 text-sm font-medium",
+                  "bg-gray-100 dark:bg-gray-800",
+                  "border border-transparent",
+                  "hover:bg-gray-200 dark:hover:bg-gray-700",
+                )}
+              >
+                {dateValue ? (
+                  format(dateValue, "dd MMM yyyy")
+                ) : (
+                  <span className="text-muted-foreground">{placeholder}</span>
+                )}
+                <CalendarRange className="ml-auto" />
+              </Button>
+            </PopoverTrigger>
 
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateValue}
-              onSelect={(date) => {
-                if (!date) return;
-                onChange?.(date.toISOString());
-              }}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dateValue}
+                onSelect={(date) => {
+                  if (!date) return;
+                  onChange?.(date.toISOString());
+                }}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          {error && (
+            <span className="text-destructive text-xs pl-2">{error}</span>
+          )}
+        </>
       )}
     </div>
   );

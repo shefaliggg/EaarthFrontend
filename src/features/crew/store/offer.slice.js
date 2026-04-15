@@ -1,9 +1,3 @@
-/**
- * offer.slice.js
- * Pure slice — state, reducers, and extra reducers only.
- * All thunks live in offer.thunks.js and are re-exported here for convenience.
- */
-
 import { createSlice } from "@reduxjs/toolkit";
 
 import {

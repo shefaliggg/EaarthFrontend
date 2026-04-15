@@ -1,6 +1,3 @@
-// src/features/auth/store/index.js
-
-// Export reducer as default and named export
 export { default as userReducer } from "./user.slice";
 export { default } from "./user.slice";
 

@@ -1,14 +1,21 @@
 import { Button } from "../ui/button";
-import { Check, Pen, X } from "lucide-react";
+import { Check, Loader2, Pen, X } from "lucide-react";
 import { cn } from "../../config/utils";
 
-function EditToggleButtons({ isEditing, onEdit, onSave, onCancel }) {
+function EditToggleButtons({
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  isLoading = false,
+}) {
   return (
     <>
       {isEditing && (
         <Button
           size="icon"
           variant="outline"
+          disabled={isLoading}
           onClick={onCancel}
           className="hover:bg-red-200 dark:hover:bg-red-800"
         >
@@ -19,6 +26,7 @@ function EditToggleButtons({ isEditing, onEdit, onSave, onCancel }) {
       <Button
         size="icon"
         variant="outline"
+        disabled={isLoading}
         onClick={isEditing ? onSave : onEdit}
         className={cn(
           isEditing
@@ -26,7 +34,9 @@ function EditToggleButtons({ isEditing, onEdit, onSave, onCancel }) {
             : "hover:bg-purple-200 dark:hover:bg-purple-800",
         )}
       >
-        {isEditing ? (
+        {isLoading ? (
+          <Loader2 className="animate-spin text-muted-foreground" />
+        ) : isEditing ? (
           <Check className="text-green-500" />
         ) : (
           <Pen className="text-primary" />

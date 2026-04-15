@@ -27,13 +27,26 @@ export function prettifySegment(seg) {
 export const convertToPrettyText = (text) => {
   if (!text) return "";
 
-  return text
-    .toString() // ensure it's a string
-    .trim() // remove leading/trailing spaces
+  const str = text.toString().trim();
+
+  // split name and extension
+  const lastDotIndex = str.lastIndexOf(".");
+
+  let namePart = str;
+  let extension = "";
+
+  if (lastDotIndex !== -1) {
+    namePart = str.slice(0, lastDotIndex);
+    extension = str.slice(lastDotIndex).toLowerCase(); // keep extension lowercase
+  }
+
+  const formattedName = namePart
     .toLowerCase()
-    .replace(/[-_]+/g, " ") // replace dashes/underscores with space
-    .replace(/\s+/g, " ") // collapse multiple spaces
-    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize first letter of each word
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  return formattedName + extension;
 };
 
 export const getFullName = (user) => {
@@ -83,3 +96,5 @@ export function formatDate(date) {
     })
     .toLowerCase();
 }
+
+const getSafeFieldData = (val, fallback) => val ?? fallback;

@@ -30,6 +30,9 @@ const SignaturePad = forwardRef(
       }
 
       if (activeTab === "type") {
+        if (!typedValue.trim()) {
+          return null;
+        }
         await document.fonts.ready;
 
         return {
@@ -38,6 +41,8 @@ const SignaturePad = forwardRef(
             text: typedValue,
             font,
           }),
+          text: typedValue,
+          font: font,
         };
       }
 
