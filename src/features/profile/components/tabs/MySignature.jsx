@@ -2,9 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   PenTool,
   Download,
-  Trash2,
   Check,
-  Fingerprint,
   Calendar,
   User,
   Eye,
@@ -15,22 +13,17 @@ import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
 import SignaturePad from "../../../crew/components/SignaturePad/SignaturePad";
 import {
-  convertTitleToUrl,
   convertToPrettyText,
   formatDate,
-  getFullName,
 } from "../../../../shared/config/utils";
 import { Button } from "../../../../shared/components/ui/button";
-import SignatureCertificateModal from "./SignatureCertificateModal";
 import { useDispatch, useSelector } from "react-redux";
-import { getDocumentsByType } from "../../../user-documents/store/document.selector";
 import SignatureOtpModal from "./my-signature/SignatureOtpModal";
 import {
   createSignatureThunk,
   fetchCurrentSignatureThunk,
   sendSignatureOtpThunk,
 } from "../../../signature/store/signature.thunk";
-import { Skeleton } from "../../../../shared/components/ui/skeleton";
 import { StatusBadge } from "../../../../shared/components/badges/StatusBadge";
 import { toast } from "sonner";
 import SignatureLoadingSkelton from "../skeltons/SignatureLoadingSkelton";
