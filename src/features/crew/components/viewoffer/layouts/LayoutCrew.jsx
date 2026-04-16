@@ -5,9 +5,13 @@
  *   No hardcoded Tailwind color classes.
  *
  * CHANGES:
- *   - Inline RequestChangesDialog replaced with shared OfferActionDialog
- *     type="requestChanges" — body/placeholder/footer note now match screenshot.
- *   - AcceptDialog and DeclineDialog remain inline (unchanged).
+ *   - Accepts new `user` prop from ViewOffer (for user.savedSignature)
+ *   - ContractInstancesPanel in signing stage now receives:
+ *       canSignRole, profileSignature, onSignInstance
+ *   - Pre-signing ContractInstancesPanel (does not exist — crew sees
+ *     OfferDocumentPane before signing stage, so no panel there)
+ *   - AcceptDialog and DeclineDialog remain inline (unchanged)
+ *   - OfferActionDialog usage unchanged
  */
 
 import { useState } from "react";
@@ -282,16 +286,9 @@ function CrewActionBox({ status, isSubmitting, onAccept, onRequestChanges, onDec
         )}
         {status === "PENDING_CREW_SIGNATURE" && (
           <>
-            <InfoBox icon={PenLine} color="purple">All documents require your signature.</InfoBox>
-            <button
-              disabled={isSubmitting}
-              onClick={onSign}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-[12px] font-semibold disabled:opacity-60 transition-colors"
-              style={{ background: "var(--primary)" }}
-            >
-              {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
-              Sign All Documents
-            </button>
+            <InfoBox icon={PenLine} color="purple">
+              Review each document below and apply your signature to all of them.
+            </InfoBox>
           </>
         )}
         {["PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE"].includes(status) && (
@@ -347,11 +344,13 @@ function OfferDocumentPane({ offer, contractData, allowances, calculatedRates })
 }
 
 // ── Signing stage sidebar ─────────────────────────────────────────────────────
+// NOTE: The "Sign All Documents" button is removed — signing is now done
+// per-document via DocumentSignatureBox embedded in ContractInstancesPanel.
 
-function SigningSidebar({ status, isSubmitting, onSign, onRequestChanges, signingStatus }) {
-  const canSign     = status === "PENDING_CREW_SIGNATURE";
+function SigningSidebar({ status, isSubmitting, onRequestChanges, signingStatus }) {
   const hasSigned   = ["PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED"].includes(status);
   const isCompleted = status === "COMPLETED";
+  const canSign     = status === "PENDING_CREW_SIGNATURE";
 
   return (
     <div className="space-y-3">
@@ -360,18 +359,9 @@ function SigningSidebar({ status, isSubmitting, onSign, onRequestChanges, signin
           Your Action
         </p>
         {canSign && (
-          <>
-            <InfoBox icon={PenLine} color="purple">Please review all documents before signing.</InfoBox>
-            <button
-              disabled={isSubmitting}
-              onClick={() => onSign("CREW")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-[12px] font-semibold disabled:opacity-60 transition-colors"
-              style={{ background: "var(--primary)" }}
-            >
-              {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
-              Sign All Documents
-            </button>
-          </>
+          <InfoBox icon={PenLine} color="purple">
+            Review each document and apply your signature using the Sign button within each one.
+          </InfoBox>
         )}
         {hasSigned && !isCompleted && (
           <InfoBox icon={PenLine} color="purple">You have signed. Awaiting further signatories.</InfoBox>
@@ -400,6 +390,7 @@ function SigningSidebar({ status, isSubmitting, onSign, onRequestChanges, signin
 export default function LayoutCrew({
   offer, contractData, allowances, calculatedRates,
   signingStatus, isSubmitting, onAction, onSign,
+  user,                    // ← NEW: current user with user.savedSignature
 }) {
   const [dialog, setDialog] = useState(null);
   const status = offer?.status;
@@ -408,6 +399,14 @@ export default function LayoutCrew({
     "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE",
     "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED",
   ].includes(status);
+
+  // ── Per-document sign handler ─────────────────────────────────────────────
+  // Called by DocumentSignatureBox with the instanceId of the doc being signed.
+  // Currently delegates to the existing onSign("CREW") which signs the whole
+  // contract. Pass instanceId to a per-instance thunk when backend supports it.
+  const handleSignInstance = async (instanceId) => {
+    await onSign("CREW");
+  };
 
   return (
     <>
@@ -452,22 +451,27 @@ export default function LayoutCrew({
                   }
                 </div>
                 <div className="p-4">
-                  {offer?._id
-                    ? <ContractInstancesPanel offerId={offer._id} offerStatus={offer?.status} />
-                    : (
-                      <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <FileText className="w-5 h-5 mb-2" style={{ color: "var(--lavender-300)" }} />
-                        <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>Loading…</p>
-                      </div>
-                    )
-                  }
+                  {offer?._id ? (
+                    <ContractInstancesPanel
+                      offerId={offer._id}
+                      offerStatus={offer?.status}
+                      canSignRole={status === "PENDING_CREW_SIGNATURE"}
+                      profileSignature={user?.savedSignature}
+                      onSignInstance={handleSignInstance}
+                      isSubmitting={isSubmitting}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <FileText className="w-5 h-5 mb-2" style={{ color: "var(--lavender-300)" }} />
+                      <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>Loading…</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
             <div className="w-[240px] shrink-0">
               <SigningSidebar
                 status={status} isSubmitting={isSubmitting}
-                onSign={onSign}
                 onRequestChanges={() => setDialog("signingRequestChanges")}
                 signingStatus={signingStatus}
               />
@@ -476,7 +480,7 @@ export default function LayoutCrew({
         )}
       </div>
 
-      {/* Accept dialog — inline */}
+      {/* Accept dialog */}
       {dialog === "accept" && (
         <AcceptDialog
           offer={offer}
@@ -486,7 +490,7 @@ export default function LayoutCrew({
         />
       )}
 
-      {/* Request Changes — shared OfferActionDialog (matches screenshot) */}
+      {/* Request Changes — shared OfferActionDialog */}
       <OfferActionDialog
         type="requestChanges"
         open={dialog === "requestChanges"}
@@ -499,7 +503,7 @@ export default function LayoutCrew({
         }}
       />
 
-      {/* Signing-stage request changes — shared OfferActionDialog */}
+      {/* Signing-stage request changes */}
       <OfferActionDialog
         type="requestChanges"
         open={dialog === "signingRequestChanges"}
@@ -512,7 +516,7 @@ export default function LayoutCrew({
         }}
       />
 
-      {/* Decline dialog — inline */}
+      {/* Decline dialog */}
       {dialog === "decline" && (
         <DeclineDialog
           offer={offer}

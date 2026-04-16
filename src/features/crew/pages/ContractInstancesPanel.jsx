@@ -1,11 +1,35 @@
 /**
- * ContractInstancesPanel.jsx
+ * ContractInstancesPanel.jsx  (updated — per-document signing)
  *
- * THEMING: All colors use CSS variables from index.css.
- *   No hardcoded Tailwind color classes (emerald-*, violet-*, neutral-*, teal-*, etc.)
+ * CHANGES FROM ORIGINAL:
+ *   - Accepts new props: canSignRole, profileSignature, onSignInstance
+ *   - DocumentView now renders <DocumentSignatureBox> at the bottom
+ *   - isSignedForRole() used to compute per-doc signed/canSign state
+ *   - Everything else (dedup, stepper, nav, bundle bar) unchanged
  *
- * FIX 1: clearHtmlCache() called alongside clearInstances().
- * FIX 2: offerStatus prop dependency — re-fetches on status change.
+ * NEW PROPS:
+ *   canSignRole      bool     - true when it's this viewRole's turn to sign
+ *   profileSignature string?  - base64 dataURL of saved profile sig
+ *   onSignInstance   fn(instanceId) → Promise  — called per document
+ *
+ * HOW TO CALL from LayoutCrew / LayoutSignatory:
+ *
+ *   <ContractInstancesPanel
+ *     offerId={offer._id}
+ *     offerStatus={offer.status}
+ *     canSignRole={canSign}           // compute from offer.status + viewRole
+ *     profileSignature={user?.savedSignature}
+ *     onSignInstance={handleSignInstance}
+ *   />
+ *
+ * handleSignInstance example (in layout component):
+ *
+ *   const handleSignInstance = async (instanceId) => {
+ *     // The existing sign thunks sign the whole contract — you may want a
+ *     // per-instance variant, or just call the existing onSign(role) here
+ *     // and let the backend advance the status.
+ *     await onSign(viewRole);
+ *   };
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -25,7 +49,6 @@ import {
   selectInstances,
   selectInstancesLoading,
   selectInstancesError,
-  selectCurrentOfferId,
 } from "../store/contractInstances.slice";
 
 import { selectViewRole } from "../store/viewrole.slice";
@@ -36,7 +59,9 @@ import {
   isSignedStatus,
 } from "../components/viewoffer/layouts/ContractStepper";
 
-// ── Type badge config ─────────────────────────────────────────────────────────
+import DocumentSignatureBox from "../components/SignaturePad/DocumentSignatureBox";
+
+// ── Type / Status config (unchanged) ─────────────────────────────────────────
 
 const TYPE_CFG = {
   contract:  { label: "CONTRACT",  bg: "var(--lavender-100)", color: "var(--lavender-700)", border: "var(--lavender-200)" },
@@ -72,12 +97,12 @@ const STATUS_STYLE = {
   SUPERSEDED:             { bg: "var(--muted)",         color: "var(--muted-foreground)", border: "var(--border)"         },
 };
 
-// ── Dedup ─────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function dedupByFormKey(instances) {
   const map = new Map();
   for (const inst of instances) {
-    const key      = inst.formKey || inst.formName || inst._id;
+    const key = inst.formKey || inst.formName || inst._id;
     const existing = map.get(key);
     if (!existing || (inst.generation ?? 1) > (existing.generation ?? 1)) {
       map.set(key, inst);
@@ -86,7 +111,26 @@ function dedupByFormKey(instances) {
   return Array.from(map.values());
 }
 
-// ── Auto-sizing iframe ────────────────────────────────────────────────────────
+/**
+ * Determine if the current viewRole has signed a specific instance.
+ * Checks instance.signatures[roleKey].signedAt — stored by signature.service.js
+ */
+function instanceSignedByRole(instance, viewRole) {
+  if (!viewRole) return false;
+  const roleKey = viewRole.toLowerCase();
+  const sig = instance?.signatures?.[roleKey];
+  return !!sig?.signedAt;
+}
+
+/**
+ * Get the signature metadata for a role on an instance.
+ */
+function getInstanceSig(instance, viewRole) {
+  if (!viewRole) return null;
+  return instance?.signatures?.[viewRole.toLowerCase()] ?? null;
+}
+
+// ── AutoIframe (unchanged) ────────────────────────────────────────────────────
 
 function AutoIframe({ html, title }) {
   const ref     = useRef(null);
@@ -118,7 +162,8 @@ function AutoIframe({ html, title }) {
 
   return (
     <iframe
-      ref={ref} title={title}
+      ref={ref}
+      title={title}
       className="w-full border-0 block"
       style={{ height: `${height}px` }}
       sandbox="allow-same-origin allow-scripts"
@@ -127,7 +172,7 @@ function AutoIframe({ html, title }) {
   );
 }
 
-// ── Status badge ──────────────────────────────────────────────────────────────
+// ── Status badge (unchanged) ──────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
   const cfg   = STATUS_CFG[status] ?? STATUS_CFG.DRAFT;
@@ -143,9 +188,19 @@ function StatusBadge({ status }) {
   );
 }
 
-// ── Single document view ──────────────────────────────────────────────────────
+// ── DocumentView — updated with signature box ─────────────────────────────────
 
-function DocumentView({ instance, index, total, viewRole }) {
+function DocumentView({
+  instance,
+  index,
+  total,
+  viewRole,
+  // New props for per-doc signing:
+  canSignRole,
+  profileSignature,
+  onSignInstance,
+  isSubmitting,
+}) {
   const dispatch  = useDispatch();
   const [html,    setHtml   ] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -154,20 +209,25 @@ function DocumentView({ instance, index, total, viewRole }) {
   const signed  = isSignedForRole(instance.status, viewRole);
   const typeCfg = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
+  // Per-document signing state
+  const isSigned  = instanceSignedByRole(instance, viewRole);
+  const sig       = getInstanceSig(instance, viewRole);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true); setError(null); setHtml(null);
     dispatch(getContractInstanceHtmlThunk(instance._id)).then((res) => {
       if (cancelled) return;
-      if (res.error)            setError(res.payload?.message || "Failed to load");
+      if (res.error)              setError(res.payload?.message || "Failed to load");
       else if (res.payload?.html) setHtml(res.payload.html);
-      else                      setError("No content returned");
+      else                        setError("No content returned");
     }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [instance._id, dispatch]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-2 duration-200">
+    <div className="animate-in fade-in slide-in-from-right-2 duration-200 space-y-3">
+      {/* Document card */}
       <div
         className="rounded-xl overflow-hidden"
         style={{ border: `1px solid ${signed ? "var(--mint-200)" : "var(--border)"}` }}
@@ -191,11 +251,7 @@ function DocumentView({ instance, index, total, viewRole }) {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span
                 className="text-[8px] font-bold px-1.5 py-px rounded border uppercase tracking-wider"
-                style={{
-                  background: "rgba(255,255,255,0.2)",
-                  color: "white",
-                  borderColor: "rgba(255,255,255,0.3)",
-                }}
+                style={{ background: "rgba(255,255,255,0.2)", color: "white", borderColor: "rgba(255,255,255,0.3)" }}
               >
                 {typeCfg.label}
               </span>
@@ -230,10 +286,7 @@ function DocumentView({ instance, index, total, viewRole }) {
             }
           </div>
           <div className="flex-1 min-w-0">
-            <p
-              className="text-[11px] font-semibold"
-              style={{ color: signed ? "var(--mint-700)" : "var(--foreground)" }}
-            >
+            <p className="text-[11px] font-semibold" style={{ color: signed ? "var(--mint-700)" : "var(--foreground)" }}>
               {signed ? "Signature recorded" : "Signature pending"}
             </p>
             <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
@@ -256,21 +309,35 @@ function DocumentView({ instance, index, total, viewRole }) {
             </div>
           ) : html ? (
             <div className="px-5 py-4">
-              <div
-                className="rounded-lg overflow-hidden"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              >
+              <div className="rounded-lg overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
                 <AutoIframe html={html} title={instance.formName} />
               </div>
             </div>
           ) : null}
         </div>
       </div>
+
+      {/* ── Per-document Signature Box ──────────────────────────────────── */}
+      {onSignInstance && (
+        <DocumentSignatureBox
+          instanceId={instance._id}
+          instanceName={instance.formName}
+          status={instance.status}
+          viewRole={viewRole}
+          canSign={canSignRole && !isSigned}
+          isSigned={isSigned}
+          signedAt={sig?.signedAt}
+          signatureId={sig?.signatureId}
+          profileSignature={profileSignature}
+          isSubmitting={isSubmitting}
+          onSign={onSignInstance}
+        />
+      )}
     </div>
   );
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
+// ── Empty state (unchanged) ───────────────────────────────────────────────────
 
 function EmptyState({ onRefresh, loading }) {
   return (
@@ -288,7 +355,8 @@ function EmptyState({ onRefresh, loading }) {
         Documents are generated when the crew accepts the offer.
       </p>
       <button
-        onClick={onRefresh} disabled={loading}
+        onClick={onRefresh}
+        disabled={loading}
         className="mt-4 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors disabled:opacity-50"
         style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", background: "var(--card)" }}
       >
@@ -299,14 +367,23 @@ function EmptyState({ onRefresh, loading }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 
-export default function ContractInstancesPanel({ offerId, offerStatus, className }) {
-  const dispatch       = useDispatch();
-  const instances      = useSelector(selectInstances);
-  const loading        = useSelector(selectInstancesLoading);
-  const error          = useSelector(selectInstancesError);
-  const viewRole       = useSelector(selectViewRole);
+export default function ContractInstancesPanel({
+  offerId,
+  offerStatus,
+  className,
+  // Per-document signing props (optional — pass from layout to enable)
+  canSignRole     = false,
+  profileSignature,
+  onSignInstance,
+  isSubmitting    = false,
+}) {
+  const dispatch  = useDispatch();
+  const instances = useSelector(selectInstances);
+  const loading   = useSelector(selectInstancesLoading);
+  const error     = useSelector(selectInstancesError);
+  const viewRole  = useSelector(selectViewRole);
 
   const [activeIdx, setActiveIdx] = useState(0);
   const retryDoneRef = useRef(false);
@@ -419,10 +496,7 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
         </div>
 
         <div className="flex items-center gap-3">
-          <div
-            className="w-28 h-1.5 rounded-full overflow-hidden"
-            style={{ background: "var(--muted)" }}
-          >
+          <div className="w-28 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{ width: `${progress}%`, background: "var(--mint-500)" }}
@@ -432,7 +506,9 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
             {signedCount}/{total}
           </span>
           <button
-            onClick={handleRefresh} disabled={loading} title="Refresh"
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh"
             className="p-1.5 rounded-lg transition-colors"
             style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", background: "var(--card)" }}
           >
@@ -449,7 +525,7 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
         viewRole={viewRole}
       />
 
-      {/* Active document */}
+      {/* Active document with per-doc signing */}
       {current && (
         <DocumentView
           key={current._id}
@@ -457,6 +533,10 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
           index={safeIdx}
           total={total}
           viewRole={viewRole}
+          canSignRole={canSignRole}
+          profileSignature={profileSignature}
+          onSignInstance={onSignInstance}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -482,6 +562,30 @@ export default function ContractInstancesPanel({ offerId, offerStatus, className
           >
             Next <ChevronRight className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* "Next document" auto-advance hint after signing */}
+      {canSignRole && signedCount > 0 && signedCount < total && (
+        <div
+          className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+          style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: "var(--mint-600)" }} />
+            <p className="text-[12px]" style={{ color: "var(--mint-700)" }}>
+              <strong>{signedCount}</strong> of <strong>{total}</strong> documents signed.
+            </p>
+          </div>
+          {safeIdx < total - 1 && (
+            <button
+              onClick={() => setActiveIdx(safeIdx + 1)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-semibold transition-all"
+              style={{ background: "var(--mint-600)", color: "white" }}
+            >
+              Next Doc <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       )}
     </div>
