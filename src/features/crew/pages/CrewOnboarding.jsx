@@ -56,7 +56,7 @@ const STAGE_KEYS = [
   { key: "PENDING_FC_SIGNATURE",     label: "FC Sign",     icon: ShieldCheck, color: "text-violet-600",   bg: "bg-violet-50",   border: "border-violet-200"   },
   { key: "PENDING_STUDIO_SIGNATURE", label: "Studio Sign", icon: Building2,   color: "text-fuchsia-600",  bg: "bg-fuchsia-50",  border: "border-fuchsia-200"  },
   // NEW: completed contracts shown as final pipeline stage
-  { key: "COMPLETED",                label: "Completed",   icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50",  border: "border-emerald-200"  },
+
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ export default function CrewOnboarding() {
         />
 
         {/* UPDATED: sm:grid-cols-9 to fit the new Completed tile */}
-        <div className="grid grid-cols-3 sm:grid-cols-9 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-8 gap-2">
           {STAGE_KEYS.map(stage => (
             <StageCard
               key={stage.key}

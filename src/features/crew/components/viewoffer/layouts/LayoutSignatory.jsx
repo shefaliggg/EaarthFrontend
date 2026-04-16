@@ -1,8 +1,23 @@
+/**
+ * layouts/LayoutSignatory.jsx
+ *
+ * THEMING: All colors use CSS variables from index.css.
+ *   No hardcoded Tailwind color classes.
+ *
+ * CHANGES:
+ *   - Accepts new `user` prop from ViewOffer (for user.savedSignature)
+ *   - ContractInstancesPanel now receives:
+ *       canSignRole, profileSignature, onSignInstance, isSubmitting
+ *   - "Sign as [ROLE]" button in SignatorySidebar removed — signing is now
+ *     done per-document via DocumentSignatureBox in ContractInstancesPanel
+ *   - "Request Changes" dialog remains inline (unchanged)
+ */
+
 import { useState }           from "react";
 import { useParams }          from "react-router-dom";
 import { toast }              from "sonner";
 import {
-  Eye, CheckCircle, XCircle, PenLine, ClipboardCheck,
+  Eye, CheckCircle, XCircle, ClipboardCheck,
   Loader2, FileText, Shield, Lock, Send, X, MessageSquare,
 } from "lucide-react";
 
@@ -200,8 +215,10 @@ function SignatureStatusCard({ signingStatus }) {
 }
 
 // ── Signatory sidebar ─────────────────────────────────────────────────────────
+// NOTE: "Sign as [ROLE]" button removed — signing happens per-document via
+// DocumentSignatureBox embedded inside ContractInstancesPanel.
 
-function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign, onRequestChanges }) {
+function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onRequestChanges }) {
   const status    = offer?.status;
   const cfg       = ROLE_CFG[role];
   if (!cfg) return null;
@@ -252,17 +269,9 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign, on
         )}
 
         {canSign && !iSigned && (
-          <>
-            <InfoBox icon={Eye} color="purple">Please review all documents before signing.</InfoBox>
-            <button
-              disabled={isSubmitting} onClick={() => onSign(role)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white text-[12px] font-semibold disabled:opacity-60 transition-colors"
-              style={{ background: "var(--primary)" }}
-            >
-              {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
-              Sign as {cfg.short}
-            </button>
-          </>
+          <InfoBox icon={Eye} color="purple">
+            Review each document below and apply your signature using the Sign button within each one.
+          </InfoBox>
         )}
 
         {iSigned && !isCompleted && (
@@ -299,6 +308,7 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onSign, on
 export default function LayoutSignatory({
   role, offer, contractData,
   signingStatus, isSubmitting, onSign, dispatch,
+  user,                    // ← NEW: current user with user.savedSignature
 }) {
   const { id } = useParams();
   const offerId = id || offer?._id;
@@ -308,11 +318,20 @@ export default function LayoutSignatory({
   const [requestSent, setRequestSent] = useState(false);
 
   const status = offer?.status;
+  const cfg    = ROLE_CFG[role];
+
+  const canSign = status === cfg?.requiredStatus;
 
   const signingInProgress = [
     "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE",
     "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
   ].includes(status);
+
+  // ── Per-document sign handler ─────────────────────────────────────────────
+  // Called by DocumentSignatureBox with the instanceId of the doc being signed.
+  const handleSignInstance = async (instanceId) => {
+    await onSign(role);
+  };
 
   const handleConfirm = async (reason) => {
     if (!offerId || !reason) return;
@@ -343,7 +362,7 @@ export default function LayoutSignatory({
     <>
       <CrewIdentityHeader contractData={contractData} offer={offer} />
 
-      {/* Sent confirmation banner */}
+      {/* Request sent confirmation banner */}
       {requestSent && (
         <div
           className="flex items-center gap-3 rounded-xl px-4 py-3"
@@ -395,7 +414,14 @@ export default function LayoutSignatory({
             </div>
             <div className="p-4">
               {offer?._id ? (
-                <ContractInstancesPanel offerId={offer._id} offerStatus={offer?.status} />
+                <ContractInstancesPanel
+                  offerId={offer._id}
+                  offerStatus={offer?.status}
+                  canSignRole={canSign}
+                  profileSignature={user?.savedSignature}
+                  onSignInstance={handleSignInstance}
+                  isSubmitting={isSubmitting}
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div
@@ -419,7 +445,6 @@ export default function LayoutSignatory({
             role={role} offer={offer}
             signingStatus={signingStatus}
             isSubmitting={isSubmitting}
-            onSign={onSign}
             onRequestChanges={() => !requestSent && setShowDialog(true)}
           />
         </div>
