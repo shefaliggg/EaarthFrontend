@@ -12,7 +12,8 @@ function App() {
       <RouterProvider router={router} />
       <Toaster
         position="bottom-right"
-        expand={false}
+        expand={true}
+        visibleToasts={5}
         richColors
         toastOptions={{
           style: {

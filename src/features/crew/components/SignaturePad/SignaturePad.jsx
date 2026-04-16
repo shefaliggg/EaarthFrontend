@@ -3,10 +3,10 @@ import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/config/utils";
 import FilterPillTabs from "../../../../shared/components/FilterPillTabs";
-import { Upload, Type, PenTool, X, Trash2, Trash, Eraser } from "lucide-react";
+import { Upload, Type, PenTool, X, Trash2, Trash, Eraser, AlertTriangle } from "lucide-react";
 
 const SignaturePad = forwardRef(
-  ({ onSave, onCancel, showActions = true }, ref) => {
+  ({ onSave, onCancel, isChangingSignature, showActions = true }, ref) => {
     const [activeTab, setActiveTab] = useState("draw");
     const [typedValue, setTypedValue] = useState("");
     const [font, setFont] = useState("Festive");
@@ -85,6 +85,33 @@ const SignaturePad = forwardRef(
 
     return (
       <div className="w-full overflow-hidden">
+        {isChangingSignature && (
+          <div className="mx-4 mb-2">
+            <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-4 shadow-sm">
+              {/* subtle glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-100/20 via-transparent to-amber-100/20 pointer-events-none" />
+
+              <div className="relative flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="p-2 rounded-lg bg-amber-100 border border-amber-200">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-amber-800">
+                    Updating your signature
+                  </p>
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    Your current active signature will be securely revoked and
+                    replaced with this new version. Previous versions will
+                    remain archived for audit and verification purposes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Tabs */}
         <div className="px-4 pt-4">
           <FilterPillTabs

@@ -1,10 +1,5 @@
 // Import the reasons if they exist in your project
 // If you don't have this file, you'll need to create it or define the reasons here
-// import {
-//   STUDIO_ADMIN_REMOVAL_REASONS,
-//   STUDIO_DEACTIVATION_REASONS,
-//   STUDIO_SUSPENSION_REASONS,
-// } from "./studioStatusActionsReason";
 
 // Temporary placeholder arrays - replace with actual imports if available
 const STUDIO_SUSPENSION_REASONS = [
@@ -75,9 +70,31 @@ export const INITIALIZE_PROJECT_CONFIG = {
   allowNote: true,
   notesPlaceholder:
     "Add any specific requirements or notes for the project setup...",
-  successMessage: "Project creation initialized successfully! Our team will contact you soon."
+  successMessage:
+    "Project creation initialized successfully! Our team will contact you soon.",
 };
 
+export const signatureReplaceConfig = {
+  title: "Replace Existing Signature?",
+  description:
+    "You already have an active digital signature. Proceeding will revoke your current signature and make it invalid for future use. This action will create a new version of your signature for audit and verification purposes.",
+  confirmText: "Continue & Replace",
+  cancelText: "Keep Current",
+  variant: "warning",
+
+  reasons: [
+    { label: "Update signature style", value: "UPDATED_SIGNATURE_STYLE" },
+    { label: "Legal name change", value: "LEGAL_NAME_CHANGE" },
+    { label: "Security concern", value: "SECURITY_COMPROMISE" },
+    { label: "Preference change", value: "PREFERENCE_CHANGE" },
+    { label: "Other", value: "OTHER" },
+  ],
+
+  requireReason: true,
+  allowNote: true,
+  requireNotes: true,
+notesPlaceholder: "Add any relevant details to support this change (e.g., reason, context, or justification)."
+};
 
 export const statusConfigMap = {
   suspend: SUSPEND_STUDIO_CONFIG,

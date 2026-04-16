@@ -33,11 +33,13 @@ import {
 import { Skeleton } from "../../../../shared/components/ui/skeleton";
 import { StatusBadge } from "../../../../shared/components/badges/StatusBadge";
 import { toast } from "sonner";
+import SignatureLoadingSkelton from "../skeltons/SignatureLoadingSkelton";
+import DocumentPreviewDialog from "../../../../shared/components/modals/DocumentPreviewDialog";
+import { signatureReplaceConfig } from "../../../../shared/config/ConfirmActionsConfig";
+import ConfirmActionDialog from "../../../../shared/components/modals/ConfirmActionDialog";
+import { downloadFileFromUrl } from "../../../../shared/config/downloadFile";
 
 export default function MySignature() {
-  const { crewProfile } = useSelector((state) => state.crewProfile);
-  const { currentUser } = useSelector((state) => state.user);
-  // const { userDocuments } = useSelector((state) => state.userDocuments);
   const { currentSignature, isFetching, isCreating } = useSelector(
     (state) => state.signature,
   );
@@ -50,15 +52,22 @@ export default function MySignature() {
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [devOtp, setDevOtp] = useState(null);
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [isChangingSignature, setIsChangingSignature] = useState(false);
+  const [changeMeta, setChangeMeta] = useState(null);
+
+  const handleEditClick = () => {
+    if (currentSignature?.status === "ACTIVE") {
+      setShowReplaceDialog(true);
+      setIsChangingSignature(true);
+    } else {
+      setIsEditing(true);
+    }
+  };
 
   const padRef = useRef();
 
   const signatureImage = currentSignature?.signatureUrl;
-  // const signatureDocuments = getDocumentsByType(userDocuments, "SIGNATURE");
-  // const signatureCertificateDocuments = getDocumentsByType(
-  //   userDocuments,
-  //   "SIGNATURE_CERTIFICATE",
-  // );
 
   useEffect(() => {
     dispatch(fetchCurrentSignatureThunk());
@@ -81,8 +90,17 @@ export default function MySignature() {
   const handleSave = async () => {
     const data = await padRef.current?.getData();
     if (!data?.data) return;
+    console.log("changing meta", changeMeta);
+    if (isChangingSignature) {
+      if (!changeMeta?.changeReasonText || !changeMeta?.changeReasonType) {
+        toast.warning(
+          "Please provide reason and describe it for changing your signature",
+        );
+        return;
+      }
+    }
     console.log("Signature data to save:", data);
-    const file = base64ToFile(data.data,"signature.png");
+    const file = base64ToFile(data.data, "signature.png");
 
     const formData = new FormData();
     formData.append("signature", file);
@@ -93,23 +111,36 @@ export default function MySignature() {
       formData.append("fontFamily", data.font || "");
     }
 
+    if (isChangingSignature && changeMeta) {
+      formData.append("changeReasonType", changeMeta.changeReasonType);
+      formData.append("changeReasonText", changeMeta.changeReasonText);
+    }
+
     const res = await dispatch(createSignatureThunk(formData));
+
     if (res.meta.requestStatus === "fulfilled") {
       toast.success("Signature created successfully", {
         description: "Your digital signature has been securely saved.",
       });
-      toast.info("Verification process Initiated", {
-        description:
-          "We are sending a secure OTP to your registered email and preparing your certificate generation pipeline.",
+
+      const loadingToastId = toast.loading("Initiating verification...", {
+        description: "Preparing secure OTP and certificate pipeline...",
       });
+
+      setIsChangingSignature(false);
+      setChangeMeta(null);
+      setIsEditing(false);
+
       const otpRes = await dispatch(sendSignatureOtpThunk());
 
-      // 👇 DEV MODE ONLY
+      // DEV MODE ONLY
       const otpFromBackend = otpRes.payload?.otp;
       if (otpFromBackend) {
         console.log("🧪 DEV OTP (initial):", otpFromBackend);
         setDevOtp(otpFromBackend);
       }
+
+      toast.dismiss(loadingToastId);
 
       setShowOtpModal(true);
     }
@@ -117,94 +148,22 @@ export default function MySignature() {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setIsChangingSignature(false);
+    setChangeMeta(null);
   };
 
-  const downloadSignature = async () => {
-    if (!signatureImage) return;
-
+  const handleDownload = async ({ type, fileUrl, fileName }) => {
     try {
-      const response = await fetch(signatureImage, {
-        method: "GET",
-      });
-
-      console.log("status:", response.status);
-      console.log("content-type:", response.headers.get("content-type"));
-      // const blob = await response.blob();
-      // const url = window.URL.createObjectURL(blob);
-
-      // const link = document.createElement("a");
-      // link.href = url;
-      // link.download = `${convertTitleToUrl(getFullName(currentUser))}-signature.png`;
-
-      // document.body.appendChild(link);
-      // link.click();
-
-      // link.remove();
-      // window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Failed to download signature");
+      toast.info(`Downloading ${type}..`);
+      await downloadFileFromUrl(fileUrl, fileName);
+    } catch (err) {
+      console.error("Download failed:", err);
+      toast.error(`Downloading ${type} failed`);
     }
   };
 
   if (isFetching) {
-    return (
-      <CardWrapper
-        title={"My Signature"}
-        icon={"PenTool"}
-        actions={
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-30 rounded-md" />
-            <Skeleton className="h-8 w-30 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        }
-      >
-        <div className="space-y-6">
-          {/* Signature Card Skeleton */}
-          <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-4">
-            {/* Signature Image Area */}
-            <div className="p-6 pt-12 pb-8 flex justify-center items-center min-h-[180px]">
-              <div className="w-full max-w-[320px] flex justify-center">
-                <Skeleton className="w-full h-32 rounded-md" />
-              </div>
-            </div>
-
-            {/* Signature Footer */}
-            <div className="px-5 pb-3">
-              <div className="flex items-center justify-between text-xs">
-                {/* Left Side (Calendar + User) */}
-                <div className="flex items-center gap-4">
-                  {/* Calendar row */}
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="w-3.5 h-3.5 rounded-sm" />
-                    <Skeleton className="h-3 w-28" />
-                  </div>
-
-                  {/* User row */}
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="w-3.5 h-3.5 rounded-sm" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                </div>
-
-                {/* Right Side */}
-                <div className="flex items-center gap-4">
-                  {/* Active status */}
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="w-1.5 h-1.5 rounded-full" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-
-                  {/* Verified */}
-                  <Skeleton className="h-3 w-14" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardWrapper>
-    );
+    return <SignatureLoadingSkelton />;
   }
 
   return (
@@ -223,7 +182,17 @@ export default function MySignature() {
                   <Eye />
                   <span className="text-sm font-medium">View Certificate</span>
                 </Button>
-                <Button onClick={downloadSignature} variant={"outline"}>
+                <Button
+                  onClick={() =>
+                    handleDownload({
+                      type: "Signature",
+                      fileName:
+                        currentSignature?.signatureDocumentId?.originalName,
+                      fileUrl: signatureImage,
+                    })
+                  }
+                  variant={"outline"}
+                >
                   <Download />
                   <span className="text-sm font-medium">
                     Download Signature
@@ -246,7 +215,7 @@ export default function MySignature() {
             <EditToggleButtons
               isEditing={isEditing}
               isLoading={isCreating}
-              onEdit={() => setIsEditing(true)}
+              onEdit={handleEditClick}
               onSave={handleSave}
               onCancel={handleCancel}
             />
@@ -260,6 +229,7 @@ export default function MySignature() {
               ref={padRef}
               onSave={handleSave}
               onCancel={handleCancel}
+              isChangingSignature={isChangingSignature}
               showActions={false}
             />
           ) : (
@@ -268,18 +238,18 @@ export default function MySignature() {
                 <>
                   <div className="space-y-6">
                     {/* Signature Card */}
-                    <div className="rounded-2xl bg-card border border-gray-200 overflow-hidden shadow-sm mt-4">
+                    <div className="rounded-2xl bg-card border border-muted overflow-hidden shadow-sm mt-4">
                       <div className="text-muted-foreground/70 text-sm p-3 px-6 flex items-center justify-end gap-2">
                         <History className="size-4" />
                         Version {currentSignature?.version}
                       </div>
                       {/* Signature Image */}
-                      <div className="p-6 py-8 flex justify-center items-center min-h-[200px]">
+                      <div className="p-6 pb-3 flex justify-center items-center min-h-[200px]">
                         <div className="relative group">
                           <img
                             src={signatureImage}
                             alt="Your signature"
-                            className="w-full max-h-32 object-contain relative z-10"
+                            className="w-full max-h-38 object-contain object-center relative z-10"
                           />
                         </div>
                       </div>
@@ -325,11 +295,13 @@ export default function MySignature() {
                     </div>
                   </div>
 
-                  <SignatureCertificateModal
-                    crewProfile={crewProfile}
+                  <DocumentPreviewDialog
                     open={isCertificateOpen}
                     onOpenChange={setIsCertificateOpen}
-                    signatureImage={signatureImage}
+                    fileUrl={currentSignature?.certificateUrl}
+                    fileName={
+                      currentSignature?.certificateDocumentId?.originalName
+                    }
                   />
                 </>
               ) : (
@@ -388,6 +360,23 @@ export default function MySignature() {
           )}
         </div>
       </CardWrapper>
+
+      <ConfirmActionDialog
+        open={showReplaceDialog}
+        onOpenChange={setShowReplaceDialog}
+        loading={isCreating}
+        config={signatureReplaceConfig}
+        onConfirm={({ reason, note }) => {
+          setShowReplaceDialog(false);
+          setIsEditing(true);
+
+          setChangeMeta({
+            changeReasonType: reason,
+            changeReasonText: note,
+          });
+        }}
+      />
+
       {showOtpModal && (
         <SignatureOtpModal
           open={showOtpModal}
