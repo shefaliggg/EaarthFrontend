@@ -9,35 +9,35 @@ import {
   History,
   RotateCcw,
 } from "lucide-react";
-import CardWrapper from "../../../../shared/components/wrappers/CardWrapper";
-import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
-import SignaturePad from "../../../crew/components/SignaturePad/SignaturePad";
+import CardWrapper from "../../../../../shared/components/wrappers/CardWrapper";
+import EditToggleButtons from "../../../../../shared/components/buttons/EditToggleButtons";
+import SignaturePad from "../../../../crew/components/SignaturePad/SignaturePad";
 import {
   convertToPrettyText,
   formatDate,
-} from "../../../../shared/config/utils";
-import { Button } from "../../../../shared/components/ui/button";
+} from "../../../../../shared/config/utils";
+import { Button } from "../../../../../shared/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
-import SignatureOtpModal from "./my-signature/SignatureOtpModal";
+import SignatureOtpModal from "./SignatureOtpModal";
 import {
   createSignatureThunk,
   fetchCurrentSignatureThunk,
   sendSignatureOtpThunk,
-} from "../../../signature/store/signature.thunk";
-import { StatusBadge } from "../../../../shared/components/badges/StatusBadge";
+} from "../../../../signature/store/signature.thunk";
+import { StatusBadge } from "../../../../../shared/components/badges/StatusBadge";
 import { toast } from "sonner";
-import SignatureLoadingSkelton from "../skeltons/SignatureLoadingSkelton";
-import DocumentPreviewDialog from "../../../../shared/components/modals/DocumentPreviewDialog";
-import { signatureReplaceConfig } from "../../../../shared/config/ConfirmActionsConfig";
-import ConfirmActionDialog from "../../../../shared/components/modals/ConfirmActionDialog";
-import { downloadFileFromUrl } from "../../../../shared/config/downloadFile";
+import SignatureLoadingSkelton from "../../skeltons/SignatureLoadingSkelton";
+import DocumentPreviewDialog from "../../../../../shared/components/modals/DocumentPreviewDialog";
+import { signatureReplaceConfig } from "../../../../../shared/config/ConfirmActionsConfig";
+import ConfirmActionDialog from "../../../../../shared/components/modals/ConfirmActionDialog";
+import { downloadFileFromUrl } from "../../../../../shared/config/downloadFile";
+import SignatureHistoryDialog from "./SignatureHistoryDialog";
+import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
 
 export default function MySignature() {
   const { currentSignature, isFetching, isCreating } = useSelector(
     (state) => state.signature,
   );
-
-  console.log("current signature:", currentSignature);
 
   const dispatch = useDispatch();
 
@@ -48,6 +48,11 @@ export default function MySignature() {
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [isChangingSignature, setIsChangingSignature] = useState(false);
   const [changeMeta, setChangeMeta] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+
+  console.log("current signature:", currentSignature);
+  console.log("preview doc:", previewDoc);
 
   const handleEditClick = () => {
     if (currentSignature?.status === "ACTIVE") {
@@ -63,8 +68,19 @@ export default function MySignature() {
   const signatureImage = currentSignature?.signatureUrl;
 
   useEffect(() => {
-    dispatch(fetchCurrentSignatureThunk());
+    if (!currentSignature) {
+      dispatch(fetchCurrentSignatureThunk());
+    }
   }, []);
+
+  useEffect(() => {
+    if (currentSignature) {
+      setPreviewDoc({
+        url: currentSignature?.certificateUrl,
+        name: currentSignature?.certificateDocumentId?.originalName,
+      });
+    }
+  }, [currentSignature]);
 
   function base64ToFile(base64, filename = "signature.png") {
     const arr = base64.split(",");
@@ -170,6 +186,7 @@ export default function MySignature() {
               <>
                 <Button
                   variant={"outline"}
+                  size={"sm"}
                   onClick={() => setIsCertificateOpen(true)}
                 >
                   <Eye />
@@ -185,6 +202,7 @@ export default function MySignature() {
                     })
                   }
                   variant={"outline"}
+                  size={"sm"}
                 >
                   <Download />
                   <span className="text-sm font-medium">
@@ -196,6 +214,7 @@ export default function MySignature() {
             {currentSignature?.verificationStatus === "PENDING" && (
               <Button
                 variant="default"
+                size={"sm"}
                 onClick={() => {
                   dispatch(sendSignatureOtpThunk());
                   setShowOtpModal(true);
@@ -204,6 +223,17 @@ export default function MySignature() {
                 <RotateCcw />
                 Retry Signature Verification
               </Button>
+            )}
+            {currentSignature?.version > 1 && (
+              <InfoTooltip content={"view Signature History"}>
+                <Button
+                  variant="outline"
+                  size={"icon"}
+                  onClick={() => setIsHistoryOpen(true)}
+                >
+                  <History />
+                </Button>
+              </InfoTooltip>
             )}
             <EditToggleButtons
               isEditing={isEditing}
@@ -291,10 +321,8 @@ export default function MySignature() {
                   <DocumentPreviewDialog
                     open={isCertificateOpen}
                     onOpenChange={setIsCertificateOpen}
-                    fileUrl={currentSignature?.certificateUrl}
-                    fileName={
-                      currentSignature?.certificateDocumentId?.originalName
-                    }
+                    fileUrl={previewDoc?.url}
+                    fileName={previewDoc?.name}
                   />
                 </>
               ) : (
@@ -368,6 +396,20 @@ export default function MySignature() {
             changeReasonText: note,
           });
         }}
+      />
+
+      <SignatureHistoryDialog
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+        history={history}
+        onViewCertificate={(item) => {
+          setIsCertificateOpen(true);
+          setPreviewDoc({
+            url: item?.certificateUrl,
+            name: item?.certificateDocumentId?.originalName,
+          });
+        }}
+        onDownload={handleDownload}
       />
 
       {showOtpModal && (

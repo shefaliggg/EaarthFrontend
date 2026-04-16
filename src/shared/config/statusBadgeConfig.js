@@ -35,6 +35,7 @@ const STATUS_ICONS = {
 
 const STATUS_META = {
   approved: "success",
+  verified: "success",
   submitted: "success",
   active: "success",
   enabled: "success",
@@ -60,6 +61,7 @@ const STATUS_META = {
 
   rejected: "danger",
   suspended: "danger",
+  revoked: "danger",
   "not-submitted": "danger",
   expired: "danger",
 };

@@ -5,7 +5,7 @@ import ContactDetails from "../components/tabs/ContactDetails";
 import FinancialDetails from "../components/tabs/FinancialDetails";
 import AllowanceDetails from "../components/tabs/allowance-details/AllowancesDetails";
 import HealthDetails from "../components/tabs/HealthDetails";
-import MySignature from "../components/tabs/MySignature";
+import MySignature from "../components/tabs/my-signature/MySignature";
 import FilterPillTabs from "../../../shared/components/FilterPillTabs";
 import {
   Briefcase,

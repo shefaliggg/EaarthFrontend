@@ -15,6 +15,7 @@ const initialState = {
   isCreating: false,
   isSendingOtp: false,
   isVerifying: false,
+  isFetchingHistory: false,
 
   otpSent: false,
   verified: false,
@@ -89,8 +90,16 @@ const signatureSlice = createSlice({
       })
 
       // HISTORY
+      .addCase(fetchSignatureHistoryThunk.pending, (state) => {
+        state.isFetchingHistory = true;
+      })
       .addCase(fetchSignatureHistoryThunk.fulfilled, (state, action) => {
+        state.isFetchingHistory = false;
         state.history = action.payload;
+      })
+      .addCase(fetchSignatureHistoryThunk.rejected, (state, action) => {
+        state.isFetchingHistory = false;
+        state.error = action.payload;
       });
   },
 });

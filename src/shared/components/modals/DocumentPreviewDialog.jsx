@@ -15,6 +15,7 @@ export default function DocumentPreviewDialog({
   fileUrl,
   fileName = "Document.pdf",
 }) {
+  console.log("filename :", fileName, "url:", fileUrl);
   const [numPages, setNumPages] = useState(null);
   const [scale, setScale] = useState(1);
   const [downloading, setDownloading] = useState(false);
