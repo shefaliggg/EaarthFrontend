@@ -21,7 +21,6 @@ import {
   getFullName,
 } from "../../../../shared/config/utils";
 import { Button } from "../../../../shared/components/ui/button";
-import SignatureCertificateModal from "./SignatureCertificateModal";
 import { useDispatch, useSelector } from "react-redux";
 import { getDocumentsByType } from "../../../user-documents/store/document.selector";
 import SignatureOtpModal from "./my-signature/SignatureOtpModal";

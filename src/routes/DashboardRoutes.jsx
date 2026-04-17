@@ -6,8 +6,8 @@ import DashboardLayout from '../layouts/DashboardLayout';
 
 import ProjectRoutes from '../features/projects/routes/ProjectRoutes';
 import SettingsRoutes from '../features/settings/routes/SettingsRoutes';
-import RoleBasedDashboard from '../shared/components/RoleBasedDashboard';
 import ProfileRoutes from '../features/profile/routes/ProfileRoutes';
+import ProjectList from '../features/projects/pages/ProjectList';
 import StudioRoutes from '../features/studio/routes/StudioRoutes';
 import SupportDashboard from '../features/support/pages/SupportDashboard';
 import CrewRoutes from '../features/crew/routes/CrewRoutes';
@@ -19,7 +19,7 @@ const DashboardRoutes = {
     path: '/', element: <GuardRoute allowedRoles='all'><DashboardLayout /></GuardRoute>,
     children: [
         { index: true, element: <Navigate to="home" replace /> },
-        { path: 'home', element: <RoleBasedDashboard /> },
+        { path: 'home', element: <ProjectList /> },
 
         StudioRoutes,
         ProjectRoutes,

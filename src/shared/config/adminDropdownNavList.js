@@ -92,13 +92,6 @@ const crewMenu = [
     route: "/projects/Myoffers",
   },
   {
-    id: "messages",
-    label: "My Messages",
-    icon: Icon.MessageCircle,
-    action: "messages",
-    badge: true,
-  },
-  {
     id: "profile",
     label: "My Profile",
     icon: Icon.User,
