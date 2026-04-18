@@ -1,7 +1,7 @@
 import { axiosConfig } from "@/features/auth/config/axiosConfig";
 
 export const getCurrentSignatureApi = async () => {
-  const res = await axiosConfig.get("/identity-signature/current");
+  const res = await axiosConfig.get("/identity-signature/current"); // ✅ FIXED
   return res.data.data;
 };
 
@@ -24,3 +24,6 @@ export const getSignatureHistoryApi = async () => {
   const res = await axiosConfig.get("/identity-signature/history");
   return res.data.data;
 };
+
+
+

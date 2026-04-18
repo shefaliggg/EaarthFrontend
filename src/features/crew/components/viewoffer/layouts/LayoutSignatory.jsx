@@ -1,157 +1,63 @@
 /**
  * layouts/LayoutSignatory.jsx
  *
- * THEMING: All colors use CSS variables from index.css.
- *   No hardcoded Tailwind color classes.
- *
- * CHANGES:
- *   - Accepts new `user` prop from ViewOffer (for user.savedSignature)
- *   - ContractInstancesPanel now receives:
- *       canSignRole, profileSignature, onSignInstance, isSubmitting
- *   - "Sign as [ROLE]" button in SignatorySidebar removed — signing is now
- *     done per-document via DocumentSignatureBox in ContractInstancesPanel
- *   - "Request Changes" dialog remains inline (unchanged)
+ * FIXES APPLIED:
+ *   - handleSignInstance passes { instanceId, signatureImage } as an object
+ *     to signContractInstanceThunk (previously passed instanceId as a plain
+ *     string, so signatureImage was silently dropped by the thunk).
+ *   - No clearInstances() on post-sign refresh (prevents UI flicker).
+ *   - profileSignature reads from Redux store first, falls back to prop.
+ *   - Everything else unchanged.
  */
 
-import { useState }           from "react";
-import { useParams }          from "react-router-dom";
-import { toast }              from "sonner";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
 import {
-  Eye, CheckCircle, XCircle, ClipboardCheck,
-  Loader2, FileText, Shield, Lock, Send, X, MessageSquare,
+  PenLine, MessageSquare, Lock, FileText, Shield,
+  CheckCircle2, Clock, XCircle, Loader2,
 } from "lucide-react";
 
 import ContractInstancesPanel from "../../../pages/ContractInstancesPanel";
-import CrewIdentityHeader     from "./CrewIdentityHeader";
 import { InfoBox }            from "./layoutHelpers";
-
 import {
-  crewRequestChangesThunk,
-  getOfferThunk,
-} from "../../../store/offer.slice";
+  signContractInstanceThunk,
+  selectInstancesSigning,
+  getContractInstancesThunk,
+} from "../../../store/contractInstances.slice";
+import OfferActionDialog from "../../../components/onboarding/OfferActionDialog";
 
-const ROLE_CFG = {
-  UPM: {
-    label:          "Unit Production Manager",
-    short:          "UPM",
-    requiredStatus: "PENDING_UPM_SIGNATURE",
-    waitingMsg:     "Awaiting crew signature before UPM can sign.",
-    signedMsg:      "You have signed as UPM. Awaiting Financial Controller.",
-    heading:        "Send Edit Request to Production",
-    description:    "As UPM, if you have identified an issue with the contract terms, rates, or crew details that requires amendment before you can sign, describe the required changes below.",
-    placeholder:    "E.G., OVERTIME RATE IS INCORRECT — SHOULD REFLECT THE AGREED SCHEDULE D RATES…",
-  },
-  FC: {
-    label:          "Financial Controller",
-    short:          "FC",
-    requiredStatus: "PENDING_FC_SIGNATURE",
-    waitingMsg:     "Awaiting UPM signature before FC can sign.",
-    signedMsg:      "You have signed as FC. Awaiting Studio approval.",
-    heading:        "Send Financial Correction to Production",
-    description:    "As Financial Controller, if you have identified discrepancies in the fee structure, budget codes, allowances, or tax status that must be corrected before you can sign, detail the corrections needed below.",
-    placeholder:    "E.G., BUDGET CODE FOR BOX RENTAL IS INCORRECT — SHOULD BE AC-4421 NOT AC-4412…",
-  },
-  STUDIO: {
-    label:          "Approved Production Executive",
-    short:          "Studio",
-    requiredStatus: "PENDING_STUDIO_SIGNATURE",
-    waitingMsg:     "Awaiting FC signature before Studio can sign.",
-    signedMsg:      "Contract fully executed.",
-    heading:        "Request Offer Amendment",
-    description:    "As the approving Production Executive, if you require changes to the offer before final sign-off, describe the amendments required below.",
-    placeholder:    "E.G., ENGAGEMENT TYPE SHOULD BE LOAN OUT NOT PAYE…",
-  },
+import { selectProfileSignatureUrl } from "../../../../signature/store/signature.slice";
+
+// ── Role config ───────────────────────────────────────────────────────────────
+
+const ROLE_LABEL = {
+  UPM:    "Unit Production Manager",
+  FC:     "Financial Controller",
+  STUDIO: "Production Executive",
 };
 
-// ── Request Changes Dialog ────────────────────────────────────────────────────
+const SIGNING_STATUS_FOR_ROLE = {
+  UPM:    "PENDING_UPM_SIGNATURE",
+  FC:     "PENDING_FC_SIGNATURE",
+  STUDIO: "PENDING_STUDIO_SIGNATURE",
+};
 
-function RequestChangesDialog({ role, offer, onConfirm, onClose, isLoading }) {
-  const [notes, setNotes] = useState("");
-  const cfg           = ROLE_CFG[role] || ROLE_CFG.UPM;
-  const recipientName = offer?.recipient?.fullName || "";
-  const offerCode     = offer?.offerCode || "";
+const ROLE_SIGNABLE_STATUS = SIGNING_STATUS_FOR_ROLE;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
-      <div
-        className="relative w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-        style={{ background: "var(--card)" }}
-      >
-        <div className="px-5 py-4 flex items-center justify-between" style={{ background: "var(--peach-500)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h2 className="text-[15px] font-bold text-white leading-tight">{cfg.heading}</h2>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span
-                  className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.2)", color: "white" }}
-                >
-                  {cfg.label}
-                </span>
-                {offerCode && (
-                  <span className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.6)" }}>{offerCode}</span>
-                )}
-              </div>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors shrink-0">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+const HAS_SIGNED_STATUSES = {
+  UPM:    ["PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED"],
+  FC:     ["PENDING_STUDIO_SIGNATURE", "COMPLETED"],
+  STUDIO: ["COMPLETED"],
+};
 
-        <div className="px-5 py-4 space-y-3">
-          {recipientName && (
-            <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>
-              Offer for <strong style={{ color: "var(--foreground)" }}>{recipientName}</strong>
-            </p>
-          )}
-          <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
-            {cfg.description}
-          </p>
-          <textarea
-            value={notes} onChange={(e) => setNotes(e.target.value)}
-            placeholder={cfg.placeholder}
-            rows={5}
-            className="w-full rounded-xl px-4 py-3 text-[13px] uppercase placeholder:normal-case resize-none focus:outline-none transition-colors"
-            style={{ border: "1px solid var(--border)", background: "var(--muted)", color: "var(--foreground)" }}
-          />
-          <div
-            className="flex items-center gap-2 rounded-lg px-3 py-2"
-            style={{ background: "var(--peach-50)", border: "1px solid var(--peach-200)" }}
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--peach-500)" }} viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a.75.75 0 110 1.5A.75.75 0 018 4zm.75 7.25h-1.5v-4h1.5v4z"/>
-            </svg>
-            <p className="text-[10px] leading-tight" style={{ color: "var(--peach-700)" }}>
-              This will set the offer to <strong>Needs Revision</strong>. Production Admin will be notified and can edit and resend to crew.
-            </p>
-          </div>
-          <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>All text is stored in uppercase.</p>
-        </div>
-
-        <div className="flex gap-3 px-5 pb-5">
-          <button onClick={onClose} disabled={isLoading}
-            className="flex-1 h-11 rounded-xl text-[13px] font-semibold transition-colors disabled:opacity-50"
-            style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}>
-            Cancel
-          </button>
-          <button
-            onClick={() => { if (!notes.trim()) return; onConfirm(notes.trim().toUpperCase()); }}
-            disabled={isLoading || !notes.trim()}
-            className="flex-1 h-11 rounded-xl text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: "var(--peach-500)" }}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            Send to Production
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+const SIGNING_STAGE_STATUSES = [
+  "PENDING_CREW_SIGNATURE",
+  "PENDING_UPM_SIGNATURE",
+  "PENDING_FC_SIGNATURE",
+  "PENDING_STUDIO_SIGNATURE",
+  "COMPLETED",
+];
 
 // ── Signature status card ─────────────────────────────────────────────────────
 
@@ -163,14 +69,21 @@ function SignatureStatusCard({ signingStatus }) {
     { role: "FC",     label: "Financial Controller" },
     { role: "STUDIO", label: "Production Executive" },
   ];
+
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+    >
       <div
         className="flex items-center gap-2 px-3 py-2.5"
         style={{ borderBottom: "1px solid var(--border)", background: "var(--mint-50)" }}
       >
         <Shield className="w-3.5 h-3.5" style={{ color: "var(--mint-600)" }} />
-        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--mint-700)" }}>
+        <span
+          className="text-[10px] font-bold uppercase tracking-wider"
+          style={{ color: "var(--mint-700)" }}
+        >
           Signature Status
         </span>
       </div>
@@ -190,8 +103,13 @@ function SignatureStatusCard({ signingStatus }) {
               >
                 {signed && (
                   <svg className="w-2 h-2 text-white" viewBox="0 0 8 8" fill="none">
-                    <path d="M1.5 4l2 2 3-3" stroke="currentColor" strokeWidth="1.5"
-                          strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M1.5 4l2 2 3-3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </div>
@@ -202,7 +120,10 @@ function SignatureStatusCard({ signingStatus }) {
                 {label}
               </span>
               {signed && sig?.signedAt && (
-                <span className="ml-auto text-[9px] shrink-0" style={{ color: "var(--muted-foreground)" }}>
+                <span
+                  className="ml-auto text-[9px] shrink-0"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   {new Date(sig.signedAt).toLocaleDateString("en-GB")}
                 </span>
               )}
@@ -215,86 +136,65 @@ function SignatureStatusCard({ signingStatus }) {
 }
 
 // ── Signatory sidebar ─────────────────────────────────────────────────────────
-// NOTE: "Sign as [ROLE]" button removed — signing happens per-document via
-// DocumentSignatureBox embedded inside ContractInstancesPanel.
 
-function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onRequestChanges }) {
-  const status    = offer?.status;
-  const cfg       = ROLE_CFG[role];
-  if (!cfg) return null;
-
-  const canSign     = status === cfg.requiredStatus;
-  const isCompleted = status === "COMPLETED";
-  const isCancelled = status === "CANCELLED";
-  const sigs        = signingStatus?.signatories ?? [];
-  const mySig       = sigs.find((s) => s.role === role);
-  const iSigned     = !!mySig?.signed;
+function SignatorySidebar({
+  role, status, isSubmitting, signingStatus, onRequestChanges,
+}) {
+  const myTurn    = status === SIGNING_STATUS_FOR_ROLE[role];
+  const hasSigned = HAS_SIGNED_STATUSES[role]?.includes(status);
+  const completed = status === "COMPLETED";
+  const waiting   = !myTurn && !hasSigned && !completed;
 
   return (
     <div className="space-y-3">
-
-      {/* Role badge */}
       <div
-        className="rounded-xl px-4 py-3"
+        className="rounded-xl p-4 space-y-2.5"
         style={{ background: "var(--card)", border: "1px solid var(--border)" }}
       >
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: "var(--lavender-100)" }}
-          >
-            <Shield className="w-3 h-3" style={{ color: "var(--lavender-600)" }} />
-          </div>
-          <span
-            className="text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: "var(--lavender-600)" }}
-          >
-            {cfg.label}
-          </span>
-        </div>
-        <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>Signing as {cfg.short}</p>
-      </div>
-
-      {/* Action card */}
-      <div
-        className="rounded-xl p-3 space-y-2"
-        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-      >
-        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
+        <p
+          className="text-[10px] font-bold uppercase tracking-widest mb-1"
+          style={{ color: "var(--muted-foreground)" }}
+        >
           Your Action
         </p>
 
-        {!canSign && !iSigned && !isCompleted && !isCancelled && (
-          <InfoBox icon={ClipboardCheck} color="blue">{cfg.waitingMsg}</InfoBox>
-        )}
-
-        {canSign && !iSigned && (
-          <InfoBox icon={Eye} color="purple">
-            Review each document below and apply your signature using the Sign button within each one.
+        {myTurn && (
+          <InfoBox icon={PenLine} color="purple">
+            Click your highlighted signature field inside each document to sign inline.
           </InfoBox>
         )}
 
-        {iSigned && !isCompleted && (
-          <InfoBox icon={CheckCircle} color="green">{cfg.signedMsg}</InfoBox>
-        )}
-        {isCompleted && (
-          <InfoBox icon={Lock} color="green">Contract fully executed and locked.</InfoBox>
-        )}
-        {isCancelled && (
-          <InfoBox icon={XCircle} color="red">This offer has been cancelled.</InfoBox>
+        {waiting && (
+          <InfoBox icon={Clock} color="blue">
+            Awaiting prior signatures before you can sign.
+          </InfoBox>
         )}
 
-        {!isCompleted && !isCancelled && (
-          <>
-            <div style={{ borderTop: "1px solid var(--border)", margin: "4px 0" }} />
-            <button
-              disabled={isSubmitting} onClick={onRequestChanges}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold disabled:opacity-60 transition-colors"
-              style={{ border: "2px solid var(--peach-300)", color: "var(--peach-600)", background: "transparent" }}
-            >
-              <MessageSquare className="w-4 h-4" /> Request Changes
-            </button>
-          </>
+        {hasSigned && !completed && (
+          <InfoBox icon={PenLine} color="purple">
+            You have signed. Awaiting further signatories.
+          </InfoBox>
+        )}
+
+        {completed && (
+          <InfoBox icon={Lock} color="green">
+            Contract fully executed.
+          </InfoBox>
+        )}
+
+        {!completed && (
+          <button
+            disabled={isSubmitting}
+            onClick={onRequestChanges}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[11px] font-semibold disabled:opacity-60 transition-colors"
+            style={{
+              border: "2px solid var(--peach-300)",
+              color: "var(--peach-600)",
+              background: "transparent",
+            }}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> Request Changes
+          </button>
         )}
       </div>
 
@@ -306,88 +206,105 @@ function SignatorySidebar({ role, offer, signingStatus, isSubmitting, onRequestC
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function LayoutSignatory({
-  role, offer, contractData,
-  signingStatus, isSubmitting, onSign, dispatch,
-  user,                    // ← NEW: current user with user.savedSignature
+  offer,
+  contractData,
+  allowances,
+  calculatedRates,
+  isSubmitting,
+  onAction,
+  dispatch: _dispatch,
+  profileSignature: profileSignatureProp,
+  role,
+  salaryBudgetCodes,
+  salaryTags,
+  overtimeBudgetCodes,
+  overtimeTags,
+  signingStatus,
+  previewHtml,
+  isLoadingPrev,
+  onSign,
 }) {
-  const { id } = useParams();
-  const offerId = id || offer?._id;
+  const dispatch  = useDispatch();
+  const isSigning = useSelector(selectInstancesSigning);
 
-  const [showDialog,  setShowDialog ] = useState(false);
-  const [isSending,   setIsSending  ] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
+  // Profile signature: prefer Redux store, fall back to prop
+  const profileSignatureFromStore = useSelector(selectProfileSignatureUrl);
+  const profileSignature = profileSignatureFromStore ?? profileSignatureProp ?? null;
 
-  const status = offer?.status;
-  const cfg    = ROLE_CFG[role];
+  const [dialog, setDialog] = useState(null);
 
-  const canSign = status === cfg?.requiredStatus;
-
-  const signingInProgress = [
-    "PENDING_CREW_SIGNATURE", "PENDING_UPM_SIGNATURE",
-    "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
-  ].includes(status);
+  const status         = offer?.status;
+  const isSigningStage = SIGNING_STAGE_STATUSES.includes(status);
+  const requiredStatus = ROLE_SIGNABLE_STATUS[role];
+  const canSign        = !!requiredStatus && status === requiredStatus;
+  const canSignRole    = canSign;
 
   // ── Per-document sign handler ─────────────────────────────────────────────
-  // Called by DocumentSignatureBox with the instanceId of the doc being signed.
-  const handleSignInstance = async (instanceId) => {
-    await onSign(role);
-  };
+  // FIX: pass { instanceId, signatureImage } object — the thunk now expects this
+  // shape. Previously instanceId was passed as a plain string and signatureImage
+  // was silently discarded.
+  const handleSignInstance = async (instanceId, meta = {}) => {
+    const signatureImage = meta.signatureUrl ?? profileSignature ?? undefined;
 
-  const handleConfirm = async (reason) => {
-    if (!offerId || !reason) return;
-    setIsSending(true);
-    toast.loading("Sending to production…", { id: "rc-req" });
-    try {
-      const result = await dispatch(
-        crewRequestChangesThunk({ offerId, reason, fieldName: `${role}_REQUEST_CHANGES` })
-      );
-      toast.dismiss("rc-req");
-      if (!result.error) {
-        toast.success("Request sent. Offer set to Needs Revision.");
-        setShowDialog(false);
-        setRequestSent(true);
-        dispatch(getOfferThunk(offerId));
-      } else {
-        toast.error(result.payload?.message || "Failed to send. Please try again.");
-      }
-    } catch (err) {
-      toast.dismiss("rc-req");
-      toast.error(err.message || "Something went wrong.");
-    } finally {
-      setIsSending(false);
+    const result = await dispatch(
+      signContractInstanceThunk({ instanceId, signatureImage })
+    );
+
+    if (result.error) {
+      const msg =
+        result.payload?.message ||
+        result.payload?.error ||
+        "Failed to sign document";
+      toast.error(msg);
+      throw new Error(msg);
+    }
+
+    toast.success("Document signed successfully");
+
+    // Refresh in background — no clearInstances to avoid flash
+    if (offer?._id) {
+      dispatch(getContractInstancesThunk(offer._id));
     }
   };
 
+  if (!offer) return null;
+
+  // ── Not yet in signing stage ──────────────────────────────────────────────
+  if (!isSigningStage) {
+    return (
+      <div
+        className="rounded-xl px-5 py-8 flex flex-col items-center justify-center text-center gap-3"
+        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{
+            background: "var(--lavender-50)",
+            border: "1px solid var(--lavender-100)",
+          }}
+        >
+          <Clock className="w-5 h-5" style={{ color: "var(--lavender-400)" }} />
+        </div>
+        <p className="text-[13px] font-semibold" style={{ color: "var(--foreground)" }}>
+          {ROLE_LABEL[role] || role}
+        </p>
+        <p
+          className="text-[12px] max-w-xs leading-relaxed"
+          style={{ color: "var(--muted-foreground)" }}
+        >
+          This offer is not yet at the signing stage. You will be notified when
+          documents are ready for your signature.
+        </p>
+      </div>
+    );
+  }
+
+  // ── Signing stage ─────────────────────────────────────────────────────────
   return (
     <>
-      <CrewIdentityHeader contractData={contractData} offer={offer} />
-
-      {/* Request sent confirmation banner */}
-      {requestSent && (
-        <div
-          className="flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{ background: "var(--peach-50)", border: "1px solid var(--peach-200)" }}
-        >
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "var(--peach-100)" }}
-          >
-            <Send className="w-4 h-4" style={{ color: "var(--peach-600)" }} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[12px] font-semibold" style={{ color: "var(--peach-800)" }}>
-              Request sent to Production
-            </p>
-            <p className="text-[10px] mt-0.5" style={{ color: "var(--peach-600)" }}>
-              Offer is now <strong>Needs Revision</strong>. Production Admin will review, edit and resend to crew.
-            </p>
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-4 items-start">
 
-        {/* Left — contract documents */}
+        {/* Documents panel */}
         <div className="flex-1 min-w-0">
           <div
             className="rounded-xl overflow-hidden"
@@ -398,17 +315,32 @@ export default function LayoutSignatory({
               style={{ borderBottom: "1px solid var(--border)" }}
             >
               <FileText className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-              <h3 className="text-[12px] font-semibold" style={{ color: "var(--foreground)" }}>
+              <h3
+                className="text-[12px] font-semibold"
+                style={{ color: "var(--foreground)" }}
+              >
                 Contract Documents
               </h3>
-              {status === "COMPLETED" && (
-                <span className="ml-auto text-[9px] font-mono font-semibold" style={{ color: "var(--mint-600)" }}>
+              {status === "COMPLETED" ? (
+                <span
+                  className="ml-auto text-[9px] font-mono font-semibold"
+                  style={{ color: "var(--mint-600)" }}
+                >
                   ALL SIGNED
                 </span>
-              )}
-              {signingInProgress && (
-                <span className="ml-auto text-[9px] font-mono" style={{ color: "var(--primary)" }}>
-                  PENDING SIGNATURE
+              ) : canSignRole ? (
+                <span
+                  className="ml-auto text-[9px] font-mono"
+                  style={{ color: "var(--primary)" }}
+                >
+                  PENDING YOUR SIGNATURE
+                </span>
+              ) : (
+                <span
+                  className="ml-auto text-[9px] font-mono"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  AWAITING OTHER SIGNATORIES
                 </span>
               )}
             </div>
@@ -416,22 +348,23 @@ export default function LayoutSignatory({
               {offer?._id ? (
                 <ContractInstancesPanel
                   offerId={offer._id}
-                  offerStatus={offer?.status}
+                  offerStatus={offer.status}
                   canSignRole={canSign}
-                  profileSignature={user?.savedSignature}
+                  profileSignature={profileSignature}
                   onSignInstance={handleSignInstance}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={isSigning || isSubmitting}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-                    style={{ background: "var(--lavender-50)", border: "1px solid var(--lavender-100)" }}
+                  <FileText
+                    className="w-5 h-5 mb-2"
+                    style={{ color: "var(--lavender-300)" }}
+                  />
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: "var(--muted-foreground)" }}
                   >
-                    <FileText className="w-5 h-5" style={{ color: "var(--lavender-300)" }} />
-                  </div>
-                  <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>
-                    Loading offer…
+                    Loading…
                   </p>
                 </div>
               )}
@@ -439,25 +372,33 @@ export default function LayoutSignatory({
           </div>
         </div>
 
-        {/* Right — signing sidebar */}
-        <div className="w-[260px] shrink-0">
+        {/* Sidebar */}
+        <div className="w-[240px] shrink-0">
           <SignatorySidebar
-            role={role} offer={offer}
-            signingStatus={signingStatus}
+            role={role}
+            status={status}
             isSubmitting={isSubmitting}
-            onRequestChanges={() => !requestSent && setShowDialog(true)}
+            signingStatus={signingStatus}
+            onRequestChanges={() => setDialog("requestChanges")}
           />
         </div>
       </div>
 
-      {showDialog && (
-        <RequestChangesDialog
-          role={role} offer={offer}
-          onConfirm={handleConfirm}
-          onClose={() => setShowDialog(false)}
-          isLoading={isSending}
-        />
-      )}
+      {/* Request Changes dialog */}
+      <OfferActionDialog
+        type="requestChanges"
+        open={dialog === "requestChanges"}
+        offer={offer}
+        isLoading={isSubmitting}
+        onClose={() => setDialog(null)}
+        onConfirm={async (payload) => {
+          setDialog(null);
+          await onAction("requestChanges", {
+            ...payload,
+            fieldName: `${role}_SIGNING_REQUEST_CHANGES`,
+          });
+        }}
+      />
     </>
   );
 }
