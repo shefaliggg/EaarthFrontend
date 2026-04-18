@@ -1,27 +1,23 @@
-// export const downloadFileFromUrl = async (signedUrl, fileName = "document.pdf") => {
-//   const response = await fetch(signedUrl);
+import { toast } from "sonner";
 
-//   if (!response.ok) throw new Error("Failed to fetch file for download");
+export const downloadFile = async ({ url, fileName, label = "file" }) => {
+  const toastId = toast.loading(`Downloading ${label}...`);
 
-//   const blob = await response.blob();
-//   const blobUrl = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName || "download";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${label} downloaded`, {
+      id: toastId,
+    });
+  } catch (err) {
+    console.error("Download failed:", err);
 
-//   const link = document.createElement("a");
-//   link.href = blobUrl;
-//   link.download = fileName;
-//   document.body.appendChild(link);
-//   link.click();
-
-//   // Cleanup
-//   document.body.removeChild(link);
-//   URL.revokeObjectURL(blobUrl);
-// };
-
-export const downloadFileFromUrl = (signedUrl, fileName) => {
-  const link = document.createElement("a");
-  link.href = signedUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    toast.error(`Downloading ${label} failed`, {
+      id: toastId,
+    });
+  }
 };

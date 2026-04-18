@@ -59,6 +59,7 @@ const STATUS_META = {
   "not-started": "neutral",
   inactive: "neutral",
   disabled: "neutral",
+  unverified: "neutral",
 
   rejected: "danger",
   suspended: "danger",
@@ -69,7 +70,6 @@ const STATUS_META = {
 };
 
 export function getStatusBadge(status, label) {
-  console.log("status", status);
   const group = STATUS_META[status];
 
   if (!group) {

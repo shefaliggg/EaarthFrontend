@@ -33,9 +33,14 @@ import SignatureLoadingSkelton from "../../skeltons/SignatureLoadingSkelton";
 import DocumentPreviewDialog from "../../../../../shared/components/modals/DocumentPreviewDialog";
 import { signatureReplaceConfig } from "../../../../../shared/config/ConfirmActionsConfig";
 import ConfirmActionDialog from "../../../../../shared/components/modals/ConfirmActionDialog";
-import { downloadFileFromUrl } from "../../../../../shared/config/downloadFile";
+import { downloadFile } from "../../../../../shared/config/downloadFile";
 import SignatureHistoryDialog from "./SignatureHistoryDialog";
 import { InfoTooltip } from "../../../../../shared/components/InfoTooltip";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../shared/stores/useModalStore";
+import { file } from "zod";
 
 export default function MySignature() {
   const { currentSignature, isFetching, isCreating } = useSelector(
@@ -46,20 +51,32 @@ export default function MySignature() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
+  const { openModal, closeModal } = useModalStore();
+
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [devOtp, setDevOtp] = useState(null);
-  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+
   const [isChangingSignature, setIsChangingSignature] = useState(false);
   const [changeMeta, setChangeMeta] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState(null);
 
-  console.log("current signature:", currentSignature);
-  console.log("preview doc:", previewDoc);
+  // console.log("current signature:", currentSignature);
 
   const handleEditClick = () => {
     if (currentSignature?.status === "ACTIVE") {
-      setShowReplaceDialog(true);
+      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+        loading: isCreating,
+        config: signatureReplaceConfig,
+
+        onConfirm: async ({ reason, note }) => {
+          setIsEditing(true);
+          setChangeMeta({
+            changeReasonType: reason,
+            changeReasonText: note,
+          });
+        },
+        autoClose: true,
+      });
       setIsChangingSignature(true);
     } else {
       setIsEditing(true);
@@ -75,16 +92,6 @@ export default function MySignature() {
       dispatch(fetchCurrentSignatureThunk());
     }
   }, []);
-
-  useEffect(() => {
-    if (currentSignature) {
-      setPreviewDoc({
-        url: currentSignature?.certificateUrl,
-        name: currentSignature?.certificateDocumentId?.originalName,
-        status: currentSignature?.status,
-      });
-    }
-  }, [currentSignature]);
 
   function base64ToFile(base64, filename = "signature.png") {
     const arr = base64.split(",");
@@ -166,36 +173,16 @@ export default function MySignature() {
   };
 
   const handleDownload = async ({ type, fileUrl, fileName }) => {
-    try {
-      toast.info(`Downloading ${type}..`);
-      await downloadFileFromUrl(fileUrl, fileName);
-    } catch (err) {
-      console.error("Download failed:", err);
-      toast.error(`Downloading ${type} failed`);
-    }
+    downloadFile({
+      url: fileUrl,
+      fileName,
+      label: type,
+    });
   };
 
   if (isFetching) {
     return <SignatureLoadingSkelton />;
   }
-
-  const certificateBanner =
-    previewDoc?.status !== "ACTIVE"
-      ? {
-          title: "Certificate Context Notice",
-          icon: TriangleAlert,
-          variant: "warning",
-          content: (
-            <div>
-              This certificate was issued before this signature version was
-              revoked.
-              <br />
-              It remains valid as a historical record but is not tied to the
-              active signature.
-            </div>
-          ),
-        }
-      : null;
 
   return (
     <>
@@ -209,7 +196,13 @@ export default function MySignature() {
                 <Button
                   variant={"outline"}
                   size={"sm"}
-                  onClick={() => setIsCertificateOpen(true)}
+                  onClick={() =>
+                    openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
+                      fileUrl: currentSignature.certificateUrl,
+                      fileName:
+                        currentSignature?.certificateDocumentId?.originalName,
+                    })
+                  }
                 >
                   <Eye />
                   <span className="text-sm font-medium">View Certificate</span>
@@ -339,14 +332,6 @@ export default function MySignature() {
                       </div>
                     </div>
                   </div>
-
-                  <DocumentPreviewDialog
-                    open={isCertificateOpen}
-                    onOpenChange={setIsCertificateOpen}
-                    fileUrl={previewDoc?.url}
-                    fileName={previewDoc?.name}
-                    banner={certificateBanner}
-                  />
                 </>
               ) : (
                 /* Empty State - Premium Design */
@@ -405,34 +390,10 @@ export default function MySignature() {
         </div>
       </CardWrapper>
 
-      <ConfirmActionDialog
-        open={showReplaceDialog}
-        onOpenChange={setShowReplaceDialog}
-        loading={isCreating}
-        config={signatureReplaceConfig}
-        onConfirm={({ reason, note }) => {
-          setShowReplaceDialog(false);
-          setIsEditing(true);
-
-          setChangeMeta({
-            changeReasonType: reason,
-            changeReasonText: note,
-          });
-        }}
-      />
-
       <SignatureHistoryDialog
         open={isHistoryOpen}
         onOpenChange={setIsHistoryOpen}
         history={history}
-        onViewCertificate={(item) => {
-          setIsCertificateOpen(true);
-          setPreviewDoc({
-            url: item?.certificateUrl,
-            name: item?.certificateDocumentId?.originalName,
-            status: item?.status,
-          });
-        }}
         onDownload={handleDownload}
       />
 

@@ -27,6 +27,11 @@ import {
 import { toast } from "sonner";
 import ReuseDocumentPromptPanel from "../common/ReuseDocumentPromptPanel";
 import { getCountryOptions } from "../../../../shared/config/countriesDataConfig";
+import EditableDocumentField from "../../../../shared/components/wrappers/EditableDocumentField";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../shared/stores/useModalStore";
 
 export default function IdentityDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -53,6 +58,7 @@ export default function IdentityDetails() {
     certificateNaturalisation: null,
   });
   const [errors, setErrors] = useState({});
+  const { openModal, closeModal } = useModalStore();
 
   const dispatch = useDispatch();
   const { crewProfile, isFetching, isUpdating, error } = useSelector(
@@ -106,6 +112,7 @@ export default function IdentityDetails() {
     files.passport,
     userDocuments,
   );
+  console.log("resolved passport:", resolvedPassport)
   const resolvedBirthCert = getDisplayDocument(
     np?.birthCertificateId,
     reuseDocIds.birthCertificate,
@@ -343,6 +350,23 @@ export default function IdentityDetails() {
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update identity proof");
+    }
+  };
+
+  const handleViewDocument = ({ url, fileName }) => {
+    if (!url) return;
+
+    const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+
+    if (isImage) {
+      openModal(MODAL_TYPES.IMAGE_PREVIEW, {
+        imageFile: url,
+      });
+    } else {
+      openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
+        fileUrl: url,
+        fileName,
+      });
     }
   };
 
@@ -745,66 +769,52 @@ export default function IdentityDetails() {
                 />
               </div>
 
-              {isEditingIdentity && passportDocs?.length > 0 && (
-                <ReuseDocumentPromptPanel
-                  label="passport document"
-                  docs={passportDocs}
-                  selectedId={reuseDocIds.passport}
-                  docType="PASSPORT"
-                  onSelect={(id) => {
-                    setReuseDocIds((prev) => ({ ...prev, passport: id }));
-                    if (id) setFiles((f) => ({ ...f, passport: null }));
-                  }}
-                  disabled={isSavingIdentity}
-                  existingDocId={initialDocIds.passport}
-                />
-              )}
-
-              <FileUpload
+              <EditableDocumentField
                 label="PASSPORT DOCUMENT"
-                infoPillDescription="Upload a clear copy of your passport. This is used to verify your identity and nationality."
+                isEditing={isEditingIdentity}
                 fileName={resolvedPassport?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
-                isEditing={isEditingIdentity}
+                status={resolvedPassport?.verificationStatus || "Pending"}
+                meta={ resolvedPassport?.sizeBytes ? `${(resolvedPassport.sizeBytes / 1024 / 1024).toFixed(1)} MB` : null }
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, passport: file }));
                   setReuseDocIds((f) => ({ ...f, passport: null }));
                 }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedPassport?.originalName,
+                  })
+                }
                 isRequired
                 error={errors?.passportDocument?._errors?.[0]}
                 disabled={isSavingIdentity}
+                infoPillDescription="Upload a clear copy of your passport. This is used to verify your identity and nationality."
+                actionSlot={
+                  isEditingIdentity &&
+                  passportDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="passport document"
+                      docs={passportDocs}
+                      selectedId={reuseDocIds.passport}
+                      docType="PASSPORT"
+                      onSelect={(id) => {
+                        setReuseDocIds((prev) => ({ ...prev, passport: id }));
+                        if (id) setFiles((f) => ({ ...f, passport: null }));
+                      }}
+                      disabled={isSavingIdentity}
+                      existingDocId={initialDocIds.passport}
+                    />
+                  )
+                }
               />
             </div>
           )}
           {nd?.type === "BIRTH_CERTIFICATE" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
-              {isEditingIdentity && birthDocs?.length > 0 && (
-                <ReuseDocumentPromptPanel
-                  label="birth certificate"
-                  docs={birthDocs}
-                  selectedId={reuseDocIds.birthCertificate}
-                  onSelect={(id) => {
-                    setReuseDocIds((prev) => ({
-                      ...prev,
-                      birthCertificate: id,
-                    }));
-
-                    if (id) {
-                      setFiles((f) => ({
-                        ...f,
-                        birthCertificate: null,
-                      }));
-                    }
-                  }}
-                  disabled={isSavingIdentity}
-                  existingDocId={initialDocIds.birthCertificate}
-                />
-              )}
-
-              <FileUpload
+              <EditableDocumentField
                 label="BIRTH CERTIFICATE"
-                infoPillDescription="Upload your birth certificate as proof of nationality."
                 fileName={resolvedBirthCert?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedBirthCert?.url ?? null}
                 isUploaded={!!resolvedBirthCert}
@@ -813,37 +823,45 @@ export default function IdentityDetails() {
                   setFiles((f) => ({ ...f, birthCertificate: file }));
                   setReuseDocIds((f) => ({ ...f, birthCertificate: null }));
                 }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedBirthCert?.originalName,
+                  })
+                }
                 isRequired
                 error={errors?.birthCertificate?._errors?.[0]}
                 disabled={isSavingIdentity}
+                infoPillDescription="Upload your birth certificate as proof of nationality."
+                actionSlot={
+                  isEditingIdentity &&
+                  birthDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="birth certificate"
+                      docs={birthDocs}
+                      selectedId={reuseDocIds.birthCertificate}
+                      onSelect={(id) => {
+                        setReuseDocIds((prev) => ({
+                          ...prev,
+                          birthCertificate: id,
+                        }));
+
+                        if (id) {
+                          setFiles((f) => ({
+                            ...f,
+                            birthCertificate: null,
+                          }));
+                        }
+                      }}
+                      disabled={isSavingIdentity}
+                      existingDocId={initialDocIds.birthCertificate}
+                    />
+                  )
+                }
               />
 
-              {isEditingIdentity && niDocs?.length > 0 && (
-                <ReuseDocumentPromptPanel
-                  label="national insurance proof"
-                  docs={niDocs}
-                  selectedId={reuseDocIds.niProof}
-                  onSelect={(id) => {
-                    setReuseDocIds((prev) => ({
-                      ...prev,
-                      niProof: id,
-                    }));
-
-                    if (id) {
-                      setFiles((f) => ({
-                        ...f,
-                        niProof: null,
-                      }));
-                    }
-                  }}
-                  disabled={isSavingIdentity}
-                  existingDocId={initialDocIds.niProof}
-                />
-              )}
-
-              <FileUpload
+              <EditableDocumentField
                 label="NATIONAL INSURANCE PROOF"
-                infoPillDescription="Upload a valid NI document to support identity and employment verification."
                 fileName={resolvedNiProof?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
@@ -852,41 +870,48 @@ export default function IdentityDetails() {
                   setFiles((f) => ({ ...f, niProof: file }));
                   setReuseDocIds((f) => ({ ...f, niProof: null }));
                 }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedNiProof?.originalName,
+                  })
+                }
                 isRequired
                 error={errors?.niProof?._errors?.[0]}
                 disabled={isSavingIdentity}
+                infoPillDescription="Upload a valid NI document to support identity and employment verification."
+                actionSlot={
+                  isEditingIdentity &&
+                  niDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="national insurance proof"
+                      docs={niDocs}
+                      selectedId={reuseDocIds.niProof}
+                      onSelect={(id) => {
+                        setReuseDocIds((prev) => ({
+                          ...prev,
+                          niProof: id,
+                        }));
+
+                        if (id) {
+                          setFiles((f) => ({
+                            ...f,
+                            niProof: null,
+                          }));
+                        }
+                      }}
+                      disabled={isSavingIdentity}
+                      existingDocId={initialDocIds.niProof}
+                    />
+                  )
+                }
               />
             </div>
           )}
           {/* ── Certificate of Naturalisation ─────────────────────────────── */}
           {nd?.type === "CERTIFICATE_OF_NATURALISATION" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
-              {isEditingIdentity && naturalisationDocs?.length > 0 && (
-                <ReuseDocumentPromptPanel
-                  label="certificate of naturalisation"
-                  docs={naturalisationDocs}
-                  selectedId={reuseDocIds.certificateNaturalisation}
-                  onSelect={(id) => {
-                    setReuseDocIds((prev) => ({
-                      ...prev,
-                      certificateNaturalisation: id,
-                    }));
-
-                    if (id) {
-                      setFiles((f) => ({
-                        ...f,
-                        certificateNaturalisation: null,
-                      }));
-                    }
-                  }}
-                  disabled={isSavingIdentity}
-                  existingDocId={
-                    initialDocIds.certificateNaturalisation
-                  }
-                />
-              )}
-
-              <FileUpload
+              <EditableDocumentField
                 label="CERTIFICATE OF NATURALISATION"
                 infoPillDescription="Upload your certificate of registration or naturalisation as proof of legal nationality."
                 fileName={
@@ -902,34 +927,43 @@ export default function IdentityDetails() {
                     certificateNaturalisation: null,
                   }));
                 }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedNaturalisation?.originalName,
+                  })
+                }
                 isRequired
                 error={errors?.certificateNaturalisation?._errors?.[0]}
                 disabled={isSavingIdentity}
+                actionSlot={
+                  isEditingIdentity &&
+                  naturalisationDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="certificate of naturalisation"
+                      docs={naturalisationDocs}
+                      selectedId={reuseDocIds.certificateNaturalisation}
+                      onSelect={(id) => {
+                        setReuseDocIds((prev) => ({
+                          ...prev,
+                          certificateNaturalisation: id,
+                        }));
+
+                        if (id) {
+                          setFiles((f) => ({
+                            ...f,
+                            certificateNaturalisation: null,
+                          }));
+                        }
+                      }}
+                      disabled={isSavingIdentity}
+                      existingDocId={initialDocIds.certificateNaturalisation}
+                    />
+                  )
+                }
               />
 
-              {isEditingIdentity && niDocs?.length > 0 && (
-                <ReuseDocumentPromptPanel
-                  label="national insurance proof"
-                  docs={niDocs}
-                  selectedId={reuseDocIds.niProof}
-                  onSelect={(id) => {
-                    setReuseDocIds((prev) => ({
-                      ...prev,
-                      niProof: id,
-                    }));
-
-                    if (id) {
-                      setFiles((f) => ({
-                        ...f,
-                        niProof: null,
-                      }));
-                    }
-                  }}
-                  disabled={isSavingIdentity}
-                  existingDocId={initialDocIds.niProof}
-                />
-              )}
-              <FileUpload
+              <EditableDocumentField
                 label="NATIONAL INSURANCE PROOF"
                 infoPillDescription="Upload a valid NI document to support identity and employment verification."
                 fileName={resolvedNiProof?.originalName ?? "No file uploaded"}
@@ -940,9 +974,40 @@ export default function IdentityDetails() {
                   setFiles((f) => ({ ...f, niProof: file }));
                   setReuseDocIds((f) => ({ ...f, niProof: null }));
                 }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedNiProof?.originalName,
+                  })
+                }
                 isRequired
                 error={errors?.niProof?._errors?.[0]}
                 disabled={isSavingIdentity}
+                actionSlot={
+                  isEditingIdentity &&
+                  niDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="national insurance proof"
+                      docs={niDocs}
+                      selectedId={reuseDocIds.niProof}
+                      onSelect={(id) => {
+                        setReuseDocIds((prev) => ({
+                          ...prev,
+                          niProof: id,
+                        }));
+
+                        if (id) {
+                          setFiles((f) => ({
+                            ...f,
+                            niProof: null,
+                          }));
+                        }
+                      }}
+                      disabled={isSavingIdentity}
+                      existingDocId={initialDocIds.niProof}
+                    />
+                  )
+                }
               />
             </div>
           )}

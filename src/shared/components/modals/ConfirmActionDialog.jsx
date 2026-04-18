@@ -28,6 +28,7 @@ export default function ConfirmActionDialog({
   config,
   error,
   onConfirm,
+  autoClose = false,
 }) {
   const {
     title,
@@ -71,6 +72,9 @@ export default function ConfirmActionDialog({
       // Show success message if provided
       if (successMessage) {
         toast.success(successMessage);
+      }
+      if (autoClose) {
+        onOpenChange();
       }
     } catch (err) {
       // Error handling - parent component should handle this

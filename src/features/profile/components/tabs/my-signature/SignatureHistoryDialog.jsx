@@ -29,24 +29,30 @@ import { Separator } from "../../../../../shared/components/ui/separator";
 import { Badge } from "../../../../../shared/components/ui/badge";
 import HistorySignatureSkelton from "../../skeltons/HistorySignatureSkelton";
 import { cn } from "../../../../../shared/config/utils";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../shared/stores/useModalStore";
 
 export default function SignatureHistoryDialog({
   open,
   onOpenChange,
-  onViewCertificate,
   onDownload,
 }) {
   const { history, isFetchingHistory } = useSelector(
     (state) => state.signature,
   );
+  const { openModal } = useModalStore();
+
   const dispatch = useDispatch();
-  console.log("signature history:", history);
+  // console.log("signature history:", history);
 
   useEffect(() => {
     if (open) {
       dispatch(fetchSignatureHistoryThunk());
     }
   }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -210,7 +216,29 @@ export default function SignatureHistoryDialog({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onViewCertificate(item)}
+                        onClick={() =>
+                          openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
+                            fileUrl: item?.certificateUrl,
+                            fileName: item?.certificateDocumentId?.originalName,
+                            banner:
+                              item?.status !== "ACTIVE"
+                                ? {
+                                    title: "Certificate Context Notice",
+                                    icon: Info,
+                                    variant: "warning",
+                                    content: (
+                                      <div>
+                                        This certificate was issued before this
+                                        signature version was revoked.
+                                        <br />
+                                        It remains valid as a historical record
+                                        but is not tied to the active signature.
+                                      </div>
+                                    ),
+                                  }
+                                : null,
+                          })
+                        }
                       >
                         <FileText className="w-4 h-4" />
                         View Certificate

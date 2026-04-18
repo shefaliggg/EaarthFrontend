@@ -13,8 +13,12 @@ export const getResolvedDocument = (documents, id) => {
   return documents?.find((doc) => String(doc?._id) === String(id) ?? null);
 };
 
+export const selectDocumentUrlById = (state, docId) => {
+  const doc = selectDocumentById(state, docId);
+  return doc?.url || null;
+};
+
 export const getDisplayDocument = (docId, reuseId, file, docs) => {
-  
   if (file) {
     return {
       originalName: file.name,
@@ -22,7 +26,7 @@ export const getDisplayDocument = (docId, reuseId, file, docs) => {
       isLocal: true,
     };
   }
-  
+
   if (reuseId) {
     return docs?.find((d) => String(d._id) === String(reuseId));
   }

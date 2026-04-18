@@ -1,11 +1,17 @@
 import { X, Download, ZoomIn, ZoomOut, Loader2 } from "lucide-react";
-import { Dialog, DialogContent } from "@/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/shared/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { toast } from "sonner";
-import { downloadFileFromUrl } from "../../config/downloadFile";
+import { downloadFile } from "../../config/downloadFile";
 import { InfoPanel } from "../panels/InfoPanel";
 import { cn } from "../../config/utils";
 
@@ -18,7 +24,6 @@ export default function DocumentPreviewDialog({
   fileName = "Document.pdf",
   banner,
 }) {
-  console.log("filename :", fileName, "url:", fileUrl);
   const [numPages, setNumPages] = useState(null);
   const [scale, setScale] = useState(1);
   const [downloading, setDownloading] = useState(false);
@@ -30,16 +35,15 @@ export default function DocumentPreviewDialog({
   const handleReset = () => setScale(1);
 
   const handleDownload = async () => {
-    try {
-      setDownloading(true);
-      toast.info("Downloading Document..");
-      await downloadFileFromUrl(fileUrl, fileName);
-    } catch (err) {
-      console.error("Download failed:", err);
-      toast.error("Downloading Document failed");
-    } finally {
-      setDownloading(false);
-    }
+    setDownloading(true);
+
+    await downloadFile({
+      url: fileUrl,
+      fileName,
+      label: "document",
+    });
+
+    setDownloading(false);
   };
 
   useEffect(() => {
@@ -51,6 +55,12 @@ export default function DocumentPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <VisuallyHidden>
+        <DialogTitle>Document Preview</DialogTitle>
+        <DialogDescription>
+          Preview and download the selected document
+        </DialogDescription>
+      </VisuallyHidden>
       <DialogContent className="w-screen max-w-screen! h-screen! max-h-screen! m-0! p-0! bg-transparent border-0 shadow-none overflow-hidden rounded-none">
         <div className="relative w-full h-full bg-black/75">
           {/* Controls */}
@@ -106,7 +116,9 @@ export default function DocumentPreviewDialog({
                 title={banner.title}
                 icon={banner.icon}
                 variant={banner.variant}
-                className={" backdrop-blur-md from-amber-50/90 to-white/90 dark:from-amber-950/40 dark:to-gray-950"}
+                className={
+                  " backdrop-blur-md from-amber-50/90 to-white/90 dark:from-amber-950/40 dark:to-gray-950"
+                }
               >
                 {banner.content}
               </InfoPanel>
@@ -115,7 +127,12 @@ export default function DocumentPreviewDialog({
 
           {/* PDF — fully your DOM, fully your control */}
           <div className="w-full h-screen overflow-auto">
-            <div className={cn("min-h-full min-w-fit flex flex-col items-center justify-center gap-4 py-15 px-4", banner && "pt-40")}>
+            <div
+              className={cn(
+                "min-h-full min-w-fit flex flex-col items-center justify-center gap-4 py-15 px-4",
+                banner && "pt-40",
+              )}
+            >
               {open && fileUrl && (
                 <Document
                   file={fileUrl}
