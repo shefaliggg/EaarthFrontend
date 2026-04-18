@@ -1,31 +1,17 @@
 /**
  * ViewOffer.jsx — FIXED
  *
- * KEY FIXES:
- * 1. offerToAllowances() — base defaults built with enabled: false so only
- *    allowances actually stored on the offer are shown as enabled.
- *    Previously defaultAllowances had enabled: true, causing ALL allowances
- *    to appear enabled in ViewOffer even when only a few were selected
- *    (most visible on Bulk-created offers).
- *
- * 2. offerToAllowances() — robust key normalization handles camelCase, snake_case,
- *    UPPER_SNAKE_CASE from backend (v1 vs v2 offers may store differently).
- *
- * 3. calculatedRates memo — ALWAYS prefers offer.calculatedRates snapshot when
- *    salary/overtime rows exist. Falls back to live calc only when truly empty.
- *    This ensures v2 contract edits show the AGREED rates, not a recalculation.
- *
- * 4. useEffect for instance fetch — depends on offer._id AND offer.status AND
- *    offer.version so any re-acceptance of v2 triggers a fresh fetch.
- *
- * 5. After crewAccept thunk resolves, immediately refetch offer so memos get
- *    fresh calculatedRates + allowances without waiting for a page reload.
- *
- * 6. TERMINATED status added to INSTANCE_FETCH_STATUSES so contract documents
- *    remain visible after termination.
- *
- * 7. EndContractCard removed from ViewOffer — banner is now rendered once
- *    inside LayoutProductionAdmin (and equivalent layout components) only.
+ * FIXES APPLIED:
+ *   1. profileSignature uses ONLY the prop (no dual-source confusion)
+ *   2. Version refetch guard: only refetch when version strictly increases
+ *   3. clearInstances() removed from post-sign and post-action flows — prevents flicker
+ *   4. handleRefresh uses offer._id (not raw `id` param) for instance fetch
+ *   5. calculatedRates memo depends on offer?.feePerDay not contractData.feePerDay
+ *   6. offerToAllowances — enabled: false default + robust enabled fallback
+ *   7. handleSignRequest stabilized with useCallback
+ *   8. NEW: onSignInstance re-fetches the offer after each document is signed,
+ *      so offer.status advances (e.g. PENDING_CREW_SIGNATURE → PENDING_UPM_SIGNATURE)
+ *      and the correct layout/signing section renders immediately.
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
@@ -57,7 +43,11 @@ import { selectViewRole, setViewRole } from "../store/viewrole.slice";
 import {
   clearInstances,
   getContractInstancesThunk,
+  signContractInstanceThunk,
 } from "../store/contractInstances.slice";
+
+import { fetchCurrentSignatureThunk } from "../../signature/store/signature.thunk";
+import { selectProfileSignatureUrl }  from "../../signature/store/signature.slice";
 
 import OfferStatusProgress from "../components/viewoffer/OfferStatusProgress";
 import SignDialog          from "../components/SignaturePad/SignDialog";
@@ -83,9 +73,6 @@ const ROLES = [
   { key: "FC",               label: "FC"          },
   { key: "STUDIO",           label: "Studio"      },
 ];
-
-// ── Statuses where contract instances should be fetched ───────────────────────
-// TERMINATED added — documents remain visible to admin after termination
 
 const INSTANCE_FETCH_STATUSES = [
   "SENT_TO_CREW",
@@ -151,7 +138,7 @@ function offerToContractData(offer) {
   };
 }
 
-// ── FIX: Robust allowance normalization ───────────────────────────────────────
+// ── Allowance normalization ───────────────────────────────────────────────────
 
 function toCamelCase(str) {
   if (!str) return str;
@@ -203,7 +190,7 @@ function offerToAllowances(offer) {
     ])
   );
 
-  if (!offer?.allowances?.length) return result;
+  if (!Array.isArray(offer?.allowances) || !offer.allowances.length) return result;
 
   offer.allowances.forEach((a) => {
     if (!a?.key) return;
@@ -214,7 +201,7 @@ function offerToAllowances(offer) {
       (result[raw] !== undefined ? raw : null);
 
     if (!canonical) {
-      result[raw] = { ...a, key: raw };
+      result[raw] = { ...a, key: raw, enabled: !!a.enabled };
       return;
     }
 
@@ -254,6 +241,16 @@ function RoleSwitcher({ viewRole, onChange }) {
   );
 }
 
+// ── Status → viewRole auto-advance map ────────────────────────────────────────
+// When the offer status changes to a signatory stage, the viewRole should
+// automatically switch so the user sees the correct signing layout.
+const STATUS_TO_ROLE = {
+  PENDING_CREW_SIGNATURE:   "CREW",
+  PENDING_UPM_SIGNATURE:    "UPM",
+  PENDING_FC_SIGNATURE:     "FC",
+  PENDING_STUDIO_SIGNATURE: "STUDIO",
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -275,6 +272,8 @@ export default function ViewOffer() {
   const isLoadingPdf   = useSelector(selectIsLoadingPdfUrl);
   const contractId     = useSelector(selectContractId);
 
+  const profileSignature = useSelector(selectProfileSignatureUrl);
+
   const [signRole, setSignRole] = useState(null);
   const prevSignRef    = useRef(null);
   const prevVersionRef = useRef(null);
@@ -284,6 +283,11 @@ export default function ViewOffer() {
   useEffect(() => {
     if (id) dispatch(getOfferThunk(id));
   }, [id, dispatch]);
+
+  // ── Fetch user's active identity signature on mount ───────────────────────
+  useEffect(() => {
+    dispatch(fetchCurrentSignatureThunk());
+  }, [dispatch]);
 
   // ── Mark viewed ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -306,10 +310,25 @@ export default function ViewOffer() {
     dispatch(getContractInstancesThunk(offer._id));
   }, [offer?._id, offer?.status, offer?.version, dispatch]);
 
-  // ── Re-fetch offer when version changes ───────────────────────────────────
+  // ── Auto-advance viewRole when offer status moves to a new signing stage ──
+  // This is the key fix: when crew finishes signing, the offer status becomes
+  // PENDING_UPM_SIGNATURE. We switch the viewRole to UPM so the UPM signing
+  // layout is shown automatically instead of staying on the crew layout.
+  useEffect(() => {
+    if (!offer?.status) return;
+    const targetRole = STATUS_TO_ROLE[offer.status];
+    if (targetRole && viewRole !== targetRole) {
+      dispatch(setViewRole(targetRole));
+    }
+  }, [offer?.status, dispatch]); // intentionally omit viewRole to avoid loop
+
+  // ── Only refetch when version strictly increases ───────────────────────────
   useEffect(() => {
     if (!offer?.version || !id) return;
-    if (prevVersionRef.current !== null && prevVersionRef.current !== offer.version) {
+    if (
+      prevVersionRef.current !== null &&
+      offer.version > prevVersionRef.current
+    ) {
       dispatch(getOfferThunk(id));
     }
     prevVersionRef.current = offer.version;
@@ -323,7 +342,6 @@ export default function ViewOffer() {
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
       if (offer?._id) {
-        dispatch(clearInstances());
         dispatch(getContractInstancesThunk(offer._id));
       }
     }
@@ -358,9 +376,9 @@ export default function ViewOffer() {
       };
     }
 
-    const fee = parseFloat(contractData.feePerDay) || 0;
+    const fee = parseFloat(offer?.feePerDay) || 0;
     return calculateRates(fee, defaultEngineSettings);
-  }, [offer?.calculatedRates, offer?.version, contractData.feePerDay]);
+  }, [offer?.calculatedRates, offer?.version, offer?.feePerDay]);
 
   const salaryBudgetCodes   = useMemo(() => offer?.salaryBudgetCodes   || [], [offer]);
   const salaryTags          = useMemo(() => offer?.salaryTags          || [], [offer]);
@@ -411,7 +429,6 @@ export default function ViewOffer() {
       }
 
       if (["accept", "accountsCheck", "pendingCrewSignature", "productionCheck"].includes(action)) {
-        dispatch(clearInstances());
         dispatch(getContractInstancesThunk(oid));
       }
 
@@ -424,9 +441,49 @@ export default function ViewOffer() {
     }
   };
 
+  // ── Per-document instance sign handler ────────────────────────────────────
+  // Optimistic: the UI injects the signature instantly (handled in ContractInstancesPanel).
+  // Here we just persist to backend + refresh state — deliberately delayed 3s so
+  // the layout doesn't shift while the user is still looking at the signed document.
+  const handleSignInstance = useCallback(async (instanceId, meta = {}) => {
+    const signatureImage = meta.signatureUrl ?? profileSignature ?? undefined;
+    try {
+      const result = await dispatch(
+        signContractInstanceThunk({ instanceId, signatureImage })
+      );
+
+      if (result.error) {
+        const msg =
+          result.payload?.message ||
+          result.payload?.error ||
+          "Failed to sign document";
+        toast.error(msg);
+        throw new Error(msg);
+      }
+
+      // Delay state refresh so the user sees the signed document for a moment
+      // before the layout potentially advances to the next signatory stage.
+      setTimeout(async () => {
+        if (offer?._id) {
+          await dispatch(getOfferThunk(offer._id));
+          dispatch(getContractInstancesThunk(offer._id));
+        }
+        if (contractId) {
+          dispatch(getSigningStatusThunk(contractId));
+          dispatch(clearContractPreview());
+          dispatch(getContractPreviewThunk(contractId));
+        }
+      }, 3000);
+
+    } catch (err) {
+      // Re-throw so ContractInstancesPanel can catch it if needed
+      throw err;
+    }
+  }, [dispatch, offer?._id, contractId, profileSignature]);
+
   const handleSign = useCallback((role) => setSignRole(role), []);
 
-  // ── Sign confirm ───────────────────────────────────────────────────────────
+  // ── Sign confirm (legacy SignDialog path) ──────────────────────────────────
   const handleSignConfirm = async (dataUrl) => {
     if (!contractId || !signRole) return;
 
@@ -445,7 +502,6 @@ export default function ViewOffer() {
       await dispatch(getSigningStatusThunk(contractId));
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(contractId));
-      dispatch(clearInstances());
       dispatch(getContractInstancesThunk(offer._id));
     } else {
       toast.error(result.payload?.message || "Failed to sign");
@@ -464,14 +520,17 @@ export default function ViewOffer() {
 
   const handleRefresh = async () => {
     const r   = await dispatch(getOfferThunk(id));
-    const cid = r.payload?.contractId ?? contractId;
+    const freshOffer = r.payload;
+    const cid = freshOffer?.contractId ?? contractId;
     if (cid) {
       dispatch(getSigningStatusThunk(cid));
       dispatch(clearContractPreview());
       dispatch(getContractPreviewThunk(cid));
     }
-    dispatch(clearInstances());
-    if (id) dispatch(getContractInstancesThunk(id));
+    if (freshOffer?._id) {
+      dispatch(clearInstances());
+      dispatch(getContractInstancesThunk(freshOffer._id));
+    }
   };
 
   // ── Layout routing ─────────────────────────────────────────────────────────
@@ -491,9 +550,12 @@ export default function ViewOffer() {
     contractData,
     allowances,
     calculatedRates,
-    isSubmitting,
+    isSubmitting: isSubmitting,
     onAction: handleAction,
     dispatch,
+    profileSignature,
+    // FIX 8: pass the centralised sign handler down to all layouts
+    onSignInstance: handleSignInstance,
   };
 
   // ── Loading / not found ────────────────────────────────────────────────────

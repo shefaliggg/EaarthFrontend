@@ -98,4 +98,7 @@ const signatureSlice = createSlice({
 export const { clearSignatureError, resetSignatureState } =
   signatureSlice.actions;
 
+export const selectProfileSignatureUrl = (state) =>
+  state.signature.currentSignature?.signatureUrl ?? null;
+
 export default signatureSlice.reducer;
