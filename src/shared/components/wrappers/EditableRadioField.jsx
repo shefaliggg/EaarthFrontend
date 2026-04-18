@@ -12,6 +12,7 @@ function EditableRadioField({
   onChange,
   icon,
   infoPillDescription,
+    disabled = false,
 }) {
   const selectedOption = options.find((o) => o.value === value);
 
@@ -39,7 +40,7 @@ function EditableRadioField({
         </div>
       ) : (
         /* Edit Mode */
-        <RadioGroup value={value} onValueChange={onChange}>
+        <RadioGroup value={value} onValueChange={onChange} disabled={disabled}>
           {options.map((option) => (
             <label
               key={option.value}

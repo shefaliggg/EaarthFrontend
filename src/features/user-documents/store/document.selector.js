@@ -14,12 +14,7 @@ export const getResolvedDocument = (documents, id) => {
 };
 
 export const getDisplayDocument = (docId, reuseId, file, docs) => {
-  // 1. Reuse selected
-  if (reuseId) {
-    return docs?.find((d) => String(d._id) === String(reuseId));
-  }
-
-  // 2. New file uploaded
+  
   if (file) {
     return {
       originalName: file.name,
@@ -27,7 +22,10 @@ export const getDisplayDocument = (docId, reuseId, file, docs) => {
       isLocal: true,
     };
   }
-
+  
+  if (reuseId) {
+    return docs?.find((d) => String(d._id) === String(reuseId));
+  }
   // 3. Existing backend doc
   if (docId) {
     return docs?.find((d) => String(d._id) === String(docId));

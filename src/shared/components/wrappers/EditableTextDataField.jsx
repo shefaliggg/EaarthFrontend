@@ -18,6 +18,8 @@ function EditableTextDataField({
   infoPillDescription,
   isRequired = true,
   error,
+  prettify = true,
+  disabled = false,
 }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl">
@@ -40,7 +42,7 @@ function EditableTextDataField({
         <div className="text-sm font-medium text-foreground">
           {value === null || value === undefined || value === "" ? (
             <span className="text-muted-foreground">Not Available</span>
-          ) : typeof value === "string" ? (
+          ) : typeof value === "string" && prettify ? (
             convertToPrettyText(value)
           ) : (
             value
@@ -61,6 +63,7 @@ function EditableTextDataField({
                   "min-h-[80px]",
                   inputClassName,
                 )}
+                disabled={disabled}
               />
               {error && (
                 <span className="text-destructive text-xs pl-2">{error}</span>
@@ -79,6 +82,7 @@ function EditableTextDataField({
                   "focus:outline-none",
                   inputClassName,
                 )}
+                disabled={disabled}
               />
               {error && (
                 <span className="text-destructive text-xs pl-2">{error}</span>

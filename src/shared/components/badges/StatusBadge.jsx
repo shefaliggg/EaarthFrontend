@@ -8,6 +8,7 @@ export function StatusBadge({
   label,
   icon,
   showIcon = true,
+  showLabel = true,
   size = "md",
   className,
 }) {
@@ -36,7 +37,7 @@ export function StatusBadge({
       {showIcon && (icon || Icon) && (
         <SmartIcon icon={FinalIcon} className="w-3! h-3!" />
       )}
-      {text}
+      {showLabel && text}
     </Badge>
   );
 }

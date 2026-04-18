@@ -83,7 +83,8 @@ const crewProfileSlice = createSlice({
         state.isUpdating = false;
         state.crewProfile = {
           ...state.crewProfile,
-          nationalityProof: action.payload,
+          nationalityProof: action.payload?.nationalityProof,
+          profileCompletionPercent: action.payload?.profileCompletionPercent,
         };
       })
       .addCase(updateNationalityProofThunk.rejected, (state, action) => {
