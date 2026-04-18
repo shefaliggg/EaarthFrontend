@@ -8,30 +8,42 @@ import {
 } from "../services/signature.service";
 import { AddOrUpdateDocument } from "../../user-documents/store/document.slice";
 
+
 // 🔥 GET CURRENT SIGNATURE
+// export const fetchCurrentSignatureThunk = createAsyncThunk(
+//   "signature/current",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       console.log("📡 fetchCurrentSignatureThunk called");
+
+//       const response = await getCurrentSignatureApi();
+
+//       console.log("✅ fetchCurrentSignature success:", response);
+
+//       return response;
+//     } catch (err) {
+//       console.error(
+//         "❌ fetchCurrentSignature error:",
+//         err.response?.data?.message || err.message,
+//       );
+
+//       return rejectWithValue({
+//         message: err.response?.data?.message || err.message,
+//         errors: err.response?.data?.errors || null,
+//       });
+//     }
+//   },
+// );
+
 export const fetchCurrentSignatureThunk = createAsyncThunk(
   "signature/current",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("📡 fetchCurrentSignatureThunk called");
-
-      const response = await getCurrentSignatureApi();
-
-      console.log("✅ fetchCurrentSignature success:", response);
-
-      return response;
+      return await getCurrentSignatureApi(); // ← uses service with correct path
     } catch (err) {
-      console.error(
-        "❌ fetchCurrentSignature error:",
-        err.response?.data?.message || err.message,
-      );
-
-      return rejectWithValue({
-        message: err.response?.data?.message || err.message,
-        errors: err.response?.data?.errors || null,
-      });
+      return rejectWithValue({ message: err.response?.data?.message || err.message });
     }
-  },
+  }
 );
 
 // 🔥 CREATE SIGNATURE
