@@ -25,50 +25,8 @@ import {
   personalDetailsSchema,
 } from "../../config/profileValidationShemas";
 import { toast } from "sonner";
-import { CheckCircle, FileText, Info, Paperclip } from "lucide-react";
-import { Button } from "../../../../shared/components/ui/button";
-import { convertToPrettyText } from "../../../../shared/config/utils";
-
-const ReuseDocumentPrompt = ({ label, docs, selectedId, onSelect }) => {
-  if (!docs?.length) return null;
-  const isSelected = (docId) => String(docId) === String(selectedId);
-  const selectedDoc = docs.find(
-    (doc) => String(doc._id) === String(selectedId),
-  );
-  return (
-    <div className="border rounded-xl p-3 bg-gray-50 space-y-2">
-      <p className="text-sm font-medium">
-        Already uploaded {label} before. Would You like to reuse one?
-      </p>
-
-      <div className="flex flex-wrap gap-2">
-        {docs.map((doc) => (
-          <Button
-            key={doc._id}
-            type="button"
-            variant={"outline"}
-            onClick={() => {
-              isSelected(doc._id) ? onSelect(null) : onSelect(doc._id);
-            }}
-            className={`${
-              isSelected(doc._id) ? "bg-primary text-white" : "bg-white"
-            }`}
-          >
-            <Paperclip />
-            {convertToPrettyText(doc.originalName)}
-          </Button>
-        ))}
-      </div>
-      {selectedId && (
-        <p className="text-xs font-medium flex items-center gap-1 text-green-500">
-          <Info className="size-3" />
-          Reusing Existing {label}:{" "}
-          {convertToPrettyText(selectedDoc?.originalName)}
-        </p>
-      )}
-    </div>
-  );
-};
+import ReuseDocumentPromptPanel from "../common/ReuseDocumentPromptPanel";
+import { getCountryOptions } from "../../../../shared/config/countriesDataConfig";
 
 export default function IdentityDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -77,6 +35,12 @@ export default function IdentityDetails() {
     identity: null,
   });
   const [files, setFiles] = useState({
+    passport: null,
+    birthCertificate: null,
+    niProof: null,
+    certificateNaturalisation: null,
+  });
+  const [initialDocIds, setInitialDocIds] = useState({
     passport: null,
     birthCertificate: null,
     niProof: null,
@@ -142,16 +106,24 @@ export default function IdentityDetails() {
     files.passport,
     userDocuments,
   );
-  const resolvedBirthCert = getResolvedDocument(
-    userDocuments,
+  const resolvedBirthCert = getDisplayDocument(
     np?.birthCertificateId,
-  );
-  const resolvedNiProof = getResolvedDocument(userDocuments, np?.niProofId);
-  const resolvedNaturalisation = getResolvedDocument(
+    reuseDocIds.birthCertificate,
+    files.birthCertificate,
     userDocuments,
-    np?.certificateNaturalisationId,
   );
-
+  const resolvedNiProof = getDisplayDocument(
+    np?.niProofId,
+    reuseDocIds.niProof,
+    files.niProof,
+    userDocuments,
+  );
+  const resolvedNaturalisation = getDisplayDocument(
+    np?.certificateNaturalisationId,
+    reuseDocIds.certificateNaturalisation,
+    files.certificateNaturalisation,
+    userDocuments,
+  );
   const isEditingPersonal = isEditing.section === "personal";
   const isEditingIdentity = isEditing.section === "identity";
   const isSavingPersonal = isUpdating && isEditing.section === "personal";
@@ -237,11 +209,18 @@ export default function IdentityDetails() {
       }));
 
       setFiles(initialFilesState);
+
+      setInitialDocIds({
+        passport: np?.passport?.passportDocumentId ?? null,
+        birthCertificate: np?.birthCertificateId ?? null,
+        niProof: np?.niProofId ?? null,
+        certificateNaturalisation: np?.certificateNaturalisationId ?? null,
+      });
       setReuseDocIds({
-        passport: null,
-        birthCertificate: null,
-        niProof: null,
-        certificateNaturalisation: null,
+        passport: np?.passport?.passportDocumentId ?? null,
+        birthCertificate: np?.birthCertificateId ?? null,
+        niProof: np?.niProofId ?? null,
+        certificateNaturalisation: np?.certificateNaturalisationId ?? null,
       });
     }
 
@@ -253,6 +232,12 @@ export default function IdentityDetails() {
     setFormState({ personal: null, identity: null });
     setErrors({});
     setFiles(initialFilesState);
+    setInitialDocIds({
+      passport: null,
+      birthCertificate: null,
+      niProof: null,
+      certificateNaturalisation: null,
+    });
     setReuseDocIds({
       passport: null,
       birthCertificate: null,
@@ -262,6 +247,7 @@ export default function IdentityDetails() {
   };
 
   const handleSavePersonal = async () => {
+    setErrors({});
     const result = personalDetailsSchema.safeParse(formState.personal);
 
     if (!result.success) {
@@ -279,10 +265,21 @@ export default function IdentityDetails() {
   };
 
   const handleSaveNationality = async () => {
-    const result = nationalityProofSchema.safeParse(formState.identity);
+    setErrors({});
+
+    const result = nationalityProofSchema.safeParse({
+      ...formState.identity,
+      _meta: {
+        legalFirstName: currentUser.legalFirstName,
+        legalLastName: currentUser.legalLastName,
+        files,
+        reuseDocIds,
+      },
+    });
 
     if (!result.success) {
-      setErrors(result.error.flatten().fieldErrors);
+      setErrors(result.error.format());
+      console.log("Validation failed:", errors);
       return;
     }
 
@@ -332,6 +329,11 @@ export default function IdentityDetails() {
       } else if (reuseDocIds.niProof) {
         fd.append("niProofId", reuseDocIds.niProof);
       }
+    }
+
+    console.log("Sending identity payload:");
+    for (let [key, value] of fd.entries()) {
+      console.log(key, value);
     }
 
     try {
@@ -400,6 +402,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.title?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableTextDataField
@@ -416,6 +419,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.legalFirstName?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableTextDataField
@@ -432,6 +436,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.legalLastName?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableTextDataField
@@ -450,6 +455,7 @@ export default function IdentityDetails() {
             }
             error={errors?.middleNames?.[0]}
             isRequired={false}
+            disabled={isSavingPersonal}
           />
 
           <EditableTextDataField
@@ -467,6 +473,7 @@ export default function IdentityDetails() {
             }
             error={errors?.screenCreditName?.[0]}
             isRequired={false}
+            disabled={isSavingPersonal}
           />
 
           <EditableSelectField
@@ -490,6 +497,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.displayNamePreference?.[0]}
+            disabled={isSavingPersonal}
           />
 
           {pd?.displayNamePreference === "CUSTOM" && (
@@ -507,6 +515,7 @@ export default function IdentityDetails() {
                 }))
               }
               error={errors?.customDisplayName?.[0]}
+              disabled={isSavingPersonal}
             />
           )}
 
@@ -527,6 +536,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.pronouns?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableSelectField
@@ -544,6 +554,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.sex?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableDateField
@@ -557,19 +568,14 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.dateOfBirth?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableSelectField
             label="COUNTRY OF RESIDENCE"
             value={pd?.countryOfPermanentResidence}
             isEditing={isEditingPersonal}
-            items={[
-              { label: "UNITED KINGDOM", value: "UNITED KINGDOM" },
-              { label: "USA", value: "USA" },
-              { label: "CANADA", value: "CANADA" },
-              { label: "AUSTRALIA", value: "AUSTRALIA" },
-              { label: "INDIA", value: "INDIA" },
-            ]}
+            items={getCountryOptions()}
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
@@ -580,19 +586,14 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.countryOfPermanentResidence?.[0]}
+            disabled={isSavingPersonal}
           />
 
           <EditableSelectField
             label="NATIONALITY"
             value={pd?.countryOfLegalNationality}
             isEditing={isEditingPersonal}
-            items={[
-              { label: "UNITED KINGDOM", value: "UNITED KINGDOM" },
-              { label: "USA", value: "USA" },
-              { label: "CANADA", value: "CANADA" },
-              { label: "AUSTRALIA", value: "AUSTRALIA" },
-              { label: "INDIA", value: "INDIA" },
-            ]}
+            items={getCountryOptions()}
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
@@ -603,6 +604,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.countryOfLegalNationality?.[0]}
+            disabled={isSavingPersonal}
           />
         </div>
       </CardWrapper>
@@ -639,6 +641,7 @@ export default function IdentityDetails() {
                 value: "CERTIFICATE_OF_NATURALISATION",
               },
             ]}
+            disabled={isSavingIdentity}
           />
           {nd?.type === "PASSPORT" && (
             <div className="mt-6 space-y-4 rounded-3xl">
@@ -659,7 +662,8 @@ export default function IdentityDetails() {
                       },
                     }))
                   }
-                  error={errors?.passport?.firstName?.[0]}
+                  error={errors?.passport?.firstName?._errors?.[0]}
+                  disabled={isSavingIdentity}
                 />
                 <EditableTextDataField
                   label="PASSPORT LAST NAME"
@@ -677,19 +681,14 @@ export default function IdentityDetails() {
                       },
                     }))
                   }
-                  error={errors?.passport?.lastName?.[0]}
+                  error={errors?.passport?.lastName?._errors?.[0]}
+                  disabled={isSavingIdentity}
                 />
                 <EditableSelectField
                   label="PASSPORT ISSUING COUNTRY"
                   value={nd?.passport?.issuingCountry}
                   isEditing={isEditingIdentity}
-                  items={[
-                    { label: "UNITED KINGDOM", value: "UNITED KINGDOM" },
-                    { label: "USA", value: "USA" },
-                    { label: "CANADA", value: "CANADA" },
-                    { label: "AUSTRALIA", value: "AUSTRALIA" },
-                    { label: "INDIA", value: "INDIA" },
-                  ]}
+                  items={getCountryOptions()}
                   onChange={(val) =>
                     setFormState((prev) => ({
                       ...prev,
@@ -702,12 +701,14 @@ export default function IdentityDetails() {
                       },
                     }))
                   }
-                  error={errors?.passport?.issuingCountry?.[0]}
+                  error={errors?.passport?.issuingCountry?._errors?.[0]}
+                  disabled={isSavingIdentity}
                 />
                 <EditableTextDataField
                   label="PASSPORT NUMBER"
                   value={nd?.passport?.number}
                   isEditing={isEditingIdentity}
+                  prettify={false}
                   onChange={(val) =>
                     setFormState((prev) => ({
                       ...prev,
@@ -720,7 +721,8 @@ export default function IdentityDetails() {
                       },
                     }))
                   }
-                  error={errors?.passport?.number?.[0]}
+                  error={errors?.passport?.number?._errors?.[0]}
+                  disabled={isSavingIdentity}
                 />
                 <EditableDateField
                   label="PASSPORT EXPIRY DATE"
@@ -738,19 +740,23 @@ export default function IdentityDetails() {
                       },
                     }))
                   }
-                  error={errors?.passport?.expiryDate?.[0]}
+                  error={errors?.passport?.expiryDate?._errors?.[0]}
+                  disabled={isSavingIdentity}
                 />
               </div>
 
               {isEditingIdentity && passportDocs?.length > 0 && (
-                <ReuseDocumentPrompt
+                <ReuseDocumentPromptPanel
                   label="passport document"
-                  docs={userDocuments}
+                  docs={passportDocs}
                   selectedId={reuseDocIds.passport}
+                  docType="PASSPORT"
                   onSelect={(id) => {
                     setReuseDocIds((prev) => ({ ...prev, passport: id }));
                     if (id) setFiles((f) => ({ ...f, passport: null }));
                   }}
+                  disabled={isSavingIdentity}
+                  existingDocId={initialDocIds.passport}
                 />
               )}
 
@@ -760,36 +766,41 @@ export default function IdentityDetails() {
                 fileName={resolvedPassport?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
-                isEditing={isEditingIdentity && !reuseDocIds.passport}
-                onUpload={(file) => setFiles((f) => ({ ...f, passport: file }))}
-                onDelete={() => setFiles((f) => ({ ...f, passport: null }))}
+                isEditing={isEditingIdentity}
+                onUpload={(file) => {
+                  setFiles((f) => ({ ...f, passport: file }));
+                  setReuseDocIds((f) => ({ ...f, passport: null }));
+                }}
+                isRequired
+                error={errors?.passportDocument?._errors?.[0]}
+                disabled={isSavingIdentity}
               />
             </div>
           )}
           {nd?.type === "BIRTH_CERTIFICATE" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
-              {isEditingIdentity &&
-                !resolvedBirthCert &&
-                birthDocs?.length > 0 && (
-                  <ReuseDocumentPrompt
-                    label="birth certificate"
-                    docs={birthDocs}
-                    selectedId={reuseDocIds.birthCertificate}
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({
-                        ...prev,
-                        birthCertificate: id,
-                      }));
+              {isEditingIdentity && birthDocs?.length > 0 && (
+                <ReuseDocumentPromptPanel
+                  label="birth certificate"
+                  docs={birthDocs}
+                  selectedId={reuseDocIds.birthCertificate}
+                  onSelect={(id) => {
+                    setReuseDocIds((prev) => ({
+                      ...prev,
+                      birthCertificate: id,
+                    }));
 
-                      if (id) {
-                        setFiles((f) => ({
-                          ...f,
-                          birthCertificate: null,
-                        }));
-                      }
-                    }}
-                  />
-                )}
+                    if (id) {
+                      setFiles((f) => ({
+                        ...f,
+                        birthCertificate: null,
+                      }));
+                    }
+                  }}
+                  disabled={isSavingIdentity}
+                  existingDocId={initialDocIds.birthCertificate}
+                />
+              )}
 
               <FileUpload
                 label="BIRTH CERTIFICATE"
@@ -797,17 +808,18 @@ export default function IdentityDetails() {
                 fileName={resolvedBirthCert?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedBirthCert?.url ?? null}
                 isUploaded={!!resolvedBirthCert}
-                isEditing={isEditingIdentity && !reuseDocIds.birthCertificate}
-                onUpload={(file) =>
-                  setFiles((f) => ({ ...f, birthCertificate: file }))
-                }
-                onDelete={() =>
-                  setFiles((f) => ({ ...f, birthCertificate: null }))
-                }
+                isEditing={isEditingIdentity}
+                onUpload={(file) => {
+                  setFiles((f) => ({ ...f, birthCertificate: file }));
+                  setReuseDocIds((f) => ({ ...f, birthCertificate: null }));
+                }}
+                isRequired
+                error={errors?.birthCertificate?._errors?.[0]}
+                disabled={isSavingIdentity}
               />
 
-              {isEditingIdentity && !resolvedNiProof && niDocs?.length > 0 && (
-                <ReuseDocumentPrompt
+              {isEditingIdentity && niDocs?.length > 0 && (
+                <ReuseDocumentPromptPanel
                   label="national insurance proof"
                   docs={niDocs}
                   selectedId={reuseDocIds.niProof}
@@ -824,6 +836,8 @@ export default function IdentityDetails() {
                       }));
                     }
                   }}
+                  disabled={isSavingIdentity}
+                  existingDocId={initialDocIds.niProof}
                 />
               )}
 
@@ -833,37 +847,44 @@ export default function IdentityDetails() {
                 fileName={resolvedNiProof?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
-                isEditing={isEditingIdentity && !reuseDocIds.niProof}
-                onUpload={(file) => setFiles((f) => ({ ...f, niProof: file }))}
-                onDelete={() => setFiles((f) => ({ ...f, niProof: null }))}
+                isEditing={isEditingIdentity}
+                onUpload={(file) => {
+                  setFiles((f) => ({ ...f, niProof: file }));
+                  setReuseDocIds((f) => ({ ...f, niProof: null }));
+                }}
+                isRequired
+                error={errors?.niProof?._errors?.[0]}
+                disabled={isSavingIdentity}
               />
             </div>
-          )}{" "}
-          {/* ── Certificate of Naturalisation ─────────────────────────────── */}{" "}
+          )}
+          {/* ── Certificate of Naturalisation ─────────────────────────────── */}
           {nd?.type === "CERTIFICATE_OF_NATURALISATION" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
-              {isEditingIdentity &&
-                !resolvedNaturalisation &&
-                naturalisationDocs?.length > 0 && (
-                  <ReuseDocumentPrompt
-                    label="certificate of naturalisation"
-                    docs={naturalisationDocs}
-                    selectedId={reuseDocIds.certificateNaturalisation}
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({
-                        ...prev,
-                        certificateNaturalisation: id,
-                      }));
+              {isEditingIdentity && naturalisationDocs?.length > 0 && (
+                <ReuseDocumentPromptPanel
+                  label="certificate of naturalisation"
+                  docs={naturalisationDocs}
+                  selectedId={reuseDocIds.certificateNaturalisation}
+                  onSelect={(id) => {
+                    setReuseDocIds((prev) => ({
+                      ...prev,
+                      certificateNaturalisation: id,
+                    }));
 
-                      if (id) {
-                        setFiles((f) => ({
-                          ...f,
-                          certificateNaturalisation: null,
-                        }));
-                      }
-                    }}
-                  />
-                )}
+                    if (id) {
+                      setFiles((f) => ({
+                        ...f,
+                        certificateNaturalisation: null,
+                      }));
+                    }
+                  }}
+                  disabled={isSavingIdentity}
+                  existingDocId={
+                    initialDocIds.certificateNaturalisation
+                  }
+                />
+              )}
 
               <FileUpload
                 label="CERTIFICATE OF NATURALISATION"
@@ -873,19 +894,21 @@ export default function IdentityDetails() {
                 }
                 fileUrl={resolvedNaturalisation?.url ?? null}
                 isUploaded={!!resolvedNaturalisation}
-                isEditing={
-                  isEditingIdentity && !reuseDocIds.certificateNaturalisation
-                }
-                onUpload={(file) =>
-                  setFiles((f) => ({ ...f, certificateNaturalisation: file }))
-                }
-                onDelete={() =>
-                  setFiles((f) => ({ ...f, certificateNaturalisation: null }))
-                }
+                isEditing={isEditingIdentity}
+                onUpload={(file) => {
+                  setFiles((f) => ({ ...f, certificateNaturalisation: file }));
+                  setReuseDocIds((f) => ({
+                    ...f,
+                    certificateNaturalisation: null,
+                  }));
+                }}
+                isRequired
+                error={errors?.certificateNaturalisation?._errors?.[0]}
+                disabled={isSavingIdentity}
               />
 
-              {isEditingIdentity && !resolvedNiProof && niDocs?.length > 0 && (
-                <ReuseDocumentPrompt
+              {isEditingIdentity && niDocs?.length > 0 && (
+                <ReuseDocumentPromptPanel
                   label="national insurance proof"
                   docs={niDocs}
                   selectedId={reuseDocIds.niProof}
@@ -902,6 +925,8 @@ export default function IdentityDetails() {
                       }));
                     }
                   }}
+                  disabled={isSavingIdentity}
+                  existingDocId={initialDocIds.niProof}
                 />
               )}
               <FileUpload
@@ -910,13 +935,18 @@ export default function IdentityDetails() {
                 fileName={resolvedNiProof?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
-                isEditing={isEditingIdentity && !reuseDocIds.niProof}
-                onUpload={(file) => setFiles((f) => ({ ...f, niProof: file }))}
-                onDelete={() => setFiles((f) => ({ ...f, niProof: null }))}
+                isEditing={isEditingIdentity}
+                onUpload={(file) => {
+                  setFiles((f) => ({ ...f, niProof: file }));
+                  setReuseDocIds((f) => ({ ...f, niProof: null }));
+                }}
+                isRequired
+                error={errors?.niProof?._errors?.[0]}
+                disabled={isSavingIdentity}
               />
             </div>
-          )}{" "}
-        </div>{" "}
+          )}
+        </div>
       </CardWrapper>
     </>
   );

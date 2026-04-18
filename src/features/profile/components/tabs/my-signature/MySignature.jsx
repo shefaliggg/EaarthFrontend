@@ -8,6 +8,9 @@ import {
   Eye,
   History,
   RotateCcw,
+  ShieldCheck,
+  Info,
+  TriangleAlert,
 } from "lucide-react";
 import CardWrapper from "../../../../../shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "../../../../../shared/components/buttons/EditToggleButtons";
@@ -78,6 +81,7 @@ export default function MySignature() {
       setPreviewDoc({
         url: currentSignature?.certificateUrl,
         name: currentSignature?.certificateDocumentId?.originalName,
+        status: currentSignature?.status,
       });
     }
   }, [currentSignature]);
@@ -174,6 +178,24 @@ export default function MySignature() {
   if (isFetching) {
     return <SignatureLoadingSkelton />;
   }
+
+  const certificateBanner =
+    previewDoc?.status !== "ACTIVE"
+      ? {
+          title: "Certificate Context Notice",
+          icon: TriangleAlert,
+          variant: "warning",
+          content: (
+            <div>
+              This certificate was issued before this signature version was
+              revoked.
+              <br />
+              It remains valid as a historical record but is not tied to the
+              active signature.
+            </div>
+          ),
+        }
+      : null;
 
   return (
     <>
@@ -323,6 +345,7 @@ export default function MySignature() {
                     onOpenChange={setIsCertificateOpen}
                     fileUrl={previewDoc?.url}
                     fileName={previewDoc?.name}
+                    banner={certificateBanner}
                   />
                 </>
               ) : (
@@ -407,6 +430,7 @@ export default function MySignature() {
           setPreviewDoc({
             url: item?.certificateUrl,
             name: item?.certificateDocumentId?.originalName,
+            status: item?.status,
           });
         }}
         onDownload={handleDownload}

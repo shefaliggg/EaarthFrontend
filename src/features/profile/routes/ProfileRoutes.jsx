@@ -14,7 +14,9 @@ const AllowanceDetails = lazy(
   () => import("../components/tabs/allowance-details/AllowancesDetails"),
 );
 const HealthDetails = lazy(() => import("../components/tabs/HealthDetails"));
-const MySignature = lazy(() => import("../components/tabs/MySignature"));
+const MySignature = lazy(
+  () => import("../components/tabs/my-signature/MySignature"),
+);
 
 const NotFound = lazy(() => import("@/shared/pages/NotFound"));
 

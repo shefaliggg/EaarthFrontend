@@ -18,6 +18,7 @@ import {
   Award,
   CheckCircle,
   ShieldCheck,
+  Info,
 } from "lucide-react";
 import { formatDate, convertToPrettyText } from "@/shared/config/utils";
 import { fetchSignatureHistoryThunk } from "../../../../signature/store/signature.thunk";
@@ -100,7 +101,12 @@ export default function SignatureHistoryDialog({
                         </span>
 
                         {item.isCurrent && (
-                          <StatusBadge showIcon={false} size="md" label="Current" status="highlight"/>
+                          <StatusBadge
+                            showIcon={false}
+                            size="md"
+                            label="Current"
+                            status="highlight"
+                          />
                         )}
                       </div>
 
@@ -114,7 +120,7 @@ export default function SignatureHistoryDialog({
                   </div>
 
                   {/* Signature Preview */}
-                  <div className="relative flex justify-center items-center rounded-xl p-6 bg-primary/5 border-2 border-dashed">
+                  <div className="relative flex justify-center items-center rounded-xl p-6 bg-primary/5 dark:bg-muted-foreground/50 border-2 border-dashed">
                     <img
                       src={item.signatureUrl}
                       className="max-h-28 min-h-28 object-contain relative z-10 transition-transform"
@@ -175,7 +181,7 @@ export default function SignatureHistoryDialog({
 
                   {/* Certificate Info */}
                   {item.certificateId && (
-                    <div className="bg-primary/5 rounded-lg p-3 border border-primary/10 ">
+                    <div className="bg-primary/5 rounded-lg p-3 border border-primary/10 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-primary" />
@@ -183,10 +189,18 @@ export default function SignatureHistoryDialog({
                             Certificate ID
                           </span>
                         </div>
+
                         <code className="text-xs bg-background/50 px-2 py-1 rounded font-mono">
                           {item.certificateId}
                         </code>
                       </div>
+
+                      {item.status === "REVOKED" && (
+                        <div className="text-xs text-yellow-600 flex items-center gap-2">
+                          <Info className="w-3 h-3" />
+                          Certificate issued before this version was revoked
+                        </div>
+                      )}
                     </div>
                   )}
 

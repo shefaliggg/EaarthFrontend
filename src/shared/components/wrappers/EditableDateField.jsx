@@ -22,8 +22,26 @@ function EditableDateField({
   infoPillDescription,
   isRequired = true,
   error,
+  disabled = false,
+
+  allowPast = true,
+  allowFuture = true,
+  yearsRange = 100,
 }) {
   const dateValue = value ? new Date(value) : null;
+
+  const today = new Date();
+
+  const fromYear = allowPast
+    ? today.getFullYear() - yearsRange
+    : today.getFullYear();
+
+  const toYear = allowFuture
+    ? today.getFullYear() + yearsRange
+    : today.getFullYear();
+
+  const fromDate = allowPast ? undefined : today;
+  const toDate = allowFuture ? undefined : today;
 
   return (
     <div className="flex flex-col gap-1.5 rounded-xl">
@@ -63,6 +81,7 @@ function EditableDateField({
                   "border border-transparent",
                   "hover:bg-gray-200 dark:hover:bg-gray-700",
                 )}
+                disabled={disabled}
               >
                 {dateValue ? (
                   format(dateValue, "dd MMM yyyy")
@@ -81,7 +100,11 @@ function EditableDateField({
                   if (!date) return;
                   onChange?.(date.toISOString());
                 }}
-                initialFocus
+                captionLayout="dropdown"
+                fromYear={fromYear}
+                toYear={toYear}
+                fromDate={fromDate}
+                toDate={toDate}
               />
             </PopoverContent>
           </Popover>

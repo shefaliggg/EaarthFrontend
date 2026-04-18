@@ -16,9 +16,6 @@ import { InfoTooltip } from "../../../../shared/components/InfoTooltip";
 import { SmartIcon } from "../../../../shared/components/SmartIcon";
 import { Button } from "../../../../shared/components/ui/button";
 
-/* -------------------------------------------------
-   FORM FIELD WRAPPER
-------------------------------------------------- */
 export function FormField({ label, children, cols = 1 }) {
   return (
     <div
@@ -156,13 +153,16 @@ export function FileUpload({
   icon,
   infoPillDescription = "Upload a clear image or PDF of your document. Our AI will verify its authenticity and extract key data for your profile.",
   fileName,
+  fileStatus = " Verified",
   isUploaded,
   isEditing,
   onUpload,
-  onDelete,
+  isRequired = true,
+  error,
+  disabled = false,
 }) {
-  const [isScanning, setIsScanning] = useState(false);
 
+  console.log("is editing", isEditing)
   const handleFileSelect = () => {
     if (!isEditing) return;
 
@@ -173,11 +173,7 @@ export function FileUpload({
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
-        setIsScanning(true);
-        setTimeout(() => {
-          setIsScanning(false);
-          onUpload && onUpload(file);
-        }, 2000);
+        onUpload && onUpload(file);
       }
     };
 
@@ -193,6 +189,9 @@ export function FileUpload({
           <InfoTooltip content={infoPillDescription}>
             <CircleQuestionMark className="size-4" />
           </InfoTooltip>
+          {isRequired && isEditing && (
+            <span className="text-destructive text-xs">*</span>
+          )}
         </div>
       )}
 
@@ -210,7 +209,7 @@ export function FileUpload({
                   {fileName}
                 </p>
                 <p className="text-xs text-accent flex items-center gap-1 font-medium">
-                  <CheckCircle className="w-3 h-3" /> AI VERIFIED
+                  <CheckCircle className="w-3 h-3" /> {fileStatus}
                 </p>
               </div>
             </div>
@@ -219,39 +218,19 @@ export function FileUpload({
               <button className="p-2 rounded-md transition-all duration-300 hover:bg-muted/50">
                 <Download className="w-4 h-4 text-primary" />
               </button>
-              {isEditing && (
-                <button
-                  onClick={onDelete}
-                  disabled={!isEditing}
-                  className="p-2 rounded-md transition-all duration-300 hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </button>
-              )}
             </div>
           </div>
-          <Button onClick={handleFileSelect} disabled={!isEditing} size={"lg"} className={"w-full"}>
-            <Repeat />
-            Change Uploaded Document
-          </Button>
-        </div>
-      ) : isScanning ? (
-        <div className="border border-dashed border-primary rounded-lg p-6 text-center bg-primary/5">
-          <div className="w-10 h-10 mx-auto mb-2">
-            <div
-              className="w-10 h-10 rounded-full border-4 animate-spin"
-              style={{
-                borderColor: "rgba(126, 87, 194, 0.3)",
-                borderTopColor: "var(--primary)",
-              }}
-            />
-          </div>
-          <p className="text-sm font-semibold text-primary mb-1">
-            AI Scanning...
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Extracting and verifying data...
-          </p>
+          {isEditing && (
+            <Button
+              onClick={handleFileSelect}
+              disabled={!isEditing || disabled}
+              size={"lg"}
+              className={"w-full"}
+            >
+              <Repeat />
+              Replace Document
+            </Button>
+          )}
         </div>
       ) : (
         <div
@@ -276,6 +255,7 @@ export function FileUpload({
           </p>
         </div>
       )}
+      {error && <span className="text-destructive text-xs pl-2">{error}</span>}
     </div>
   );
 }

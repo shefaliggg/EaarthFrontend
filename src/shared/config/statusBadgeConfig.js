@@ -52,6 +52,7 @@ const STATUS_META = {
 
   draft: "warning",
   pending: "warning",
+  pending_admin_review: "warning",
   "pending-approval": "warning",
   expiring: "warning",
 
@@ -63,6 +64,7 @@ const STATUS_META = {
   suspended: "danger",
   revoked: "danger",
   "not-submitted": "danger",
+  not_submitted: "danger",
   expired: "danger",
 };
 

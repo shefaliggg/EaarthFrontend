@@ -18,18 +18,20 @@ export function SelectMenu({
   selected,
   onSelect,
   className = "w-[220px]",
+  disabled = false,
 }) {
   const selectedItem = items.find((item) => item.value === selected);
 
   return (
     <Select value={selected} onValueChange={onSelect}>
-<SelectTrigger
-  textCase={textCase}
-  className={cn(
-    "w-full min-w-0 text-foreground data-[placeholder]:text-muted-foreground",
-    className,
-  )}
->
+      <SelectTrigger
+        textCase={textCase}
+        className={cn(
+          "w-full min-w-0 text-foreground data-[placeholder]:text-muted-foreground",
+          className,
+        )}
+        disabled={disabled}
+      >
         <SelectValue placeholder={label} />
       </SelectTrigger>
 

@@ -6,6 +6,8 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { toast } from "sonner";
 import { downloadFileFromUrl } from "../../config/downloadFile";
+import { InfoPanel } from "../panels/InfoPanel";
+import { cn } from "../../config/utils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -14,6 +16,7 @@ export default function DocumentPreviewDialog({
   onOpenChange,
   fileUrl,
   fileName = "Document.pdf",
+  banner,
 }) {
   console.log("filename :", fileName, "url:", fileUrl);
   const [numPages, setNumPages] = useState(null);
@@ -97,9 +100,22 @@ export default function DocumentPreviewDialog({
             )}
           </button>
 
+          {banner && (
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-full! max-w-2xl">
+              <InfoPanel
+                title={banner.title}
+                icon={banner.icon}
+                variant={banner.variant}
+                className={" backdrop-blur-md from-amber-50/90 to-white/90 dark:from-amber-950/40 dark:to-gray-950"}
+              >
+                {banner.content}
+              </InfoPanel>
+            </div>
+          )}
+
           {/* PDF — fully your DOM, fully your control */}
           <div className="w-full h-screen overflow-auto">
-            <div className="min-h-full min-w-fit flex flex-col items-center justify-center gap-4 py-10 px-4">
+            <div className={cn("min-h-full min-w-fit flex flex-col items-center justify-center gap-4 py-15 px-4", banner && "pt-40")}>
               {open && fileUrl && (
                 <Document
                   file={fileUrl}

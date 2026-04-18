@@ -15,6 +15,7 @@ function EditableSelectField({
   infoPillDescription,
   isRequired = true,
   error,
+  disabled = false,
 }) {
   const Icon = icon && LucideIcons[icon];
   const selectedItem = items.find((i) => i.value === value);
@@ -42,6 +43,7 @@ function EditableSelectField({
             label={placeholder}
             onSelect={onChange}
             className={cn("w-full shadow-none", selectClassName)}
+            disabled={disabled}
           />
           {error && (
             <span className="text-destructive text-xs pl-2">{error}</span>

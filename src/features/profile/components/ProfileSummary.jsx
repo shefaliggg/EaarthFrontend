@@ -20,19 +20,16 @@ import { CircularProgress } from "../../../shared/components/ui/circular-progres
 import { formatDate, getAvatarFallback } from "../../../shared/config/utils";
 import { InfoTooltip } from "../../../shared/components/InfoTooltip";
 import { CopyButton } from "../../../shared/components/buttons/CopyButton";
+import { StatusBadge } from "../../../shared/components/badges/StatusBadge";
 
-export default function ProfileSummary({
-  profile,
-  isDarkMode,
-  isEditing,
-  setIsEditing,
-  handleSave,
-  handleCancel,
-}) {
+export default function ProfileSummary() {
   const [showQRModal, setShowQRModal] = useState(false);
-  const [isVerified] = useState(true);
   const { currentUser } = useSelector((state) => state.user);
+  const { crewProfile, isFetching } = useSelector(
+    (state) => state.crewProfile,
+  );
 
+  const verificationStatus = currentUser?.verification?.status
   return (
     <div className="space-y-4">
       <PageHeader
@@ -40,13 +37,8 @@ export default function ProfileSummary({
         title={
           <span className="flex items-center gap-2">
             {currentUser.displayName}{" "}
-            {isVerified && (
-              <span className="inline-flex items-center gap-1 px-0.5 py-0.5 rounded-full bg-green-600 text-white text-xs font-bold">
-                <div className="bg-green-600 rounded-full p-0.5">
-                  <BadgeCheck className="w-4 h-4 text-white" />
-                </div>
-                {/* Verified */}
-              </span>
+            {verificationStatus && (
+              <StatusBadge status={verificationStatus} size="sm"/>
             )}
           </span>
         }
@@ -88,7 +80,7 @@ export default function ProfileSummary({
                 <CircularProgress
                   size={72}
                   strokeWidth={8}
-                  value={80}
+                  value={crewProfile?.profileCompletionPercent ?? 0}
                   labelClass="text-sm font-medium"
                 />
               </div>

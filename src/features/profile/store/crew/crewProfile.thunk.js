@@ -4,6 +4,8 @@ import {
   updatePersonalDetails,
   updateNationalityProof,
 } from "../../services/profile.service";
+import { updateCurrentUser } from "../../../auth/store";
+import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
 
 export const fetchProfileThunk = createAsyncThunk(
   "profile/fetchProfile",
@@ -25,12 +27,23 @@ export const fetchProfileThunk = createAsyncThunk(
 // 🔥 UPDATE PERSONAL
 export const updatePersonalDetailsThunk = createAsyncThunk(
   "profile/updatePersonalDetails",
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, dispatch }) => {
     try {
       console.log("called update profile personal detials thunk");
       const response = await updatePersonalDetails(payload);
+      const { profile, user } = response;
+      if (user) {
+        dispatch(
+          updateCurrentUser({
+            displayName: user.displayName,
+            legalFirstName: user.legalFirstName,
+            legalLastName: user.legalLastName,
+          }),
+        );
+      }
+
       console.log("✅ updatePersonalDetailsThunk success:", response);
-      return response;
+      return profile;
     } catch (err) {
       console.error(
         "❌ updatePersonalDetailsThunk error:",
@@ -47,11 +60,26 @@ export const updatePersonalDetailsThunk = createAsyncThunk(
 // 🔥 UPDATE NATIONALITY PROOF
 export const updateNationalityProofThunk = createAsyncThunk(
   "profile/updateNationalityProof",
-  async (formData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue, dispatch }) => {
     try {
       const response = await updateNationalityProof(formData);
+      const { nationalityProof, profileCompletionPercent, documents } =
+        response;
+
+      console.log("documents:", documents);
+
+      const docsArray = Array.isArray(documents)
+        ? documents
+        : documents
+          ? [documents]
+          : [];
+
+      docsArray.forEach((doc) => {
+        dispatch(AddOrUpdateDocument(doc));
+      });
+
       console.log("✅ updateNationalityProofThunk success:", response);
-      return response;
+      return { nationalityProof, profileCompletionPercent };
     } catch (err) {
       console.error("❌ updateNationalityProofThunk error:", err.message);
       return rejectWithValue({
