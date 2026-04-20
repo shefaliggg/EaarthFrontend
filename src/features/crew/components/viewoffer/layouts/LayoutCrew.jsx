@@ -2,22 +2,18 @@
  * layouts/LayoutCrew.jsx
  *
  * FIXES APPLIED:
- *   - handleSignInstance passes { instanceId, signatureImage } as an object
- *     to signContractInstanceThunk (previously passed instanceId as a plain
- *     string, so signatureImage was silently dropped by the thunk).
- *   - No clearInstances() on post-sign refresh (prevents UI flicker).
+ *   - onAllSigned prop now forwarded to ContractInstancesPanel so that when
+ *     crew signs every document the offer advances to PENDING_UPM_SIGNATURE.
+ *   - onSignInstance prop from ViewOffer used directly (no local re-creation).
  *   - profileSignature reads from Redux store first, falls back to prop.
- *   - Everything else unchanged.
+ *   - onSign intentionally NOT used for signing (no dialog path).
  */
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "sonner";
 import {
-  signContractInstanceThunk,
   selectInstancesSigning,
   selectInstancesSignError,
-  getContractInstancesThunk,
 } from "../../../store/contractInstances.slice";
 import {
   CheckCircle, MessageSquare, XCircle, PenLine,
@@ -194,18 +190,8 @@ function AcceptDialog({ offer, onConfirm, onClose, isLoading }) {
               { label: "End",     value: fmtDate(offer?.endDate) },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p
-                  className="text-[10px] font-medium mb-0.5"
-                  style={{ color: "var(--mint-600)" }}
-                >
-                  {label}
-                </p>
-                <p
-                  className="text-[12px] font-semibold"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  {value}
-                </p>
+                <p className="text-[10px] font-medium mb-0.5" style={{ color: "var(--mint-600)" }}>{label}</p>
+                <p className="text-[12px] font-semibold" style={{ color: "var(--foreground)" }}>{value}</p>
               </div>
             ))}
           </div>
@@ -215,11 +201,7 @@ function AcceptDialog({ offer, onConfirm, onClose, isLoading }) {
             onClick={onClose}
             disabled={isLoading}
             className="flex-1 h-11 rounded-xl text-[13px] font-semibold transition-colors disabled:opacity-50"
-            style={{
-              border: "1px solid var(--border)",
-              color: "var(--foreground)",
-              background: "var(--card)",
-            }}
+            style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}
           >
             Cancel
           </button>
@@ -229,10 +211,7 @@ function AcceptDialog({ offer, onConfirm, onClose, isLoading }) {
             className="flex-1 h-11 rounded-xl text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 transition-colors"
             style={{ background: "var(--mint-600)" }}
           >
-            {isLoading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <CheckCircle className="w-4 h-4" />
-            }
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
             Accept Offer
           </button>
         </div>
@@ -247,10 +226,7 @@ function DeclineDialog({ offer, onConfirm, onClose, isLoading }) {
   const [reason, setReason] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
       <div
         className="relative w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         style={{ background: "var(--card)" }}
@@ -260,30 +236,18 @@ function DeclineDialog({ offer, onConfirm, onClose, isLoading }) {
           style={{ background: "var(--destructive)" }}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.2)" }}
-            >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
               <XCircle className="w-4 h-4 text-white" />
             </div>
             <div>
               <h2 className="text-[15px] font-bold text-white">Decline Offer</h2>
-              {offer?.offerCode && (
-                <p className="text-[9px] text-white/60 font-mono mt-0.5">
-                  {offer.offerCode}
-                </p>
-              )}
+              {offer?.offerCode && <p className="text-[9px] text-white/60 font-mono mt-0.5">{offer.offerCode}</p>}
             </div>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white">
-            <XCircle className="w-5 h-5" />
-          </button>
+          <button onClick={onClose} className="text-white/70 hover:text-white"><XCircle className="w-5 h-5" /></button>
         </div>
         <div className="px-5 py-5 space-y-3">
-          <p
-            className="text-[13px] leading-relaxed"
-            style={{ color: "var(--muted-foreground)" }}
-          >
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
             Are you sure you want to decline this offer? You can optionally provide a reason.
           </p>
           <textarea
@@ -292,49 +256,26 @@ function DeclineDialog({ offer, onConfirm, onClose, isLoading }) {
             placeholder="Optional: reason for declining..."
             rows={3}
             className="w-full rounded-xl px-4 py-3 text-[13px] uppercase placeholder:normal-case resize-none focus:outline-none transition-colors"
-            style={{
-              border: "1px solid var(--border)",
-              background: "var(--muted)",
-              color: "var(--foreground)",
-            }}
+            style={{ border: "1px solid var(--border)", background: "var(--muted)", color: "var(--foreground)" }}
           />
-          <div
-            className="rounded-xl p-3"
-            style={{
-              background: "var(--destructive-50, #fff1f1)",
-              border: "1px solid var(--destructive-200, #fecaca)",
-            }}
-          >
+          <div className="rounded-xl p-3" style={{ background: "var(--destructive-50, #fff1f1)", border: "1px solid var(--destructive-200, #fecaca)" }}>
             <p className="text-[11px]" style={{ color: "var(--destructive)" }}>
               Production will be notified. They will review and cancel or revise the offer.
             </p>
           </div>
         </div>
         <div className="flex gap-3 px-5 pb-5">
-          <button
-            onClick={onClose}
-            disabled={isLoading}
+          <button onClick={onClose} disabled={isLoading}
             className="flex-1 h-11 rounded-xl text-[13px] font-semibold transition-colors disabled:opacity-50"
-            style={{
-              border: "1px solid var(--border)",
-              color: "var(--foreground)",
-              background: "var(--card)",
-            }}
-          >
+            style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}>
             Keep Offer
           </button>
           <button
-            onClick={() =>
-              onConfirm({ reason: reason.toUpperCase().trim() || "DECLINED BY CREW" })
-            }
+            onClick={() => onConfirm({ reason: reason.toUpperCase().trim() || "DECLINED BY CREW" })}
             disabled={isLoading}
             className="flex-1 h-11 rounded-xl text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-60 transition-colors"
-            style={{ background: "var(--destructive)" }}
-          >
-            {isLoading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <XCircle className="w-4 h-4" />
-            }
+            style={{ background: "var(--destructive)" }}>
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             Decline Offer
           </button>
         </div>
@@ -345,106 +286,43 @@ function DeclineDialog({ offer, onConfirm, onClose, isLoading }) {
 
 // ── Crew action box ───────────────────────────────────────────────────────────
 
-function CrewActionBox({
-  status, isSubmitting, onAccept, onRequestChanges, onDecline, onSign,
-}) {
+function CrewActionBox({ status, isSubmitting, onAccept, onRequestChanges, onDecline }) {
   const canRespond = status === "SENT_TO_CREW" || status === "NEEDS_REVISION";
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-    >
-      <div
-        className="px-4 py-2.5"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--muted)" }}
-      >
-        <p
-          className="text-[10px] font-bold uppercase tracking-widest"
-          style={{ color: "var(--muted-foreground)" }}
-        >
-          Your Response
-        </p>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+      <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)", background: "var(--muted)" }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Your Response</p>
       </div>
       <div className="p-3 space-y-2">
         {canRespond && (
           <>
-            <button
-              disabled={isSubmitting}
-              onClick={onAccept}
+            <button disabled={isSubmitting} onClick={onAccept}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white text-[13px] font-bold disabled:opacity-60 transition-colors"
-              style={{ background: "var(--mint-600)" }}
-            >
-              {isSubmitting
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <CheckCircle className="w-4 h-4" />
-              }
+              style={{ background: "var(--mint-600)" }}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
               Accept Offer
             </button>
-            <button
-              disabled={isSubmitting}
-              onClick={onRequestChanges}
+            <button disabled={isSubmitting} onClick={onRequestChanges}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold disabled:opacity-60 transition-colors"
-              style={{
-                border: "2px solid var(--peach-300)",
-                color: "var(--peach-600)",
-                background: "transparent",
-              }}
-            >
+              style={{ border: "2px solid var(--peach-300)", color: "var(--peach-600)", background: "transparent" }}>
               <MessageSquare className="w-4 h-4" /> Request Changes
             </button>
-            <button
-              disabled={isSubmitting}
-              onClick={onDecline}
+            <button disabled={isSubmitting} onClick={onDecline}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium disabled:opacity-60 transition-colors"
-              style={{
-                border: "1px solid var(--border)",
-                color: "var(--muted-foreground)",
-                background: "transparent",
-              }}
-            >
+              style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", background: "transparent" }}>
               Decline Offer
             </button>
           </>
         )}
-        {status === "CREW_ACCEPTED" && (
-          <InfoBox icon={ClipboardCheck} color="blue">
-            You accepted this offer. Under production review.
-          </InfoBox>
+        {status === "CREW_ACCEPTED" && <InfoBox icon={ClipboardCheck} color="blue">You accepted this offer. Under production review.</InfoBox>}
+        {["PRODUCTION_CHECK", "ACCOUNTS_CHECK"].includes(status) && <InfoBox icon={ClipboardCheck} color="blue">Offer is under internal review.</InfoBox>}
+        {status === "PENDING_CREW_SIGNATURE" && <InfoBox icon={PenLine} color="purple">Click your signature field inside each document to sign.</InfoBox>}
+        {["PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE"].includes(status) && (
+          <InfoBox icon={PenLine} color="purple">You have signed. Awaiting further signatories.</InfoBox>
         )}
-        {["PRODUCTION_CHECK", "ACCOUNTS_CHECK"].includes(status) && (
-          <InfoBox icon={ClipboardCheck} color="blue">
-            Offer is under internal review.
-          </InfoBox>
-        )}
-        {status === "PENDING_CREW_SIGNATURE" && (
-          <InfoBox icon={PenLine} color="purple">
-            Click your signature field inside each document to sign.
-          </InfoBox>
-        )}
-        {[
-          "PENDING_UPM_SIGNATURE",
-          "PENDING_FC_SIGNATURE",
-          "PENDING_STUDIO_SIGNATURE",
-        ].includes(status) && (
-          <InfoBox icon={PenLine} color="purple">
-            You have signed. Awaiting further signatories.
-          </InfoBox>
-        )}
-        {status === "COMPLETED" && (
-          <InfoBox icon={Lock} color="green">
-            Contract fully executed. Welcome to the production!
-          </InfoBox>
-        )}
-        {status === "CANCELLED" && (
-          <InfoBox icon={XCircle} color="red">
-            This offer has been cancelled.
-          </InfoBox>
-        )}
-        {status === "DRAFT" && (
-          <InfoBox icon={Eye} color="gray">
-            Offer has not been sent to you yet.
-          </InfoBox>
-        )}
+        {status === "COMPLETED" && <InfoBox icon={Lock} color="green">Contract fully executed. Welcome to the production!</InfoBox>}
+        {status === "CANCELLED" && <InfoBox icon={XCircle} color="red">This offer has been cancelled.</InfoBox>}
+        {status === "DRAFT" && <InfoBox icon={Eye} color="gray">Offer has not been sent to you yet.</InfoBox>}
       </div>
     </div>
   );
@@ -455,47 +333,22 @@ function CrewActionBox({
 function OfferDocumentPane({ offer, contractData, allowances, calculatedRates }) {
   const [af, setAf] = useState(null);
   return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-    >
-      <div
-        className="flex items-center justify-between px-4 py-2.5"
-        style={{ borderBottom: "1px solid var(--border)", background: "var(--muted)" }}
-      >
-        <p
-          className="text-[13px] font-bold uppercase tracking-wide"
-          style={{ color: "var(--foreground)" }}
-        >
-          Offer Document
-        </p>
-        {offer?.offerCode && (
-          <span className="text-[9px] font-mono" style={{ color: "var(--muted-foreground)" }}>
-            {offer.offerCode}
-          </span>
-        )}
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+      <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)", background: "var(--muted)" }}>
+        <p className="text-[13px] font-bold uppercase tracking-wide" style={{ color: "var(--foreground)" }}>Offer Document</p>
+        {offer?.offerCode && <span className="text-[9px] font-mono" style={{ color: "var(--muted-foreground)" }}>{offer.offerCode}</span>}
       </div>
       <CreateOfferLayout
-        data={contractData}
-        offer={offer}
-        activeField={af}
-        onFieldFocus={setAf}
-        onFieldBlur={() => setAf(null)}
-        calculatedRates={calculatedRates}
-        engineSettings={defaultEngineSettings}
-        salaryBudgetCodes={offer?.salaryBudgetCodes     || []}
-        setSalaryBudgetCodes={() => {}}
-        salaryTags={offer?.salaryTags                   || []}
-        setSalaryTags={() => {}}
-        overtimeBudgetCodes={offer?.overtimeBudgetCodes || []}
-        setOvertimeBudgetCodes={() => {}}
-        overtimeTags={offer?.overtimeTags               || []}
-        setOvertimeTags={() => {}}
+        data={contractData} offer={offer}
+        activeField={af} onFieldFocus={setAf} onFieldBlur={() => setAf(null)}
+        calculatedRates={calculatedRates} engineSettings={defaultEngineSettings}
+        salaryBudgetCodes={offer?.salaryBudgetCodes || []} setSalaryBudgetCodes={() => {}}
+        salaryTags={offer?.salaryTags || []} setSalaryTags={() => {}}
+        overtimeBudgetCodes={offer?.overtimeBudgetCodes || []} setOvertimeBudgetCodes={() => {}}
+        overtimeTags={offer?.overtimeTags || []} setOvertimeTags={() => {}}
         allowances={allowances}
-        hideOfferSections={false}
-        hideContractDocument={true}
-        isDocumentLocked={true}
-        initialOfferCollapsed={false}
+        hideOfferSections={false} hideContractDocument={true}
+        isDocumentLocked={true} initialOfferCollapsed={false}
       />
     </div>
   );
@@ -504,53 +357,21 @@ function OfferDocumentPane({ offer, contractData, allowances, calculatedRates })
 // ── Signing stage sidebar ─────────────────────────────────────────────────────
 
 function SigningSidebar({ status, isSubmitting, onRequestChanges, signingStatus }) {
-  const hasSigned = [
-    "PENDING_UPM_SIGNATURE",
-    "PENDING_FC_SIGNATURE",
-    "PENDING_STUDIO_SIGNATURE",
-    "COMPLETED",
-  ].includes(status);
+  const hasSigned = ["PENDING_UPM_SIGNATURE", "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE", "COMPLETED"].includes(status);
   const isCompleted = status === "COMPLETED";
   const canSign     = status === "PENDING_CREW_SIGNATURE";
 
   return (
     <div className="space-y-3">
-      <div
-        className="rounded-xl p-4 space-y-2.5"
-        style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-      >
-        <p
-          className="text-[10px] font-bold uppercase tracking-widest mb-1"
-          style={{ color: "var(--muted-foreground)" }}
-        >
-          Your Action
-        </p>
-        {canSign && (
-          <InfoBox icon={PenLine} color="purple">
-            Click your highlighted signature field inside each document to sign inline.
-          </InfoBox>
-        )}
-        {hasSigned && !isCompleted && (
-          <InfoBox icon={PenLine} color="purple">
-            You have signed. Awaiting further signatories.
-          </InfoBox>
-        )}
-        {isCompleted && (
-          <InfoBox icon={Lock} color="green">
-            Contract fully executed. Welcome to the production!
-          </InfoBox>
-        )}
+      <div className="rounded-xl p-4 space-y-2.5" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>Your Action</p>
+        {canSign && <InfoBox icon={PenLine} color="purple">Click your highlighted signature field inside each document to sign inline.</InfoBox>}
+        {hasSigned && !isCompleted && <InfoBox icon={PenLine} color="purple">You have signed. Awaiting further signatories.</InfoBox>}
+        {isCompleted && <InfoBox icon={Lock} color="green">Contract fully executed. Welcome to the production!</InfoBox>}
         {!isCompleted && (
-          <button
-            disabled={isSubmitting}
-            onClick={onRequestChanges}
+          <button disabled={isSubmitting} onClick={onRequestChanges}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[11px] font-semibold disabled:opacity-60 transition-colors"
-            style={{
-              border: "2px solid var(--peach-300)",
-              color: "var(--peach-600)",
-              background: "transparent",
-            }}
-          >
+            style={{ border: "2px solid var(--peach-300)", color: "var(--peach-600)", background: "transparent" }}>
             <MessageSquare className="w-3.5 h-3.5" /> Request Changes
           </button>
         )}
@@ -571,6 +392,8 @@ export default function LayoutCrew({
   onAction,
   dispatch: _dispatch,
   profileSignature: profileSignatureProp,
+  onSignInstance,        // ← ViewOffer's handler, used directly
+  onAllSigned,           // ← NEW: forwarded from ViewOffer → ContractInstancesPanel
   salaryBudgetCodes,
   salaryTags,
   overtimeBudgetCodes,
@@ -578,11 +401,9 @@ export default function LayoutCrew({
   signingStatus,
   previewHtml,
   isLoadingPrev,
-  onSign,
+  onSign,               // kept in props but intentionally NOT used
 }) {
-  const dispatch  = useDispatch();
   const isSigning = useSelector(selectInstancesSigning);
-  const signError = useSelector(selectInstancesSignError);
 
   // Profile signature: prefer Redux store, fall back to prop
   const profileSignatureFromStore = useSelector(selectProfileSignatureUrl);
@@ -594,56 +415,18 @@ export default function LayoutCrew({
   const isSigningStage = SIGNING_STAGE_STATUSES.includes(status);
   const canSign        = CREW_SIGNABLE_STATUSES.includes(status);
 
-  // ── Per-document sign handler ─────────────────────────────────────────────
-  // FIX: pass { instanceId, signatureImage } object — the thunk now expects this
-  // shape. Previously instanceId was passed as a plain string and signatureImage
-  // was silently discarded.
-  const handleSignInstance = async (instanceId, meta = {}) => {
-    const signatureImage = meta.signatureUrl ?? profileSignature ?? undefined;
-
-    const result = await dispatch(
-      signContractInstanceThunk({ instanceId, signatureImage })
-    );
-
-    if (result.error) {
-      const msg =
-        result.payload?.message ||
-        result.payload?.error ||
-        "Failed to sign document";
-      toast.error(msg);
-      throw new Error(msg);
-    }
-
-    toast.success("Document signed");
-
-    // Refresh in background — no clearInstances to avoid flash
-    if (offer?._id) {
-      dispatch(getContractInstancesThunk(offer._id));
-    }
-  };
-
-  const handleSignRequest = (upperRole) => {
-    if (onSign) onSign(upperRole);
-  };
-
   if (!offer) return null;
 
   return (
     <>
       <div className="space-y-4">
-
         <CrewIdentityHeader contractData={contractData} offer={offer} />
 
         {/* Pre-signing stage */}
         {!isSigningStage && (
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
-              <OfferDocumentPane
-                offer={offer}
-                contractData={contractData}
-                allowances={allowances}
-                calculatedRates={calculatedRates}
-              />
+              <OfferDocumentPane offer={offer} contractData={contractData} allowances={allowances} calculatedRates={calculatedRates} />
             </div>
             <div className="w-[240px] shrink-0">
               <CrewActionBox
@@ -652,7 +435,6 @@ export default function LayoutCrew({
                 onAccept={() => setDialog("accept")}
                 onRequestChanges={() => setDialog("requestChanges")}
                 onDecline={() => setDialog("decline")}
-                onSign={() => onSign?.("CREW")}
               />
             </div>
           </div>
@@ -662,36 +444,14 @@ export default function LayoutCrew({
         {isSigningStage && (
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0">
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              >
-                <div
-                  className="flex items-center gap-2 px-4 py-2.5"
-                  style={{ borderBottom: "1px solid var(--border)" }}
-                >
+              <div className="rounded-xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
                   <FileText className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-                  <h3
-                    className="text-[12px] font-semibold"
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    Contract Documents
-                  </h3>
-                  {status === "COMPLETED" ? (
-                    <span
-                      className="ml-auto text-[9px] font-mono font-semibold"
-                      style={{ color: "var(--mint-600)" }}
-                    >
-                      ALL SIGNED
-                    </span>
-                  ) : (
-                    <span
-                      className="ml-auto text-[9px] font-mono"
-                      style={{ color: "var(--primary)" }}
-                    >
-                      PENDING SIGNATURE
-                    </span>
-                  )}
+                  <h3 className="text-[12px] font-semibold" style={{ color: "var(--foreground)" }}>Contract Documents</h3>
+                  {status === "COMPLETED"
+                    ? <span className="ml-auto text-[9px] font-mono font-semibold" style={{ color: "var(--mint-600)" }}>ALL SIGNED</span>
+                    : <span className="ml-auto text-[9px] font-mono" style={{ color: "var(--primary)" }}>PENDING SIGNATURE</span>
+                  }
                 </div>
                 <div className="p-4">
                   {offer?._id ? (
@@ -700,22 +460,14 @@ export default function LayoutCrew({
                       offerStatus={offer.status}
                       canSignRole={canSign}
                       profileSignature={profileSignature}
-                      onSignInstance={handleSignInstance}
-                      onSignRequest={handleSignRequest}
+                      onSignInstance={onSignInstance}
                       isSubmitting={isSigning || isSubmitting}
+                      onAllSigned={onAllSigned}  
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <FileText
-                        className="w-5 h-5 mb-2"
-                        style={{ color: "var(--lavender-300)" }}
-                      />
-                      <p
-                        className="text-sm font-semibold"
-                        style={{ color: "var(--muted-foreground)" }}
-                      >
-                        Loading…
-                      </p>
+                      <FileText className="w-5 h-5 mb-2" style={{ color: "var(--lavender-300)" }} />
+                      <p className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>Loading…</p>
                     </div>
                   )}
                 </div>
@@ -735,60 +487,32 @@ export default function LayoutCrew({
 
       {/* Accept dialog */}
       {dialog === "accept" && (
-        <AcceptDialog
-          offer={offer}
-          isLoading={isSubmitting}
-          onConfirm={async () => {
-            setDialog(null);
-            await onAction("accept");
-          }}
-          onClose={() => setDialog(null)}
-        />
+        <AcceptDialog offer={offer} isLoading={isSubmitting}
+          onConfirm={async () => { setDialog(null); await onAction("accept"); }}
+          onClose={() => setDialog(null)} />
       )}
 
       {/* Request Changes */}
-      <OfferActionDialog
-        type="requestChanges"
-        open={dialog === "requestChanges"}
-        offer={offer}
-        isLoading={isSubmitting}
-        onClose={() => setDialog(null)}
-        onConfirm={async (payload) => {
-          setDialog(null);
-          await onAction("requestChanges", payload);
-        }}
-      />
+      <OfferActionDialog type="requestChanges" open={dialog === "requestChanges"}
+        offer={offer} isLoading={isSubmitting} onClose={() => setDialog(null)}
+        onConfirm={async (payload) => { setDialog(null); await onAction("requestChanges", payload); }} />
 
       {/* Signing-stage request changes */}
-      <OfferActionDialog
-        type="requestChanges"
-        open={dialog === "signingRequestChanges"}
-        offer={offer}
-        isLoading={isSubmitting}
-        onClose={() => setDialog(null)}
+      <OfferActionDialog type="requestChanges" open={dialog === "signingRequestChanges"}
+        offer={offer} isLoading={isSubmitting} onClose={() => setDialog(null)}
         onConfirm={async (payload) => {
           setDialog(null);
-          await onAction("requestChanges", {
-            ...payload,
-            fieldName: "CREW_SIGNING_REQUEST_CHANGES",
-          });
-        }}
-      />
+          await onAction("requestChanges", { ...payload, fieldName: "CREW_SIGNING_REQUEST_CHANGES" });
+        }} />
 
       {/* Decline dialog */}
       {dialog === "decline" && (
-        <DeclineDialog
-          offer={offer}
-          isLoading={isSubmitting}
+        <DeclineDialog offer={offer} isLoading={isSubmitting}
           onConfirm={async (payload) => {
             setDialog(null);
-            await onAction("requestChanges", {
-              reason: payload.reason || "DECLINED BY CREW",
-              fieldName: "DECLINE",
-            });
+            await onAction("requestChanges", { reason: payload.reason || "DECLINED BY CREW", fieldName: "DECLINE" });
           }}
-          onClose={() => setDialog(null)}
-        />
+          onClose={() => setDialog(null)} />
       )}
     </>
   );

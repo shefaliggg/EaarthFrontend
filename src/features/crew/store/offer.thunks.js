@@ -4,6 +4,13 @@
  * NEW: extendContractThunk     — calls PATCH /offers/:id/extend
  * NEW: cloneOfferThunk         — calls POST  /offers/:id/clone
  * NEW: toggleContractLockThunk — calls PATCH /offers/:id/toggle-lock
+ * NEW: moveToPendingUpmSignatureThunk    — advance after crew signs all docs
+ * NEW: moveToPendingFcSignatureThunk     — advance after UPM signs all docs
+ * NEW: moveToPendingStudioSignatureThunk — advance after FC signs all docs
+ * NEW: completeOfferThunk                — advance after Studio signs all docs
+ *
+ * UPDATED: deleteOfferThunk — backend now soft-deletes (status → DELETED),
+ *   so we return { id, offer } so the slice can patch status in-place.
  */
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -51,9 +58,13 @@ export const updateOfferThunk = createAsyncThunk("offers/update",
   }
 );
 
+// UPDATED: soft-delete — backend returns the updated offer with status DELETED.
 export const deleteOfferThunk = createAsyncThunk("offers/delete",
   async (id, { rejectWithValue }) => {
-    try { await offerApi.deleteOffer(id); return id; }
+    try {
+      const offer = await offerApi.deleteOffer(id);
+      return { id, offer };
+    }
     catch (e) { return rejectWithValue(normalizeError(e)); }
   }
 );
@@ -123,6 +134,52 @@ export const returnToProductionThunk = createAsyncThunk("offers/returnToProducti
   }
 );
 
+// ─── NEW: Stage-advance thunks called after all docs signed ──────────────────
+// These are called by ContractInstancesPanel's onAllSigned callback.
+// Each one moves the offer to the next signing stage.
+
+export const moveToPendingUpmSignatureThunk = createAsyncThunk(
+  "offers/pendingUpmSig",
+  async (offerId, { rejectWithValue }) => {
+    try {
+      // Try the dedicated endpoint first; fall back to a generic status patch
+      // if your API exposes it differently — adjust the API fn name to match yours.
+      return await offerApi.moveToPendingUpmSignature(offerId);
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+export const moveToPendingFcSignatureThunk = createAsyncThunk(
+  "offers/pendingFcSig",
+  async (offerId, { rejectWithValue }) => {
+    try {
+      return await offerApi.moveToPendingFcSignature(offerId);
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+export const moveToPendingStudioSignatureThunk = createAsyncThunk(
+  "offers/pendingStudioSig",
+  async (offerId, { rejectWithValue }) => {
+    try {
+      return await offerApi.moveToPendingStudioSignature(offerId);
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
+export const completeOfferThunk = createAsyncThunk(
+  "offers/complete",
+  async (offerId, { rejectWithValue }) => {
+    try {
+      return await offerApi.completeOffer(offerId);
+    }
+    catch (e) { return rejectWithValue(normalizeError(e)); }
+  }
+);
+
 // ─── Extend Contract ──────────────────────────────────────────────────────────
 
 export const extendContractThunk = createAsyncThunk("offers/extend",
@@ -163,19 +220,18 @@ export const voidAndReplaceThunk = createAsyncThunk("offers/voidAndReplace",
   }
 );
 
- export const endAndReviseThunk = createAsyncThunk(
-   "offers/endAndRevise",
-   async ({ offerId, endCurrentOn, newEffectiveFrom, reason }, { rejectWithValue }) => {
-     try {
+export const endAndReviseThunk = createAsyncThunk(
+  "offers/endAndRevise",
+  async ({ offerId, endCurrentOn, newEffectiveFrom, reason }, { rejectWithValue }) => {
+    try {
       return await offerApi.endAndRevise(offerId, { endCurrentOn, newEffectiveFrom, reason });
-     } catch (e) {
-       return rejectWithValue(normalizeError(e));
+    } catch (e) {
+      return rejectWithValue(normalizeError(e));
     }
-   }
- );
+  }
+);
+
 // ─── Toggle Contract Lock ─────────────────────────────────────────────────────
-// Returns { isLocked: boolean } — NOT the full offer.
-// The slice handles this separately via its own fulfilled case.
 
 export const toggleContractLockThunk = createAsyncThunk("offers/toggleLock",
   async (offerId, { rejectWithValue }) => {
@@ -239,8 +295,6 @@ export const resolveChangeRequestThunk = createAsyncThunk("offers/resolveChangeR
 );
 
 // ─── Grouped exports for slice builders ──────────────────────────────────────
-// NOTE: toggleContractLockThunk is NOT in workflowThunks because it returns
-// { isLocked } not a full offer — it has its own extraReducer case in the slice.
 
 export const workflowThunks = [
   sendToCrewThunk,
@@ -251,6 +305,10 @@ export const workflowThunks = [
   moveToProductionCheckThunk,
   moveToAccountsCheckThunk,
   moveToPendingCrewSignatureThunk,
+  moveToPendingUpmSignatureThunk,    // NEW
+  moveToPendingFcSignatureThunk,     // NEW
+  moveToPendingStudioSignatureThunk, // NEW
+  completeOfferThunk,                // NEW
   returnToProductionThunk,
   extendContractThunk,
   cloneOfferThunk,

@@ -2,17 +2,15 @@
  * layouts/LayoutSignatory.jsx
  *
  * FIXES APPLIED:
- *   - handleSignInstance passes { instanceId, signatureImage } as an object
- *     to signContractInstanceThunk (previously passed instanceId as a plain
- *     string, so signatureImage was silently dropped by the thunk).
- *   - No clearInstances() on post-sign refresh (prevents UI flicker).
+ *   - onAllSigned prop now forwarded to ContractInstancesPanel so that when
+ *     UPM/FC/STUDIO signs every document the offer advances to the next stage.
+ *   - onSignInstance prop from ViewOffer used directly (no local re-creation).
  *   - profileSignature reads from Redux store first, falls back to prop.
- *   - Everything else unchanged.
+ *   - onSign intentionally NOT forwarded (no dialog path).
  */
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "sonner";
 import {
   PenLine, MessageSquare, Lock, FileText, Shield,
   CheckCircle2, Clock, XCircle, Loader2,
@@ -21,9 +19,7 @@ import {
 import ContractInstancesPanel from "../../../pages/ContractInstancesPanel";
 import { InfoBox }            from "./layoutHelpers";
 import {
-  signContractInstanceThunk,
   selectInstancesSigning,
-  getContractInstancesThunk,
 } from "../../../store/contractInstances.slice";
 import OfferActionDialog from "../../../components/onboarding/OfferActionDialog";
 
@@ -214,6 +210,8 @@ export default function LayoutSignatory({
   onAction,
   dispatch: _dispatch,
   profileSignature: profileSignatureProp,
+  onSignInstance,          // ← ViewOffer's handler, used directly
+  onAllSigned,             // ← NEW: forwarded from ViewOffer → ContractInstancesPanel
   role,
   salaryBudgetCodes,
   salaryTags,
@@ -222,7 +220,7 @@ export default function LayoutSignatory({
   signingStatus,
   previewHtml,
   isLoadingPrev,
-  onSign,
+  onSign,                  // kept in props but intentionally NOT used
 }) {
   const dispatch  = useDispatch();
   const isSigning = useSelector(selectInstancesSigning);
@@ -238,34 +236,6 @@ export default function LayoutSignatory({
   const requiredStatus = ROLE_SIGNABLE_STATUS[role];
   const canSign        = !!requiredStatus && status === requiredStatus;
   const canSignRole    = canSign;
-
-  // ── Per-document sign handler ─────────────────────────────────────────────
-  // FIX: pass { instanceId, signatureImage } object — the thunk now expects this
-  // shape. Previously instanceId was passed as a plain string and signatureImage
-  // was silently discarded.
-  const handleSignInstance = async (instanceId, meta = {}) => {
-    const signatureImage = meta.signatureUrl ?? profileSignature ?? undefined;
-
-    const result = await dispatch(
-      signContractInstanceThunk({ instanceId, signatureImage })
-    );
-
-    if (result.error) {
-      const msg =
-        result.payload?.message ||
-        result.payload?.error ||
-        "Failed to sign document";
-      toast.error(msg);
-      throw new Error(msg);
-    }
-
-    toast.success("Document signed successfully");
-
-    // Refresh in background — no clearInstances to avoid flash
-    if (offer?._id) {
-      dispatch(getContractInstancesThunk(offer._id));
-    }
-  };
 
   if (!offer) return null;
 
@@ -351,8 +321,9 @@ export default function LayoutSignatory({
                   offerStatus={offer.status}
                   canSignRole={canSign}
                   profileSignature={profileSignature}
-                  onSignInstance={handleSignInstance}
+                  onSignInstance={onSignInstance}
                   isSubmitting={isSigning || isSubmitting}
+                  onAllSigned={onAllSigned}  
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">

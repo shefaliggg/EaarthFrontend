@@ -64,6 +64,18 @@ export const moveToProductionCheck = (id) =>
     .patch(`${BASE}/${id}/production-check`, {}, { headers: roleHeaders() })
     .then(unwrap);
 
+export const moveToPendingUpmSignature = (offerId) =>
+  axiosConfig.patch(`/offers/${offerId}/pending-upm-signature`).then((r) => r.data?.data ?? r.data);
+ 
+export const moveToPendingFcSignature = (offerId) =>
+  axiosConfig.patch(`/offers/${offerId}/pending-fc-signature`).then((r) => r.data?.data ?? r.data);
+ 
+export const moveToPendingStudioSignature = (offerId) =>
+  axiosConfig.patch(`/offers/${offerId}/pending-studio-signature`).then((r) => r.data?.data ?? r.data);
+ 
+export const completeOffer = (offerId) =>
+  axiosConfig.patch(`/offers/${offerId}/complete`).then((r) => r.data?.data ?? r.data);    
+
 export const moveToAccountsCheck = (id) =>
   axiosConfig
     .patch(`${BASE}/${id}/accounts-check`, {}, { headers: roleHeaders() })
