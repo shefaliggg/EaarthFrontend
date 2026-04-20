@@ -1,10 +1,20 @@
 // ─── OffersListRow ───────────────────────────────────────────────────────────
 // One row in the offer list. Hover reveals action buttons.
+// Delete is available for ALL offer statuses.
+// Delete confirmation is handled by the parent (OffersList) via OfferActionDialog.
+// LAYOUT: Buttons come BEFORE Next Action text, all in one aligned row.
 
-import { Eye, Pencil, PenLine, Stamp, ShieldCheck, Building2, Calculator, ClipboardCheck } from "lucide-react";
-import { CrewAvatar } from "./CrewAvatar";
+import { useState, useRef, useEffect } from "react";
+import {
+  Eye, Pencil, PenLine, Stamp, ShieldCheck, Building2,
+  Calculator, ClipboardCheck, Copy, CalendarDays, Trash2,
+  MoreVertical,
+} from "lucide-react";
+import { CrewAvatar }       from "./CrewAvatar";
 import { OfferStatusBadge } from "./OfferStatusBadge";
-import { useParams } from "react-router-dom";
+import { useParams }        from "react-router-dom";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getNextAction(status) {
   const map = {
@@ -19,6 +29,11 @@ function getNextAction(status) {
     PENDING_FC_SIGNATURE:     "Awaiting FC signature",
     PENDING_STUDIO_SIGNATURE: "Awaiting studio approval",
     COMPLETED:                "Contract complete",
+    CANCELLED:                "Offer cancelled",
+    TERMINATED:               "Contract terminated",
+    VOIDED:                   "Contract voided",
+    REVISED:                  "Contract revised",
+    DELETED:                  "Offer deleted",
   };
   return map[status] || "Review offer";
 }
@@ -39,71 +54,199 @@ function getDeptLabel(val = "") {
 }
 
 function getEngagementLabel(type = "") {
-  return { loan_out: "Loan Out", paye: "PAYE", schd: "SCHD", long_form: "Long Form" }[type]
-    || type.replace(/_/g, " ").toUpperCase();
+  return (
+    { loan_out: "Loan Out", paye: "PAYE", schd: "SCHD", long_form: "Long Form" }[type] ||
+    type.replace(/_/g, " ").toUpperCase()
+  );
 }
 
-function ActionButtons({ offer, onNavigate, projectName }) {
-  const id     = offer.id || offer._id;
-  const status = offer.status;
-  const base   = `/projects/${projectName || "demo-project"}/offers/${id}`;
+// ── Primary contextual action button ─────────────────────────────────────────
 
-  const btn = (label, icon, color, path) => (
-    <button
-      key={label}
-      onClick={() => onNavigate(path)}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${color}`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
+function PrimaryActionButton({ status, onNavigate, base }) {
+  if (status === "PRODUCTION_CHECK") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors whitespace-nowrap"
+      >
+        <ClipboardCheck className="h-3.5 w-3.5" />
+        Review
+      </button>
+    );
+  }
+  if (status === "ACCOUNTS_CHECK") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+      >
+        <Calculator className="h-3.5 w-3.5" />
+        Accounts Review
+      </button>
+    );
+  }
+  if (status === "PENDING_CREW_SIGNATURE") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-teal-600 text-white hover:bg-teal-700 transition-colors whitespace-nowrap"
+      >
+        <PenLine className="h-3.5 w-3.5" />
+        Crew Sign
+      </button>
+    );
+  }
+  if (status === "PENDING_UPM_SIGNATURE") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
+      >
+        <Stamp className="h-3.5 w-3.5" />
+        UPM Sign
+      </button>
+    );
+  }
+  if (status === "PENDING_FC_SIGNATURE") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors whitespace-nowrap"
+      >
+        <ShieldCheck className="h-3.5 w-3.5" />
+        FC Sign
+      </button>
+    );
+  }
+  if (status === "PENDING_STUDIO_SIGNATURE") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-fuchsia-600 text-white hover:bg-fuchsia-700 transition-colors whitespace-nowrap"
+      >
+        <Building2 className="h-3.5 w-3.5" />
+        Studio Sign
+      </button>
+    );
+  }
+  if (status === "COMPLETED") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view?openExtend=true`); }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors whitespace-nowrap"
+      >
+        <CalendarDays className="h-3.5 w-3.5" />
+        Extend
+      </button>
+    );
+  }
+  return null;
+}
 
-  const actions = [];
+// ── Three-dot dropdown menu ───────────────────────────────────────────────────
 
-  // Contextual primary action based on status
-  if (status === "PRODUCTION_CHECK")
-    actions.push(btn("Review", <ClipboardCheck className="h-3.5 w-3.5" />,
-      "bg-purple-600 text-white hover:bg-purple-700", `${base}/view`));
+function DropdownMenu({ offer, onNavigate, onClone, onDeleteRequest, base, status }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
-  if (status === "ACCOUNTS_CHECK")
-    actions.push(btn("Accounts Review", <Calculator className="h-3.5 w-3.5" />,
-      "bg-blue-600 text-white hover:bg-blue-700", `${base}/view`));
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  if (status === "PENDING_CREW_SIGNATURE")
-    actions.push(btn("Crew Sign", <PenLine className="h-3.5 w-3.5" />,
-      "bg-teal-600 text-white hover:bg-teal-700", `${base}/sign`));
-
-  if (status === "PENDING_UPM_SIGNATURE")
-    actions.push(btn("UPM Sign", <Stamp className="h-3.5 w-3.5" />,
-      "bg-indigo-600 text-white hover:bg-indigo-700", `${base}/sign`));
-
-  if (status === "PENDING_FC_SIGNATURE")
-    actions.push(btn("FC Sign", <ShieldCheck className="h-3.5 w-3.5" />,
-      "bg-violet-600 text-white hover:bg-violet-700", `${base}/sign`));
-
-  if (status === "PENDING_STUDIO_SIGNATURE")
-    actions.push(btn("Studio Sign", <Building2 className="h-3.5 w-3.5" />,
-      "bg-fuchsia-600 text-white hover:bg-fuchsia-700", `${base}/sign`));
-
-  // Always show View + Edit
-  actions.push(
-    btn("View", <Eye className="h-3.5 w-3.5" />,
-      "border border-neutral-200 text-neutral-600 hover:bg-neutral-50", `${base}/view`),
-    btn("Edit", <Pencil className="h-3.5 w-3.5" />,
-      "border border-purple-200 text-purple-700 hover:bg-purple-50", `${base}/edit`),
-  );
+  const isCloneable = !["DRAFT"].includes(status);
 
   return (
-    <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-      {actions}
+    <div className="relative" ref={ref}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors text-neutral-400 hover:text-neutral-700"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 z-50 mt-1 w-52 rounded-xl shadow-xl border border-neutral-200 bg-white overflow-hidden"
+          style={{ top: "100%" }}
+        >
+          {/* View */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onNavigate(`${base}/view`); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            <Eye className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+            View Offer
+          </button>
+
+          {/* Edit — only for editable statuses */}
+          {["DRAFT", "NEEDS_REVISION", "PRODUCTION_CHECK", "ACCOUNTS_CHECK"].includes(status) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onNavigate(`${base}/edit`); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-neutral-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5 shrink-0" />
+              Edit Offer
+            </button>
+          )}
+
+          {/* Clone */}
+          {isCloneable && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onClone(offer); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-neutral-700 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+            >
+              <Copy className="w-3.5 h-3.5 shrink-0" />
+              Clone Offer
+            </button>
+          )}
+
+          {/* Extend — completed only */}
+          {status === "COMPLETED" && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onNavigate(`${base}/view?openExtend=true`); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-neutral-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+            >
+              <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+              Extend Contract
+            </button>
+          )}
+
+          {/* Delete — available for ALL statuses */}
+          <div className="h-px bg-neutral-100 mx-2" />
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDeleteRequest(offer); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[12px] text-red-600 hover:bg-red-50 transition-colors font-medium"
+          >
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+            Delete Offer
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export function OffersListRow({ offer, onNavigate, isLast, projectName }) {
+// ── Main row component ────────────────────────────────────────────────────────
+
+export function OffersListRow({
+  offer,
+  onNavigate,
+  onClone,
+  onDeleteRequest,  // signals parent to open confirm dialog
+  isLast,
+  projectName,
+  isDeleting = false,
+}) {
   const params = useParams();
   const resolvedProjectName = projectName || params.projectName || "demo-project";
+
+  const id     = offer.id || offer._id;
+  const status = offer.status;
+  const base   = `/projects/${resolvedProjectName}/offers/${id}`;
 
   const name    = offer.fullName || offer.recipient?.fullName || "Unnamed";
   const roles   = Array.isArray(offer.roles) ? offer.roles : [];
@@ -113,29 +256,41 @@ export function OffersListRow({ offer, onNavigate, isLast, projectName }) {
   const rate    = role?.rateType   || (offer.dailyOrWeekly
     ? offer.dailyOrWeekly.charAt(0).toUpperCase() + offer.dailyOrWeekly.slice(1)
     : "—");
-  const engType = getEngagementLabel(offer.contractType || offer.engagementType || "");
+  const engType     = getEngagementLabel(offer.contractType || offer.engagementType || "");
   const lastComment = offer.lastComment || null;
 
   const handleRowClick = () => {
-    const id = offer.id || offer._id;
     onNavigate(`/projects/${resolvedProjectName}/offers/${id}/view`);
+  };
+
+  const handleClone = (e) => {
+    e?.stopPropagation?.();
+    if (onClone) onClone(offer);
+  };
+
+  const handleDeleteRequest = (e) => {
+    e?.stopPropagation?.();
+    if (onDeleteRequest) onDeleteRequest(offer);
   };
 
   return (
     <div
       onClick={handleRowClick}
       className={`
-        flex items-center gap-4 px-4 py-3
+        flex items-center gap-3 px-4 py-3
         hover:bg-purple-50/30 transition-colors group cursor-pointer
         ${!isLast ? "border-b border-neutral-100" : ""}
+        ${isDeleting ? "opacity-50 pointer-events-none" : ""}
       `}
     >
+      {/* Avatar */}
       <CrewAvatar name={name} />
 
+      {/* Name + meta */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           <span className="text-[13px] font-semibold text-neutral-800 truncate">{name}</span>
-          <OfferStatusBadge status={offer.status} />
+          <OfferStatusBadge status={status} />
         </div>
         <div className="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-400 flex-wrap">
           <span className="font-medium text-neutral-500">{title}</span>
@@ -155,15 +310,74 @@ export function OffersListRow({ offer, onNavigate, isLast, projectName }) {
         )}
       </div>
 
-      <div className="text-right shrink-0 mr-2 hidden md:block">
-        <p className="text-[10px] text-neutral-400 uppercase tracking-wider">Next Action</p>
-        <p className="text-[11px] text-neutral-600 font-medium">{getNextAction(offer.status)}</p>
-        {offer.updatedAt && (
-          <p className="text-[10px] text-neutral-400">{timeAgo(offer.updatedAt)}</p>
+      {/* RIGHT SIDE: Action buttons FIRST, then Next Action text */}
+      {/* Action buttons — visible on hover */}
+      <div
+        className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Contextual primary signing/action button */}
+        <PrimaryActionButton status={status} onNavigate={onNavigate} base={base} />
+
+        {/* Always: View */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/view`); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors whitespace-nowrap"
+        >
+          <Eye className="h-3.5 w-3.5" />
+          View
+        </button>
+
+        {/* Edit — only for editable statuses */}
+        {["DRAFT", "NEEDS_REVISION", "PRODUCTION_CHECK", "ACCOUNTS_CHECK"].includes(status) && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onNavigate(`${base}/edit`); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </button>
         )}
+
+        {/* Clone — all non-DRAFT statuses */}
+        {!["DRAFT"].includes(status) && (
+          <button
+            onClick={handleClone}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-violet-200 text-violet-700 hover:bg-violet-50 transition-colors whitespace-nowrap"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Clone
+          </button>
+        )}
+
+        {/* Delete — ALL statuses */}
+        <button
+          onClick={handleDeleteRequest}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </button>
+
+        {/* Three-dot overflow menu */}
+        <DropdownMenu
+          offer={offer}
+          onNavigate={onNavigate}
+          onClone={handleClone}
+          onDeleteRequest={handleDeleteRequest}
+          base={base}
+          status={status}
+        />
       </div>
 
-      <ActionButtons offer={offer} onNavigate={onNavigate} projectName={resolvedProjectName} />
+      {/* Next Action label — AFTER buttons, hidden on mobile */}
+      <div className="text-right shrink-0 hidden md:block min-w-[120px]">
+        <p className="text-[10px] text-neutral-400 uppercase tracking-wider whitespace-nowrap">Next Action</p>
+        <p className="text-[11px] text-neutral-600 font-medium whitespace-nowrap">{getNextAction(status)}</p>
+        {offer.updatedAt && (
+          <p className="text-[10px] text-neutral-400 whitespace-nowrap">{timeAgo(offer.updatedAt)}</p>
+        )}
+      </div>
     </div>
   );
 }

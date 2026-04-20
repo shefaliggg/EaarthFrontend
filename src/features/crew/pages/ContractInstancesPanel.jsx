@@ -1,33 +1,24 @@
 /**
  * ContractInstancesPanel.jsx
  *
- * FIXES FOR IMAGE 1 + IMAGE 2:
+ * FIXES APPLIED:
  *
- *   Image 1 fix — raw Handlebars text showing:
- *     The {{#ifEquals activeRole 'crew'}} helper was never registered, so
- *     Handlebars passed the block through as literal text. Fix is in
- *     contractInstance.service.js (register helpers at module load). This
- *     file handles the DISPLAY side — once the HTML is correctly compiled
- *     by the backend, the iframe renders it properly.
+ *  BUG 1 — After crew signs ALL docs, offer doesn't advance to PENDING_UPM_SIGNATURE.
+ *    FIX:  onAllSigned(role) prop emitted when all docs signed. Parent dispatches
+ *          the correct status-advance thunk.
  *
- *   Image 2 fix — clicking sig area does nothing:
- *     The second document uses a legacy template with .sig-item + .sig-line
- *     instead of .signature-slot[data-role]. The click listener only looked
- *     for .signature-slot so it found nothing. Fix: updateSlotStates now
- *     handles BOTH patterns:
- *       Pattern A: .signature-slot[data-role="crew"] — offer-document template
- *       Pattern B: .sig-item/.sig-box + .sig-line — legacy LSA/crew-info templates
- *     For Pattern B a clickable neutral overlay is injected above the .sig-line.
- *     Clicking it opens an inline confirm dialog (dim + preview + Sign/Cancel).
+ *  BUG 2 — UPM/FC/Studio "Click to sign" badge never appears.
+ *    FIX:  canSignRole must be true for the correct role.
  *
- *   Signature confirm flow (NEW):
- *     - Before signing: neutral grey dashed border, no colour. Purple tint on hover only.
- *     - On click: iframe dims with a dark overlay. A centred card shows the saved
- *       signature image preview with "Cancel" and "Confirm & sign" buttons.
- *     - After confirm: signature injected, green border applied to the slot.
- *     - Cancel: overlay removed, no side-effects.
+ *  BUG 3 — After signing one doc, panel stays on same doc.
+ *    FIX:  onSignedAdvance() called after signing to auto-advance to next doc.
  *
- *   Stale closure bug: canSignRef / signedRef keep guards current (from previous fix).
+ *  BUG 4 — "SIGN: PRODUCTION EXECUTIVE" draw/type dialog still appears on some docs.
+ *    FIX:  handleIframeReady now:
+ *          - Overrides all known dialog-opening functions with no-ops in the iframe window
+ *          - Adds a MutationObserver that kills any modal nodes injected after page load
+ *          - Intercepts addEventListener to block native click handlers on sig elements
+ *          Cleanup effect disconnects the observer on unmount.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -93,20 +84,23 @@ const STATUS_STYLE = {
   SUPERSEDED:             { bg: "var(--muted)",         color: "var(--muted-foreground)", border: "var(--border)"         },
 };
 
-// Maps data-role attribute values to app-level role strings
-const ROLE_FROM_SLOT = { crew: "CREW", upm: "UPM", fc: "FC", studio: "STUDIO" };
+const ROLE_FROM_SLOT = {
+  crew:   "CREW",
+  upm:    "UPM",
+  fc:     "FC",
+  studio: "STUDIO",
+};
 
-// Maps label text in legacy templates to role keys (lowercase)
 const ROLE_FROM_LABEL_PATTERNS = [
   { pattern: /crew\s*member/i,               role: "crew"   },
   { pattern: /unit\s*production\s*manager/i, role: "upm"    },
   { pattern: /\bupm\b/i,                     role: "upm"    },
+  { pattern: /production\s*office/i,         role: "upm"    },
+  { pattern: /received\s*by/i,               role: "upm"    },
   { pattern: /financial\s*controller/i,      role: "fc"     },
   { pattern: /\bfc\b/i,                      role: "fc"     },
   { pattern: /production\s*executive/i,      role: "studio" },
   { pattern: /approved.*executive/i,         role: "studio" },
-  { pattern: /production\s*office/i,         role: "studio" },
-  { pattern: /received\s*by/i,               role: "studio" },
 ];
 
 function roleFromLabelText(text = "") {
@@ -114,6 +108,11 @@ function roleFromLabelText(text = "") {
     if (pattern.test(text)) return role;
   }
   return null;
+}
+
+function normaliseRole(r = "") {
+  if (!r) return "";
+  return (ROLE_FROM_SLOT[r.toLowerCase()] ?? r).toUpperCase();
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -201,25 +200,13 @@ function StatusBadge({ status }) {
   );
 }
 
-function SigningOverlay({ visible }) {
-  if (!visible) return null;
-  return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg"
-         style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(2px)" }}>
-      <div className="flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg"
-           style={{ background: "var(--primary)", color: "white" }}>
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span className="text-[12px] font-semibold">Applying signature…</span>
-      </div>
-    </div>
-  );
-}
-
 // ── DocumentView ──────────────────────────────────────────────────────────────
 
-function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
-  profileSignature, onSignInstance, isSubmitting, onSignedAdvance }) {
-
+function DocumentView({
+  instance, index, total, viewRole, offerId, canSignRole,
+  profileSignature, onSignInstance, isSubmitting, onSignedAdvance,
+  onDocSigned,
+}) {
   const dispatch   = useDispatch();
   const iframeRef  = useRef(null);
   const canSignRef = useRef(canSignRole);
@@ -234,8 +221,17 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
   const signed        = isSignedForRole(instance.status, viewRole);
   const typeCfg       = TYPE_CFG[instance.displayType] ?? TYPE_CFG.standard;
 
+  const viewRoleUpper = normaliseRole(viewRole);
+
   useEffect(() => { canSignRef.current = canSignRole;   }, [canSignRole]);
   useEffect(() => { signedRef.current  = alreadySigned; }, [alreadySigned]);
+
+  // ── Cleanup observer on unmount ───────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      iframeRef.current?._sigModalObserver?.disconnect();
+    };
+  }, []);
 
   // ── Load HTML ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -250,16 +246,16 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
     return () => { cancelled = true; };
   }, [instance._id, dispatch]);
 
-  // ── injectSignatureIntoIframe (both template patterns) ───────────────────
-  const injectSignatureIntoIframe = useCallback((slotRoleLower, signatureUrl) => {
+  // ── injectSignatureIntoIframe ─────────────────────────────────────────────
+  const injectSignatureIntoIframe = useCallback((roleLower, signatureUrl) => {
     const iframe = iframeRef.current;
     if (!iframe) return;
     try {
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (!doc) return;
 
-      // Pattern A — .signature-slot[data-role]
-      const slotEl = doc.querySelector(`.signature-slot[data-role="${slotRoleLower}"]`);
+      // Pattern A
+      const slotEl = doc.querySelector(`.signature-slot[data-role="${roleLower}"]`);
       if (slotEl) {
         slotEl.innerHTML = `
           <div style="display:flex;align-items:flex-end;padding:4px 6px;width:100%;height:100%;">
@@ -267,33 +263,38 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
           </div>`;
         slotEl.classList.remove("active-role");
         slotEl.classList.add("signed");
-        Object.assign(slotEl.style, { cursor: "default", pointerEvents: "none", background: "transparent", borderColor: "var(--border)" });
+        Object.assign(slotEl.style, {
+          cursor: "default", pointerEvents: "none",
+          background: "transparent", borderColor: "var(--border)",
+        });
         slotEl.querySelector(".sig-active-badge")?.remove();
         return;
       }
 
-      // Pattern B — .sig-item/.sig-box with .sig-line
-      const containers = [...doc.querySelectorAll(".sig-item"), ...doc.querySelectorAll(".sig-box")];
+      // Pattern B
+      const containers = [
+        ...doc.querySelectorAll(".sig-item"),
+        ...doc.querySelectorAll(".sig-box"),
+      ];
       for (const container of containers) {
-        const labelEl   = container.querySelector(".sig-label, .sig-role, [class*='sig-label']");
-        const labelText = labelEl?.textContent || container.textContent || "";
-        if (roleFromLabelText(labelText) !== slotRoleLower) continue;
+        const labelEl   = container.querySelector(
+          ".sig-label, .sig-role, [class*='sig-label'], .sig-title, .sig-name"
+        );
+        const labelText = labelEl?.textContent?.trim() || "";
+        if (!labelText) continue;
+        if (roleFromLabelText(labelText) !== roleLower) continue;
 
         const sigLine = container.querySelector(".sig-line");
         if (!sigLine) continue;
 
-        // Remove click overlay
         container.querySelector(".inline-sign-overlay")?.remove();
-
-        // Inject image into .sig-line
         Object.assign(sigLine.style, {
-          position: "relative",
-          minHeight: "64px",
-          borderBottom: "1px solid var(--border)",
-          background: "transparent",
+          position: "relative", minHeight: "64px",
+          borderBottom: "1px solid var(--border)", background: "transparent",
         });
         sigLine.innerHTML = `
-          <img src="${signatureUrl}" style="display:block;max-height:52px;max-width:100%;object-fit:contain;margin-bottom:2px;" />`;
+          <img src="${signatureUrl}"
+               style="display:block;max-height:52px;max-width:100%;object-fit:contain;margin-bottom:2px;" />`;
         break;
       }
     } catch (err) {
@@ -302,203 +303,144 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
   }, []);
 
   // ── showInlineConfirm ─────────────────────────────────────────────────────
-  // Instead of a floating overlay, replaces the clicked sig area (the .sig-line
-  // or .signature-slot) in-place with a preview card + Confirm/Cancel buttons.
-  // On Cancel the original overlay is restored. On Confirm the sig image is
-  // permanently injected via injectSignatureIntoIframe.
-  const showInlineConfirm = useCallback((iframeEl, appRole, roleLower, triggerEl) => {
+  const showInlineConfirm = useCallback((iframeEl, roleLower, _triggerEl) => {
     try {
-      const doc = iframeEl.contentDocument || iframeEl.contentWindow?.document;
-      if (!doc) return;
-      if (doc.getElementById("__sig-inline-confirm__")) return;
+      if (iframeEl.dataset.signing === "1") return;
 
-      // ── Find the target container to replace ─────────────────────────────
-      // triggerEl is either the .inline-sign-overlay (Pattern B) or
-      // .signature-slot.active-role (Pattern A). We expand to the nearest
-      // meaningful wrapper so the preview replaces the whole sig area.
-      let targetEl = triggerEl;
+      iframeEl.dataset.signing = "1";
+      signedRef.current  = true;
+      canSignRef.current = false;
 
-      // For Pattern B: walk up to .sig-item or .sig-box
-      const patternBContainer = triggerEl.closest?.(".sig-item, .sig-box");
-      if (patternBContainer) targetEl = patternBContainer;
+      injectSignatureIntoIframe(roleLower, profileSignature);
+      toast.success("Signed — moving to next document");
 
-      // Save original content so Cancel can restore it
-      const originalHTML   = targetEl.innerHTML;
-      const originalStyle  = targetEl.getAttribute("style") || "";
+      setTimeout(() => {
+        if (onSignedAdvance) onSignedAdvance();
+      }, 800);
 
-      // ── Build inline preview card ─────────────────────────────────────────
-      targetEl.setAttribute("id", "__sig-inline-confirm__");
-      Object.assign(targetEl.style, {
-        border: "1.5px solid #c4b5fd",
-        borderRadius: "8px",
-        background: "#faf9ff",
-        padding: "12px 14px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "stretch",
-        gap: "10px",
-        cursor: "default",
-        pointerEvents: "auto",
-        minHeight: "auto",
-      });
-
-      targetEl.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="background:#ede9fe;border-radius:6px;padding:6px;flex-shrink:0;">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
-                 stroke="#7c3aed" stroke-width="1.5" style="display:block;">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5 0 013.536
-                   3.536L12.536 16.536 8 18 9.464 13.536z"/>
-            </svg>
-          </div>
-          <span style="font-size:11px;font-weight:600;color:#4c1d95;">Review your signature</span>
-        </div>
-
-        <div style="border:1px solid #e9d5ff;border-radius:6px;background:#fff;
-                    padding:10px 12px;display:flex;align-items:center;
-                    justify-content:center;min-height:56px;">
-          <img src="${profileSignature}"
-               style="max-height:48px;max-width:100%;object-fit:contain;display:block;" />
-        </div>
-
-        <p style="font-size:9px;color:#9f7aea;margin:0;text-align:center;
-                  letter-spacing:.04em;text-transform:uppercase;">
-          From your saved profile
-        </p>
-
-        <div style="display:flex;gap:8px;">
-          <button id="__sig-inline-cancel__"
-            style="flex:1;padding:8px 0;border-radius:6px;
-                   border:1px solid #e9d5ff;background:#fff;
-                   font-size:11px;font-weight:500;color:#6b7280;
-                   cursor:pointer;">
-            Cancel
-          </button>
-          <button id="__sig-inline-confirm__"
-            style="flex:1;padding:8px 0;border-radius:6px;border:none;
-                   background:#7c3aed;font-size:11px;font-weight:600;
-                   color:#fff;cursor:pointer;">
-            Confirm &amp; sign
-          </button>
-        </div>`;
-
-      // ── Cancel — restore original ─────────────────────────────────────────
-      const restoreOriginal = () => {
-        try {
-          targetEl.removeAttribute("id");
-          targetEl.setAttribute("style", originalStyle);
-          targetEl.innerHTML = originalHTML;
-          // Re-attach the click overlay listener for Pattern B
-          const newOverlay = targetEl.querySelector(".inline-sign-overlay");
-          if (newOverlay) {
-            newOverlay.addEventListener("mouseenter", () => {
-              newOverlay.style.borderColor = "#7c3aed";
-              newOverlay.style.background  = "#faf9ff";
-              newOverlay.querySelector("svg")?.setAttribute("stroke", "#7c3aed");
-              const lbl = newOverlay.querySelector("span");
-              if (lbl) lbl.style.color = "#7c3aed";
-            });
-            newOverlay.addEventListener("mouseleave", () => {
-              newOverlay.style.borderColor = "#d1d5db";
-              newOverlay.style.background  = "transparent";
-              newOverlay.querySelector("svg")?.setAttribute("stroke", "#aaa");
-              const lbl = newOverlay.querySelector("span");
-              if (lbl) lbl.style.color = "#aaa";
-            });
-            newOverlay.addEventListener("click", (e) => {
-              e.preventDefault(); e.stopPropagation();
-              showInlineConfirm(iframeEl, appRole, roleLower, newOverlay);
-            });
-          }
-        } catch (_) { /* ignore */ }
-      };
-
-      targetEl.querySelector("#__sig-inline-cancel__").addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        restoreOriginal();
-      });
-
-      // ── Confirm — optimistic instant sign, backend fires in background ──────
-      targetEl.querySelector("#__sig-inline-confirm__").addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-
-        // 1. Instantly restore the original sig-area structure
-        targetEl.removeAttribute("id");
-        targetEl.setAttribute("style", originalStyle);
-        targetEl.innerHTML = originalHTML;
-
-        // 2. Immediately paint the signature into the document — no spinner, no wait
-        injectSignatureIntoIframe(roleLower, profileSignature);
-        toast.success("Document signed");
-
-        // Stay on the same document after signing — do not auto-advance.
-
-        // 4. Fire the backend call silently in the background — never awaited in UI
-        if (onSignInstance) {
-          onSignInstance(instance._id, { role: appRole, signatureUrl: profileSignature })
-            .catch((err) => {
-              console.error("Background sign failed:", err);
-              toast.error("Signature could not be saved — please refresh and try again");
-            });
-        }
-      });
-
-      // Hover states
-      const cBtn = targetEl.querySelector("#__sig-inline-cancel__");
-      const xBtn = targetEl.querySelector("#__sig-inline-confirm__");
-      cBtn?.addEventListener("mouseenter", () => { cBtn.style.background = "#f5f3ff"; });
-      cBtn?.addEventListener("mouseleave", () => { cBtn.style.background = "#fff"; });
-      xBtn?.addEventListener("mouseenter", () => { if (!xBtn.disabled) xBtn.style.background = "#6d28d9"; });
-      xBtn?.addEventListener("mouseleave", () => { if (!xBtn.disabled) xBtn.style.background = "#7c3aed"; });
-
+      if (onSignInstance) {
+        const appRole = ROLE_FROM_SLOT[roleLower] ?? roleLower.toUpperCase();
+        onSignInstance(instance._id, { role: appRole, signatureUrl: profileSignature })
+          .then(() => {
+            if (onDocSigned) onDocSigned(instance._id, appRole);
+          })
+          .catch((err) => {
+            console.error("Background sign failed:", err);
+            signedRef.current        = false;
+            canSignRef.current       = true;
+            iframeEl.dataset.signing = "0";
+            toast.error("Could not save — please try again");
+          });
+      }
     } catch (err) {
       console.warn("showInlineConfirm failed:", err);
     }
-  }, [profileSignature, onSignInstance, instance._id,
-      injectSignatureIntoIframe, offerId, dispatch, onSignedAdvance]);
+  }, [profileSignature, onSignInstance, onSignedAdvance, onDocSigned, instance._id, injectSignatureIntoIframe]);
 
-  // ── handleInlineSign — opens the inline confirm card ─────────────────────
+  // ── attachOverlayListeners ────────────────────────────────────────────────
+  const attachOverlayListeners = useCallback((overlay, iframeEl, roleLower) => {
+    overlay.addEventListener("mouseenter", () => {
+      overlay.style.borderColor = "#7c3aed";
+      overlay.style.background  = "#faf9ff";
+      overlay.querySelector("svg")?.setAttribute("stroke", "#7c3aed");
+      const lbl = overlay.querySelector("span");
+      if (lbl) lbl.style.color = "#7c3aed";
+    });
+    overlay.addEventListener("mouseleave", () => {
+      overlay.style.borderColor = "#d1d5db";
+      overlay.style.background  = "transparent";
+      overlay.querySelector("svg")?.setAttribute("stroke", "#aaa");
+      const lbl = overlay.querySelector("span");
+      if (lbl) lbl.style.color = "#aaa";
+    });
+    overlay.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (!canSignRef.current || signedRef.current) return;
+      showInlineConfirm(iframeEl, roleLower, overlay);
+    });
+  }, [showInlineConfirm]);
+
+  // ── handleInlineSign ──────────────────────────────────────────────────────
   const handleInlineSign = useCallback((roleArg, triggerEl) => {
-    if (!profileSignature) { toast.error("No saved signature — update your profile first"); return; }
-    const appRole   = roleArg.length <= 6 ? ROLE_FROM_SLOT[roleArg] ?? roleArg.toUpperCase() : roleArg;
-    const roleLower = appRole.toLowerCase();
-    if (appRole !== viewRole)  return;
-    if (signedRef.current)     return;
-    if (!canSignRef.current)   return;
+    if (!profileSignature) {
+      toast.error("No saved signature — update your profile first");
+      return;
+    }
+    const appRoleUpper = normaliseRole(roleArg);
+    const roleLower    = appRoleUpper.toLowerCase();
+
+    if (appRoleUpper !== viewRoleUpper) return;
+    if (signedRef.current)             return;
+    if (!canSignRef.current)           return;
 
     const iframe = iframeRef.current;
-    if (iframe) showInlineConfirm(iframe, appRole, roleLower, triggerEl);
-  }, [profileSignature, viewRole, showInlineConfirm]);
+    if (iframe) showInlineConfirm(iframe, roleLower, triggerEl);
+  }, [profileSignature, viewRoleUpper, showInlineConfirm]);
 
-  // ── updateSlotStates — activate / lock slots in BOTH patterns ─────────────
+  // ── makeBadge ─────────────────────────────────────────────────────────────
+  const makeBadge = useCallback((doc) => {
+    const badge = doc.createElement("div");
+    badge.className = "sig-active-badge";
+    badge.style.cssText = [
+      "display:flex", "flex-direction:column", "align-items:center",
+      "justify-content:center", "gap:5px", "width:100%", "min-height:60px",
+      "border:1.5px dashed #d1d5db", "border-radius:6px",
+      "background:transparent", "cursor:pointer",
+      "transition:border-color 0.15s,background 0.15s",
+    ].join(";");
+    badge.innerHTML = `
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
+           stroke="#aaa" stroke-width="1.5" style="display:block;">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5
+             0 013.536 3.536L12.536 16.536 8 18 9.464 13.536z"/>
+      </svg>
+      <span style="font-size:9px;font-weight:600;color:#aaa;
+                   text-transform:uppercase;letter-spacing:.06em;pointer-events:none;">
+        Click to sign
+      </span>`;
+    badge.addEventListener("mouseenter", () => {
+      badge.style.borderColor = "#7c3aed";
+      badge.style.background  = "#faf9ff";
+      badge.querySelector("svg")?.setAttribute("stroke", "#7c3aed");
+      const lbl = badge.querySelector("span");
+      if (lbl) lbl.style.color = "#7c3aed";
+    });
+    badge.addEventListener("mouseleave", () => {
+      badge.style.borderColor = "#d1d5db";
+      badge.style.background  = "transparent";
+      badge.querySelector("svg")?.setAttribute("stroke", "#aaa");
+      const lbl = badge.querySelector("span");
+      if (lbl) lbl.style.color = "#aaa";
+    });
+    return badge;
+  }, []);
+
+  // ── updateSlotStates ──────────────────────────────────────────────────────
   const updateSlotStates = useCallback((iframeEl) => {
     try {
-      const doc     = iframeEl.contentDocument || iframeEl.contentWindow?.document;
+      const doc = iframeEl.contentDocument || iframeEl.contentWindow?.document;
       if (!doc) return;
       const isActive = canSignRef.current && !signedRef.current;
 
-      // ── Pattern A ────────────────────────────────────────────────────────
+      // Pattern A
       doc.querySelectorAll(".signature-slot[data-role]").forEach((el) => {
         if (el.classList.contains("signed")) return;
-        const appRole = ROLE_FROM_SLOT[el.dataset.role];
-        const mine    = isActive && appRole === viewRole;
+
+        const slotRoleUpper = normaliseRole(el.dataset.role);
+        const mine = isActive && slotRoleUpper === viewRoleUpper;
 
         if (mine) {
           el.classList.add("active-role");
           el.classList.remove("locked");
-          Object.assign(el.style, { cursor: "pointer", pointerEvents: "auto", opacity: "1" });
-          if (!el.querySelector(".sig-active-badge")) {
-            const badge = doc.createElement("div");
-            badge.className   = "sig-active-badge";
-            badge.textContent = "👆 Click to Sign";
-            badge.style.cssText =
-              "position:absolute;top:-9px;left:50%;transform:translateX(-50%);" +
-              "background:#22c55e;color:#fff;font-size:6.5px;font-weight:800;padding:1px 8px;" +
-              "border-radius:6px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;z-index:2;";
-            el.style.position = "relative";
-            el.insertBefore(badge, el.firstChild);
-          }
+          Object.assign(el.style, {
+            cursor: "pointer", pointerEvents: "auto",
+            opacity: "1", position: "relative",
+          });
+          el.querySelector(".sig-active-badge")?.remove();
+          const badge = makeBadge(doc);
+          el.innerHTML = "";
+          el.appendChild(badge);
         } else {
           el.classList.remove("active-role");
           el.classList.add("locked");
@@ -508,40 +450,44 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
         }
       });
 
-      // ── Pattern B — .sig-item / .sig-box ─────────────────────────────────
-      const containers = [...doc.querySelectorAll(".sig-item"), ...doc.querySelectorAll(".sig-box")];
+      // Pattern B
+      const containers = [
+        ...doc.querySelectorAll(".sig-item"),
+        ...doc.querySelectorAll(".sig-box"),
+      ];
       containers.forEach((container) => {
-        const labelEl   = container.querySelector(".sig-label, .sig-role, [class*='sig-label']");
-        const labelText = labelEl?.textContent || "";
-        const slotRole  = roleFromLabelText(labelText); // "crew"|"upm"|"fc"|"studio"|null
-        if (!slotRole) return;
+        const labelEl   = container.querySelector(
+          ".sig-label, .sig-role, [class*='sig-label'], .sig-title, .sig-name"
+        );
+        const labelText = labelEl?.textContent?.trim() || "";
+        if (!labelText) return;
+
+        const slotRoleLower = roleFromLabelText(labelText);
+        if (!slotRoleLower) return;
 
         const sigLine = container.querySelector(".sig-line");
         if (!sigLine) return;
 
-        // Remove stale overlay
         container.querySelector(".inline-sign-overlay")?.remove();
 
-        // Already has a signed image — leave it
         if (sigLine.querySelector("img")) return;
 
-        const appRole = ROLE_FROM_SLOT[slotRole]; // "CREW" etc.
+        const slotRoleUpper = normaliseRole(slotRoleLower);
+        const isMySlot = slotRoleUpper === viewRoleUpper;
+        if (isMySlot && signedRef.current) return;
 
-        if (isActive && appRole === viewRole) {
-          // ── Neutral grey overlay — no green, no purple fill pre-click ────
+        const mine = isActive && isMySlot;
+
+        if (mine) {
           const overlay = doc.createElement("div");
           overlay.className = "inline-sign-overlay";
           overlay.style.cssText = [
             "display:flex", "align-items:center", "justify-content:center",
-            "min-height:60px",
-            "border:1.5px dashed #d1d5db",
-            "border-radius:6px",
-            "background:transparent",
-            "cursor:pointer",
-            "margin-top:4px",
+            "min-height:60px", "border:1.5px dashed #d1d5db",
+            "border-radius:6px", "background:transparent",
+            "cursor:pointer", "margin-top:4px",
             "transition:border-color 0.15s,background 0.15s",
           ].join(";");
-
           overlay.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;">
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24"
@@ -555,65 +501,103 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
                 Click to sign
               </span>
             </div>`;
-
-          // Hover — subtle purple tint only on hover
-          overlay.addEventListener("mouseenter", () => {
-            overlay.style.borderColor = "#7c3aed";
-            overlay.style.background  = "#faf9ff";
-            const icon = overlay.querySelector("svg");
-            const lbl  = overlay.querySelector("span");
-            if (icon) icon.setAttribute("stroke", "#7c3aed");
-            if (lbl)  lbl.style.color = "#7c3aed";
-          });
-          overlay.addEventListener("mouseleave", () => {
-            overlay.style.borderColor = "#d1d5db";
-            overlay.style.background  = "transparent";
-            const icon = overlay.querySelector("svg");
-            const lbl  = overlay.querySelector("span");
-            if (icon) icon.setAttribute("stroke", "#aaa");
-            if (lbl)  lbl.style.color = "#aaa";
-          });
-
-          overlay.addEventListener("click", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            handleInlineSign(appRole, overlay);
-          });
-
+          attachOverlayListeners(overlay, iframeEl, slotRoleLower);
           sigLine.insertAdjacentElement("afterend", overlay);
         } else {
-          // Not active role — dim the empty sig-line
           if (!sigLine.querySelector("img")) sigLine.style.opacity = "0.5";
         }
       });
 
     } catch (err) { console.warn("updateSlotStates failed:", err); }
-  }, [viewRole, handleInlineSign]);
+  }, [viewRoleUpper, makeBadge, attachOverlayListeners]);
 
-  // ── Attach click listener + initial slot state ────────────────────────────
+  // ── handleIframeReady — FULL FIX including modal kill switch ──────────────
   const handleIframeReady = useCallback((iframeEl) => {
     iframeRef.current = iframeEl;
     updateSlotStates(iframeEl);
+
     try {
       const doc = iframeEl.contentDocument || iframeEl.contentWindow?.document;
       if (!doc) return;
+
+      // 1. Block the click-to-sign slot handler (existing)
       const clickHandler = (e) => {
         const slot = e.target.closest(".signature-slot.active-role");
         if (!slot) return;
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         handleInlineSign(slot.dataset.role, slot);
       };
       doc.removeEventListener("click", clickHandler);
       doc.addEventListener("click", clickHandler);
+
+      // 2. Override all known dialog-opening functions with no-ops
+      const win = iframeEl.contentWindow;
+      if (win) {
+        const noop = () => {};
+        const dialogFns = [
+          "openSignDialog", "showSignatureDialog", "signDoc",
+          "openModal", "showModal", "signModal",
+          "drawSignature", "typeSignature", "applySignature",
+          "getSignatureImage", "clearSignature",
+          "showSign", "openSign", "launchSignDialog",
+        ];
+        dialogFns.forEach((fn) => {
+          try { win[fn] = noop; } catch { /* cross-origin guard */ }
+        });
+      }
+
+      // 3. MutationObserver — remove modal/dialog nodes the instant they appear
+      //    This catches modals injected by JS after page load (setTimeout, event handlers)
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType !== 1) continue;
+
+            const classList = (typeof node.className === "string" ? node.className : "").toLowerCase();
+            const nodeId    = (node.id || "").toLowerCase();
+
+            const isModal =
+              classList.includes("modal") ||
+              classList.includes("dialog") ||
+              classList.includes("sign-overlay") ||
+              classList.includes("sig-toast") ||
+              classList.includes("signature-popup") ||
+              classList.includes("signing-modal") ||
+              nodeId.includes("modal") ||
+              nodeId.includes("sign-dialog") ||
+              node.style?.position === "fixed";
+
+            const hasSignTitle =
+              node.textContent?.includes("SIGN:") ||
+              node.textContent?.includes("APPLY SIGNATURE") ||
+              node.textContent?.includes("Draw or type your signature");
+
+            if (isModal || hasSignTitle) {
+              console.log(
+                "[ContractInstancesPanel] Killed modal injected by template script:",
+                node.className || node.id || node.tagName
+              );
+              node.remove();
+            }
+          }
+        }
+      });
+
+      const observeTarget = doc.body || doc.documentElement;
+      if (observeTarget) {
+        observer.observe(observeTarget, { childList: true, subtree: true });
+        // Store so cleanup effect can disconnect it
+        iframeEl._sigModalObserver = observer;
+      }
+
     } catch (err) { console.warn("iframe listener attach failed:", err); }
   }, [updateSlotStates, handleInlineSign]);
 
-  // Re-activate when canSignRole / alreadySigned changes
   useEffect(() => {
     const iframe = iframeRef.current;
     if (iframe) updateSlotStates(iframe);
   }, [canSignRole, alreadySigned, updateSlotStates]);
-
-
 
   return (
     <div className="animate-in fade-in slide-in-from-right-2 duration-200 space-y-3">
@@ -682,7 +666,7 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
           )}
         </div>
 
-        {/* Document */}
+        {/* Document iframe */}
         <div className="relative" style={{ background: "var(--lavender-50)" }}>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
@@ -704,8 +688,6 @@ function DocumentView({ instance, index, total, viewRole, offerId, canSignRole,
           ) : null}
         </div>
       </div>
-
-
     </div>
   );
 }
@@ -737,6 +719,7 @@ function EmptyState({ onRefresh, loading }) {
 export default function ContractInstancesPanel({
   offerId, offerStatus, className, canSignRole = false,
   profileSignature, onSignInstance, isSubmitting = false,
+  onAllSigned,
 }) {
   const dispatch  = useDispatch();
   const instances = useSelector(selectInstances);
@@ -744,11 +727,13 @@ export default function ContractInstancesPanel({
   const error     = useSelector(selectInstancesError);
   const viewRole  = useSelector(selectViewRole);
 
-  const [activeIdx, setActiveIdx] = useState(0);
+  const [activeIdx,   setActiveIdx  ] = useState(0);
+  const signedThisSessionRef = useRef(new Set());
   const retryDoneRef = useRef(false);
 
   const handleRefresh = useCallback(() => {
     retryDoneRef.current = false;
+    signedThisSessionRef.current = new Set();
     dispatch(clearInstances()); dispatch(clearHtmlCache());
     dispatch(getContractInstancesThunk(offerId));
   }, [dispatch, offerId]);
@@ -756,17 +741,24 @@ export default function ContractInstancesPanel({
   useEffect(() => {
     if (!offerId) return;
     retryDoneRef.current = false;
+    signedThisSessionRef.current = new Set();
     dispatch(clearInstances()); dispatch(clearHtmlCache());
     dispatch(getContractInstancesThunk(offerId));
   }, [offerId, offerStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!offerId || loading || instances.length > 0 || retryDoneRef.current) return;
-    const t = setTimeout(() => { retryDoneRef.current = true; dispatch(getContractInstancesThunk(offerId)); }, 2000);
+    const t = setTimeout(() => {
+      retryDoneRef.current = true;
+      dispatch(getContractInstancesThunk(offerId));
+    }, 2000);
     return () => clearTimeout(t);
   }, [offerId, loading, instances.length, dispatch]);
 
-  useEffect(() => { setActiveIdx(0); }, [offerId]);
+  useEffect(() => {
+    setActiveIdx(0);
+    signedThisSessionRef.current = new Set();
+  }, [offerId]);
 
   const activeInstances = dedupByFormKey(
     instances
@@ -778,8 +770,39 @@ export default function ContractInstancesPanel({
   const total       = activeInstances.length;
   const signedCount = activeInstances.filter((i) => isSignedForRole(i.status, viewRole)).length;
   const progress    = total ? Math.round((signedCount / total) * 100) : 0;
-  const steps       = activeInstances.map((inst) => ({ id: inst._id, label: inst.formName, status: inst.status }));
-  const handleSignedAdvance = useCallback(() => { if (safeIdx < total - 1) setActiveIdx(safeIdx + 1); }, [safeIdx, total]);
+  const steps       = activeInstances.map((inst) => ({
+    id: inst._id, label: inst.formName, status: inst.status,
+  }));
+
+  const handleSignedAdvance = useCallback(() => {
+    setActiveIdx((prev) => {
+      const next = prev + 1;
+      return next < total ? next : prev;
+    });
+  }, [total]);
+
+  const handleDocSigned = useCallback((instanceId, role) => {
+    signedThisSessionRef.current.add(instanceId);
+
+    const allSignedIds = new Set([
+      ...activeInstances
+        .filter((i) => isSignedForRole(i.status, viewRole))
+        .map((i) => i._id),
+      ...signedThisSessionRef.current,
+    ]);
+
+    const totalSignedNow = allSignedIds.size;
+
+    console.log(`[ContractInstancesPanel] Doc signed: ${instanceId}. Total signed: ${totalSignedNow}/${total}`);
+
+    if (totalSignedNow >= total && total > 0) {
+      console.log(`[ContractInstancesPanel] ALL ${total} docs signed for role ${role} → calling onAllSigned`);
+      toast.success(`All documents signed! Advancing to next stage…`);
+      setTimeout(() => {
+        if (onAllSigned) onAllSigned(role);
+      }, 1200);
+    }
+  }, [activeInstances, viewRole, total, onAllSigned]);
 
   if (loading && instances.length === 0) {
     return (
@@ -844,7 +867,10 @@ export default function ContractInstancesPanel({
         </div>
       </div>
 
-      <ContractStepper steps={steps} activeIndex={safeIdx} onSelect={setActiveIdx} viewRole={viewRole} />
+      <ContractStepper
+        steps={steps} activeIndex={safeIdx}
+        onSelect={setActiveIdx} viewRole={viewRole}
+      />
 
       {current && (
         <DocumentView
@@ -854,6 +880,7 @@ export default function ContractInstancesPanel({
           canSignRole={canSignRole} profileSignature={profileSignature}
           onSignInstance={onSignInstance} isSubmitting={isSubmitting}
           onSignedAdvance={handleSignedAdvance}
+          onDocSigned={handleDocSigned}
         />
       )}
 

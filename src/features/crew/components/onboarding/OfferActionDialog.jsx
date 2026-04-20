@@ -2,6 +2,9 @@
  * OfferActionDialog.jsx
  *
  * NEW dialog type added:
+ *   "deleteOffer"  — confirmation dialog for permanently deleting a DRAFT/CANCELLED/VOIDED offer.
+ *                    Replaces the inline DeleteConfirmDialog that used to live in OffersListRow.
+ *
  *   "endAndRevise" — preview/info dialog that navigates → ?openEndAndRevise=true
  *                    (same pattern as "extendContract", "endContract", "voidAndReplace")
  *
@@ -12,6 +15,7 @@ import { useState } from "react";
 import {
   X, Send, CheckCircle, AlertTriangle, Loader2, Edit2, XCircle,
   ClipboardCheck, MessageSquare, CalendarDays, Copy, OctagonX, ShieldAlert, GitBranch,
+  Trash2,
 } from "lucide-react";
 
 const fmtMoney = (n, currency = "GBP") => {
@@ -95,6 +99,52 @@ function DialogFooter({ onClose, onConfirm, isLoading, confirmLabel, confirmBg, 
         {confirmLabel}
       </button>
     </div>
+  );
+}
+
+// ─── 0. Delete Offer ──────────────────────────────────────────────────────────
+// Replaces the inline DeleteConfirmDialog from OffersListRow.
+// Used when user clicks Delete on a DRAFT / CANCELLED / VOIDED offer in the list.
+
+function DeleteOfferDialog({ offer, onConfirm, onClose, isLoading }) {
+  const name = offer?.recipient?.fullName || offer?.fullName || "this offer";
+  return (
+    <DialogShell onClose={isLoading ? undefined : onClose}>
+      <DialogHeader
+        bg="var(--destructive, #dc2626)"
+        icon={Trash2}
+        title="Delete Offer?"
+        offerCode={offer?.offerCode}
+        onClose={isLoading ? undefined : onClose}
+      />
+      <div className="px-5 py-5 space-y-4">
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          Are you sure you want to permanently delete the offer for{" "}
+          <strong style={{ color: "var(--foreground)" }}>{name}</strong>?
+          This cannot be undone.
+        </p>
+        <div
+          className="rounded-xl px-4 py-3 flex items-start gap-2.5"
+          style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "var(--destructive, #dc2626)" }} />
+          <ul className="text-[11px] space-y-1 list-disc list-inside" style={{ color: "var(--destructive, #dc2626)" }}>
+            <li>The offer and all associated data will be removed</li>
+            <li>This action cannot be reversed</li>
+          </ul>
+        </div>
+      </div>
+      <DialogFooter
+        onClose={onClose}
+        onConfirm={onConfirm}
+        isLoading={isLoading}
+        confirmLabel="Yes, Delete"
+        confirmBg="var(--destructive, #dc2626)"
+        confirmHoverBg="#b91c1c"
+        confirmIcon={Trash2}
+        cancelLabel="Keep Offer"
+      />
+    </DialogShell>
   );
 }
 
@@ -427,9 +477,6 @@ function VoidAndReplacePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
 }
 
 // ─── 12. End & Revise (preview) ───────────────────────────────────────────── NEW
-// Lightweight info/navigation dialog — opened from CrewTable.
-// Takes the user to ViewOffer?openEndAndRevise=true where the full
-// EndAndReviseDialog (with date inputs + reason) opens automatically.
 
 function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
   const name     = offer?.name || offer?.recipient?.fullName || "this crew member";
@@ -439,7 +486,6 @@ function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
     "Current contract ended on the date you choose",
     "Old contract marked as REVISED — preserved for full audit trail",
     "New DRAFT offer created with all terms copied",
-
   ];
 
   return (
@@ -459,7 +505,6 @@ function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
           was <strong style={{ color: "var(--foreground)" }}>correct but the terms need to change</strong> — such as a rate increase, schedule change, or new agreement.
         </p>
 
-        {/* Current dates info */}
         <div
           className="rounded-xl p-3 grid grid-cols-2 gap-x-6 gap-y-2"
           style={{ background: "var(--lavender-50,#f5f3ff)", border: "1px solid var(--lavender-200,#ddd6fe)" }}
@@ -474,7 +519,6 @@ function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
           </div>
         </div>
 
-        {/* What happens list */}
         <div
           className="rounded-xl p-4 space-y-2"
           style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
@@ -490,7 +534,6 @@ function EndAndRevisePreviewDialog({ offer, onConfirm, onClose, isLoading }) {
           ))}
         </div>
 
-        {/* Advisory note */}
         <div
           className="rounded-xl px-4 py-3 flex items-start gap-2.5"
           style={{ background: "var(--lavender-50,#f5f3ff)", border: "1px solid var(--lavender-200,#ddd6fe)" }}
@@ -523,6 +566,7 @@ export default function OfferActionDialog({
   if (!open) return null;
   return (
     <>
+      {type === "deleteOffer"        && <DeleteOfferDialog            offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "sendToCrew"         && <SendToCrewDialog             offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "acceptOffer"        && <AcceptOfferDialog            offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}
       {type === "requestChanges"     && <RequestChangesDialog         offer={offer} onConfirm={onConfirm} onClose={onClose} isLoading={isLoading} />}

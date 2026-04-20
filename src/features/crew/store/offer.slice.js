@@ -121,14 +121,37 @@ const offerSlice = createSlice({
       })
       .addCase(getMyOffersThunk.rejected, setRejected("isLoadingList"));
 
-    // ── Delete ──────────────────────────────────────────────────────────────
+    // ── Delete (soft delete) ────────────────────────────────────────────────
+    // Backend sets status → DELETED and returns the updated offer.
+    // Thunk returns { id, offer } — we patch the record in-place so the
+    // "Deleted" filter card immediately shows the correct count.
     builder
-      .addCase(deleteOfferThunk.fulfilled, (state, { payload: id }) => {
-        state.projectOffers = state.projectOffers.filter((o) => o._id !== id);
-        if (state.currentOffer?._id === id) state.currentOffer = null;
+      .addCase(deleteOfferThunk.pending, setPending("isSubmitting"))
+      .addCase(deleteOfferThunk.fulfilled, (state, { payload }) => {
+        state.isSubmitting = false;
+        const { id, offer } = payload;
+
+        // Patch status to DELETED in projectOffers list
+        const idx = state.projectOffers.findIndex((o) => o._id === id);
+        if (idx !== -1) {
+          state.projectOffers[idx] = offer?._id
+            ? offer                                           // use full updated offer if returned
+            : { ...state.projectOffers[idx], status: "DELETED" }; // fallback: just flip status
+        }
+
+        // Also patch currentOffer if it was the deleted one
+        if (state.currentOffer?._id === id) {
+          state.currentOffer = offer?._id
+            ? offer
+            : { ...state.currentOffer, status: "DELETED" };
+        }
+
         state.successMessage = "Offer deleted";
       })
-      .addCase(deleteOfferThunk.rejected, (state, { payload }) => { state.error = payload; });
+      .addCase(deleteOfferThunk.rejected, (state, { payload }) => {
+        state.isSubmitting = false;
+        state.error = payload;
+      });
 
     // ── Workflow thunks (all share same pattern) ─────────────────────────────
     workflowThunks.forEach((thunk) => {
@@ -195,7 +218,6 @@ const offerSlice = createSlice({
       })
       .addCase(toggleContractLockThunk.fulfilled, (state, { payload }) => {
         state.isTogglingLock = false;
-        // Patch signingStatus so the UI reflects the new lock state immediately
         if (state.signingStatus) {
           state.signingStatus = {
             ...state.signingStatus,

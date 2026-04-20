@@ -6,6 +6,8 @@
  *   2. STAGE_KEYS — added COMPLETED tile so pipeline shows completed contracts
  *   3. matchesSummaryFilter in OffersList updated to filter COMPLETED for ENDED
  *   4. Grid updated to sm:grid-cols-9 for the extra tile
+ *   5. NEW: Added "Deleted" summary stat card — shows count of DELETED offers
+ *      Placed after "Ended" in the top summary row
  */
 
 import { useState, useMemo, useEffect } from "react";
@@ -15,7 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   BarChart3, Clock, CheckCircle2, XCircle, Users,
   FileText, Eye, AlertCircle, Calculator,
-  PenLine, Stamp, ShieldCheck, Building2,
+  PenLine, Stamp, ShieldCheck, Building2, Trash2,
 } from "lucide-react";
 
 import { PageHeader }        from "../../../shared/components/PageHeader";
@@ -37,12 +39,14 @@ const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 // ─── Static config ────────────────────────────────────────────────────────────
 
+// NEW: Added "Deleted" card after "Ended"
 const SUMMARY_STATS_CONFIG = [
   { value: "ALL",      label: "All Contracts", icon: BarChart3,    iconColor: "text-purple-600",  iconBg: "bg-purple-50",  color: "text-purple-700"  },
   { value: "PENDING",  label: "Pending",       icon: Clock,        iconColor: "text-amber-600",   iconBg: "bg-amber-50",   color: "text-amber-700"   },
   { value: "ACCEPTED", label: "Accepted",      icon: CheckCircle2, iconColor: "text-emerald-600", iconBg: "bg-emerald-50", color: "text-emerald-700" },
   { value: "REJECTED", label: "Rejected",      icon: XCircle,      iconColor: "text-red-600",     iconBg: "bg-red-50",     color: "text-red-700"     },
   { value: "ENDED",    label: "Ended",         icon: Users,        iconColor: "text-neutral-500", iconBg: "bg-neutral-50", color: "text-neutral-700" },
+  { value: "DELETED",  label: "Deleted",       icon: Trash2,       iconColor: "text-rose-500",    iconBg: "bg-rose-50",    color: "text-rose-600"    },
 ];
 
 // UPDATED: added COMPLETED as the 9th tile
@@ -56,7 +60,6 @@ const STAGE_KEYS = [
   { key: "PENDING_FC_SIGNATURE",     label: "FC Sign",     icon: ShieldCheck, color: "text-violet-600",   bg: "bg-violet-50",   border: "border-violet-200"   },
   { key: "PENDING_STUDIO_SIGNATURE", label: "Studio Sign", icon: Building2,   color: "text-fuchsia-600",  bg: "bg-fuchsia-50",  border: "border-fuchsia-200"  },
   // NEW: completed contracts shown as final pipeline stage
-
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,7 +73,7 @@ function computeStageCounts(offers) {
   return counts;
 }
 
-// UPDATED: COMPLETED now goes to "ended", not "accepted"
+// UPDATED: COMPLETED now goes to "ended", not "accepted". DELETED tracked separately.
 function computeSummaryValues(offers) {
   const pendingStatuses = new Set([
     "DRAFT", "SENT_TO_CREW", "NEEDS_REVISION", "PRODUCTION_CHECK",
@@ -78,15 +81,19 @@ function computeSummaryValues(offers) {
     "PENDING_FC_SIGNATURE", "PENDING_STUDIO_SIGNATURE",
   ]);
 
-  let pending = 0, accepted = 0, rejected = 0, ended = 0;
+  let pending = 0, accepted = 0, rejected = 0, ended = 0, deleted = 0;
   offers.forEach(o => {
-    if (pendingStatuses.has(o.status))     pending++;
-    else if (o.status === "CREW_ACCEPTED") accepted++;
-    else if (o.status === "COMPLETED")     ended++;   // fixed: was never counted before
-    else if (o.status === "CANCELLED")     rejected++;
+    if (o.status === "DELETED")        deleted++;
+    else if (pendingStatuses.has(o.status)) pending++;
+    else if (o.status === "CREW_ACCEPTED")  accepted++;
+    else if (o.status === "COMPLETED")      ended++;
+    else if (o.status === "TERMINATED")     ended++;
+    else if (o.status === "VOIDED")         ended++;
+    else if (o.status === "REVISED")        ended++;
+    else if (o.status === "CANCELLED")      rejected++;
   });
 
-  return { all: offers.length, pending, accepted, rejected, ended };
+  return { all: offers.length, pending, accepted, rejected, ended, deleted };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -145,8 +152,9 @@ export default function CrewOnboarding() {
           }}
         />
 
+        {/* Summary stats — now 6 cards including Deleted */}
         <PrimaryStats
-          gridColumns={5}
+          gridColumns={6}
           gridGap={3}
           stats={SUMMARY_STATS_CONFIG.map(s => ({
             ...s,
@@ -155,13 +163,14 @@ export default function CrewOnboarding() {
               s.value === "PENDING"  ? summaryValues.pending  :
               s.value === "ACCEPTED" ? summaryValues.accepted :
               s.value === "REJECTED" ? summaryValues.rejected :
+              s.value === "DELETED"  ? summaryValues.deleted  :
               summaryValues.ended,
             isSelected: statFilter === s.value,
             onClick: () => handleStatSelect(s.value),
           }))}
         />
 
-        {/* UPDATED: sm:grid-cols-9 to fit the new Completed tile */}
+        {/* Stage pipeline cards */}
         <div className="grid grid-cols-3 sm:grid-cols-8 gap-2">
           {STAGE_KEYS.map(stage => (
             <StageCard
