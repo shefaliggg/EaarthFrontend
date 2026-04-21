@@ -136,26 +136,6 @@ export const nationalityProofSchema = z
         });
       }
 
-      const legalFirst = data._meta?.legalFirstName?.trim().toLowerCase();
-      const legalLast = data._meta?.legalLastName?.trim().toLowerCase();
-
-      const passFirst = p.firstName?.trim().toLowerCase();
-      const passLast = p.lastName?.trim().toLowerCase();
-
-      if (legalFirst && passFirst && legalFirst !== passFirst) {
-        ctx.addIssue({
-          path: ["passport", "firstName"],
-          message: "Passport first name must match legal first name",
-        });
-      }
-
-      if (legalLast && passLast && legalLast !== passLast) {
-        ctx.addIssue({
-          path: ["passport", "lastName"],
-          message: "Passport last name must match legal last name",
-        });
-      }
-
       const hasPassportFile = data._meta?.files?.passport;
       const hasPassportId = data._meta?.reuseDocIds?.passport;
 
@@ -211,3 +191,73 @@ export const nationalityProofSchema = z
       }
     }
   });
+
+export const homeAddressSchema = z.object({
+  addressLine1: z.string().min(3, "Atleast 1 line Address is required"),
+
+  addressLine2: z.string().optional(),
+  addressLine3: z.string().optional(),
+
+  postcode: z.string().min(3, "Postcode required").max(20),
+
+  country: z.string().min(1, "Country is required"),
+});
+
+export const contactInfoSchema = z.object({
+  mobileCountryCode: z.string().min(1, "Country code is required"),
+
+  mobileNumber: z
+    .string()
+    .min(6, "Mobile number is too short")
+    .max(15, "Mobile number is too long")
+    .regex(/^[0-9]+$/, "Only digits allowed"),
+
+  otherCountryCode: z.string().optional(),
+
+  otherNumber: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^[0-9]+$/.test(val), "Only digits allowed")
+    .refine((val) => !val || val.length >= 6, "Too short")
+    .refine((val) => !val || val.length <= 15, "Too long"),
+
+  email: z.string().email("Invalid email"),
+
+  emailPayslip: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      "Invalid email",
+    ),
+
+  emailPension: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      "Invalid email",
+    ),
+
+  sendProjectEmailsToCrewMember: z.boolean(),
+});
+
+export const emergencyContactSchema = z.object({
+  emergencyName: z
+    .string()
+    .min(2, "Name is required")
+    .max(100, "Max 100 characters"),
+
+  emergencyRelationship: z
+    .string()
+    .min(2, "Relationship is required")
+    .max(50, "Max 50 characters"),
+
+  emergencyCountryCode: z.string().min(1, "Country code required"),
+
+  emergencyNumber: z
+    .string()
+    .min(6, "Number too short")
+    .max(15, "Number too long")
+    .regex(/^[0-9]+$/, "Only digits allowed"),
+});

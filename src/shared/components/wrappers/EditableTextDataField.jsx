@@ -7,6 +7,7 @@ import { InfoTooltip } from "../InfoTooltip";
 
 function EditableTextDataField({
   label,
+  badge,
   value,
   icon,
   isEditing = false,
@@ -27,6 +28,9 @@ function EditableTextDataField({
       <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
         {icon && <SmartIcon icon={icon} size="md" />}
         <span>{label}</span>
+        {badge && (
+          <span className="text-amber-600">({badge})</span>
+        )}
         {infoPillDescription && (
           <InfoTooltip content={infoPillDescription}>
             <LucideIcons.CircleQuestionMark className="size-4" />

@@ -1,6 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchProfileThunk,
+  updateContactInfoThunk,
+  updateEmergencyContactThunk,
+  updateHomeAddressThunk,
   updateNationalityProofThunk,
   updatePersonalDetailsThunk,
 } from "./crewProfile.thunk";
@@ -88,6 +91,51 @@ const crewProfileSlice = createSlice({
         };
       })
       .addCase(updateNationalityProofThunk.rejected, (state, action) => {
+        state.isUpdating = false;
+      })
+
+      // HOME ADDRESS
+      .addCase(updateHomeAddressThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateHomeAddressThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = {
+          ...state.crewProfile,
+          ...action.payload,
+        };
+      })
+      .addCase(updateHomeAddressThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // CONTACT INFO
+      .addCase(updateContactInfoThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateContactInfoThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = {
+          ...state.crewProfile,
+          ...action.payload,
+        };
+      })
+      .addCase(updateContactInfoThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // EMERGENCY CONTACT
+      .addCase(updateEmergencyContactThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateEmergencyContactThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = {
+          ...state.crewProfile,
+          ...action.payload,
+        };
+      })
+      .addCase(updateEmergencyContactThunk.rejected, (state) => {
         state.isUpdating = false;
       });
   },

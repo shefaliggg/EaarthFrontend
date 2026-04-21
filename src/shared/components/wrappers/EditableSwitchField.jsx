@@ -29,7 +29,7 @@ function EditableSwitchField({
       {/* Right Section */}
       <div className="flex items-center gap-3">
         <StatusBadge
-          status={checked ? "enabled" : "inactive"}
+          status={checked ? "enabled" : "disabled"}
           showIcon={false}
           size="sm"
         />

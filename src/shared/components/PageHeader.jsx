@@ -17,6 +17,7 @@ export function PageHeader({
   secondaryActions,
 }) {
   const IconComponent = icon && Icons[icon] ? Icons[icon] : null;
+  console.log("tite in page header", title)
 
   const renderIdentity = () => {
     // 1️⃣ Image

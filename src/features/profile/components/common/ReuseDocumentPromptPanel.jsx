@@ -27,7 +27,7 @@ function ReuseDocumentPromptPanel({
     (doc) => String(doc._id) === String(selectedId),
   );
   return (
-    <div className="border rounded-xl p-3 px-4 bg-gray-50 space-y-2">
+    <div className="border rounded-xl p-3 px-4 bg-card space-y-2">
       <p
         className={cn(
           "text-sm font-medium flex items-center gap-1",

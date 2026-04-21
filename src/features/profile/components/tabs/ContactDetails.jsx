@@ -1,269 +1,606 @@
-import React, { useState } from "react";
-import { Field, PhoneField, FileUpload } from "../common/UnifiedFields";
-import {
-  Home,
-  Phone,
-  AlertCircle,
-  Briefcase,
-  X,
-  Check,
-  Pen,
-  Banknote,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import CardWrapper from "@/shared/components/wrappers/CardWrapper";
-import { Button } from "@/shared/components/ui/button";
-import { cn } from "@/shared/config/utils";
-import EditableSelectField from "../../../../shared/components/wrappers/EditableSelectField";
-import EditableTextDataField from "../../../../shared/components/wrappers/EditableTextDataField";
-import EditableCheckboxField from "../../../../shared/components/wrappers/EditableCheckboxField";
-import EditablePhoneField from "../../../../shared/components/wrappers/EditablePhoneField";
-import EditToggleButtons from "../../../../shared/components/buttons/EditToggleButtons";
-import EditableSwitchField from "../../../../shared/components/wrappers/EditableSwitchField";
-export default function ContactDetails({
-  profile,
-  setProfile,
-  isEditing,
-  setIsEditing,
-}) {
-  const [sendEmailsToCrewMember, setSendEmailsToCrewMember] = useState(true);
+import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
+import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
+import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
+import EditablePhoneField from "@/shared/components/wrappers/EditablePhoneField";
+import EditableSwitchField from "@/shared/components/wrappers/EditableSwitchField";
+import {
+  derivePhoneCode,
+  getCountryByCode,
+  getCountryOptions,
+  getPhoneCodeOptions,
+} from "@/shared/config/countriesDataConfig";
+import { toast } from "sonner";
+import {
+  fetchProfileThunk,
+  updateHomeAddressThunk,
+  updateContactInfoThunk,
+  updateEmergencyContactThunk,
+} from "../../store/crew/crewProfile.thunk";
+import ProfileCardLoadingSkelton from "../skeltons/ProfileCardLoadingSkelton";
+import ProfileCardErrorSkelton from "../skeltons/ProfileCardErrorSkelton";
+import {
+  contactInfoSchema,
+  emergencyContactSchema,
+  homeAddressSchema,
+} from "../../config/profileValidationShemas";
+import z from "zod";
+
+function syncEmptyPhoneCodes(contactInfo, changedKey, newCode) {
+  const phoneCodeKeys = ["mobileCountryCode", "otherCountryCode"];
+  const updated = { ...contactInfo, [changedKey]: newCode };
+
+  for (const key of phoneCodeKeys) {
+    if (key !== changedKey && !contactInfo[key]) {
+      updated[key] = newCode;
+    }
+  }
+
+  return updated;
+}
+
+export default function ContactDetails() {
+  const [isEditing, setIsEditing] = useState({ section: null });
+  const [formState, setFormState] = useState({
+    homeAddress: null,
+    contactInfo: null,
+    emergencyContact: null,
+  });
+  const [errors, setErrors] = useState({});
+
+  const dispatch = useDispatch();
+  const { crewProfile, isFetching, isUpdating, error } = useSelector(
+    (state) => state.crewProfile,
+  );
+  const { currentUser } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    if (!crewProfile && !isFetching) {
+      dispatch(fetchProfileThunk());
+    }
+  }, [crewProfile, isFetching]);
+
+  const isEditingHome = isEditing.section === "homeAddress";
+  const isEditingContact = isEditing.section === "contactInfo";
+  const isEditingEmergency = isEditing.section === "emergencyContact";
+
+  const isSavingHome = isUpdating && isEditingHome;
+  const isSavingContact = isUpdating && isEditingContact;
+  const isSavingEmergency = isUpdating && isEditingEmergency;
+
+  const ha = isEditingHome
+    ? formState.homeAddress
+    : {
+        addressLine1: crewProfile?.homeAddress?.line1 ?? "",
+        addressLine2: crewProfile?.homeAddress?.line2 ?? "",
+        addressLine3: crewProfile?.homeAddress?.line3 ?? "",
+        postcode: crewProfile?.homeAddress?.postcode ?? "",
+        country: crewProfile?.homeAddress?.country ?? "",
+      };
+
+  const ci = isEditingContact
+    ? formState.contactInfo
+    : {
+        mobileCountryCode: currentUser?.phone?.countryCode ?? "",
+        mobileNumber: currentUser?.phone?.number ?? "",
+        otherCountryCode: crewProfile?.otherPhone?.countryCode ?? "",
+        otherNumber: crewProfile?.otherPhone?.number ?? "",
+        email: currentUser?.email ?? "",
+        emailPayslip: crewProfile?.emailPayslip ?? "",
+        emailPension: crewProfile?.emailPension ?? "",
+        sendProjectEmailsToCrewMember:
+          crewProfile?.sendProjectEmailsToCrewMember ?? true,
+      };
+
+  const ec = isEditingEmergency
+    ? formState.emergencyContact
+    : {
+        emergencyName: crewProfile?.emergencyContact?.fullName ?? "",
+        emergencyRelationship:
+          crewProfile?.emergencyContact?.relationship ?? "",
+        emergencyCountryCode:
+          crewProfile?.emergencyContact?.phone?.countryCode ?? "",
+        emergencyNumber: crewProfile?.emergencyContact?.phone?.number ?? "",
+      };
+
+  const startEditing = (section) => {
+    setErrors({});
+
+    if (section === "homeAddress") {
+      setFormState((prev) => ({
+        ...prev,
+        homeAddress: {
+          addressLine1: crewProfile?.homeAddress?.line1 ?? "",
+          addressLine2: crewProfile?.homeAddress?.line2 ?? "",
+          addressLine3: crewProfile?.homeAddress?.line3 ?? "",
+          postcode: crewProfile?.homeAddress?.postcode ?? "",
+          country: crewProfile?.homeAddress?.country ?? "",
+        },
+      }));
+    }
+
+    if (section === "contactInfo") {
+      const derived = derivePhoneCode(crewProfile?.homeAddress?.country);
+
+      setFormState((prev) => ({
+        ...prev,
+        contactInfo: {
+          mobileCountryCode: currentUser?.phone?.countryCode || derived,
+          mobileNumber: currentUser?.phone?.number ?? "",
+          otherCountryCode: crewProfile?.otherPhone?.countryCode || derived,
+          otherNumber: crewProfile?.otherPhone?.number ?? "",
+          email: currentUser?.email ?? "",
+          emailPayslip: crewProfile?.emailPayslip ?? "",
+          emailPension: crewProfile?.emailPension ?? "",
+          sendProjectEmailsToCrewMember:
+            crewProfile?.sendProjectEmailsToCrewMember ?? true,
+        },
+      }));
+    }
+
+    if (section === "emergencyContact") {
+      setFormState((prev) => ({
+        ...prev,
+        emergencyContact: {
+          emergencyName: crewProfile?.emergencyContact?.fullName ?? "",
+          emergencyRelationship:
+            crewProfile?.emergencyContact?.relationship ?? "",
+          emergencyCountryCode:
+            crewProfile?.emergencyContact?.phone?.countryCode ?? "",
+          emergencyNumber: crewProfile?.emergencyContact?.phone?.number ?? "",
+        },
+      }));
+    }
+
+    setIsEditing({ section });
+  };
+
+  const cancelEditing = () => {
+    setIsEditing({ section: null });
+    setFormState({
+      homeAddress: null,
+      contactInfo: null,
+      emergencyContact: null,
+    });
+    setErrors({});
+  };
+
+  const handleSaveHomeAddress = async () => {
+    setErrors({});
+
+    const result = homeAddressSchema.safeParse(formState.homeAddress);
+
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    const payload = {
+      line1: formState.homeAddress.addressLine1,
+      line2: formState.homeAddress.addressLine2,
+      line3: formState.homeAddress.addressLine3,
+      postcode: formState.homeAddress.postcode,
+      country: formState.homeAddress.country,
+    };
+
+    try {
+      await dispatch(updateHomeAddressThunk(payload)).unwrap();
+      toast.success("Home address updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update home address");
+    }
+  };
+
+  const handleSaveContactInfo = async () => {
+    setErrors({});
+
+    const result = contactInfoSchema.safeParse(formState.contactInfo);
+
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    const payload = {
+      mobilePhone: {
+        countryCode: formState.contactInfo.mobileCountryCode,
+        number: formState.contactInfo.mobileNumber,
+      },
+      otherPhone: {
+        countryCode: formState.contactInfo.otherCountryCode,
+        number: formState.contactInfo.otherNumber,
+      },
+      emailPayslip: formState.contactInfo.emailPayslip,
+      emailPension: formState.contactInfo.emailPension,
+      sendProjectEmailsToCrewMember:
+        formState.contactInfo.sendProjectEmailsToCrewMember,
+    };
+
+    await dispatch(updateContactInfoThunk(payload)).unwrap();
+
+    try {
+      await dispatch(updateContactInfoThunk(payload)).unwrap();
+      toast.success("Contact information updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update contact information");
+    }
+  };
+
+  const handleSaveEmergencyContact = async () => {
+    setErrors({});
+
+    const result = emergencyContactSchema.safeParse(formState.emergencyContact);
+
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    const payload = {
+      fullName: formState.emergencyContact.emergencyName,
+      relationship: formState.emergencyContact.emergencyRelationship,
+      phone: {
+        countryCode: formState.emergencyContact.emergencyCountryCode,
+        number: formState.emergencyContact.emergencyNumber,
+      },
+    };
+
+    try {
+      await dispatch(updateEmergencyContactThunk(payload)).unwrap();
+      toast.success("Emergency contact updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update emergency contact");
+    }
+  };
+
+  const handleHomeCountryChange = (val) => {
+    setFormState((prev) => ({
+      ...prev,
+      homeAddress: { ...prev.homeAddress, country: val },
+    }));
+  };
+
+  const makeContactPhoneHandler = (codeKey, numberKey) => (val) => {
+    setFormState((prev) => {
+      const prevCode = prev.contactInfo?.[codeKey];
+      const codeChanged = val.countryCode !== prevCode;
+
+      const updated = {
+        ...prev.contactInfo,
+        [numberKey]: val.phoneNumber,
+      };
+
+      const synced = codeChanged
+        ? syncEmptyPhoneCodes(updated, codeKey, val.countryCode)
+        : { ...updated, [codeKey]: val.countryCode };
+
+      return { ...prev, contactInfo: synced };
+    });
+  };
+
+  // ── loading / error states ─────────────────────────────────────────────────
+
+  if (isFetching) {
+    return (
+      <>
+        <ProfileCardLoadingSkelton fields={5} columns={2} />
+        <ProfileCardLoadingSkelton fields={5} columns={2} />
+        <ProfileCardLoadingSkelton fields={3} columns={2} />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProfileCardErrorSkelton
+        message={
+          typeof error === "string"
+            ? error
+            : error?.message || "Something went wrong"
+        }
+        onRetry={() => dispatch(fetchProfileThunk())}
+      />
+    );
+  }
 
   return (
     <>
+      {/* ── Home Address ──────────────────────────────────────────────────── */}
       <CardWrapper
-        title={"Home Address"}
-        icon={"Home"}
+        title="Home Address"
+        icon="Home"
         actions={
           <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
+            isEditing={isEditingHome}
+            isLoading={isSavingHome}
+            onEdit={() => startEditing("homeAddress")}
+            onSave={handleSaveHomeAddress}
+            onCancel={cancelEditing}
           />
         }
       >
         <div className="grid grid-cols-1 gap-4">
           <EditableTextDataField
             label="ADDRESS LINE 1"
-            value={profile.addressLine1}
-            onChange={(value) =>
-              setProfile({
-                ...profile,
-                addressLine1: value.toUpperCase(),
-              })
+            value={ha?.addressLine1}
+            isEditing={isEditingHome}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                homeAddress: {
+                  ...prev.homeAddress,
+                  addressLine1: val,
+                },
+              }))
             }
-            isEditing={isEditing}
+            error={errors?.addressLine1?.[0]}
+            disabled={isSavingHome}
           />
 
           <EditableTextDataField
             label="ADDRESS LINE 2"
-            value={profile.addressLine2}
-            onChange={(value) =>
-              setProfile({
-                ...profile,
-                addressLine2: value.toUpperCase(),
-              })
+            value={ha?.addressLine2}
+            isEditing={isEditingHome}
+            isRequired={false}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                homeAddress: {
+                  ...prev.homeAddress,
+                  addressLine2: val,
+                },
+              }))
             }
-            isEditing={isEditing}
+            error={errors?.addressLine2?.[0]}
+            disabled={isSavingHome}
           />
 
           <EditableTextDataField
             label="ADDRESS LINE 3"
-            value={profile.addressLine3}
-            onChange={(value) =>
-              setProfile({
-                ...profile,
-                addressLine3: value.toUpperCase(),
-              })
+            value={ha?.addressLine3}
+            isEditing={isEditingHome}
+            isRequired={false}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                homeAddress: {
+                  ...prev.homeAddress,
+                  addressLine3: val,
+                },
+              }))
             }
-            isEditing={isEditing}
+            error={errors?.addressLine3?.[0]}
+            disabled={isSavingHome}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EditableTextDataField
               label="POSTCODE"
-              value={profile.postcode}
-              onChange={(value) =>
-                setProfile({
-                  ...profile,
-                  postcode: value.toUpperCase(),
-                })
+              value={ha?.postcode}
+              isEditing={isEditingHome}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  homeAddress: {
+                    ...prev.homeAddress,
+                    postcode: val.toUpperCase(),
+                  },
+                }))
               }
-              isEditing={isEditing}
+              error={errors?.postcode?.[0]}
+              disabled={isSavingHome}
             />
 
             <EditableSelectField
               label="COUNTRY"
-              value={profile.country}
-              onChange={(value) => setProfile({ ...profile, country: value })}
-              items={[
-                { label: "UNITED KINGDOM", value: "UNITED KINGDOM" },
-                { label: "USA", value: "USA" },
-                { label: "CANADA", value: "CANADA" },
-                { label: "AUSTRALIA", value: "AUSTRALIA" },
-                { label: "INDIA", value: "INDIA" },
-              ]}
-              isEditing={isEditing}
+              value={ha?.country}
+              isEditing={isEditingHome}
+              items={getCountryOptions()}
+              onChange={handleHomeCountryChange}
+              error={errors?.country?.[0]}
+              disabled={isSavingHome}
             />
           </div>
         </div>
       </CardWrapper>
+
+      {/* ── Contact Information ───────────────────────────────────────────── */}
       <CardWrapper
-        title={"Contact Information"}
-        icon={"Phone"}
+        title="Contact Information"
+        icon="Phone"
         actions={
           <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
+            isEditing={isEditingContact}
+            isLoading={isSavingContact}
+            onEdit={() => startEditing("contactInfo")}
+            onSave={handleSaveContactInfo}
+            onCancel={cancelEditing}
           />
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <EditablePhoneField
-            label="Mobile Telephone Number"
+            label="PERSONAL MOBILE NUMBER"
+            badge={"Primary"}
             value={{
-              countryCode: profile.mobileCountryCode,
-              phoneNumber: profile.mobileNumber,
+              countryCode: ci?.mobileCountryCode,
+              phoneNumber: ci?.mobileNumber,
             }}
-            isEditing={isEditing}
-            onChange={(val) =>
-              setProfile((prev) => ({
-                ...prev,
-                mobileCountryCode: val.countryCode,
-                mobileNumber: val.phoneNumber,
-              }))
+            isEditing={isEditingContact}
+            onChange={makeContactPhoneHandler(
+              "mobileCountryCode",
+              "mobileNumber",
+            )}
+            codeOptions={getPhoneCodeOptions()}
+            error={errors?.mobileNumber?.[0]}
+            disabled={isSavingContact}
+            infoPillDescription={
+              "This is your primary contact number for account-related and official communication."
             }
-            codeOptions={[
-              { value: "+44", label: "+44" },
-              { value: "+1", label: "+1" },
-              { value: "+91", label: "+91" },
-              { value: "+61", label: "+61" },
-              { value: "+33", label: "+33" },
-              { value: "+49", label: "+49" },
-            ]}
           />
 
           <EditablePhoneField
-            label="Other Telephone Number"
+            label="OTHER TELEPHONE NUMBER"
             value={{
-              countryCode: profile.otherCountryCode,
-              phoneNumber: profile.otherNumber,
+              countryCode: ci?.otherCountryCode,
+              phoneNumber: ci?.otherNumber,
             }}
-            isEditing={isEditing}
-            onChange={(val) =>
-              setProfile((prev) => ({
-                ...prev,
-                otherCountryCode: val.countryCode,
-                otherNumber: val.phoneNumber,
-              }))
-            }
-            codeOptions={[
-              { value: "+44", label: "+44" },
-              { value: "+1", label: "+1" },
-              { value: "+91", label: "+91" },
-              { value: "+61", label: "+61" },
-              { value: "+33", label: "+33" },
-              { value: "+49", label: "+49" },
-            ]}
+            isEditing={isEditingContact}
+            onChange={makeContactPhoneHandler(
+              "otherCountryCode",
+              "otherNumber",
+            )}
+            codeOptions={getPhoneCodeOptions()}
+            isRequired={false}
+            error={errors?.otherNumber?.[0]}
+            disabled={isSavingContact}
           />
+
           <EditableTextDataField
             label="EMAIL ADDRESS"
-            value={profile.email}
-            onChange={(value) => setProfile({ ...profile, email: value })}
+            badge={"Primary"}
+            infoPillDescription={
+              "This is your primary email from account settings. It cannot be edited here."
+            }
+            value={ci?.email}
+            isEditing={isEditingContact}
             type="email"
-            isEditing={isEditing}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, email: val },
+              }))
+            }
+            error={errors?.email?.[0]}
+            disabled={true}
           />
 
           <EditableTextDataField
             label="EMAIL FOR PAYSLIP"
-            value={profile.emailPayslip}
-            onChange={(value) =>
-              setProfile({ ...profile, emailPayslip: value })
-            }
+            value={ci?.emailPayslip}
+            isEditing={isEditingContact}
             type="email"
-            isEditing={isEditing}
+            isRequired={false}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, emailPayslip: val },
+              }))
+            }
+            error={errors?.emailPayslip?.[0]}
+            disabled={isSavingContact}
           />
 
           <EditableTextDataField
             label="EMAIL FOR PENSION"
-            value={profile.emailPension}
-            onChange={(value) =>
-              setProfile({ ...profile, emailPension: value })
-            }
+            value={ci?.emailPension}
+            isEditing={isEditingContact}
             type="email"
-            isEditing={isEditing}
+            isRequired={false}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                contactInfo: { ...prev.contactInfo, emailPension: val },
+              }))
+            }
+            error={errors?.emailPension?.[0]}
+            disabled={isSavingContact}
           />
         </div>
+
         <div className="mt-4">
           <EditableSwitchField
-            label="Send Project Emails to Crew Member"
-            checked={sendEmailsToCrewMember}
-            isEditing={isEditing}
-            onChange={setSendEmailsToCrewMember}
+            label="Send Project emails to crew member"
+            checked={ci?.sendProjectEmailsToCrewMember}
+            isEditing={isEditingContact}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                contactInfo: {
+                  ...prev.contactInfo,
+                  sendProjectEmailsToCrewMember: val,
+                },
+              }))
+            }
+            disabled={isSavingContact}
           />
         </div>
       </CardWrapper>
 
+      {/* ── Emergency Contact ─────────────────────────────────────────────── */}
       <CardWrapper
-        title={"Emergency Contact"}
-        icon={"AlertCircle"}
+        title="Emergency Contact"
+        icon="AlertCircle"
         actions={
           <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
-            onSave={() => setIsEditing(false)}
-            onCancel={() => setIsEditing(false)}
+            isEditing={isEditingEmergency}
+            isLoading={isSavingEmergency}
+            onEdit={() => startEditing("emergencyContact")}
+            onSave={handleSaveEmergencyContact}
+            onCancel={cancelEditing}
           />
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <EditableTextDataField
             label="EMERGENCY CONTACT FULL NAME"
-            value={profile.emergencyName}
-            onChange={(value) =>
-              setProfile({
-                ...profile,
-                emergencyName: value.toUpperCase(),
-              })
+            value={ec?.emergencyName}
+            isEditing={isEditingEmergency}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                emergencyContact: {
+                  ...prev.emergencyContact,
+                  emergencyName: val,
+                },
+              }))
             }
-            isEditing={isEditing}
+            error={errors?.emergencyName?.[0]}
+            disabled={isSavingEmergency}
           />
 
           <EditableTextDataField
             label="RELATIONSHIP"
-            value={profile.emergencyRelationship}
-            onChange={(value) =>
-              setProfile({
-                ...profile,
-                emergencyRelationship: value.toUpperCase(),
-              })
+            value={ec?.emergencyRelationship}
+            isEditing={isEditingEmergency}
+            onChange={(val) =>
+              setFormState((prev) => ({
+                ...prev,
+                emergencyContact: {
+                  ...prev.emergencyContact,
+                  emergencyRelationship: val,
+                },
+              }))
             }
-            isEditing={isEditing}
+            error={errors?.emergencyRelationship?.[0]}
+            disabled={isSavingEmergency}
           />
 
           <EditablePhoneField
-            label="Emergency Contact Telephone"
+            label="EMERGENCY CONTACT TELEPHONE"
             value={{
-              countryCode: profile.emergencyCountryCode,
-              phoneNumber: profile.emergencyNumber,
+              countryCode: ec?.emergencyCountryCode,
+              phoneNumber: ec?.emergencyNumber,
             }}
-            isEditing={isEditing}
+            isEditing={isEditingEmergency}
             onChange={(val) =>
-              setProfile((prev) => ({
+              setFormState((prev) => ({
                 ...prev,
-                emergencyCountryCode: val.countryCode,
-                emergencyNumber: val.phoneNumber,
+                emergencyContact: {
+                  ...prev.emergencyContact,
+                  emergencyCountryCode: val.countryCode,
+                  emergencyNumber: val.phoneNumber,
+                },
               }))
             }
-            codeOptions={[
-              { value: "+44", label: "+44" },
-              { value: "+1", label: "+1" },
-              { value: "+91", label: "+91" },
-              { value: "+61", label: "+61" },
-              { value: "+33", label: "+33" },
-              { value: "+49", label: "+49" },
-            ]}
+            codeOptions={getPhoneCodeOptions()}
+            error={errors?.emergencyNumber?.[0]}
+            disabled={isSavingEmergency}
           />
         </div>
       </CardWrapper>

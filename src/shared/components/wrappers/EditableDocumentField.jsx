@@ -21,6 +21,7 @@ export default function EditableDocumentField({
   fileUrl,
   isUploaded,
   status = "Pending",
+  expiresAt,
   meta,
 
   onUpload,
@@ -48,6 +49,19 @@ export default function EditableDocumentField({
 
     input.click();
   };
+
+  const getExpiryState = (expiresAt) => {
+    if (!expiresAt) return null;
+
+    const now = new Date();
+    const diffDays = (new Date(expiresAt) - now) / (1000 * 60 * 60 * 24);
+
+    if (diffDays < 0) return "expired";
+    if (diffDays < 30) return "expiringSoon";
+    return "valid";
+  };
+
+  const expiryState = getExpiryState(expiresAt);
 
   return (
     <div className="flex flex-col gap-2">
@@ -82,7 +96,25 @@ export default function EditableDocumentField({
                 <p className="text-sm font-medium mb-0.5">{fileName}</p>
                 <StatusBadge status={status.toLowerCase()} size="xs" />
               </div>
-              <div className="text-xs">{meta}</div>
+              <div className="text-xs flex items-center gap-3 text-muted-foreground">
+                {meta && <span>{meta}</span>}
+
+                {expiresAt && (
+                  <span
+                    className={
+                      expiryState === "expired"
+                        ? "text-destructive font-semibold"
+                        : expiryState === "expiringSoon"
+                          ? "text-yellow-600"
+                          : "text-muted-foreground"
+                    }
+                  >
+                    {expiryState === "expired"
+                      ? "Expired"
+                      : `Expires on ${formatDate(expiresAt)}`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
