@@ -93,7 +93,17 @@ export const signatureReplaceConfig = {
   requireReason: true,
   allowNote: true,
   requireNotes: true,
-notesPlaceholder: "Add any relevant details to support this change (e.g., reason, context, or justification)."
+  notesPlaceholder:
+    "Add any relevant details to support this change (e.g., reason, context, or justification).",
+};
+
+export const removeAgencyDetailsConfig = {
+  title: "Disable agent and remove details?",
+  description:
+    "Turning off agent representation will clear all associated agency details such as contact and bank information. You can add them again later if needed.",
+  confirmText: "Disable & clear",
+  cancelText: "Keep details",
+  variant: "danger",
 };
 
 export const statusConfigMap = {

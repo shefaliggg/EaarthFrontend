@@ -29,6 +29,11 @@ import {
 import { AutoHeight } from "../../../../shared/components/wrappers/AutoHeight";
 import { Upload } from "lucide-react";
 import { Button } from "../../../../shared/components/ui/button";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../shared/stores/useModalStore";
+import { removeAgencyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
 
 const EMPTY_AGENCY_DETAILS = {
   hasAgent: false,
@@ -63,6 +68,7 @@ const EMPTY_AGENT_BANK = {
 export default function AgencyDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
   const [isSetupStarted, setIsSetupStarted] = useState(false);
+  const [showConfirm, setIsShowConfirm] = useState(false);
   const [formState, setFormState] = useState({
     agencyDetails: null,
     agentContact: null,
@@ -74,12 +80,14 @@ export default function AgencyDetails() {
   const { crewProfile, isFetching, isUpdating, error } = useSelector(
     (state) => state.crewProfile,
   );
+  const { openModal, closeModal } = useModalStore();
 
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
   }, [crewProfile, isFetching]);
 
   const agency = crewProfile?.agency;
+  const hasAgencyData = agency?.agencyName || agency?.bank?.accountNumber;
   const isConfigured = agency?.configured === true;
   const isSetupMode = !isConfigured && isSetupStarted;
 
@@ -185,9 +193,8 @@ export default function AgencyDetails() {
     setIsEditing({ section: null });
     setErrors({});
 
-    if (isSetupMode) {
-      setIsSetupStarted(false);
-    }
+    setIsSetupStarted(false);
+
     setFormState({
       agencyDetails: null,
       agentContact: null,
@@ -258,6 +265,37 @@ export default function AgencyDetails() {
     const result = agencyDetailsSchema.safeParse(formState.agencyDetails);
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    if (hasAgencyData && !formState.agencyDetails.hasAgent) {
+      const payload = {
+        hasAgent: false,
+        agencyName: "",
+        address: {
+          line1: "",
+          line2: "",
+          line3: "",
+          postcode: "",
+          country: "",
+        },
+      };
+
+      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+        config: removeAgencyDetailsConfig,
+        onConfirm: async () => {
+          closeModal();
+          try {
+            await dispatch(updateAgencyDetailsThunk(payload)).unwrap();
+            toast.success("Agency removed successfully");
+            cancelEditing();
+          } catch (err) {
+            toast.error(err?.message || "Failed to remove agency");
+          }
+        },
+        autoClose: true,
+      });
+
       return;
     }
 
