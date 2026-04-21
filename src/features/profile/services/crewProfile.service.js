@@ -28,6 +28,7 @@ export const updateHomeAddress = async (formData) => {
   );
   return res.data.data;
 };
+
 export const updateContactInfo = async (formData) => {
   const res = await axiosConfig.patch(
     "/profile/crew/contact/contact-info",
@@ -35,10 +36,31 @@ export const updateContactInfo = async (formData) => {
   );
   return res.data.data;
 };
+
 export const updateEmergencyContact = async (formData) => {
   const res = await axiosConfig.patch(
     "/profile/crew/contact/emergency-contact",
     formData,
   );
+  return res.data.data;
+};
+
+export const setupAgency = async (payload) => {
+  const res = await axiosConfig.post("/profile/crew/agency/setup", payload);
+  return res.data.data;
+};
+
+export const updateAgencyDetails = async (payload) => {
+  const res = await axiosConfig.patch("/profile/crew/agency/details", payload);
+  return res.data.data;
+};
+
+export const updateAgentContact = async (payload) => {
+  const res = await axiosConfig.patch("/profile/crew/agency/contact", payload);
+  return res.data.data;
+};
+
+export const updateAgentBank = async (payload) => {
+  const res = await axiosConfig.patch("/profile/crew/agency/bank", payload);
   return res.data.data;
 };

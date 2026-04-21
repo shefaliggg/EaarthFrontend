@@ -46,7 +46,7 @@ export function SelectMenu({
 
           return (
             <SelectItem
-              key={item.value}
+              key={`${item.value}-${item.label}`}
               value={item.value}
               disabled={item.disabled}
               className="flex items-center justify-between"

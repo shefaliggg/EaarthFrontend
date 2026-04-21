@@ -3,6 +3,10 @@ import {
   getProfile,
   updatePersonalDetails,
   updateNationalityProof,
+  updateAgencyDetails,
+  updateAgentContact,
+  updateAgentBank,
+  setupAgency,
 } from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
@@ -98,7 +102,7 @@ export const updateHomeAddressThunk = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const response = await updateHomeAddress(payload);
-      
+
       console.log("✅ updateHomeAddressThunk success:", response);
       return response;
     } catch (err) {
@@ -137,6 +141,62 @@ export const updateEmergencyContactThunk = createAsyncThunk(
   },
 );
 
+export const setupAgencyThunk = createAsyncThunk(
+  "profile/setupAgency",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await setupAgency(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgencyDetailsThunk = createAsyncThunk(
+  "profile/updateAgencyDetails",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgencyDetails(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgentContactThunk = createAsyncThunk(
+  "profile/updateAgentContact",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgentContact(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgentBankThunk = createAsyncThunk(
+  "profile/updateAgentBank",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgentBank(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
@@ -144,4 +204,7 @@ export default {
   updateHomeAddressThunk,
   updateContactInfoThunk,
   updateEmergencyContactThunk,
+  updateAgencyDetailsThunk,
+  updateAgentContactThunk,
+  updateAgentBankThunk,
 };

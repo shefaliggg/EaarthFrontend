@@ -261,3 +261,241 @@ export const emergencyContactSchema = z.object({
     .max(15, "Number too long")
     .regex(/^[0-9]+$/, "Only digits allowed"),
 });
+
+export const agencySetupSchema = z
+  .object({
+    hasAgent: z.boolean(),
+    agencyName: z.string().optional(),
+    addressLine1: z.string().optional(),
+    addressLine2: z.string().optional(),
+    addressLine3: z.string().optional(),
+    postcode: z.string().optional(),
+    country: z.string().optional(),
+    agentCountryCode: z.string().optional(),
+    agentNumber: z.string().optional(),
+    agentCorrespondenceName: z.string().optional(),
+    agentCorrespondenceEmail: z.string().optional(),
+    sendEmailToCrewMember: z.boolean().default(false),
+    agentSignatoryName: z.string().optional(),
+    agentSignatoryEmail: z.string().optional(),
+    bankName: z.string().optional(),
+    branch: z.string().optional(),
+    accountName: z.string().optional(),
+    sortCode: z.string().optional(),
+    accountNumber: z.string().optional(),
+    iban: z.string().optional(),
+    swiftBic: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.hasAgent) return;
+
+    if (!data.agencyName?.trim())
+      ctx.addIssue({
+        path: ["agencyName"],
+        message: "Agency name is required",
+      });
+
+    if (!data.addressLine1?.trim())
+      ctx.addIssue({
+        path: ["addressLine1"],
+        message: "Address line 1 is required",
+      });
+
+    if (!data.postcode?.trim())
+      ctx.addIssue({ path: ["postcode"], message: "Postcode is required" });
+
+    if (!data.country?.trim())
+      ctx.addIssue({ path: ["country"], message: "Country is required" });
+
+    if (!data.agentCountryCode)
+      ctx.addIssue({
+        path: ["agentCountryCode"],
+        message: "Country code required",
+      });
+
+    if (!data.agentNumber || data.agentNumber.length < 6)
+      ctx.addIssue({
+        path: ["agentNumber"],
+        message: "Valid phone number required",
+      });
+
+    if (data.agentNumber && !/^[0-9]+$/.test(data.agentNumber))
+      ctx.addIssue({ path: ["agentNumber"], message: "Only digits allowed" });
+
+    if (!data.agentCorrespondenceName?.trim())
+      ctx.addIssue({
+        path: ["agentCorrespondenceName"],
+        message: "Correspondence name required",
+      });
+
+    if (!data.agentCorrespondenceEmail?.trim())
+      ctx.addIssue({
+        path: ["agentCorrespondenceEmail"],
+        message: "Correspondence email required",
+      });
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.agentCorrespondenceEmail))
+      ctx.addIssue({
+        path: ["agentCorrespondenceEmail"],
+        message: "Invalid email",
+      });
+
+    if (!data.bankName?.trim())
+      ctx.addIssue({ path: ["bankName"], message: "Bank name is required" });
+
+    if (!data.accountName?.trim())
+      ctx.addIssue({
+        path: ["accountName"],
+        message: "Account name is required",
+      });
+
+    if (!data.accountNumber?.trim())
+      ctx.addIssue({
+        path: ["accountNumber"],
+        message: "Account number is required",
+      });
+  });
+
+export const agencyDetailsSchema = z
+  .object({
+    hasAgent: z.boolean(),
+
+    agencyName: z.string().optional(),
+    addressLine1: z.string().optional(),
+    addressLine2: z.string().optional(),
+    addressLine3: z.string().optional(),
+    postcode: z.string().optional(),
+    country: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.hasAgent) return;
+
+    if (!data.agencyName?.trim()) {
+      ctx.addIssue({
+        path: ["agencyName"],
+        message: "Agency name is required",
+      });
+    }
+
+    if (!data.addressLine1?.trim()) {
+      ctx.addIssue({
+        path: ["addressLine1"],
+        message: "Address line 1 is required",
+      });
+    }
+
+    if (!data.postcode?.trim()) {
+      ctx.addIssue({
+        path: ["postcode"],
+        message: "Postcode is required",
+      });
+    }
+
+    if (!data.country?.trim()) {
+      ctx.addIssue({
+        path: ["country"],
+        message: "Country is required",
+      });
+    }
+  });
+
+export const agentContactSchema = z
+  .object({
+    hasAgent: z.boolean(), // 👈 IMPORTANT (pass this from UI)
+
+    agentCountryCode: z.string().optional(),
+
+    agentNumber: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^[0-9]+$/.test(val), "Only digits allowed"),
+
+    agentCorrespondenceName: z.string().optional(),
+
+    agentCorrespondenceEmail: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        "Invalid email",
+      ),
+
+    sendEmailToCrewMember: z.boolean(),
+
+    agentSignatoryName: z.string().optional(),
+
+    agentSignatoryEmail: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        "Invalid email",
+      ),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.hasAgent) return;
+
+    if (!data.agentCountryCode) {
+      ctx.addIssue({
+        path: ["agentCountryCode"],
+        message: "Country code required",
+      });
+    }
+
+    if (!data.agentNumber || data.agentNumber.length < 6) {
+      ctx.addIssue({
+        path: ["agentNumber"],
+        message: "Valid phone number required",
+      });
+    }
+
+    if (!data.agentCorrespondenceName?.trim()) {
+      ctx.addIssue({
+        path: ["agentCorrespondenceName"],
+        message: "Correspondence name required",
+      });
+    }
+
+    if (!data.agentCorrespondenceEmail?.trim()) {
+      ctx.addIssue({
+        path: ["agentCorrespondenceEmail"],
+        message: "Correspondence email required",
+      });
+    }
+  });
+
+export const agentBankSchema = z
+  .object({
+    hasAgent: z.boolean(), // 👈 IMPORTANT
+
+    bankName: z.string().optional(),
+    branch: z.string().optional(),
+    accountName: z.string().optional(),
+    sortCode: z.string().optional(),
+    accountNumber: z.string().optional(),
+    iban: z.string().optional(),
+    swiftBic: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.hasAgent) return;
+
+    if (!data.bankName?.trim()) {
+      ctx.addIssue({
+        path: ["bankName"],
+        message: "Bank name is required",
+      });
+    }
+
+    if (!data.accountName?.trim()) {
+      ctx.addIssue({
+        path: ["accountName"],
+        message: "Account name is required",
+      });
+    }
+
+    if (!data.accountNumber?.trim()) {
+      ctx.addIssue({
+        path: ["accountNumber"],
+        message: "Account number is required",
+      });
+    }
+  });
