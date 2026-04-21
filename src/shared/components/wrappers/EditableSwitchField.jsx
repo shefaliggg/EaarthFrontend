@@ -1,13 +1,21 @@
 import { Switch } from "@/shared/components/ui/switch";
 import { StatusBadge } from "../badges/StatusBadge";
 import { cn } from "@/shared/config/utils";
+import { InfoTooltip } from "../InfoTooltip";
+import { CircleQuestionMark } from "lucide-react";
 
 function EditableSwitchField({
   label,
+  badge,
+  icon,
   checked = false,
   onChange,
   isEditing = false,
   switchSize = "lg",
+  infoPillDescription,
+  isRequired = true,
+  error,
+  disabled = false,
   className,
 }) {
   return (
@@ -20,16 +28,27 @@ function EditableSwitchField({
         className,
       )}
     >
-      <div className="flex flex-col">
+      <div className="flex items-center gap-2">
+        {icon && <SmartIcon icon={icon} size="md" />}
+
         {label && (
           <span className="text-sm font-medium text-foreground">{label}</span>
+        )}
+        {badge && <span className="text-amber-600">({badge})</span>}
+        {infoPillDescription && (
+          <InfoTooltip content={infoPillDescription}>
+            <CircleQuestionMark className="size-4" />
+          </InfoTooltip>
+        )}
+        {isRequired && isEditing && (
+          <span className="text-destructive text-xs">*</span>
         )}
       </div>
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
         <StatusBadge
-          status={checked ? "enabled" : "inactive"}
+          status={checked ? "enabled" : "disabled"}
           showIcon={false}
           size="sm"
         />
@@ -38,7 +57,7 @@ function EditableSwitchField({
           size={switchSize}
           checked={checked}
           onCheckedChange={onChange}
-          disabled={!isEditing}
+          disabled={!isEditing || disabled}
         />
       </div>
     </div>

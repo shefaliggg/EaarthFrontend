@@ -147,6 +147,22 @@ export function getCountryOptions(list = countries) {
     }));
 }
 
+export function getPhoneCodeOptions(list = countries) {
+  return list
+    .filter((c) => !c.nonBusiness && c.phone)
+    .map((c) => ({
+      label: `+${c.phone} (${c.label})`,
+      value: `+${c.phone}`,
+      countryCode: c.code,
+    }));
+}
+
+export function derivePhoneCode(countryCode) {
+  if (!countryCode) return "";
+  const country = getCountryByCode(countryCode);
+  return country?.phone ? `+${country.phone}` : "";
+}
+
 export const businessCountries = countries
   .filter((c) => !c.nonBusiness)
   .map((c) => ({

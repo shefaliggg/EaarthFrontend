@@ -443,7 +443,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.legalFirstName?.[0]}
-            disabled={isSavingPersonal}
+            disabled={true}
           />
 
           <EditableTextDataField
@@ -460,7 +460,7 @@ export default function IdentityDetails() {
               }))
             }
             error={errors?.legalLastName?.[0]}
-            disabled={isSavingPersonal}
+            disabled={true}
           />
 
           <EditableTextDataField
@@ -776,6 +776,7 @@ export default function IdentityDetails() {
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
                 status={resolvedPassport?.verificationStatus || "Pending"}
+                expiresAt={resolvedPassport?.expiresAt}
                 meta={ resolvedPassport?.sizeBytes ? `${(resolvedPassport.sizeBytes / 1024 / 1024).toFixed(1)} MB` : null }
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, passport: file }));
@@ -817,6 +818,7 @@ export default function IdentityDetails() {
                 label="BIRTH CERTIFICATE"
                 fileName={resolvedBirthCert?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedBirthCert?.url ?? null}
+                expiresAt={resolvedBirthCert?.expiresAt}
                 isUploaded={!!resolvedBirthCert}
                 isEditing={isEditingIdentity}
                 onUpload={(file) => {
@@ -866,6 +868,7 @@ export default function IdentityDetails() {
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
                 isEditing={isEditingIdentity}
+                expiresAt={resolvedNiProof?.expiresAt}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, niProof: file }));
                   setReuseDocIds((f) => ({ ...f, niProof: null }));
@@ -918,6 +921,7 @@ export default function IdentityDetails() {
                   resolvedNaturalisation?.originalName ?? "No file uploaded"
                 }
                 fileUrl={resolvedNaturalisation?.url ?? null}
+                expiresAt={resolvedNaturalisation?.expiresAt}
                 isUploaded={!!resolvedNaturalisation}
                 isEditing={isEditingIdentity}
                 onUpload={(file) => {
@@ -969,6 +973,7 @@ export default function IdentityDetails() {
                 fileName={resolvedNiProof?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
+                expiresAt={resolvedNiProof?.expiresAt}
                 isEditing={isEditingIdentity}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, niProof: file }));

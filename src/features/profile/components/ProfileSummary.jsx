@@ -17,7 +17,7 @@ import { Button } from "../../../shared/components/ui/button";
 import { PageHeader } from "../../../shared/components/PageHeader";
 import { useSelector } from "react-redux";
 import { CircularProgress } from "../../../shared/components/ui/circular-progress";
-import { formatDate, getAvatarFallback } from "../../../shared/config/utils";
+import { convertToPrettyText, formatDate, getAvatarFallback } from "../../../shared/config/utils";
 import { InfoTooltip } from "../../../shared/components/InfoTooltip";
 import { CopyButton } from "../../../shared/components/buttons/CopyButton";
 import { StatusBadge } from "../../../shared/components/badges/StatusBadge";
@@ -36,7 +36,7 @@ export default function ProfileSummary() {
         initials={getAvatarFallback(currentUser.displayName)}
         title={
           <span className="flex items-center gap-2">
-            {currentUser.displayName}{" "}
+            {convertToPrettyText(currentUser.displayName)}{" "}
             {verificationStatus && (
               <StatusBadge status={verificationStatus} size="sm"/>
             )}

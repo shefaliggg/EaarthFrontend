@@ -3,9 +3,16 @@ import {
   getProfile,
   updatePersonalDetails,
   updateNationalityProof,
-} from "../../services/profile.service";
+  updateAgencyDetails,
+  updateAgentContact,
+  updateAgentBank,
+  setupAgency,
+} from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
+import { updateHomeAddress } from "../../services/crewProfile.service";
+import { updateContactInfo } from "../../services/crewProfile.service";
+import { updateEmergencyContact } from "../../services/crewProfile.service";
 
 export const fetchProfileThunk = createAsyncThunk(
   "profile/fetchProfile",
@@ -63,10 +70,8 @@ export const updateNationalityProofThunk = createAsyncThunk(
   async (formData, { rejectWithValue, dispatch }) => {
     try {
       const response = await updateNationalityProof(formData);
-      const { nationalityProof, profileCompletionPercent, documents } =
+      const { nationalityProof, profileCompletionPercent, documents, user } =
         response;
-
-      console.log("documents:", documents);
 
       const docsArray = Array.isArray(documents)
         ? documents
@@ -77,6 +82,8 @@ export const updateNationalityProofThunk = createAsyncThunk(
       docsArray.forEach((doc) => {
         dispatch(AddOrUpdateDocument(doc));
       });
+
+      dispatch(updateCurrentUser({ ...user }));
 
       console.log("✅ updateNationalityProofThunk success:", response);
       return { nationalityProof, profileCompletionPercent };
@@ -90,8 +97,114 @@ export const updateNationalityProofThunk = createAsyncThunk(
   },
 );
 
+export const updateHomeAddressThunk = createAsyncThunk(
+  "contactDetails/updateHomeAddress",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateHomeAddress(payload);
+
+      console.log("✅ updateHomeAddressThunk success:", response);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateContactInfoThunk = createAsyncThunk(
+  "contactDetails/updateContactInfo",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateContactInfo(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateEmergencyContactThunk = createAsyncThunk(
+  "contactDetails/updateEmergencyContact",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateEmergencyContact(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const setupAgencyThunk = createAsyncThunk(
+  "profile/setupAgency",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await setupAgency(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgencyDetailsThunk = createAsyncThunk(
+  "profile/updateAgencyDetails",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgencyDetails(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgentContactThunk = createAsyncThunk(
+  "profile/updateAgentContact",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgentContact(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAgentBankThunk = createAsyncThunk(
+  "profile/updateAgentBank",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateAgentBank(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
   updateNationalityProof,
+  updateHomeAddressThunk,
+  updateContactInfoThunk,
+  updateEmergencyContactThunk,
+  updateAgencyDetailsThunk,
+  updateAgentContactThunk,
+  updateAgentBankThunk,
 };
