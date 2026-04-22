@@ -4,7 +4,7 @@ import LoadingScreen from "@/shared/components/LoadingScreen";
 
 export default function SuspenseOutlet() {
   return (
-    <Suspense fallback={<LoadingScreen variant="glass" />}>
+    <Suspense fallback={<LoadingScreen />}>
       <Outlet />
     </Suspense>
   );

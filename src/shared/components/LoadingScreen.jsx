@@ -21,12 +21,8 @@ function LoadingScreen({ variant = "default" }) {
   return (
     <>
       {/* Loader UI */}
-      <div className={`fixed top-0 left-0 z-50 w-screen h-screen flex flex-col justify-center items-center ${variant === "glass" ? "backdrop-blur-sm bg-background/10" : "bg-background"}`}>
+      <div className={`fixed top-0 left-0 z-50 w-screen h-screen flex flex-col justify-center items-center ${variant === "glass" ? "backdrop-blur-md bg-background/10" : "bg-background"}`}>
         <img src={Mainlogo} className="w-30 lg:w-40 animate-pulse" alt="Eaarth Studios Logo" />
-        {variant === "glass" &&
-
-          <Loader className='size-6 animate-spin text-primary' />
-        }
       </div>
     </>
   );
