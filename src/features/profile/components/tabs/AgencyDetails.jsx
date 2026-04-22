@@ -249,7 +249,6 @@ export default function AgencyDetails() {
     }
   };
 
-  // ── Individual section saves (configured mode only) ───────────────────────
   const handleSaveAgencyDetails = async () => {
     setErrors({});
     const result = agencyDetailsSchema.safeParse(formState.agencyDetails);
@@ -366,7 +365,6 @@ export default function AgencyDetails() {
     }
   };
 
-  // ── Loading / error ───────────────────────────────────────────────────────
   if (isFetching) {
     return (
       <>

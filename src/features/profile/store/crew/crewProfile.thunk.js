@@ -7,6 +7,11 @@ import {
   updateAgentContact,
   updateAgentBank,
   setupAgency,
+  setupCompany,
+  updateCompanyDetails,
+  updateCompanyContact,
+  updateCompanyTax,
+  updateCompanyBank,
 } from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
@@ -197,6 +202,94 @@ export const updateAgentBankThunk = createAsyncThunk(
   },
 );
 
+export const setupCompanyThunk = createAsyncThunk(
+  "profile/setupCompany",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await setupCompany(formData);
+      const docsArray = Array.isArray(response.documents)
+        ? response.documents
+        : response.documents
+          ? [response.documents]
+          : [];
+      docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateCompanyDetailsThunk = createAsyncThunk(
+  "profile/updateCompanyDetails",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await updateCompanyDetails(formData);
+      const docsArray = Array.isArray(response.documents)
+        ? response.documents
+        : response.documents
+          ? [response.documents]
+          : [];
+      docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateCompanyContactThunk = createAsyncThunk(
+  "profile/updateCompanyContact",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateCompanyContact(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateCompanyTaxThunk = createAsyncThunk(
+  "profile/updateCompanyTax",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await updateCompanyTax(formData);
+      const docsArray = Array.isArray(response.documents)
+        ? response.documents
+        : response.documents
+          ? [response.documents]
+          : [];
+      docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateCompanyBankThunk = createAsyncThunk(
+  "profile/updateCompanyBank",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateCompanyBank(payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
@@ -204,7 +297,13 @@ export default {
   updateHomeAddressThunk,
   updateContactInfoThunk,
   updateEmergencyContactThunk,
+  setupAgencyThunk,
   updateAgencyDetailsThunk,
   updateAgentContactThunk,
   updateAgentBankThunk,
+  setupCompanyThunk,
+  updateCompanyDetailsThunk,
+  updateCompanyContactThunk,
+  updateCompanyTaxThunk,
+  updateCompanyBankThunk,
 };

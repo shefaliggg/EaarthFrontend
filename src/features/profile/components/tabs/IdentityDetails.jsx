@@ -112,7 +112,7 @@ export default function IdentityDetails() {
     files.passport,
     userDocuments,
   );
-  console.log("resolved passport:", resolvedPassport)
+  console.log("resolved passport:", resolvedPassport);
   const resolvedBirthCert = getDisplayDocument(
     np?.birthCertificateId,
     reuseDocIds.birthCertificate,
@@ -353,14 +353,14 @@ export default function IdentityDetails() {
     }
   };
 
-  const handleViewDocument = ({ url, fileName }) => {
+  const handleViewDocument = ({ url, fileName, mimeType }) => {
     if (!url) return;
 
-    const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    const isImage = mimeType?.startsWith("image/");
 
     if (isImage) {
       openModal(MODAL_TYPES.IMAGE_PREVIEW, {
-        imageFile: url,
+        imageFile: { url },
       });
     } else {
       openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
@@ -777,7 +777,11 @@ export default function IdentityDetails() {
                 isUploaded={!!resolvedPassport}
                 status={resolvedPassport?.verificationStatus || "Pending"}
                 expiresAt={resolvedPassport?.expiresAt}
-                meta={ resolvedPassport?.sizeBytes ? `${(resolvedPassport.sizeBytes / 1024 / 1024).toFixed(1)} MB` : null }
+                meta={
+                  resolvedPassport?.sizeBytes
+                    ? `${(resolvedPassport.sizeBytes / 1024 / 1024).toFixed(1)} MB`
+                    : null
+                }
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, passport: file }));
                   setReuseDocIds((f) => ({ ...f, passport: null }));
@@ -786,6 +790,7 @@ export default function IdentityDetails() {
                   handleViewDocument({
                     url,
                     fileName: resolvedPassport?.originalName,
+                    mimeType: resolvedPassport?.mimeType,
                   })
                 }
                 isRequired
@@ -829,6 +834,7 @@ export default function IdentityDetails() {
                   handleViewDocument({
                     url,
                     fileName: resolvedBirthCert?.originalName,
+                    mimeType: resolvedBirthCert?.mimeType,
                   })
                 }
                 isRequired
@@ -877,6 +883,7 @@ export default function IdentityDetails() {
                   handleViewDocument({
                     url,
                     fileName: resolvedNiProof?.originalName,
+                    mimeType: resolvedNiProof?.mimeType,
                   })
                 }
                 isRequired
@@ -935,6 +942,7 @@ export default function IdentityDetails() {
                   handleViewDocument({
                     url,
                     fileName: resolvedNaturalisation?.originalName,
+                    mimeType: resolvedNaturalisation?.mimeType,
                   })
                 }
                 isRequired
@@ -983,6 +991,7 @@ export default function IdentityDetails() {
                   handleViewDocument({
                     url,
                     fileName: resolvedNiProof?.originalName,
+                    mimeType: resolvedNiProof?.mimeType,
                   })
                 }
                 isRequired
