@@ -3,11 +3,13 @@ import * as FramerMotion from "framer-motion";
 import { PageHeader } from "@/shared/components/PageHeader";
 import AnimatedCircularProgress from "@/features/projects/settings/components/shared/AnimatedCircularProgress";
 import ProgressNavigator from "./ProgressNavigator";
-import { Outlet } from "react-router-dom";
-import SettingsStatusHeader from "@/features/projects/settings/components/SettingsStatusHeader";
-
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import SettingsHeader from "@/features/projects/settings/components/SettingsHeader";
+import NavigationFooter from "@/features/projects/settings/components/NavigationFooter";
 
 export default function SettingsLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const tabs = [
     { path: "details", label: "Details", progress: 42 },
     { path: "contacts", label: "Contacts", progress: 67 },
@@ -36,6 +38,23 @@ export default function SettingsLayout() {
     { path: "ai-knowledge-base", label: "AI Knowledge Base", progress: 85 },
   ];
 
+  const segments = new Set(location.pathname.split("/"));
+  const matchedTabIndex = tabs.findIndex((tab) => segments.has(tab.path));
+  const activeIndex = matchedTabIndex === -1 ? 0 : matchedTabIndex;
+  const currentTab = tabs[activeIndex];
+
+  const goPrev = () => {
+    if (activeIndex > 0) {
+      navigate(tabs[activeIndex - 1].path);
+    }
+  };
+
+  const goNext = () => {
+    if (activeIndex < tabs.length - 1) {
+      navigate(tabs[activeIndex + 1].path);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -49,11 +68,23 @@ export default function SettingsLayout() {
           </span>
         }
         icon="Settings"
-        extraActions={<AnimatedCircularProgress progressPercentage={100} />}
+        extraActions={<AnimatedCircularProgress progressPercentage={1} />}
       />
-      <ProgressNavigator tabs={tabs} />
-      <SettingsStatusHeader tabs={tabs} />
+      <ProgressNavigator
+        tabs={tabs}
+        activeIndex={activeIndex}
+        currentTab={currentTab}
+        goPrev={goPrev}
+        goNext={goNext}
+      />
+      <SettingsHeader currentTab={currentTab} />
       <Outlet />
+      <NavigationFooter
+        activeIndex={activeIndex}
+        goPrev={goPrev}
+        goNext={goNext}
+        tabs={tabs}
+      />
     </div>
   );
 }

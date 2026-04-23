@@ -1,18 +1,7 @@
-import { useLocation } from "react-router-dom";
 import AnimatedCircularProgress from "@/features/projects/settings/components/shared/AnimatedCircularProgress";
 import * as FramerMotion from "framer-motion";
 
-export default function SettingsStatusHeader({ tabs }) {
-  const location = useLocation();
-
-  const segments = new Set(location.pathname.split("/"));
-
-  const activeIndexRaw = tabs.findIndex((tab) => segments.has(tab.path));
-
-  const activeIndex = activeIndexRaw === -1 ? 0 : activeIndexRaw;
-
-  const currentTab = tabs[activeIndex];
-
+export default function SettingsHeader({ currentTab }) {
   return (
     <>
       <div className="p-4 rounded-3xl border bg-background shadow-sm">

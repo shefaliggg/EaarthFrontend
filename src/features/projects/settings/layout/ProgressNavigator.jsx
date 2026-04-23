@@ -111,26 +111,8 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
     </>
   );
 });
-function ProgressNavigator({ tabs }) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const segments = new Set(location.pathname.split("/"));
-  const activeIndexRaw = tabs.findIndex((tab) => segments.has(tab.path));
-  const activeIndex = activeIndexRaw === -1 ? 0 : activeIndexRaw;
 
-  const currentTab = tabs[activeIndex];
-
-  const goPrev = () => {
-    if (activeIndex > 0) {
-      navigate(tabs[activeIndex - 1].path);
-    }
-  };
-
-  const goNext = () => {
-    if (activeIndex < tabs.length - 1) {
-      navigate(tabs[activeIndex + 1].path);
-    }
-  };
+function ProgressNavigator({ tabs, activeIndex, currentTab, goPrev, goNext }) {
   return (
     <>
       <div className="rounded-3xl border bg-background shadow-sm mt-7">
