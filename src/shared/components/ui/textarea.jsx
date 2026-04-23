@@ -12,7 +12,7 @@ function Textarea({ className, textCase = "upper", ...props }) {
         placeholder:normal-case
         rounded-md px-3.5 py-1.5
         border border-border
-        bg-background
+        bg-muted
         text-foreground
         placeholder:text-muted-foreground
 
