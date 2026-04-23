@@ -7,6 +7,7 @@
  *  3. Stay on same document after signing — user clicks Next manually
  *  4. No auto-advance, no sig-signed-chip, no green permanent state
  *  5. Date stamp purple, role label stays purple after signed
+ *  6. ISA (contract displayType) ALWAYS shown first in bundle — contract-type-first sort
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -81,14 +82,37 @@ function normaliseRole(r = "") {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * displayType rank — "contract" is always 0 (first), everything else is 1.
+ * This guarantees the ISA / main contract document is always document #1
+ * in the bundle regardless of what sortOrder the DB record has.
+ */
+function displayTypeRank(inst) {
+  return inst.displayType === "contract" ? 0 : 1;
+}
+
+/**
+ * Dedup instances by formKey, keeping the highest generation.
+ * Then sort: contract displayType first, then by sortOrder ascending.
+ */
 function dedupByFormKey(instances) {
   const map = new Map();
   for (const inst of instances) {
     const key = inst.formKey || inst.formName || inst._id;
     const existing = map.get(key);
-    if (!existing || (inst.generation ?? 1) > (existing.generation ?? 1)) map.set(key, inst);
+    if (!existing || (inst.generation ?? 1) > (existing.generation ?? 1)) {
+      map.set(key, inst);
+    }
   }
-  return Array.from(map.values());
+
+  return Array.from(map.values()).sort((a, b) => {
+    // 1️⃣ Contract type always first
+    const typeDiff = displayTypeRank(a) - displayTypeRank(b);
+    if (typeDiff !== 0) return typeDiff;
+
+    // 2️⃣ Then by sortOrder
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  });
 }
 
 function instanceSignedByRole(instance, viewRole) {
@@ -736,10 +760,9 @@ export default function ContractInstancesPanel({
     signedThisSessionRef.current = new Set();
   }, [offerId]);
 
+  // ── activeInstances: contract (ISA) always first, then by sortOrder ──────
   const activeInstances = dedupByFormKey(
-    instances
-      .filter((i) => i.status !== "SUPERSEDED" && i.status !== "VOIDED")
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    instances.filter((i) => i.status !== "SUPERSEDED" && i.status !== "VOIDED")
   );
 
   const safeIdx     = Math.min(activeIdx, Math.max(0, activeInstances.length - 1));
