@@ -1,12 +1,4 @@
-/**
- * MyOffer.jsx — CREW-ONLY VIEW
- *
- * UI CHANGES ONLY — all logic/functions UNCHANGED:
- *   ✅ REMOVED:  SummaryStatCards (ALL CONTRACTS / PENDING / ACCEPTED / REJECTED)
- *   ✅ KEPT:     StageCard grid (Offer Review / Contract & Sign / Contract Active / Contract Ended)
- *   ✅ RESTYLED: StageCards → image-1 style: icon top-center, label center, big count, bigger text
- *   ✅ RESTYLED: Offer list → image-3 style: avatar, role, company, rate, status badge
- */
+
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useParams }   from "react-router-dom";
