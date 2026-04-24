@@ -106,6 +106,15 @@ export const removeAgencyDetailsConfig = {
   variant: "danger",
 };
 
+export const removeCompanyDetailsConfig = {
+  title: "Disable company and remove details?",
+  description:
+    "Turning off company representation will clear all associated company details such as contact and bank information. You can add them again later if needed.",
+  confirmText: "Disable & clear",
+  cancelText: "Keep details",
+  variant: "danger",
+};
+
 export const statusConfigMap = {
   suspend: SUSPEND_STUDIO_CONFIG,
   deactivate: DEACTIVATE_STUDIO_CONFIG,

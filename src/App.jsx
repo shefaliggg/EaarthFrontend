@@ -4,6 +4,7 @@ import { Toaster } from "@/shared/components/ui/sonner";
 import CallModal from "./features/projects/project-chat/components/call-modal/CallModal";
 import IncomingCallToast from "./features/projects/project-chat/components/call-modal/IncomingCallToast";
 import GlobalModalRenderer from "./shared/components/wrappers/GlobalModalRenderer";
+import GlobalLoaderRenderer from "./shared/components/wrappers/GlobalLoaderRenderer";
 
 const router = createBrowserRouter(AppRoutes);
 
@@ -26,6 +27,7 @@ function App() {
       />
 
       <GlobalModalRenderer />
+      <GlobalLoaderRenderer />
       <CallModal />
       <IncomingCallToast />
     </>

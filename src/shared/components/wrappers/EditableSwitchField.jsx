@@ -13,7 +13,6 @@ function EditableSwitchField({
   isEditing = false,
   switchSize = "lg",
   infoPillDescription,
-  isRequired = true,
   error,
   disabled = false,
   className,
@@ -39,9 +38,6 @@ function EditableSwitchField({
           <InfoTooltip content={infoPillDescription}>
             <CircleQuestionMark className="size-4" />
           </InfoTooltip>
-        )}
-        {isRequired && isEditing && (
-          <span className="text-destructive text-xs">*</span>
         )}
       </div>
 

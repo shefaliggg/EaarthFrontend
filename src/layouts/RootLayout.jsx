@@ -3,18 +3,29 @@ import { useSelector } from "react-redux";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
 import SuspenseOutlet from "../shared/components/SuspenseOutlet";
-import LoadingScreen from "@/shared/components/LoadingScreen";
+import { useLoaderStore } from "../shared/stores/useLoaderStore";
+import { useEffect } from "react";
 
 export default function RootLayout() {
   const { initialLoading, isAuthenticated } = useAuth();
+  const { showLoader, hideLoader } = useLoaderStore();
   const { pathname } = useLocation();
   const user = useSelector((state) => state.user.currentUser);
 
+  useEffect(() => {
+    if (initialLoading) {
+      showLoader();
+    } else {
+      hideLoader();
+    }
+  }, [initialLoading, showLoader, hideLoader]);
+
   if (initialLoading) {
-    return <LoadingScreen />;
+    return null;
   }
 
-  const isAuthRoute = pathname.startsWith("/auth") || pathname === "/invite/verify";
+  const isAuthRoute =
+    pathname.startsWith("/auth") || pathname === "/invite/verify";
 
   if (!isAuthenticated && !isAuthRoute) {
     return <Navigate to="/auth/login" replace />;

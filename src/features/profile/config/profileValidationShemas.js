@@ -499,3 +499,247 @@ export const agentBankSchema = z
       });
     }
   });
+
+// ─── COMPANY SCHEMAS ─────────────────────────────────────────────────────────
+
+export const companySetupSchema = z
+  .object({
+    usesLoanOutCompany: z.boolean(),
+
+    // ── Details ──────────────────────────────────────────────────────────────
+    name: z.string().optional(),
+    registrationNumber: z.string().optional(),
+    ktNumber: z.string().optional(),
+    countryOfIncorporation: z.string().optional(),
+
+    // ── Contact / Address ────────────────────────────────────────────────────
+    addressLine1: z.string().optional(),
+    addressLine2: z.string().optional(),
+    addressLine3: z.string().optional(),
+    postcode: z.string().optional(),
+    country: z.string().optional(),
+    representativeName: z.string().optional(),
+    representativeEmail: z.string().optional(),
+    allowThirdPartyToSignContracts: z.boolean().default(false),
+
+    // ── Tax ──────────────────────────────────────────────────────────────────
+    isVATRegistered: z.boolean().default(false),
+    taxRegistrationNumberIreland: z.string().optional(),
+    taxClearanceAccessNumberIreland: z.string().optional(),
+
+    // ── Bank ─────────────────────────────────────────────────────────────────
+    bankName: z.string().optional(),
+    branch: z.string().optional(),
+    accountName: z.string().optional(),
+    sortCode: z.string().optional(),
+    accountNumber: z.string().optional(),
+    iban: z.string().optional(),
+    swiftBic: z.string().optional(),
+    bankNumberIceland: z.string().optional(),
+    bankHBIceland: z.string().optional(),
+
+    _meta: z
+      .object({
+        files: z.object({
+          certificateOfIncorporation: z.any().optional(),
+          vatCertificate: z.any().optional(),
+        }),
+        reuseDocIds: z.object({
+          certificateOfIncorporation: z.string().nullable().optional(),
+          vatCertificate: z.string().nullable().optional(),
+        }),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.usesLoanOutCompany) return;
+
+    // ── Details ──────────────────────────────────────────────────────────────
+    if (!data.name?.trim())
+      ctx.addIssue({ path: ["name"], message: "Company name is required" });
+
+    if (!data.registrationNumber?.trim())
+      ctx.addIssue({
+        path: ["registrationNumber"],
+        message: "Registration number is required",
+      });
+
+    if (!data.countryOfIncorporation?.trim())
+      ctx.addIssue({
+        path: ["countryOfIncorporation"],
+        message: "Country of incorporation is required",
+      });
+
+    const hasCertFile = data._meta?.files?.certificateOfIncorporation;
+    const hasCertId = data._meta?.reuseDocIds?.certificateOfIncorporation;
+
+    if (!hasCertFile && !hasCertId) {
+      ctx.addIssue({
+        path: ["certificateOfIncorporation"],
+        message: "Certificate of incorporation is required",
+      });
+    }
+
+    // ── Contact / Address ────────────────────────────────────────────────────
+    if (!data.addressLine1?.trim())
+      ctx.addIssue({
+        path: ["addressLine1"],
+        message: "Address line 1 is required",
+      });
+
+    if (!data.postcode?.trim())
+      ctx.addIssue({ path: ["postcode"], message: "Postcode is required" });
+
+    if (!data.country?.trim())
+      ctx.addIssue({ path: ["country"], message: "Country is required" });
+
+    if (!data.representativeName?.trim())
+      ctx.addIssue({
+        path: ["representativeName"],
+        message: "Representative name is required",
+      });
+
+    if (!data.representativeEmail?.trim()) {
+      ctx.addIssue({
+        path: ["representativeEmail"],
+        message: "Representative email is required",
+      });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.representativeEmail)) {
+      ctx.addIssue({
+        path: ["representativeEmail"],
+        message: "Invalid email",
+      });
+    }
+
+    // 🔥 VAT certificate validation (only if VAT enabled)
+    if (data.isVATRegistered) {
+      const hasVatFile = data._meta?.files?.vatCertificate;
+      const hasVatId = data._meta?.reuseDocIds?.vatCertificate;
+
+      if (!hasVatFile && !hasVatId) {
+        ctx.addIssue({
+          path: ["vatCertificate"],
+          message: "VAT certificate is required",
+        });
+      }
+    }
+
+    // ── Bank ─────────────────────────────────────────────────────────────────
+    if (!data.bankName?.trim())
+      ctx.addIssue({ path: ["bankName"], message: "Bank name is required" });
+
+    if (!data.accountName?.trim())
+      ctx.addIssue({
+        path: ["accountName"],
+        message: "Account name is required",
+      });
+
+    if (!data.accountNumber?.trim())
+      ctx.addIssue({
+        path: ["accountNumber"],
+        message: "Account number is required",
+      });
+  });
+
+export const companyDetailsSchema = z
+  .object({
+    usesLoanOutCompany: z.boolean(),
+    name: z.string().optional(),
+    registrationNumber: z.string().optional(),
+    ktNumber: z.string().optional(),
+    countryOfIncorporation: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.usesLoanOutCompany) return;
+
+    if (!data.name?.trim())
+      ctx.addIssue({ path: ["name"], message: "Company name is required" });
+
+    if (!data.registrationNumber?.trim())
+      ctx.addIssue({
+        path: ["registrationNumber"],
+        message: "Registration number is required",
+      });
+
+    if (!data.countryOfIncorporation?.trim())
+      ctx.addIssue({
+        path: ["countryOfIncorporation"],
+        message: "Country of incorporation is required",
+      });
+  });
+
+export const companyContactSchema = z
+  .object({
+    addressLine1: z.string().optional(),
+    addressLine2: z.string().optional(),
+    addressLine3: z.string().optional(),
+    postcode: z.string().optional(),
+    country: z.string().optional(),
+    representativeName: z.string().optional(),
+    representativeEmail: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+        "Invalid email",
+      ),
+    allowThirdPartyToSignContracts: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.addressLine1?.trim())
+      ctx.addIssue({
+        path: ["addressLine1"],
+        message: "Address line 1 is required",
+      });
+
+    if (!data.postcode?.trim())
+      ctx.addIssue({ path: ["postcode"], message: "Postcode is required" });
+
+    if (!data.country?.trim())
+      ctx.addIssue({ path: ["country"], message: "Country is required" });
+
+    if (!data.representativeName?.trim())
+      ctx.addIssue({
+        path: ["representativeName"],
+        message: "Representative name is required",
+      });
+
+    if (!data.representativeEmail?.trim())
+      ctx.addIssue({
+        path: ["representativeEmail"],
+        message: "Representative email is required",
+      });
+  });
+
+export const companyTaxSchema = z.object({
+  isVATRegistered: z.boolean(),
+  taxRegistrationNumberIreland: z.string().optional(),
+  taxClearanceAccessNumberIreland: z.string().optional(),
+});
+
+export const companyBankSchema = z
+  .object({
+    bankName: z.string().optional(),
+    branch: z.string().optional(),
+    accountName: z.string().optional(),
+    sortCode: z.string().optional(),
+    accountNumber: z.string().optional(),
+    iban: z.string().optional(),
+    swiftBic: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.bankName?.trim())
+      ctx.addIssue({ path: ["bankName"], message: "Bank name is required" });
+
+    if (!data.accountName?.trim())
+      ctx.addIssue({
+        path: ["accountName"],
+        message: "Account name is required",
+      });
+
+    if (!data.accountNumber?.trim())
+      ctx.addIssue({
+        path: ["accountNumber"],
+        message: "Account number is required",
+      });
+  });

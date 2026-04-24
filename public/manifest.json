@@ -1,0 +1,27 @@
+{
+  "short_name": "Eaarth",
+  "name": "Eaarth - Movie Production Managment Platform",
+  "lang": "en-US",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fafafa",
+  "theme_color": "#9333ea",
+  "description": "Eaarth Studios - A Movie Production Management Platform.",
+  "categories": ["Eaarth Studios", "service platform", "production", "movie production management", "movies"],
+  "icons": [
+{
+      "src": "/eaarth.webp",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/eaarth.webp",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -91,16 +91,6 @@ export default function AgencyDetails() {
   const isConfigured = agency?.configured === true;
   const isSetupMode = !isConfigured && isSetupStarted;
 
-  useEffect(() => {
-    if (isSetupMode && crewProfile && !formState.agencyDetails) {
-      setFormState({
-        agencyDetails: { ...EMPTY_AGENCY_DETAILS },
-        agentContact: { ...EMPTY_AGENT_CONTACT },
-        agentBank: { ...EMPTY_AGENT_BANK },
-      });
-    }
-  }, [isConfigured, crewProfile]);
-
   const isEditingAgencyDetails =
     isSetupMode || isEditing.section === "agencyDetails";
   const isEditingAgentContact =
@@ -259,7 +249,6 @@ export default function AgencyDetails() {
     }
   };
 
-  // ── Individual section saves (configured mode only) ───────────────────────
   const handleSaveAgencyDetails = async () => {
     setErrors({});
     const result = agencyDetailsSchema.safeParse(formState.agencyDetails);
@@ -376,7 +365,6 @@ export default function AgencyDetails() {
     }
   };
 
-  // ── Loading / error ───────────────────────────────────────────────────────
   if (isFetching) {
     return (
       <>
@@ -400,40 +388,8 @@ export default function AgencyDetails() {
     );
   }
 
-  if (!isConfigured && !isSetupStarted) {
-    return (
-      <CardWrapper
-        title="Agency Configuration"
-        icon="BriefcaseBusiness"
-        actions={
-          <EditToggleButtons
-            isEditing={isSetupStarted}
-            onEdit={() => setIsSetupStarted(true)}
-            onCancel={cancelEditing}
-          />
-        }
-      >
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center border-2 border-dashed border-border rounded-xl">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Upload className="size-6" />
-          </div>
-
-          <p className="text-sm font-medium mb-1">
-            No agency details added yet
-          </p>
-
-          <p className="text-xs text-muted-foreground mb-6 max-w-xs">
-            Set up your agency information.
-          </p>
-
-          <Button onClick={() => setIsSetupStarted(true)}>Set Up Agency</Button>
-        </div>
-      </CardWrapper>
-    );
-  }
-
   return (
-    <AutoHeight className="space-y-4">
+    <>
       <CardWrapper
         title="Agency Details"
         icon="BriefcaseBusiness"
@@ -450,23 +406,32 @@ export default function AgencyDetails() {
         }
       >
         <div className="grid grid-cols-1 gap-4">
-          {!isSetupMode && (
-            <EditableSwitchField
-              label="Represented by an agent"
-              checked={haveAgent}
-              isEditing={isEditingAgencyDetails}
-              onChange={(val) =>
+          <EditableSwitchField
+            label="Represented by an agent"
+            checked={haveAgent}
+            isEditing={isEditingAgencyDetails}
+            infoPillDescription="Turn this on if you are represented by an agent. Additional details will be required."
+            onChange={(val) => {
+              if (!isConfigured && val === true) {
+                setIsSetupStarted(true);
+
+                setFormState({
+                  agencyDetails: { ...EMPTY_AGENCY_DETAILS, hasAgent: true },
+                  agentContact: { ...EMPTY_AGENT_CONTACT },
+                  agentBank: { ...EMPTY_AGENT_BANK },
+                });
+              } else {
                 setFormState((prev) => ({
                   ...prev,
                   agencyDetails: { ...prev.agencyDetails, hasAgent: val },
-                }))
+                }));
               }
-              disabled={isSetupMode ? isSavingSetup : isSavingAgencyDetails}
-            />
-          )}
+            }}
+            disabled={isSetupMode ? isSavingSetup : isSavingAgencyDetails}
+          />
 
           {(isSetupMode || haveAgent) && (
-            <div className="grid grid-cols-1 gap-4">
+            <AutoHeight className="grid grid-cols-1 gap-4">
               <EditableTextDataField
                 label="AGENCY NAME"
                 value={ad?.agencyName}
@@ -560,7 +525,7 @@ export default function AgencyDetails() {
                   disabled={isSetupMode ? isSavingSetup : isSavingAgencyDetails}
                 />
               </div>
-            </div>
+            </AutoHeight>
           )}
         </div>
       </CardWrapper>
@@ -833,6 +798,6 @@ export default function AgencyDetails() {
           </CardWrapper>
         </>
       )}
-    </AutoHeight>
+    </>
   );
 }

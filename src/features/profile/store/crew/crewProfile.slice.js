@@ -2,9 +2,14 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchProfileThunk,
   setupAgencyThunk,
+  setupCompanyThunk,
   updateAgencyDetailsThunk,
   updateAgentBankThunk,
   updateAgentContactThunk,
+  updateCompanyBankThunk,
+  updateCompanyContactThunk,
+  updateCompanyDetailsThunk,
+  updateCompanyTaxThunk,
   updateContactInfoThunk,
   updateEmergencyContactThunk,
   updateHomeAddressThunk,
@@ -200,6 +205,66 @@ const crewProfileSlice = createSlice({
         };
       })
       .addCase(updateAgentBankThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // COMPANY SETUP
+      .addCase(setupCompanyThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(setupCompanyThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(setupCompanyThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // COMPANY DETAILS
+      .addCase(updateCompanyDetailsThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateCompanyDetailsThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateCompanyDetailsThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // COMPANY CONTACT
+      .addCase(updateCompanyContactThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateCompanyContactThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateCompanyContactThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // COMPANY TAX
+      .addCase(updateCompanyTaxThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateCompanyTaxThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateCompanyTaxThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // COMPANY BANK
+      .addCase(updateCompanyBankThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateCompanyBankThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateCompanyBankThunk.rejected, (state) => {
         state.isUpdating = false;
       });
   },
