@@ -726,6 +726,138 @@ export const companyBankSchema = z
     accountNumber: z.string().optional(),
     iban: z.string().optional(),
     swiftBic: z.string().optional(),
+    bankNumberIceland: z.string().optional(),
+    bankHBIceland: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.bankName?.trim())
+      ctx.addIssue({ path: ["bankName"], message: "Bank name is required" });
+
+    if (!data.accountName?.trim())
+      ctx.addIssue({
+        path: ["accountName"],
+        message: "Account name is required",
+      });
+
+    if (!data.accountNumber?.trim())
+      ctx.addIssue({
+        path: ["accountNumber"],
+        message: "Account number is required",
+      });
+  });
+
+// ─── FINANCE ─────────────────────────────────────────────────────────────────
+
+export const financeDetailsSchema = z
+  .object({
+    ppsNumber: z.string().optional(),
+    taxClearanceAccessNumber: z.string().optional(),
+    ktNumber: z.string().optional(),
+    nationalInsuranceNumber: z.string().optional(),
+    vatNumber: z.string().optional(),
+
+    hasOngoingStudentLoan: z.boolean().nullable().optional(),
+
+    payeStatus: z
+      .enum([
+        "first_job_since_april",
+        "only_job_no_other_income",
+        "has_other_job_or_pension",
+      ])
+      .nullable()
+      .optional(),
+
+    _meta: z
+      .object({
+        files: z.object({
+          fs4: z.any().optional(),
+          payslip: z.any().optional(),
+          p45: z.any().optional(),
+          vatCert: z.any().optional(),
+        }),
+
+        reuseDocIds: z.object({
+          fs4: z.string().nullable().optional(),
+          payslip: z.string().nullable().optional(),
+          p45: z.string().nullable().optional(),
+          vatCert: z.string().nullable().optional(),
+        }),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const files = data._meta?.files || {};
+    const ids = data._meta?.reuseDocIds || {};
+
+    // 🟡 1. At least one financial field
+    const hasAnyField =
+      data.ppsNumber ||
+      data.taxClearanceAccessNumber ||
+      data.ktNumber ||
+      data.nationalInsuranceNumber ||
+      data.vatNumber
+
+    if (!hasAnyField) {
+      ctx.addIssue({
+        path: ["formFields"],
+        message: "Please provide at least one financial detail",
+      });
+    }
+
+    // 🟡 2. At least one document
+    const hasAnyDocument =
+      files.fs4 ||
+      ids.fs4 ||
+      files.payslip ||
+      ids.payslip ||
+      files.p45 ||
+      ids.p45 ||
+      files.vatCert ||
+      ids.vatCert;
+
+    if (!hasAnyDocument) {
+      ctx.addIssue({
+        path: ["documents"],
+        message: "Please upload at least one financial document",
+      });
+    }
+
+    // 🔴 3. VAT → requires VAT certificate
+    if (data.vatNumber && data.vatNumber.trim() !== "") {
+      const hasVatDoc = files.vatCert || ids.vatCert;
+
+      if (!hasVatDoc) {
+        ctx.addIssue({
+          path: ["vatCert"],
+          message: "VAT certificate is required when VAT number is provided",
+        });
+      }
+    }
+
+    // 🔴 4. PAYE → requires payslip OR P45
+    if (data.payeStatus) {
+      const hasPayeDoc = files.payslip || ids.payslip || files.p45 || ids.p45;
+
+      if (!hasPayeDoc) {
+        ctx.addIssue({
+          path: ["payslip"], // you can also use "payeDocs"
+          message: "Payslip or P45 is required for PAYE status",
+        });
+      }
+    }
+  });
+
+export const personalBankSchema = z
+  .object({
+    bankName: z.string().optional(),
+    branch: z.string().optional(),
+    accountName: z.string().optional(),
+    sortCode: z.string().optional(),
+    accountNumber: z.string().optional(),
+    iban: z.string().optional(),
+    swiftBic: z.string().optional(),
+    bankNumberIceland: z.string().optional(),
+    bankHBIceland: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.bankName?.trim())

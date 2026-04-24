@@ -11,6 +11,7 @@ import { SmartIcon } from "../SmartIcon";
 import { InfoTooltip } from "../InfoTooltip";
 import { StatusBadge } from "../badges/StatusBadge";
 import { downloadFile } from "../../config/downloadFile";
+import { cn } from "../../config/utils";
 
 export default function EditableDocumentField({
   label,
@@ -28,8 +29,10 @@ export default function EditableDocumentField({
   onView,
   onRemove,
 
+  isNewUpload = false,
   isRequired = false,
   error,
+  showErrorDescription = true,
   disabled = false,
 
   actionSlot,
@@ -141,10 +144,20 @@ export default function EditableDocumentField({
             >
               <Download />
             </Button>
+            {isEditing && isNewUpload && (
+              <Button onClick={onRemove} size="icon" variant="outline" className={"text-red-500 hover:bg-red-600 hover:border-red-600 dark:bg-red-600"}>
+                <FileXCorner />
+              </Button>
+            )}
           </div>
         </div>
       ) : (
-        <div className="border border-dashed rounded-xl p-5 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <div
+          className={cn(
+            "border border-dashed rounded-xl p-5 flex items-center justify-center gap-2 text-sm text-muted-foreground",
+            error && "border-2 border-destructive/40",
+          )}
+        >
           <FileXCorner className="size-4 text-muted-foreground" />
           No document uploaded
         </div>
@@ -161,7 +174,9 @@ export default function EditableDocumentField({
         </div>
       )}
 
-      {error && <span className="text-xs text-destructive pl-2">{error}</span>}
+      {error && showErrorDescription && (
+        <span className="text-xs text-destructive pl-2">{error}</span>
+      )}
     </div>
   );
 }

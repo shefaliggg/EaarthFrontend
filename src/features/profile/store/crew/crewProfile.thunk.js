@@ -12,6 +12,8 @@ import {
   updateCompanyContact,
   updateCompanyTax,
   updateCompanyBank,
+  updateFinanceDetails,
+  updatePersonalBank,
 } from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
@@ -290,6 +292,43 @@ export const updateCompanyBankThunk = createAsyncThunk(
   },
 );
 
+export const updateFinanceDetailsThunk = createAsyncThunk(
+  "profile/updateFinanceDetails",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await updateFinanceDetails(formData);
+      const { finance, profileCompletionPercent, documents } = response;
+
+      const docsArray = Array.isArray(documents)
+        ? documents
+        : documents
+          ? [documents]
+          : [];
+      docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
+
+      return { finance, profileCompletionPercent };
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updatePersonalBankThunk = createAsyncThunk(
+  "profile/updatePersonalBank",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updatePersonalBank(payload);
+      return response; // { personalBank, profileCompletionPercent }
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
@@ -306,4 +345,6 @@ export default {
   updateCompanyContactThunk,
   updateCompanyTaxThunk,
   updateCompanyBankThunk,
+  updateFinanceDetailsThunk,
+  updatePersonalBankThunk,
 };

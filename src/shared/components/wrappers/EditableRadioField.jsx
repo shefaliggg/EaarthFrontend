@@ -12,7 +12,9 @@ function EditableRadioField({
   onChange,
   icon,
   infoPillDescription,
-    disabled = false,
+  isRequired = true,
+  error,
+  disabled = false,
 }) {
   const selectedOption = options.find((o) => o.value === value);
 
@@ -26,6 +28,9 @@ function EditableRadioField({
           <InfoTooltip content={infoPillDescription}>
             <CircleQuestionMark className="size-4" />
           </InfoTooltip>
+        )}
+        {isRequired && isEditing && (
+          <span className="text-destructive text-xs">*</span>
         )}
       </div>
 
@@ -47,10 +52,15 @@ function EditableRadioField({
               className="flex items-center gap-2 cursor-pointer"
             >
               <RadioGroupItem value={option.value} />
-              <span className="text-sm font-medium tracking-wide">{option.label}</span>
+              <span className="text-sm font-medium tracking-wide">
+                {option.label}
+              </span>
             </label>
           ))}
         </RadioGroup>
+      )}
+      {error && (
+        <span className="text-xs text-destructive pl-2">{error}</span>
       )}
     </div>
   );

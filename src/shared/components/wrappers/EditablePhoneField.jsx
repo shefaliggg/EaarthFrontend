@@ -15,6 +15,7 @@ function EditablePhoneField({
   infoPillDescription,
   isRequired = true,
   error,
+  showErrorDescription = true,
   disabled = false,
 }) {
   const handleCodeChange = (code) => {
@@ -72,6 +73,8 @@ function EditablePhoneField({
               selectClassName="h-8! text-sm"
               isRequired={false}
               disabled={disabled}
+              error={error}
+              showErrorDescription={false}
             />
           </div>
 
@@ -86,11 +89,15 @@ function EditablePhoneField({
               inputClassName="h-8"
               isRequired={false}
               disabled={disabled}
+              error={error}
+              showErrorDescription={false}
             />
           </div>
         </div>
       )}
-      {error && <span className="text-destructive text-xs pl-2">{error}</span>}
+      {error && showErrorDescription && (
+        <span className="text-destructive text-xs pl-2">{error}</span>
+      )}
     </div>
   );
 }

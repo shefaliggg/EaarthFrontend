@@ -198,7 +198,7 @@ export default function CompanyDetails() {
 
   const usesCompany = cd?.usesLoanOutCompany;
   const conpanyisInIreland = cd?.countryOfIncorporation === "IE";
-  const conpanyisInIceland = cd?.countryOfIncorporation === "IS";
+  const companyIsInIceland = cd?.countryOfIncorporation === "IS";
 
   // ── Resolved documents ────────────────────────────────────────────────────
   const resolvedCertOfIncorp = getDisplayDocument(
@@ -1183,7 +1183,7 @@ export default function CompanyDetails() {
                 disabled={isSetupMode ? isSavingSetup : isSavingBank}
               />
 
-              {conpanyisInIceland && (
+              {companyIsInIceland && (
                 <>
                   <EditableTextDataField
                     label="BANK NUMBER"

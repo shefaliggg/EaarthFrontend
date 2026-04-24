@@ -9,6 +9,7 @@ function EditToggleButtons({
   onSave,
   onCancel,
   isLoading = false,
+  disabled = false,
   editToolTipContent = "Edit",
   cancelToolTipContent = "Cancel Changes",
   saveToolTipContent = "Save Changes",
@@ -21,7 +22,7 @@ function EditToggleButtons({
             <Button
               size="icon"
               variant="outline"
-              disabled={isLoading}
+              disabled={isLoading || disabled}
               onClick={onCancel}
               className="hover:bg-red-200 dark:hover:bg-red-800"
             >
@@ -33,7 +34,7 @@ function EditToggleButtons({
             <Button
               size="icon"
               variant="outline"
-              disabled={isLoading}
+              disabled={isLoading || disabled}
               onClick={onSave}
               className={cn("hover:bg-green-200 dark:hover:bg-green-800")}
             >

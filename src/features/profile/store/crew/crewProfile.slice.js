@@ -12,8 +12,10 @@ import {
   updateCompanyTaxThunk,
   updateContactInfoThunk,
   updateEmergencyContactThunk,
+  updateFinanceDetailsThunk,
   updateHomeAddressThunk,
   updateNationalityProofThunk,
+  updatePersonalBankThunk,
   updatePersonalDetailsThunk,
 } from "./crewProfile.thunk";
 
@@ -265,6 +267,30 @@ const crewProfileSlice = createSlice({
         state.crewProfile = { ...state.crewProfile, ...action.payload };
       })
       .addCase(updateCompanyBankThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // FINANCE DETAILS
+      .addCase(updateFinanceDetailsThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateFinanceDetailsThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateFinanceDetailsThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // PERSONAL BANK
+      .addCase(updatePersonalBankThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updatePersonalBankThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updatePersonalBankThunk.rejected, (state) => {
         state.isUpdating = false;
       });
   },

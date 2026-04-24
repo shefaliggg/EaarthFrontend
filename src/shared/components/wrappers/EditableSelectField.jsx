@@ -15,6 +15,7 @@ function EditableSelectField({
   infoPillDescription,
   isRequired = true,
   error,
+  showErrorDescription = true,
   disabled = false,
 }) {
   const Icon = icon && LucideIcons[icon];
@@ -42,10 +43,14 @@ function EditableSelectField({
             selected={value}
             label={placeholder}
             onSelect={onChange}
-            className={cn("w-full shadow-none", selectClassName)}
+            className={cn(
+              "w-full shadow-none",
+              error && "ring-1 ring-destructive",
+              selectClassName,
+            )}
             disabled={disabled}
           />
-          {error && (
+          {error && showErrorDescription && (
             <span className="text-destructive text-xs pl-2">{error}</span>
           )}
         </>

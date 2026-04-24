@@ -20,8 +20,10 @@ function EditableDateField({
   onChange,
   placeholder = "Select date",
   infoPillDescription,
+
   isRequired = true,
   error,
+  showErrorDescription = true,
   disabled = false,
 
   allowPast = true,
@@ -80,6 +82,7 @@ function EditableDateField({
                   "bg-gray-100 dark:bg-gray-800",
                   "border border-transparent",
                   "hover:bg-gray-200 dark:hover:bg-gray-700",
+                  error && "ring-1 ring-destructive",
                 )}
                 disabled={disabled}
               >
@@ -108,7 +111,7 @@ function EditableDateField({
               />
             </PopoverContent>
           </Popover>
-          {error && (
+          {error && showErrorDescription && (
             <span className="text-destructive text-xs pl-2">{error}</span>
           )}
         </>

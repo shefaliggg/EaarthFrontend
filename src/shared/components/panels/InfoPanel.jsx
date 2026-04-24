@@ -48,7 +48,7 @@ const styles = variants[variant]
 return (
   <div
     className={cn(
-      "relative rounded-xl border p-5 shadow-sm ring-1 backdrop-blur-sm",
+      "relative rounded-xl border p-4 shadow-sm ring-1 backdrop-blur-sm",
       styles.container,
       className
     )}
@@ -67,7 +67,7 @@ return (
 
       <div className="flex-1">
         {title && (
-          <h4 className={cn("text-sm font-semibold tracking-tight mb-2", styles.title)}>
+          <h4 className={cn("text-sm font-semibold tracking-tight mb-1", styles.title)}>
             {title}
           </h4>
         )}

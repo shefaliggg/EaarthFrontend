@@ -19,6 +19,7 @@ function EditableTextDataField({
   infoPillDescription,
   isRequired = true,
   error,
+  showErrorDescription = true,
   prettify = true,
   disabled = false,
 }) {
@@ -28,9 +29,7 @@ function EditableTextDataField({
       <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
         {icon && <SmartIcon icon={icon} size="md" />}
         <span>{label}</span>
-        {badge && (
-          <span className="text-amber-600">({badge})</span>
-        )}
+        {badge && <span className="text-amber-600">({badge})</span>}
         {infoPillDescription && (
           <InfoTooltip content={infoPillDescription}>
             <LucideIcons.CircleQuestionMark className="size-4" />
@@ -65,6 +64,7 @@ function EditableTextDataField({
                   "border border-transparent",
                   "focus:outline-none",
                   "min-h-[80px]",
+                  error && "ring-1 ring-destructive",
                   inputClassName,
                 )}
                 disabled={disabled}
@@ -84,12 +84,13 @@ function EditableTextDataField({
                   "rounded-md shadow-none h-8 text-sm font-medium text-gray-900",
                   "border border-transparent",
                   "focus:outline-none",
+                  error && "ring-1 ring-destructive",
                   inputClassName,
                 )}
                 disabled={disabled}
               />
-              {error && (
-                <span className="text-destructive text-xs pl-2">{error}</span>
+              {error && showErrorDescription && (
+                <span className="text-xs text-destructive pl-2">{error}</span>
               )}
             </>
           )}
