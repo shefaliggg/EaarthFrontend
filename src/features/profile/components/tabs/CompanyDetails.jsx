@@ -73,6 +73,8 @@ const EMPTY_COMPANY_BANK = {
   accountNumber: "",
   iban: "",
   swiftBic: "",
+  bankNumberIceland: "",
+  bankHBIceland: "",
 };
 
 const EMPTY_FILES = {
@@ -190,9 +192,13 @@ export default function CompanyDetails() {
         accountNumber: company?.bank?.accountNumber ?? "",
         iban: company?.bank?.iban ?? "",
         swiftBic: company?.bank?.swiftBic ?? "",
+        bankNumberIceland: company?.bank?.bankNumberIceland ?? "",
+        bankHBIceland: company?.bank?.bankHBIceland ?? "",
       };
 
   const usesCompany = cd?.usesLoanOutCompany;
+  const conpanyisInIreland = cd?.countryOfIncorporation === "IE";
+  const conpanyisInIceland = cd?.countryOfIncorporation === "IS";
 
   // ── Resolved documents ────────────────────────────────────────────────────
   const resolvedCertOfIncorp = getDisplayDocument(
@@ -249,6 +255,8 @@ export default function CompanyDetails() {
         accountNumber: company?.bank?.accountNumber ?? "",
         iban: company?.bank?.iban ?? "",
         swiftBic: company?.bank?.swiftBic ?? "",
+        bankNumberIceland: company?.bank?.bankNumberIceland ?? "",
+        bankHBIceland: company?.bank?.bankHBIceland ?? "",
       },
     };
 
@@ -954,41 +962,45 @@ export default function CompanyDetails() {
                   disabled={isSetupMode ? isSavingSetup : isSavingTax}
                 />
               </div>
+              {conpanyisInIreland && (
+                <>
+                  <EditableTextDataField
+                    label="TAX REGISTRATION NUMBER"
+                    badge={"(IRELAND Specific)"}
+                    value={ct?.taxRegistrationNumberIreland}
+                    isEditing={isEditingTax}
+                    isRequired={false}
+                    onChange={(val) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        companyTax: {
+                          ...prev.companyTax,
+                          taxRegistrationNumberIreland: val,
+                        },
+                      }))
+                    }
+                    disabled={isSetupMode ? isSavingSetup : isSavingTax}
+                  />
 
-              <EditableTextDataField
-                label="TAX REGISTRATION NUMBER (IRELAND)"
-                value={ct?.taxRegistrationNumberIreland}
-                isEditing={isEditingTax}
-                isRequired={false}
-                onChange={(val) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    companyTax: {
-                      ...prev.companyTax,
-                      taxRegistrationNumberIreland: val,
-                    },
-                  }))
-                }
-                disabled={isSetupMode ? isSavingSetup : isSavingTax}
-              />
-
-              <EditableTextDataField
-                label="TAX CLEARANCE ACCESS NUMBER (IRELAND)"
-                value={ct?.taxClearanceAccessNumberIreland}
-                isEditing={isEditingTax}
-                isRequired={false}
-                onChange={(val) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    companyTax: {
-                      ...prev.companyTax,
-                      taxClearanceAccessNumberIreland: val,
-                    },
-                  }))
-                }
-                disabled={isSetupMode ? isSavingSetup : isSavingTax}
-              />
-
+                  <EditableTextDataField
+                    label="TAX CLEARANCE ACCESS NUMBER"
+                    badge={"(IRELAND Specific)"}
+                    value={ct?.taxClearanceAccessNumberIreland}
+                    isEditing={isEditingTax}
+                    isRequired={false}
+                    onChange={(val) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        companyTax: {
+                          ...prev.companyTax,
+                          taxClearanceAccessNumberIreland: val,
+                        },
+                      }))
+                    }
+                    disabled={isSetupMode ? isSavingSetup : isSavingTax}
+                  />
+                </>
+              )}
               {ct?.isVATRegistered && (
                 <div className="xl:col-span-2 2xl:col-span-1">
                   <EditableDocumentField
@@ -1171,42 +1183,45 @@ export default function CompanyDetails() {
                 disabled={isSetupMode ? isSavingSetup : isSavingBank}
               />
 
-              <EditableTextDataField
-                label="BANK NUMBER (ICELAND)"
-                badge={"Currently not in use"}
-                isRequired={false}
-                // value={profile.companyBankNumberIceland}
-                // onChange={(v) =>
-                //   setProfile({ ...profile, companyBankNumberIceland: v })
-                // }
-                isEditing={true}
-                disabled
-              />
-              <EditableTextDataField
-                label="BANK HB (ICELAND)"
-                badge={"Currently not in use"}
-                isRequired={false}
-                // value={profile.companyBankHBIceland}
-                // onChange={(v) =>
-                //   setProfile({ ...profile, companyBankHBIceland: v })
-                // }
-                isEditing={true}
-                disabled
-              />
-              <EditableTextDataField
-                label="BANK ACCOUNT NUMBER (ICELAND)"
-                badge={"Currently not in use"}
-                isRequired={false}
-                // value={profile.companyBankAccountNumberIceland}
-                // onChange={(v) =>
-                //   setProfile({
-                //     ...profile,
-                //     companyBankAccountNumberIceland: v,
-                //   })
-                // }
-                isEditing={true}
-                disabled
-              />
+              {conpanyisInIceland && (
+                <>
+                  <EditableTextDataField
+                    label="BANK NUMBER"
+                    badge={"(ICELAND Specific)"}
+                    value={cb?.bankNumberIceland}
+                    isEditing={isEditingBank}
+                    isRequired={false}
+                    onChange={(val) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        companyBank: {
+                          ...prev.companyBank,
+                          bankNumberIceland: val.toUpperCase(),
+                        },
+                      }))
+                    }
+                    disabled={isSetupMode ? isSavingSetup : isSavingBank}
+                  />
+
+                  <EditableTextDataField
+                    label="BANK HB (ICELAND)"
+                    badge={"(ICELAND Specific)"}
+                    value={cb?.bankHBIceland}
+                    isEditing={isEditingBank}
+                    isRequired={false}
+                    onChange={(val) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        companyBank: {
+                          ...prev.companyBank,
+                          bankHBIceland: val.toUpperCase(),
+                        },
+                      }))
+                    }
+                    disabled={isSetupMode ? isSavingSetup : isSavingBank}
+                  />
+                </>
+              )}
             </div>
           </CardWrapper>
         </>

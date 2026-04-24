@@ -535,6 +535,8 @@ export const companySetupSchema = z
     accountNumber: z.string().optional(),
     iban: z.string().optional(),
     swiftBic: z.string().optional(),
+    bankNumberIceland: z.string().optional(),
+    bankHBIceland: z.string().optional(),
 
     _meta: z
       .object({
