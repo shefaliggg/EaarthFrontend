@@ -16,7 +16,7 @@ export function InfoTooltip({
             <TooltipTrigger asChild>
                 {children}
             </TooltipTrigger>
-            <TooltipContent side={side} align={align} className="max-w-xs text-xs leading-relaxed z-1000">
+            <TooltipContent side={side} align={align} className="max-w-sm text-xs leading-relaxed z-1000">
                 {content}
             </TooltipContent>
         </Tooltip>

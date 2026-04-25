@@ -125,6 +125,7 @@ export default function FinanceDetails() {
         ktNumber: fin?.ktNumber ?? "",
         nationalInsuranceNumber: fin?.nationalInsuranceNumber ?? "",
         vatNumber: fin?.vatNumber ?? "",
+        utrNumber: fin?.utrNumber ?? "",
         hasOngoingStudentLoan: fin?.hasOngoingStudentLoan ?? null,
         payeStatus: fin?.payeStatus ?? null,
       };
@@ -155,6 +156,7 @@ export default function FinanceDetails() {
           ktNumber: fin?.ktNumber ?? "",
           nationalInsuranceNumber: fin?.nationalInsuranceNumber ?? "",
           vatNumber: fin?.vatNumber ?? "",
+          utrNumber: fin?.utrNumber ?? "",
           hasOngoingStudentLoan: fin?.hasOngoingStudentLoan ?? null,
           payeStatus: fin?.payeStatus ?? null,
         },
@@ -227,6 +229,7 @@ export default function FinanceDetails() {
       "ktNumber",
       "nationalInsuranceNumber",
       "vatNumber",
+      "utrNumber",
       "payeStatus",
     ];
     textFields.forEach((key) => {
@@ -348,6 +351,8 @@ export default function FinanceDetails() {
               value={fd?.ppsNumber}
               isEditing={isEditingFinance}
               prettify={false}
+              badge="Ireland Specific"
+              infoPillDescription="Used for tax and payroll purposes in Ireland. Required if you work on Irish productions."
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
@@ -364,6 +369,8 @@ export default function FinanceDetails() {
               value={fd?.taxClearanceAccessNumber}
               isEditing={isEditingFinance}
               prettify={false}
+              badge="Ireland Specific"
+              infoPillDescription="Used to verify tax clearance status in Ireland. May be required for certain Irish contracts."
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
@@ -383,6 +390,8 @@ export default function FinanceDetails() {
               value={fd?.ktNumber}
               isEditing={isEditingFinance}
               prettify={false}
+              badge="Iceland Specific"
+              infoPillDescription="National identification number used for tax and payroll purposes in Iceland."
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
@@ -399,6 +408,8 @@ export default function FinanceDetails() {
               value={fd?.nationalInsuranceNumber}
               isEditing={isEditingFinance}
               prettify={false}
+              badge="UK PAYE"
+              infoPillDescription="Used for PAYE (Pay As You Earn) contracts in the UK for tax and social security tracking."
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
@@ -418,10 +429,31 @@ export default function FinanceDetails() {
               value={fd?.vatNumber}
               isEditing={isEditingFinance}
               prettify={false}
+              badge="Loan Out / Self-employed"
+              infoPillDescription="Needed if you operate as a company or are VAT registered. May be required for loan-out or invoicing contracts."
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
                   finance: { ...prev.finance, vatNumber: val },
+                }))
+              }
+              error={errors?.formFields ? " " : undefined}
+              showErrorDescription={false}
+              disabled={isSavingFinance}
+              isRequired={false}
+            />
+
+            <EditableTextDataField
+              label="UTR NUMBER"
+              value={fd?.utrNumber}
+              isEditing={isEditingFinance}
+              prettify={false}
+              badge="UK Schedule D"
+              infoPillDescription="Unique Taxpayer Reference used for self-employed (Schedule D) work in the UK. Required only for certain contract types."
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  finance: { ...prev.finance, utrNumber: val },
                 }))
               }
               error={errors?.formFields ? " " : undefined}
@@ -455,7 +487,8 @@ export default function FinanceDetails() {
           <EditableRadioField
             label="PAYE CONTRACT STATUS"
             value={fd?.payeStatus}
-            infoPillDescription="For PAYE contracts only"
+            badge="UK PAYE Specific"
+            infoPillDescription="Only applicable for PAYE contracts. You will be asked for this when working under PAYE payroll."
             options={[
               {
                 value: "first_job_since_april",
@@ -512,7 +545,7 @@ export default function FinanceDetails() {
                 setFiles((f) => ({ ...f, fs4: file }));
                 setReuseDocIds((f) => ({ ...f, fs4: null }));
               }}
-                            onRemove={() => {
+              onRemove={() => {
                 setFiles((f) => ({ ...f, fs4: null }));
               }}
               onView={(url) =>
@@ -527,7 +560,7 @@ export default function FinanceDetails() {
               error={errors?.documents}
               showErrorDescription={false}
               disabled={isSavingFinance}
-              infoPillDescription="Upload your complete FS4 form to confirm your tax registration and employment status."
+              infoPillDescription="Required for certain Irish payroll setups to confirm tax registration and employment status."
               actionSlot={
                 isEditingFinance &&
                 fs4Docs?.length > 0 && (
@@ -564,7 +597,7 @@ export default function FinanceDetails() {
                 setFiles((f) => ({ ...f, payslip: file }));
                 setReuseDocIds((f) => ({ ...f, payslip: null }));
               }}
-                            onRemove={() => {
+              onRemove={() => {
                 setFiles((f) => ({ ...f, payslip: null }));
               }}
               onView={(url) =>
@@ -581,7 +614,7 @@ export default function FinanceDetails() {
               }
               showErrorDescription={false}
               disabled={isSavingFinance}
-              infoPillDescription="Upload your most recent payslip from previous employment as proof of income."
+              infoPillDescription="Used for PAYE contracts as proof of previous employment and income."
               actionSlot={
                 isEditingFinance &&
                 payslipDocs?.length > 0 && (
@@ -618,7 +651,7 @@ export default function FinanceDetails() {
                 setFiles((f) => ({ ...f, p45: file }));
                 setReuseDocIds((f) => ({ ...f, p45: null }));
               }}
-                            onRemove={() => {
+              onRemove={() => {
                 setFiles((f) => ({ ...f, p45: null }));
               }}
               onView={(url) =>
@@ -633,7 +666,7 @@ export default function FinanceDetails() {
               error={errors?.p45?.[0] || (errors?.documents ? " " : undefined)}
               showErrorDescription={false}
               disabled={isSavingFinance}
-              infoPillDescription="Upload your P45 to provide details of your previous employment and tax contributions."
+              infoPillDescription="Required for PAYE contracts to provide previous employment and tax details."
               actionSlot={
                 isEditingFinance &&
                 p45Docs?.length > 0 && (
@@ -687,7 +720,7 @@ export default function FinanceDetails() {
               }
               showErrorDescription={errors?.vatCert?.[0] ?? false}
               disabled={isSavingFinance}
-              infoPillDescription="Upload your VAT registration certificate to confirm your VAT status."
+              infoPillDescription="Required if you provide a VAT number. Used to verify your VAT registration."
               actionSlot={
                 isEditingFinance &&
                 vatCertDocs?.length > 0 && (
