@@ -7,6 +7,11 @@
  *   offer       — offer object from Redux
  *   isSelected  — boolean
  *   onClick     — () => void
+ *
+ * Display rules:
+ *   - PRODUCTION_CHECK / ACCOUNTS_CHECK → show CREW_ACCEPTED badge
+ *   - PRODUCTION_CHECK                  → show amber "Production review" dot
+ *   - ACCOUNTS_CHECK                    → show amber "Finance review" dot
  */
 
 import { cn } from "../../../../shared/config/utils";
@@ -27,14 +32,26 @@ const timeAgo = (dateStr) => {
 const deptLabel = (val = "") =>
   val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Statuses that are "post-accept but pre-contract" — display as CREW_ACCEPTED
+const POST_ACCEPT_STATUSES = ["PRODUCTION_CHECK", "ACCOUNTS_CHECK"];
+
 export function OfferListItem({ offer, isSelected = false, onClick }) {
   const name =
     offer.recipient?.fullName || offer.fullName || "—";
+
   const jobTitle =
     offer.createOwnJobTitle && offer.newJobTitle
       ? offer.newJobTitle
       : offer.jobTitle || "—";
+
   const dept = offer.department ? deptLabel(offer.department) : null;
+
+  // Whether to override the displayed badge to CREW_ACCEPTED
+  const isPostAccept      = POST_ACCEPT_STATUSES.includes(offer.status);
+  const isAccountsReview  = offer.status === "ACCOUNTS_CHECK";
+
+  // The badge status to actually render
+  const displayStatus = isPostAccept ? "CREW_ACCEPTED" : offer.status;
 
   return (
     <button
@@ -58,7 +75,7 @@ export function OfferListItem({ offer, isSelected = false, onClick }) {
         >
           {name}
         </span>
-        <OfferStatusBadge status={offer.status} />
+        <OfferStatusBadge status={displayStatus} />
       </div>
 
       {/* Job title + dept */}
@@ -67,14 +84,24 @@ export function OfferListItem({ offer, isSelected = false, onClick }) {
         {dept ? ` · ${dept}` : ""}
       </p>
 
-      {/* Updated at */}
-      {offer.updatedAt && (
+      {/* Production / Finance review progress dot */}
+      {isPostAccept ? (
         <div className="flex items-center gap-1 mt-1">
-          <Clock className="w-2.5 h-2.5 text-neutral-300" />
-          <span className="text-[10px] text-neutral-400">
-            {timeAgo(offer.updatedAt)}
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          <span className="text-[10px] text-amber-600 font-medium">
+            {isAccountsReview ? "Finance review" : "Production review"}
           </span>
         </div>
+      ) : (
+        /* Updated at — only shown when not in post-accept review */
+        offer.updatedAt && (
+          <div className="flex items-center gap-1 mt-1">
+            <Clock className="w-2.5 h-2.5 text-neutral-300" />
+            <span className="text-[10px] text-neutral-400">
+              {timeAgo(offer.updatedAt)}
+            </span>
+          </div>
+        )
       )}
     </button>
   );
