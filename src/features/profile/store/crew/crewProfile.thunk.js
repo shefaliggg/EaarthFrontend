@@ -14,6 +14,8 @@ import {
   updateCompanyBank,
   updateFinanceDetails,
   updatePersonalBank,
+  updateVehicleAllowance,
+  updateAllowanceEquipments,
 } from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
@@ -329,6 +331,41 @@ export const updatePersonalBankThunk = createAsyncThunk(
   },
 );
 
+export const updateVehicleAllowanceThunk = createAsyncThunk(
+  "profile/updateVehicleAllowance",
+  async (formData, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await updateVehicleAllowance(formData);
+      const docsArray = Array.isArray(response.documents)
+        ? response.documents
+        : response.documents
+          ? [response.documents]
+          : [];
+      docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
+      return response; // { vehicle, profileCompletionPercent, documents }
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
+export const updateAllowanceEquipmentsThunk = createAsyncThunk(
+  "profile/updateAllowanceEquipments",
+  async ({ type, formData }, { rejectWithValue }) => {
+    try {
+      const response = await updateAllowanceEquipments(type, formData);
+      // response = { type, items, profileCompletionPercent }
+      return response;
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
@@ -347,4 +384,6 @@ export default {
   updateCompanyBankThunk,
   updateFinanceDetailsThunk,
   updatePersonalBankThunk,
+  updateVehicleAllowanceThunk,
+  updateAllowanceEquipmentsThunk,
 };

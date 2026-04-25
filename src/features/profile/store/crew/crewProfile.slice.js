@@ -6,6 +6,7 @@ import {
   updateAgencyDetailsThunk,
   updateAgentBankThunk,
   updateAgentContactThunk,
+  updateAllowanceEquipmentsThunk,
   updateCompanyBankThunk,
   updateCompanyContactThunk,
   updateCompanyDetailsThunk,
@@ -17,6 +18,7 @@ import {
   updateNationalityProofThunk,
   updatePersonalBankThunk,
   updatePersonalDetailsThunk,
+  updateVehicleAllowanceThunk,
 } from "./crewProfile.thunk";
 
 const initialState = {
@@ -291,6 +293,39 @@ const crewProfileSlice = createSlice({
         state.crewProfile = { ...state.crewProfile, ...action.payload };
       })
       .addCase(updatePersonalBankThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // VEHICLE
+      .addCase(updateVehicleAllowanceThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateVehicleAllowanceThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateVehicleAllowanceThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // ALLOWANCE SECTION
+      .addCase(updateAllowanceEquipmentsThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateAllowanceEquipmentsThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        const { type, items, profileCompletionPercent } = action.payload;
+        const normalizedType = type === "box_rentals" ? "boxRentals" : type;
+        if (state.crewProfile) {
+          if (!state.crewProfile.allowances) state.crewProfile.allowances = {};
+          state.crewProfile.allowances[normalizedType] = items;
+          if (profileCompletionPercent !== undefined) {
+            state.crewProfile.profileCompletionPercent =
+              profileCompletionPercent;
+          }
+        }
+      })
+      .addCase(updateAllowanceEquipmentsThunk.rejected, (state) => {
         state.isUpdating = false;
       });
   },

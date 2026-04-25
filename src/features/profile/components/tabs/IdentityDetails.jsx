@@ -79,13 +79,13 @@ export default function IdentityDetails() {
     if (!crewProfile && !isFetching) {
       dispatch(fetchProfileThunk());
     }
-  }, [crewProfile, isFetching]);
+  }, []);
 
   useEffect(() => {
     if (!userDocuments && !isFetchingDocs) {
       dispatch(fetchDocumentsThunk());
     }
-  }, [userDocuments, isFetchingDocs]);
+  }, []);
 
   console.log("crew profile", crewProfile);
   console.log("user documents", userDocuments);
@@ -112,7 +112,7 @@ export default function IdentityDetails() {
     files.passport,
     userDocuments,
   );
-  console.log("resolved passport:", resolvedPassport);
+
   const resolvedBirthCert = getDisplayDocument(
     np?.birthCertificateId,
     reuseDocIds.birthCertificate,

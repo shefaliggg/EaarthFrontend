@@ -876,3 +876,99 @@ export const personalBankSchema = z
         message: "Account number is required",
       });
   });
+
+export const vehicleAllowanceSchema = z
+  .object({
+    usesOwnVehicle: z.boolean(),
+
+    make: z.string().optional(),
+    model: z.string().optional(),
+    colour: z.string().optional(),
+    registration: z.string().optional(),
+    insuranceExpiryDate: z.string().nullable().optional(),
+
+    _meta: z
+      .object({
+        files: z.object({
+          drivingLicence: z.any().optional(),
+          vehicleInsurance: z.any().optional(),
+        }),
+        reuseDocIds: z.object({
+          drivingLicence: z.string().nullable().optional(),
+          vehicleInsurance: z.string().nullable().optional(),
+        }),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.usesOwnVehicle) return;
+
+    // 🚗 Basic vehicle details
+    if (!data.make?.trim()) {
+      ctx.addIssue({
+        path: ["make"],
+        message: "Vehicle make is required",
+      });
+    }
+
+    if (!data.model?.trim()) {
+      ctx.addIssue({
+        path: ["model"],
+        message: "Vehicle model is required",
+      });
+    }
+
+    if (!data.registration?.trim()) {
+      ctx.addIssue({
+        path: ["registration"],
+        message: "Vehicle registration is required",
+      });
+    }
+
+    if (!data.insuranceExpiryDate) {
+      ctx.addIssue({
+        path: ["insuranceExpiryDate"],
+        message: "Insurance expiry date is required",
+      });
+    }
+
+    // 📄 Driving licence validation
+    const hasDLFile = data._meta?.files?.drivingLicence;
+    const hasDLId = data._meta?.reuseDocIds?.drivingLicence;
+
+    if (!hasDLFile && !hasDLId) {
+      ctx.addIssue({
+        path: ["drivingLicence"],
+        message: "Driving licence is required",
+      });
+    }
+
+    // 🛡️ Insurance validation
+    const hasInsuranceFile = data._meta?.files?.vehicleInsurance;
+    const hasInsuranceId = data._meta?.reuseDocIds?.vehicleInsurance;
+
+    if (!hasInsuranceFile && !hasInsuranceId) {
+      ctx.addIssue({
+        path: ["vehicleInsurance"],
+        message: "Vehicle insurance certificate is required",
+      });
+    }
+  });
+
+export const allowanceItemSchema = z.object({
+  itemName: z.string().min(1, "Item name is required"),
+
+  description: z.string().optional(),
+
+  qty: z
+    .number({ invalid_type_error: "Quantity must be a number" })
+    .min(1, "Quantity must be at least 1"),
+
+  amount: z
+    .number({ invalid_type_error: "Amount must be a number" })
+    .min(1, "Min amount required"),
+
+  condition: z.string().optional(),
+});
+
+export const allowanceEquipmentsSchema = z.array(allowanceItemSchema);

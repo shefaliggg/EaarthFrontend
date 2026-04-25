@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Info, Plus, XCircle } from "lucide-react";
 import AllowanceItemCard from "./AllowanceItemCard";
-import { AutoHeight } from "../../../../../../shared/components/wrappers/AutoHeight";
-import { SmartIcon } from "../../../../../../shared/components/SmartIcon";
-import { set } from "date-fns";
-
-// allowance.config.js
+import { AutoHeight } from "@/shared/components/wrappers/AutoHeight";
+import { SmartIcon } from "@/shared/components/SmartIcon";
+import { InfoPanel } from "../../../../../../shared/components/panels/InfoPanel";
+import { convertToPrettyText } from "../../../../../../shared/config/utils";
 
 export const ALLOWANCE_CONFIG = {
   equipment: {
@@ -14,28 +12,24 @@ export const ALLOWANCE_CONFIG = {
     description: "e.g. Used for on-site repairs",
     addButtonLabel: "Add New Equipment",
   },
-
   computer: {
     icon: "Laptop",
     itemName: "e.g. MacBook Pro, Desktop PC",
     description: "e.g. Development or office work",
     addButtonLabel: "Add New Computer",
   },
-
   mobile: {
     icon: "Smartphone",
     itemName: "e.g. iPhone 13, Samsung Galaxy",
     description: "e.g. Communication or testing",
     addButtonLabel: "Add New Mobile Phone",
   },
-
   box_rentals: {
     icon: "Package",
     itemName: "e.g. Storage Box, Transport Case",
     description: "e.g. Used for equipment storage",
     addButtonLabel: "Add New Rental",
   },
-
   software: {
     icon: "AppWindow",
     itemName: "e.g. Adobe Premiere Pro, VS Code License",
@@ -44,105 +38,56 @@ export const ALLOWANCE_CONFIG = {
   },
 };
 
+const emptyItem = () => ({
+  id: Date.now() + Math.random(),
+  image: "",
+  imageFile: null,
+  itemName: "",
+  description: "",
+  qty: 1,
+  amount: 0,
+  condition: "",
+});
+
+const isItemEmpty = (item) => !item.itemName && !item.description;
+
 export default function AllowanceItemsList({
   allowanceType = "equipment",
   isEditing = false,
-  setAllowanceTotal,
+  errors,
+  items = [],
+  onChange,
 }) {
-  const [items, setItems] = useState([
-    {
-      id: Date.now(),
-      image: "",
-      itemName: "",
-      description: "",
-      qty: 1,
-      amount: 0,
-      condition: "",
-    },
-  ]);
   const config = ALLOWANCE_CONFIG[allowanceType] || ALLOWANCE_CONFIG.equipment;
 
-  const addItem = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        image: "",
-        itemName: "",
-        description: "",
-        qty: 1,
-        amount: 0,
-        condition: "",
-      },
-    ]);
-  };
+  const addItem = () => onChange([...items, emptyItem()]);
 
-  const updateItem = (id, updatedData) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updatedData } : item)),
+  const updateItem = (id, updatedData) =>
+    onChange(
+      items.map((item) =>
+        item.id === id ? { ...item, ...updatedData } : item,
+      ),
     );
-  };
 
   const removeItem = (id) => {
-    if (
-      items.length === 1 &&
-      items[0].itemName === "" &&
-      items[0].description === ""
-    )
-      return;
-
-    if (
-      items.length === 1 &&
-      (items[0].itemName !== "" || items[0].description !== "")
-    ) {
-      setItems([
-        {
-          id: Date.now(),
-          image: "",
-          itemName: "",
-          description: "",
-          qty: 1,
-          amount: 0,
-          condition: "",
-        },
-      ]);
-    } else {
-      setItems((prev) => prev.filter((item) => item.id !== id));
-    }
+    onChange(items.filter((item) => item.id !== id));
   };
 
-  const grossTotal = items.reduce((total, item) => {
-    const qty = Number(item.qty) || 0;
-    const amount = Number(item.amount) || 0;
-    return total + qty * amount;
-  }, 0);
+  const isEmpty = items.length === 0;
 
-  useEffect(() => {
-    if (!setAllowanceTotal) return;
-
-    setAllowanceTotal((prev) => ({
-      ...prev,
-      [allowanceType]: grossTotal,
-    }));
-  }, [grossTotal, allowanceType, setAllowanceTotal]);
-
-  if (
-    !isEditing &&
-    items.length === 1 &&
-    items[0].itemName === "" &&
-    items[0].description === ""
-  ) {
+  if (!isEditing && isEmpty) {
     return (
       <div className="p-8 pt-2 flex flex-col items-center justify-center text-center gap-4">
-        {/* Icon */}
         <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center">
           <SmartIcon icon={config.icon} className="text-primary" size="lg" />
         </div>
-
-        {/* Text */}
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">
-            No {allowanceType.replace("_", " ")} items added
+            No{" "}
+            {convertToPrettyText(
+              allowanceType === "boxRentals" ? "Box Rentals" : allowanceType,
+            )}{" "}
+            items added
           </p>
           <p className="text-xs text-muted-foreground">
             Start by adding your first item to track costs
@@ -154,40 +99,31 @@ export default function AllowanceItemsList({
 
   return (
     <div className="space-y-4">
-      {/* Total Summary */}
-      {/* <div className="flex justify-end">
-        <div className="w-full px-3">
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <span>Gross Total</span>
-            <span className="text-lg font-semibold text-primary">
-              £{grossTotal.toFixed(2)}
-            </span>
-          </div>
-        </div>
-      </div> */}
       <AutoHeight className="flex flex-col gap-3">
-        {items.length > 0 &&
-          items.map((item) => (
-            <AllowanceItemCard
-              key={item.id}
-              data={item}
-              onChange={(data) => updateItem(item.id, data)}
-              onDelete={() => removeItem(item.id)}
-              isDisableDelete={
-                items.length === 1 &&
-                items[0].itemName === "" &&
-                items[0].description === ""
-              }
-              placeholders={config}
-              isEditing={isEditing}
-            />
-          ))}
+        {isEditing && isEmpty && (
+          <InfoPanel variant="info" title="No items added" icon={Info}>
+            You can leave this empty or add items if needed.
+          </InfoPanel>
+        )}
+        {items.map((item, index) => (
+          <AllowanceItemCard
+            key={item.id}
+            data={item}
+            onChange={(data) => updateItem(item.id, data)}
+            onDelete={() => removeItem(item.id)}
+            isDisableDelete={items.length === 0}
+            placeholders={config}
+            isEditing={isEditing}
+            errors={errors?.[index]}
+          />
+        ))}
       </AutoHeight>
 
       {isEditing && (
         <button
+          type="button"
           onClick={addItem}
-          className="w-full border-2 border-dashed border-border ursor-pointer transition-all text-primary duration-300 hover:border-primary hover:bg-muted/20 py-10 rounded-lg flex items-center justify-center gap-2"
+          className="w-full border-2 border-dashed border-border cursor-pointer transition-all text-primary duration-300 hover:border-primary hover:bg-muted/20 py-10 rounded-lg flex items-center justify-center gap-2"
         >
           <Plus size={16} />
           {config.addButtonLabel}

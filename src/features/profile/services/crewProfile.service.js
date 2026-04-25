@@ -99,3 +99,13 @@ export const updatePersonalBank = async (payload) => {
   const res = await axiosConfig.patch("/profile/crew/finance/personal-bank", payload);
   return res.data.data;
 };
+
+export const updateVehicleAllowance = async (formData) => {
+  const res = await axiosConfig.patch("/profile/crew/allowances/vehicle", formData);
+  return res.data.data;
+};
+
+export const updateAllowanceEquipments = async (type, formData) => {
+  const res = await axiosConfig.patch(`/profile/crew/allowances/${type}`, formData);
+  return res.data.data;
+};
