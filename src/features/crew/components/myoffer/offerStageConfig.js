@@ -1,14 +1,15 @@
 /**
  * offerStageConfig.js
  *
- * 4 lifecycle stage cards for the MyOffer page.
- * CREW ONLY — no UPM / FC / Studio / production / accounts stages.
+ * CREW PAGE ONLY. After crew signs (PENDING_UPM/FC/STUDIO_SIGNATURE),
+ * the offer is no longer shown on MyOffer — those stages belong to ViewOffer.
  *
- * STAGE RULES:
- *   offer_review         → SENT_TO_CREW, NEEDS_REVISION
- *   contract_review_sign → PENDING_*_SIGNATURE statuses
- *   contract_active      → COMPLETED (regardless of date — active + future merged)
+ *   offer_review         → SENT_TO_CREW, NEEDS_REVISION, CREW_ACCEPTED,
+ *                          PRODUCTION_CHECK, ACCOUNTS_CHECK
+ *   contract_review_sign → PENDING_CREW_SIGNATURE only
+ *   contract_active      → COMPLETED + endDate in future (or no endDate)
  *   contract_ended       → TERMINATED, CANCELLED, COMPLETED past endDate
+ *   everything else      → null (not shown on MyOffer)
  */
 
 import { FileText, PenLine, CheckCircle, Clock } from "lucide-react";
@@ -20,7 +21,13 @@ export const OFFER_STAGES = [
     sub: "Waiting for your decision",
     icon: FileText,
     colorScheme: "amber",
-    statuses: ["SENT_TO_CREW", "NEEDS_REVISION"],
+    statuses: [
+      "SENT_TO_CREW",
+      "NEEDS_REVISION",
+      "CREW_ACCEPTED",
+      "PRODUCTION_CHECK",
+      "ACCOUNTS_CHECK",
+    ],
   },
   {
     key: "contract_review_sign",
@@ -28,12 +35,8 @@ export const OFFER_STAGES = [
     sub: "Documents to review and sign",
     icon: PenLine,
     colorScheme: "purple",
-    statuses: [
-      "PENDING_CREW_SIGNATURE",
-      "PENDING_UPM_SIGNATURE",
-      "PENDING_FC_SIGNATURE",
-      "PENDING_STUDIO_SIGNATURE",
-    ],
+    // Only crew's own signing turn — once they sign the offer leaves MyOffer
+    statuses: ["PENDING_CREW_SIGNATURE"],
   },
   {
     key: "contract_active",
@@ -55,8 +58,9 @@ export const OFFER_STAGES = [
 ];
 
 /**
- * Returns stage key for a given offer (crew perspective).
- * Returns null for statuses not shown on crew page (DRAFT, PRODUCTION_CHECK, etc.)
+ * Returns the stage key for a given offer (crew perspective).
+ * Returns null for statuses not shown on the crew MyOffer page.
+ * PENDING_UPM/FC/STUDIO_SIGNATURE → null (ViewOffer only).
  */
 export function getStageForOffer(offer) {
   const status = offer?.status;
@@ -64,36 +68,38 @@ export function getStageForOffer(offer) {
   today.setHours(0, 0, 0, 0);
   const end = offer?.endDate ? new Date(offer.endDate) : null;
 
-  if (["SENT_TO_CREW", "NEEDS_REVISION"].includes(status)) {
+  if ([
+    "SENT_TO_CREW",
+    "NEEDS_REVISION",
+    "CREW_ACCEPTED",
+    "PRODUCTION_CHECK",
+    "ACCOUNTS_CHECK",
+  ].includes(status)) {
     return "offer_review";
   }
 
-  if (
-    [
-      "PENDING_CREW_SIGNATURE",
-      "PENDING_UPM_SIGNATURE",
-      "PENDING_FC_SIGNATURE",
-      "PENDING_STUDIO_SIGNATURE",
-    ].includes(status)
-  ) {
+  if (status === "PENDING_CREW_SIGNATURE") {
     return "contract_review_sign";
   }
+
+  // PENDING_UPM_SIGNATURE, PENDING_FC_SIGNATURE, PENDING_STUDIO_SIGNATURE
+  // → null — offer disappears from MyOffer once crew has signed
 
   if (["TERMINATED", "CANCELLED"].includes(status)) {
     return "contract_ended";
   }
 
   if (status === "COMPLETED") {
-    // Past end date → ended
     if (end && end < today) return "contract_ended";
-    // All other COMPLETED (active or upcoming) → active
     return "contract_active";
   }
 
-  // DRAFT, PRODUCTION_CHECK, ACCOUNTS_CHECK → not shown to crew
   return null;
 }
 
+/**
+ * Count offers per stage.
+ */
 export function countByStage(offers = []) {
   const counts = Object.fromEntries(OFFER_STAGES.map((s) => [s.key, 0]));
   offers.forEach((o) => {
@@ -103,6 +109,10 @@ export function countByStage(offers = []) {
   return counts;
 }
 
+/**
+ * Filter offers by stage key.
+ * If stageKey is null, returns all offers that have a visible stage.
+ */
 export function filterByStage(offers = [], stageKey) {
   if (!stageKey) return offers.filter((o) => getStageForOffer(o) !== null);
   return offers.filter((o) => getStageForOffer(o) === stageKey);
@@ -110,19 +120,25 @@ export function filterByStage(offers = [], stageKey) {
 
 /**
  * Maps an offer status to the 3-step crew stepper index.
- *   0 = Offer  |  1 = Contract  |  2 = Active
+ *   0 = Offer  |  1 = Contract  |  2 = Active/Ended
  */
 export function getStepperIndex(status) {
-  if (["SENT_TO_CREW", "NEEDS_REVISION"].includes(status)) return 0;
-  if (
-    [
-      "PENDING_CREW_SIGNATURE",
-      "PENDING_UPM_SIGNATURE",
-      "PENDING_FC_SIGNATURE",
-      "PENDING_STUDIO_SIGNATURE",
-    ].includes(status)
-  )
-    return 1;
+  if ([
+    "SENT_TO_CREW",
+    "NEEDS_REVISION",
+    "CREW_ACCEPTED",
+    "PRODUCTION_CHECK",
+    "ACCOUNTS_CHECK",
+  ].includes(status)) return 0;
+
+  if ([
+    "PENDING_CREW_SIGNATURE",
+    "PENDING_UPM_SIGNATURE",
+    "PENDING_FC_SIGNATURE",
+    "PENDING_STUDIO_SIGNATURE",
+  ].includes(status)) return 1;
+
   if (["COMPLETED", "TERMINATED", "CANCELLED"].includes(status)) return 2;
+
   return 0;
 }
