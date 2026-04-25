@@ -126,18 +126,18 @@ function DetailsSettings() {
 
   const cancelEditing = () => {
     setIsEditing({ section: null });
-    setFormState({ details: null, projectSettings: null });
+    setFormState({ details: null, projectSettings: null, offerHandling: null });
   };
 
-//   if (isLoading) {
-//   return (
-//     <>
-//       <SettingsCardLoadingSkelton fields={6} columns={2} />
-//       <SettingsCardLoadingSkelton fields={12} columns={2} />
-//       <SettingsCardLoadingSkelton fields={6} columns={2} />
-//     </>
-//   );
-// }
+  //   if (isLoading) {
+  //   return (
+  //     <>
+  //       <SettingsCardLoadingSkelton fields={6} columns={2} />
+  //       <SettingsCardLoadingSkelton fields={12} columns={2} />
+  //       <SettingsCardLoadingSkelton fields={6} columns={2} />
+  //     </>
+  //   );
+  // }
 
   return (
     <div className="space-y-4">
@@ -150,7 +150,8 @@ function DetailsSettings() {
                 Project Details
               </h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                Helpful information which is shown to crew and can be updated any time
+                Helpful information which is shown to crew and can be updated
+                any time
               </p>
             </div>
           </div>
