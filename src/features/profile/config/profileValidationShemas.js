@@ -755,6 +755,7 @@ export const financeDetailsSchema = z
     ktNumber: z.string().optional(),
     nationalInsuranceNumber: z.string().optional(),
     vatNumber: z.string().optional(),
+    utrNumber: z.string().optional(),
 
     hasOngoingStudentLoan: z.boolean().nullable().optional(),
 
@@ -795,7 +796,7 @@ export const financeDetailsSchema = z
       data.taxClearanceAccessNumber ||
       data.ktNumber ||
       data.nationalInsuranceNumber ||
-      data.vatNumber
+      data.vatNumber;
 
     if (!hasAnyField) {
       ctx.addIssue({
