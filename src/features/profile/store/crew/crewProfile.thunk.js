@@ -16,6 +16,7 @@ import {
   updatePersonalBank,
   updateVehicleAllowance,
   updateAllowanceEquipments,
+  updateHealthDetails,
 } from "../../services/crewProfile.service";
 import { updateCurrentUser } from "../../../auth/store";
 import { AddOrUpdateDocument } from "../../../user-documents/store/document.slice";
@@ -366,6 +367,20 @@ export const updateAllowanceEquipmentsThunk = createAsyncThunk(
   },
 );
 
+export const updateHealthDetailsThunk = createAsyncThunk(
+  "profile/updateHealthDetails",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateHealthDetails(payload);
+      return response; // { health, profileCompletionPercent }
+    } catch (err) {
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+      });
+    }
+  },
+);
+
 export default {
   getProfile,
   updatePersonalDetails,
@@ -386,4 +401,5 @@ export default {
   updatePersonalBankThunk,
   updateVehicleAllowanceThunk,
   updateAllowanceEquipmentsThunk,
+  updateHealthDetailsThunk,
 };

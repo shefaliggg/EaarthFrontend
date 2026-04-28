@@ -37,6 +37,7 @@ import {
   companyBankSchema,
 } from "../../config/profileValidationShemas";
 import { removeCompanyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
+import { formatFileSize } from "../../../../shared/config/utils";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -415,7 +416,10 @@ export default function CompanyDetails() {
           closeModal();
           try {
             await dispatch(updateCompanyDetailsThunk(payload)).unwrap();
-            toast.success("Company details updated successfully");
+            toast.success("Loan company details disabled", {
+              description:
+                "All loan company and financial details have been removed. You can add them again anytime.",
+            });
             cancelEditing();
           } catch (err) {
             toast.error(err?.message || "Failed to update company details");
@@ -456,7 +460,10 @@ export default function CompanyDetails() {
 
     try {
       await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
-      toast.success("Company details updated successfully");
+      toast.success("Loan company details updated", {
+        description:
+          "Your loan company and financial details have been successfully updated.",
+      });
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update company details");
@@ -716,11 +723,7 @@ export default function CompanyDetails() {
                 isUploaded={!!resolvedCertOfIncorp}
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
                 expiresAt={resolvedCertOfIncorp?.expiresAt}
-                meta={
-                  resolvedCertOfIncorp?.sizeBytes
-                    ? `${(resolvedCertOfIncorp.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                    : null
-                }
+                meta={formatFileSize(resolvedCertOfIncorp?.sizeBytes)}
                 isRequired
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
@@ -1013,11 +1016,7 @@ export default function CompanyDetails() {
                     isUploaded={!!resolvedVatCert}
                     status={resolvedVatCert?.verificationStatus || "Pending"}
                     expiresAt={resolvedVatCert?.expiresAt}
-                    meta={
-                      resolvedVatCert?.sizeBytes
-                        ? `${(resolvedVatCert.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                        : null
-                    }
+                    meta={formatFileSize(resolvedVatCert?.sizeBytes)}
                     onUpload={(file) => {
                       setFiles((f) => ({ ...f, vatCertificate: file }));
                       setReuseDocIds((f) => ({ ...f, vatCertificate: null }));

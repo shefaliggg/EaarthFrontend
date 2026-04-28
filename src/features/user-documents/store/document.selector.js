@@ -37,3 +37,29 @@ export const getDisplayDocument = (docId, reuseId, file, docs) => {
 
   return null;
 };
+
+export function resolveDocStatus(doc) {
+  switch (doc.status) {
+    case "EXPIRED":
+      return { status: "expired", label: "Expired" };
+    case "REVOKED":
+      return { status: "rejected", label: "Revoked" };
+    case "ARCHIVED":
+      return { status: "inactive", label: "Archived" };
+    case "ACTIVE":
+    default:
+      break;
+  }
+
+  switch (doc.verificationStatus) {
+    case "verified":
+      return { status: "active", label: "Verified" };
+    case "pending_review":
+      return { status: "pending", label: "Pending Review" };
+    case "rejected":
+      return { status: "rejected", label: "Rejected" };
+    case "unverified":
+    default:
+      return { status: "inactive", label: "Unverified" };
+  }
+}

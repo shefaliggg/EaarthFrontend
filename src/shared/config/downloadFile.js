@@ -10,7 +10,7 @@ export const downloadFile = async ({ url, fileName, label = "file" }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`${label} downloaded`, {
+    toast.success(`${label} download Intiated`, {
       id: toastId,
     });
   } catch (err) {

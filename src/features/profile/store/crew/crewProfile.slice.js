@@ -14,6 +14,7 @@ import {
   updateContactInfoThunk,
   updateEmergencyContactThunk,
   updateFinanceDetailsThunk,
+  updateHealthDetailsThunk,
   updateHomeAddressThunk,
   updateNationalityProofThunk,
   updatePersonalBankThunk,
@@ -326,6 +327,18 @@ const crewProfileSlice = createSlice({
         }
       })
       .addCase(updateAllowanceEquipmentsThunk.rejected, (state) => {
+        state.isUpdating = false;
+      })
+
+      // HEALTH DETAILS
+      .addCase(updateHealthDetailsThunk.pending, (state) => {
+        state.isUpdating = true;
+      })
+      .addCase(updateHealthDetailsThunk.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
+      })
+      .addCase(updateHealthDetailsThunk.rejected, (state) => {
         state.isUpdating = false;
       });
   },

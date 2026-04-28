@@ -30,6 +30,7 @@ import {
   useModalStore,
 } from "../../../../../shared/stores/useModalStore";
 import { formatFileSize } from "../../../../../shared/config/utils";
+import { removeVehicleAllowanceConfig } from "../../../../../shared/config/ConfirmActionsConfig";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -127,14 +128,15 @@ export default function AllowanceDetails() {
     userDocuments,
   );
 
-  console.log("resolved driving licence", resolvedDrivingLicence);
-
   const resolvedVehicleInsurance = getDisplayDocument(
     crewProfile?.vehicle?.insuranceCertificateId,
     vehicleDocIds.vehicleInsurance,
     vehicleFiles.vehicleInsurance,
     userDocuments,
   );
+
+  const hasVehicleData =
+    crewProfile?.vehicle?.make || crewProfile?.vehicle?.model;
 
   // ── Editing controls ────────────────────────────────────────────────────────
 
@@ -189,6 +191,32 @@ export default function AllowanceDetails() {
       return;
     }
 
+    if (hasVehicleData && !vehicleForm.usesOwnVehicle) {
+      const payload = {
+        usesOwnVehicle: false,
+      };
+
+      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+        config: removeVehicleAllowanceConfig,
+        onConfirm: async () => {
+          closeModal();
+          try {
+            await dispatch(updateVehicleAllowanceThunk(payload)).unwrap();
+            toast.success("Vehicle allowance disabled", {
+              description:
+                "All vehicle allowance details have been removed. You can add them again anytime.",
+            });
+            cancelEditing();
+          } catch (err) {
+            toast.error(err?.message || "Failed to disable vehicle allowance");
+          }
+        },
+        autoClose: true,
+      });
+
+      return;
+    }
+
     const fd = new FormData();
 
     fd.append("usesOwnVehicle", String(vehicleForm.usesOwnVehicle));
@@ -217,7 +245,10 @@ export default function AllowanceDetails() {
 
     try {
       await dispatch(updateVehicleAllowanceThunk(fd)).unwrap();
-      toast.success("Vehicle details updated successfully");
+      toast.success("Vehicle allowance details updated", {
+        description:
+          "Your vehicle and allowance details have been successfully updated.",
+      });
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update vehicle details");
