@@ -107,9 +107,18 @@ export const removeAgencyDetailsConfig = {
 };
 
 export const removeCompanyDetailsConfig = {
-  title: "Disable company and remove details?",
+  title: "Disable loan company details and remove data?",
   description:
-    "Turning off company representation will clear all associated company details such as contact and bank information. You can add them again later if needed.",
+    "Turning this off will remove all loan company details, including financial and company-related information. You can add them again later if needed.",
+  confirmText: "Disable & clear",
+  cancelText: "Keep details",
+  variant: "danger",
+};
+
+export const removeVehicleAllowanceConfig = {
+  title: "Disable vehicle allowance and remove details?",
+  description:
+    "Turning this off will remove all vehicle allowance details, including vehicle and allowance-related information. You can add them again later if needed.",
   confirmText: "Disable & clear",
   cancelText: "Keep details",
   variant: "danger",

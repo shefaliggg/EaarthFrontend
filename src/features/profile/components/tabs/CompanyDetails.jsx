@@ -415,7 +415,10 @@ export default function CompanyDetails() {
           closeModal();
           try {
             await dispatch(updateCompanyDetailsThunk(payload)).unwrap();
-            toast.success("Company details updated successfully");
+            toast.success("Loan company details disabled", {
+              description:
+                "All loan company and financial details have been removed. You can add them again anytime.",
+            });
             cancelEditing();
           } catch (err) {
             toast.error(err?.message || "Failed to update company details");
@@ -456,7 +459,10 @@ export default function CompanyDetails() {
 
     try {
       await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
-      toast.success("Company details updated successfully");
+      toast.success("Loan company details updated", {
+        description:
+          "Your loan company and financial details have been successfully updated.",
+      });
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update company details");
