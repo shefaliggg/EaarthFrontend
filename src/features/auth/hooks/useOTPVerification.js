@@ -5,7 +5,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { verifyLoginOtpThunk, loginUserThunk } from "../store/user.thunks";
 import { clearUserError } from "../store/user.slice";
 import { toast } from "sonner";
-import { disconnectPublicSocket, markPublicSocketManualDisconnect } from "../../../shared/config/socketConfig";
+import {
+  disconnectPublicSocket,
+  markPublicSocketManualDisconnect,
+} from "../../../shared/config/socketConfig";
 import { useQrLogin } from "./useQrLogin";
 
 export const useOTPVerification = ({ setDevOtp }) => {
@@ -98,7 +101,9 @@ export const useOTPVerification = ({ setDevOtp }) => {
       );
 
       if (verifyLoginOtpThunk.fulfilled.match(resultAction)) {
-        toast.success("Login successful!");
+        toast.success("Login successful", {
+          description: "You’re now signed in and ready to continue.",
+        });
         markPublicSocketManualDisconnect();
         disconnectPublicSocket();
         navigate("/home", { replace: true });

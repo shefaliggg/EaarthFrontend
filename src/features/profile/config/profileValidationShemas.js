@@ -972,3 +972,8 @@ export const allowanceItemSchema = z.object({
 });
 
 export const allowanceEquipmentsSchema = z.array(allowanceItemSchema);
+
+export const healthDetailsSchema = z.object({
+  dietaryRequirements: z.array(z.string()).optional().default([]),
+  allergies: z.array(z.string()).optional().default([]),
+});

@@ -11,7 +11,7 @@ import { SmartIcon } from "../SmartIcon";
 import { InfoTooltip } from "../InfoTooltip";
 import { StatusBadge } from "../badges/StatusBadge";
 import { downloadFile } from "../../config/downloadFile";
-import { cn } from "../../config/utils";
+import { cn, formatDate } from "../../config/utils";
 
 export default function EditableDocumentField({
   label,

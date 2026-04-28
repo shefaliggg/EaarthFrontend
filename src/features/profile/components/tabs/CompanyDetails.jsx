@@ -37,6 +37,7 @@ import {
   companyBankSchema,
 } from "../../config/profileValidationShemas";
 import { removeCompanyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
+import { formatFileSize } from "../../../../shared/config/utils";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -722,11 +723,7 @@ export default function CompanyDetails() {
                 isUploaded={!!resolvedCertOfIncorp}
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
                 expiresAt={resolvedCertOfIncorp?.expiresAt}
-                meta={
-                  resolvedCertOfIncorp?.sizeBytes
-                    ? `${(resolvedCertOfIncorp.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                    : null
-                }
+                meta={formatFileSize(resolvedCertOfIncorp?.sizeBytes)}
                 isRequired
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
@@ -1019,11 +1016,7 @@ export default function CompanyDetails() {
                     isUploaded={!!resolvedVatCert}
                     status={resolvedVatCert?.verificationStatus || "Pending"}
                     expiresAt={resolvedVatCert?.expiresAt}
-                    meta={
-                      resolvedVatCert?.sizeBytes
-                        ? `${(resolvedVatCert.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                        : null
-                    }
+                    meta={formatFileSize(resolvedVatCert?.sizeBytes)}
                     onUpload={(file) => {
                       setFiles((f) => ({ ...f, vatCertificate: file }));
                       setReuseDocIds((f) => ({ ...f, vatCertificate: null }));

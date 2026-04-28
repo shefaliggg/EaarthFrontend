@@ -88,7 +88,10 @@ export function getAvatarFallback(name) {
 }
 
 export function formatDate(date) {
-  return new Date(date)
+  if (!date) return "—";
+  const d = new Date(date);
+  if (isNaN(d)) return "—";
+  return d
     .toLocaleDateString("en-GB", {
       day: "numeric",
       month: "long",
@@ -98,15 +101,21 @@ export function formatDate(date) {
 }
 
 export const formatFileSize = (bytes) => {
-  if (!bytes) return null;
-
+  if (!bytes && bytes !== 0) return "—";
   if (bytes < 1024) return `${bytes} B`;
-
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-
-  const mb = kb / 1024;
-  return `${mb.toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 };
+
+export const arrayToText = (arr) =>
+  Array.isArray(arr) ? arr.filter(Boolean).join(", ") : (arr ?? "");
+
+export const textToArray = (text) =>
+  (text ?? "")
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
 
 const getSafeFieldData = (val, fallback) => val ?? fallback;

@@ -71,7 +71,10 @@ export const setupCompany = async (formData) => {
 };
 
 export const updateCompanyDetails = async (formData) => {
-  const res = await axiosConfig.patch("/profile/crew/company/details", formData);
+  const res = await axiosConfig.patch(
+    "/profile/crew/company/details",
+    formData,
+  );
   return res.data.data;
 };
 
@@ -91,21 +94,38 @@ export const updateCompanyBank = async (payload) => {
 };
 
 export const updateFinanceDetails = async (formData) => {
-  const res = await axiosConfig.patch("/profile/crew/finance/details", formData);
+  const res = await axiosConfig.patch(
+    "/profile/crew/finance/details",
+    formData,
+  );
   return res.data.data;
 };
 
 export const updatePersonalBank = async (payload) => {
-  const res = await axiosConfig.patch("/profile/crew/finance/personal-bank", payload);
+  const res = await axiosConfig.patch(
+    "/profile/crew/finance/personal-bank",
+    payload,
+  );
   return res.data.data;
 };
 
 export const updateVehicleAllowance = async (formData) => {
-  const res = await axiosConfig.patch("/profile/crew/allowances/vehicle", formData);
+  const res = await axiosConfig.patch(
+    "/profile/crew/allowances/vehicle",
+    formData,
+  );
   return res.data.data;
 };
 
 export const updateAllowanceEquipments = async (type, formData) => {
-  const res = await axiosConfig.patch(`/profile/crew/allowances/${type}`, formData);
+  const res = await axiosConfig.patch(
+    `/profile/crew/allowances/${type}`,
+    formData,
+  );
+  return res.data.data;
+};
+
+export const updateHealthDetails = async (payload) => {
+  const res = await axiosConfig.patch("/profile/crew/health", payload);
   return res.data.data;
 };

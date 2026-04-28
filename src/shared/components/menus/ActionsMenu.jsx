@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/shared/components/ui/button";
 import { MoreVertical, ChevronRight } from "lucide-react";
+import { cn } from "../../config/utils";
 
 function getSafeIcon(icon) {
   if (typeof icon === "function") return icon;
@@ -54,9 +55,10 @@ function renderMenuItems(items) {
 
         <DropdownMenuItem
           onClick={item.onClick}
+          disabled={item.disabled}
           className={item.destructive ? "text-red-600 focus:text-red-600" : ""}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className={cn("h-4 w-4", item.destructive && "text-red-600!")} />
           {item.label}
         </DropdownMenuItem>
       </React.Fragment>

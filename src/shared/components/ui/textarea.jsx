@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/shared/config/utils";
 
-function Textarea({ className, textCase = "upper", ...props }) {
+function Textarea({ className, textCase = "normal", ...props }) {
   return (
     <textarea
       data-slot="textarea"

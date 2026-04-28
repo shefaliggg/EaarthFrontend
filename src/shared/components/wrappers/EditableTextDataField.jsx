@@ -10,6 +10,7 @@ function EditableTextDataField({
   badge,
   value,
   icon,
+  displayType = "text", // text, list
   isEditing = false,
   onChange,
   multiline = false,
@@ -45,6 +46,12 @@ function EditableTextDataField({
         <div className="text-sm font-medium text-foreground">
           {value === null || value === undefined || value === "" ? (
             <span className="text-muted-foreground">Not Available</span>
+          ) : displayType === "list" && Array.isArray(value) ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {value.map((item, index) => (
+                <li key={index}>{convertToPrettyText(item)}</li>
+              ))}
+            </ul>
           ) : typeof value === "string" && prettify ? (
             convertToPrettyText(value)
           ) : (

@@ -1,102 +1,176 @@
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-import { Eye, Download, Trash2, Share2, FileText } from "lucide-react";
+import { FileText, Download, Share2, Star, BadgeCheck } from "lucide-react";
 import { StatusBadge } from "../../../shared/components/badges/StatusBadge";
+import {
+  convertToPrettyText,
+  formatDate,
+  formatFileSize,
+} from "../../../shared/config/utils";
+import { resolveDocStatus } from "../../user-documents/store/document.selector";
+import { downloadFile } from "../../../shared/config/downloadFile";
+import { Button } from "@/shared/components/ui/button";
+import ActionsMenu from "../../../shared/components/menus/ActionsMenu";
 
-export const DocumentTableColumns = () => [
+export const DocumentTableColumns = ({ onView, onDelete } = {}) => [
+  // ── Name + size ──────────────────────────────────────────────────────────────
   {
-    key: "documentName",
+    key: "originalName",
     label: "Document Name",
     align: "left",
     render: (row) => (
       <div className="flex items-center gap-2">
-        {/* Icon */}
-        <div className="mt-0.5 bg-primary/10 rounded-md p-2.5">
+        <div className="mt-0.5 bg-primary/10 rounded-md p-2.5 shrink-0">
           <FileText className="w-4 h-4 text-primary" />
         </div>
-
-        {/* Text */}
-        <div>
-          <div className="font-medium text-foreground leading-none">
-            {row.documentName}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-foreground leading-none truncate">
+              {convertToPrettyText(row.label || row.originalName)}
+            </span>
+            {row.isPrimary && (
+              <BadgeCheck className="w-4 h-4 text-background fill-green-500 shrink-0" />
+            )}
           </div>
-          <div className="text-xs text-muted-foreground">{row.fileSize}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {formatFileSize(row.sizeBytes)}
+          </div>
         </div>
       </div>
     ),
   },
 
+  // ── Type ─────────────────────────────────────────────────────────────────────
   {
-    key: "type",
+    key: "documentType",
     label: "Type",
     align: "center",
     render: (row) => (
       <StatusBadge
-        status={"highlight"}
-        label={row.type}
+        status="highlight"
+        label={row.documentType?.replace(/_/g, " ")}
         size="sm"
         showIcon={false}
       />
     ),
   },
 
+  // ── Purpose ───────────────────────────────────────────────────────────────────
   {
-    key: "uploadDate",
-    label: "Upload Date",
-    align: "center",
-    render: (row) => (
-      <span className="text-muted-foreground">{row.uploadDate}</span>
-    ),
-  },
-
-  {
-    key: "expiryDate",
-    label: "Expiry Date",
-    align: "center",
-    render: (row) => (
-      <span className="text-muted-foreground">{row.expiryDate}</span>
-    ),
-  },
-
-  {
-    key: "status",
-    label: "Status",
-    align: "center",
-    render: (row) => <StatusBadge status={row.status} size="sm" />,
-  },
-
-  {
-    key: "shared",
-    label: "Shared",
+    key: "documentPurpose",
+    label: "Purpose",
     align: "center",
     render: (row) => (
       <StatusBadge
-        status={row.shared ? "highlight" : "private"}
-        label={row.shared ? "Shared" : "Private"}
+        status="default"
+        label={row.documentPurpose}
         size="sm"
+        showIcon={false}
       />
     ),
   },
 
+  // ── Upload date ───────────────────────────────────────────────────────────────
+  {
+    key: "createdAt",
+    label: "Uploaded",
+    align: "center",
+    render: (row) => (
+      <span className="text-muted-foreground">{formatDate(row.createdAt)}</span>
+    ),
+  },
+
+  // ── Expiry ────────────────────────────────────────────────────────────────────
+  {
+    key: "expiresAt",
+    label: "Expires",
+    align: "center",
+    render: (row) =>
+      row.expiresAt ? (
+        <span
+          className={
+            row.status === "EXPIRED"
+              ? "text-red-500 font-medium"
+              : "text-muted-foreground"
+          }
+        >
+          {formatDate(row.expiresAt)}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+
+  // ── Status (document.status + verificationStatus) ─────────────────────────────
+  {
+    key: "status",
+    label: "Status",
+    align: "center",
+    render: (row) => {
+      const { status, label } = resolveDocStatus(row);
+      return <StatusBadge status={status} label={label} size="sm" />;
+    },
+  },
+
+  // ── Usage count ───────────────────────────────────────────────────────────────
+  {
+    key: "usage",
+    label: "Used In",
+    align: "center",
+    render: (row) => {
+      const count = row.usage?.length ?? 0;
+      return (
+        <span className="text-muted-foreground text-sm">
+          {count > 0 ? `${count} context${count > 1 ? "s" : ""}` : "—"}
+        </span>
+      );
+    },
+  },
+
+  // ── Actions ───────────────────────────────────────────────────────────────────
   {
     key: "actions",
     label: "Actions",
     align: "right",
     render: (row) => (
-      <div className="flex items-center justify-center gap-2">
-        <Button variant="ghost" size="icon">
-          <Share2 className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Eye className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Download className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Trash2 className="w-4 h-4 text-red-500" />
-        </Button>
-      </div>
+      <ActionsMenu
+        actions={[
+          {
+            label: "View",
+            icon: "Eye",
+            onClick: () => onView?.(row),
+          },
+          {
+            label: "Download",
+            icon: "Download",
+            onClick: async () => {
+              await downloadFile({
+                url: row.url,
+                fileName: row.originalName,
+                label: "document",
+              });
+            },
+          },
+          {
+            label: "Share",
+            icon: "Share2",
+            onClick: () => {},
+            disabled: true,
+          },
+          {
+            label: "Archive",
+            icon: "Archive",
+            onClick: () => {},
+            disabled: true,
+          },
+          {
+            label: "Delete",
+            icon: "Trash2",
+            destructive: true,
+            onClick: () => onDelete?.(row),
+            separatorBefore: true,
+            disabled: true,
+          },
+        ]}
+      />
     ),
   },
 ];
