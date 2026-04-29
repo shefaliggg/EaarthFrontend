@@ -60,7 +60,7 @@ export default function MySignature() {
   const [changeMeta, setChangeMeta] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  // console.log("current signature:", currentSignature);
+  console.log("current signature:", currentSignature);
 
   const handleEditClick = () => {
     if (currentSignature?.status === "ACTIVE") {
@@ -120,7 +120,10 @@ export default function MySignature() {
       }
     }
     console.log("Signature data to save:", data);
-    const file = base64ToFile(data.data, "signature.png");
+    const file = base64ToFile(
+      data.data,
+      `signature-v${(currentSignature?.version || 0) + 1}.png`,
+    );
 
     const formData = new FormData();
     formData.append("signature", file);

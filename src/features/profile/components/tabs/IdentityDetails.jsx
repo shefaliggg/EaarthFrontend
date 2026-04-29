@@ -87,7 +87,7 @@ export default function IdentityDetails() {
     }
   }, []);
 
-  console.log("crew profile", crewProfile);
+  // console.log("crew profile", crewProfile);
   console.log("user documents", userDocuments);
 
   const initialFilesState = {

@@ -2,7 +2,9 @@ import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  CircleX,
   Download,
+  File,
 } from "lucide-react";
 
 import { cn } from "@/shared/config/utils";
@@ -19,6 +21,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { exportToCSV } from "@/shared/config/export";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SelectMenu } from "../../menus/SelectMenu";
+import { TableStateRow } from "../TableStateRow";
 
 export default function DataTable({
   data = [],
@@ -33,6 +36,8 @@ export default function DataTable({
   loading = false,
   error = false,
 
+  emptyStateConfig,
+
   selectable = false,
   onBulkAction,
   bulkActionLabel = "Delete Selected",
@@ -44,18 +49,18 @@ export default function DataTable({
 
   onRowClick,
   className,
+  rowClassName,
 }) {
-  
   const [selectedRows, setSelectedRows] = useState(new Set());
 
   const totalPages = Math.ceil(totalItemsSize / ItemsPerPage);
 
   const itemsPerPageOptions = [
-    { value: 10, label: '10 per page' },
-    { value: 25, label: '25 per page' },
-    { value: 50, label: '50 per page' },
-    { value: 100, label: '100 per page' },
-  ]
+    { value: 10, label: "10 per page" },
+    { value: 25, label: "25 per page" },
+    { value: 50, label: "50 per page" },
+    { value: 100, label: "100 per page" },
+  ];
 
   const handleSelectAll = (checked) => {
     if (checked) {
@@ -73,22 +78,38 @@ export default function DataTable({
   };
 
   const isAllSelected = data.length > 0 && selectedRows.size === data.length;
-  const selectedData = Array.from(selectedRows).map(i => data[i]);
+  const selectedData = Array.from(selectedRows).map((i) => data[i]);
 
   const handleExport = () => {
-    const exportColumns = columns.map(col => ({
+    const exportColumns = columns.map((col) => ({
       key: col.key,
       label: col.label,
       format: col.exportFormat,
     }));
 
-    exportToCSV(selectedData.length ? selectedData : data, exportColumns, exportFilename);
+    exportToCSV(
+      selectedData.length ? selectedData : data,
+      exportColumns,
+      exportFilename,
+    );
   };
 
   if (error) {
     return (
-      <div className="rounded-xl border border-border bg-card p-10 text-center text-destructive">
-        Failed to load data.
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <Table>
+          <TableBody>
+            <TableStateRow
+              colSpan={columns.length + (selectable ? 1 : 0)}
+              type="error"
+              title="Failed to load data"
+              description="We couldn’t fetch the records. Please try again."
+              icon="AlertCircle"
+              actionLabel="Retry"
+              onAction={() => window.location.reload()}
+            />
+          </TableBody>
+        </Table>
       </div>
     );
   }
@@ -121,24 +142,27 @@ export default function DataTable({
       </div>
 
       {/* ✅ TABLE */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-hidden rounded-xl border border-border">
         <Table>
           <TableHeader>
             <TableRow>
               {selectable && (
                 <TableHead className="w-10 h-10 text-center">
-                  <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                  />
                 </TableHead>
               )}
 
-              {columns.map(col => (
+              {columns.map((col) => (
                 <TableHead
                   key={col.key}
                   className={cn(
                     col.align === "center" && "text-center",
                     col.align === "right" && "text-right",
                     "h-13 last:pr-6 first:pl-4 text-muted-foreground",
-                    !selectable && "first:pl-6!"
+                    !selectable && "first:pl-6!",
                   )}
                   style={{ width: col.width }}
                 >
@@ -152,8 +176,12 @@ export default function DataTable({
             {loading &&
               Array.from({ length: ItemsPerPage }).map((_, i) => (
                 <TableRow key={i}>
-                  {selectable && <TableCell><div className="h-4 w-4 bg-muted rounded" /></TableCell>}
-                  {columns.map(col => (
+                  {selectable && (
+                    <TableCell>
+                      <div className="h-4 w-4 bg-muted rounded" />
+                    </TableCell>
+                  )}
+                  {columns.map((col) => (
                     <TableCell key={col.key}>
                       <Skeleton className="h-5 w-full rounded-full my-2" />
                     </TableCell>
@@ -162,14 +190,13 @@ export default function DataTable({
               ))}
 
             {!loading && data.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="text-center py-20 text-muted-foreground"
-                >
-                  No Data records found
-                </TableCell>
-              </TableRow>
+              <TableStateRow
+                colSpan={columns.length + (selectable ? 1 : 0)}
+                type="empty"
+                title={emptyStateConfig?.title}
+                description={emptyStateConfig?.description}
+                icon={emptyStateConfig?.icon ?? "File"}
+              />
             )}
 
             {!loading &&
@@ -180,29 +207,32 @@ export default function DataTable({
                   className={cn(
                     "hover:bg-muted/50 transition-colors",
                     selectable && selectedRows.has(index) && "bg-primary/10",
-                    onRowClick && "cursor-pointer"
+                    onRowClick && "cursor-pointer",
+                    rowClassName?.(row, index),
                   )}
                 >
                   {selectable && (
                     <TableCell className="w-10 text-center">
                       <Checkbox
                         checked={selectedRows.has(index)}
-                        onCheckedChange={checked => handleSelectRow(index, checked)}
-                        onClick={e => e.stopPropagation()}
+                        onCheckedChange={(checked) =>
+                          handleSelectRow(index, checked)
+                        }
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </TableCell>
                   )}
 
-                  {columns.map(col => (
+                  {columns.map((col) => (
                     <TableCell
                       key={col.key}
                       className={cn(
                         col.align === "center" && "text-center",
                         col.align === "right" && "text-right",
-                        "last:pr-4 first:pl-4"
+                        "last:pr-4 first:pl-4",
                       )}
                     >
-                      {col.render ? col.render(row) : (row)[col.key]}
+                      {col.render ? col.render(row) : row[col.key]}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -210,7 +240,7 @@ export default function DataTable({
           </TableBody>
         </Table>
       </div>
-      {!hidePagination &&
+      {!hidePagination && (
         <div className="flex items-center justify-between">
           <SelectMenu
             label="Items Per Page"
@@ -242,7 +272,7 @@ export default function DataTable({
             </Button>
           </div>
         </div>
-      }
+      )}
     </div>
   );
 }

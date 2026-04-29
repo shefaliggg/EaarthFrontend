@@ -39,13 +39,36 @@ export const getDisplayDocument = (docId, reuseId, file, docs) => {
 };
 
 export function resolveDocStatus(doc) {
+  if (doc.isDeleted) {
+    return {
+      status: "deleted",
+      label: "In Trash",
+      icon: "Trash2",
+    };
+  }
+
   switch (doc.status) {
     case "EXPIRED":
-      return { status: "expired", label: "Expired" };
+      return {
+        status: "expired",
+        label: "Expired",
+        icon: "Clock",
+      };
+
     case "REVOKED":
-      return { status: "rejected", label: "Revoked" };
+      return {
+        status: "rejected",
+        label: "Revoked",
+        icon: "XCircle",
+      };
+
     case "ARCHIVED":
-      return { status: "inactive", label: "Archived" };
+      return {
+        status: "archived",
+        label: "Archived",
+        icon: "Archive",
+      };
+
     case "ACTIVE":
     default:
       break;
@@ -53,13 +76,44 @@ export function resolveDocStatus(doc) {
 
   switch (doc.verificationStatus) {
     case "verified":
-      return { status: "active", label: "Verified" };
+      return {
+        status: "active",
+        label: "Verified",
+        icon: "CheckCircle",
+      };
+
     case "pending_review":
-      return { status: "pending", label: "Pending Review" };
+      return {
+        status: "pending",
+        label: "Pending Review",
+        icon: "Clock",
+      };
+
     case "rejected":
-      return { status: "rejected", label: "Rejected" };
+      return {
+        status: "rejected",
+        label: "Rejected",
+        icon: "XCircle",
+      };
+
     case "unverified":
     default:
-      return { status: "inactive", label: "Unverified" };
+      return {
+        status: "inactive",
+        label: "Unverified",
+        icon: "CircleDashed",
+      };
   }
 }
+
+export const upsertDoc = (list, updated) => {
+  const idx = list.findIndex((d) => d._id === updated._id);
+  if (idx !== -1) {
+    list[idx] = updated;
+  } else {
+    list.unshift(updated);
+  }
+};
+
+/** Remove a doc from the array by _id. */
+export const removeDoc = (list, id) => list.filter((d) => d._id !== id);

@@ -55,11 +55,13 @@ const STATUS_META = {
   pending_admin_review: "warning",
   "pending-approval": "warning",
   expiring: "warning",
+  deleted: "warning",
 
   "not-started": "neutral",
   inactive: "neutral",
   disabled: "neutral",
   unverified: "neutral",
+  archived: "neutral",
 
   rejected: "danger",
   suspended: "danger",
