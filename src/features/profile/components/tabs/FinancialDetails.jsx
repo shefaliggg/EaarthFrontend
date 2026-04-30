@@ -531,6 +531,7 @@ export default function FinanceDetails() {
             <EditableDocumentField
               label="FS4 DOCUMENT"
               isEditing={isEditingFinance}
+              isLoading={isFetchingDocs}
               fileName={resolvedFs4?.originalName ?? "No file uploaded"}
               fileUrl={resolvedFs4?.url ?? null}
               isUploaded={!!resolvedFs4}
@@ -583,6 +584,7 @@ export default function FinanceDetails() {
             <EditableDocumentField
               label="LATEST PAYSLIP"
               isEditing={isEditingFinance}
+              isLoading={isFetchingDocs}
               fileName={resolvedPayslip?.originalName ?? "No file uploaded"}
               fileUrl={resolvedPayslip?.url ?? null}
               isUploaded={!!resolvedPayslip}
@@ -637,6 +639,7 @@ export default function FinanceDetails() {
             <EditableDocumentField
               label="P45 DOCUMENT"
               isEditing={isEditingFinance}
+              isLoading={isFetchingDocs}
               fileName={resolvedP45?.originalName ?? "No file uploaded"}
               fileUrl={resolvedP45?.url ?? null}
               isUploaded={!!resolvedP45}
@@ -689,6 +692,7 @@ export default function FinanceDetails() {
             <EditableDocumentField
               label="VAT CERTIFICATE"
               isEditing={isEditingFinance}
+              isLoading={isFetchingDocs}
               fileName={resolvedVatCert?.originalName ?? "No file uploaded"}
               fileUrl={resolvedVatCert?.url ?? null}
               isUploaded={!!resolvedVatCert}

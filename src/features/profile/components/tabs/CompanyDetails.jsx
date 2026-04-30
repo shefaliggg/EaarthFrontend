@@ -716,6 +716,7 @@ export default function CompanyDetails() {
               <EditableDocumentField
                 label="CERTIFICATE OF INCORPORATION"
                 isEditing={isEditingDetails}
+                isLoading={isFetchingDocs}
                 fileName={
                   resolvedCertOfIncorp?.originalName ?? "No file uploaded"
                 }
@@ -1009,6 +1010,7 @@ export default function CompanyDetails() {
                   <EditableDocumentField
                     label="VAT CERTIFICATE"
                     isEditing={isEditingTax}
+                    isLoading={isFetchingDocs}
                     fileName={
                       resolvedVatCert?.originalName ?? "No file uploaded"
                     }

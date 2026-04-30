@@ -1,9 +1,14 @@
 import { useEffect, useRef } from "react";
-import { ImagePlus, Trash2, X } from "lucide-react";
+import { ImagePlus, Share2, Trash2, X } from "lucide-react";
 import EditableTextDataField from "../../../../../../shared/components/wrappers/EditableTextDataField";
 import EditableSelectField from "../../../../../../shared/components/wrappers/EditableSelectField";
 import { Button } from "../../../../../../shared/components/ui/button";
 import { SmartIcon } from "../../../../../../shared/components/SmartIcon";
+import { InfoTooltip } from "../../../../../../shared/components/InfoTooltip";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../../shared/stores/useModalStore";
 
 export default function AllowanceItemCard({
   data,
@@ -19,7 +24,9 @@ export default function AllowanceItemCard({
   errors,
 }) {
   const fileInputRef = useRef(null);
+  const { openModal } = useModalStore();
 
+  console.log("Allowance data:", data);
   const handleChange = (field, value) => {
     onChange({
       ...data,
@@ -30,7 +37,9 @@ export default function AllowanceItemCard({
   // 🔥 Image logic (new + old merged)
   const imagePreview = data.imageFile
     ? URL.createObjectURL(data.imageFile)
-    : data.image || null;
+    : data.image?.url || null;
+
+    const hasImage = Boolean(imagePreview);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -39,12 +48,16 @@ export default function AllowanceItemCard({
   };
 
   const handleRemoveImage = () => {
-    onChange({ ...data, imageFile: null, image: "" });
+    onChange({ ...data, imageFile: null, image: null });
   };
 
   useEffect(() => {
-    return () => URL.revokeObjectURL(imagePreview);
-  }, [imagePreview]);
+    if (!data.imageFile) return;
+
+    const url = URL.createObjectURL(data.imageFile);
+
+    return () => URL.revokeObjectURL(url);
+  }, [data.imageFile]);
 
   const lineTotal = (data.qty || 0) * (data.amount || 0);
 
@@ -52,13 +65,15 @@ export default function AllowanceItemCard({
     <div className="flex items-center gap-3 border rounded-xl p-3 bg-card shadow-md">
       {/* ── Image ───────────────────────────────────────── */}
       <div className="relative w-20 h-20 bg-muted rounded-md flex items-center justify-center overflow-hidden">
-        {imagePreview ? (
+        {hasImage ? (
           <>
             <img
               src={imagePreview}
               alt=""
               className="w-full h-full object-cover"
             />
+
+            {/* ❌ Remove button (editing only) */}
             {isEditing && (
               <button
                 type="button"
@@ -67,6 +82,31 @@ export default function AllowanceItemCard({
               >
                 <X size={10} />
               </button>
+            )}
+
+            {/* ✅ Share button (view mode only) */}
+            {!isEditing && (
+              <div className="absolute bottom-1 right-1">
+                <InfoTooltip content="Share image">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-6 w-6 rounded-full shadow-md"
+                    onClick={() =>
+                      openModal(MODAL_TYPES.SHARE_DOCUMENT, {
+                        document: {
+                          key: data.image?.key,
+                          name: data.itemName || "Allowance Item",
+                          mime: data.image?.mimeType,
+                          documentType: "Image"
+                        },
+                      })
+                    }
+                  >
+                    <Share2 size={12} />
+                  </Button>
+                </InfoTooltip>
+              </div>
             )}
           </>
         ) : isEditing ? (

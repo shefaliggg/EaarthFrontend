@@ -287,7 +287,19 @@ export default function AllowanceDetails() {
 
     const fd = new FormData();
 
-    const itemsData = cleanedItems.map(({ imageFile, id, ...rest }) => rest);
+    const itemsData = cleanedItems.map(({ imageFile, id, image, ...rest }) => {
+      return {
+        ...rest,
+        image: image?.key
+          ? {
+              key: image.key,
+              mimeType: image.mimeType,
+              size: image.size,
+            }
+          : null,
+      };
+    });
+
     fd.append("items", JSON.stringify(itemsData));
 
     filteredItems.forEach((item, index) => {
@@ -458,9 +470,11 @@ export default function AllowanceDetails() {
               <EditableDocumentField
                 label="DRIVING LICENCE"
                 isEditing={isEditingVehicle}
+                isLoading={isFetchingDocs}
                 fileName={
                   resolvedDrivingLicence?.originalName ?? "No file uploaded"
                 }
+                isRequired
                 fileUrl={resolvedDrivingLicence?.url ?? null}
                 isUploaded={!!resolvedDrivingLicence}
                 status={resolvedDrivingLicence?.verificationStatus || "Pending"}
@@ -511,9 +525,12 @@ export default function AllowanceDetails() {
               <EditableDocumentField
                 label="VEHICLE INSURANCE CERTIFICATE"
                 isEditing={isEditingVehicle}
+                isLoading={isFetchingDocs}
                 fileName={
                   resolvedVehicleInsurance?.originalName ?? "No file uploaded"
                 }
+                isRequired
+
                 fileUrl={resolvedVehicleInsurance?.url ?? null}
                 isUploaded={!!resolvedVehicleInsurance}
                 status={
