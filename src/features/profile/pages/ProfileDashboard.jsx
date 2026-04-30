@@ -21,10 +21,11 @@ import {
 import DocumentsDetails from "../components/tabs/documents-details/DocumentsDetails";
 import AgencyDetails from "../components/tabs/AgencyDetails";
 import CompanyDetails from "../components/tabs/CompanyDetails";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function ProfileDashboard() {
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("identity");
+  const location = useLocation();
 
   // Shared file upload state
   const [uploads, setUploads] = useState({
@@ -131,25 +132,16 @@ export default function ProfileDashboard() {
   };
 
   const tabs = [
-    { value: "identity", label: "Identity", icon: User },
-    { value: "contact", label: "Contact", icon: MapPin },
-    { value: "agency", label: "Agency", icon: BriefcaseBusiness },
-    { value: "company", label: "Company", icon: Briefcase },
-    { value: "financial", label: "Financial", icon: DollarSign },
-    { value: "allowances", label: "Allowances", icon: Car },
-    { value: "health", label: "Health", icon: Heart },
-    { value: "documents", label: "Documents", icon: FileText },
-    { value: "signature", label: "My Signature", icon: PenTool },
+    { route: "/profile", label: "Identity", icon: User },
+    { route: "/profile/contact", label: "Contact", icon: MapPin },
+    { route: "/profile/agency", label: "Agency", icon: BriefcaseBusiness },
+    { route: "/profile/company", label: "Company", icon: Briefcase },
+    { route: "/profile/financial", label: "Financial", icon: DollarSign },
+    { route: "/profile/allowance", label: "Allowances", icon: Car },
+    { route: "/profile/health", label: "Health", icon: Heart },
+    { route: "/profile/documents", label: "Documents", icon: FileText },
+    { route: "/profile/signature", label: "My Signature", icon: PenTool },
   ];
-
-  //   const tabs = [
-  //   { route: "/profile", label: "Identity", icon: User },
-  //   { route: "/profile/contact", label: "Contact", icon: MapPin },
-  //   { route: "/profile/financial", label: "Financial", icon: DollarSign },
-  //   { route: "/profile/allowances", label: "Allowances", icon: Car },
-  //   { route: "/profile/health", label: "Health", icon: Heart },
-  //   { route: "/profile/signature", label: "My Signature", icon: PenTool },
-  // ];
 
   return (
     <div className="mx-auto space-y-6">
@@ -164,101 +156,15 @@ export default function ProfileDashboard() {
       <div className="space-y-4">
         <FilterPillTabs
           options={tabs}
-          value={activeTab}
+          value={location.pathname}
           onChange={(value) => setActiveTab(value)}
           size="md"
           fullWidth
           showActiveIndicator
+          navigatable
         />
 
-        {/* <Outlet /> */}
-
-        {/* TAB CONTENTS */}
-        {activeTab === "identity" && (
-          <IdentityDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            uploads={uploads}
-            setUploads={setUploads}
-          />
-        )}
-
-        {activeTab === "contact" && (
-          <ContactDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        )}
-        {activeTab === "agency" && (
-          <AgencyDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        )}
-        {activeTab === "company" && (
-          <CompanyDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            uploads={uploads}
-            setUploads={setUploads}
-          />
-        )}
-
-        {activeTab === "financial" && (
-          <FinancialDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            uploads={uploads}
-            setUploads={setUploads}
-          />
-        )}
-
-        {activeTab === "allowances" && (
-          <AllowanceDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-            uploads={uploads}
-            setUploads={setUploads}
-          />
-        )}
-
-        {activeTab === "health" && (
-          <HealthDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        )}
-        {activeTab === "documents" && (
-          <DocumentsDetails
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        )}
-
-        {activeTab === "signature" && (
-          <MySignature
-            profile={profile}
-            setProfile={setProfile}
-            isEditing={isEditing}
-            setIsEditing={setIsEditing}
-          />
-        )}
+        <Outlet />
       </div>
     </div>
   );
