@@ -124,6 +124,22 @@ export const removeVehicleAllowanceConfig = {
   variant: "danger",
 };
 
+export const archiveDocumentConfirmConfig = {
+  title: "Archive Document?",
+  description:
+    "This document will be archived and removed from active use.\n\nIf no action is taken, it will be automatically moved to trash after 6 months. Once in trash, it will be permanently deleted after 30 days.",
+  confirmText: "Archive",
+  variant: "default",
+};
+
+export const deleteDocumentConfirmConfig = {
+  title: "Move to Trash?",
+  description:
+    "This document will be moved to trash.\n\nYou can restore it within 30 days. After that, it will be permanently deleted and cannot be recovered.",
+  confirmText: "Move to Trash",
+  variant: "danger",
+};
+
 export const statusConfigMap = {
   suspend: SUSPEND_STUDIO_CONFIG,
   deactivate: DEACTIVATE_STUDIO_CONFIG,

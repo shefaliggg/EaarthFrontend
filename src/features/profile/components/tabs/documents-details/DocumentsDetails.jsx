@@ -18,6 +18,8 @@ import StateDisplay from "../../../../../shared/components/StateDisplay";
 import { DocumentListCardSkeleton } from "./components/skeltons/DocumentListCardSkeleton";
 import { useDocumentActions } from "../../../../user-documents/hooks/useDocumentActions";
 import { fetchDocumentsThunk } from "../../../../user-documents/store/document.thunk";
+import { InfoPanel } from "../../../../../shared/components/panels/InfoPanel";
+import { Archive, Trash2 } from "lucide-react";
 
 const SORT_OPTIONS = [
   { label: "Last Added", value: "latest" },
@@ -171,7 +173,7 @@ export default function DocumentsDetails({
       }
     >
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <SearchBar
           placeholder="Search documents…"
           value={search}
@@ -201,6 +203,45 @@ export default function DocumentsDetails({
           />
         </div>
       </div>
+
+      {viewMode === "archived" && (
+        <InfoPanel
+          title="Archived documents"
+          icon={Archive}
+          variant="warning"
+          dismissible
+          storageKey="hide_archived_info"
+        >
+          <ul className="list-disc pl-4 space-y-1">
+            <li>Removed from active use but kept safely stored</li>
+            <li>
+              Automatically moved to trash after{" "}
+              <span className="font-medium">6 months</span> if no action is
+              taken
+            </li>
+            <li>Can be restored anytime before moving to trash</li>
+          </ul>
+        </InfoPanel>
+      )}
+
+      {viewMode === "trash" && (
+        <InfoPanel
+          title="Trash"
+          icon={Trash2}
+          variant="danger"
+          dismissible
+          storageKey="hide_trash_info"
+        >
+          <ul className="list-disc pl-4 space-y-1">
+            <li>Scheduled for permanent deletion</li>
+            <li>
+              Automatically removed after{" "}
+              <span className="font-medium">30 days</span>
+            </li>
+            <li>Can be restored anytime before deletion</li>
+          </ul>
+        </InfoPanel>
+      )}
 
       {/* ── Views ── */}
       {view === "table" && (

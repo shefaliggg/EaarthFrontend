@@ -11,6 +11,7 @@ import {
   Loader2,
   ArchiveRestore,
   Undo2,
+  Circle,
 } from "lucide-react";
 import { StatusBadge } from "@/shared/components/badges/StatusBadge";
 import { resolveDocStatus } from "../../../../../user-documents/store/document.selector";
@@ -23,6 +24,14 @@ import {
 import { downloadFile } from "../../../../../../shared/config/downloadFile";
 import { InfoTooltip } from "../../../../../../shared/components/InfoTooltip";
 import { useDocumentActions } from "../../../../../user-documents/hooks/useDocumentActions";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../../shared/stores/useModalStore";
+import {
+  archiveDocumentConfirmConfig,
+  deleteDocumentConfirmConfig,
+} from "../../../../../../shared/config/ConfirmActionsConfig";
 
 export function DocumentListCard({ row, onView }) {
   const {
@@ -35,6 +44,8 @@ export function DocumentListCard({ row, onView }) {
     isRestoring,
     isUnarchiving,
   } = useDocumentActions();
+
+  const { openModal } = useModalStore();
 
   const { status, label } = resolveDocStatus(row);
   const usageCount = row.usage?.length ?? 0;
@@ -65,7 +76,9 @@ export function DocumentListCard({ row, onView }) {
             </span>
 
             {row.isPrimary && (
-              <BadgeCheck className="w-4 h-4 text-background fill-green-500 shrink-0" />
+              <InfoTooltip content={"Currently active document"}>
+                <Circle className="w-2.5 h-2.5 fill-current text-green-500 animate-pulse" />
+              </InfoTooltip>
             )}
 
             <StatusBadge
@@ -157,7 +170,15 @@ export function DocumentListCard({ row, onView }) {
                   variant="outline"
                   size="icon"
                   disabled={isUsed || isArchiving(row._id)}
-                  onClick={() => archiveDocument(row)}
+                  onClick={() =>
+                    openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                      config: archiveDocumentConfirmConfig,
+                      autoClose: true,
+                      onConfirm: async () => {
+                        await archiveDocument(row);
+                      },
+                    })
+                  }
                 >
                   {isArchiving(row._id) ? (
                     <Loader2 className="animate-spin text-muted-foreground" />
@@ -190,7 +211,15 @@ export function DocumentListCard({ row, onView }) {
               variant="outline_destructive"
               size="icon"
               disabled={isDeleting(row._id)}
-              onClick={() => deleteDocument(row)}
+              onClick={() =>
+                openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                  config: deleteDocumentConfirmConfig,
+                  autoClose: true,
+                  onConfirm: async () => {
+                    await deleteDocument(row);
+                  },
+                })
+              }
             >
               {isDeleting(row._id) ? (
                 <Loader2 className="animate-spin text-muted-foreground" />
@@ -202,7 +231,7 @@ export function DocumentListCard({ row, onView }) {
         )}
 
         {isDeleted && (
-          <InfoTooltip content="Restore from Trash">
+          <InfoTooltip content="Restore document (undo delete)">
             <Button
               variant="outline_success"
               size="icon"

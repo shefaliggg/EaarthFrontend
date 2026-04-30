@@ -12,6 +12,8 @@ import {
   ArchiveRestore,
   Loader2,
   Undo2,
+  Zap,
+  Circle,
 } from "lucide-react";
 import { StatusBadge } from "@/shared/components/badges/StatusBadge";
 import { Button } from "@/shared/components/ui/button";
@@ -27,6 +29,11 @@ import { Document, Page } from "react-pdf";
 import { useEffect, useRef, useState } from "react";
 import { InfoTooltip } from "../../../../../../shared/components/InfoTooltip";
 import { useDocumentActions } from "../../../../../user-documents/hooks/useDocumentActions";
+import { MODAL_TYPES, useModalStore } from "../../../../../../shared/stores/useModalStore";
+import {
+  archiveDocumentConfirmConfig,
+  deleteDocumentConfirmConfig,
+} from "../../../../../../shared/config/ConfirmActionsConfig";
 
 export function DocumentPreviewCard({ row, onView }) {
   const {
@@ -39,6 +46,8 @@ export function DocumentPreviewCard({ row, onView }) {
     isRestoring,
     isUnarchiving,
   } = useDocumentActions();
+
+  const { openModal } = useModalStore();
 
   const { status, label } = resolveDocStatus(row);
   const usageCount = row.usage?.length ?? 0;
@@ -75,22 +84,32 @@ export function DocumentPreviewCard({ row, onView }) {
       {/* ── PREVIEW AREA ── */}
       <div className="relative aspect-square bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-purple-400/5 flex items-center justify-center m-1.5 rounded-md overflow-hidden shadow">
         {/* Top-left: doc status */}
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-2 right-3 z-10">
           <StatusBadge status={status} label={label} size="xs" />
         </div>
 
         {/* Top-right: primary star OR doc type */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
-          {row.isPrimary && (
-            <BadgeCheck className="w-5 h-5 text-background fill-green-500" />
-          )}
+        <div className="absolute top-2 left-3 z-10">
           <StatusBadge
             status="highlight"
             label={row.documentType?.replace(/_/g, " ")}
             size="xs"
             showIcon={false}
-            // className={"bg-primary! text-background!"}
+            className={
+              "bg-primary/80 backdrop-blur-2xl text-background text-[9px]"
+            }
           />
+        </div>
+
+        <div className="absolute bottom-3 right-3 z-10">
+          {row.isPrimary && (
+            <InfoTooltip content={"Currently active document"}>
+              <div className="flex items-center gap-1.5">
+                <Circle className="w-2.5 h-2.5 fill-current text-green-500 animate-pulse" />
+                <p className="text-[11px] text-green-500">Active</p>
+              </div>
+            </InfoTooltip>
+          )}
         </div>
 
         {/* Thumbnail or icon */}
@@ -158,7 +177,7 @@ export function DocumentPreviewCard({ row, onView }) {
         {usageCount > 0 && (
           <p className="text-xs text-muted-foreground">
             Used in{" "}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-primary">
               {usageCount} context{usageCount > 1 ? "s" : ""}
             </span>
           </p>
@@ -216,7 +235,15 @@ export function DocumentPreviewCard({ row, onView }) {
                     variant="outline"
                     size="icon"
                     disabled={isUsed || isArchiving(row._id)}
-                    onClick={() => archiveDocument(row)}
+                    onClick={() =>
+                      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                        config: archiveDocumentConfirmConfig,
+                        autoClose: true,
+                        onConfirm: async () => {
+                          await archiveDocument(row);
+                        },
+                      })
+                    }
                   >
                     {isArchiving(row._id) ? (
                       <Loader2 className="animate-spin text-muted-foreground" />
@@ -249,7 +276,15 @@ export function DocumentPreviewCard({ row, onView }) {
                 variant="outline_destructive"
                 size="icon"
                 disabled={isDeleting(row._id)}
-                onClick={() => deleteDocument(row)}
+                onClick={() =>
+                  openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                    config: deleteDocumentConfirmConfig,
+                    autoClose: true,
+                    onConfirm: async () => {
+                      await deleteDocument(row);
+                    },
+                  })
+                }
               >
                 {isDeleting(row._id) ? (
                   <Loader2 className="animate-spin text-muted-foreground" />
@@ -261,7 +296,7 @@ export function DocumentPreviewCard({ row, onView }) {
           )}
 
           {isDeleted && (
-            <InfoTooltip content="Restore from Trash">
+            <InfoTooltip content="Restore document (undo delete)">
               <Button
                 variant="outline_success"
                 size="icon"

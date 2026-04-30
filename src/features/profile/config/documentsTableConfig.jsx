@@ -1,4 +1,12 @@
-import { FileText, Download, Share2, Star, BadgeCheck } from "lucide-react";
+import {
+  FileText,
+  Download,
+  Share2,
+  Star,
+  BadgeCheck,
+  Zap,
+  Circle,
+} from "lucide-react";
 import { StatusBadge } from "../../../shared/components/badges/StatusBadge";
 import {
   convertToPrettyText,
@@ -10,6 +18,12 @@ import { downloadFile } from "../../../shared/config/downloadFile";
 import { Button } from "@/shared/components/ui/button";
 import ActionsMenu from "../../../shared/components/menus/ActionsMenu";
 import { useDocumentActions } from "../../user-documents/hooks/useDocumentActions";
+import { InfoTooltip } from "../../../shared/components/InfoTooltip";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../shared/stores/useModalStore";
+import { archiveDocumentConfirmConfig, deleteDocumentConfirmConfig } from "../../../shared/config/ConfirmActionsConfig";
 
 export const DocumentTableColumns = ({ onView } = {}) => {
   const {
@@ -22,6 +36,8 @@ export const DocumentTableColumns = ({ onView } = {}) => {
     isRestoring,
     isUnarchiving,
   } = useDocumentActions();
+
+  const { openModal } = useModalStore();
 
   return [
     // ── Name + size ──────────────────────────────────────────────────────────────
@@ -36,11 +52,13 @@ export const DocumentTableColumns = ({ onView } = {}) => {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-medium text-foreground leading-none truncate">
+              <span className="font-medium text-foreground leading-none truncate pb-0.5">
                 {convertToPrettyText(row.label || row.originalName)}
               </span>
               {row.isPrimary && (
-                <BadgeCheck className="w-4 h-4 text-background fill-green-500 shrink-0" />
+                <InfoTooltip content={"Currently active document"}>
+                  <Circle className="w-2.5 h-2.5 fill-current text-green-500 animate-pulse" />
+                </InfoTooltip>
               )}
             </div>
             <div className="text-xs text-muted-foreground mt-0.5">
@@ -121,7 +139,9 @@ export const DocumentTableColumns = ({ onView } = {}) => {
       align: "center",
       render: (row) => {
         const { status, label, icon } = resolveDocStatus(row);
-        return <StatusBadge status={status} label={label} icon={icon} size="sm" />;
+        return (
+          <StatusBadge status={status} label={label} icon={icon} size="sm" />
+        );
       },
     },
 
@@ -187,7 +207,14 @@ export const DocumentTableColumns = ({ onView } = {}) => {
                   ? {
                       label: "Archive",
                       icon: "Archive",
-                      onClick: () => archiveDocument(row),
+                      onClick: () =>
+                        openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                          config: archiveDocumentConfirmConfig,
+                          autoClose: true,
+                          onConfirm: async () => {
+                            await archiveDocument(row);
+                          },
+                        }),
                       disabled: isUsed || isArchiving(row._id),
                       loading: isArchiving(row._id),
                       description: isUsed
@@ -212,7 +239,14 @@ export const DocumentTableColumns = ({ onView } = {}) => {
                   icon: "Trash2",
                   destructive: true,
                   separatorBefore: true,
-                  onClick: () => deleteDocument(row),
+                  onClick: () =>
+                    openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                      config: deleteDocumentConfirmConfig,
+                      autoClose: true,
+                      onConfirm: async () => {
+                        await deleteDocument(row);
+                      },
+                    }),
                   disabled: isDeleting(row._id),
                   loading: isDeleting(row._id),
                 },
