@@ -47,7 +47,7 @@ function ProjectChat() {
   const { projectMembers } = useSelector((state) => state.project);
   const { conversations, setSelectedChat, loadConversations } = useChatStore();
 
-  console.log("project members:",projectMembers)
+  // console.log("project members:",projectMembers)
   const currentProject = {
     _id: DEFAULT_PROJECT_ID,
     name: "Default Project",

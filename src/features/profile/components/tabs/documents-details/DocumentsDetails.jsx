@@ -74,7 +74,7 @@ export default function DocumentsDetails({
         viewMode === "trash" ? { includeDeleted: "true" } : {},
       ),
     );
-  }, [viewMode, view]);
+  }, [viewMode]);
 
   // ── filter + search ──────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
