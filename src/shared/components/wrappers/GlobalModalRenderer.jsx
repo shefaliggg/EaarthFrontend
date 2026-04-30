@@ -1,3 +1,4 @@
+import ShareDocumentDialog from "../../../features/profile/components/tabs/documents-details/components/ShareDocumentDialog";
 import ImagePreviewDialog from "../../../features/projects/project-chat/Dialogs/ImagePreviewDialog";
 import { MODAL_TYPES, useModalStore } from "../../stores/useModalStore";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
@@ -39,6 +40,15 @@ export default function GlobalModalRenderer() {
           error={data?.error}
           onConfirm={data?.onConfirm}
           autoClose={data?.autoClose}
+        />
+      );
+
+    case MODAL_TYPES.SHARE_DOCUMENT:
+      return (
+        <ShareDocumentDialog
+          open={isOpen}
+          onOpenChange={closeModal}
+          document={data?.document}
         />
       );
 

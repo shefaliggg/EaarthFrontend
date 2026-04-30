@@ -23,7 +23,10 @@ import {
   MODAL_TYPES,
   useModalStore,
 } from "../../../shared/stores/useModalStore";
-import { archiveDocumentConfirmConfig, deleteDocumentConfirmConfig } from "../../../shared/config/ConfirmActionsConfig";
+import {
+  archiveDocumentConfirmConfig,
+  deleteDocumentConfirmConfig,
+} from "../../../shared/config/ConfirmActionsConfig";
 
 export const DocumentTableColumns = ({ onView } = {}) => {
   const {
@@ -198,7 +201,10 @@ export const DocumentTableColumns = ({ onView } = {}) => {
               !isDeleted && {
                 label: "Share",
                 icon: "Share2",
-                onClick: () => {},
+                onClick: () =>
+                  openModal(MODAL_TYPES.SHARE_DOCUMENT, {
+                    document: row,
+                  }),
               },
 
               // 📦 Archive / Unarchive

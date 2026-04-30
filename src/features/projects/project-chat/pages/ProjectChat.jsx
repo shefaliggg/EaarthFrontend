@@ -47,6 +47,7 @@ function ProjectChat() {
   const { projectMembers } = useSelector((state) => state.project);
   const { conversations, setSelectedChat, loadConversations } = useChatStore();
 
+  console.log("project members:",projectMembers)
   const currentProject = {
     _id: DEFAULT_PROJECT_ID,
     name: "Default Project",
@@ -226,32 +227,6 @@ function ProjectChat() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* <DropdownMenu>
-                  <InfoTooltip content={"Menu"}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <EllipsisVertical className=" w-5! h-5!" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </InfoTooltip>
-                  <DropdownMenuContent align="end" className="min-w-48">
-                    <DropdownMenuLabel>Chat menu</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem onClick={() => setShowDirectDialog(true)}>
-                      <MessageCirclePlus className="h-4 w-4" />
-                      Archive Chat
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => setShowSubjectDialog(true)}
-                    >
-                      <Users className="h-4 w-4" />
-                      Unread All Chats
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
               </div>
             </>
           }

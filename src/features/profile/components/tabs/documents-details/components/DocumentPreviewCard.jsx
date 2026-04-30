@@ -29,7 +29,10 @@ import { Document, Page } from "react-pdf";
 import { useEffect, useRef, useState } from "react";
 import { InfoTooltip } from "../../../../../../shared/components/InfoTooltip";
 import { useDocumentActions } from "../../../../../user-documents/hooks/useDocumentActions";
-import { MODAL_TYPES, useModalStore } from "../../../../../../shared/stores/useModalStore";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../../shared/stores/useModalStore";
 import {
   archiveDocumentConfirmConfig,
   deleteDocumentConfirmConfig,
@@ -195,7 +198,16 @@ export function DocumentPreviewCard({ row, onView }) {
       <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-auto">
         {!isDeleted && (
           <InfoTooltip content={"Share to Chat"}>
-            <Button variant="outline" size="sm" className="text-primary">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-primary"
+              onClick={() =>
+                openModal(MODAL_TYPES.SHARE_DOCUMENT, {
+                  document: row,
+                })
+              }
+            >
               <Share2 className="w-4 h-4" />
             </Button>
           </InfoTooltip>

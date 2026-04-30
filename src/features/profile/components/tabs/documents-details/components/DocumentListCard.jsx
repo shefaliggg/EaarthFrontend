@@ -131,7 +131,16 @@ export function DocumentListCard({ row, onView }) {
       <div className="flex items-center gap-2 shrink-0">
         {!isDeleted && (
           <InfoTooltip content={"Share to Chat"}>
-            <Button variant="outline" size="sm" className="text-primary">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-primary"
+              onClick={() =>
+                openModal(MODAL_TYPES.SHARE_DOCUMENT, {
+                  document: row,
+                })
+              }
+            >
               <Share2 className="w-4 h-4" />
             </Button>
           </InfoTooltip>
