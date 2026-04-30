@@ -13,6 +13,8 @@
  *   - subDepartment is a plain string
  *   - department stored as display name string
  *   - specialStipulations included in API payload
+ *   - prefillFromUser: production admin enters userId → recipient, representation
+ *     and allowances auto-populated from completed crew profile
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -180,8 +182,6 @@ function offerToSchedule(offer) {
 }
 
 // ─── Transform allowances array → object ─────────────────────────────────────
-//
-// Build base with ALL enabled: false, then overlay only the stored (enabled) ones.
 function offerToAllowances(offer) {
   const result = Object.fromEntries(
     Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
@@ -193,12 +193,7 @@ function offerToAllowances(offer) {
     if (!a?.key) return;
     const key = a.key;
     if (result[key] !== undefined) {
-      result[key] = {
-        ...result[key],
-        ...a,
-        key,
-        enabled: !!a.enabled,
-      };
+      result[key] = { ...result[key], ...a, key, enabled: !!a.enabled };
     } else {
       result[key] = { ...a, key, enabled: !!a.enabled };
     }
@@ -207,15 +202,7 @@ function offerToAllowances(offer) {
   return result;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// computeCategoryTotals
-//
-// Groups inventoryItems by item.category and sums (quantity × amount) per group.
-//
-// inventoryItems shape: [{ category: "box"|"software"|"equipment", quantity: number, amount: number }]
-//
-// Returns: { box: number, software: number, equipment: number }
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── computeCategoryTotals ────────────────────────────────────────────────────
 function computeCategoryTotals(inventoryItems = []) {
   const totals = { box: 0, software: 0, equipment: 0 };
   inventoryItems.forEach((item) => {
@@ -248,10 +235,12 @@ export default function CreateOfferPage() {
   const [dialog,          setDialog         ] = useState(null);
   const [editInitialized, setEditInitialized] = useState(false);
 
-  // ── Inventory items from the profile/box-rental section ───────────────────
-  // Shape: [{ category: "box"|"software"|"equipment", quantity: number, amount: number, ... }]
-  // Populated by CreateOfferLayout via the onInventoryChange callback.
   const [inventoryItems, setInventoryItems] = useState([]);
+
+  // ── Prefill state ──────────────────────────────────────────────────────────
+  const [prefillUserId, setPrefillUserId] = useState("");
+  const [isPrefilling,  setIsPrefilling ] = useState(false);
+  const [prefillDone,   setPrefillDone  ] = useState(false);
 
   const savedOfferIdRef = useRef(null);
   const proj = projectName || "demo-project";
@@ -269,9 +258,6 @@ export default function CreateOfferPage() {
   const [overtimeTags,        setOvertimeTags       ] = useState([]);
   const [engineSettings]                              = useState(defaultEngineSettings);
 
-  // ── categoryTotals: grouped sums per category ─────────────────────────────
-  // { box: number, software: number, equipment: number }
-  // Used by AllowanceRow to calculate live percentage cap per allowance type.
   const categoryTotals = useMemo(
     () => computeCategoryTotals(inventoryItems),
     [inventoryItems]
@@ -294,7 +280,6 @@ export default function CreateOfferPage() {
     setOvertimeBudgetCodes(existingOffer.overtimeBudgetCodes || []);
     setOvertimeTags(existingOffer.overtimeTags               || []);
 
-    // Restore inventory items if stored on the offer (so categoryTotals rehydrates)
     if (Array.isArray(existingOffer.inventoryItems)) {
       setInventoryItems(existingOffer.inventoryItems);
     }
@@ -330,6 +315,90 @@ export default function CreateOfferPage() {
     const fee = parseFloat(contractData?.feePerDay) || 0;
     return calculateRates(fee, engineSettings);
   }, [contractData?.feePerDay, engineSettings]);
+
+  // ── Prefill from crew profile ──────────────────────────────────────────────
+  //
+  // Calls GET /offers/prefill/:userId
+  // Merges recipient + representation into contractData.
+  // Merges profile allowances (box rental, equipment, software, computer, mobile)
+  // into allowances state — each enabled with summed feePerWeek + description.
+  // Also restores inventoryItems so categoryTotals rehydrates for AllowanceRow caps.
+
+  const handlePrefillFromUser = async () => {
+    const uid = prefillUserId.trim();
+    if (!uid) return;
+
+    setIsPrefilling(true);
+    try {
+      const res = await axiosConfig.get(`/offers/prefill/${uid}`, { headers: rh() });
+      const {
+        recipient,
+        representation,
+        allowances:     profileAllowances,
+        inventoryItems: profileInventory,
+      } = res.data.data;
+
+      // Merge recipient + representation
+      setContractData((prev) => ({
+        ...prev,
+        recipient:      { ...prev.recipient,      ...recipient },
+        representation: { ...prev.representation, ...representation },
+      }));
+
+      // Merge allowances — only overwrite keys that came from profile
+      if (profileAllowances?.length > 0) {
+        setAllowances((prev) => {
+          const next = { ...prev };
+          profileAllowances.forEach((a) => {
+            if (!a.key) return;
+            next[a.key] = {
+              ...(next[a.key] || {}),
+              ...a,
+              enabled: true,
+            };
+          });
+          return next;
+        });
+      }
+
+      // Restore inventory items so categoryTotals rehydrates
+      if (profileInventory?.length > 0) {
+        setInventoryItems(profileInventory);
+      }
+
+      setPrefillDone(true);
+      toast.success("✅ Profile data loaded successfully!");
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "User not found or profile incomplete"
+      );
+    } finally {
+      setIsPrefilling(false);
+    }
+  };
+
+  // Allow pressing Enter in the userId input
+  const handlePrefillKeyDown = (e) => {
+    if (e.key === "Enter") handlePrefillFromUser();
+  };
+
+  // Clear prefill — resets recipient + representation + allowances back to defaults
+  const handleClearPrefill = () => {
+    setContractData((prev) => ({
+      ...prev,
+      recipient:      defaultContractData.recipient,
+      representation: defaultContractData.representation,
+    }));
+    setAllowances(
+      Object.fromEntries(
+        Object.entries(defaultAllowances).map(([k, v]) => [k, { ...v, enabled: false }])
+      )
+    );
+    setInventoryItems([]);
+    setPrefillUserId("");
+    setPrefillDone(false);
+    toast.info("Prefill cleared");
+  };
 
   // ── Build API payload ──────────────────────────────────────────────────────
   const buildPayload = (isDraft = false) => {
@@ -405,11 +474,8 @@ export default function CreateOfferPage() {
       overtimeTags,
       allowances: allowancesArr,
 
-      // ── Inventory / profile items ────────────────────────────────────────
-      // Stored so they can be restored on edit and categoryTotals rehydrated.
-      // Each item must carry a `category` field ("box" | "software" | "equipment").
       inventoryItems,
-      categoryTotals,   // denormalised snapshot — useful for backend reporting
+      categoryTotals,
 
       notes: {
         otherDealProvisions: cd.notes?.otherDealProvisions || "",
@@ -616,6 +682,66 @@ export default function CreateOfferPage() {
             </p>
           </div>
         )}
+
+        {/* ── Prefill from crew profile — only shown on create, not edit ── */}
+        {!isEditMode && (
+          <div className="mt-3 bg-white border border-purple-100 rounded-lg px-4 py-3">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+
+              {/* Left — label + description */}
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-neutral-700">
+                  Load from crew profile
+                </p>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Enter a crew member's User ID to prefill recipient details, representation and allowances from their completed profile.
+                </p>
+              </div>
+
+              {/* Right — input + buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                {prefillDone && (
+                  <button
+                    onClick={handleClearPrefill}
+                    className="text-[11px] text-neutral-400 hover:text-neutral-600 underline underline-offset-2 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+                <input
+                  type="text"
+                  placeholder="Paste User ID…"
+                  value={prefillUserId}
+                  onChange={(e) => setPrefillUserId(e.target.value)}
+                  onKeyDown={handlePrefillKeyDown}
+                  disabled={isPrefilling}
+                  className="text-xs border border-neutral-200 rounded-md px-3 py-1.5 w-56 focus:outline-none focus:ring-1 focus:ring-purple-400 disabled:opacity-50 disabled:bg-neutral-50"
+                />
+                <button
+                  onClick={handlePrefillFromUser}
+                  disabled={isPrefilling || !prefillUserId.trim()}
+                  className="text-xs font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-md px-3 py-1.5 disabled:opacity-40 transition-colors whitespace-nowrap"
+                >
+                  {isPrefilling ? "Loading…" : "Load Profile"}
+                </button>
+              </div>
+
+            </div>
+
+            {/* Success badge shown after prefill */}
+            {prefillDone && (
+              <div className="mt-2.5 flex items-center gap-2 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md px-3 py-1.5">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>
+                  Profile loaded for <strong>{contractData.recipient?.fullName || prefillUserId}</strong>.
+                  Recipient, representation and allowances prefilled — complete the remaining fields below.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="px-6 pb-10">
@@ -646,8 +772,6 @@ export default function CreateOfferPage() {
                 onSave={isEditMode ? handleEditSave : handleSaveDraft}
                 onPrint={isEditMode ? handleEditSave : handleSaveDraft}
                 categories={categories}
-                // ← Pass category totals instead of a single totalProductValue.
-                //   AllowanceRow resolves the correct bucket per allowance key.
                 categoryTotals={categoryTotals}
               />
             </CardContent>
@@ -677,10 +801,6 @@ export default function CreateOfferPage() {
                 schedule={schedule}
                 hideOfferSections={false}
                 hideContractDocument={false}
-                // ── Inventory items: CreateOfferLayout calls onInventoryChange
-                //    whenever the profile section adds/removes/edits lines.
-                //    Each item MUST include a `category` field:
-                //      "box" | "software" | "equipment"
                 inventoryItems={inventoryItems}
                 onInventoryChange={setInventoryItems}
               />

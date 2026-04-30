@@ -24,7 +24,7 @@ import { RoleSection }            from "../createoffer/RoleSection";
 import { TaxStatusSection }       from "../createoffer/TaxStatusSection";
 import { PlaceOfWorkSection }     from "../createoffer/PlaceOfWorkSection";
 import { EngagementSection }      from "../createoffer/EngagementSection";
-import { ScheduleSection }        from "../createoffer/ScheduleSection";
+// import { ScheduleSection }        from "../createoffer/ScheduleSection";
 import { RatesSection }           from "../createoffer/RatesSection";
 import { SalarySection, OvertimeSection } from "../createoffer/SalaryOvertimeSection";
 import { AllowancesSection }      from "../createoffer/AllowancesSection";
@@ -41,7 +41,7 @@ const SECTION_CONFIG = [
   { id: "taxStatus",     title: "Tax Status",           defaultOpen: false },
   { id: "placeOfWork",   title: "Place of Work",        defaultOpen: false },
   { id: "engagement",    title: "Engagement",           defaultOpen: true  },
-  { id: "schedule",      title: "Schedule",             defaultOpen: false },
+  // { id: "schedule",      title: "Schedule",             defaultOpen: false },
   { id: "rates",         title: "Rates",                defaultOpen: true  },
   { id: "salary",        title: "Salary",               defaultOpen: true  },
   { id: "overtime",      title: "Overtime",             defaultOpen: true  },
@@ -142,8 +142,8 @@ export function ContractForm({
       case "engagement":
         return <EngagementSection {...shared} categoryOptions={categoryOptions} />;
 
-      case "schedule":
-        return <ScheduleSection schedule={sched} setSchedule={setSchedule} onFieldFocus={onFieldFocus} onFieldBlur={onFieldBlur} />;
+      // case "schedule":
+        // return <ScheduleSection schedule={sched} setSchedule={setSchedule} onFieldFocus={onFieldFocus} onFieldBlur={onFieldBlur} />;//
 
       case "rates":
         return <RatesSection {...shared} currencySymbol={cs} />;
