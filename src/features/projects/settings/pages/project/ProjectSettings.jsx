@@ -23,6 +23,7 @@ function ProjectSettings() {
       vehicleAllowance: false,
       vehicleHire: false,
       perDiem: false,
+      living: false,
     },
   });
 
@@ -45,6 +46,7 @@ function ProjectSettings() {
           mobile: false,
           vehicleAllowance: false,
           vehicleHire: false,
+          living: false,
         };
 
   const mealPenaltiesData =
@@ -334,6 +336,22 @@ Many thanks for your hard work on the production.`,
               }
             />
           )}
+          <div className="mt-4">
+            <EditableSwitchField
+              label="Living"
+              checked={allowancesData.living}
+              isEditing={isEditing.section === "perDiem"}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  allowances: {
+                    ...prev.allowances,
+                    living: val,
+                  },
+                }))
+              }
+            />
+          </div>
         </CardWrapper>
         <CardWrapper showLabel={false}>
           <div className="flex items-center justify-between mb-7">
