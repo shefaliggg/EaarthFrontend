@@ -4,6 +4,7 @@ export const MODAL_TYPES = {
   IMAGE_PREVIEW: "IMAGE_PREVIEW",
   DOCUMENT_PREVIEW: "DOCUMENT_PREVIEW",
   CONFIRM_ACTION: "CONFIRM_ACTION",
+  SHARE_DOCUMENT: "SHARE_DOCUMENT",
 };
 
 export const useModalStore = create((set) => ({

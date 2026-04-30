@@ -20,7 +20,7 @@ export default function ForwardMessageDialog({
       avatar: conv.type === "dm" ? conv.avatar : undefined,
       subtitle: conv.type === "dm" ? "Direct Message" : "Group Chat",
     }))
-    .filter((conv) => conv.name.includes(searchQuery.toLowerCase()));
+    .filter((conv) => conv.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleConfirm = async (selectedIds) => {
     const forwardPromise = Promise.all(

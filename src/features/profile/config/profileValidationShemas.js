@@ -70,6 +70,7 @@ export const nationalityProofSchema = z
       .object({
         firstName: z.string().optional(),
         lastName: z.string().optional(),
+        placeOfBirth: z.string().optional(),
         number: z.string().optional(),
         issuingCountry: z.string().optional(),
         expiryDate: z.string().nullish(),
@@ -112,6 +113,12 @@ export const nationalityProofSchema = z
         ctx.addIssue({
           path: ["passport", "lastName"],
           message: "Passport last name is required",
+        });
+      }
+      if (!p.placeOfBirth || p.placeOfBirth.trim() === "") {
+        ctx.addIssue({
+          path: ["passport", "placeOfBirth"],
+          message: "Place of birth is required",
         });
       }
 

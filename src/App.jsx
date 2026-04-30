@@ -13,7 +13,7 @@ function App() {
     <>
       <RouterProvider router={router} />
       <Toaster
-        position="bottom-right"
+        position="top-center"
         expand={true}
         visibleToasts={5}
         richColors

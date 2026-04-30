@@ -130,19 +130,14 @@ export default function ConfirmActionDialog({
         {/* Header Section with Icon */}
         <div
           className={cn(
-            "relative px-6 py-8  text-center",
-            currentVariant.iconBg,
-            currentVariant.borderColor,
-            "border-b",
+            "relative p-6 py-8  text-center",
           )}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent" />
-
           <div className="relative">
             <div
               className={cn(
-                "mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full",
-                "border-4 border-white shadow-lg backdrop-blur-sm",
+                "mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full",
+                "border-2 border-white shadow-lg backdrop-blur-sm",
                 currentVariant.iconBg,
                 currentVariant.iconColor,
               )}
@@ -152,16 +147,16 @@ export default function ConfirmActionDialog({
               ) : isInfo ? (
                 <Info className="h-7 w-7" strokeWidth={2} />
               ) : (
-                <AlertTriangle className="h-7 w-7" strokeWidth={2} />
+                <AlertTriangle className="h-5 w-5" strokeWidth={2} />
               )}
             </div>
 
-            <DialogTitle className="text-xl font-bold text-gray-900 tracking-tight">
+            <DialogTitle className="font-bold text-gray-900 tracking-tight">
               {title}
             </DialogTitle>
 
             {description && (
-              <DialogDescription className="mt-2.5 text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">
+              <DialogDescription className="mt-2.5 text-sm text-gray-600 leading-relaxed mx-auto">
                 {description}
               </DialogDescription>
             )}
@@ -232,10 +227,9 @@ export default function ConfirmActionDialog({
           </div>
         )}
         {/* Footer with Actions */}
-        <div className="px-6 py-5  border-t">
+        <div className="px-6 py-5 pt-4">
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3">
             <Button
-              size="lg"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={loading}
@@ -244,7 +238,6 @@ export default function ConfirmActionDialog({
             </Button>
 
             <Button
-              size="lg"
               variant={isDanger ? "destructive" : "default"}
               className={cn(
                 currentVariant.button,

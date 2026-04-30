@@ -1,4 +1,5 @@
 import { Download, FileText } from "lucide-react";
+import { convertToPrettyText } from "../../../../../../shared/config/utils";
 
 function MessageFile({ file, url, single, isOwn }) {
   return (

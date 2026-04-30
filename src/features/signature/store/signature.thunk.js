@@ -8,60 +8,51 @@ import {
 } from "../services/signature.service";
 import { AddOrUpdateDocument } from "../../user-documents/store/document.slice";
 
-
-// 🔥 GET CURRENT SIGNATURE
-// export const fetchCurrentSignatureThunk = createAsyncThunk(
-//   "signature/current",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       console.log("📡 fetchCurrentSignatureThunk called");
-
-//       const response = await getCurrentSignatureApi();
-
-//       console.log("✅ fetchCurrentSignature success:", response);
-
-//       return response;
-//     } catch (err) {
-//       console.error(
-//         "❌ fetchCurrentSignature error:",
-//         err.response?.data?.message || err.message,
-//       );
-
-//       return rejectWithValue({
-//         message: err.response?.data?.message || err.message,
-//         errors: err.response?.data?.errors || null,
-//       });
-//     }
-//   },
-// );
-
+// GET CURRENT SIGNATURE
 export const fetchCurrentSignatureThunk = createAsyncThunk(
   "signature/current",
   async (_, { rejectWithValue }) => {
     try {
-      return await getCurrentSignatureApi(); // ← uses service with correct path
+      console.log("📡 fetchCurrentSignatureThunk called");
+
+      const response = await getCurrentSignatureApi();
+
+      console.log("✅ fetchCurrentSignature success:", response);
+
+      return response;
     } catch (err) {
-      return rejectWithValue({ message: err.response?.data?.message || err.message });
+      console.error(
+        "❌ fetchCurrentSignature error:",
+        err.response?.data?.message || err.message,
+      );
+
+      return rejectWithValue({
+        message: err.response?.data?.message || err.message,
+        errors: err.response?.data?.errors || null,
+      });
     }
-  }
+  },
 );
 
-// 🔥 CREATE SIGNATURE
+// CREATE SIGNATURE
 export const createSignatureThunk = createAsyncThunk(
   "signature/create",
-  async (formData, { rejectWithValue,dispatch }) => {
+  async (formData, { rejectWithValue, dispatch }) => {
     try {
       console.log("📡 createSignatureThunk called", formData);
 
       const response = await createSignatureApi(formData);
 
       console.log("✅ createSignature success:", response);
+      const { signature, document } = response;
 
       if (response) {
-        dispatch(AddOrUpdateDocument(response));
+        dispatch(
+          AddOrUpdateDocument(signature?.signatureDocumentId ?? document),
+        );
       }
 
-      return response;
+      return signature;
     } catch (err) {
       console.error(
         "❌ createSignature error:",
@@ -76,7 +67,7 @@ export const createSignatureThunk = createAsyncThunk(
   },
 );
 
-// 🔥 SEND OTP
+// SEND OTP
 export const sendSignatureOtpThunk = createAsyncThunk(
   "signature/sendOtp",
   async (_, { rejectWithValue }) => {
@@ -102,7 +93,7 @@ export const sendSignatureOtpThunk = createAsyncThunk(
   },
 );
 
-// 🔥 VERIFY OTP
+// VERIFY OTP
 export const verifySignatureOtpThunk = createAsyncThunk(
   "signature/verifyOtp",
   async (payload, { rejectWithValue, dispatch }) => {
@@ -112,7 +103,11 @@ export const verifySignatureOtpThunk = createAsyncThunk(
       const response = await verifyOtpApi(payload);
 
       console.log("✅ verifyOtp success:", response);
-      dispatch(AddOrUpdateDocument(response?.certificate));
+      dispatch(
+        AddOrUpdateDocument(
+          response?.signature?.certificateDocumentId ?? response?.certificate,
+        ),
+      );
 
       return response;
     } catch (err) {
@@ -129,7 +124,7 @@ export const verifySignatureOtpThunk = createAsyncThunk(
   },
 );
 
-// 🔥 HISTORY
+// HISTORY
 export const fetchSignatureHistoryThunk = createAsyncThunk(
   "signature/history",
   async (_, { rejectWithValue }) => {

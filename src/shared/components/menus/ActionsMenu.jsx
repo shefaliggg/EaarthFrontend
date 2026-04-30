@@ -58,8 +58,15 @@ function renderMenuItems(items) {
           disabled={item.disabled}
           className={item.destructive ? "text-red-600 focus:text-red-600" : ""}
         >
-          <Icon className={cn("h-4 w-4", item.destructive && "text-red-600!")} />
+          <Icon
+            className={cn("h-4 w-4", item.destructive && "text-red-600!")}
+          />
           {item.label}
+          {item.description && (
+            <span className="text-xs text-muted-foreground">
+              {item.description}
+            </span>
+          )}
         </DropdownMenuItem>
       </React.Fragment>
     );

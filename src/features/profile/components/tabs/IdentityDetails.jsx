@@ -87,7 +87,7 @@ export default function IdentityDetails() {
     }
   }, []);
 
-  console.log("crew profile", crewProfile);
+  // console.log("crew profile", crewProfile);
   console.log("user documents", userDocuments);
 
   const initialFilesState = {
@@ -163,6 +163,7 @@ export default function IdentityDetails() {
         passport: {
           firstName: np?.passport?.firstName ?? "",
           lastName: np?.passport?.lastName ?? "",
+          placeOfBirth: np?.passport?.placeOfBirth ?? "",
           number: np?.passport?.number ?? "",
           issuingCountry: np?.passport?.issuingCountry ?? "",
           expiryDate: np?.passport?.expiryDate ?? null,
@@ -208,6 +209,7 @@ export default function IdentityDetails() {
           passport: {
             firstName: np?.passport?.firstName ?? "",
             lastName: np?.passport?.lastName ?? "",
+            placeOfBirth: np?.passport?.placeOfBirth ?? "",
             number: np?.passport?.number ?? "",
             issuingCountry: np?.passport?.issuingCountry ?? "",
             expiryDate: np?.passport?.expiryDate ?? null,
@@ -708,6 +710,26 @@ export default function IdentityDetails() {
                   error={errors?.passport?.lastName?._errors?.[0]}
                   disabled={isSavingIdentity}
                 />
+
+                <EditableTextDataField
+                  label="PLACE OF BIRTH"
+                  value={nd?.passport?.placeOfBirth}
+                  isEditing={isEditingIdentity}
+                  onChange={(val) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      identity: {
+                        ...prev.identity,
+                        passport: {
+                          ...prev.identity.passport,
+                          placeOfBirth: val,
+                        },
+                      },
+                    }))
+                  }
+                  error={errors?.passport?.placeOfBirth?._errors?.[0]}
+                  disabled={isSavingIdentity}
+                />
                 <EditableSelectField
                   label="PASSPORT ISSUING COUNTRY"
                   value={nd?.passport?.issuingCountry}
@@ -772,6 +794,7 @@ export default function IdentityDetails() {
               <EditableDocumentField
                 label="PASSPORT DOCUMENT"
                 isEditing={isEditingIdentity}
+                isLoading={isFetchingDocs}
                 fileName={resolvedPassport?.originalName ?? "No file uploaded"}
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
@@ -826,6 +849,7 @@ export default function IdentityDetails() {
                 expiresAt={resolvedBirthCert?.expiresAt}
                 isUploaded={!!resolvedBirthCert}
                 isEditing={isEditingIdentity}
+                isLoading={isFetchingDocs}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, birthCertificate: file }));
                   setReuseDocIds((f) => ({ ...f, birthCertificate: null }));
@@ -874,6 +898,7 @@ export default function IdentityDetails() {
                 fileUrl={resolvedNiProof?.url ?? null}
                 isUploaded={!!resolvedNiProof}
                 isEditing={isEditingIdentity}
+                isLoading={isFetchingDocs}
                 expiresAt={resolvedNiProof?.expiresAt}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, niProof: file }));
@@ -931,6 +956,7 @@ export default function IdentityDetails() {
                 expiresAt={resolvedNaturalisation?.expiresAt}
                 isUploaded={!!resolvedNaturalisation}
                 isEditing={isEditingIdentity}
+                isLoading={isFetchingDocs}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, certificateNaturalisation: file }));
                   setReuseDocIds((f) => ({
@@ -983,6 +1009,7 @@ export default function IdentityDetails() {
                 isUploaded={!!resolvedNiProof}
                 expiresAt={resolvedNiProof?.expiresAt}
                 isEditing={isEditingIdentity}
+                isLoading={isFetchingDocs}
                 onUpload={(file) => {
                   setFiles((f) => ({ ...f, niProof: file }));
                   setReuseDocIds((f) => ({ ...f, niProof: null }));

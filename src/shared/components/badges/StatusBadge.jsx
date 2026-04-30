@@ -13,6 +13,7 @@ export function StatusBadge({
   className,
 }) {
   const { color, Icon, label: text } = getStatusBadge(status, label);
+
   const sizes = {
     xs: "px-1 py-0.5 text-[9px] rounded-md",
     sm: "px-2 py-1 text-[10px] rounded-lg",
@@ -20,24 +21,28 @@ export function StatusBadge({
     lg: "px-4 py-2 text-sm rounded-xl",
   };
 
-  // console.log("icon from timesheet", icon)
+  const iconSizes = {
+    xs: "w-2.5 h-2.5",
+    sm: "w-3 h-3",
+    md: "w-3.5 h-3.5",
+    lg: "w-4 h-4",
+  };
+
   const FinalIcon = icon ?? Icon;
-  // console.log("final icon", FinalIcon)
 
   return (
     <Badge
       className={cn(
-        "inline-flex items-center justify-center gap-1 font-medium leading-none", // 👈 add leading-none
-        "[&>svg]:w-4 [&>svg]:h-4",
+        "inline-flex items-center gap-1 font-medium leading-none align-middle",
         sizes[size],
         color,
         className,
       )}
     >
-      {showIcon && (icon || Icon) && (
-        <SmartIcon icon={FinalIcon} className="w-3! h-3!" />
+      {showIcon && FinalIcon && (
+        <SmartIcon icon={FinalIcon} className={iconSizes[size]} />
       )}
-      {showLabel && text}
+      {showLabel && <span className="leading-none">{text}</span>}
     </Badge>
   );
 }

@@ -8,10 +8,17 @@ import {
   BadgeCheck,
   Archive,
   Loader,
+  File,
+  ArchiveRestore,
+  Loader2,
+  Undo2,
+  Zap,
+  Circle,
 } from "lucide-react";
 import { StatusBadge } from "@/shared/components/badges/StatusBadge";
 import { Button } from "@/shared/components/ui/button";
 import {
+  cn,
   convertToPrettyText,
   formatDate,
   formatFileSize,
@@ -20,13 +27,40 @@ import { resolveDocStatus } from "../../../../../user-documents/store/document.s
 import { downloadFile } from "../../../../../../shared/config/downloadFile";
 import { Document, Page } from "react-pdf";
 import { useEffect, useRef, useState } from "react";
+import { InfoTooltip } from "../../../../../../shared/components/InfoTooltip";
+import { useDocumentActions } from "../../../../../user-documents/hooks/useDocumentActions";
+import {
+  MODAL_TYPES,
+  useModalStore,
+} from "../../../../../../shared/stores/useModalStore";
+import {
+  archiveDocumentConfirmConfig,
+  deleteDocumentConfirmConfig,
+} from "../../../../../../shared/config/ConfirmActionsConfig";
 
 export function DocumentPreviewCard({ row, onView }) {
+  const {
+    archiveDocument,
+    unarchiveDocument,
+    deleteDocument,
+    restoreDocument,
+    isArchiving,
+    isDeleting,
+    isRestoring,
+    isUnarchiving,
+  } = useDocumentActions();
+
+  const { openModal } = useModalStore();
+
   const { status, label } = resolveDocStatus(row);
   const usageCount = row.usage?.length ?? 0;
 
   const isImage = row.mimeType?.startsWith("image/");
   const isPdf = row.mimeType === "application/pdf";
+
+  const isArchived = row.status === "ARCHIVED";
+  const isUsed = usageCount > 0;
+  const isDeleted = row.isDeleted;
 
   const containerRef = useRef(null);
   const [width, setWidth] = useState(200);
@@ -44,26 +78,41 @@ export function DocumentPreviewCard({ row, onView }) {
   }, []);
 
   return (
-    <div className="group rounded-2xl border bg-background shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+    <div
+      className={cn(
+        "group rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full",
+        isDeleted ? "bg-red-50/50 border-red-200" : "bg-background",
+      )}
+    >
       {/* ── PREVIEW AREA ── */}
       <div className="relative aspect-square bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-purple-400/5 flex items-center justify-center m-1.5 rounded-md overflow-hidden shadow">
         {/* Top-left: doc status */}
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-2 right-3 z-10">
           <StatusBadge status={status} label={label} size="xs" />
         </div>
 
         {/* Top-right: primary star OR doc type */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
-          {row.isPrimary && (
-            <BadgeCheck className="w-5 h-5 text-background fill-green-500" />
-          )}
+        <div className="absolute top-2 left-3 z-10">
           <StatusBadge
             status="highlight"
             label={row.documentType?.replace(/_/g, " ")}
             size="xs"
             showIcon={false}
-            // className={"bg-primary! text-background!"}
+            className={
+              "bg-primary/80 backdrop-blur-2xl text-background text-[9px]"
+            }
           />
+        </div>
+
+        <div className="absolute bottom-3 right-3 z-10">
+          {row.isPrimary && (
+            <InfoTooltip content={"Currently active document"}>
+              <div className="flex items-center gap-1.5">
+                <Circle className="w-2.5 h-2.5 fill-current text-green-500 animate-pulse" />
+                <p className="text-[11px] text-green-500">Active</p>
+              </div>
+            </InfoTooltip>
+          )}
         </div>
 
         {/* Thumbnail or icon */}
@@ -79,10 +128,13 @@ export function DocumentPreviewCard({ row, onView }) {
           <div ref={containerRef} className="h-full w-[75%]">
             <Document
               file={row.url}
-              loading={<Loader className="size-4" />}
-              error={<div className="text-red-400">Failed to load PDF</div>}
+              loading={
+                <div className="w-full h-full flex justify-center items-center py-24">
+                  <Loader className="size-6 animate-spin" />
+                </div>
+              }
             >
-              <Page pageNumber={1} width={width}/>
+              <Page pageNumber={1} width={width} />
             </Document>
           </div>
         )}
@@ -95,7 +147,7 @@ export function DocumentPreviewCard({ row, onView }) {
       </div>
 
       {/* ── CONTENT ── */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-2 flex-1">
         <div>
           <h3 className="font-semibold text-sm text-foreground truncate">
             {convertToPrettyText(row.label || row.originalName)}
@@ -128,7 +180,7 @@ export function DocumentPreviewCard({ row, onView }) {
         {usageCount > 0 && (
           <p className="text-xs text-muted-foreground">
             Used in{" "}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-primary">
               {usageCount} context{usageCount > 1 ? "s" : ""}
             </span>
           </p>
@@ -143,34 +195,134 @@ export function DocumentPreviewCard({ row, onView }) {
       </div>
 
       {/* ── ACTIONS ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
-        <Button variant="outline" size="sm" className="text-primary">
-          <Share2 className="w-4 h-4" />
-        </Button>
+      <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 mt-auto">
+        {!isDeleted && (
+          <InfoTooltip content={"Share to Chat"}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-primary"
+              onClick={() =>
+                openModal(MODAL_TYPES.SHARE_DOCUMENT, {
+                  document: row,
+                })
+              }
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+        )}
+        <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition ml-auto">
+          <InfoTooltip content={"View Document"}>
+            <Button variant="outline" size="icon" onClick={() => onView?.(row)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+          <InfoTooltip content={"Download Document"}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={async () =>
+                await downloadFile({
+                  url: row.url,
+                  fileName: row.originalName,
+                  label: "document",
+                })
+              }
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </InfoTooltip>
+          {!isDeleted &&
+            (!isArchived ? (
+              <InfoTooltip
+                content={
+                  isUsed
+                    ? `Used in ${usageCount} context(s) — remove usage to archive`
+                    : "Archive Document"
+                }
+              >
+                <span className="inline-flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={isUsed || isArchiving(row._id)}
+                    onClick={() =>
+                      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                        config: archiveDocumentConfirmConfig,
+                        autoClose: true,
+                        onConfirm: async () => {
+                          await archiveDocument(row);
+                        },
+                      })
+                    }
+                  >
+                    {isArchiving(row._id) ? (
+                      <Loader2 className="animate-spin text-muted-foreground" />
+                    ) : (
+                      <Archive className="w-4 h-4" />
+                    )}
+                  </Button>
+                </span>
+              </InfoTooltip>
+            ) : (
+              <InfoTooltip content="Restore Document">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={isUnarchiving(row._id)}
+                  onClick={() => unarchiveDocument(row)}
+                >
+                  {isUnarchiving(row._id) ? (
+                    <Loader2 className="animate-spin text-muted-foreground" />
+                  ) : (
+                    <ArchiveRestore className="w-4 h-4" />
+                  )}
+                </Button>
+              </InfoTooltip>
+            ))}
 
-        <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition">
-          <Button variant="outline" size="icon" onClick={() => onView?.(row)}>
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={async () =>
-              await downloadFile({
-                url: row.url,
-                fileName: row.originalName,
-                label: "document",
-              })
-            }
-          >
-            <Download className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon">
-            <Archive className="w-4 h-4" />
-          </Button>
-          <Button variant="outline_destructive" size="icon">
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          {isArchived && !isUsed && !isDeleted && (
+            <InfoTooltip content="Move to trash">
+              <Button
+                variant="outline_destructive"
+                size="icon"
+                disabled={isDeleting(row._id)}
+                onClick={() =>
+                  openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                    config: deleteDocumentConfirmConfig,
+                    autoClose: true,
+                    onConfirm: async () => {
+                      await deleteDocument(row);
+                    },
+                  })
+                }
+              >
+                {isDeleting(row._id) ? (
+                  <Loader2 className="animate-spin text-muted-foreground" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </Button>
+            </InfoTooltip>
+          )}
+
+          {isDeleted && (
+            <InfoTooltip content="Restore document (undo delete)">
+              <Button
+                variant="outline_success"
+                size="icon"
+                disabled={isRestoring(row._id)}
+                onClick={() => restoreDocument(row)}
+              >
+                {isRestoring(row._id) ? (
+                  <Loader2 className="animate-spin text-muted-foreground" />
+                ) : (
+                  <Undo2 className="w-4 h-4" />
+                )}
+              </Button>
+            </InfoTooltip>
+          )}
         </div>
       </div>
     </div>

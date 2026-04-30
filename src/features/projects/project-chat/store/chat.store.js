@@ -545,6 +545,16 @@ const useChatStore = create(
         }
       },
 
+      getOrCreateDirectConversation: async (projectId, userId) => {
+        const existing = get().conversations.find(
+          (c) => c.type === "dm" && c.userId?.toString() === userId.toString(),
+        );
+
+        if (existing) return existing;
+
+        return await get().createDirectConversation(projectId, userId);
+      },
+
       createSubjectConversation: async (projectId, title, targetUserIds) => {
         try {
           const currentUserId = getCurrentUserId();

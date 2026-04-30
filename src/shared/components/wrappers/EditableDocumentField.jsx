@@ -12,11 +12,13 @@ import { InfoTooltip } from "../InfoTooltip";
 import { StatusBadge } from "../badges/StatusBadge";
 import { downloadFile } from "../../config/downloadFile";
 import { cn, formatDate } from "../../config/utils";
+import { Skeleton } from "../ui/skeleton";
 
 export default function EditableDocumentField({
   label,
   icon,
   isEditing = false,
+  isLoading = false,
 
   fileName,
   fileUrl,
@@ -87,7 +89,15 @@ export default function EditableDocumentField({
       )}
 
       {/* VIEW MODE */}
-      {isUploaded ? (
+      {isLoading ? (
+        <div className="border rounded-lg p-3 flex items-center gap-3 animate-pulse bg-card">
+          <Skeleton className="w-10 h-10 rounded-md" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-40 rounded" />
+            <Skeleton className="h-2 w-24 rounded" />
+          </div>
+        </div>
+      ) : !isLoading && isUploaded ? (
         <div className="border rounded-lg p-3 flex items-center justify-between bg-card">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
@@ -145,7 +155,14 @@ export default function EditableDocumentField({
               <Download />
             </Button>
             {isEditing && isNewUpload && (
-              <Button onClick={onRemove} size="icon" variant="outline" className={"text-red-500 hover:bg-red-600 hover:border-red-600 dark:bg-red-600"}>
+              <Button
+                onClick={onRemove}
+                size="icon"
+                variant="outline"
+                className={
+                  "text-red-500 hover:bg-red-600 hover:border-red-600 dark:bg-red-600"
+                }
+              >
                 <FileXCorner />
               </Button>
             )}

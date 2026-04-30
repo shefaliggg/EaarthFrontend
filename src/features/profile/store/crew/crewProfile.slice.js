@@ -315,16 +315,7 @@ const crewProfileSlice = createSlice({
       })
       .addCase(updateAllowanceEquipmentsThunk.fulfilled, (state, action) => {
         state.isUpdating = false;
-        const { type, items, profileCompletionPercent } = action.payload;
-        const normalizedType = type === "box_rentals" ? "boxRentals" : type;
-        if (state.crewProfile) {
-          if (!state.crewProfile.allowances) state.crewProfile.allowances = {};
-          state.crewProfile.allowances[normalizedType] = items;
-          if (profileCompletionPercent !== undefined) {
-            state.crewProfile.profileCompletionPercent =
-              profileCompletionPercent;
-          }
-        }
+        state.crewProfile = { ...state.crewProfile, ...action.payload };
       })
       .addCase(updateAllowanceEquipmentsThunk.rejected, (state) => {
         state.isUpdating = false;
