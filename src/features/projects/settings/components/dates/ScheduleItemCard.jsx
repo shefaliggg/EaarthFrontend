@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
 import EditableDateField from "@/shared/components/wrappers/EditableDateField";
 
-export default function HiatusItemCard({
+export default function ScheduleItemCard({
   data,
   onChange,
   onDelete,
@@ -19,8 +19,8 @@ export default function HiatusItemCard({
   return (
     <div className="p-4 rounded-3xl border bg-background">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">
-          {data.name || "Untitled Hiatus"}
+        <span className="text-sm font-medium">
+          {data.description || "Untitled"}
         </span>
 
         {isEditing && (
@@ -32,10 +32,10 @@ export default function HiatusItemCard({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <EditableTextDataField
-          label="Hiatus Name"
-          value={data.name}
+          label="Description"
+          value={data.description}
           isEditing={isEditing}
-          onChange={(val) => handleChange("name", val)}
+          onChange={(val) => handleChange("description", val)}
         />
 
         <EditableDateField
