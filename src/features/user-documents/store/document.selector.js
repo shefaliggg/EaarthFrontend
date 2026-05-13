@@ -115,5 +115,20 @@ export const upsertDoc = (list, updated) => {
   }
 };
 
-/** Remove a doc from the array by _id. */
 export const removeDoc = (list, id) => list.filter((d) => d._id !== id);
+
+/**
+ * Returns aiExtraction.fields from an already-fetched UserDocument.
+ * Used by the reuse-document flow so no extra API call is needed.
+ * Returns null if the document hasn't been AI-scanned yet.
+ *
+ * @param {Array}  userDocuments
+ * @param {string} docId
+ */
+export const getDocAIFields = (userDocuments, docId) => {
+  if (!docId || !userDocuments) return null;
+  const doc = userDocuments.find((d) => String(d._id) === String(docId));
+  if (!doc?.aiExtraction) return null;
+  if (doc.aiExtraction.status !== "COMPLETED") return null;
+  return doc.aiExtraction.fields ?? null;
+};

@@ -7,6 +7,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { convertToPrettyText } from "./utils";
+import { success } from "zod";
 
 const STATUS_STYLES = {
   success:
@@ -35,6 +36,7 @@ const STATUS_ICONS = {
 
 const STATUS_META = {
   approved: "success",
+  success: "success",
   verified: "success",
   submitted: "success",
   active: "success",
@@ -51,6 +53,7 @@ const STATUS_META = {
   restricted: "protect",
 
   draft: "warning",
+  warning: "warning",
   pending: "warning",
   pending_admin_review: "warning",
   "pending-approval": "warning",
