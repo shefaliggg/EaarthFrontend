@@ -100,6 +100,19 @@ export function formatDate(date) {
     .toLowerCase();
 }
 
+export const normalizeDate = (value) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value).trim();
+  }
+
+  // Compare only YYYY-MM-DD
+  return date.toISOString().split("T")[0];
+};
+
 export const formatFileSize = (bytes) => {
   if (!bytes && bytes !== 0) return "—";
   if (bytes < 1024) return `${bytes} B`;

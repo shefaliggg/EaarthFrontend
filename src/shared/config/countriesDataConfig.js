@@ -60,6 +60,7 @@ export const currencyOptions =
   getCurrenciesArrayFromCountries(businessCountries);
 
 export function getCountryByCode(code) {
+  console.log("countries:",countries)
   return countries.find((c) => c.code === code) || null;
 }
 

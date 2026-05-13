@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FileUpload } from "../common/UnifiedFields";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
 import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
 import EditableDateField from "@/shared/components/wrappers/EditableDateField";
@@ -16,7 +15,7 @@ import { fetchDocumentsThunk } from "../../../user-documents/store/document.thun
 import {
   getDisplayDocument,
   getDocumentsByType,
-  getResolvedDocument,
+  getDocAIFields, // ← new
 } from "../../../user-documents/store/document.selector";
 import ProfileCardLoadingSkelton from "../skeltons/ProfileCardLoadingSkelton";
 import ProfileCardErrorSkelton from "../skeltons/ProfileCardErrorSkelton";
@@ -32,6 +31,14 @@ import {
   MODAL_TYPES,
   useModalStore,
 } from "../../../../shared/stores/useModalStore";
+import {
+  buildPassportAiExtraction,
+  mergeAIFields,
+  normalizeAIFieldsForMerge,
+  setNestedValue,
+} from "../../../user-documents/config/aiFieldMapper";
+import { useDocumentAIScan } from "../../../user-documents/hooks/useDocumentAIScan";
+import { AIConflictPanel, AIScanBanner } from "../common/AIFieldSuggestion";
 
 export default function IdentityDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -58,7 +65,13 @@ export default function IdentityDetails() {
     certificateNaturalisation: null,
   });
   const [errors, setErrors] = useState({});
-  const { openModal, closeModal } = useModalStore();
+  const { openModal } = useModalStore();
+
+  const { getScan, triggerScan, setReuseFields, clearAllScans } =
+    useDocumentAIScan();
+  const [aiConflicts, setAiConflicts] = useState([]);
+  const [autoFilledCount, setAutoFilledCount] = useState(0);
+  const [aiRawFields, setAiRawFields] = useState(null);
 
   const dispatch = useDispatch();
   const { crewProfile, isFetching, isUpdating, error } = useSelector(
@@ -69,27 +82,6 @@ export default function IdentityDetails() {
   );
   const { currentUser } = useSelector((state) => state.user);
 
-  const appendIfExists = (fd, key, value) => {
-    if (value !== undefined && value !== null && value !== "") {
-      fd.append(key, value);
-    }
-  };
-
-  useEffect(() => {
-    if (!crewProfile && !isFetching) {
-      dispatch(fetchProfileThunk());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!userDocuments && !isFetchingDocs) {
-      dispatch(fetchDocumentsThunk());
-    }
-  }, []);
-
-  // console.log("crew profile", crewProfile);
-  console.log("user documents", userDocuments);
-
   const initialFilesState = {
     passport: null,
     birthCertificate: null,
@@ -98,6 +90,16 @@ export default function IdentityDetails() {
   };
   const np = crewProfile?.nationalityProof;
 
+  // ── Fetch on mount ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
+  }, []);
+
+  useEffect(() => {
+    if (!userDocuments && !isFetchingDocs) dispatch(fetchDocumentsThunk());
+  }, []);
+
+  // ── Document selectors ─────────────────────────────────────────────────────
   const passportDocs = getDocumentsByType(userDocuments, "PASSPORT");
   const birthDocs = getDocumentsByType(userDocuments, "BIRTH_CERTIFICATE");
   const niDocs = getDocumentsByType(userDocuments, "NI_PROOF");
@@ -112,7 +114,6 @@ export default function IdentityDetails() {
     files.passport,
     userDocuments,
   );
-
   const resolvedBirthCert = getDisplayDocument(
     np?.birthCertificateId,
     reuseDocIds.birthCertificate,
@@ -131,11 +132,13 @@ export default function IdentityDetails() {
     files.certificateNaturalisation,
     userDocuments,
   );
+
   const isEditingPersonal = isEditing.section === "personal";
   const isEditingIdentity = isEditing.section === "identity";
   const isSavingPersonal = isUpdating && isEditing.section === "personal";
   const isSavingIdentity = isUpdating && isEditing.section === "identity";
 
+  // ── Display data (read-mode fallback) ──────────────────────────────────────
   const pd = isEditingPersonal
     ? formState.personal
     : {
@@ -159,7 +162,6 @@ export default function IdentityDetails() {
     ? formState.identity
     : {
         type: np?.type ?? null,
-
         passport: {
           firstName: np?.passport?.firstName ?? "",
           lastName: np?.passport?.lastName ?? "",
@@ -169,11 +171,47 @@ export default function IdentityDetails() {
           expiryDate: np?.passport?.expiryDate ?? null,
           passportDocumentId: np?.passport?.passportDocumentId ?? null,
         },
-
         birthCertificateId: np?.birthCertificateId ?? null,
         niProofId: np?.niProofId ?? null,
         certificateNaturalisationId: np?.certificateNaturalisationId ?? null,
       };
+
+  const applyMergeResult = useCallback(
+    ({ updatedForm, autoFilled, conflicts }) => {
+      setFormState((prev) => ({ ...prev, identity: updatedForm }));
+      setAutoFilledCount(autoFilled.length);
+      setAiConflicts(conflicts);
+    },
+    [],
+  );
+
+  /** Clear all temporary AI state (called on cancel or type change) */
+  const resetAIState = useCallback(() => {
+    setAiConflicts([]);
+    setAiRawFields(null);
+    setAutoFilledCount(0);
+    clearAllScans();
+  }, [clearAllScans]);
+
+  // User accepts AI suggestion → update form, remove from conflict list
+  const acceptAISuggestion = useCallback((conflict) => {
+    setFormState((prev) => ({
+      ...prev,
+      identity: setNestedValue(
+        prev.identity,
+        conflict.formPath,
+        conflict.aiValue,
+      ),
+    }));
+    setAiConflicts((prev) => prev.filter((c) => c.aiKey !== conflict.aiKey));
+  }, []);
+
+  // User keeps current value → just remove from conflict list
+  const rejectAISuggestion = useCallback((conflict) => {
+    setAiConflicts((prev) => prev.filter((c) => c.aiKey !== conflict.aiKey));
+  }, []);
+
+  // ── Section editing ────────────────────────────────────────────────────────
 
   const startEditing = (section) => {
     setErrors({});
@@ -218,7 +256,6 @@ export default function IdentityDetails() {
       }));
 
       setFiles(initialFilesState);
-
       setInitialDocIds({
         passport: np?.passport?.passportDocumentId ?? null,
         birthCertificate: np?.birthCertificateId ?? null,
@@ -231,6 +268,7 @@ export default function IdentityDetails() {
         niProof: np?.niProofId ?? null,
         certificateNaturalisation: np?.certificateNaturalisationId ?? null,
       });
+      resetAIState();
     }
 
     setIsEditing({ section });
@@ -253,12 +291,138 @@ export default function IdentityDetails() {
       niProof: null,
       certificateNaturalisation: null,
     });
+    resetAIState();
   };
+
+  const processPassportAIScan = useCallback(
+    async ({ file, documentId, currentForm }) => {
+      resetAIState();
+
+      const scanPromise = triggerScan({
+        key: "passport",
+        file,
+        documentId,
+        documentType: "PASSPORT",
+      });
+
+      toast.promise(scanPromise, {
+        loading: "Scanning passport with AI...",
+        success: () => ({
+          message: "Passport scan completed",
+          description: "Details extracted. Please review before continuing.",
+        }),
+        error: (err) => ({
+          message: "AI scan failed",
+          description: err?.message || "You can still fill fields manually.",
+        }),
+      });
+
+      const fields = await scanPromise;
+
+      if (!fields) return;
+
+      setAiRawFields(fields);
+
+      const result = mergeAIFields({
+        currentForm,
+        aiFields: fields,
+        documentType: "PASSPORT",
+      });
+
+      applyMergeResult(result);
+    },
+    [triggerScan, applyMergeResult, resetAIState],
+  );
+
+  const handlePassportUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, passport: file }));
+      setReuseDocIds((prev) => ({ ...prev, passport: null }));
+
+      await processPassportAIScan({
+        file,
+        currentForm: formState.identity,
+      });
+    },
+    [formState.identity, processPassportAIScan],
+  );
+
+  const handlePassportRescan = useCallback(async () => {
+    if (!resolvedPassport) return;
+
+    // Enter edit mode automatically
+    if (!isEditingIdentity) {
+      startEditing("identity");
+    }
+
+    try {
+      resetAIState();
+
+      await processPassportAIScan({
+        file: files.passport ?? null,
+        documentId: resolvedPassport._id,
+        currentForm: formState.identity || nd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan passport");
+      console.error("Passport rescan error:", err);
+    }
+  }, [
+    resolvedPassport,
+    isEditingIdentity,
+    formState.identity,
+    nd,
+    processPassportAIScan,
+    resetAIState,
+  ]);
+
+  const passportAIStatus =
+    resolvedPassport?.aiExtraction?.status || "NOT_SCANNED";
+
+  const passportAIScanLabel =
+    passportAIStatus === "NOT_SCANNED" || passportAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  /**
+   * Called when user selects an EXISTING passport from ReuseDocumentPromptPanel.
+   * Reuses persisted aiExtraction.fields from already-fetched userDocuments —
+   * no additional API call needed.
+   */
+  const handlePassportReuseSelect = useCallback(
+    (id) => {
+      resetAIState();
+      setReuseDocIds((prev) => ({ ...prev, passport: id }));
+
+      if (id) {
+        setFiles((f) => ({ ...f, passport: null }));
+
+        const persistedFields = getDocAIFields(userDocuments, id);
+        if (persistedFields) {
+          const normalized = normalizeAIFieldsForMerge(persistedFields);
+          setReuseFields({ key: "passport", fields: normalized });
+
+          const result = mergeAIFields({
+            currentForm: formState.identity,
+            aiFields: normalized,
+            documentType: "PASSPORT",
+          });
+          applyMergeResult(result);
+        }
+      }
+    },
+    [
+      formState.identity,
+      userDocuments,
+      setReuseFields,
+      applyMergeResult,
+      resetAIState,
+    ],
+  );
 
   const handleSavePersonal = async () => {
     setErrors({});
     const result = personalDetailsSchema.safeParse(formState.personal);
-
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
       return;
@@ -266,7 +430,6 @@ export default function IdentityDetails() {
     try {
       await dispatch(updatePersonalDetailsThunk(result.data)).unwrap();
       toast.success("Personal details updated successfully");
-
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update personal details");
@@ -288,67 +451,56 @@ export default function IdentityDetails() {
 
     if (!result.success) {
       setErrors(result.error.format());
-      console.log("Validation failed:", errors);
       return;
     }
 
     const fd = new FormData();
     const data = formState.identity;
 
-    if (data.type) {
-      fd.append("type", data.type);
-    }
+    if (data.type) fd.append("type", data.type);
 
     if (data.type === "PASSPORT") {
-      const p = data.passport ?? {};
-
-      fd.append("passport", JSON.stringify(p));
-
+      fd.append("passport", JSON.stringify(data.passport ?? {}));
       if (files.passport) {
         fd.append("passport", files.passport);
+
+        if (aiRawFields) {
+          fd.append(
+            "passportAiExtraction",
+            JSON.stringify(
+              buildPassportAiExtraction(aiRawFields, data.passport),
+            ),
+          );
+        }
       } else if (reuseDocIds.passport) {
         fd.append("passportDocumentId", reuseDocIds.passport);
       }
     }
 
     if (data.type === "BIRTH_CERTIFICATE") {
-      if (files.birthCertificate) {
+      if (files.birthCertificate)
         fd.append("birthCertificate", files.birthCertificate);
-      } else if (reuseDocIds.birthCertificate) {
+      else if (reuseDocIds.birthCertificate)
         fd.append("birthCertificateId", reuseDocIds.birthCertificate);
-      }
-      if (files.niProof) {
-        fd.append("niProof", files.niProof);
-      } else if (reuseDocIds.niProof) {
-        fd.append("niProofId", reuseDocIds.niProof);
-      }
+      if (files.niProof) fd.append("niProof", files.niProof);
+      else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
     }
 
     if (data.type === "CERTIFICATE_OF_NATURALISATION") {
-      if (files.certificateNaturalisation) {
+      if (files.certificateNaturalisation)
         fd.append("certificateNaturalisation", files.certificateNaturalisation);
-      } else if (reuseDocIds.certificateNaturalisation) {
+      else if (reuseDocIds.certificateNaturalisation)
         fd.append(
           "certificateNaturalisationId",
           reuseDocIds.certificateNaturalisation,
         );
-      }
-      if (files.niProof) {
-        fd.append("niProof", files.niProof);
-      } else if (reuseDocIds.niProof) {
-        fd.append("niProofId", reuseDocIds.niProof);
-      }
-    }
-
-    console.log("Sending identity payload:");
-    for (let [key, value] of fd.entries()) {
-      console.log(key, value);
+      if (files.niProof) fd.append("niProof", files.niProof);
+      else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
     }
 
     try {
       await dispatch(updateNationalityProofThunk(fd)).unwrap();
       toast.success("Nationality proof updated successfully");
-
       cancelEditing();
     } catch (err) {
       toast.error(err?.message || "Failed to update identity proof");
@@ -357,18 +509,11 @@ export default function IdentityDetails() {
 
   const handleViewDocument = ({ url, fileName, mimeType }) => {
     if (!url) return;
-
     const isImage = mimeType?.startsWith("image/");
-
     if (isImage) {
-      openModal(MODAL_TYPES.IMAGE_PREVIEW, {
-        imageFile: { url },
-      });
+      openModal(MODAL_TYPES.IMAGE_PREVIEW, { imageFile: { url } });
     } else {
-      openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
-        fileUrl: url,
-        fileName,
-      });
+      openModal(MODAL_TYPES.DOCUMENT_PREVIEW, { fileUrl: url, fileName });
     }
   };
 
@@ -394,8 +539,11 @@ export default function IdentityDetails() {
     );
   }
 
+  const passportScan = getScan("passport");
+
   return (
     <>
+      {/* ── Personal Details ─────────────────────────────────────────────── */}
       <CardWrapper
         title="Personal Details"
         icon="User2"
@@ -438,10 +586,7 @@ export default function IdentityDetails() {
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
-                personal: {
-                  ...prev.personal,
-                  legalFirstName: val,
-                },
+                personal: { ...prev.personal, legalFirstName: val },
               }))
             }
             error={errors?.legalFirstName?.[0]}
@@ -455,10 +600,7 @@ export default function IdentityDetails() {
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
-                personal: {
-                  ...prev.personal,
-                  legalLastName: val,
-                },
+                personal: { ...prev.personal, legalLastName: val },
               }))
             }
             error={errors?.legalLastName?.[0]}
@@ -473,10 +615,7 @@ export default function IdentityDetails() {
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
-                personal: {
-                  ...prev.personal,
-                  middleNames: val,
-                },
+                personal: { ...prev.personal, middleNames: val },
               }))
             }
             error={errors?.middleNames?.[0]}
@@ -491,10 +630,7 @@ export default function IdentityDetails() {
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
-                personal: {
-                  ...prev.personal,
-                  screenCreditName: val,
-                },
+                personal: { ...prev.personal, screenCreditName: val },
               }))
             }
             error={errors?.screenCreditName?.[0]}
@@ -516,10 +652,7 @@ export default function IdentityDetails() {
             onChange={(val) =>
               setFormState((prev) => ({
                 ...prev,
-                personal: {
-                  ...prev.personal,
-                  displayNamePreference: val,
-                },
+                personal: { ...prev.personal, displayNamePreference: val },
               }))
             }
             error={errors?.displayNamePreference?.[0]}
@@ -534,10 +667,7 @@ export default function IdentityDetails() {
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
-                  personal: {
-                    ...prev.personal,
-                    customDisplayName: val,
-                  },
+                  personal: { ...prev.personal, customDisplayName: val },
                 }))
               }
               error={errors?.customDisplayName?.[0]}
@@ -635,6 +765,7 @@ export default function IdentityDetails() {
         </div>
       </CardWrapper>
 
+      {/* ── Proof of Identity ─────────────────────────────────────────────── */}
       <CardWrapper
         title="Proof of Identity"
         icon="IdCard"
@@ -653,12 +784,14 @@ export default function IdentityDetails() {
             label="PROOF OF NATIONALITY"
             value={nd?.type}
             isEditing={isEditingIdentity}
-            onChange={(val) =>
+            onChange={(val) => {
+              // Changing proof type resets all AI state for a clean slate
+              resetAIState();
               setFormState((prev) => ({
                 ...prev,
                 identity: { ...prev.identity, type: val },
-              }))
-            }
+              }));
+            }}
             options={[
               { label: "PASSPORT", value: "PASSPORT" },
               { label: "BIRTH CERTIFICATE", value: "BIRTH_CERTIFICATE" },
@@ -669,6 +802,8 @@ export default function IdentityDetails() {
             ]}
             disabled={isSavingIdentity}
           />
+
+          {/* ── PASSPORT ─────────────────────────────────────────────────── */}
           {nd?.type === "PASSPORT" && (
             <div className="mt-6 space-y-4 rounded-3xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -681,15 +816,14 @@ export default function IdentityDetails() {
                       ...prev,
                       identity: {
                         ...prev.identity,
-                        passport: {
-                          ...prev.identity.passport,
-                          firstName: val,
-                        },
+                        passport: { ...prev.identity.passport, firstName: val },
                       },
                     }))
                   }
                   error={errors?.passport?.firstName?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
                 <EditableTextDataField
                   label="PASSPORT LAST NAME"
@@ -700,15 +834,14 @@ export default function IdentityDetails() {
                       ...prev,
                       identity: {
                         ...prev.identity,
-                        passport: {
-                          ...prev.identity.passport,
-                          lastName: val,
-                        },
+                        passport: { ...prev.identity.passport, lastName: val },
                       },
                     }))
                   }
                   error={errors?.passport?.lastName?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
 
                 <EditableTextDataField
@@ -728,7 +861,9 @@ export default function IdentityDetails() {
                     }))
                   }
                   error={errors?.passport?.placeOfBirth?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
                 <EditableSelectField
                   label="PASSPORT ISSUING COUNTRY"
@@ -748,7 +883,9 @@ export default function IdentityDetails() {
                     }))
                   }
                   error={errors?.passport?.issuingCountry?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
                 <EditableTextDataField
                   label="PASSPORT NUMBER"
@@ -768,7 +905,9 @@ export default function IdentityDetails() {
                     }))
                   }
                   error={errors?.passport?.number?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
                 <EditableDateField
                   label="PASSPORT EXPIRY DATE"
@@ -787,9 +926,30 @@ export default function IdentityDetails() {
                     }))
                   }
                   error={errors?.passport?.expiryDate?._errors?.[0]}
-                  disabled={isSavingIdentity}
+                  disabled={
+                    isSavingIdentity || passportScan.status === "scanning"
+                  }
                 />
               </div>
+
+              {/* ↓ AI scan status banner — appears immediately after file pick */}
+              {isEditingIdentity && (
+                <AIScanBanner
+                  status={passportScan.status}
+                  error={passportScan.error}
+                  autoFilledCount={autoFilledCount}
+                  conflictCount={aiConflicts.length}
+                />
+              )}
+
+              {/* ↓ Conflict resolution panel — only when there are conflicts */}
+              {isEditingIdentity && aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={aiConflicts}
+                  onAccept={acceptAISuggestion}
+                  onReject={rejectAISuggestion}
+                />
+              )}
 
               <EditableDocumentField
                 label="PASSPORT DOCUMENT"
@@ -805,10 +965,7 @@ export default function IdentityDetails() {
                     ? `${(resolvedPassport.sizeBytes / 1024 / 1024).toFixed(1)} MB`
                     : null
                 }
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, passport: file }));
-                  setReuseDocIds((f) => ({ ...f, passport: null }));
-                }}
+                onUpload={handlePassportUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -819,7 +976,22 @@ export default function IdentityDetails() {
                 isRequired
                 error={errors?.passportDocument?._errors?.[0]}
                 disabled={isSavingIdentity}
-                infoPillDescription="Upload a clear copy of your passport. This is used to verify your identity and nationality."
+                infoPillDescription="Upload a clear copy of your passport. AI will auto-fill the fields above."
+                secondaryActions={
+                  files.passport
+                    ? [
+                        {
+                          label: passportAIScanLabel,
+                          icon: "Sparkles",
+                          onClick: handlePassportRescan,
+                          disabled:
+                            !resolvedPassport ||
+                            passportScan.status === "scanning" ||
+                            isSavingIdentity,
+                        },
+                      ]
+                    : []
+                }
                 actionSlot={
                   isEditingIdentity &&
                   passportDocs?.length > 0 && (
@@ -828,10 +1000,7 @@ export default function IdentityDetails() {
                       docs={passportDocs}
                       selectedId={reuseDocIds.passport}
                       docType="PASSPORT"
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({ ...prev, passport: id }));
-                        if (id) setFiles((f) => ({ ...f, passport: null }));
-                      }}
+                      onSelect={handlePassportReuseSelect}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.passport}
                     />
@@ -840,6 +1009,8 @@ export default function IdentityDetails() {
               />
             </div>
           )}
+
+          {/* ── BIRTH CERTIFICATE ─────────────────────────────────────────── */}
           {nd?.type === "BIRTH_CERTIFICATE" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
               <EditableDocumentField
@@ -877,13 +1048,8 @@ export default function IdentityDetails() {
                           ...prev,
                           birthCertificate: id,
                         }));
-
-                        if (id) {
-                          setFiles((f) => ({
-                            ...f,
-                            birthCertificate: null,
-                          }));
-                        }
+                        if (id)
+                          setFiles((f) => ({ ...f, birthCertificate: null }));
                       }}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.birthCertificate}
@@ -923,17 +1089,8 @@ export default function IdentityDetails() {
                       docs={niDocs}
                       selectedId={reuseDocIds.niProof}
                       onSelect={(id) => {
-                        setReuseDocIds((prev) => ({
-                          ...prev,
-                          niProof: id,
-                        }));
-
-                        if (id) {
-                          setFiles((f) => ({
-                            ...f,
-                            niProof: null,
-                          }));
-                        }
+                        setReuseDocIds((prev) => ({ ...prev, niProof: id }));
+                        if (id) setFiles((f) => ({ ...f, niProof: null }));
                       }}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.niProof}
@@ -943,7 +1100,8 @@ export default function IdentityDetails() {
               />
             </div>
           )}
-          {/* ── Certificate of Naturalisation ─────────────────────────────── */}
+
+          {/* ── CERTIFICATE OF NATURALISATION ─────────────────────────────── */}
           {nd?.type === "CERTIFICATE_OF_NATURALISATION" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
               <EditableDocumentField
@@ -986,13 +1144,11 @@ export default function IdentityDetails() {
                           ...prev,
                           certificateNaturalisation: id,
                         }));
-
-                        if (id) {
+                        if (id)
                           setFiles((f) => ({
                             ...f,
                             certificateNaturalisation: null,
                           }));
-                        }
                       }}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.certificateNaturalisation}
@@ -1032,17 +1188,8 @@ export default function IdentityDetails() {
                       docs={niDocs}
                       selectedId={reuseDocIds.niProof}
                       onSelect={(id) => {
-                        setReuseDocIds((prev) => ({
-                          ...prev,
-                          niProof: id,
-                        }));
-
-                        if (id) {
-                          setFiles((f) => ({
-                            ...f,
-                            niProof: null,
-                          }));
-                        }
+                        setReuseDocIds((prev) => ({ ...prev, niProof: id }));
+                        if (id) setFiles((f) => ({ ...f, niProof: null }));
                       }}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.niProof}

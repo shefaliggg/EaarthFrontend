@@ -30,3 +30,16 @@ export const restoreDocument = async (id) => {
   const res = await axiosConfig.patch(`/user-documents/${id}/restore`);
   return res.data.data;
 };
+
+export const scanTempDocument = async ({ file,documentId, documentType }) => {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("documentId", documentId);
+  fd.append("documentType", documentType);
+
+  const res = await axiosConfig.post("/user-documents/scan-temp", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data.data; // { documentType, fields }
+};

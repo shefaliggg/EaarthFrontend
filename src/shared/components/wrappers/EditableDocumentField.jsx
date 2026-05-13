@@ -37,6 +37,7 @@ export default function EditableDocumentField({
   showErrorDescription = true,
   disabled = false,
 
+  secondaryActions,
   actionSlot,
   infoPillDescription,
 }) {
@@ -132,6 +133,24 @@ export default function EditableDocumentField({
           </div>
 
           <div className="flex items-center gap-2">
+            {secondaryActions &&
+              secondaryActions.map((action, idx) => (
+                <Button
+                  key={idx}
+                  variant={action.variant || "outline"}
+                  size={action.size || "sm"}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                >
+                  {action.icon && (
+                    <SmartIcon
+                      icon={action.icon}
+                      size={action.iconSize || "md"}
+                    />
+                  )}
+                  {action.label}
+                </Button>
+              ))}
             {onView && fileUrl && (
               <Button
                 onClick={() => onView?.(fileUrl)}
