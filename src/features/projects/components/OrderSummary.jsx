@@ -1,243 +1,206 @@
-import React from 'react';
+// src/features/projects/components/OrderSummary.jsx
+import React, { useState } from 'react';
+import { Check } from 'lucide-react';
 
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
+const PACKAGE_DETAILS = {
+  indie: {
+    name: 'Indie',
+    subtitle: 'Independent Production',
+    price: 15,
+    tags: ['5 Core Apps', '25GB Storage', 'Up to 15 Crew'],
+  },
+  studio: {
+    name: 'Studio',
+    subtitle: 'Production Studio',
+    price: 45,
+    tags: ['All Apps', '500GB Storage', 'Unlimited Crew'],
+  },
+  blockbuster: {
+    name: 'Blockbuster',
+    subtitle: 'Major Production',
+    price: 85,
+    tags: ['White Label', 'Unlimited Storage', 'Dedicated Support'],
+  },
+};
+
+const APP_PRICES = {
+  calendar: 10, callsheets: 5, schedule: 8, asset: 12,
+  costume: 15, catering: 20, accounts: 25, script: 8,
+  market: 10, transport: 12, eplayer: 15, forms: 5,
+  props: 18, animals: 22, vehicles: 15, locations: 12,
+  cloud: 30, timesheets: 10, noticeboard: 5, breakdown: 8,
+  reports: 12, casting: 20, budget: 15, eearth_sign: 18,
+};
+
+const BILLING_OPTIONS = [
+  { value: 'weekly',  label: 'Weekly',  badge: null,       saveBadge: null },
+  { value: 'monthly', label: 'Monthly', badge: 'Save 10%', saveBadge: null },
+  { value: 'annual',  label: 'Annual',  badge: 'Save 20%', saveBadge: 'Best Value' },
+];
+
+const PROMO_CODES = [
+  { code: 'SAVE20',    label: '🏷 SAVE20' },
+  { code: 'WELCOME10', label: '🏷 WELCOME10' },
+];
+
+const MULTIPLIERS = { weekly: 1, monthly: 4, annual: 52 };
+
 export const OrderSummary = ({ formData, updateField, onEdit, onComplete }) => {
-  const basePackagePrices = {
-    basic: 20,
-    agency: 40,
-    whitelabel: 70
-  };
+  const [promoCode, setPromoCode] = useState(formData.promoCode ?? '');
+  const [billing, setBilling]     = useState(formData.billingPeriod ?? 'weekly');
 
-  const packageDetails = {
-    basic: {
-      name: 'Basic',
-      description: 'Basic Package',
-      features: ['🌍 Earth Branding', '10GB Storage', 'Limited Access']
-    },
-    agency: {
-      name: 'Agency',
-      description: 'Agency Package',
-      features: ['🌍 Earth + 📁 Project Branding', '100GB Storage', 'Full Access']
-    },
-    whitelabel: {
-      name: 'White Label',
-      description: 'White Label Package',
-      features: ['🎨 Your Studio Branding', 'Unlimited Storage', 'Complete Control']
-    }
-  };
-
-  const appPrices = {
-    calendar: 10,
-    callsheets: 5,
-    schedule: 8,
-    asset: 12,
-    costume: 15,
-    catering: 20,
-    accounts: 25,
-    script: 8,
-    market: 10,
-    transport: 12,
-    eplayer: 15,
-    forms: 5,
-    props: 18,
-    animals: 22,
-    vehicles: 15,
-    locations: 12,
-    cloud: 30,
-    timesheets: 10,
-    noticeboard: 5,
-    breakdown: 8,
-    reports: 12,
-    casting: 20,
-    budget: 15,
-    eearth_sign: 18
-  };
-
-  const appDetails = [
-    { id: 'calendar', title: 'Project Calendar' },
-    { id: 'callsheets', title: 'Call Sheets' },
-    { id: 'schedule', title: 'Shooting Schedule' },
-    { id: 'asset', title: 'Asset' },
-    { id: 'costume', title: 'Costume' },
-    { id: 'catering', title: 'Catering' },
-    { id: 'accounts', title: 'Accounts' },
-    { id: 'script', title: 'Script' },
-    { id: 'market', title: 'Market' },
-    { id: 'transport', title: 'Transport' },
-    { id: 'eplayer', title: 'E Player' },
-    { id: 'forms', title: 'Forms' },
-    { id: 'props', title: 'Props & Assets' },
-    { id: 'animals', title: 'Animals' },
-    { id: 'vehicles', title: 'Vehicles' },
-    { id: 'locations', title: 'Locations' },
-    { id: 'cloud', title: 'Cloud' },
-    { id: 'timesheets', title: 'Timesheets' },
-    { id: 'noticeboard', title: 'Notice Board' },
-    { id: 'breakdown', title: 'Script Breakdown' },
-    { id: 'reports', title: 'Production Reports' },
-    { id: 'casting', title: 'Casting Calls' },
-    { id: 'budget', title: 'Budget' },
-    { id: 'eearth_sign', title: 'EAARTH Sign' }
-  ];
-
-  const basePrice = basePackagePrices[formData.packageTier];
-  const appsTotal = formData.selectedApplications.reduce((sum, appId) => sum + (appPrices[appId] || 0), 0);
-  const weeklyTotal = basePrice + appsTotal;
-  const monthlyTotal = weeklyTotal * 4;
-  const annualTotal = weeklyTotal * 52;
-
-  const pkg = packageDetails[formData.packageTier];
+  const pkg        = PACKAGE_DETAILS[formData.packageTier] ?? PACKAGE_DETAILS.studio;
+  const selectedApps = formData.selectedApplications ?? [];
+  const appsTotal  = selectedApps.reduce((sum, id) => sum + (APP_PRICES[id] ?? 0), 0);
+  const baseWeekly = pkg.price;
+  const multiplier = MULTIPLIERS[billing] ?? 1;
+  const subtotal   = (baseWeekly + appsTotal) * multiplier;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">Review your selections and complete your subscription</p>
+      <p className="text-sm text-gray-500">Review your selections and complete your subscription</p>
 
-      {/* 2 Column Layout */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Left Column: Package & Applications */}
-        <div className="space-y-4">
-          {/* Your Package */}
-          <div className="border border-gray-200 rounded-lg p-3">
-            <h3 className="text-xs font-semibold text-gray-900 mb-2 uppercase tracking-wider">Your Package</h3>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-900">{pkg.name}</p>
-              <p className="text-xs text-gray-600">{pkg.description}</p>
-              <ul className="text-xs text-gray-600 space-y-0.5 mt-1">
-                {pkg.features.map((feature, idx) => (
-                  <li key={idx} className="truncate">{feature}</li>
-                ))}
-              </ul>
-              <p className="text-xs font-semibold text-purple-600 mt-2">
-                ${basePrice}/week
-              </p>
-            </div>
+      {/* Two-column layout — equal height panels */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+
+        {/* ── Left: Your Package ──────────────────────────────────────── */}
+        <div className="border border-gray-200 rounded-xl p-5 flex flex-col bg-white">
+
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-4">
+            Your Package
+          </p>
+
+          {/* Package name + subtitle */}
+          <div className="mb-4">
+            <h3 className="text-2xl font-bold text-gray-900 leading-tight">{pkg.name}</h3>
+            <p className="text-xs text-gray-400 mt-0.5">{pkg.subtitle}</p>
           </div>
 
-          {/* Selected Applications */}
-          {formData.selectedApplications.length > 0 && (
-            <div className="border border-gray-200 rounded-lg p-3">
-              <h3 className="text-xs font-semibold text-gray-900 mb-2 uppercase tracking-wider">
-                Apps ({formData.selectedApplications.length})
-              </h3>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
-                {formData.selectedApplications.map(appId => {
-                  const app = appDetails.find(a => a.id === appId);
-                  const price = appPrices[appId];
-                  return app ? (
-                    <div key={appId} className="flex justify-between text-xs">
-                      <span className="text-gray-700 truncate pr-2">{app.title}</span>
-                      <span className="text-gray-900 font-medium flex-shrink-0">${price}/mo</span>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-              <button
-                onClick={() => onEdit(2)}
-                className="mt-2 text-xs text-purple-600 hover:text-purple-700 font-medium"
-              >
-                Edit
-              </button>
+          {/* Bullet tags */}
+          <ul className="space-y-1.5 flex-1">
+            {pkg.tags.map((tag) => (
+              <li key={tag} className="flex items-center gap-2 text-sm text-gray-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+                {tag}
+              </li>
+            ))}
+          </ul>
+
+          {/* Pricing rows pinned to bottom */}
+          <div className="border-t border-gray-100 mt-6 pt-4 space-y-1.5">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500">Package base</span>
+              <span className="font-medium text-gray-800">${baseWeekly}/week</span>
             </div>
-          )}
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500">{selectedApps.length} apps selected</span>
+              <span className="font-medium text-gray-800">${appsTotal}/mo</span>
+            </div>
+          </div>
         </div>
 
-        {/* Right Column: Payment & Pricing */}
-        <div className="space-y-4">
-          {/* Payment Details */}
-          <div className="border border-gray-200 rounded-lg p-3 space-y-3">
-            <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Payment</h3>
+        {/* ── Right: Payment ──────────────────────────────────────────── */}
+        <div className="border border-gray-200 rounded-xl p-5 flex flex-col gap-5 bg-white">
 
-            {/* Promo Code */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-700">Promo Code</label>
-              <div className="flex gap-1">
-                <input
-                  type="text"
-                  placeholder="Code"
-                  value={formData.promoCode}
-                  onChange={(e) => updateField('promoCode', e.target.value)}
-                  className="flex-1 h-7 px-2 rounded text-xs border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button className="px-2 h-7 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700">
-                  Apply
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            Payment
+          </p>
+
+          {/* Promo code */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-600">Promo Code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Code"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="flex-1 h-10 px-3 rounded-lg text-sm border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+              />
+              <button className="px-5 h-10 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition">
+                Apply
+              </button>
+            </div>
+            {/* Quick promo chips */}
+            <div className="flex gap-2">
+              {PROMO_CODES.map((p) => (
+                <button
+                  key={p.code}
+                  onClick={() => setPromoCode(p.code)}
+                  className={cn(
+                    'text-xs px-3 py-1 rounded-full border transition',
+                    promoCode === p.code
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'border-purple-200 text-purple-600 hover:bg-purple-50',
+                  )}
+                >
+                  {p.label}
                 </button>
-              </div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {[
-                  { code: 'SAVE20', discount: '20%' },
-                  { code: 'WELCOME10', discount: '10%' }
-                ].map(promo => (
-                  <button
-                    key={promo.code}
-                    onClick={() => updateField('promoCode', promo.code)}
-                    className="text-xs px-1.5 py-0.5 border border-purple-300 text-purple-600 rounded hover:bg-purple-50"
-                    title={promo.discount}
-                  >
-                    {promo.code}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Billing Period */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-700">Billing</label>
-              <div className="flex gap-1">
-                {[
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'monthly', label: 'Monthly' },
-                  { value: 'annual', label: 'Annual' }
-                ].map(period => (
-                  <button
-                    key={period.value}
-                    onClick={() => updateField('billingPeriod', period.value)}
-                    className={cn(
-                      "flex-1 px-2 py-1 rounded text-xs font-medium transition-all",
-                      formData.billingPeriod === period.value
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    )}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Pricing Summary */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Weekly:</span>
-              <span className="text-gray-900 font-medium">${weeklyTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Monthly:</span>
-              <span className="text-gray-900 font-medium">${monthlyTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Annual:</span>
-              <span className="text-gray-900 font-medium">${annualTotal.toFixed(2)}</span>
-            </div>
-            <div className="border-t border-gray-300 pt-1 mt-1 flex justify-between">
-              <span className="text-xs font-semibold text-gray-900">Total:</span>
-              <div className="text-right">
-                <span className="text-sm font-bold text-purple-600">${weeklyTotal.toFixed(2)}</span>
-                <span className="text-xs text-gray-600">/wk</span>
-              </div>
+          {/* Billing toggle */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-600">Billing</label>
+            <div className="relative flex rounded-xl bg-gray-100 p-1 gap-1">
+              {BILLING_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setBilling(opt.value)}
+                  className={cn(
+                    'relative flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1',
+                    billing === opt.value
+                      ? 'bg-purple-600 text-white shadow'
+                      : 'text-gray-500 hover:text-gray-700',
+                  )}
+                >
+                  {/* Best Value badge floating above Annual */}
+                  {opt.saveBadge && (
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                      {opt.saveBadge}
+                    </span>
+                  )}
+                  {opt.label}
+                  {opt.badge && billing !== opt.value && (
+                    <span className="text-[9px] text-green-600 font-bold">{opt.badge}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Complete Button */}
-          <button
-            onClick={onComplete}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-          >
-            Complete Subscription
-          </button>
+          {/* Subtotal + Total */}
+          <div className="flex-1 flex flex-col justify-end gap-2">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+              <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100 text-sm">
+                <span className="text-gray-500">Subtotal ({BILLING_OPTIONS.find(b => b.value === billing)?.label})</span>
+                <span className="font-medium text-gray-800">${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-baseline px-4 py-3">
+                <span className="text-sm font-semibold text-gray-900">Total</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-purple-600">${subtotal.toFixed(2)}</span>
+                  <span className="text-xs text-gray-400">/{billing === 'weekly' ? 'wk' : billing === 'monthly' ? 'mo' : 'yr'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Complete Subscription — inside the card */}
+            <button
+              onClick={onComplete}
+              className="w-full bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md shadow-purple-100 flex items-center justify-center gap-2"
+            >
+              Complete Subscription
+              <Check className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+export default OrderSummary;

@@ -1,44 +1,83 @@
-import React, { useState } from 'react';
+// src/features/projects/pages/CreateProject.jsx
+
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
 import { PageHeader } from "../../../shared/components/PageHeader";
-import ProjectDetails from '@/features/projects/pages/ProjectDetails';
-import ConfirmActionDialog from '../../../shared/components/modals/ConfirmActionDialog';
-import { INITIALIZE_PROJECT_CONFIG } from '../../../shared/config/ConfirmActionsConfig';
+import ProjectDetails from "../pages/ProjectDetails";
+import ConfirmActionDialog from "../../../shared/components/modals/ConfirmActionDialog";
+import { INITIALIZE_PROJECT_CONFIG } from "../../../shared/config/ConfirmActionsConfig";
+
+import { createProjectThunk } from "../store/project.thunks";
+import { clearError, clearSuccessMessage } from "../store/project.slice";
 
 function CreateProject() {
-  const [confirmModal, setConfirmModal] = useState({ open: false });
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState(null);
-  const [projectData, setProjectData] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleProjectComplete = (data) => {
-    setProjectData(data);
-    setConfirmModal({ open: true });
+  // ── Redux state ────────────────────────────────────────────────────────────
+  const isCreating     = useSelector((state) => state.project.isCreating);
+  const error          = useSelector((state) => state.project.error);
+  const successMessage = useSelector((state) => state.project.successMessage);
+
+  // ── Local state ────────────────────────────────────────────────────────────
+  const [modalOpen, setModalOpen]           = useState(false);
+  const [pendingPayload, setPendingPayload] = useState(null);
+  const [createdId, setCreatedId]           = useState(null);
+
+  // ── Navigate once creation succeeds ───────────────────────────────────────
+  useEffect(() => {
+    if (successMessage && createdId) {
+      setModalOpen(false);
+      dispatch(clearSuccessMessage());
+      navigate(`/productions/${createdId}`);
+    }
+  }, [successMessage, createdId, navigate, dispatch]);
+
+  // ── Clean up error when modal closes ──────────────────────────────────────
+  const handleModalOpenChange = (open) => {
+    setModalOpen(open);
+    if (!open) dispatch(clearError());
   };
 
-  const handleConfirmInitialize = async ({ note }) => {
-    setIsCreating(true);
-    setError(null);
-    
-    try {
-      console.log("Initializing project with data:", projectData);
-      console.log("Note:", note);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Close modal on success
-      setConfirmModal({ open: false });
-      
-      // Show success message or navigate
-      alert('Project initialized successfully!');
-      
-    } catch (err) {
-      setError(err.message || "Failed to initialize project");
-    } finally {
-      setIsCreating(false);
+  // ── Called by ProjectDetails "Finish" ─────────────────────────────────────
+  const handleProjectComplete = (payload) => {
+    setPendingPayload(payload);
+    setModalOpen(true);
+  };
+
+  // ── Modal confirm ──────────────────────────────────────────────────────────
+  const handleConfirmInitialize = async () => {
+    if (!pendingPayload) return;
+
+    // studioId must come from your auth state or be collected in ProjectDetails.
+    // Example: const studioId = useSelector(s => s.auth.user.activeAffiliation.studioId)
+    const body = {
+      productionName:  pendingPayload.productionName,
+      productionType:  pendingPayload.productionType,
+      studioId:        pendingPayload.studioId,       // ← wire your studioId here
+      country:         pendingPayload.country,
+      prepStartDate:   pendingPayload.prepStartDate,
+      prepEndDate:     pendingPayload.prepEndDate,
+      shootStartDate:  pendingPayload.shootStartDate,
+      shootEndDate:    pendingPayload.shootEndDate,
+      wrapStartDate:   pendingPayload.wrapStartDate,
+      wrapEndDate:     pendingPayload.wrapEndDate,
+      applications:    pendingPayload.applications    ?? [],
+      packageTier:     pendingPayload.packageTier     ?? "basic",
+      projectContacts: pendingPayload.projectContacts ?? [],
+    };
+
+    const result = await dispatch(createProjectThunk(body));
+
+    // RTK gives us the new production in result.payload on success
+    if (createProjectThunk.fulfilled.match(result)) {
+      setCreatedId(result.payload._id);
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       <PageHeader
@@ -49,9 +88,7 @@ function CreateProject() {
             label: "Cancel",
             icon: "X",
             variant: "outline",
-            clickAction: () => {
-              window.history.back();
-            },
+            clickAction: () => navigate(-1),
           },
         ]}
       />
@@ -59,8 +96,8 @@ function CreateProject() {
       <ProjectDetails onComplete={handleProjectComplete} />
 
       <ConfirmActionDialog
-        open={confirmModal.open}
-        onOpenChange={(open) => setConfirmModal({ open })}
+        open={modalOpen}
+        onOpenChange={handleModalOpenChange}
         config={INITIALIZE_PROJECT_CONFIG}
         loading={isCreating}
         error={error}

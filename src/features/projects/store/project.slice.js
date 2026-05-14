@@ -8,31 +8,51 @@ import {
   updateProjectThunk,
   deleteProjectThunk,
   getProjectMembersThunk,
+  getProjectContactsThunk,
+  upsertProjectContactThunk,
+  removeProjectContactThunk,
+  addCrewMemberThunk,
 } from "./project.thunks";
 
 const initialState = {
-  projects: [],
-  currentProject: null,
-  projectMembers: [],
-  isFetchingMembers: false,
-  isCreating: false,
-  isSubmitting: false,
-  isFetching: false,
-  isFetchingDetails: false,
-  isUpdating: false,
-  isDeleting: false,
-  error: null,
-  successMessage: null,
-  search: "",
-  projectType: "",
-  country: "",
-  studioId: "",
-  approvalStatus: "", // Added approval status filter
-  sort: "newest",
-  total: 0,
-  page: 1,
-  pages: 1,
-  limit: 10,
+  // ── List ──────────────────────────────────────────────────────────────────
+  projects:           [],
+  currentProject:     null,
+
+  // ── Members (existing) ────────────────────────────────────────────────────
+  projectMembers:     [],
+
+  // ── Contacts ──────────────────────────────────────────────────────────────
+  projectContacts:    [],   // standalone contacts array (for contacts-only fetches)
+
+  // ── Loading flags ─────────────────────────────────────────────────────────
+  isCreating:           false,
+  isSubmitting:         false,
+  isFetching:           false,
+  isFetchingDetails:    false,
+  isUpdating:           false,
+  isDeleting:           false,
+  isFetchingMembers:    false,
+  isFetchingContacts:   false,
+  isUpsertingContact:   false,
+  isRemovingContact:    false,
+  isAddingCrew:         false,
+
+  // ── Feedback ──────────────────────────────────────────────────────────────
+  error:              null,
+  successMessage:     null,
+
+  // ── Filters / pagination ──────────────────────────────────────────────────
+  search:         "",
+  projectType:    "",
+  country:        "",
+  studioId:       "",
+  approvalStatus: "",
+  sort:           "newest",
+  total:          0,
+  page:           1,
+  pages:          1,
+  limit:          10,
 };
 
 const projectSlice = createSlice({
@@ -40,12 +60,15 @@ const projectSlice = createSlice({
   initialState,
   reducers: {
     resetProjectState(state) {
-      state.isCreating = false;
-      state.isSubmitting = false;
-      state.isUpdating = false;
-      state.isDeleting = false;
-      state.error = null;
-      state.successMessage = null;
+      state.isCreating        = false;
+      state.isSubmitting      = false;
+      state.isUpdating        = false;
+      state.isDeleting        = false;
+      state.isUpsertingContact = false;
+      state.isRemovingContact  = false;
+      state.isAddingCrew       = false;
+      state.error              = null;
+      state.successMessage     = null;
     },
 
     clearCurrentProject(state) {
@@ -54,8 +77,8 @@ const projectSlice = createSlice({
 
     clearAllProjects(state) {
       state.projects = [];
-      state.total = 0;
-      state.pages = 1;
+      state.total    = 0;
+      state.pages    = 1;
     },
 
     setPageLimit(state, action) {
@@ -102,12 +125,16 @@ const projectSlice = createSlice({
       state.successMessage = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
-      // ========== CREATE PROJECT ==========
+
+      // ======================================================================
+      // CREATE PROJECT
+      // ======================================================================
       .addCase(createProjectThunk.pending, (state) => {
-        state.isCreating = true;
-        state.error = null;
+        state.isCreating     = true;
+        state.error          = null;
         state.successMessage = null;
       })
       .addCase(createProjectThunk.fulfilled, (state, action) => {
@@ -119,24 +146,22 @@ const projectSlice = createSlice({
       })
       .addCase(createProjectThunk.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.payload;
+        state.error      = action.payload;
       })
 
-      // ========== SUBMIT FOR APPROVAL ==========
+      // ======================================================================
+      // SUBMIT FOR APPROVAL
+      // ======================================================================
       .addCase(submitProjectForApprovalThunk.pending, (state) => {
         state.isSubmitting = true;
-        state.error = null;
+        state.error        = null;
       })
       .addCase(submitProjectForApprovalThunk.fulfilled, (state, action) => {
         state.isSubmitting = false;
-        // Update project in list
         const index = state.projects.findIndex(
           (p) => p._id === action.payload._id,
         );
-        if (index !== -1) {
-          state.projects[index] = action.payload;
-        }
-        // Update current project if viewing
+        if (index !== -1) state.projects[index] = action.payload;
         if (state.currentProject?._id === action.payload._id) {
           state.currentProject = action.payload;
         }
@@ -144,95 +169,197 @@ const projectSlice = createSlice({
       })
       .addCase(submitProjectForApprovalThunk.rejected, (state, action) => {
         state.isSubmitting = false;
-        state.error = action.payload;
+        state.error        = action.payload;
       })
 
-      // ========== GET ALL PROJECTS ==========
+      // ======================================================================
+      // GET ALL PROJECTS
+      // ======================================================================
       .addCase(getAllProjectsThunk.pending, (state) => {
         state.isFetching = true;
-        state.error = null;
+        state.error      = null;
       })
       .addCase(getAllProjectsThunk.fulfilled, (state, action) => {
         state.isFetching = false;
-        state.projects = action.payload.projects || [];
-        state.total = action.payload.total || 0;
-        state.page = action.payload.page || 1;
-        state.pages = action.payload.pages || 1;
-        state.limit = action.payload.limit || 10;
+        state.projects   = action.payload.projects || [];
+        state.total      = action.payload.total    || 0;
+        state.page       = action.payload.page     || 1;
+        state.pages      = action.payload.pages    || 1;
+        state.limit      = action.payload.limit    || 10;
       })
       .addCase(getAllProjectsThunk.rejected, (state, action) => {
         state.isFetching = false;
-        state.error = action.payload;
+        state.error      = action.payload;
       })
 
-      // ========== GET PROJECT BY ID ==========
+      // ======================================================================
+      // GET PROJECT BY ID
+      // ======================================================================
       .addCase(getProjectByIdThunk.pending, (state) => {
         state.isFetchingDetails = true;
-        state.error = null;
+        state.error             = null;
       })
       .addCase(getProjectByIdThunk.fulfilled, (state, action) => {
         state.isFetchingDetails = false;
-        state.currentProject = action.payload || null;
+        state.currentProject    = action.payload || null;
       })
       .addCase(getProjectByIdThunk.rejected, (state, action) => {
         state.isFetchingDetails = false;
-        state.error = action.payload;
+        state.error             = action.payload;
       })
 
-      // ========== UPDATE PROJECT ==========
+      // ======================================================================
+      // UPDATE PROJECT
+      // ======================================================================
       .addCase(updateProjectThunk.pending, (state) => {
-        state.isUpdating = true;
-        state.error = null;
+        state.isUpdating     = true;
+        state.error          = null;
         state.successMessage = null;
       })
       .addCase(updateProjectThunk.fulfilled, (state, action) => {
-        state.isUpdating = false;
+        state.isUpdating     = false;
         state.currentProject = action.payload;
         const index = state.projects.findIndex(
           (p) => p._id === action.payload._id,
         );
-        if (index !== -1) {
-          state.projects[index] = action.payload;
-        }
+        if (index !== -1) state.projects[index] = action.payload;
         state.successMessage = "Project updated successfully";
       })
       .addCase(updateProjectThunk.rejected, (state, action) => {
         state.isUpdating = false;
-        state.error = action.payload;
+        state.error      = action.payload;
       })
 
-      // ========== DELETE PROJECT ==========
+      // ======================================================================
+      // DELETE PROJECT
+      // ======================================================================
       .addCase(deleteProjectThunk.pending, (state) => {
-        state.isDeleting = true;
-        state.error = null;
+        state.isDeleting     = true;
+        state.error          = null;
         state.successMessage = null;
       })
       .addCase(deleteProjectThunk.fulfilled, (state, action) => {
         state.isDeleting = false;
-        state.projects = state.projects.filter((p) => p._id !== action.payload);
-        state.total -= 1;
+        state.projects   = state.projects.filter((p) => p._id !== action.payload);
+        state.total     -= 1;
         state.successMessage = "Project deleted successfully";
       })
       .addCase(deleteProjectThunk.rejected, (state, action) => {
         state.isDeleting = false;
-        state.error = action.payload;
+        state.error      = action.payload;
       })
 
-      //get all project members
+      // ======================================================================
+      // GET PROJECT MEMBERS (existing)
+      // ======================================================================
       .addCase(getProjectMembersThunk.pending, (state) => {
         state.isFetchingMembers = true;
-        state.error = null;
+        state.error             = null;
       })
       .addCase(getProjectMembersThunk.fulfilled, (state, action) => {
         state.isFetchingMembers = false;
-        state.projectMembers = action.payload || [];
+        state.projectMembers    = action.payload || [];
       })
       .addCase(getProjectMembersThunk.rejected, (state, action) => {
         state.isFetchingMembers = false;
-        state.error = action.payload;
+        state.error             = action.payload;
+      })
+
+      // ======================================================================
+      // GET PROJECT CONTACTS
+      // ======================================================================
+      .addCase(getProjectContactsThunk.pending, (state) => {
+        state.isFetchingContacts = true;
+        state.error              = null;
+      })
+      .addCase(getProjectContactsThunk.fulfilled, (state, action) => {
+        state.isFetchingContacts = false;
+        state.projectContacts    = action.payload.contacts || [];
+        // Also patch into currentProject if it matches
+        if (state.currentProject?._id === action.payload.productionId) {
+          state.currentProject.projectContacts = action.payload.contacts;
+        }
+      })
+      .addCase(getProjectContactsThunk.rejected, (state, action) => {
+        state.isFetchingContacts = false;
+        state.error              = action.payload;
+      })
+
+      // ======================================================================
+      // UPSERT PROJECT CONTACT
+      // ======================================================================
+      .addCase(upsertProjectContactThunk.pending, (state) => {
+        state.isUpsertingContact = true;
+        state.error              = null;
+        state.successMessage     = null;
+      })
+      .addCase(upsertProjectContactThunk.fulfilled, (state, action) => {
+        state.isUpsertingContact = false;
+        // action.payload = full updated production document
+        const index = state.projects.findIndex(
+          (p) => p._id === action.payload._id,
+        );
+        if (index !== -1) state.projects[index] = action.payload;
+        if (state.currentProject?._id === action.payload._id) {
+          state.currentProject = action.payload;
+        }
+        // Sync standalone contacts array
+        state.projectContacts = action.payload.projectContacts || [];
+        state.successMessage  = "Project contact saved successfully";
+      })
+      .addCase(upsertProjectContactThunk.rejected, (state, action) => {
+        state.isUpsertingContact = false;
+        state.error              = action.payload;
+      })
+
+      // ======================================================================
+      // REMOVE PROJECT CONTACT
+      // ======================================================================
+      .addCase(removeProjectContactThunk.pending, (state) => {
+        state.isRemovingContact = true;
+        state.error             = null;
+        state.successMessage    = null;
+      })
+      .addCase(removeProjectContactThunk.fulfilled, (state, action) => {
+        state.isRemovingContact = false;
+        const index = state.projects.findIndex(
+          (p) => p._id === action.payload._id,
+        );
+        if (index !== -1) state.projects[index] = action.payload;
+        if (state.currentProject?._id === action.payload._id) {
+          state.currentProject = action.payload;
+        }
+        state.projectContacts = action.payload.projectContacts || [];
+        state.successMessage  = "Project contact removed successfully";
+      })
+      .addCase(removeProjectContactThunk.rejected, (state, action) => {
+        state.isRemovingContact = false;
+        state.error             = action.payload;
+      })
+
+      // ======================================================================
+      // ADD CREW MEMBER
+      // ======================================================================
+      .addCase(addCrewMemberThunk.pending, (state) => {
+        state.isAddingCrew   = true;
+        state.error          = null;
+        state.successMessage = null;
+      })
+      .addCase(addCrewMemberThunk.fulfilled, (state, action) => {
+        state.isAddingCrew = false;
+        if (state.currentProject?._id === action.payload._id) {
+          state.currentProject = action.payload;
+        }
+        state.successMessage = "Crew member added successfully";
+      })
+      .addCase(addCrewMemberThunk.rejected, (state, action) => {
+        state.isAddingCrew = false;
+        state.error        = action.payload;
       });
   },
 });
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
 export const {
   resetProjectState,

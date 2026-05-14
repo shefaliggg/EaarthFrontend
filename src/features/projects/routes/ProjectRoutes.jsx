@@ -31,7 +31,7 @@ const ProjectRoutes = {
 
     // studio_admin only
     {
-      element: <GuardRoute allowedRoles={['studio_admin']} />,
+      element: <GuardRoute allowedRoles={['studio_admin', 'crew']} />,
       children: [
         { path: 'create', element: <CreateProject /> },
         { path: ':id/edit', element: <EditProject /> },
