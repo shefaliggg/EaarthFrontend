@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
@@ -11,166 +11,93 @@ import { SmartIcon } from "../../../shared/components/SmartIcon";
 import { getFullName } from "../../../shared/config/utils";
 import ProjectCard from "../components/ProjectCard";
 
+import {
+  getAllProjectsThunk,
+} from "../store/project.thunks";
+import {
+  setSearch,
+  setApprovalStatus,
+  setCurrentPage,
+  clearAllProjects,
+} from "../store/project.slice";
+
 function ProjectList() {
   const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // ── Redux state ──────────────────────────────────────────────────────────
+  const {
+    projects,
+    isFetching,
+    search: reduxSearch,
+    total,
+    page,
+    pages,
+    limit,
+  } = useSelector((state) => state.project);
+
+  // ── Local UI state (same as before) ─────────────────────────────────────
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  /* -------------------- DATA -------------------- */
-  const projects = [
-    {
-      id: "project-avatar1",
-      title: "AVATAR 1",
-      type: "Feature Film",
-      category: "film",
-      period: "shoot",
-      progress: 60,
-      role: "LEAD ANIMATION ARTIST",
-      studios: ["Disney Studios", "Amazon Prime"],
-      startDate: "15/01/2024",
-      endDate: "30/12/2024",
-      rating: 4.5,
-      teamSize: 125,
-      budget: "£2.5M",
-      image: "🎬",
-      projectCode: "AVT1"
-    },
-    {
-      id: "project-avatar2",
-      title: "AVATAR 2",
-      type: "Feature Film",
-      category: "film",
-      period: "prep",
-      progress: 45,
-      role: "CHARACTER DESIGNER",
-      studios: ["Disney Studios", "Amazon Prime"],
-      startDate: "01/03/2024",
-      endDate: "15/01/2025",
-      rating: 4.2,
-      teamSize: 98,
-      budget: "£3.2M",
-      image: "🎥",
-      projectCode: "AVT2"
-    },
-    {
-      id: "project-mumbai",
-      title: "MUMBAI CHRONICLES",
-      type: "Television Series",
-      category: "tv",
-      period: "post",
-      progress: 85,
-      role: "ANIMATION ARTIST",
-      studios: ["Netflix", "Hotstar"],
-      startDate: "10/06/2023",
-      endDate: "20/10/2024",
-      rating: 4.9,
-      teamSize: 67,
-      budget: "£1.8M",
-      image: "🎭",
-      projectCode: "MBC1"
-    },
-    {
-      id: "project-avatar3",
-      title: "AVATAR 3",
-      type: "Feature Film",
-      category: "film",
-      period: "prep",
-      progress: 30,
-      role: "LEAD ANIMATOR",
-      studios: ["20th Century Studios"],
-      startDate: "10/02/2024",
-      endDate: "15/12/2025",
-      rating: 4.0,
-      teamSize: 110,
-      budget: "£2.8M",
-      image: "🎬",
-      projectCode: "AVT3"
-    },
-    {
-      id: "project-scifi-series",
-      title: "THE EXPANSE REBORN",
-      type: "Television Series",
-      category: "tv",
-      period: "shoot",
-      progress: 55,
-      role: "VFX SUPERVISOR",
-      studios: ["Amazon Studios"],
-      startDate: "05/03/2024",
-      endDate: "20/11/2024",
-      rating: 4.7,
-      teamSize: 85,
-      budget: "£2.1M",
-      image: "🚀",
-      projectCode: "EXP1"
-    },
-  ];
-
-  const archivedProjects = [
-    {
-      id: "project-tech-doc",
-      title: "TECH STARTUP DOC",
-      type: "Documentary",
-      category: "documentary",
-      period: "wrap",
-      progress: 100,
-      role: "MOTION GRAPHICS",
-      studios: ["Sony Pictures"],
-      startDate: "05/02/2024",
-      endDate: "15/09/2024",
-      rating: 4.7,
-      teamSize: 15,
-      budget: "£480K",
-      image: "💼",
-      projectCode: "TSD1"
-    },
-    {
-      id: "project-old-film",
-      title: "LEGACY PROJECT",
-      type: "Feature Film",
-      category: "film",
-      period: "wrap",
-      progress: 100,
-      role: "SENIOR ANIMATOR",
-      studios: ["Universal Pictures"],
-      startDate: "10/01/2023",
-      endDate: "25/08/2023",
-      rating: 4.4,
-      teamSize: 95,
-      budget: "£1.9M",
-      image: "🎞️",
-      projectCode: "LEG1"
-    },
-  ];
-
+  // ── Tab options: filter by productionType ────────────────────────────────
   const tabOptions = [
-    { value: "all", label: "ALL PROJECTS", icon: "LayoutGrid" },
-    { 
-      value: "archived", 
-      label: showArchived ? "SHOW ACTIVE" : "SHOW ARCHIVED", 
-      icon: "Archive",
-      onClick: () => setShowArchived(!showArchived)
-    },
+    { value: "all",          label: "ALL PROJECTS",  icon: "LayoutGrid" },
+    { value: "Feature Film", label: "FILMS",         icon: "Film" },
+    { value: "Television",   label: "TV",            icon: "Tv" },
+    { value: "Documentary",  label: "DOCUMENTARY",   icon: "BookOpen" },
+    { value: "Commercial",   label: "COMMERCIAL",    icon: "Megaphone" },
+    { value: "Music Video",  label: "MUSIC VIDEO",   icon: "Music" },
   ];
 
-  /* -------------------- FILTERING -------------------- */
-  const displayedProjects = showArchived ? archivedProjects : projects;
+  // ── Fetch approved projects whenever filters change ──────────────────────
+  useEffect(() => {
+    const params = {
+      approvalStatus: "approved",
+      page: 1,
+      limit,
+      sort: "newest",
+    };
 
-  const filteredProjects = displayedProjects.filter((project) => {
-    const matchesTab =
-      activeTab === "all" || project.category === activeTab;
-    const matchesSearch =
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.role.toLowerCase().includes(searchQuery.toLowerCase());
+    if (activeTab !== "all") {
+      params.productionType = activeTab;
+    }
 
-    return matchesTab && matchesSearch;
-  });
+    if (searchQuery.trim()) {
+      params.search = searchQuery.trim();
+    }
 
-  /* -------------------- UI -------------------- */
+    dispatch(getAllProjectsThunk(params));
+  }, [activeTab, searchQuery, dispatch, limit]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearAllProjects());
+    };
+  }, [dispatch]);
+
+  // ── Load more (pagination) ───────────────────────────────────────────────
+  const handleLoadMore = () => {
+    if (page < pages) {
+      const params = {
+        approvalStatus: "approved",
+        page: page + 1,
+        limit,
+        sort: "newest",
+      };
+      if (activeTab !== "all") params.productionType = activeTab;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      dispatch(setCurrentPage(page + 1));
+      dispatch(getAllProjectsThunk(params));
+    }
+  };
+
+  // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className=" space-y-6">
+    <div className="space-y-6">
       {/* Page Header */}
       <PageHeader
         title={
@@ -182,8 +109,6 @@ function ProjectList() {
           </>
         }
         icon="Film"
-
-       
         secondaryActions={[
           {
             label: "CREATE PROJECT",
@@ -201,7 +126,10 @@ function ProjectList() {
           <FilterPillTabs
             options={tabOptions}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={(val) => {
+              setActiveTab(val);
+              dispatch(setCurrentPage(1));
+            }}
             transparentBg={true}
           />
         </div>
@@ -222,7 +150,10 @@ function ProjectList() {
               onClick={() => setIsSearchOpen(true)}
               className="p-2 bg-primary hover:bg-primary/90 rounded-lg transition-colors"
             >
-              <SmartIcon icon="Search" className="w-5 h-5 text-primary-foreground stroke-[2.5]" />
+              <SmartIcon
+                icon="Search"
+                className="w-5 h-5 text-primary-foreground stroke-[2.5]"
+              />
             </button>
           )}
           {isSearchOpen && (
@@ -241,32 +172,71 @@ function ProjectList() {
 
       {/* Projects Grid */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab + searchQuery}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {filteredProjects.length === 0 ? (
-            <div className="col-span-full text-center py-16">
-              <Sparkles className="w-14 h-14 mx-auto mb-4 opacity-50" />
-              <p className="font-semibold">NO PROJECTS FOUND</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Try adjusting your filters or search query
-              </p>
-            </div>
-          ) : (
-            filteredProjects.map((project, index) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                index={index}
+        {isFetching && projects.length === 0 ? (
+          /* ── Loading skeleton ── */
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-64 rounded-xl bg-muted animate-pulse"
               />
-            ))
-          )}
-        </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            key={activeTab + searchQuery}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {projects.length === 0 ? (
+              <div className="col-span-full text-center py-16">
+                <Sparkles className="w-14 h-14 mx-auto mb-4 opacity-50" />
+                <p className="font-semibold">NO APPROVED PROJECTS FOUND</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {searchQuery
+                    ? "Try adjusting your search query"
+                    : "No approved projects yet. Create and submit one for approval."}
+                </p>
+              </div>
+            ) : (
+              projects.map((project, index) => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  index={index}
+                />
+              ))
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
+
+      {/* Load More — only show if more pages exist */}
+      {!isFetching && page < pages && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={handleLoadMore}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm"
+          >
+            LOAD MORE ({total - projects.length} remaining)
+          </button>
+        </div>
+      )}
+
+      {/* Subtle loading indicator when fetching more pages */}
+      {isFetching && projects.length > 0 && (
+        <div className="flex justify-center py-4">
+          <SmartIcon icon="Loader2" className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
     </div>
   );
 }
