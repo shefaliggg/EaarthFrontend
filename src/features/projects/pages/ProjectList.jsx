@@ -47,9 +47,7 @@ function ProjectList() {
     { value: "all",          label: "ALL PROJECTS",  icon: "LayoutGrid" },
     { value: "Feature Film", label: "FILMS",         icon: "Film" },
     { value: "Television",   label: "TV",            icon: "Tv" },
-    { value: "Documentary",  label: "DOCUMENTARY",   icon: "BookOpen" },
-    { value: "Commercial",   label: "COMMERCIAL",    icon: "Megaphone" },
-    { value: "Music Video",  label: "MUSIC VIDEO",   icon: "Music" },
+
   ];
 
   // ── Fetch approved projects whenever filters change ──────────────────────

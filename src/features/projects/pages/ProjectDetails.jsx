@@ -12,6 +12,9 @@ import { PackageSelection } from '../pages/PackageSelection';
 import EditableTextDataField from '../../../shared/components/wrappers/EditableTextDataField';
 import EditableSelectField from '../../../shared/components/wrappers/EditableSelectField';
 import EditableDateField from '../../../shared/components/wrappers/EditableDateField';
+import { useAuth } from '../../../features/auth/context/AuthContext';
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
   { id: 'details',      label: 'Project Details' },
@@ -19,6 +22,8 @@ const STEPS = [
   { id: 'package',      label: 'Select Package' },
   { id: 'order',        label: 'Order Summary' },
 ];
+
+// ── Static data ───────────────────────────────────────────────────────────────
 
 const GENRE_ITEMS = [
   'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
@@ -30,6 +35,35 @@ const PROJECT_TYPES = [
   { value: 'Feature Film', icon: Clapperboard },
   { value: 'Television',   icon: Tv },
 ];
+
+// ── Package tier map ──────────────────────────────────────────────────────────
+// Frontend PackageSelection IDs → backend enum values
+const PACKAGE_TIER_MAP = {
+  indie:       'basic',
+  studio:      'agency',
+  blockbuster: 'whitelabel',
+  // pass-through in case backend values arrive directly
+  basic:       'basic',
+  agency:      'agency',
+  whitelabel:  'whitelabel',
+};
+
+// ── Fix 4: accent color palette ───────────────────────────────────────────────
+/**
+ * One color is picked at random when the project is first created and persisted
+ * via `branding.accentColor`.  After that it never changes (it's stored in the DB),
+ * so the sidebar always shows the same icon color for a given production.
+ */
+const ACCENT_COLORS = [
+  "#38bdf8", "#34d399", "#fbbf24", "#fb7185", "#a78bfa",
+  "#f97316", "#22d3ee", "#818cf8", "#e879f9", "#4ade80",
+];
+
+function pickAccentColor() {
+  return ACCENT_COLORS[Math.floor(Math.random() * ACCENT_COLORS.length)];
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 const ProjectTypePills = ({ selected, onChange }) => (
   <div className="flex flex-col gap-1.5">
@@ -59,6 +93,8 @@ const ProjectTypePills = ({ selected, onChange }) => (
   </div>
 );
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const toISO = (dateStr) => {
   if (!dateStr) return '';
   if (dateStr.includes('T')) return dateStr;
@@ -71,9 +107,9 @@ const splitIntoPhases = (startISO, endISO) => {
   const range   = endMs - startMs;
   if (range <= 0) {
     return {
-      prepStartDate: startISO, prepEndDate: startISO,
+      prepStartDate:  startISO, prepEndDate:  startISO,
       shootStartDate: startISO, shootEndDate: startISO,
-      wrapStartDate: startISO, wrapEndDate: startISO,
+      wrapStartDate:  startISO, wrapEndDate:  startISO,
     };
   }
   const third = Math.floor(range / 3);
@@ -87,9 +123,17 @@ const splitIntoPhases = (startISO, endISO) => {
   };
 };
 
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 const ProjectDetails = ({ onComplete }) => {
   const [step, setStep] = useState(0);
-  const studioId = "69494aa6df29472c2c6b5d8f";
+
+  // ── Fix: read studioId from auth context instead of hardcoding ────────────
+  const { user } = useAuth();
+  const studioId =
+    user?.affiliations?.find(
+      (a) => a.orgType === "studio" && a.status === "active"
+    )?.orgId ?? "";
 
   const [formData, setFormData] = useState({
     projectName:          '',
@@ -130,18 +174,29 @@ const ProjectDetails = ({ onComplete }) => {
 
   const handleFinish = () => {
     if (!canProceed() || !onComplete) return;
+
     const startISO = toISO(formData.startDate);
     const endISO   = toISO(formData.endDate);
     const phases   = splitIntoPhases(startISO, endISO);
+
+    const backendPackageTier = PACKAGE_TIER_MAP[formData.packageTier] ?? 'basic';
+
+    // Fix 4: generate a persistent accent color at creation time
+    const accentColor = pickAccentColor();
+
     onComplete({
       productionName:  formData.projectName.trim(),
       productionType:  formData.projectType,
-      studioId,
+      studioId,                          // Fix: from auth context, not hardcoded
       country:         formData.primaryLocation.trim(),
       ...phases,
       applications:    formData.selectedApplications ?? [],
-      packageTier:     formData.packageTier ?? 'studio',
+      packageTier:     backendPackageTier,
       projectContacts: [],
+      // Fix 4: branding object sent to backend so accent color is persisted
+      branding: {
+        accentColor,
+      },
     });
   };
 
@@ -154,39 +209,76 @@ const ProjectDetails = ({ onComplete }) => {
           <div key={step} className="animate-in fade-in slide-in-from-right-4 duration-200">
 
             {step === 0 && (
-              <CardWrapper title="Project Details" subtitle="Tell us about your production" variant="default" showLabel>
+              <CardWrapper
+                title="Project Details"
+                subtitle="Tell us about your production"
+                variant="default"
+                showLabel
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
                   <EditableTextDataField
-                    label="Project Name" value={formData.projectName}
+                    label="Project Name"
+                    value={formData.projectName}
                     onChange={(v) => updateField('projectName', v)}
-                    placeholder="Project name" isEditing isRequired error={errors.projectName}
+                    placeholder="Project name"
+                    isEditing
+                    isRequired
+                    error={errors.projectName}
                   />
                   <EditableSelectField
-                    label="Genre" value={formData.genre} items={GENRE_ITEMS}
+                    label="Genre"
+                    value={formData.genre}
+                    items={GENRE_ITEMS}
                     onChange={(v) => updateField('genre', v)}
-                    placeholder="Select genres..." isEditing isRequired={false} error={errors.genre}
+                    placeholder="Select genres..."
+                    isEditing
+                    isRequired={false}
+                    error={errors.genre}
                   />
                   <EditableTextDataField
-                    label="Location" value={formData.primaryLocation}
+                    label="Location"
+                    value={formData.primaryLocation}
                     onChange={(v) => updateField('primaryLocation', v)}
-                    placeholder="City, Country" isEditing isRequired error={errors.primaryLocation}
+                    placeholder="City, Country"
+                    isEditing
+                    isRequired
+                    error={errors.primaryLocation}
                   />
-                  <ProjectTypePills selected={formData.projectType} onChange={(v) => updateField('projectType', v)} />
+                  <ProjectTypePills
+                    selected={formData.projectType}
+                    onChange={(v) => updateField('projectType', v)}
+                  />
                   <EditableDateField
-                    label="Start Date" value={formData.startDate}
+                    label="Start Date"
+                    value={formData.startDate}
                     onChange={(v) => updateField('startDate', v)}
-                    placeholder="dd/mm/yyyy" isEditing isRequired allowPast allowFuture error={errors.startDate}
+                    placeholder="dd/mm/yyyy"
+                    isEditing
+                    isRequired
+                    allowPast
+                    allowFuture
+                    error={errors.startDate}
                   />
                   <EditableDateField
-                    label="End Date" value={formData.endDate}
+                    label="End Date"
+                    value={formData.endDate}
                     onChange={(v) => updateField('endDate', v)}
-                    placeholder="dd/mm/yyyy" isEditing isRequired allowPast allowFuture error={errors.endDate}
+                    placeholder="dd/mm/yyyy"
+                    isEditing
+                    isRequired
+                    allowPast
+                    allowFuture
+                    error={errors.endDate}
                   />
                   <div className="md:col-span-2">
                     <EditableTextDataField
-                      label="Description" value={formData.projectDescription}
+                      label="Description (optional)"
+                      value={formData.projectDescription}
                       onChange={(v) => updateField('projectDescription', v)}
-                      placeholder="Describe your project..." isEditing isRequired={false} multiline
+                      placeholder="Describe your project..."
+                      isEditing
+                      isRequired={false}
+                      multiline
                     />
                   </div>
                 </div>
