@@ -39,6 +39,8 @@ import {
 } from "../../../user-documents/config/aiFieldMapper";
 import { useDocumentAIScan } from "../../../user-documents/hooks/useDocumentAIScan";
 import { AIConflictPanel, AIScanBanner } from "../common/AIFieldSuggestion";
+import { InfoPanel } from "../../../../shared/components/panels/InfoPanel";
+import { BrainCircuit } from "lucide-react";
 
 export default function IdentityDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -934,12 +936,31 @@ export default function IdentityDetails() {
 
               {/* ↓ AI scan status banner — appears immediately after file pick */}
               {isEditingIdentity && (
-                <AIScanBanner
-                  status={passportScan.status}
-                  error={passportScan.error}
-                  autoFilledCount={autoFilledCount}
-                  conflictCount={aiConflicts.length}
-                />
+                <>
+                  <InfoPanel
+                    icon={BrainCircuit}
+                    title="AI document scan"
+                    variant="info"
+                    dismissible
+                    storageKey="hide-ai-passport-info"
+                  >
+                    <p>
+                      Upload your passport to auto-fill the fields above using
+                      AI.
+                    </p>
+
+                    <p className="text-[11px] opacity-80">
+                      Please review all extracted details before saving, as AI
+                      may occasionally make mistakes.
+                    </p>
+                  </InfoPanel>
+                  <AIScanBanner
+                    status={passportScan.status}
+                    error={passportScan.error}
+                    autoFilledCount={autoFilledCount}
+                    conflictCount={aiConflicts.length}
+                  />
+                </>
               )}
 
               {/* ↓ Conflict resolution panel — only when there are conflicts */}
@@ -977,21 +998,17 @@ export default function IdentityDetails() {
                 error={errors?.passportDocument?._errors?.[0]}
                 disabled={isSavingIdentity}
                 infoPillDescription="Upload a clear copy of your passport. AI will auto-fill the fields above."
-                secondaryActions={
-                  files.passport
-                    ? [
-                        {
-                          label: passportAIScanLabel,
-                          icon: "Sparkles",
-                          onClick: handlePassportRescan,
-                          disabled:
-                            !resolvedPassport ||
-                            passportScan.status === "scanning" ||
-                            isSavingIdentity,
-                        },
-                      ]
-                    : []
-                }
+                secondaryActions={[
+                  {
+                    label: passportAIScanLabel,
+                    icon: "Sparkles",
+                    onClick: handlePassportRescan,
+                    disabled:
+                      !resolvedPassport ||
+                      passportScan.status === "scanning" ||
+                      isSavingIdentity,
+                  },
+                ]}
                 actionSlot={
                   isEditingIdentity &&
                   passportDocs?.length > 0 && (

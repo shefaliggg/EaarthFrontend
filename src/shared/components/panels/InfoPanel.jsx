@@ -79,9 +79,9 @@ export function InfoPanel({
       {dismissible && (
         <button
           onClick={handleDismiss}
-          className="absolute top-5 right-4 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition"
+          className="absolute  top-1/2 -translate-y-1/2 right-4 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition"
         >
-          <X className={cn("w-4.5 h-4.5","text-muted-foreground")} />
+          <X className={cn("w-4.5 h-4.5", "text-muted-foreground")} />
         </button>
       )}
 
