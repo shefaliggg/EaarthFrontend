@@ -11,8 +11,6 @@ import { AutoHeight } from "@/shared/components/wrappers/AutoHeight";
 import RolePermissionsTable from "@/features/projects/settings/components/admin/RolePermissionsTable";
 import RoleAssignmentsTable from "@/features/projects/settings/components/admin/RoleAssignmentsTable";
 
-
-
 const INITIAL_ROLE_PERMISSIONS = [
   {
     id: 1,
@@ -236,6 +234,9 @@ function AdminSettings() {
 
   const startEditing = (section) => {
     setIsEditing({ section });
+    if (section !== "roleAssignments") {
+      setShow(false);
+    }
   };
 
   const cancelEditing = () => {
