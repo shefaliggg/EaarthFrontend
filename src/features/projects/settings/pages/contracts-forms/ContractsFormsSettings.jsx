@@ -3,9 +3,14 @@ import { Eye, FileText, Lock, Shield, Unlock } from "lucide-react";
 import { cn } from "@/shared/config/utils";
 import { useState } from "react";
 import FilterPillTabs from "@/shared/components/FilterPillTabs";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import axiosConfig from "../../../../auth/config/axiosConfig";
 
 function ContractsFormsSettings() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const navigate = useNavigate();
+
   const formGroups = [
     {
       id: "group-1",
@@ -3663,7 +3668,122 @@ function ContractsFormsSettings() {
     },
   ];
 
+  //   async function openPreview(bundle, categoryName) {
+  //   const toastId = toast.loading(
+  //     "Preparing contract preview and loading template..."
+  //   );
+
+  //   // TODO: swap this for a per-form S3 URL from backend
+  //     const S3_URL =
+  //       "https://eaarthuploads.s3.eu-west-2.amazonaws.com/EaarthTemplates/standard_crew_daily_paye.html?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAVUJJ2KPXB7MZKQCR%2F20260516%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20260516T054151Z&X-Amz-Expires=300&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEL7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCWV1LXdlc3QtMiJHMEUCIFQ7x6XZYwH5wyQtkTdRQ8m5CocN8mpX%2F93foxy9qOdIAiEAs7sYNQBiRkPCh1cVLDxfFiyiyi%2F0i92uVMCkZ1aAaxsq4wIIh%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgwzODcxNzE2MzYyMDYiDEOj63sz4g6ZBT2PBSq3AvYFh89cX131a4qpaAlLZQN%2F0CdXlrM7CxYHj%2BFQRaH0lY%2F18Cgz72cUUKTxGzF3kW0%2FPzAYPCnO58HgfkNM1Khl8UATWfZsBA74yvC91s%2BOd5nHfyT%2FZvrvT4CconhM%2BnTVrBQA3tQj0akgvmcuAyvpYecyFQ2RbC1YTJlRGH6VkwWli1U1h%2FN95EkI8Vz15QGRS4YLfhQenihCuM8alVCmG36xflBMTVIPll722iOmjD6RB6bm%2FHzXtwOq8ddRWdr3FS5yDjrv0ywfBcpaPcgZUyr6CoqI41hBAa%2BugDH8pY2pgt3u8KWMy3cCBaxIeYwEu%2FXvif6TQpTn7vGOS1G7z9s3ycIE2bdFZrERUfZp8BEoRJRFNgJJLM7oVlTPEMV%2BanusI8T4CFZDVnrzRpE3wkQ380ARMOrgn9AGOq0CpUcejTQzMHJYTYKgb98wgvGPimebuHsFlcfmcBreXEPInrWf5KbVdL1rAC5P7DFIDXxFIz%2BgZRCJePXbOvGcdM3spliCUEiZDQPFKk1q0BHzS7hsitvoms79igY2545hL6f1gcWWlcfNeNu3WKwbp60aXYSwPoA7Lfdph%2FaR27aNsTPQKoSk5c8xy7PdJMrrPS0JqsycPcm%2Beg%2F3VKPoQuRlXrcCB5ae4eTzaCXH3mzSyBg59nJGtS4N%2FcneSuWLF7uv%2FwoduQHc4mqZP6I4QLj8T89ubsPJJj4BkQMa%2FTI9A5bORBsJv2CGyQHirPrj%2BTe4oAgh9owpyuX9ZjriRsbdQ16kNPqyynZivFU8I7b5VrsVbKE7DbwaOIR4kT5%2FSBi%2FGXG74UNgu%2BIqbg%3D%3D&X-Amz-Signature=280939e3b4c07aad91d533360499ebe857a4a10b627e22cef493ca3061e9b722&X-Amz-SignedHeaders=host&response-content-disposition=inline";
+
+  //   let htmlTemplate = "";
+
+  //   try {
+  //     const res = await fetch(S3_URL);
+
+  //     if (!res.ok) {
+  //       throw new Error(`S3 fetch failed: ${res.status}`);
+  //     }
+
+  //     htmlTemplate = await res.text();
+  //   } catch (err) {
+  //     toast.error(
+  //       "Unable to load the contract template. Please try again in a moment.",
+  //       {
+  //         id: toastId,
+  //       }
+  //     );
+
+  //     console.error(err);
+  //     return;
+  //   }
+
+  //   const override = {
+  //     bundle: {
+  //       name: `${bundle.name} · ${categoryName}`,
+  //       forms: bundle.forms.map((form) => ({
+  //         formKey: form.id,
+  //         formName: form.name,
+  //         displayType: "contract",
+  //         formGroupId: {
+  //           forms: [{ key: form.id, htmlTemplate }],
+  //         },
+  //       })),
+  //     },
+  //   };
+
+  //   toast.success("Contract preview loaded successfully.", {
+  //     id: toastId,
+  //   });
+
+  //   navigate("review-edit", {
+  //     state: { override },
+  //   });
+  // }
+
   // console.log(categories);
+
+  async function openPreview(bundle, categoryName) {
+    const toastId = toast.loading("Preparing contract preview...");
+
+    // TODO: replace with the real per-bundle key from the API
+    const TEMP_S3_KEY = "EaarthTemplates/standard_crew_daily_paye.html";
+
+    let htmlTemplate = "";
+
+    try {
+      // Step 1: Get fresh signed URL
+      const { data } = await axiosConfig.post("/settings/template-url", {
+        key: TEMP_S3_KEY,
+      });
+
+      const { url } = data;
+
+      if (!url) {
+        throw new Error("Signed URL missing from response");
+      }
+
+      // Step 2: Fetch template HTML from S3
+      const htmlRes = await fetch(url);
+
+      if (!htmlRes.ok) {
+        throw new Error(`S3 fetch failed: ${htmlRes.status}`);
+      }
+
+      htmlTemplate = await htmlRes.text();
+    } catch (err) {
+      toast.error("Unable to load the contract template. Please try again.", {
+        id: toastId,
+      });
+
+      console.error(err);
+      return;
+    }
+
+    const override = {
+      bundle: {
+        name: `${bundle.name} · ${categoryName}`,
+        forms: bundle.forms.map((form) => ({
+          formKey: form.id,
+          formName: form.name,
+          displayType: "contract",
+          formGroupId: {
+            forms: [{ key: form.id, htmlTemplate }],
+          },
+        })),
+      },
+    };
+
+    toast.success("Contract preview loaded successfully.", {
+      id: toastId,
+    });
+
+    navigate("review-edit", {
+      state: { override },
+    });
+  }
+
   const filteredCategories =
     activeCategory === "all"
       ? categories
@@ -3716,7 +3836,9 @@ function ContractsFormsSettings() {
 
                     <div className="flex items-center gap-1">
                       <button
+                        // disabled={bundle.isLocked}
                         type="button"
+                        onClick={() => openPreview(bundle, category.name)}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg bg-peach-500/10 text-peach-500 hover:bg-peach-500/20 transition-colors text-[0.6rem]"
                       >
                         <Eye className="h-3 w-3" />

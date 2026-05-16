@@ -5,7 +5,10 @@ import { ChevronLeft, ChevronRight, Layers, FileText } from "lucide-react";
 function AutoIframe({ html, title }) {
   if (!html) {
     return (
-      <div className="flex items-center justify-center h-[400px] text-sm" style={{ color: "var(--muted-foreground)" }}>
+      <div
+        className="flex items-center justify-center h-[400px] text-sm"
+        style={{ color: "var(--muted-foreground)" }}
+      >
         No template available
       </div>
     );
@@ -31,9 +34,8 @@ export default function Preview() {
   const forms = rawForms
     .map((form) => {
       const html =
-        form.formGroupId?.forms?.find(
-          (f) => f.key === form.formKey
-        )?.htmlTemplate || "";
+        form.formGroupId?.forms?.find((f) => f.key === form.formKey)
+          ?.htmlTemplate || "";
 
       return {
         ...form,
@@ -47,9 +49,17 @@ export default function Preview() {
   const current = forms[activeIdx];
   const total = forms.length;
 
+  console.log("locatuon state:", state);
+  console.log("RAW FORMS:", rawForms);
+  console.log("FORMS:", forms);
+  console.log("CURRENT HTML:", current?.html);
+
   if (!forms.length) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm" style={{ color: "var(--muted-foreground)" }}>
+      <div
+        className="flex items-center justify-center py-20 text-sm"
+        style={{ color: "var(--muted-foreground)" }}
+      >
         No previewable forms
       </div>
     );
@@ -57,7 +67,6 @@ export default function Preview() {
 
   return (
     <div className="space-y-5">
-
       {/* Bundle Header */}
       <div
         className="flex items-center gap-3 rounded-xl px-4 py-3"
@@ -67,13 +76,22 @@ export default function Preview() {
           className="w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
           style={{ background: "var(--primary)" }}
         >
-          <Layers className="w-4 h-4" style={{ color: "var(--primary-foreground)" }} />
+          <Layers
+            className="w-4 h-4"
+            style={{ color: "var(--primary-foreground)" }}
+          />
         </div>
         <div>
-          <h2 className="text-[13px] font-bold" style={{ color: "var(--foreground)" }}>
+          <h2
+            className="text-[13px] font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
             {override.bundle?.name || "Bundle"}
           </h2>
-          <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+          <p
+            className="text-[10px]"
+            style={{ color: "var(--muted-foreground)" }}
+          >
             {total} forms in bundle
           </p>
         </div>
@@ -89,7 +107,10 @@ export default function Preview() {
             style={{
               border: "1px solid var(--border)",
               background: i === activeIdx ? "var(--primary)" : "var(--card)",
-              color: i === activeIdx ? "var(--primary-foreground)" : "var(--muted-foreground)",
+              color:
+                i === activeIdx
+                  ? "var(--primary-foreground)"
+                  : "var(--muted-foreground)",
             }}
           >
             {form.formName}
@@ -142,7 +163,10 @@ export default function Preview() {
         <div className="px-5 py-4" style={{ background: "var(--lavender-50)" }}>
           <div
             className="rounded-lg overflow-hidden"
-            style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+            }}
           >
             <AutoIframe html={current.html} title={current.formName} />
           </div>
@@ -151,18 +175,28 @@ export default function Preview() {
         {total > 1 && (
           <div
             className="flex justify-between items-center px-5 py-3"
-            style={{ borderTop: "1px solid var(--border)", background: "var(--card)" }}
+            style={{
+              borderTop: "1px solid var(--border)",
+              background: "var(--card)",
+            }}
           >
             <button
               onClick={() => setActiveIdx((i) => Math.max(0, i - 1))}
               disabled={activeIdx === 0}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                background: "var(--card)",
+              }}
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Previous
             </button>
 
-            <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            <span
+              className="text-[11px]"
+              style={{ color: "var(--muted-foreground)" }}
+            >
               {activeIdx + 1} of {total}
             </span>
 
@@ -170,15 +204,17 @@ export default function Preview() {
               onClick={() => setActiveIdx((i) => Math.min(total - 1, i + 1))}
               disabled={activeIdx === total - 1}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ border: "1px solid var(--border)", color: "var(--foreground)", background: "var(--card)" }}
+              style={{
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                background: "var(--card)",
+              }}
             >
               Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
-
       </div>
-
     </div>
   );
 }
