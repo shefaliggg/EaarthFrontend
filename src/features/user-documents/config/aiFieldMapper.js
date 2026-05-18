@@ -1,3 +1,5 @@
+import { getCountryCode } from "@/shared/config/countriesDataConfig";
+import { normalizeDate } from "../../../shared/config/utils";
 /**
  * Maps AI-extracted field keys → nested form state paths.
  * Extend FIELD_MAPS to support additional document types.
@@ -71,8 +73,6 @@ export function setNestedValue(obj, path, value) {
   return result;
 }
 
-// ─── Core merge logic ─────────────────────────────────────────────────────────
-
 /**
  * Merge AI-extracted fields into the current form state.
  *
@@ -84,8 +84,6 @@ export function setNestedValue(obj, path, value) {
  * @param {{ currentForm: object, aiFields: object, documentType: string }}
  * @returns {{ updatedForm: object, autoFilled: Mapping[], conflicts: Conflict[] }}
  */
-import { getCountryCode } from "@/shared/config/countriesDataConfig";
-import { normalizeDate } from "../../../shared/config/utils";
 
 export const mergeAIFields = ({ currentForm, aiFields, documentType }) => {
   const fieldMap = FIELD_MAPS[documentType] ?? [];

@@ -459,6 +459,8 @@ export default function IdentityDetails() {
     const fd = new FormData();
     const data = formState.identity;
 
+    console.log("ai extracted fields: ", aiRawFields);
+
     if (data.type) fd.append("type", data.type);
 
     if (data.type === "PASSPORT") {
