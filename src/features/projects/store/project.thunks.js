@@ -29,18 +29,18 @@ export const createProjectThunk = createAsyncThunk(
   async (values, { rejectWithValue }) => {
     try {
       const payload = {
-        productionName:  values.productionName,
-        productionType:  values.productionType,
-        studioId:        values.studioId,
-        country:         values.country,
-        prepStartDate:   values.prepStartDate,
-        prepEndDate:     values.prepEndDate,
-        shootStartDate:  values.shootStartDate,
-        shootEndDate:    values.shootEndDate,
-        wrapStartDate:   values.wrapStartDate,
-        wrapEndDate:     values.wrapEndDate,
-        applications:    values.applications    ?? [],
-        packageTier:     values.packageTier     ?? "basic",
+        productionName: values.productionName,
+        productionType: values.productionType,
+        studioId: values.studioId,
+        country: values.country,
+        prepStartDate: values.prepStartDate,
+        prepEndDate: values.prepEndDate,
+        shootStartDate: values.shootStartDate,
+        shootEndDate: values.shootEndDate,
+        wrapStartDate: values.wrapStartDate,
+        wrapEndDate: values.wrapEndDate,
+        applications: values.applications ?? [],
+        packageTier: values.packageTier ?? "basic",
         projectContacts: values.projectContacts ?? [],
       };
 
@@ -80,14 +80,16 @@ export const getAllProjectsThunk = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const response = await getAllProjectsAPI(filters);
+      // console.log("getAllProjectsThunk response:", response);
       return {
-        projects: response.data        || [],
-        total:    response.pagination?.total  || 0,
-        page:     response.pagination?.page   || 1,
-        pages:    response.pagination?.pages  || 1,
-        limit:    response.pagination?.limit  || 10,
+        projects: response.data || [],
+        total: response.pagination?.total || 0,
+        page: response.pagination?.page || 1,
+        pages: response.pagination?.pages || 1,
+        limit: response.pagination?.limit || 10,
       };
     } catch (err) {
+      console.error("getAllProjectsThunk error:", err);
       return rejectWithValue(
         err?.response?.data?.message || "Failed to fetch projects",
       );
@@ -121,18 +123,18 @@ export const updateProjectThunk = createAsyncThunk(
   async ({ id, values }, { rejectWithValue }) => {
     try {
       const payload = {
-        productionName:  values.productionName,
-        productionType:  values.productionType,
-        studioId:        values.studioId,
-        country:         values.country,
-        prepStartDate:   values.prepStartDate,
-        prepEndDate:     values.prepEndDate,
-        shootStartDate:  values.shootStartDate,
-        shootEndDate:    values.shootEndDate,
-        wrapStartDate:   values.wrapStartDate,
-        wrapEndDate:     values.wrapEndDate,
-        applications:    values.applications,
-        packageTier:     values.packageTier,
+        productionName: values.productionName,
+        productionType: values.productionType,
+        studioId: values.studioId,
+        country: values.country,
+        prepStartDate: values.prepStartDate,
+        prepEndDate: values.prepEndDate,
+        shootStartDate: values.shootStartDate,
+        shootEndDate: values.shootEndDate,
+        wrapStartDate: values.wrapStartDate,
+        wrapEndDate: values.wrapEndDate,
+        applications: values.applications,
+        packageTier: values.packageTier,
         projectContacts: values.projectContacts,
       };
 

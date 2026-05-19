@@ -15,7 +15,6 @@ import { fetchDocumentsThunk } from "../../../user-documents/store/document.thun
 import {
   getDisplayDocument,
   getDocumentsByType,
-  getDocAIFields, // ← new
 } from "../../../user-documents/store/document.selector";
 import ProfileCardLoadingSkelton from "../skeltons/ProfileCardLoadingSkelton";
 import ProfileCardErrorSkelton from "../skeltons/ProfileCardErrorSkelton";
@@ -31,14 +30,12 @@ import {
   MODAL_TYPES,
   useModalStore,
 } from "../../../../shared/stores/useModalStore";
+import { buildDocumentAiExtraction } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import { useDocumentSectionAI } from "../../../ai/documents/hooks/useDocumentSectionAI";
 import {
-  buildPassportAiExtraction,
-  mergeAIFields,
-  normalizeAIFieldsForMerge,
-  setNestedValue,
-} from "../../../user-documents/config/aiFieldMapper";
-import { useDocumentAIScan } from "../../../user-documents/hooks/useDocumentAIScan";
-import { AIConflictPanel, AIScanBanner } from "../common/AIFieldSuggestion";
+  AIConflictPanel,
+  AIScanBanner,
+} from "../../../ai/documents/components/AIFieldSuggestion";
 import { InfoPanel } from "../../../../shared/components/panels/InfoPanel";
 import { BrainCircuit } from "lucide-react";
 
@@ -67,15 +64,10 @@ export default function IdentityDetails() {
     certificateNaturalisation: null,
   });
   const [errors, setErrors] = useState({});
+
   const { openModal } = useModalStore();
-
-  const { getScan, triggerScan, setReuseFields, clearAllScans } =
-    useDocumentAIScan();
-  const [aiConflicts, setAiConflicts] = useState([]);
-  const [autoFilledCount, setAutoFilledCount] = useState(0);
-  const [aiRawFields, setAiRawFields] = useState(null);
-
   const dispatch = useDispatch();
+
   const { crewProfile, isFetching, isUpdating, error } = useSelector(
     (state) => state.crewProfile,
   );
@@ -90,7 +82,17 @@ export default function IdentityDetails() {
     niProof: null,
     certificateNaturalisation: null,
   };
+
   const np = crewProfile?.nationalityProof;
+
+  // ── Passport AI hook ───────────────────────────────────────────────────────
+  const passportAI = useDocumentSectionAI({
+    documentType: "PASSPORT",
+    scanKey: "passport",
+    getForm: () => formState.identity,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, identity: updated })),
+  });
 
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -135,10 +137,19 @@ export default function IdentityDetails() {
     userDocuments,
   );
 
+  // ── Derived flags ──────────────────────────────────────────────────────────
   const isEditingPersonal = isEditing.section === "personal";
   const isEditingIdentity = isEditing.section === "identity";
   const isSavingPersonal = isUpdating && isEditing.section === "personal";
   const isSavingIdentity = isUpdating && isEditing.section === "identity";
+
+  const passportAIStatus =
+    resolvedPassport?.aiExtraction?.status || "NOT_SCANNED";
+
+  const passportAIScanLabel =
+    passportAIStatus === "NOT_SCANNED" || passportAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
 
   // ── Display data (read-mode fallback) ──────────────────────────────────────
   const pd = isEditingPersonal
@@ -178,43 +189,7 @@ export default function IdentityDetails() {
         certificateNaturalisationId: np?.certificateNaturalisationId ?? null,
       };
 
-  const applyMergeResult = useCallback(
-    ({ updatedForm, autoFilled, conflicts }) => {
-      setFormState((prev) => ({ ...prev, identity: updatedForm }));
-      setAutoFilledCount(autoFilled.length);
-      setAiConflicts(conflicts);
-    },
-    [],
-  );
-
-  /** Clear all temporary AI state (called on cancel or type change) */
-  const resetAIState = useCallback(() => {
-    setAiConflicts([]);
-    setAiRawFields(null);
-    setAutoFilledCount(0);
-    clearAllScans();
-  }, [clearAllScans]);
-
-  // User accepts AI suggestion → update form, remove from conflict list
-  const acceptAISuggestion = useCallback((conflict) => {
-    setFormState((prev) => ({
-      ...prev,
-      identity: setNestedValue(
-        prev.identity,
-        conflict.formPath,
-        conflict.aiValue,
-      ),
-    }));
-    setAiConflicts((prev) => prev.filter((c) => c.aiKey !== conflict.aiKey));
-  }, []);
-
-  // User keeps current value → just remove from conflict list
-  const rejectAISuggestion = useCallback((conflict) => {
-    setAiConflicts((prev) => prev.filter((c) => c.aiKey !== conflict.aiKey));
-  }, []);
-
   // ── Section editing ────────────────────────────────────────────────────────
-
   const startEditing = (section) => {
     setErrors({});
 
@@ -270,7 +245,7 @@ export default function IdentityDetails() {
         niProof: np?.niProofId ?? null,
         certificateNaturalisation: np?.certificateNaturalisationId ?? null,
       });
-      resetAIState();
+      passportAI.resetAIState();
     }
 
     setIsEditing({ section });
@@ -293,77 +268,37 @@ export default function IdentityDetails() {
       niProof: null,
       certificateNaturalisation: null,
     });
-    resetAIState();
+    passportAI.resetAIState();
   };
 
-  const processPassportAIScan = useCallback(
-    async ({ file, documentId, currentForm }) => {
-      resetAIState();
+  // ── Passport handlers ──────────────────────────────────────────────────────
 
-      const scanPromise = triggerScan({
-        key: "passport",
-        file,
-        documentId,
-        documentType: "PASSPORT",
-      });
-
-      toast.promise(scanPromise, {
-        loading: "Scanning passport with AI...",
-        success: () => ({
-          message: "Passport scan completed",
-          description: "Details extracted. Please review before continuing.",
-        }),
-        error: (err) => ({
-          message: "AI scan failed",
-          description: err?.message || "You can still fill fields manually.",
-        }),
-      });
-
-      const fields = await scanPromise;
-
-      if (!fields) return;
-
-      setAiRawFields(fields);
-
-      const result = mergeAIFields({
-        currentForm,
-        aiFields: fields,
-        documentType: "PASSPORT",
-      });
-
-      applyMergeResult(result);
-    },
-    [triggerScan, applyMergeResult, resetAIState],
-  );
-
+  // New upload: store file, clear any reuse selection, fire AI scan
   const handlePassportUpload = useCallback(
     async (file) => {
       setFiles((f) => ({ ...f, passport: file }));
       setReuseDocIds((prev) => ({ ...prev, passport: null }));
-
-      await processPassportAIScan({
-        file,
-        currentForm: formState.identity,
-      });
+      await passportAI.processAIScan({ file, currentForm: formState.identity });
     },
-    [formState.identity, processPassportAIScan],
+    [formState.identity, passportAI],
   );
 
+  // Rescan button: works whether the resolved doc came from a new upload or
+  // a previously saved document. Enters edit mode automatically if needed.
   const handlePassportRescan = useCallback(async () => {
     if (!resolvedPassport) return;
 
-    // Enter edit mode automatically
     if (!isEditingIdentity) {
       startEditing("identity");
     }
 
     try {
-      resetAIState();
-
-      await processPassportAIScan({
+      await passportAI.processAIScan({
+        // prefer the in-memory file; fall back to the saved document id
         file: files.passport ?? null,
         documentId: resolvedPassport._id,
-        currentForm: formState.identity || nd,
+        // use live formState if editing, otherwise fall back to read-mode nd
+        currentForm: formState.identity ?? nd,
       });
     } catch (err) {
       toast.error("Failed to rescan passport");
@@ -372,56 +307,23 @@ export default function IdentityDetails() {
   }, [
     resolvedPassport,
     isEditingIdentity,
+    files.passport,
     formState.identity,
     nd,
-    processPassportAIScan,
-    resetAIState,
+    passportAI,
   ]);
 
-  const passportAIStatus =
-    resolvedPassport?.aiExtraction?.status || "NOT_SCANNED";
-
-  const passportAIScanLabel =
-    passportAIStatus === "NOT_SCANNED" || passportAIStatus === "PROCESSING"
-      ? "Scan with AI"
-      : "Rescan with AI";
-
-  /**
-   * Called when user selects an EXISTING passport from ReuseDocumentPromptPanel.
-   * Reuses persisted aiExtraction.fields from already-fetched userDocuments —
-   * no additional API call needed.
-   */
+  // Reuse existing document: store chosen id, clear new file, apply persisted AI fields
   const handlePassportReuseSelect = useCallback(
     (id) => {
-      resetAIState();
       setReuseDocIds((prev) => ({ ...prev, passport: id }));
-
-      if (id) {
-        setFiles((f) => ({ ...f, passport: null }));
-
-        const persistedFields = getDocAIFields(userDocuments, id);
-        if (persistedFields) {
-          const normalized = normalizeAIFieldsForMerge(persistedFields);
-          setReuseFields({ key: "passport", fields: normalized });
-
-          const result = mergeAIFields({
-            currentForm: formState.identity,
-            aiFields: normalized,
-            documentType: "PASSPORT",
-          });
-          applyMergeResult(result);
-        }
-      }
+      if (id) setFiles((f) => ({ ...f, passport: null }));
+      passportAI.handleReuseSelect(id, userDocuments);
     },
-    [
-      formState.identity,
-      userDocuments,
-      setReuseFields,
-      applyMergeResult,
-      resetAIState,
-    ],
+    [userDocuments, passportAI],
   );
 
+  // ── Save handlers ──────────────────────────────────────────────────────────
   const handleSavePersonal = async () => {
     setErrors({});
     const result = personalDetailsSchema.safeParse(formState.personal);
@@ -459,25 +361,28 @@ export default function IdentityDetails() {
     const fd = new FormData();
     const data = formState.identity;
 
-    console.log("ai extracted fields: ", aiRawFields);
-
     if (data.type) fd.append("type", data.type);
 
     if (data.type === "PASSPORT") {
       fd.append("passport", JSON.stringify(data.passport ?? {}));
+
       if (files.passport) {
         fd.append("passport", files.passport);
-
-        if (aiRawFields) {
-          fd.append(
-            "passportAiExtraction",
-            JSON.stringify(
-              buildPassportAiExtraction(aiRawFields, data.passport),
-            ),
-          );
-        }
       } else if (reuseDocIds.passport) {
         fd.append("passportDocumentId", reuseDocIds.passport);
+      }
+
+      if (passportAI.aiRawFields) {
+        fd.append(
+          "passportAiExtraction",
+          JSON.stringify(
+            buildDocumentAiExtraction(
+              passportAI.aiRawFields,
+              data.passport,
+              "PASSPORT",
+            ),
+          ),
+        );
       }
     }
 
@@ -486,6 +391,7 @@ export default function IdentityDetails() {
         fd.append("birthCertificate", files.birthCertificate);
       else if (reuseDocIds.birthCertificate)
         fd.append("birthCertificateId", reuseDocIds.birthCertificate);
+
       if (files.niProof) fd.append("niProof", files.niProof);
       else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
     }
@@ -498,6 +404,7 @@ export default function IdentityDetails() {
           "certificateNaturalisationId",
           reuseDocIds.certificateNaturalisation,
         );
+
       if (files.niProof) fd.append("niProof", files.niProof);
       else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
     }
@@ -521,6 +428,7 @@ export default function IdentityDetails() {
     }
   };
 
+  // ── Loading / error states ─────────────────────────────────────────────────
   if (isFetching) {
     return (
       <>
@@ -543,8 +451,7 @@ export default function IdentityDetails() {
     );
   }
 
-  const passportScan = getScan("passport");
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       {/* ── Personal Details ─────────────────────────────────────────────── */}
@@ -789,8 +696,8 @@ export default function IdentityDetails() {
             value={nd?.type}
             isEditing={isEditingIdentity}
             onChange={(val) => {
-              // Changing proof type resets all AI state for a clean slate
-              resetAIState();
+              // Changing type resets AI so there's no stale scan state
+              passportAI.resetAIState();
               setFormState((prev) => ({
                 ...prev,
                 identity: { ...prev.identity, type: val },
@@ -810,6 +717,7 @@ export default function IdentityDetails() {
           {/* ── PASSPORT ─────────────────────────────────────────────────── */}
           {nd?.type === "PASSPORT" && (
             <div className="mt-6 space-y-4 rounded-3xl">
+              {/* Passport form fields — disabled while scanning */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <EditableTextDataField
                   label="PASSPORT FIRST NAME"
@@ -826,9 +734,10 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.firstName?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
+
                 <EditableTextDataField
                   label="PASSPORT LAST NAME"
                   value={nd?.passport?.lastName}
@@ -844,7 +753,7 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.lastName?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
 
@@ -866,9 +775,10 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.placeOfBirth?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
+
                 <EditableSelectField
                   label="PASSPORT ISSUING COUNTRY"
                   value={nd?.passport?.issuingCountry}
@@ -888,9 +798,10 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.issuingCountry?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
+
                 <EditableTextDataField
                   label="PASSPORT NUMBER"
                   value={nd?.passport?.number}
@@ -910,9 +821,10 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.number?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
+
                 <EditableDateField
                   label="PASSPORT EXPIRY DATE"
                   value={nd?.passport?.expiryDate}
@@ -931,12 +843,12 @@ export default function IdentityDetails() {
                   }
                   error={errors?.passport?.expiryDate?._errors?.[0]}
                   disabled={
-                    isSavingIdentity || passportScan.status === "scanning"
+                    isSavingIdentity || passportAI.scan.status === "scanning"
                   }
                 />
               </div>
 
-              {/* ↓ AI scan status banner — appears immediately after file pick */}
+              {/* AI info + status banners — edit mode only */}
               {isEditingIdentity && (
                 <>
                   <InfoPanel
@@ -950,27 +862,27 @@ export default function IdentityDetails() {
                       Upload your passport to auto-fill the fields above using
                       AI.
                     </p>
-
                     <p className="text-[11px] opacity-80">
                       Please review all extracted details before saving, as AI
                       may occasionally make mistakes.
                     </p>
                   </InfoPanel>
+
                   <AIScanBanner
-                    status={passportScan.status}
-                    error={passportScan.error}
-                    autoFilledCount={autoFilledCount}
-                    conflictCount={aiConflicts.length}
+                    status={passportAI.scan.status}
+                    error={passportAI.scan.error}
+                    autoFilledCount={passportAI.autoFilledCount}
+                    conflictCount={passportAI.aiConflicts.length}
                   />
                 </>
               )}
 
-              {/* ↓ Conflict resolution panel — only when there are conflicts */}
-              {isEditingIdentity && aiConflicts.length > 0 && (
+              {/* Conflict resolution panel */}
+              {isEditingIdentity && passportAI.aiConflicts.length > 0 && (
                 <AIConflictPanel
-                  conflicts={aiConflicts}
-                  onAccept={acceptAISuggestion}
-                  onReject={rejectAISuggestion}
+                  conflicts={passportAI.aiConflicts}
+                  onAccept={passportAI.acceptAISuggestion}
+                  onReject={passportAI.rejectAISuggestion}
                 />
               )}
 
@@ -982,6 +894,13 @@ export default function IdentityDetails() {
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
                 status={resolvedPassport?.verificationStatus || "Pending"}
+                secondaryBadges={[
+                  {
+                    status: passportAIStatus,
+                    label: `AI Scan ${passportAIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
                 expiresAt={resolvedPassport?.expiresAt}
                 meta={
                   resolvedPassport?.sizeBytes
@@ -1004,10 +923,15 @@ export default function IdentityDetails() {
                   {
                     label: passportAIScanLabel,
                     icon: "Sparkles",
+                    variant:
+                      passportAIStatus === "NOT_SCANNED" ||
+                      passportAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
                     onClick: handlePassportRescan,
                     disabled:
                       !resolvedPassport ||
-                      passportScan.status === "scanning" ||
+                      passportAI.scan.status === "scanning" ||
                       isSavingIdentity,
                   },
                 ]}

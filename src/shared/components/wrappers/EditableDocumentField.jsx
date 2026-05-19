@@ -24,6 +24,7 @@ export default function EditableDocumentField({
   fileUrl,
   isUploaded,
   status = "Pending",
+  secondaryBadges = [],
   expiresAt,
   meta,
 
@@ -106,9 +107,20 @@ export default function EditableDocumentField({
             </div>
 
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <p className="text-sm font-medium mb-0.5">{fileName}</p>
                 <StatusBadge status={status.toLowerCase()} size="xs" />
+                {secondaryBadges.map((badge, idx) => (
+                  <StatusBadge
+                    key={idx}
+                    status={badge?.status.toLowerCase()}
+                    label={badge?.label || badge?.status.toLowerCase()}
+                    icon={badge?.icon || null}
+                    showIcon={badge?.showIcon || true}
+                    showLabel={badge?.showLabel || true}
+                    size={badge?.size ?? "xs"}
+                  />
+                ))}
               </div>
               <div className="text-xs flex items-center gap-3 text-muted-foreground">
                 {meta && <span>{meta}</span>}

@@ -1,12 +1,5 @@
 import { useState, useCallback } from "react";
-import { scanTempDocument } from "../services/document.service";
-
-/**
- * Manages temporary AI scan state per document slot.
- * Each slot is keyed by a string (e.g. "passport", "birthCertificate").
- *
- * Status lifecycle: idle → scanning → done | error
- */
+import { scanTempDocument } from "../../../user-documents/services/document.service";
 
 const IDLE = { status: "idle", fields: null, error: null };
 

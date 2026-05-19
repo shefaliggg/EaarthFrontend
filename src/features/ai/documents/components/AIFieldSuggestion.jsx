@@ -14,9 +14,27 @@ import { InfoPanel } from "../../../../shared/components/panels/InfoPanel";
 import { getCountryOptions } from "@/shared/config/countriesDataConfig";
 import { getCountryLabel } from "../../../../shared/config/countriesDataConfig";
 
-// ─────────────────────────────────────────────────────────────
-// AI Scan Banner
-// ─────────────────────────────────────────────────────────────
+function formatConflictValue(value, conflict) {
+  if (!value) return "—";
+
+  // Format dates
+  if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
+    return formatDate(value);
+  }
+
+  // Convert country ISO code -> country name
+  const isCountryField =
+    conflict?.aiKey === "issuingCountry" ||
+    conflict?.formPath?.includes("issuingCountry") ||
+    conflict?.formPath?.includes("country");
+
+  console.log("is country field:", isCountryField, conflict);
+  if (isCountryField) {
+    return getCountryLabel(value) || value;
+  }
+
+  return String(value);
+}
 
 export function AIScanBanner({
   status,
@@ -65,7 +83,11 @@ export function AIScanBanner({
 
   if (autoFilledCount === 0 && conflictCount === 0) {
     return (
-      <InfoPanel icon={CheckCircle2} title="AI Scan completed" variant="success">
+      <InfoPanel
+        icon={CheckCircle2}
+        title="AI Scan completed"
+        variant="success"
+      >
         <p>Everything is already up to date.</p>
       </InfoPanel>
     );
@@ -93,10 +115,6 @@ export function AIScanBanner({
     </InfoPanel>
   );
 }
-
-// ─────────────────────────────────────────────────────────────
-// Conflict Panel
-// ─────────────────────────────────────────────────────────────
 
 export function AIConflictPanel({ conflicts, onAccept, onReject }) {
   if (!conflicts?.length) return null;
@@ -186,10 +204,6 @@ function ConflictRow({ conflict, onAccept, onReject }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// AI Filled Badge
-// ─────────────────────────────────────────────────────────────
-
 export function AIFilledBadge({ className }) {
   return (
     <span
@@ -202,26 +216,4 @@ export function AIFilledBadge({ className }) {
       AI Filled
     </span>
   );
-}
-
-function formatConflictValue(value, conflict) {
-  if (!value) return "—";
-
-  // Format dates
-  if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
-    return formatDate(value);
-  }
-
-  // Convert country ISO code -> country name
-  const isCountryField =
-    conflict?.aiKey === "issuingCountry" ||
-    conflict?.formPath?.includes("issuingCountry") ||
-    conflict?.formPath?.includes("country");
-
-  console.log("is country field:", isCountryField, conflict);
-  if (isCountryField) {
-    return getCountryLabel(value) || value;
-  }
-
-  return String(value);
 }

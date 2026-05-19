@@ -42,6 +42,7 @@ const STATUS_META = {
   active: "success",
   enabled: "success",
   synced: "success",
+  completed: "success",
 
   information: "info",
 
@@ -59,12 +60,14 @@ const STATUS_META = {
   "pending-approval": "warning",
   expiring: "warning",
   deleted: "warning",
+  processing: "warning",
 
   "not-started": "neutral",
   inactive: "neutral",
   disabled: "neutral",
-  unverified: "neutral",
   archived: "neutral",
+  unverified: "neutral",
+  not_scanned: "neutral",
 
   rejected: "danger",
   suspended: "danger",
@@ -72,6 +75,7 @@ const STATUS_META = {
   "not-submitted": "danger",
   not_submitted: "danger",
   expired: "danger",
+  failed: "danger",
 };
 
 export function getStatusBadge(status, label) {

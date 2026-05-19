@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
 import EditableRadioField from "@/shared/components/wrappers/EditableRadioField";
@@ -28,7 +28,14 @@ import {
   useModalStore,
 } from "../../../../shared/stores/useModalStore";
 import { InfoPanel } from "../../../../shared/components/panels/InfoPanel";
-import { XCircle } from "lucide-react";
+import { buildDocumentAiExtraction } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import { useDocumentSectionAI } from "../../../ai/documents/hooks/useDocumentSectionAI";
+import {
+  AIConflictPanel,
+  AIScanBanner,
+} from "../../../ai/documents/components/AIFieldSuggestion";
+import { BrainCircuit, XCircle } from "lucide-react";
+import { formatFileSize } from "../../../../shared/config/utils";
 
 export default function FinanceDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -116,6 +123,74 @@ export default function FinanceDetails() {
   const isSavingFinance = isUpdating && isEditing.section === "finance";
   const isSavingBank = isUpdating && isEditing.section === "bank";
 
+  const fs4AI = useDocumentSectionAI({
+    documentType: "FS4",
+    scanKey: "fs4",
+    getForm: () => formState.finance,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, finance: updated })),
+  });
+
+  const payslipAI = useDocumentSectionAI({
+    documentType: "PAYSLIP",
+    scanKey: "payslip",
+    getForm: () => formState.finance,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, finance: updated })),
+  });
+
+  const p45AI = useDocumentSectionAI({
+    documentType: "P45",
+    scanKey: "p45",
+    getForm: () => formState.finance,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, finance: updated })),
+  });
+
+  const vatCertAI = useDocumentSectionAI({
+    documentType: "VAT_CERTIFICATE",
+    scanKey: "vatCert",
+    getForm: () => formState.finance,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, finance: updated })),
+  });
+
+  const fs4AIStatus =
+    fs4AI.scan.status !== "idle"
+      ? fs4AI.scan.status
+      : resolvedFs4?.aiExtraction?.status || "NOT_SCANNED";
+  const fs4AIScanLabel =
+    fs4AIStatus === "NOT_SCANNED" || fs4AIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  const payslipAIStatus =
+    payslipAI.scan.status !== "idle"
+      ? payslipAI.scan.status
+      : resolvedPayslip?.aiExtraction?.status || "NOT_SCANNED";
+  const payslipAIScanLabel =
+    payslipAIStatus === "NOT_SCANNED" || payslipAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  const p45AIStatus =
+    p45AI.scan.status !== "idle"
+      ? p45AI.scan.status
+      : resolvedP45?.aiExtraction?.status || "NOT_SCANNED";
+  const p45AIScanLabel =
+    p45AIStatus === "NOT_SCANNED" || p45AIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  const vatCertAIStatus =
+    vatCertAI.scan.status !== "idle"
+      ? vatCertAI.scan.status
+      : resolvedVatCert?.aiExtraction?.status || "NOT_SCANNED";
+  const vatCertAIScanLabel =
+    vatCertAIStatus === "NOT_SCANNED" || vatCertAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
   // ── View data (edit mode uses formState, display mode uses crewProfile) ────
   const fd = isEditingFinance
     ? formState.finance
@@ -174,6 +249,10 @@ export default function FinanceDetails() {
         p45: fin?.p45DocumentId ?? null,
         vatCert: fin?.vatCertificateId ?? null,
       });
+      fs4AI.resetAIState();
+      payslipAI.resetAIState();
+      p45AI.resetAIState();
+      vatCertAI.resetAIState();
     }
     if (section === "bank") {
       setFormState((prev) => ({
@@ -201,7 +280,158 @@ export default function FinanceDetails() {
     setFiles(initialFilesState);
     setInitialDocIds({ fs4: null, payslip: null, p45: null, vatCert: null });
     setReuseDocIds({ fs4: null, payslip: null, p45: null, vatCert: null });
+    fs4AI.resetAIState();
+    payslipAI.resetAIState();
+    p45AI.resetAIState();
+    vatCertAI.resetAIState();
   };
+
+  // ── AI scan handlers ───────────────────────────────────────────────────────
+  const handleFs4Upload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, fs4: file }));
+      setReuseDocIds((prev) => ({ ...prev, fs4: null }));
+      await fs4AI.processAIScan({ file, currentForm: formState.finance });
+    },
+    [fs4AI, formState.finance],
+  );
+
+  const handleFs4Rescan = useCallback(async () => {
+    if (!resolvedFs4) return;
+    if (!isEditingFinance) startEditing("finance");
+    try {
+      await fs4AI.processAIScan({
+        file: files.fs4 ?? null,
+        documentId: resolvedFs4._id,
+        currentForm: formState.finance ?? fd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan FS4 document");
+      console.error(err);
+    }
+  }, [resolvedFs4, files.fs4, formState.finance, fd, fs4AI, isEditingFinance]);
+
+  const handleFs4ReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, fs4: id }));
+      if (id) setFiles((prev) => ({ ...prev, fs4: null }));
+      fs4AI.handleReuseSelect(id, userDocuments);
+    },
+    [fs4AI, userDocuments],
+  );
+
+  const handlePayslipUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, payslip: file }));
+      setReuseDocIds((prev) => ({ ...prev, payslip: null }));
+      await payslipAI.processAIScan({ file, currentForm: formState.finance });
+    },
+    [payslipAI, formState.finance],
+  );
+
+  const handlePayslipRescan = useCallback(async () => {
+    if (!resolvedPayslip) return;
+    if (!isEditingFinance) startEditing("finance");
+    try {
+      await payslipAI.processAIScan({
+        file: files.payslip ?? null,
+        documentId: resolvedPayslip._id,
+        currentForm: formState.finance ?? fd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan payslip");
+      console.error(err);
+    }
+  }, [
+    resolvedPayslip,
+    files.payslip,
+    formState.finance,
+    fd,
+    payslipAI,
+    isEditingFinance,
+  ]);
+
+  const handlePayslipReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, payslip: id }));
+      if (id) setFiles((prev) => ({ ...prev, payslip: null }));
+      payslipAI.handleReuseSelect(id, userDocuments);
+    },
+    [payslipAI, userDocuments],
+  );
+
+  const handleP45Upload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, p45: file }));
+      setReuseDocIds((prev) => ({ ...prev, p45: null }));
+      await p45AI.processAIScan({ file, currentForm: formState.finance });
+    },
+    [p45AI, formState.finance],
+  );
+
+  const handleP45Rescan = useCallback(async () => {
+    if (!resolvedP45) return;
+    if (!isEditingFinance) startEditing("finance");
+    try {
+      await p45AI.processAIScan({
+        file: files.p45 ?? null,
+        documentId: resolvedP45._id,
+        currentForm: formState.finance ?? fd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan P45 document");
+      console.error(err);
+    }
+  }, [resolvedP45, files.p45, formState.finance, fd, p45AI, isEditingFinance]);
+
+  const handleP45ReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, p45: id }));
+      if (id) setFiles((prev) => ({ ...prev, p45: null }));
+      p45AI.handleReuseSelect(id, userDocuments);
+    },
+    [p45AI, userDocuments],
+  );
+
+  const handleVatCertUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, vatCert: file }));
+      setReuseDocIds((prev) => ({ ...prev, vatCert: null }));
+      await vatCertAI.processAIScan({ file, currentForm: formState.finance });
+    },
+    [vatCertAI, formState.finance],
+  );
+
+  const handleVatCertRescan = useCallback(async () => {
+    if (!resolvedVatCert) return;
+    if (!isEditingFinance) startEditing("finance");
+    try {
+      await vatCertAI.processAIScan({
+        file: files.vatCert ?? null,
+        documentId: resolvedVatCert._id,
+        currentForm: formState.finance ?? fd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan VAT certificate");
+      console.error(err);
+    }
+  }, [
+    resolvedVatCert,
+    files.vatCert,
+    formState.finance,
+    fd,
+    vatCertAI,
+    isEditingFinance,
+  ]);
+
+  const handleVatCertReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, vatCert: id }));
+      if (id) setFiles((prev) => ({ ...prev, vatCert: null }));
+      vatCertAI.handleReuseSelect(id, userDocuments);
+    },
+    [vatCertAI, userDocuments],
+  );
 
   // ── Save: Finance Details ──────────────────────────────────────────────────
   const handleSaveFinance = async () => {
@@ -262,6 +492,58 @@ export default function FinanceDetails() {
     if (files.vatCert) formData.append("vatCertificate", files.vatCert);
     else if (reuseDocIds.vatCert)
       formData.append("vatCertificateId", reuseDocIds.vatCert);
+
+    if (fs4AI.aiRawFields) {
+      formData.append(
+        "fs4AiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            fs4AI.aiRawFields,
+            formState.finance,
+            "FS4",
+          ),
+        ),
+      );
+    }
+
+    if (payslipAI.aiRawFields) {
+      formData.append(
+        "payslipAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            payslipAI.aiRawFields,
+            formState.finance,
+            "PAYSLIP",
+          ),
+        ),
+      );
+    }
+
+    if (p45AI.aiRawFields) {
+      formData.append(
+        "p45AiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            p45AI.aiRawFields,
+            formState.finance,
+            "P45",
+          ),
+        ),
+      );
+    }
+
+    if (vatCertAI.aiRawFields) {
+      formData.append(
+        "vatCertAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            vatCertAI.aiRawFields,
+            formState.finance,
+            "VAT_CERTIFICATE",
+          ),
+        ),
+      );
+    }
 
     try {
       await dispatch(updateFinanceDetailsThunk(formData)).unwrap();
@@ -526,223 +808,373 @@ export default function FinanceDetails() {
               {errors.documents}
             </InfoPanel>
           )}
+
+          {isEditingFinance && (
+            <InfoPanel
+              icon={BrainCircuit}
+              title="AI document scan"
+              variant="info"
+              dismissible
+              storageKey="hide-ai-finance-info"
+            >
+              <p>
+                Upload your financial documents to auto-fill the respective
+                details above using AI when available.
+              </p>
+              <p className="text-[11px] opacity-80">
+                Review any suggested values before saving, especially if AI has
+                detected a conflict and ai can make mistakes.
+              </p>
+            </InfoPanel>
+          )}
+
           {/* Tax documents */}
           <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-            <EditableDocumentField
-              label="FS4 DOCUMENT"
-              isEditing={isEditingFinance}
-              isLoading={isFetchingDocs}
-              fileName={resolvedFs4?.originalName ?? "No file uploaded"}
-              fileUrl={resolvedFs4?.url ?? null}
-              isUploaded={!!resolvedFs4}
-              status={resolvedFs4?.verificationStatus || "Pending"}
-              expiresAt={resolvedFs4?.expiresAt}
-              meta={
-                resolvedFs4?.sizeBytes
-                  ? `${(resolvedFs4.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                  : null
-              }
-              onUpload={(file) => {
-                setFiles((f) => ({ ...f, fs4: file }));
-                setReuseDocIds((f) => ({ ...f, fs4: null }));
-              }}
-              onRemove={() => {
-                setFiles((f) => ({ ...f, fs4: null }));
-              }}
-              onView={(url) =>
-                handleViewDocument({
-                  url,
-                  fileName: resolvedFs4?.originalName,
-                  mimeType: resolvedFs4?.mimeType,
-                })
-              }
-              isNewUpload={!!files.fs4}
-              isRequired={false}
-              error={errors?.documents}
-              showErrorDescription={false}
-              disabled={isSavingFinance}
-              infoPillDescription="Required for certain Irish payroll setups to confirm tax registration and employment status."
-              actionSlot={
-                isEditingFinance &&
-                fs4Docs?.length > 0 && (
-                  <ReuseDocumentPromptPanel
-                    label="FS4 document"
-                    docs={fs4Docs}
-                    selectedId={reuseDocIds.fs4}
-                    docType="FS4"
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({ ...prev, fs4: id }));
-                      if (id) setFiles((f) => ({ ...f, fs4: null }));
-                    }}
-                    disabled={isSavingFinance}
-                    existingDocId={initialDocIds.fs4}
-                  />
-                )
-              }
-            />
+            <div>
+              <EditableDocumentField
+                label="FS4 DOCUMENT"
+                isEditing={isEditingFinance}
+                isLoading={isFetchingDocs}
+                fileName={resolvedFs4?.originalName ?? "No file uploaded"}
+                fileUrl={resolvedFs4?.url ?? null}
+                isUploaded={!!resolvedFs4}
+                status={resolvedFs4?.verificationStatus || "Pending"}
+                expiresAt={resolvedFs4?.expiresAt}
+                meta={formatFileSize(resolvedFs4?.sizeBytes)}
+                onUpload={handleFs4Upload}
+                onRemove={() => {
+                  setFiles((f) => ({ ...f, fs4: null }));
+                }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedFs4?.originalName,
+                    mimeType: resolvedFs4?.mimeType,
+                  })
+                }
+                isNewUpload={!!files.fs4}
+                isRequired={false}
+                error={errors?.documents}
+                showErrorDescription={false}
+                disabled={isSavingFinance}
+                secondaryBadges={[
+                  {
+                    status: fs4AIStatus,
+                    label: `AI Scan ${fs4AIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
+                secondaryActions={[
+                  {
+                    label: fs4AIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      fs4AIStatus === "NOT_SCANNED" ||
+                      fs4AIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleFs4Rescan,
+                    disabled:
+                      (!resolvedFs4 && !files.fs4) ||
+                      fs4AI.scan.status === "scanning" ||
+                      isSavingFinance,
+                  },
+                ]}
+                infoPillDescription="Required for certain Irish payroll setups to confirm tax registration and employment status. AI scan is available for this document."
+                actionSlot={
+                  isEditingFinance &&
+                  fs4Docs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="FS4 document"
+                      docs={fs4Docs}
+                      selectedId={reuseDocIds.fs4}
+                      docType="FS4"
+                      onSelect={handleFs4ReuseSelect}
+                      disabled={isSavingFinance}
+                      existingDocId={initialDocIds.fs4}
+                    />
+                  )
+                }
+              />
 
-            <EditableDocumentField
-              label="LATEST PAYSLIP"
-              isEditing={isEditingFinance}
-              isLoading={isFetchingDocs}
-              fileName={resolvedPayslip?.originalName ?? "No file uploaded"}
-              fileUrl={resolvedPayslip?.url ?? null}
-              isUploaded={!!resolvedPayslip}
-              status={resolvedPayslip?.verificationStatus || "Pending"}
-              expiresAt={resolvedPayslip?.expiresAt}
-              meta={
-                resolvedPayslip?.sizeBytes
-                  ? `${(resolvedPayslip.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                  : null
-              }
-              onUpload={(file) => {
-                setFiles((f) => ({ ...f, payslip: file }));
-                setReuseDocIds((f) => ({ ...f, payslip: null }));
-              }}
-              onRemove={() => {
-                setFiles((f) => ({ ...f, payslip: null }));
-              }}
-              onView={(url) =>
-                handleViewDocument({
-                  url,
-                  fileName: resolvedPayslip?.originalName,
-                  mimeType: resolvedPayslip?.mimeType,
-                })
-              }
-              isNewUpload={!!files.payslip}
-              isRequired={false}
-              error={
-                errors?.payslip?.[0] || (errors?.documents ? " " : undefined)
-              }
-              showErrorDescription={false}
-              disabled={isSavingFinance}
-              infoPillDescription="Used for PAYE contracts as proof of previous employment and income."
-              actionSlot={
-                isEditingFinance &&
-                payslipDocs?.length > 0 && (
-                  <ReuseDocumentPromptPanel
-                    label="payslip"
-                    docs={payslipDocs}
-                    selectedId={reuseDocIds.payslip}
-                    docType="PAYSLIP"
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({ ...prev, payslip: id }));
-                      if (id) setFiles((f) => ({ ...f, payslip: null }));
-                    }}
-                    disabled={isSavingFinance}
-                    existingDocId={initialDocIds.payslip}
-                  />
-                )
-              }
-            />
+              {isEditingFinance && fs4AI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={fs4AI.scan.status}
+                  error={fs4AI.scan.error}
+                  autoFilledCount={fs4AI.autoFilledCount}
+                  conflictCount={fs4AI.aiConflicts.length}
+                />
+              )}
 
-            <EditableDocumentField
-              label="P45 DOCUMENT"
-              isEditing={isEditingFinance}
-              isLoading={isFetchingDocs}
-              fileName={resolvedP45?.originalName ?? "No file uploaded"}
-              fileUrl={resolvedP45?.url ?? null}
-              isUploaded={!!resolvedP45}
-              status={resolvedP45?.verificationStatus || "Pending"}
-              expiresAt={resolvedP45?.expiresAt}
-              meta={
-                resolvedP45?.sizeBytes
-                  ? `${(resolvedP45.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                  : null
-              }
-              onUpload={(file) => {
-                setFiles((f) => ({ ...f, p45: file }));
-                setReuseDocIds((f) => ({ ...f, p45: null }));
-              }}
-              onRemove={() => {
-                setFiles((f) => ({ ...f, p45: null }));
-              }}
-              onView={(url) =>
-                handleViewDocument({
-                  url,
-                  fileName: resolvedP45?.originalName,
-                  mimeType: resolvedP45?.mimeType,
-                })
-              }
-              isNewUpload={!!files.p45}
-              isRequired={false}
-              error={errors?.p45?.[0] || (errors?.documents ? " " : undefined)}
-              showErrorDescription={false}
-              disabled={isSavingFinance}
-              infoPillDescription="Required for PAYE contracts to provide previous employment and tax details."
-              actionSlot={
-                isEditingFinance &&
-                p45Docs?.length > 0 && (
-                  <ReuseDocumentPromptPanel
-                    label="P45 document"
-                    docs={p45Docs}
-                    selectedId={reuseDocIds.p45}
-                    docType="P45"
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({ ...prev, p45: id }));
-                      if (id) setFiles((f) => ({ ...f, p45: null }));
-                    }}
-                    disabled={isSavingFinance}
-                    existingDocId={initialDocIds.p45}
-                  />
-                )
-              }
-            />
+              {isEditingFinance && fs4AI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={fs4AI.aiConflicts}
+                  onAccept={fs4AI.acceptAISuggestion}
+                  onReject={fs4AI.rejectAISuggestion}
+                />
+              )}
+            </div>
 
-            <EditableDocumentField
-              label="VAT CERTIFICATE"
-              isEditing={isEditingFinance}
-              isLoading={isFetchingDocs}
-              fileName={resolvedVatCert?.originalName ?? "No file uploaded"}
-              fileUrl={resolvedVatCert?.url ?? null}
-              isUploaded={!!resolvedVatCert}
-              status={resolvedVatCert?.verificationStatus || "Pending"}
-              expiresAt={resolvedVatCert?.expiresAt}
-              meta={
-                resolvedVatCert?.sizeBytes
-                  ? `${(resolvedVatCert.sizeBytes / 1024 / 1024).toFixed(1)} MB`
-                  : null
-              }
-              onUpload={(file) => {
-                setFiles((f) => ({ ...f, vatCert: file }));
-                setReuseDocIds((f) => ({ ...f, vatCert: null }));
-              }}
-              onRemove={() => {
-                setFiles((f) => ({ ...f, vatCert: null }));
-              }}
-              onView={(url) =>
-                handleViewDocument({
-                  url,
-                  fileName: resolvedVatCert?.originalName,
-                  mimeType: resolvedVatCert?.mimeType,
-                })
-              }
-              isRequired={false}
-              isNewUpload={!!files.vatCert}
-              error={
-                errors?.vatCert?.[0] || (errors?.documents ? " " : undefined)
-              }
-              showErrorDescription={errors?.vatCert?.[0] ?? false}
-              disabled={isSavingFinance}
-              infoPillDescription="Required if you provide a VAT number. Used to verify your VAT registration."
-              actionSlot={
-                isEditingFinance &&
-                vatCertDocs?.length > 0 && (
-                  <ReuseDocumentPromptPanel
-                    label="VAT certificate"
-                    docs={vatCertDocs}
-                    selectedId={reuseDocIds.vatCert}
-                    docType="VAT_CERTIFICATE"
-                    onSelect={(id) => {
-                      setReuseDocIds((prev) => ({ ...prev, vatCert: id }));
-                      if (id) setFiles((f) => ({ ...f, vatCert: null }));
-                    }}
-                    disabled={isSavingFinance}
-                    existingDocId={initialDocIds.vatCert}
-                  />
-                )
-              }
-            />
+            <div>
+              <EditableDocumentField
+                label="LATEST PAYSLIP"
+                isEditing={isEditingFinance}
+                isLoading={isFetchingDocs}
+                fileName={resolvedPayslip?.originalName ?? "No file uploaded"}
+                fileUrl={resolvedPayslip?.url ?? null}
+                isUploaded={!!resolvedPayslip}
+                status={resolvedPayslip?.verificationStatus || "Pending"}
+                expiresAt={resolvedPayslip?.expiresAt}
+                meta={formatFileSize(resolvedPayslip?.sizeBytes)}
+                onUpload={handlePayslipUpload}
+                onRemove={() => {
+                  setFiles((f) => ({ ...f, payslip: null }));
+                }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedPayslip?.originalName,
+                    mimeType: resolvedPayslip?.mimeType,
+                  })
+                }
+                isNewUpload={!!files.payslip}
+                isRequired={false}
+                error={
+                  errors?.payslip?.[0] || (errors?.documents ? " " : undefined)
+                }
+                showErrorDescription={false}
+                disabled={isSavingFinance}
+                secondaryBadges={[
+                  {
+                    status: payslipAIStatus,
+                    label: `AI Scan ${payslipAIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
+                secondaryActions={[
+                  {
+                    label: payslipAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      payslipAIStatus === "NOT_SCANNED" ||
+                      payslipAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handlePayslipRescan,
+                    disabled:
+                      (!resolvedPayslip && !files.payslip) ||
+                      payslipAI.scan.status === "scanning" ||
+                      isSavingFinance,
+                  },
+                ]}
+                infoPillDescription="Used for PAYE contracts as proof of previous employment and income. AI scan is available for this document."
+                actionSlot={
+                  isEditingFinance &&
+                  payslipDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="payslip"
+                      docs={payslipDocs}
+                      selectedId={reuseDocIds.payslip}
+                      docType="PAYSLIP"
+                      onSelect={handlePayslipReuseSelect}
+                      disabled={isSavingFinance}
+                      existingDocId={initialDocIds.payslip}
+                    />
+                  )
+                }
+              />
+
+              {isEditingFinance && payslipAI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={payslipAI.scan.status}
+                  error={payslipAI.scan.error}
+                  autoFilledCount={payslipAI.autoFilledCount}
+                  conflictCount={payslipAI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && payslipAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={payslipAI.aiConflicts}
+                  onAccept={payslipAI.acceptAISuggestion}
+                  onReject={payslipAI.rejectAISuggestion}
+                />
+              )}
+            </div>
+
+            <div>
+              <EditableDocumentField
+                label="P45 DOCUMENT"
+                isEditing={isEditingFinance}
+                isLoading={isFetchingDocs}
+                fileName={resolvedP45?.originalName ?? "No file uploaded"}
+                fileUrl={resolvedP45?.url ?? null}
+                isUploaded={!!resolvedP45}
+                status={resolvedP45?.verificationStatus || "Pending"}
+                expiresAt={resolvedP45?.expiresAt}
+                meta={formatFileSize(resolvedP45?.sizeBytes)}
+                onUpload={handleP45Upload}
+                onRemove={() => {
+                  setFiles((f) => ({ ...f, p45: null }));
+                }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedP45?.originalName,
+                    mimeType: resolvedP45?.mimeType,
+                  })
+                }
+                isNewUpload={!!files.p45}
+                isRequired={false}
+                error={
+                  errors?.p45?.[0] || (errors?.documents ? " " : undefined)
+                }
+                showErrorDescription={false}
+                disabled={isSavingFinance}
+                secondaryBadges={[
+                  {
+                    status: p45AIStatus,
+                    label: `AI Scan ${p45AIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
+                secondaryActions={[
+                  {
+                    label: p45AIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      p45AIStatus === "NOT_SCANNED" ||
+                      p45AIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleP45Rescan,
+                    disabled:
+                      (!resolvedP45 && !files.p45) ||
+                      p45AI.scan.status === "scanning" ||
+                      isSavingFinance,
+                  },
+                ]}
+                infoPillDescription="Required for PAYE contracts to provide previous employment and tax details. AI scan is available for this document."
+                actionSlot={
+                  isEditingFinance &&
+                  p45Docs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="P45 document"
+                      docs={p45Docs}
+                      selectedId={reuseDocIds.p45}
+                      docType="P45"
+                      onSelect={handleP45ReuseSelect}
+                      disabled={isSavingFinance}
+                      existingDocId={initialDocIds.p45}
+                    />
+                  )
+                }
+              />
+
+              {isEditingFinance && p45AI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={p45AI.scan.status}
+                  error={p45AI.scan.error}
+                  autoFilledCount={p45AI.autoFilledCount}
+                  conflictCount={p45AI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && p45AI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={p45AI.aiConflicts}
+                  onAccept={p45AI.acceptAISuggestion}
+                  onReject={p45AI.rejectAISuggestion}
+                />
+              )}
+            </div>
+
+            <div>
+              <EditableDocumentField
+                label="VAT CERTIFICATE"
+                isEditing={isEditingFinance}
+                isLoading={isFetchingDocs}
+                fileName={resolvedVatCert?.originalName ?? "No file uploaded"}
+                fileUrl={resolvedVatCert?.url ?? null}
+                isUploaded={!!resolvedVatCert}
+                status={resolvedVatCert?.verificationStatus || "Pending"}
+                expiresAt={resolvedVatCert?.expiresAt}
+                meta={formatFileSize(resolvedVatCert?.sizeBytes)}
+                onUpload={handleVatCertUpload}
+                onRemove={() => {
+                  setFiles((f) => ({ ...f, vatCert: null }));
+                }}
+                onView={(url) =>
+                  handleViewDocument({
+                    url,
+                    fileName: resolvedVatCert?.originalName,
+                    mimeType: resolvedVatCert?.mimeType,
+                  })
+                }
+                isRequired={false}
+                isNewUpload={!!files.vatCert}
+                error={
+                  errors?.vatCert?.[0] || (errors?.documents ? " " : undefined)
+                }
+                showErrorDescription={errors?.vatCert?.[0] ?? false}
+                disabled={isSavingFinance}
+                secondaryBadges={[
+                  {
+                    status: vatCertAIStatus,
+                    label: `AI Scan ${vatCertAIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
+                secondaryActions={[
+                  {
+                    label: vatCertAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      vatCertAIStatus === "NOT_SCANNED" ||
+                      vatCertAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleVatCertRescan,
+                    disabled:
+                      (!resolvedVatCert && !files.vatCert) ||
+                      vatCertAI.scan.status === "scanning" ||
+                      isSavingFinance,
+                  },
+                ]}
+                infoPillDescription="Required if you provide a VAT number. Used to verify your VAT registration. AI scan is available for this document."
+                actionSlot={
+                  isEditingFinance &&
+                  vatCertDocs?.length > 0 && (
+                    <ReuseDocumentPromptPanel
+                      label="VAT certificate"
+                      docs={vatCertDocs}
+                      selectedId={reuseDocIds.vatCert}
+                      docType="VAT_CERTIFICATE"
+                      onSelect={handleVatCertReuseSelect}
+                      disabled={isSavingFinance}
+                      existingDocId={initialDocIds.vatCert}
+                    />
+                  )
+                }
+              />
+
+              {isEditingFinance && vatCertAI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={vatCertAI.scan.status}
+                  error={vatCertAI.scan.error}
+                  autoFilledCount={vatCertAI.autoFilledCount}
+                  conflictCount={vatCertAI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && vatCertAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={vatCertAI.aiConflicts}
+                  onAccept={vatCertAI.acceptAISuggestion}
+                  onReject={vatCertAI.rejectAISuggestion}
+                />
+              )}
+            </div>
           </div>
         </div>
       </CardWrapper>

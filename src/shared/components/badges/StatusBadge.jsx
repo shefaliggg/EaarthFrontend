@@ -15,10 +15,10 @@ export function StatusBadge({
   const { color, Icon, label: text } = getStatusBadge(status, label);
 
   const sizes = {
-    xs: "px-1 py-0.5 text-[9px] rounded-md",
-    sm: "px-2 py-1 text-[10px] rounded-lg",
+    xs: "px-1.5 py-0.5 text-[10px] rounded-md",
+    sm: "px-2.5 py-1 text-[11px] rounded-lg",
     md: "px-3 py-1.5 text-xs rounded-xl",
-    lg: "px-4 py-2 text-sm rounded-xl",
+    lg: "px-4 py-2 text-sm rounded-2xl",
   };
 
   const iconSizes = {
@@ -33,7 +33,10 @@ export function StatusBadge({
   return (
     <Badge
       className={cn(
-        "inline-flex items-center gap-1 font-medium leading-none align-middle",
+        "inline-flex items-center gap-1.5 font-semibold tracking-wide leading-none",
+        "transition-all duration-200",
+        "hover:scale-[1.02]",
+        "select-none",
         sizes[size],
         color,
         className,

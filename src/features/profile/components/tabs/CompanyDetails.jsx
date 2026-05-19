@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import CardWrapper from "@/shared/components/wrappers/CardWrapper";
@@ -38,6 +38,15 @@ import {
 } from "../../config/profileValidationShemas";
 import { removeCompanyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
 import { formatFileSize } from "../../../../shared/config/utils";
+import { buildDocumentAiExtraction } from "@/features/ai/documents/config/aiDocumentScanner.helper";
+import { useDocumentSectionAI } from "@/features/ai/documents/hooks/useDocumentSectionAI";
+import {
+  AIConflictPanel,
+  AIScanBanner,
+} from "@/features/ai/documents/components/AIFieldSuggestion";
+import { InfoPanel } from "@/shared/components/panels/InfoPanel";
+import { BrainCircuit } from "lucide-react";
+import { is } from "zod/v4/locales";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -113,6 +122,27 @@ export default function CompanyDetails() {
   );
   const { openModal, closeModal } = useModalStore();
 
+  // ── AI hooks ───────────────────────────────────────────────────────────────
+
+  // Cert of incorp — auto-fills: company name, registration number, country
+  const certOfIncorpAI = useDocumentSectionAI({
+    documentType: "CERTIFICATE_OF_INCORPORATION",
+    scanKey: "certOfIncorp",
+    getForm: () => formState.companyDetails,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, companyDetails: updated })),
+  });
+
+  // VAT cert — no form fields to fill yet, but scan is persisted on the doc
+  const vatCertAI = useDocumentSectionAI({
+    documentType: "VAT_CERTIFICATE",
+    scanKey: "vatCert",
+    getForm: () => formState.companyTax,
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, companyTax: updated })),
+  });
+
+  // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
   }, [crewProfile, isFetching]);
@@ -145,7 +175,6 @@ export default function CompanyDetails() {
     userDocuments,
     "CERTIFICATE_OF_INCORPORATION",
   );
-
   const vatCertDocs = getDocumentsByType(userDocuments, "VAT_CERTIFICATE");
 
   // ── Display values (read vs edit) ─────────────────────────────────────────
@@ -209,14 +238,28 @@ export default function CompanyDetails() {
     userDocuments,
   );
 
-  console.log("resolvedCertOfIncorp:", resolvedCertOfIncorp);
-
   const resolvedVatCert = getDisplayDocument(
     company?.vatCertificateId,
     reuseDocIds.vatCertificate,
     files.vatCertificate,
     userDocuments,
   );
+
+  // ── AI scan status labels ─────────────────────────────────────────────────
+  const certOfIncorpAIStatus =
+    resolvedCertOfIncorp?.aiExtraction?.status || "NOT_SCANNED";
+  const certOfIncorpAIScanLabel =
+    certOfIncorpAIStatus === "NOT_SCANNED" ||
+    certOfIncorpAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  const vatCertAIStatus =
+    resolvedVatCert?.aiExtraction?.status || "NOT_SCANNED";
+  const vatCertAIScanLabel =
+    vatCertAIStatus === "NOT_SCANNED" || vatCertAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
 
   // ── Editing controls ──────────────────────────────────────────────────────
   const startEditing = (section) => {
@@ -263,7 +306,6 @@ export default function CompanyDetails() {
 
     setFormState((prev) => ({ ...prev, [section]: snapshots[section] }));
 
-    // Seed reuse IDs from current profile for document sections
     if (section === "companyDetails") {
       setInitialDocIds((p) => ({
         ...p,
@@ -275,7 +317,9 @@ export default function CompanyDetails() {
         certificateOfIncorporation:
           company?.certificateOfIncorporationId ?? null,
       }));
+      certOfIncorpAI.resetAIState();
     }
+
     if (section === "companyTax") {
       setInitialDocIds((p) => ({
         ...p,
@@ -285,6 +329,7 @@ export default function CompanyDetails() {
         ...p,
         vatCertificate: company?.vatCertificateId ?? null,
       }));
+      vatCertAI.resetAIState();
     }
 
     setIsEditing({ section });
@@ -303,7 +348,102 @@ export default function CompanyDetails() {
     setInitialDocIds(EMPTY_REUSE_IDS);
     setReuseDocIds(EMPTY_REUSE_IDS);
     setErrors({});
+    certOfIncorpAI.resetAIState();
+    vatCertAI.resetAIState();
   };
+
+  // ── Cert of incorp handlers ───────────────────────────────────────────────
+
+  const handleCertOfIncorpUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
+      setReuseDocIds((f) => ({ ...f, certificateOfIncorporation: null }));
+      await certOfIncorpAI.processAIScan({
+        file,
+        currentForm: formState.companyDetails,
+      });
+    },
+    [formState.companyDetails, certOfIncorpAI],
+  );
+
+  const handleCertOfIncorpRescan = useCallback(async () => {
+    if (!resolvedCertOfIncorp) return;
+    if(!isEditingDetails) {
+      startEditing("companyDetails");
+    }
+    try {
+      await certOfIncorpAI.processAIScan({
+        file: files.certificateOfIncorporation ?? null,
+        documentId: resolvedCertOfIncorp._id,
+        currentForm: formState.companyDetails ?? cd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan certificate of incorporation");
+      console.error(err);
+    }
+  }, [
+    resolvedCertOfIncorp,
+    files.certificateOfIncorporation,
+    formState.companyDetails,
+    cd,
+    certOfIncorpAI,
+  ]);
+
+  const handleCertOfIncorpReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, certificateOfIncorporation: id }));
+      if (id) setFiles((f) => ({ ...f, certificateOfIncorporation: null }));
+      certOfIncorpAI.handleReuseSelect(id, userDocuments);
+    },
+    [userDocuments, certOfIncorpAI],
+  );
+
+  // ── VAT cert handlers ─────────────────────────────────────────────────────
+
+  const handleVatCertUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, vatCertificate: file }));
+      setReuseDocIds((f) => ({ ...f, vatCertificate: null }));
+      await vatCertAI.processAIScan({
+        file,
+        currentForm: formState.companyTax,
+      });
+    },
+    [formState.companyTax, vatCertAI],
+  );
+
+  const handleVatCertRescan = useCallback(async () => {
+    if (!resolvedVatCert) return;
+
+    if(!isEditingTax) {
+      startEditing("companyTax");
+    }
+    try {
+      await vatCertAI.processAIScan({
+        file: files.vatCertificate ?? null,
+        documentId: resolvedVatCert._id,
+        currentForm: formState.companyTax ?? ct,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan VAT certificate");
+      console.error(err);
+    }
+  }, [
+    resolvedVatCert,
+    files.vatCertificate,
+    formState.companyTax,
+    ct,
+    vatCertAI,
+  ]);
+
+  const handleVatCertReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, vatCertificate: id }));
+      if (id) setFiles((f) => ({ ...f, vatCertificate: null }));
+      vatCertAI.handleReuseSelect(id, userDocuments);
+    },
+    [userDocuments, vatCertAI],
+  );
 
   // ── Build FormData helper ─────────────────────────────────────────────────
   const buildFormData = (fields, fileMap) => {
@@ -338,10 +478,7 @@ export default function CompanyDetails() {
 
     const result = companySetupSchema.safeParse({
       ...combined,
-      _meta: {
-        files,
-        reuseDocIds,
-      },
+      _meta: { files, reuseDocIds },
     });
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
@@ -385,6 +522,32 @@ export default function CompanyDetails() {
       },
     );
 
+    // Attach AI extractions if scans ran during this session
+    if (certOfIncorpAI.aiRawFields) {
+      fd.append(
+        "certOfIncorpAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            certOfIncorpAI.aiRawFields,
+            formState.companyDetails,
+            "CERTIFICATE_OF_INCORPORATION",
+          ),
+        ),
+      );
+    }
+    if (vatCertAI.aiRawFields) {
+      fd.append(
+        "vatCertAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            vatCertAI.aiRawFields,
+            formState.companyTax,
+            "VAT_CERTIFICATE",
+          ),
+        ),
+      );
+    }
+
     try {
       await dispatch(setupCompanyThunk(fd)).unwrap();
       toast.success("Company setup complete", {
@@ -406,16 +569,14 @@ export default function CompanyDetails() {
     }
 
     if (hasCompanyData && !formState.companyDetails?.usesLoanOutCompany) {
-      const payload = {
-        usesLoanOutCompany: false,
-      };
-
       openModal(MODAL_TYPES.CONFIRM_ACTION, {
         config: removeCompanyDetailsConfig,
         onConfirm: async () => {
           closeModal();
           try {
-            await dispatch(updateCompanyDetailsThunk(payload)).unwrap();
+            await dispatch(
+              updateCompanyDetailsThunk({ usesLoanOutCompany: false }),
+            ).unwrap();
             toast.success("Loan company details disabled", {
               description:
                 "All loan company and financial details have been removed. You can add them again anytime.",
@@ -427,7 +588,6 @@ export default function CompanyDetails() {
         },
         autoClose: true,
       });
-
       return;
     }
 
@@ -458,6 +618,19 @@ export default function CompanyDetails() {
       { certificateOfIncorporation: files.certificateOfIncorporation },
     );
 
+    if (certOfIncorpAI.aiRawFields) {
+      fd.append(
+        "certOfIncorpAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            certOfIncorpAI.aiRawFields,
+            formState.companyDetails,
+            "CERTIFICATE_OF_INCORPORATION",
+          ),
+        ),
+      );
+    }
+
     try {
       await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
       toast.success("Loan company details updated", {
@@ -477,23 +650,22 @@ export default function CompanyDetails() {
       setErrors(result.error.flatten().fieldErrors);
       return;
     }
-
-    const payload = {
-      address: {
-        line1: formState.companyContact.addressLine1,
-        line2: formState.companyContact.addressLine2,
-        line3: formState.companyContact.addressLine3,
-        postcode: formState.companyContact.postcode,
-        country: formState.companyContact.country,
-      },
-      representativeName: formState.companyContact.representativeName,
-      representativeEmail: formState.companyContact.representativeEmail,
-      allowThirdPartyToSignContracts:
-        formState.companyContact.allowThirdPartyToSignContracts,
-    };
-
     try {
-      await dispatch(updateCompanyContactThunk(payload)).unwrap();
+      await dispatch(
+        updateCompanyContactThunk({
+          address: {
+            line1: formState.companyContact.addressLine1,
+            line2: formState.companyContact.addressLine2,
+            line3: formState.companyContact.addressLine3,
+            postcode: formState.companyContact.postcode,
+            country: formState.companyContact.country,
+          },
+          representativeName: formState.companyContact.representativeName,
+          representativeEmail: formState.companyContact.representativeEmail,
+          allowThirdPartyToSignContracts:
+            formState.companyContact.allowThirdPartyToSignContracts,
+        }),
+      ).unwrap();
       toast.success("Company contact updated successfully");
       cancelEditing();
     } catch (err) {
@@ -523,6 +695,19 @@ export default function CompanyDetails() {
       { vatCertificate: files.vatCertificate },
     );
 
+    if (vatCertAI.aiRawFields) {
+      fd.append(
+        "vatCertAiExtraction",
+        JSON.stringify(
+          buildDocumentAiExtraction(
+            vatCertAI.aiRawFields,
+            formState.companyTax,
+            "VAT_CERTIFICATE",
+          ),
+        ),
+      );
+    }
+
     try {
       await dispatch(updateCompanyTaxThunk(fd)).unwrap();
       toast.success("Company tax updated successfully");
@@ -539,7 +724,6 @@ export default function CompanyDetails() {
       setErrors(result.error.flatten().fieldErrors);
       return;
     }
-
     try {
       await dispatch(updateCompanyBankThunk(formState.companyBank)).unwrap();
       toast.success("Company bank updated successfully");
@@ -551,18 +735,11 @@ export default function CompanyDetails() {
 
   const handleViewDocument = ({ url, fileName, mimeType }) => {
     if (!url) return;
-
     const isImage = mimeType?.startsWith("image/");
-
     if (isImage) {
-      openModal(MODAL_TYPES.IMAGE_PREVIEW, {
-        imageFile: { url },
-      });
+      openModal(MODAL_TYPES.IMAGE_PREVIEW, { imageFile: { url } });
     } else {
-      openModal(MODAL_TYPES.DOCUMENT_PREVIEW, {
-        fileUrl: url,
-        fileName,
-      });
+      openModal(MODAL_TYPES.DOCUMENT_PREVIEW, { fileUrl: url, fileName });
     }
   };
 
@@ -658,7 +835,10 @@ export default function CompanyDetails() {
                     }))
                   }
                   error={errors?.name?.[0]}
-                  disabled={isSetupMode ? isSavingSetup : isSavingDetails}
+                  disabled={
+                    (isSetupMode ? isSavingSetup : isSavingDetails) ||
+                    certOfIncorpAI.scan.status === "scanning"
+                  }
                 />
 
                 <EditableTextDataField
@@ -676,7 +856,10 @@ export default function CompanyDetails() {
                     }))
                   }
                   error={errors?.registrationNumber?.[0]}
-                  disabled={isSetupMode ? isSavingSetup : isSavingDetails}
+                  disabled={
+                    (isSetupMode ? isSavingSetup : isSavingDetails) ||
+                    certOfIncorpAI.scan.status === "scanning"
+                  }
                 />
 
                 <EditableTextDataField
@@ -709,9 +892,50 @@ export default function CompanyDetails() {
                     }))
                   }
                   error={errors?.countryOfIncorporation?.[0]}
-                  disabled={isSetupMode ? isSavingSetup : isSavingDetails}
+                  disabled={
+                    (isSetupMode ? isSavingSetup : isSavingDetails) ||
+                    certOfIncorpAI.scan.status === "scanning"
+                  }
                 />
               </AutoHeight>
+
+              {/* AI info + status banners — edit mode only */}
+              {isEditingDetails && (
+                <>
+                  <InfoPanel
+                    icon={BrainCircuit}
+                    title="AI document scan"
+                    variant="info"
+                    dismissible
+                    storageKey="hide-ai-cert-incorp-info"
+                  >
+                    <p>
+                      Upload your certificate of incorporation to auto-fill the
+                      company details above using AI.
+                    </p>
+                    <p className="text-[11px] opacity-80">
+                      Please review all extracted details before saving, as AI
+                      may occasionally make mistakes.
+                    </p>
+                  </InfoPanel>
+
+                  <AIScanBanner
+                    status={certOfIncorpAI.scan.status}
+                    error={certOfIncorpAI.scan.error}
+                    autoFilledCount={certOfIncorpAI.autoFilledCount}
+                    conflictCount={certOfIncorpAI.aiConflicts.length}
+                  />
+                </>
+              )}
+
+              {/* Conflict resolution */}
+              {isEditingDetails && certOfIncorpAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={certOfIncorpAI.aiConflicts}
+                  onAccept={certOfIncorpAI.acceptAISuggestion}
+                  onReject={certOfIncorpAI.rejectAISuggestion}
+                />
+              )}
 
               <EditableDocumentField
                 label="CERTIFICATE OF INCORPORATION"
@@ -723,16 +947,17 @@ export default function CompanyDetails() {
                 fileUrl={resolvedCertOfIncorp?.url ?? null}
                 isUploaded={!!resolvedCertOfIncorp}
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
+                secondaryBadges={[
+                  {
+                    status: certOfIncorpAIStatus,
+                    label: `AI Scan ${certOfIncorpAIStatus}`,
+                    icon: "Brain",
+                  },
+                ]}
                 expiresAt={resolvedCertOfIncorp?.expiresAt}
                 meta={formatFileSize(resolvedCertOfIncorp?.sizeBytes)}
                 isRequired
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
-                  setReuseDocIds((f) => ({
-                    ...f,
-                    certificateOfIncorporation: null,
-                  }));
-                }}
+                onUpload={handleCertOfIncorpUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -743,6 +968,22 @@ export default function CompanyDetails() {
                 infoPillDescription="Upload your certificate of incorporation as proof of company registration."
                 error={errors?.certificateOfIncorporation?.[0]}
                 disabled={isSetupMode ? isSavingSetup : isSavingDetails}
+                secondaryActions={[
+                  {
+                    label: certOfIncorpAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      certOfIncorpAIStatus === "NOT_SCANNED" ||
+                      certOfIncorpAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleCertOfIncorpRescan,
+                    disabled:
+                      !resolvedCertOfIncorp ||
+                      certOfIncorpAI.scan.status === "scanning" ||
+                      (isSetupMode ? isSavingSetup : isSavingDetails),
+                  },
+                ]}
                 actionSlot={
                   isEditingDetails &&
                   certOfIncorpDocs?.length > 0 && (
@@ -751,17 +992,7 @@ export default function CompanyDetails() {
                       docs={certOfIncorpDocs}
                       selectedId={reuseDocIds.certificateOfIncorporation}
                       docType="CERTIFICATE_OF_INCORPORATION"
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({
-                          ...prev,
-                          certificateOfIncorporation: id,
-                        }));
-                        if (id)
-                          setFiles((f) => ({
-                            ...f,
-                            certificateOfIncorporation: null,
-                          }));
-                      }}
+                      onSelect={handleCertOfIncorpReuseSelect}
                       disabled={isSetupMode ? isSavingSetup : isSavingDetails}
                       existingDocId={initialDocIds.certificateOfIncorporation}
                     />
@@ -966,6 +1197,7 @@ export default function CompanyDetails() {
                   disabled={isSetupMode ? isSavingSetup : isSavingTax}
                 />
               </div>
+
               {conpanyisInIreland && (
                 <>
                   <EditableTextDataField
@@ -1005,8 +1237,22 @@ export default function CompanyDetails() {
                   />
                 </>
               )}
+
               {ct?.isVATRegistered && (
                 <div className="xl:col-span-2 2xl:col-span-1">
+                  {/* VAT cert scan banner — no field conflicts since VAT_CERTIFICATE
+                      has no FIELD_MAPS entries, but status still reflects scan progress */}
+                  {isEditingTax && vatCertAI.scan.status !== "idle" && (
+                    <div className="mb-3">
+                      <AIScanBanner
+                        status={vatCertAI.scan.status}
+                        error={vatCertAI.scan.error}
+                        autoFilledCount={vatCertAI.autoFilledCount}
+                        conflictCount={vatCertAI.aiConflicts.length}
+                      />
+                    </div>
+                  )}
+
                   <EditableDocumentField
                     label="VAT CERTIFICATE"
                     isEditing={isEditingTax}
@@ -1017,12 +1263,16 @@ export default function CompanyDetails() {
                     fileUrl={resolvedVatCert?.url ?? null}
                     isUploaded={!!resolvedVatCert}
                     status={resolvedVatCert?.verificationStatus || "Pending"}
+                    secondaryBadges={[
+                      {
+                        status: vatCertAIStatus,
+                        label: `AI Scan ${vatCertAIStatus}`,
+                        icon: "Brain",
+                      },
+                    ]}
                     expiresAt={resolvedVatCert?.expiresAt}
                     meta={formatFileSize(resolvedVatCert?.sizeBytes)}
-                    onUpload={(file) => {
-                      setFiles((f) => ({ ...f, vatCertificate: file }));
-                      setReuseDocIds((f) => ({ ...f, vatCertificate: null }));
-                    }}
+                    onUpload={handleVatCertUpload}
                     onView={(url) =>
                       handleViewDocument({
                         url,
@@ -1033,6 +1283,22 @@ export default function CompanyDetails() {
                     infoPillDescription="Upload your VAT registration certificate."
                     error={errors?.vatCertificate?.[0]}
                     disabled={isSetupMode ? isSavingSetup : isSavingTax}
+                    secondaryActions={[
+                      {
+                        label: vatCertAIScanLabel,
+                        icon: "Sparkles",
+                        variant:
+                          vatCertAIStatus === "NOT_SCANNED" ||
+                          vatCertAIStatus === "PROCESSING"
+                            ? "default"
+                            : "outline",
+                        onClick: handleVatCertRescan,
+                        disabled:
+                          !resolvedVatCert ||
+                          vatCertAI.scan.status === "scanning" ||
+                          (isSetupMode ? isSavingSetup : isSavingTax),
+                      },
+                    ]}
                     actionSlot={
                       isEditingTax &&
                       vatCertDocs?.length > 0 && (
@@ -1041,14 +1307,7 @@ export default function CompanyDetails() {
                           docs={vatCertDocs}
                           selectedId={reuseDocIds.vatCertificate}
                           docType="VAT_CERTIFICATE"
-                          onSelect={(id) => {
-                            setReuseDocIds((prev) => ({
-                              ...prev,
-                              vatCertificate: id,
-                            }));
-                            if (id)
-                              setFiles((f) => ({ ...f, vatCertificate: null }));
-                          }}
+                          onSelect={handleVatCertReuseSelect}
                           disabled={isSetupMode ? isSavingSetup : isSavingTax}
                           existingDocId={initialDocIds.vatCertificate}
                         />
