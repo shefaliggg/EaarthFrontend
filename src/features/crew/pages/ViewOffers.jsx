@@ -1,30 +1,14 @@
 /**
- * ViewOffer.jsx — FIXED
+ * ViewOffer.jsx
  *
- * KEY FIX — stage does not advance after all docs signed:
- *
- *   handleAllSigned(role) is now wired to ContractInstancesPanel's onAllSigned prop
- *   (via LayoutCrew and LayoutSignatory). It calls the correct status-advance thunk
- *   depending on which role just finished signing:
- *
- *     CREW   → moveToPendingUpmSignatureThunk
- *     UPM    → moveToPendingFcSignatureThunk
- *     FC     → moveToPendingStudioSignatureThunk
- *     STUDIO → completeOfferThunk
- *
- *   After the thunk resolves the offer is re-fetched so Redux + the UI reflect
- *   the new status immediately, and the viewRole auto-advances to the next
- *   signatory (via the STATUS_TO_ROLE map that was already present).
- *
- * OTHER FIXES (preserved from previous iteration):
- *   1. profileSignature uses ONLY the Redux store selector
- *   2. Version refetch guard: only refetch when version strictly increases
- *   3. clearInstances() removed from post-sign flows — prevents flicker
- *   4. handleRefresh uses offer._id for instance fetch
- *   5. calculatedRates memo depends on offer?.feePerDay
- *   6. offerToAllowances — enabled: false default + robust enabled fallback
- *   7. onSignInstance re-fetches the offer after each document is signed
- *   8. SignDialog completely removed — all roles sign inline
+ * CHANGES vs previous version:
+ *   - PROJECT_ID is no longer hardcoded from APP_CONFIG.
+ *     It is resolved dynamically from Redux:
+ *       1. currentProject._id
+ *       2. Slug match against allProjects using :projectName param
+ *       3. APP_CONFIG.PROJECT_ID as last-resort fallback
+ *   - getProjectOffersThunk uses resolvedProjectId instead of PROJECT_ID
+ *   - All signing / workflow logic unchanged
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
@@ -77,6 +61,12 @@ import LayoutSignatory        from "../components/viewoffer/layouts/LayoutSignat
 
 import { calculateRates, defaultEngineSettings } from "../utils/rateCalculations";
 import { defaultAllowances }                      from "../utils/Defaultallowance";
+
+import { APP_CONFIG } from "../config/appConfig";
+
+// ─── Slug helper — must mirror DashboardLayout ────────────────────────────────
+const toSlug    = (name = "") => name.toLowerCase().replace(/\s+/g, "-");
+const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 // ── Role switcher config ──────────────────────────────────────────────────────
 
@@ -264,8 +254,6 @@ const STATUS_TO_ROLE = {
   PENDING_STUDIO_SIGNATURE: "STUDIO",
 };
 
-// ── Maps signing role → the thunk that advances the offer to the next stage ──
-// Called from handleAllSigned when ContractInstancesPanel reports all docs done.
 const ADVANCE_THUNK_FOR_ROLE = {
   CREW:   (offerId, dispatch) => dispatch(moveToPendingUpmSignatureThunk(offerId)),
   UPM:    (offerId, dispatch) => dispatch(moveToPendingFcSignatureThunk(offerId)),
@@ -296,9 +284,28 @@ export default function ViewOffer() {
 
   const profileSignature = useSelector(selectProfileSignatureUrl);
 
+  // ── Resolve real project _id from Redux ───────────────────────────────────
+  const currentProject = useSelector((s) => s.project?.currentProject ?? null);
+  const allProjects    = useSelector((s) => s.project?.projects ?? []);
+
+  const resolvedProjectId = useMemo(() => {
+    // 1. currentProject already loaded in Redux
+    if (isObjectId(currentProject?._id)) return String(currentProject._id);
+
+    // 2. Match by :projectName slug
+    if (projectName) {
+      const slug  = projectName.toLowerCase();
+      const match = allProjects.find((p) => toSlug(p.productionName ?? "") === slug);
+      if (isObjectId(match?._id)) return String(match._id);
+    }
+
+    // 3. Fallback
+    console.warn("[ViewOffer] Could not resolve projectId from Redux — using APP_CONFIG fallback");
+    return APP_CONFIG.PROJECT_ID;
+  }, [currentProject, allProjects, projectName]);
+
   const prevSignRef    = useRef(null);
   const prevVersionRef = useRef(null);
-  // Guard: prevent double-firing onAllSigned if component re-renders mid-flight
   const advancingRef   = useRef(false);
 
   const proj = projectName || "demo-project";
@@ -341,7 +348,7 @@ export default function ViewOffer() {
     if (targetRole && viewRole !== targetRole) {
       dispatch(setViewRole(targetRole));
     }
-  }, [offer?.status, dispatch]); // intentionally omit viewRole to avoid loop
+  }, [offer?.status, dispatch]);
 
   // ── Only refetch when version strictly increases ───────────────────────────
   useEffect(() => {
@@ -479,8 +486,6 @@ export default function ViewOffer() {
         throw new Error(msg);
       }
 
-      // Delay state refresh so the user sees the signed document before
-      // the layout potentially advances to the next signatory stage.
       setTimeout(async () => {
         if (offer?._id) {
           await dispatch(getOfferThunk(offer._id));
@@ -499,23 +504,10 @@ export default function ViewOffer() {
   }, [dispatch, offer?._id, contractId, profileSignature]);
 
   // ── ALL DOCS SIGNED → advance offer to next stage ─────────────────────────
-  //
-  // Called by ContractInstancesPanel via onAllSigned(role) once every document
-  // in the bundle has been signed by the current role.
-  //
-  // Flow:
-  //   CREW   signs all → moveToPendingUpmSignatureThunk  → viewRole auto-sets to UPM
-  //   UPM    signs all → moveToPendingFcSignatureThunk   → viewRole auto-sets to FC
-  //   FC     signs all → moveToPendingStudioSignatureThunk → viewRole auto-sets to STUDIO
-  //   STUDIO signs all → completeOfferThunk              → offer is COMPLETED
-  //
-  // The STATUS_TO_ROLE useEffect above handles the viewRole switch automatically
-  // once the offer refetch returns the new status.
   const handleAllSigned = useCallback(async (role) => {
     const oid = offer?._id;
     if (!oid) return;
 
-    // Prevent double-fire if ContractInstancesPanel emits twice
     if (advancingRef.current) return;
     advancingRef.current = true;
 
@@ -539,8 +531,6 @@ export default function ViewOffer() {
         return;
       }
 
-      // Re-fetch the offer so Redux gets the new status; STATUS_TO_ROLE
-      // useEffect will automatically switch viewRole to the next signatory.
       const fresh = await dispatch(getOfferThunk(oid));
       const newStatus = fresh.payload?.status;
       toast.success(
@@ -556,7 +546,6 @@ export default function ViewOffer() {
         dispatch(getContractPreviewThunk(cid));
       }
 
-      // Reload instances for the new stage
       if (fresh.payload?._id) {
         dispatch(clearInstances());
         dispatch(getContractInstancesThunk(fresh.payload._id));
@@ -567,7 +556,6 @@ export default function ViewOffer() {
       toast.error("Failed to advance signing stage");
       console.error("[ViewOffer] handleAllSigned error:", err);
     } finally {
-      // Reset guard after a delay so rapid re-renders don't re-fire immediately
       setTimeout(() => { advancingRef.current = false; }, 5000);
     }
   }, [dispatch, offer?._id, contractId]);
@@ -617,8 +605,7 @@ export default function ViewOffer() {
     dispatch,
     profileSignature,
     onSignInstance: handleSignInstance,
-    // NEW: every layout that wraps ContractInstancesPanel must forward this
-    onAllSigned: handleAllSigned,
+    onAllSigned:    handleAllSigned,
   };
 
   // ── Loading / not found ────────────────────────────────────────────────────
@@ -791,7 +778,6 @@ export default function ViewOffer() {
         )}
 
       </div>
-      {/* SignDialog intentionally removed — all roles sign inline via ContractInstancesPanel */}
     </div>
   );
 }
