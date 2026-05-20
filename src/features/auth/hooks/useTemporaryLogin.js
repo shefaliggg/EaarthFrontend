@@ -17,23 +17,20 @@ const useTemporaryLogin = () => {
     setLoading(true);
 
     try {
-      const response = await authService.temporaryLogin({
-        email,
-        password,
-      });
+      const response = await authService.temporaryLogin({ email, password });
 
       if (response?.success) {
+        // Backend returns: { success, data: { staffId, email, isTemporary } }
         return {
           success: true,
-          userId: response.userId || response.data?.userId,
-          email: response.email || response.data?.email,
+          userId: response.data?.staffId,   // field is staffId, not userId
+          email:  response.data?.email,
         };
       }
 
       return false;
     } catch (err) {
-      const errorMsg =
-        err?.message || "Temporary login failed. Please try again.";
+      const errorMsg = err?.message || "Temporary login failed. Please try again.";
       setError(errorMsg);
       return false;
     } finally {

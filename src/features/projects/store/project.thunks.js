@@ -109,22 +109,6 @@ export const getAllProjectsThunk = createAsyncThunk(
   "project/getAllProjects",
   async (filters = {}, { getState, rejectWithValue }) => {
     try {
-<<<<<<< HEAD
-      const response = await getAllProjectsAPI(filters);
-      // console.log("getAllProjectsThunk response:", response);
-      return {
-        projects: response.data || [],
-        total: response.pagination?.total || 0,
-        page: response.pagination?.page || 1,
-        pages: response.pagination?.pages || 1,
-        limit: response.pagination?.limit || 10,
-      };
-    } catch (err) {
-      console.error("getAllProjectsThunk error:", err);
-      return rejectWithValue(
-        err?.response?.data?.message || "Failed to fetch projects",
-      );
-=======
       const studioAdmin = isStudioAdminFromState(getState);
 
       if (studioAdmin) {
@@ -151,7 +135,6 @@ export const getAllProjectsThunk = createAsyncThunk(
       }
     } catch (err) {
       return rejectWithValue(err?.response?.data?.message || "Failed to fetch projects");
->>>>>>> shanid/contract
     }
   }
 );
@@ -273,10 +256,5 @@ export const addCrewMemberThunk = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err?.response?.data?.message || "Failed to add crew member");
     }
-<<<<<<< HEAD
-  },
-);
-=======
   }
 );
->>>>>>> shanid/contract
