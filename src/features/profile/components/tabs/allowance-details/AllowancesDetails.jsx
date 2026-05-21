@@ -13,7 +13,10 @@ import {
 } from "../../../../user-documents/store/document.selector";
 import { useDocumentSectionAI } from "@/features/ai/documents/hooks/useDocumentSectionAI";
 import { buildDocumentAiExtraction } from "@/features/ai/documents/config/aiDocumentScanner.helper";
-import { AIScanBanner, AIConflictPanel } from "@/features/ai/documents/components/AIFieldSuggestion";
+import {
+  AIScanBanner,
+  AIConflictPanel,
+} from "@/features/ai/documents/components/AIFieldSuggestion";
 import ProfileCardLoadingSkelton from "../../skeltons/ProfileCardLoadingSkelton";
 import ProfileCardErrorSkelton from "../../skeltons/ProfileCardErrorSkelton";
 import AllowanceItemsList from "./components/AllowanceItemsList";
@@ -34,6 +37,8 @@ import {
 } from "../../../../../shared/stores/useModalStore";
 import { formatFileSize } from "../../../../../shared/config/utils";
 import { removeVehicleAllowanceConfig } from "../../../../../shared/config/ConfirmActionsConfig";
+import { InfoPanel } from "../../../../../shared/components/panels/InfoPanel";
+import { BrainCircuit } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -155,12 +160,12 @@ export default function AllowanceDetails() {
   const drivingLicenceAIStatus =
     drivingLicenceAI.scan.status !== "idle"
       ? drivingLicenceAI.scan.status
-      : resolvedDrivingLicence?.aiExtraction?.status ?? "NOT_SCANNED";
+      : (resolvedDrivingLicence?.aiExtraction?.status ?? "NOT_SCANNED");
 
   const vehicleInsuranceAIStatus =
     vehicleInsuranceAI.scan.status !== "idle"
       ? vehicleInsuranceAI.scan.status
-      : resolvedVehicleInsurance?.aiExtraction?.status ?? "NOT_SCANNED";
+      : (resolvedVehicleInsurance?.aiExtraction?.status ?? "NOT_SCANNED");
 
   const drivingLicenceAIScanLabel =
     drivingLicenceAIStatus === "NOT_SCANNED" ||
@@ -533,242 +538,272 @@ export default function AllowanceDetails() {
               />
             </div>
 
+            {isEditingVehicle && (
+              <InfoPanel
+                icon={BrainCircuit}
+                title="AI document scan"
+                variant="info"
+                dismissible
+                storageKey="hide-ai-vehicle-allowance-info"
+              >
+                <p>
+                  Upload your driving licence and vehicle insurance to auto-fill
+                  the fields above using AI.
+                </p>
+                <p className="text-[11px] opacity-80">
+                  Please review all extracted details before saving, as AI may
+                  occasionally make mistakes.
+                </p>
+              </InfoPanel>
+            )}
+
             <div className="grid grid-cols-1 gap-3 mt-2">
-              <EditableDocumentField
-                label="DRIVING LICENCE"
-                isEditing={isEditingVehicle}
-                isLoading={isFetchingDocs}
-                fileName={
-                  resolvedDrivingLicence?.originalName ?? "No file uploaded"
-                }
-                isRequired
-                fileUrl={resolvedDrivingLicence?.url ?? null}
-                isUploaded={!!resolvedDrivingLicence}
-                status={resolvedDrivingLicence?.verificationStatus || "Pending"}
-                secondaryBadges={[
-                  {
-                    status: drivingLicenceAIStatus,
-                    label: `AI Scan ${drivingLicenceAIStatus}`,
-                    icon: "Brain",
-                  },
-                ]}
-                expiresAt={resolvedDrivingLicence?.expiresAt}
-                meta={formatFileSize(resolvedDrivingLicence?.sizeBytes)}
-                onUpload={async (file) => {
-                  setVehicleFiles((p) => ({ ...p, drivingLicence: file }));
-                  setVehicleDocIds((p) => ({ ...p, drivingLicence: null }));
-                  try {
-                    await drivingLicenceAI.processAIScan({
-                      file,
-                      currentForm: vehicleForm ?? crewProfile?.vehicle,
-                    });
-                  } catch (err) {
-                    console.error("Driving licence AI scan failed:", err);
-                  }
-                }}
-                onView={(url) =>
-                  handleViewDocument({
-                    url,
-                    fileName: resolvedDrivingLicence?.originalName,
-                    mimeType: resolvedDrivingLicence?.mimeType,
-                  })
-                }
-                infoPillDescription="Upload a valid government-issued driving licence. AI scan is available for this document."
-                error={errors?.drivingLicence?.[0]}
-                disabled={isSavingVehicle}
-                secondaryActions={[
-                  {
-                    label: drivingLicenceAIScanLabel,
-                    icon: "Sparkles",
-                    variant:
-                      drivingLicenceAIStatus === "NOT_SCANNED" ||
-                      drivingLicenceAIStatus === "PROCESSING"
-                        ? "default"
-                        : "outline",
-                    onClick: async () => {
-                      if (!resolvedDrivingLicence) return;
-                      if (!isEditingVehicle) startEditing("vehicle");
-                      try {
-                        await drivingLicenceAI.processAIScan({
-                          file: vehicleFiles.drivingLicence ?? null,
-                          documentId: resolvedDrivingLicence._id,
-                          currentForm: vehicleForm ?? crewProfile?.vehicle,
-                        });
-                      } catch (err) {
-                        toast.error("Failed to rescan driving licence");
-                      }
-                    },
-                    disabled:
-                      !resolvedDrivingLicence ||
-                      drivingLicenceAI.scan.status === "scanning" ||
-                      isSavingVehicle,
-                  },
-                ]}
-                actionSlot={
-                  isEditingVehicle &&
-                  drivingLicenceDocs?.length > 0 && (
-                    <ReuseDocumentPromptPanel
-                      label="driving licence"
-                      docs={drivingLicenceDocs}
-                      selectedId={vehicleDocIds.drivingLicence}
-                      docType="DRIVING_LICENCE"
-                      onSelect={(id) => {
-                        setVehicleDocIds((prev) => ({
-                          ...prev,
-                          drivingLicence: id,
-                        }));
-
-                        if (id) {
-                          setVehicleFiles((f) => ({
-                            ...f,
-                            drivingLicence: null,
-                          }));
-                        }
-                        drivingLicenceAI.handleReuseSelect(id, userDocuments);
-                      }}
-                      disabled={isSavingVehicle}
-                      existingDocId={initialVehicleDocIds.drivingLicence}
+              <div className="space-y-3">
+                {isEditingVehicle &&
+                  drivingLicenceAI.scan.status !== "idle" && (
+                    <AIScanBanner
+                      status={drivingLicenceAI.scan.status}
+                      error={drivingLicenceAI.scan.error}
+                      autoFilledCount={drivingLicenceAI.autoFilledCount}
+                      conflictCount={drivingLicenceAI.aiConflicts.length}
                     />
-                  )
-                }
-              />
+                  )}
 
-              {isEditingVehicle &&
-                drivingLicenceAI.scan.status !== "idle" && (
-                  <AIScanBanner
-                    status={drivingLicenceAI.scan.status}
-                    error={drivingLicenceAI.scan.error}
-                    autoFilledCount={drivingLicenceAI.autoFilledCount}
-                    conflictCount={drivingLicenceAI.aiConflicts.length}
-                  />
-                )}
-
-              {isEditingVehicle && drivingLicenceAI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={drivingLicenceAI.aiConflicts}
-                  onAccept={drivingLicenceAI.acceptAISuggestion}
-                  onReject={drivingLicenceAI.rejectAISuggestion}
-                />
-              )}
-
-              <EditableDocumentField
-                label="VEHICLE INSURANCE CERTIFICATE"
-                isEditing={isEditingVehicle}
-                isLoading={isFetchingDocs}
-                fileName={
-                  resolvedVehicleInsurance?.originalName ?? "No file uploaded"
-                }
-                isRequired
-                fileUrl={resolvedVehicleInsurance?.url ?? null}
-                isUploaded={!!resolvedVehicleInsurance}
-                status={
-                  resolvedVehicleInsurance?.verificationStatus || "Pending"
-                }
-                secondaryBadges={[
-                  {
-                    status: vehicleInsuranceAIStatus,
-                    label: `AI Scan ${vehicleInsuranceAIStatus}`,
-                    icon: "Brain",
-                  },
-                ]}
-                expiresAt={resolvedVehicleInsurance?.expiresAt}
-                meta={formatFileSize(resolvedVehicleInsurance?.sizeBytes)}
-                onUpload={async (file) => {
-                  setVehicleFiles((p) => ({ ...p, vehicleInsurance: file }));
-                  setVehicleDocIds((p) => ({ ...p, vehicleInsurance: null }));
-                  try {
-                    await vehicleInsuranceAI.processAIScan({
-                      file,
-                      currentForm: vehicleForm ?? crewProfile?.vehicle,
-                    });
-                  } catch (err) {
-                    console.error("Vehicle insurance AI scan failed:", err);
-                  }
-                }}
-                onView={(url) =>
-                  handleViewDocument({
-                    url,
-                    fileName: resolvedVehicleInsurance?.originalName,
-                    mimeType: resolvedVehicleInsurance?.mimeType,
-                  })
-                }
-                infoPillDescription="Upload a valid vehicle insurance certificate. AI scan is available for this document."
-                error={errors?.vehicleInsurance?.[0]}
-                disabled={isSavingVehicle}
-                secondaryActions={[
-                  {
-                    label: vehicleInsuranceAIScanLabel,
-                    icon: "Sparkles",
-                    variant:
-                      vehicleInsuranceAIStatus === "NOT_SCANNED" ||
-                      vehicleInsuranceAIStatus === "PROCESSING"
-                        ? "default"
-                        : "outline",
-                    onClick: async () => {
-                      if (!resolvedVehicleInsurance) return;
-                      if (!isEditingVehicle) startEditing("vehicle");
-                      try {
-                        await vehicleInsuranceAI.processAIScan({
-                          file: vehicleFiles.vehicleInsurance ?? null,
-                          documentId: resolvedVehicleInsurance._id,
-                          currentForm: vehicleForm ?? crewProfile?.vehicle,
-                        });
-                      } catch (err) {
-                        toast.error("Failed to rescan insurance certificate");
-                      }
-                    },
-                    disabled:
-                      !resolvedVehicleInsurance ||
-                      vehicleInsuranceAI.scan.status === "scanning" ||
-                      isSavingVehicle,
-                  },
-                ]}
-                actionSlot={
-                  isEditingVehicle &&
-                  vehicleInsuranceDocs?.length > 0 && (
-                    <ReuseDocumentPromptPanel
-                      label="vehicle insurance certificate"
-                      docs={vehicleInsuranceDocs}
-                      selectedId={vehicleDocIds.vehicleInsurance}
-                      docType="VEHICLE_INSURANCE"
-                      onSelect={(id) => {
-                        setVehicleDocIds((prev) => ({
-                          ...prev,
-                          vehicleInsurance: id,
-                        }));
-
-                        if (id) {
-                          setVehicleFiles((f) => ({
-                            ...f,
-                            vehicleInsurance: null,
-                          }));
-                        }
-                        vehicleInsuranceAI.handleReuseSelect(id, userDocuments);
-                      }}
-                      disabled={isSavingVehicle}
-                      existingDocId={initialVehicleDocIds.vehicleInsurance}
+                {isEditingVehicle &&
+                  drivingLicenceAI.aiConflicts.length > 0 && (
+                    <AIConflictPanel
+                      conflicts={drivingLicenceAI.aiConflicts}
+                      onAccept={drivingLicenceAI.acceptAISuggestion}
+                      onReject={drivingLicenceAI.rejectAISuggestion}
                     />
-                  )
-                }
-              />
+                  )}
 
-              {isEditingVehicle &&
-                vehicleInsuranceAI.scan.status !== "idle" && (
-                  <AIScanBanner
-                    status={vehicleInsuranceAI.scan.status}
-                    error={vehicleInsuranceAI.scan.error}
-                    autoFilledCount={vehicleInsuranceAI.autoFilledCount}
-                    conflictCount={vehicleInsuranceAI.aiConflicts.length}
-                  />
-                )}
+                <EditableDocumentField
+                  label="DRIVING LICENCE"
+                  isEditing={isEditingVehicle}
+                  isLoading={isFetchingDocs}
+                  fileName={
+                    resolvedDrivingLicence?.originalName ?? "No file uploaded"
+                  }
+                  isRequired
+                  fileUrl={resolvedDrivingLicence?.url ?? null}
+                  isUploaded={!!resolvedDrivingLicence}
+                  status={
+                    resolvedDrivingLicence?.verificationStatus || "Pending"
+                  }
+                  secondaryBadges={[
+                    {
+                      status: drivingLicenceAIStatus,
+                      label: `AI Scan ${drivingLicenceAIStatus}`,
+                      icon: "Brain",
+                    },
+                  ]}
+                  expiresAt={resolvedDrivingLicence?.expiresAt}
+                  meta={formatFileSize(resolvedDrivingLicence?.sizeBytes)}
+                  onUpload={async (file) => {
+                    setVehicleFiles((p) => ({ ...p, drivingLicence: file }));
+                    setVehicleDocIds((p) => ({ ...p, drivingLicence: null }));
+                    try {
+                      await drivingLicenceAI.processAIScan({
+                        file,
+                        currentForm: vehicleForm ?? crewProfile?.vehicle,
+                      });
+                    } catch (err) {
+                      console.error("Driving licence AI scan failed:", err);
+                    }
+                  }}
+                  onView={(url) =>
+                    handleViewDocument({
+                      url,
+                      fileName: resolvedDrivingLicence?.originalName,
+                      mimeType: resolvedDrivingLicence?.mimeType,
+                    })
+                  }
+                  infoPillDescription="Upload a valid government-issued driving licence. AI scan is available for this document."
+                  error={errors?.drivingLicence?.[0]}
+                  disabled={isSavingVehicle}
+                  secondaryActions={[
+                    {
+                      label: drivingLicenceAIScanLabel,
+                      icon: "Sparkles",
+                      variant:
+                        drivingLicenceAIStatus === "NOT_SCANNED" ||
+                        drivingLicenceAIStatus === "PROCESSING"
+                          ? "default"
+                          : "outline",
+                      onClick: async () => {
+                        if (!resolvedDrivingLicence) return;
+                        if (!isEditingVehicle) startEditing("vehicle");
+                        try {
+                          await drivingLicenceAI.processAIScan({
+                            file: vehicleFiles.drivingLicence ?? null,
+                            documentId: resolvedDrivingLicence._id,
+                            currentForm: vehicleForm ?? crewProfile?.vehicle,
+                          });
+                        } catch (err) {
+                          toast.error("Failed to rescan driving licence");
+                        }
+                      },
+                      disabled:
+                        !resolvedDrivingLicence ||
+                        drivingLicenceAI.scan.status === "scanning" ||
+                        isSavingVehicle,
+                    },
+                  ]}
+                  actionSlot={
+                    isEditingVehicle &&
+                    drivingLicenceDocs?.length > 0 && (
+                      <ReuseDocumentPromptPanel
+                        label="driving licence"
+                        docs={drivingLicenceDocs}
+                        selectedId={vehicleDocIds.drivingLicence}
+                        docType="DRIVING_LICENCE"
+                        onSelect={(id) => {
+                          setVehicleDocIds((prev) => ({
+                            ...prev,
+                            drivingLicence: id,
+                          }));
 
-              {isEditingVehicle && vehicleInsuranceAI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={vehicleInsuranceAI.aiConflicts}
-                  onAccept={vehicleInsuranceAI.acceptAISuggestion}
-                  onReject={vehicleInsuranceAI.rejectAISuggestion}
+                          if (id) {
+                            setVehicleFiles((f) => ({
+                              ...f,
+                              drivingLicence: null,
+                            }));
+                          }
+                          drivingLicenceAI.handleReuseSelect(id, userDocuments);
+                        }}
+                        disabled={isSavingVehicle}
+                        existingDocId={initialVehicleDocIds.drivingLicence}
+                      />
+                    )
+                  }
                 />
-              )}
+              </div>
+
+              <div className="space-y-3">
+                {isEditingVehicle &&
+                  vehicleInsuranceAI.scan.status !== "idle" && (
+                    <AIScanBanner
+                      status={vehicleInsuranceAI.scan.status}
+                      error={vehicleInsuranceAI.scan.error}
+                      autoFilledCount={vehicleInsuranceAI.autoFilledCount}
+                      conflictCount={vehicleInsuranceAI.aiConflicts.length}
+                    />
+                  )}
+
+                {isEditingVehicle &&
+                  vehicleInsuranceAI.aiConflicts.length > 0 && (
+                    <AIConflictPanel
+                      conflicts={vehicleInsuranceAI.aiConflicts}
+                      onAccept={vehicleInsuranceAI.acceptAISuggestion}
+                      onReject={vehicleInsuranceAI.rejectAISuggestion}
+                    />
+                  )}
+
+                <EditableDocumentField
+                  label="VEHICLE INSURANCE CERTIFICATE"
+                  isEditing={isEditingVehicle}
+                  isLoading={isFetchingDocs}
+                  fileName={
+                    resolvedVehicleInsurance?.originalName ?? "No file uploaded"
+                  }
+                  isRequired
+                  fileUrl={resolvedVehicleInsurance?.url ?? null}
+                  isUploaded={!!resolvedVehicleInsurance}
+                  status={
+                    resolvedVehicleInsurance?.verificationStatus || "Pending"
+                  }
+                  secondaryBadges={[
+                    {
+                      status: vehicleInsuranceAIStatus,
+                      label: `AI Scan ${vehicleInsuranceAIStatus}`,
+                      icon: "Brain",
+                    },
+                  ]}
+                  expiresAt={resolvedVehicleInsurance?.expiresAt}
+                  meta={formatFileSize(resolvedVehicleInsurance?.sizeBytes)}
+                  onUpload={async (file) => {
+                    setVehicleFiles((p) => ({ ...p, vehicleInsurance: file }));
+                    setVehicleDocIds((p) => ({ ...p, vehicleInsurance: null }));
+                    try {
+                      await vehicleInsuranceAI.processAIScan({
+                        file,
+                        currentForm: vehicleForm ?? crewProfile?.vehicle,
+                      });
+                    } catch (err) {
+                      console.error("Vehicle insurance AI scan failed:", err);
+                    }
+                  }}
+                  onView={(url) =>
+                    handleViewDocument({
+                      url,
+                      fileName: resolvedVehicleInsurance?.originalName,
+                      mimeType: resolvedVehicleInsurance?.mimeType,
+                    })
+                  }
+                  infoPillDescription="Upload a valid vehicle insurance certificate. AI scan is available for this document."
+                  error={errors?.vehicleInsurance?.[0]}
+                  disabled={isSavingVehicle}
+                  secondaryActions={[
+                    {
+                      label: vehicleInsuranceAIScanLabel,
+                      icon: "Sparkles",
+                      variant:
+                        vehicleInsuranceAIStatus === "NOT_SCANNED" ||
+                        vehicleInsuranceAIStatus === "PROCESSING"
+                          ? "default"
+                          : "outline",
+                      onClick: async () => {
+                        if (!resolvedVehicleInsurance) return;
+                        if (!isEditingVehicle) startEditing("vehicle");
+                        try {
+                          await vehicleInsuranceAI.processAIScan({
+                            file: vehicleFiles.vehicleInsurance ?? null,
+                            documentId: resolvedVehicleInsurance._id,
+                            currentForm: vehicleForm ?? crewProfile?.vehicle,
+                          });
+                        } catch (err) {
+                          toast.error("Failed to rescan insurance certificate");
+                        }
+                      },
+                      disabled:
+                        !resolvedVehicleInsurance ||
+                        vehicleInsuranceAI.scan.status === "scanning" ||
+                        isSavingVehicle,
+                    },
+                  ]}
+                  actionSlot={
+                    isEditingVehicle &&
+                    vehicleInsuranceDocs?.length > 0 && (
+                      <ReuseDocumentPromptPanel
+                        label="vehicle insurance certificate"
+                        docs={vehicleInsuranceDocs}
+                        selectedId={vehicleDocIds.vehicleInsurance}
+                        docType="VEHICLE_INSURANCE"
+                        onSelect={(id) => {
+                          setVehicleDocIds((prev) => ({
+                            ...prev,
+                            vehicleInsurance: id,
+                          }));
+
+                          if (id) {
+                            setVehicleFiles((f) => ({
+                              ...f,
+                              vehicleInsurance: null,
+                            }));
+                          }
+                          vehicleInsuranceAI.handleReuseSelect(
+                            id,
+                            userDocuments,
+                          );
+                        }}
+                        disabled={isSavingVehicle}
+                        existingDocId={initialVehicleDocIds.vehicleInsurance}
+                      />
+                    )
+                  }
+                />
+              </div>
             </div>
           </div>
         )}

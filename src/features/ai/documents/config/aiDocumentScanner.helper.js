@@ -234,10 +234,6 @@ export const mergeAIFields = ({ currentForm, aiFields, documentType }) => {
       continue;
     }
 
-    if (mapping.isCountryField) {
-      aiValue = getCountryCode(aiValue) || aiValue;
-    }
-
     const currentValue = getNestedValue(currentForm, mapping.formPath);
 
     if (

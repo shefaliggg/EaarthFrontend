@@ -155,37 +155,27 @@ export default function FinanceDetails() {
       setFormState((prev) => ({ ...prev, finance: updated })),
   });
 
-  const fs4AIStatus =
-    fs4AI.scan.status !== "idle"
-      ? fs4AI.scan.status
-      : resolvedFs4?.aiExtraction?.status || "NOT_SCANNED";
+  const fs4AIStatus = resolvedFs4?.aiExtraction?.status || "NOT_SCANNED";
   const fs4AIScanLabel =
     fs4AIStatus === "NOT_SCANNED" || fs4AIStatus === "PROCESSING"
       ? "Scan with AI"
       : "Rescan with AI";
 
   const payslipAIStatus =
-    payslipAI.scan.status !== "idle"
-      ? payslipAI.scan.status
-      : resolvedPayslip?.aiExtraction?.status || "NOT_SCANNED";
+    resolvedPayslip?.aiExtraction?.status || "NOT_SCANNED";
   const payslipAIScanLabel =
     payslipAIStatus === "NOT_SCANNED" || payslipAIStatus === "PROCESSING"
       ? "Scan with AI"
       : "Rescan with AI";
 
-  const p45AIStatus =
-    p45AI.scan.status !== "idle"
-      ? p45AI.scan.status
-      : resolvedP45?.aiExtraction?.status || "NOT_SCANNED";
+  const p45AIStatus = resolvedP45?.aiExtraction?.status || "NOT_SCANNED";
   const p45AIScanLabel =
     p45AIStatus === "NOT_SCANNED" || p45AIStatus === "PROCESSING"
       ? "Scan with AI"
       : "Rescan with AI";
 
   const vatCertAIStatus =
-    vatCertAI.scan.status !== "idle"
-      ? vatCertAI.scan.status
-      : resolvedVatCert?.aiExtraction?.status || "NOT_SCANNED";
+    resolvedVatCert?.aiExtraction?.status || "NOT_SCANNED";
   const vatCertAIScanLabel =
     vatCertAIStatus === "NOT_SCANNED" || vatCertAIStatus === "PROCESSING"
       ? "Scan with AI"
@@ -830,7 +820,23 @@ export default function FinanceDetails() {
 
           {/* Tax documents */}
           <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-3">
+              {isEditingFinance && fs4AI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={fs4AI.scan.status}
+                  error={fs4AI.scan.error}
+                  autoFilledCount={fs4AI.autoFilledCount}
+                  conflictCount={fs4AI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && fs4AI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={fs4AI.aiConflicts}
+                  onAccept={fs4AI.acceptAISuggestion}
+                  onReject={fs4AI.rejectAISuggestion}
+                />
+              )}
               <EditableDocumentField
                 label="FS4 DOCUMENT"
                 isEditing={isEditingFinance}
@@ -871,7 +877,7 @@ export default function FinanceDetails() {
                     variant:
                       fs4AIStatus === "NOT_SCANNED" ||
                       fs4AIStatus === "PROCESSING"
-                        ? "default"
+                        ? "secondary"
                         : "outline",
                     onClick: handleFs4Rescan,
                     disabled:
@@ -896,26 +902,26 @@ export default function FinanceDetails() {
                   )
                 }
               />
-
-              {isEditingFinance && fs4AI.scan.status !== "idle" && (
-                <AIScanBanner
-                  status={fs4AI.scan.status}
-                  error={fs4AI.scan.error}
-                  autoFilledCount={fs4AI.autoFilledCount}
-                  conflictCount={fs4AI.aiConflicts.length}
-                />
-              )}
-
-              {isEditingFinance && fs4AI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={fs4AI.aiConflicts}
-                  onAccept={fs4AI.acceptAISuggestion}
-                  onReject={fs4AI.rejectAISuggestion}
-                />
-              )}
             </div>
 
-            <div>
+            <div className="space-y-3">
+              {isEditingFinance && payslipAI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={payslipAI.scan.status}
+                  error={payslipAI.scan.error}
+                  autoFilledCount={payslipAI.autoFilledCount}
+                  conflictCount={payslipAI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && payslipAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={payslipAI.aiConflicts}
+                  onAccept={payslipAI.acceptAISuggestion}
+                  onReject={payslipAI.rejectAISuggestion}
+                />
+              )}
+
               <EditableDocumentField
                 label="LATEST PAYSLIP"
                 isEditing={isEditingFinance}
@@ -958,7 +964,7 @@ export default function FinanceDetails() {
                     variant:
                       payslipAIStatus === "NOT_SCANNED" ||
                       payslipAIStatus === "PROCESSING"
-                        ? "default"
+                        ? "secondary"
                         : "outline",
                     onClick: handlePayslipRescan,
                     disabled:
@@ -983,26 +989,26 @@ export default function FinanceDetails() {
                   )
                 }
               />
-
-              {isEditingFinance && payslipAI.scan.status !== "idle" && (
-                <AIScanBanner
-                  status={payslipAI.scan.status}
-                  error={payslipAI.scan.error}
-                  autoFilledCount={payslipAI.autoFilledCount}
-                  conflictCount={payslipAI.aiConflicts.length}
-                />
-              )}
-
-              {isEditingFinance && payslipAI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={payslipAI.aiConflicts}
-                  onAccept={payslipAI.acceptAISuggestion}
-                  onReject={payslipAI.rejectAISuggestion}
-                />
-              )}
             </div>
 
-            <div>
+            <div className="space-y-3">
+              {isEditingFinance && p45AI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={p45AI.scan.status}
+                  error={p45AI.scan.error}
+                  autoFilledCount={p45AI.autoFilledCount}
+                  conflictCount={p45AI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && p45AI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={p45AI.aiConflicts}
+                  onAccept={p45AI.acceptAISuggestion}
+                  onReject={p45AI.rejectAISuggestion}
+                />
+              )}
+
               <EditableDocumentField
                 label="P45 DOCUMENT"
                 isEditing={isEditingFinance}
@@ -1045,7 +1051,7 @@ export default function FinanceDetails() {
                     variant:
                       p45AIStatus === "NOT_SCANNED" ||
                       p45AIStatus === "PROCESSING"
-                        ? "default"
+                        ? "secondary"
                         : "outline",
                     onClick: handleP45Rescan,
                     disabled:
@@ -1070,26 +1076,26 @@ export default function FinanceDetails() {
                   )
                 }
               />
-
-              {isEditingFinance && p45AI.scan.status !== "idle" && (
-                <AIScanBanner
-                  status={p45AI.scan.status}
-                  error={p45AI.scan.error}
-                  autoFilledCount={p45AI.autoFilledCount}
-                  conflictCount={p45AI.aiConflicts.length}
-                />
-              )}
-
-              {isEditingFinance && p45AI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={p45AI.aiConflicts}
-                  onAccept={p45AI.acceptAISuggestion}
-                  onReject={p45AI.rejectAISuggestion}
-                />
-              )}
             </div>
 
-            <div>
+            <div className="space-y-3">
+              {isEditingFinance && vatCertAI.scan.status !== "idle" && (
+                <AIScanBanner
+                  status={vatCertAI.scan.status}
+                  error={vatCertAI.scan.error}
+                  autoFilledCount={vatCertAI.autoFilledCount}
+                  conflictCount={vatCertAI.aiConflicts.length}
+                />
+              )}
+
+              {isEditingFinance && vatCertAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={vatCertAI.aiConflicts}
+                  onAccept={vatCertAI.acceptAISuggestion}
+                  onReject={vatCertAI.rejectAISuggestion}
+                />
+              )}
+
               <EditableDocumentField
                 label="VAT CERTIFICATE"
                 isEditing={isEditingFinance}
@@ -1132,7 +1138,7 @@ export default function FinanceDetails() {
                     variant:
                       vatCertAIStatus === "NOT_SCANNED" ||
                       vatCertAIStatus === "PROCESSING"
-                        ? "default"
+                        ? "secondary"
                         : "outline",
                     onClick: handleVatCertRescan,
                     disabled:
@@ -1157,23 +1163,6 @@ export default function FinanceDetails() {
                   )
                 }
               />
-
-              {isEditingFinance && vatCertAI.scan.status !== "idle" && (
-                <AIScanBanner
-                  status={vatCertAI.scan.status}
-                  error={vatCertAI.scan.error}
-                  autoFilledCount={vatCertAI.autoFilledCount}
-                  conflictCount={vatCertAI.aiConflicts.length}
-                />
-              )}
-
-              {isEditingFinance && vatCertAI.aiConflicts.length > 0 && (
-                <AIConflictPanel
-                  conflicts={vatCertAI.aiConflicts}
-                  onAccept={vatCertAI.acceptAISuggestion}
-                  onReject={vatCertAI.rejectAISuggestion}
-                />
-              )}
             </div>
           </div>
         </div>
