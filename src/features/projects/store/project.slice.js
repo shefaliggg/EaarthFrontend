@@ -1,4 +1,5 @@
-// src/features/project/store/project.slice.js
+// src/features/projects/store/project.slice.js
+
 import { createSlice } from "@reduxjs/toolkit";
 import {
   createProjectThunk,
@@ -19,8 +20,13 @@ const initialState = {
   projects:        [],
   currentProject:  null,
 
+  // ── View mode ─────────────────────────────────────────────────────────────
+  // true  = crew view  (projects from /my-projects, i.e. completed contracts)
+  // false = studio view (all studio productions from /productions)
+  isCrewView: false,
+
   // ── Members ───────────────────────────────────────────────────────────────
-  projectMembers:  [],
+  projectMembers: [],
 
   // ── Contacts ──────────────────────────────────────────────────────────────
   projectContacts: [],
@@ -70,7 +76,7 @@ const projectSlice = createSlice({
       state.error              = null;
       state.successMessage     = null;
     },
-    clearCurrentProject(state) { state.currentProject = null; },
+    clearCurrentProject(state)        { state.currentProject = null; },
     clearAllProjects(state) {
       state.projects = [];
       state.total    = 0;
@@ -99,23 +105,16 @@ const projectSlice = createSlice({
         state.successMessage = null;
       })
       .addCase(createProjectThunk.fulfilled, (state, action) => {
-        state.isCreating = false;
-
-        const newProduction = action.payload;
-
-        // Set as currentProject immediately so the dashboard can render
+        state.isCreating     = false;
+        const newProduction  = action.payload;
         state.currentProject = newProduction;
 
-        // Prepend to projects[] so the sidebar shows it right away.
-        // Avoid duplicates in case the list was already fetched.
         const alreadyIn = state.projects.some((p) => p._id === newProduction._id);
         if (!alreadyIn) {
           state.projects = [newProduction, ...state.projects];
           state.total    = state.total + 1;
         }
-
-        state.successMessage =
-          "PROJECT CREATED AS DRAFT. SUBMIT FOR APPROVAL TO ACTIVATE.";
+        state.successMessage = "PROJECT CREATED AS DRAFT. SUBMIT FOR APPROVAL TO ACTIVATE.";
       })
       .addCase(createProjectThunk.rejected, (state, action) => {
         state.isCreating = false;
@@ -140,22 +139,25 @@ const projectSlice = createSlice({
         state.error        = action.payload;
       })
 
-      // ── GET ALL PROJECTS ──────────────────────────────────────────────────
+      // ── GET ALL PROJECTS (role-aware) ─────────────────────────────────────
+      //
+      // Studio admin: receives all studio productions (any approvalStatus)
+      // Crew:         receives only projects where their contract is COMPLETED
+      //               (via ProjectMember collection on the backend)
       .addCase(getAllProjectsThunk.pending, (state) => {
         state.isFetching = true;
         state.error      = null;
       })
       .addCase(getAllProjectsThunk.fulfilled, (state, action) => {
         state.isFetching = false;
+        state.isCrewView = action.payload.isCrewView ?? false;
 
-        const incoming = action.payload.projects || [];
-
-        // Merge: keep any locally-created project that isn't in the API response
-        // (e.g. a freshly created draft that isn't returned by this particular query).
+        const incoming   = action.payload.projects || [];
         const incomingIds = new Set(incoming.map((p) => p._id));
-        const localOnly   = state.projects.filter(
-          (p) => !incomingIds.has(p._id),
-        );
+
+        // Preserve any locally-created project not yet in the API response
+        // (e.g. a fresh draft that isn't returned by crew endpoint)
+        const localOnly = state.projects.filter((p) => !incomingIds.has(p._id));
 
         state.projects = [...localOnly, ...incoming];
         state.total    = action.payload.total  || 0;
@@ -177,13 +179,11 @@ const projectSlice = createSlice({
         state.isFetchingDetails = false;
         state.currentProject    = action.payload || null;
 
-        // Also update the project in the list so sidebar labels stay fresh
         if (action.payload) {
           const idx = state.projects.findIndex((p) => p._id === action.payload._id);
           if (idx !== -1) {
             state.projects[idx] = action.payload;
           } else {
-            // Project wasn't in the list yet — add it
             state.projects = [action.payload, ...state.projects];
           }
         }
@@ -318,7 +318,6 @@ const projectSlice = createSlice({
   },
 });
 
-// ── Actions ───────────────────────────────────────────────────────────────────
 export const {
   resetProjectState,
   clearCurrentProject,
@@ -335,5 +334,8 @@ export const {
   clearError,
   clearSuccessMessage,
 } = projectSlice.actions;
+
+// ── Selectors ─────────────────────────────────────────────────────────────────
+export const selectIsCrewView = (s) => s.project.isCrewView;
 
 export default projectSlice.reducer;

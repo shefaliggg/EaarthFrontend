@@ -2,19 +2,13 @@
  * CreateOffer.jsx — Unified Create + Edit page
  *
  * CHANGES:
- *   - totalProductValue removed — replaced by categoryTotals
- *   - categoryTotals computed from inventoryItems grouped by item.category:
- *       { box: number, software: number, equipment: number }
- *     Each allowance uses its own category total for % cap calculations.
- *   - categoryTotals passed to ContractForm → AllowanceRow for live cap preview
- *   - categoryTotals + inventoryItems stored in API payload for edit-mode restore
- *   - offerToAllowances() — base built with enabled: false
- *   - workingHours at contractData level (not schedule)
- *   - subDepartment is a plain string
- *   - department stored as display name string
- *   - specialStipulations included in API payload
- *   - prefillFromUser: production admin enters userId → recipient, representation
- *     and allowances auto-populated from completed crew profile
+ *   - PROJECT_ID is no longer read from APP_CONFIG (hardcoded).
+ *     Instead it is resolved dynamically from Redux:
+ *       1. currentProject._id  (set when user navigates to a project)
+ *       2. Slug match against allProjects using :projectName param
+ *       3. APP_CONFIG.PROJECT_ID as last-resort fallback
+ *   - STUDIO_ID remains hardcoded from APP_CONFIG (still one studio)
+ *   - All other logic unchanged
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -48,8 +42,12 @@ import {
 
 import { APP_CONFIG } from "../config/appConfig";
 
-const STUDIO_ID  = APP_CONFIG.STUDIO_ID;
-const PROJECT_ID = APP_CONFIG.PROJECT_ID;
+// ─── STUDIO stays hardcoded (single studio) ───────────────────────────────────
+const STUDIO_ID = APP_CONFIG.STUDIO_ID;
+
+// ─── Slug helper — must mirror DashboardLayout ────────────────────────────────
+const toSlug = (name = "") => name.toLowerCase().replace(/\s+/g, "-");
+const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 const rh = () => ({
   "x-view-as-role": localStorage.getItem("viewRole") || "PRODUCTION_ADMIN",
@@ -229,6 +227,26 @@ export default function CreateOfferPage() {
   const apiError      = useSelector(selectOfferError);
   const existingOffer = useSelector(selectCurrentOffer);
 
+  // ── Resolve real project _id from Redux ───────────────────────────────────
+  const currentProject = useSelector((s) => s.project?.currentProject ?? null);
+  const allProjects    = useSelector((s) => s.project?.projects ?? []);
+
+  const resolvedProjectId = useMemo(() => {
+    // 1. currentProject already loaded in Redux
+    if (isObjectId(currentProject?._id)) return String(currentProject._id);
+
+    // 2. Match by :projectName slug against full projects list
+    if (projectName) {
+      const slug  = projectName.toLowerCase();
+      const match = allProjects.find((p) => toSlug(p.productionName ?? "") === slug);
+      if (isObjectId(match?._id)) return String(match._id);
+    }
+
+    // 3. Fallback — keeps existing behaviour for local dev
+    console.warn("[CreateOffer] Could not resolve projectId from Redux — using APP_CONFIG fallback");
+    return APP_CONFIG.PROJECT_ID;
+  }, [currentProject, allProjects, projectName]);
+
   const [activeField,     setActiveField    ] = useState(null);
   const [categories,      setCategories     ] = useState(null);
   const [projectSettings, setProjectSettings] = useState(null);
@@ -287,6 +305,7 @@ export default function CreateOfferPage() {
     setEditInitialized(true);
   }, [existingOffer, id, isEditMode, editInitialized]);
 
+  // ── Fetch studio categories ────────────────────────────────────────────────
   useEffect(() => {
     axiosConfig
       .get(`/studio/${STUDIO_ID}/categories`, { headers: rh() })
@@ -294,12 +313,14 @@ export default function CreateOfferPage() {
       .catch(() => {});
   }, []);
 
+  // ── Fetch project settings — uses resolvedProjectId ───────────────────────
   useEffect(() => {
+    if (!resolvedProjectId) return;
     axiosConfig
-      .get(`/project/${PROJECT_ID}/settings`, { headers: rh() })
+      .get(`/project/${resolvedProjectId}/settings`, { headers: rh() })
       .then((res) => { if (res.data?.data) setProjectSettings(res.data.data); })
       .catch(() => {});
-  }, []);
+  }, [resolvedProjectId]);
 
   useEffect(() => {
     if (apiError) {
@@ -317,13 +338,6 @@ export default function CreateOfferPage() {
   }, [contractData?.feePerDay, engineSettings]);
 
   // ── Prefill from crew profile ──────────────────────────────────────────────
-  //
-  // Calls GET /offers/prefill/:userId
-  // Merges recipient + representation into contractData.
-  // Merges profile allowances (box rental, equipment, software, computer, mobile)
-  // into allowances state — each enabled with summed feePerWeek + description.
-  // Also restores inventoryItems so categoryTotals rehydrates for AllowanceRow caps.
-
   const handlePrefillFromUser = async () => {
     const uid = prefillUserId.trim();
     if (!uid) return;
@@ -338,30 +352,23 @@ export default function CreateOfferPage() {
         inventoryItems: profileInventory,
       } = res.data.data;
 
-      // Merge recipient + representation
       setContractData((prev) => ({
         ...prev,
         recipient:      { ...prev.recipient,      ...recipient },
         representation: { ...prev.representation, ...representation },
       }));
 
-      // Merge allowances — only overwrite keys that came from profile
       if (profileAllowances?.length > 0) {
         setAllowances((prev) => {
           const next = { ...prev };
           profileAllowances.forEach((a) => {
             if (!a.key) return;
-            next[a.key] = {
-              ...(next[a.key] || {}),
-              ...a,
-              enabled: true,
-            };
+            next[a.key] = { ...(next[a.key] || {}), ...a, enabled: true };
           });
           return next;
         });
       }
 
-      // Restore inventory items so categoryTotals rehydrates
       if (profileInventory?.length > 0) {
         setInventoryItems(profileInventory);
       }
@@ -377,12 +384,10 @@ export default function CreateOfferPage() {
     }
   };
 
-  // Allow pressing Enter in the userId input
   const handlePrefillKeyDown = (e) => {
     if (e.key === "Enter") handlePrefillFromUser();
   };
 
-  // Clear prefill — resets recipient + representation + allowances back to defaults
   const handleClearPrefill = () => {
     setContractData((prev) => ({
       ...prev,
@@ -400,7 +405,7 @@ export default function CreateOfferPage() {
     toast.info("Prefill cleared");
   };
 
-  // ── Build API payload ──────────────────────────────────────────────────────
+  // ── Build API payload — uses resolvedProjectId ─────────────────────────────
   const buildPayload = (isDraft = false) => {
     const cd = contractData;
     const allowancesArr = Object.entries(allowances)
@@ -409,7 +414,7 @@ export default function CreateOfferPage() {
 
     return {
       studioId:    STUDIO_ID,
-      projectId:   PROJECT_ID,
+      projectId:   resolvedProjectId,   // ← dynamic, not hardcoded
       saveAsDraft: isDraft,
 
       recipient: {
@@ -528,7 +533,7 @@ export default function CreateOfferPage() {
 
       toast.success(`✅ Offer v${currentVersion + 1} sent to crew for review!`);
       dispatch(getOfferThunk(id));
-      dispatch(getProjectOffersThunk({ projectId: PROJECT_ID }));
+      dispatch(getProjectOffersThunk({ projectId: resolvedProjectId }));
 
       const destination = redirectAfterSave === "onboarding"
         ? `/projects/${proj}/onboarding`
@@ -687,8 +692,6 @@ export default function CreateOfferPage() {
         {!isEditMode && (
           <div className="mt-3 bg-white border border-purple-100 rounded-lg px-4 py-3">
             <div className="flex items-center justify-between gap-4 flex-wrap">
-
-              {/* Left — label + description */}
               <div className="min-w-0">
                 <p className="text-xs font-medium text-neutral-700">
                   Load from crew profile
@@ -697,8 +700,6 @@ export default function CreateOfferPage() {
                   Enter a crew member's User ID to prefill recipient details, representation and allowances from their completed profile.
                 </p>
               </div>
-
-              {/* Right — input + buttons */}
               <div className="flex items-center gap-2 shrink-0">
                 {prefillDone && (
                   <button
@@ -725,10 +726,8 @@ export default function CreateOfferPage() {
                   {isPrefilling ? "Loading…" : "Load Profile"}
                 </button>
               </div>
-
             </div>
 
-            {/* Success badge shown after prefill */}
             {prefillDone && (
               <div className="mt-2.5 flex items-center gap-2 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md px-3 py-1.5">
                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">

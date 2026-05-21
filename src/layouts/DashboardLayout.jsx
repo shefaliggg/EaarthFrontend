@@ -32,27 +32,13 @@ import { getAllProjectsThunk } from "../features/projects/store/project.thunks";
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const DASHBOARD_APPLICATIONS = [
-  { id: "onboarding", label: "ONBOARDING", icon: Users, route: "onboarding" },
-  {
-    id: "timesheets",
-    label: "TIMESHEETS",
-    icon: ClipboardList,
-    route: "timesheets",
-  },
-  { id: "calendar", label: "CALENDAR", icon: CalendarDays, route: "calendar" },
-  { id: "chat", label: "CHAT", icon: MessageSquare, route: "chat" },
-  {
-    id: "call-sheets",
-    label: "CALL SHEETS",
-    icon: Video,
-    route: "call-sheets",
-  },
+  { id: "onboarding",  label: "ONBOARDING",  icon: Users,         route: "onboarding"  },
+  { id: "timesheets",  label: "TIMESHEETS",  icon: ClipboardList, route: "timesheets"  },
+  { id: "calendar",    label: "CALENDAR",    icon: CalendarDays,  route: "calendar"    },
+  { id: "chat",        label: "CHAT",        icon: MessageSquare, route: "chat"        },
+  { id: "call-sheets", label: "CALL SHEETS", icon: Video,         route: "call-sheets" },
 ];
 
-/**
- * Default palette — used ONLY when a project has no persisted branding.accentColor.
- * Once Fix 4 is live on the backend, this becomes purely a fallback for legacy data.
- */
 const PROJECT_ACCENT_PALETTE = [
   "#38bdf8",
   "#34d399",
@@ -66,43 +52,35 @@ const PROJECT_ACCENT_PALETTE = [
   "#4ade80",
 ];
 
+// ── Role helper ───────────────────────────────────────────────────────────────
+//
+// Source of truth: affiliations[] — NOT user.userType (deprecated field).
+// Mirrors the same check used in ProjectList and on the backend.
+
+function checkIsStudioAdmin(user) {
+  if (!Array.isArray(user?.affiliations)) return false;
+  return user.affiliations.some(
+    (a) => a.orgType === "studio" && a.role === "studio_admin" && a.status === "active"
+  );
+}
+
 // ── Approval status helpers ───────────────────────────────────────────────────
 
-/**
- * Returns true when the project's apps should be fully accessible.
- * Only "approved" unlocks navigation; every other status (draft, pending, rejected)
- * keeps the sub-nav locked.
- */
 function isProjectApproved(approvalStatus) {
   return approvalStatus === "approved";
 }
 
-/**
- * Human-readable label + colour token for each approval state.
- * Used in the sidebar lock tooltip.
- */
 function approvalStatusMeta(approvalStatus) {
   switch (approvalStatus) {
-    case "pending":
-      return { label: "Awaiting approval", color: "#fbbf24" };
-    case "rejected":
-      return { label: "Rejected — resubmit", color: "#fb7185" };
-    case "draft":
-      return { label: "Draft — not submitted", color: "#94a3b8" };
-    default:
-      return null;
+    case "pending":  return { label: "Awaiting approval",    color: "#fbbf24" };
+    case "rejected": return { label: "Rejected — resubmit",  color: "#fb7185" };
+    case "draft":    return { label: "Draft — not submitted", color: "#94a3b8" };
+    default:         return null;
   }
 }
 
 // ── Project helpers ───────────────────────────────────────────────────────────
 
-/**
- * Derive accent color for a production.
- * Priority: persisted branding.accentColor → fallback palette (index-based).
- *
- * Fix 4: once the backend schema has `branding.accentColor`, every new project
- * will have a deterministic, persisted color instead of a random per-session one.
- */
 function resolveAccentColor(production, index) {
   return (
     production?.branding?.accentColor ??
@@ -110,17 +88,17 @@ function resolveAccentColor(production, index) {
   );
 }
 
-/** Turn a Redux production into a sidebar-project-shaped object */
 function productionToSidebarProject(p, index) {
   return {
-    id: p._id,
-    name: p.productionName,
-    accent: resolveAccentColor(p, index),
-    approvalStatus: p.approvalStatus ?? "draft",
+    id:             p._id,
+    name:           p.productionName,
+    accent:         resolveAccentColor(p, index),
+    // Crew projects always come back as "approved" (contract is complete)
+    // Studio admin projects can be any status
+    approvalStatus: p.approvalStatus ?? "approved",
   };
 }
 
-/** Build a URL slug from a production name (display-only; routing uses _id) */
 function toSlug(name = "") {
   return name.toLowerCase().replace(/\s+/g, "-");
 }
@@ -145,15 +123,11 @@ function resolveWorkspaceTabMeta(path, dynamicProjects) {
   const normalizedPath = normalizeDashboardPath(path);
   const segments = normalizedPath.split("/").filter(Boolean);
 
-  if (normalizedPath === "/home") return { label: "HOME", icon: Home };
-  if (normalizedPath === "/projects")
-    return { label: "PROJECTS", icon: Briefcase };
-  if (normalizedPath === "/projects/create")
-    return { label: "CREATE PROJECT", icon: Briefcase };
-  if (normalizedPath === "/support")
-    return { label: "SUPPORT", icon: LifeBuoy };
-  if (normalizedPath === "/profile")
-    return { label: "PROFILE", icon: UserRound };
+  if (normalizedPath === "/home")            return { label: "HOME",           icon: Home      };
+  if (normalizedPath === "/projects")        return { label: "PROJECTS",       icon: Briefcase };
+  if (normalizedPath === "/projects/create") return { label: "CREATE PROJECT", icon: Briefcase };
+  if (normalizedPath === "/support")         return { label: "SUPPORT",        icon: LifeBuoy  };
+  if (normalizedPath === "/profile")         return { label: "PROFILE",        icon: UserRound };
 
   if (segments[0] === "settings") {
     return segments.length === 1
@@ -180,8 +154,7 @@ function resolveWorkspaceTabMeta(path, dynamicProjects) {
     }
 
     const appSlug = segments[2];
-    const app = DASHBOARD_APPLICATIONS.find((item) => item.route === appSlug);
-
+    const app     = DASHBOARD_APPLICATIONS.find((item) => item.route === appSlug);
     return app
       ? { label: app.label, icon: app.icon, accent: project?.accent ?? null }
       : {
@@ -224,10 +197,6 @@ function createWorkspaceTab(path, dynamicProjects) {
 
 // ── Locked app tooltip ────────────────────────────────────────────────────────
 
-/**
- * A subtle inline tooltip shown when hovering a locked app link.
- * Rendered as a `<span>` so it stays in-flow and doesn't need position:fixed.
- */
 function LockedAppItem({ item, statusMeta }) {
   const [hovered, setHovered] = useState(false);
   const ItemIcon = item.icon;
@@ -238,10 +207,7 @@ function LockedAppItem({ item, statusMeta }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Connector line decoration (mirrors the unlocked item) */}
       <span className="absolute -left-5 top-[calc(50%-12px)] h-9 w-5 border-l border-b border-sidebar-border/70 rounded-bl-[22px]" />
-
-      {/* The locked button — visually dimmed, cursor blocked */}
       <button
         type="button"
         disabled
@@ -250,20 +216,14 @@ function LockedAppItem({ item, statusMeta }) {
       >
         <ItemIcon className="w-4 h-4 shrink-0" />
         <span className="flex-1 text-left">{item.label}</span>
-        {/* Lock icon — subtle, right-aligned */}
         <Lock className="w-3 h-3 shrink-0 opacity-60" />
       </button>
-
-      {/* Hover tooltip */}
       {hovered && statusMeta && (
         <div
           className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-md border border-sidebar-border bg-sidebar px-2.5 py-1.5 shadow-lg pointer-events-none"
           role="tooltip"
         >
-          <p
-            className="text-[11px] font-medium"
-            style={{ color: statusMeta.color }}
-          >
+          <p className="text-[11px] font-medium" style={{ color: statusMeta.color }}>
             {statusMeta.label}
           </p>
           <p className="text-[10px] text-sidebar-foreground/50 mt-0.5">
@@ -275,16 +235,10 @@ function LockedAppItem({ item, statusMeta }) {
   );
 }
 
-// ── Approval status banner ────────────────────────────────────────────────────
+// ── Approval status badge ─────────────────────────────────────────────────────
 
-/**
- * A compact inline banner shown inside the project's sidebar section when the
- * project is not yet approved.  Keeps the user informed without requiring them
- * to navigate to the dashboard.
- */
 function ApprovalStatusBadge({ approvalStatus }) {
   if (approvalStatus === "approved") return null;
-
   const meta = approvalStatusMeta(approvalStatus);
   if (!meta) return null;
 
@@ -297,17 +251,14 @@ function ApprovalStatusBadge({ approvalStatus }) {
       }}
     >
       <Lock className="w-2.5 h-2.5 shrink-0" style={{ color: meta.color }} />
-      <span
-        className="text-[10px] font-medium leading-tight"
-        style={{ color: meta.color }}
-      >
+      <span className="text-[10px] font-medium leading-tight" style={{ color: meta.color }}>
         {meta.label}
       </span>
     </div>
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 
 const DashboardLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -315,29 +266,29 @@ const DashboardLayout = () => {
 
   const { user } = useAuth();
   const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const showHeader = useScrollHeaderTracker(); // eslint-disable-line no-unused-vars
+  const navigate     = useNavigate();
+  const dispatch     = useDispatch();
+  useScrollHeaderTracker(); // eslint-disable-line
 
-  // ── Redux: real projects list ─────────────────────────────────────────────
-  const reduxProjects = useSelector((s) => s.project?.projects ?? []);
+  // ── Role — affiliations[] is the source of truth ──────────────────────────
+  // This is the ONLY place that determines whether "Create Project" shows.
+  // Do NOT use user.userType here — it's deprecated.
+  const canCreateProject = checkIsStudioAdmin(user);
+
+  // ── Redux ─────────────────────────────────────────────────────────────────
+  const reduxProjects  = useSelector((s) => s.project?.projects ?? []);
   const currentProject = useSelector((s) => s.project?.currentProject);
 
-  // Fetch user's productions on mount
+  // Fetch on mount — thunk internally routes to /productions or /my-projects
+  // based on whether the user is a studio admin (reads affiliations[] from Redux)
   useEffect(() => {
     dispatch(getAllProjectsThunk({}));
   }, [dispatch]);
 
-  // console.log("current user:",user)
-
-  // ── Build sidebar projects from Redux only ────────────────────────────────
+  // ── Build sidebar project list ────────────────────────────────────────────
   const dynamicProjects = reduxProjects.map(productionToSidebarProject);
 
-  /**
-   * If a project was just created and isn't in the fetched list yet (e.g. the
-   * list query filters by approvalStatus=approved), prepend it so the sidebar
-   * shows it immediately.
-   */
+  // Prepend a just-created project that may not be in the fetched list yet
   const mergedProjects = (() => {
     if (!currentProject) return dynamicProjects;
     const alreadyIn = dynamicProjects.some((p) => p.id === currentProject._id);
@@ -345,9 +296,6 @@ const DashboardLayout = () => {
     return [productionToSidebarProject(currentProject, 0), ...dynamicProjects];
   })();
 
-  const activeSidebarProjects = mergedProjects;
-
-  const canCreateProject = user?.userType === "studio_admin";
   const activeProjectId = getProjectIdFromPath(pathname, mergedProjects);
 
   // ── Workspace tabs ────────────────────────────────────────────────────────
@@ -358,7 +306,7 @@ const DashboardLayout = () => {
 
   const { tabs: workspaceTabs, activeTabId } = workspaceState;
 
-  // Patch tab labels when project names resolve from Redux
+  // Re-label tabs when project names resolve from Redux
   useEffect(() => {
     if (mergedProjects.length === 0) return;
     setWorkspaceState((prev) => ({
@@ -400,38 +348,27 @@ const DashboardLayout = () => {
     [workspaceTabs, mergedProjects, pathname, navigate],
   );
 
-  const handleCloseWorkspaceTab = useCallback(
-    (tabId) => {
-      let nextPath = null;
-
-      setWorkspaceState((prev) => {
-        const tabIndex = prev.tabs.findIndex((t) => t.id === tabId);
-        if (tabIndex === -1) return prev;
-
-        const nextTabs = prev.tabs.filter((t) => t.id !== tabId);
-
-        if (!nextTabs.length) {
-          const fallback = createWorkspaceTab("/home", mergedProjects);
-          nextPath = fallback.path;
-          return { tabs: [fallback], activeTabId: fallback.id };
-        }
-
-        if (prev.activeTabId === tabId) {
-          const fallback = nextTabs[Math.min(tabIndex, nextTabs.length - 1)];
-          nextPath = fallback.path;
-          return { tabs: nextTabs, activeTabId: fallback.id };
-        }
-
-        return { ...prev, tabs: nextTabs };
-      });
-
-      setExpandedProjectId(
-        nextPath ? getProjectIdFromPath(nextPath, mergedProjects) : null,
-      );
-      if (nextPath && nextPath !== pathname) navigate(nextPath);
-    },
-    [mergedProjects, pathname, navigate],
-  );
+  const handleCloseWorkspaceTab = useCallback((tabId) => {
+    let nextPath = null;
+    setWorkspaceState((prev) => {
+      const tabIndex = prev.tabs.findIndex((t) => t.id === tabId);
+      if (tabIndex === -1) return prev;
+      const nextTabs = prev.tabs.filter((t) => t.id !== tabId);
+      if (!nextTabs.length) {
+        const fallback = createWorkspaceTab("/home", mergedProjects);
+        nextPath = fallback.path;
+        return { tabs: [fallback], activeTabId: fallback.id };
+      }
+      if (prev.activeTabId === tabId) {
+        const fallback = nextTabs[Math.min(tabIndex, nextTabs.length - 1)];
+        nextPath = fallback.path;
+        return { tabs: nextTabs, activeTabId: fallback.id };
+      }
+      return { ...prev, tabs: nextTabs };
+    });
+    setExpandedProjectId(nextPath ? getProjectIdFromPath(nextPath, mergedProjects) : null);
+    if (nextPath && nextPath !== pathname) navigate(nextPath);
+  }, [mergedProjects, pathname, navigate]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -446,7 +383,7 @@ const DashboardLayout = () => {
       )}
 
       <div className="flex">
-        {/* ── Sidebar ─────────────────────────────────────────────────── */}
+        {/* ── Sidebar ───────────────────────────────────────────────────── */}
         <aside
           className={cn(
             "fixed top-0 left-0 z-50 flex h-screen w-50 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-transform duration-300 ease-in-out",
@@ -464,8 +401,11 @@ const DashboardLayout = () => {
             />
           </div>
 
-          {/* Create project button */}
-          {canCreateProject && (
+          {/* Create project — STUDIO ADMIN ONLY
+           *  canCreateProject uses affiliations[] not userType.
+           *  Crew users will NEVER see this button.
+           */}
+          {/* {canCreateProject && (
             <>
               <div className="px-3 py-2">
                 <button
@@ -480,31 +420,29 @@ const DashboardLayout = () => {
               </div>
               <div className="border-b border-sidebar-border" />
             </>
-          )}
+          )} */}
 
           {/* Projects list */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <div className="space-y-3">
-                {activeSidebarProjects.length === 0 && (
+                {mergedProjects.length === 0 && (
                   <p className="px-2 text-[11px] text-sidebar-foreground/40">
-                    NO PROJECTS YET.
+                    {canCreateProject ? "NO PROJECTS YET." : "NO PROJECTS ASSIGNED YET."}
                   </p>
                 )}
 
-                {activeSidebarProjects.map((project) => {
-                  const slug = toSlug(project.name);
+                {mergedProjects.map((project) => {
+                  const slug        = toSlug(project.name);
                   const projectPath = `/projects/${slug}`;
                   const isActive = pathname.startsWith(`/projects/${slug}`);
                   const isOpen =
                     activeProjectId === project.id ||
                     expandedProjectId === project.id;
 
-                  // ── Fix 3: derive approval state for gating ─────────────
-                  const approved = isProjectApproved(project.approvalStatus);
+                  const approved   = isProjectApproved(project.approvalStatus);
                   const statusMeta = approvalStatusMeta(project.approvalStatus);
-                  // Show the amber dot for anything that isn't approved
-                  const isPending = !approved;
+                  const isPending  = !approved;
 
                   const projectInitials = project.name
                     .split(" ")
@@ -516,7 +454,7 @@ const DashboardLayout = () => {
 
                   return (
                     <div key={project.id} className="space-y-1">
-                      {/* ── Project header row ────────────────────────── */}
+                      {/* Project header row */}
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -528,7 +466,6 @@ const DashboardLayout = () => {
                           )}
                           title={project.name.toUpperCase()}
                         >
-                          {/* Project avatar */}
                           <span
                             className="flex h-6 w-6 shrink-0 items-center justify-center border text-[10px] font-bold text-white shadow-sm"
                             style={{
@@ -539,13 +476,11 @@ const DashboardLayout = () => {
                           >
                             {projectInitials}
                           </span>
-
                           <span className="flex-1 truncate text-left font-medium uppercase">
                             {project.name}
                           </span>
-
-                          {/* Status dot — amber = not approved */}
-                          {isPending && (
+                          {/* Amber dot — only for studio admin viewing unapproved projects */}
+                          {isPending && canCreateProject && (
                             <span
                               className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full"
                               style={{
@@ -556,7 +491,7 @@ const DashboardLayout = () => {
                           )}
                         </button>
 
-                        {/* Expand/collapse chevron */}
+                        {/* Expand/collapse */}
                         <button
                           type="button"
                           aria-label={`${isOpen ? "COLLAPSE" : "EXPAND"} ${project.name.toUpperCase()}`}
@@ -580,13 +515,13 @@ const DashboardLayout = () => {
                         </button>
                       </div>
 
-                      {/* ── Expanded sub-nav ──────────────────────────── */}
+                      {/* Expanded sub-nav */}
                       {isOpen && (
                         <div className="space-y-0.5">
-                          {/* Fix 3: approval status badge (draft / pending / rejected) */}
-                          <ApprovalStatusBadge
-                            approvalStatus={project.approvalStatus}
-                          />
+                          {/* Status badge — only shown to studio admin for non-approved projects */}
+                          {canCreateProject && (
+                            <ApprovalStatusBadge approvalStatus={project.approvalStatus} />
+                          )}
 
                           <div className="relative ml-5 pl-3 pt-0 space-y-1">
                             <div className="absolute left-0 top-0 bottom-1 w-px rounded-full bg-sidebar-border/70" />
@@ -594,7 +529,9 @@ const DashboardLayout = () => {
                             {DASHBOARD_APPLICATIONS.map((item) => {
                               const to = `/projects/${slug}/${item.route}`;
 
-                              // ── Fix 3: gate navigation on approval ────
+                              // Gate navigation on approval — applies to both roles.
+                              // Crew projects are always approved so they'll always see links.
+                              // Studio admin's draft/pending/rejected projects stay locked.
                               if (!approved) {
                                 return (
                                   <LockedAppItem
@@ -605,8 +542,7 @@ const DashboardLayout = () => {
                                 );
                               }
 
-                              // Approved — normal clickable link
-                              const ItemIcon = item.icon;
+                              const ItemIcon    = item.icon;
                               const isAppActive = pathname === to;
 
                               return (
@@ -642,7 +578,7 @@ const DashboardLayout = () => {
           </div>
         </aside>
 
-        {/* ── Main content ───────────────────────────────────────────── */}
+        {/* ── Main content ─────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 md:pl-50">
           <button
             type="button"
