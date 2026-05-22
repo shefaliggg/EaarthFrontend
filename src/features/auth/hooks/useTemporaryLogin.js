@@ -20,11 +20,11 @@ const useTemporaryLogin = () => {
       const response = await authService.temporaryLogin({ email, password });
 
       if (response?.success) {
-        // Backend returns: { success, data: { staffId, email, isTemporary } }
+        // Response is flat: { success, userId, email, message }
         return {
           success: true,
-          userId: response.data?.staffId,   // field is staffId, not userId
-          email:  response.data?.email,
+          userId: response.userId || response.staffId, // read directly, not response.data
+          email: response.email,
         };
       }
 

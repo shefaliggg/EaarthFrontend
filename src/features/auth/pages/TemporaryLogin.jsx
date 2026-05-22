@@ -35,7 +35,7 @@ export const TemporaryLoginPage = () => {
       navigate('/auth/set-password', {
         replace: true,
         state: {
-          userId: result.userId,
+          userId: result.userId, // normalized in hook — always reliable
           email: result.email,
         },
       });

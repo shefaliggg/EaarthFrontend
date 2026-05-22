@@ -17,7 +17,7 @@ export const useLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = useCallback(
+const handleSubmit = useCallback(
     async (e) => {
       if (e) e.preventDefault();
 
@@ -49,6 +49,24 @@ export const useLogin = () => {
               replace: true,
               state: {
                 email: response.data?.email || email,
+                fromInvite: false,
+              },
+            });
+            return;
+          }
+
+          if (response?.redirect === "new-password-setup") {
+            toast.info("Almost there!", {
+              description:
+                response.redirectReason ||
+                "Please complete your password setup to continue.",
+            });
+
+            navigate("/auth/set-password", {
+              replace: true,
+              state: {
+                email: response.data?.email || email,
+                userId: response.data?.userId || "",
                 fromInvite: false,
               },
             });

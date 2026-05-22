@@ -8,7 +8,7 @@ export const SetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const userId = location.state?.userId;
+const userId = location.state?.userId ?? location.state?.staffId
   const email = location.state?.email || 'user@example.com';
 
   const {
