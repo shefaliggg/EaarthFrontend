@@ -10,8 +10,10 @@ function SettingsCardLoadingSkelton({
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
+           {/* Icon skeleton */}
           <Skeleton className="w-1.5 h-7 rounded-full" />
           <div className="space-y-1">
+               {/* Title skeleton */}
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-48" />
           </div>
