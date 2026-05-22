@@ -1,6 +1,6 @@
 import { cn } from "@/shared/config/utils";
 
-function Input({ className, type = "text", ...props }) {
+function Input({ className, type = "text", textCase = "normal", ...props }) {
   return (
     <input
       type={type}
@@ -30,6 +30,7 @@ function Input({ className, type = "text", ...props }) {
         file:text-sm
         file:font-medium
         `,
+        textCase === "upper" && "uppercase",
         className
       )}
       {...props}

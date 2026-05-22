@@ -156,25 +156,67 @@ export const FIELD_MAPS = {
   ],
 
   DRIVING_LICENCE: [
-    { aiKey: "firstName", formPath: ["drivingLicence", "firstName"], label: "First Name" },
-    { aiKey: "lastName", formPath: ["drivingLicence", "lastName"], label: "Last Name" },
-    { aiKey: "dateOfBirth", formPath: ["drivingLicence", "dateOfBirth"], label: "Date of Birth", isDateField: true },
-    { aiKey: "licenceNumber", formPath: ["drivingLicence", "number"], label: "Licence Number" },
-    { aiKey: "expiryDate", formPath: ["drivingLicence", "expiryDate"], label: "Licence Expiry Date", isDateField: true },
+    {
+      aiKey: "firstName",
+      formPath: ["drivingLicence", "firstName"],
+      label: "First Name",
+    },
+    {
+      aiKey: "lastName",
+      formPath: ["drivingLicence", "lastName"],
+      label: "Last Name",
+    },
+    {
+      aiKey: "dateOfBirth",
+      formPath: ["drivingLicence", "dateOfBirth"],
+      label: "Date of Birth",
+      isDateField: true,
+    },
+    {
+      aiKey: "licenceNumber",
+      formPath: ["drivingLicence", "number"],
+      label: "Licence Number",
+    },
+    {
+      aiKey: "expiryDate",
+      formPath: ["drivingLicence", "expiryDate"],
+      label: "Licence Expiry Date",
+      isDateField: true,
+    },
     {
       aiKey: "issuingCountry",
       formPath: ["drivingLicence", "issuingCountry"],
       label: "Issuing Country",
       isCountryField: true,
     },
-    { aiKey: "address", formPath: ["drivingLicence", "address"], label: "Address" },
+    {
+      aiKey: "address",
+      formPath: ["drivingLicence", "address"],
+      label: "Address",
+    },
   ],
 
   VEHICLE_INSURANCE: [
-    { aiKey: "providerName", formPath: ["vehicleInsurance", "providerName"], label: "Insurance Provider" },
-    { aiKey: "policyNumber", formPath: ["vehicleInsurance", "policyNumber"], label: "Policy Number" },
-    { aiKey: "insuredName", formPath: ["vehicleInsurance", "insuredName"], label: "Insured Name" },
-    { aiKey: "vehicleRegistration", formPath: ["vehicleInsurance", "registration"], label: "Vehicle Registration" },
+    {
+      aiKey: "providerName",
+      formPath: ["vehicleInsurance", "providerName"],
+      label: "Insurance Provider",
+    },
+    {
+      aiKey: "policyNumber",
+      formPath: ["vehicleInsurance", "policyNumber"],
+      label: "Policy Number",
+    },
+    {
+      aiKey: "insuredName",
+      formPath: ["vehicleInsurance", "insuredName"],
+      label: "Insured Name",
+    },
+    {
+      aiKey: "vehicleRegistration",
+      formPath: ["vehicleInsurance", "registration"],
+      label: "Vehicle Registration",
+    },
     {
       aiKey: "effectiveDate",
       formPath: ["vehicleInsurance", "effectiveDate"],
@@ -187,7 +229,11 @@ export const FIELD_MAPS = {
       label: "Policy Expiry Date",
       isDateField: true,
     },
-    { aiKey: "providerAddress", formPath: ["vehicleInsurance", "providerAddress"], label: "Provider Address" },
+    {
+      aiKey: "providerAddress",
+      formPath: ["vehicleInsurance", "providerAddress"],
+      label: "Provider Address",
+    },
   ],
 
   BIRTH_CERTIFICATE: [],
@@ -251,7 +297,6 @@ export const mergeAIFields = ({ currentForm, aiFields, documentType }) => {
       let curr = currentValue;
       let ai = aiValue;
 
-      // Normalize date fields
       if (mapping.isDateField) {
         curr = normalizeDate(curr);
         ai = normalizeDate(ai);
@@ -297,7 +342,7 @@ export const buildDocumentAiExtraction = (
 ) => {
   if (!rawAiFields) return null;
 
-  // console.log("form values in document extraction builder:", formSection);
+  console.log("form values in document extraction builder:", formSection);
 
   const fieldMap = FIELD_MAPS[documentType] ?? [];
 
@@ -314,10 +359,31 @@ export const buildDocumentAiExtraction = (
     }),
   );
 
+  console.log("mapped fields:", fields)
+
   return {
     status: "COMPLETED",
     provider: "GEMINI",
     scannedAt: new Date().toISOString(),
     fields,
   };
+};
+
+export const resolveAIVerificationStatusLabel = ({
+  scanStatus,
+  verificationStatus,
+}) => {
+  const labels = {
+    NOT_RUN: "AI Not Scanned",
+    PROCESSING: "AI Scanning Document",
+    PASSED: "AI Check Passed",
+    NEEDS_REVIEW: "Needs Admin Review",
+    FAILED: "AI Verification Failed",
+  };
+
+  if (scanStatus === "scanning") {
+    return labels["PROCESSING"];
+  }
+
+  return labels[verificationStatus] || "Unknown Status";
 };

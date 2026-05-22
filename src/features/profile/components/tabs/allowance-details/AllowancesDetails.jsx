@@ -12,7 +12,10 @@ import {
   getDocumentsByType,
 } from "../../../../user-documents/store/document.selector";
 import { useDocumentSectionAI } from "@/features/ai/documents/hooks/useDocumentSectionAI";
-import { buildDocumentAiExtraction } from "@/features/ai/documents/config/aiDocumentScanner.helper";
+import {
+  buildDocumentAiExtraction,
+  resolveAIVerificationStatusLabel,
+} from "@/features/ai/documents/config/aiDocumentScanner.helper";
 import {
   AIScanBanner,
   AIConflictPanel,
@@ -301,6 +304,10 @@ export default function AllowanceDetails() {
         );
       }
 
+      if (drivingLicenceAI.aiRawVerification) {
+        fd.append("drivingLicenceAiVerification", JSON.stringify(drivingLicenceAI.aiRawVerification));
+      }
+
       if (vehicleInsuranceAI.aiRawFields) {
         fd.append(
           "vehicleInsuranceAiExtraction",
@@ -312,6 +319,10 @@ export default function AllowanceDetails() {
             ),
           ),
         );
+      }
+
+      if (vehicleInsuranceAI.aiRawVerification) {
+        fd.append("vehicleInsuranceAiVerification", JSON.stringify(vehicleInsuranceAI.aiRawVerification));
       }
     }
 
@@ -593,8 +604,12 @@ export default function AllowanceDetails() {
                   }
                   secondaryBadges={[
                     {
-                      status: drivingLicenceAIStatus,
-                      label: `AI Scan ${drivingLicenceAIStatus}`,
+                      status: resolvedDrivingLicence?.aiVerification?.status,
+                      label: resolveAIVerificationStatusLabel({
+                        scanStatus: drivingLicenceAI.scan.status?.toUpperCase(),
+                        verificationStatus:
+                          resolvedDrivingLicence?.aiVerification?.status?.toUpperCase(),
+                      }),
                       icon: "Brain",
                     },
                   ]}
@@ -715,8 +730,13 @@ export default function AllowanceDetails() {
                   }
                   secondaryBadges={[
                     {
-                      status: vehicleInsuranceAIStatus,
-                      label: `AI Scan ${vehicleInsuranceAIStatus}`,
+                      status: resolvedVehicleInsurance?.aiVerification?.status,
+                      label: resolveAIVerificationStatusLabel({
+                        scanStatus:
+                          vehicleInsuranceAI.scan.status?.toUpperCase(),
+                        verificationStatus:
+                          resolvedVehicleInsurance?.aiVerification?.status?.toUpperCase(),
+                      }),
                       icon: "Brain",
                     },
                   ]}

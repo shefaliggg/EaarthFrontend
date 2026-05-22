@@ -30,7 +30,10 @@ import {
   MODAL_TYPES,
   useModalStore,
 } from "../../../../shared/stores/useModalStore";
-import { buildDocumentAiExtraction } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import {
+  buildDocumentAiExtraction,
+  resolveAIVerificationStatusLabel,
+} from "../../../ai/documents/config/aiDocumentScanner.helper";
 import { useDocumentSectionAI } from "../../../ai/documents/hooks/useDocumentSectionAI";
 import {
   AIConflictPanel,
@@ -94,6 +97,33 @@ export default function IdentityDetails() {
       setFormState((prev) => ({ ...prev, identity: updated })),
   });
 
+  // ── Birth Certificate AI hook ──────────────────────────────────────────────
+  const birthCertificateAI = useDocumentSectionAI({
+    documentType: "BIRTH_CERTIFICATE",
+    scanKey: "birthCertificate",
+    getForm: () => formState.identity || {},
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, identity: updated })),
+  });
+
+  // ── NI Proof AI hook ───────────────────────────────────────────────────────
+  const niProofAI = useDocumentSectionAI({
+    documentType: "NI_PROOF",
+    scanKey: "niProof",
+    getForm: () => formState.identity || {},
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, identity: updated })),
+  });
+
+  // ── Certificate of Naturalisation AI hook ──────────────────────────────────
+  const naturalisationAI = useDocumentSectionAI({
+    documentType: "CERTIFICATE_NATURALISATION",
+    scanKey: "certificateNaturalisation",
+    getForm: () => formState.identity || {},
+    setForm: (updated) =>
+      setFormState((prev) => ({ ...prev, identity: updated })),
+  });
+
   // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
@@ -148,6 +178,34 @@ export default function IdentityDetails() {
 
   const passportAIScanLabel =
     passportAIStatus === "NOT_SCANNED" || passportAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  // ── Birth Certificate AI status ────────────────────────────────────────────
+  const birthCertAIStatus =
+    resolvedBirthCert?.aiExtraction?.status || "NOT_SCANNED";
+
+  const birthCertAIScanLabel =
+    birthCertAIStatus === "NOT_SCANNED" || birthCertAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  // ── NI Proof AI status ─────────────────────────────────────────────────────
+  const niProofAIStatus =
+    resolvedNiProof?.aiExtraction?.status || "NOT_SCANNED";
+
+  const niProofAIScanLabel =
+    niProofAIStatus === "NOT_SCANNED" || niProofAIStatus === "PROCESSING"
+      ? "Scan with AI"
+      : "Rescan with AI";
+
+  // ── Certificate of Naturalisation AI status ────────────────────────────────
+  const naturalisationAIStatus =
+    resolvedNaturalisation?.aiExtraction?.status || "NOT_SCANNED";
+
+  const naturalisationAIScanLabel =
+    naturalisationAIStatus === "NOT_SCANNED" ||
+    naturalisationAIStatus === "PROCESSING"
       ? "Scan with AI"
       : "Rescan with AI";
 
@@ -246,6 +304,9 @@ export default function IdentityDetails() {
         certificateNaturalisation: np?.certificateNaturalisationId ?? null,
       });
       passportAI.resetAIState();
+      birthCertificateAI.resetAIState();
+      niProofAI.resetAIState();
+      naturalisationAI.resetAIState();
     }
 
     setIsEditing({ section });
@@ -269,6 +330,9 @@ export default function IdentityDetails() {
       certificateNaturalisation: null,
     });
     passportAI.resetAIState();
+    birthCertificateAI.resetAIState();
+    niProofAI.resetAIState();
+    naturalisationAI.resetAIState();
   };
 
   // ── Passport handlers ──────────────────────────────────────────────────────
@@ -321,6 +385,157 @@ export default function IdentityDetails() {
       passportAI.handleReuseSelect(id, userDocuments);
     },
     [userDocuments, passportAI],
+  );
+
+  // ── Birth Certificate handlers ─────────────────────────────────────────────
+  const handleBirthCertificateUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, birthCertificate: file }));
+      setReuseDocIds((prev) => ({ ...prev, birthCertificate: null }));
+      await birthCertificateAI.processAIScan({
+        file,
+        currentForm: formState.identity || {},
+      });
+    },
+    [formState.identity, birthCertificateAI],
+  );
+
+  const handleBirthCertificateRescan = useCallback(async () => {
+    if (!resolvedBirthCert) return;
+
+    if (!isEditingIdentity) {
+      startEditing("identity");
+    }
+
+    try {
+      await birthCertificateAI.processAIScan({
+        file: files.birthCertificate ?? null,
+        documentId: resolvedBirthCert._id,
+        currentForm: formState.identity ?? nd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan birth certificate");
+      console.error("Birth certificate rescan error:", err);
+    }
+  }, [
+    resolvedBirthCert,
+    isEditingIdentity,
+    files.birthCertificate,
+    formState.identity,
+    nd,
+    birthCertificateAI,
+  ]);
+
+  const handleBirthCertificateReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, birthCertificate: id }));
+      if (id) setFiles((f) => ({ ...f, birthCertificate: null }));
+      birthCertificateAI.handleReuseSelect(id, userDocuments);
+    },
+    [userDocuments, birthCertificateAI],
+  );
+
+  // ── NI Proof handlers ──────────────────────────────────────────────────────
+  const handleNiProofUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, niProof: file }));
+      setReuseDocIds((prev) => ({ ...prev, niProof: null }));
+      await niProofAI.processAIScan({
+        file,
+        currentForm: formState.identity || {},
+      });
+    },
+    [formState.identity, niProofAI],
+  );
+
+  const handleNiProofRescan = useCallback(async () => {
+    if (!resolvedNiProof) return;
+
+    if (!isEditingIdentity) {
+      startEditing("identity");
+    }
+
+    try {
+      await niProofAI.processAIScan({
+        file: files.niProof ?? null,
+        documentId: resolvedNiProof._id,
+        currentForm: formState.identity ?? nd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan NI proof");
+      console.error("NI proof rescan error:", err);
+    }
+  }, [
+    resolvedNiProof,
+    isEditingIdentity,
+    files.niProof,
+    formState.identity,
+    nd,
+    niProofAI,
+  ]);
+
+  const handleNiProofReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({ ...prev, niProof: id }));
+      if (id) setFiles((f) => ({ ...f, niProof: null }));
+      niProofAI.handleReuseSelect(id, userDocuments);
+    },
+    [userDocuments, niProofAI],
+  );
+
+  // ── Certificate of Naturalisation handlers ────────────────────────────────
+  const handleNaturalisationUpload = useCallback(
+    async (file) => {
+      setFiles((f) => ({ ...f, certificateNaturalisation: file }));
+      setReuseDocIds((prev) => ({ ...prev, certificateNaturalisation: null }));
+      await naturalisationAI.processAIScan({
+        file,
+        currentForm: formState.identity || {},
+      });
+    },
+    [formState.identity, naturalisationAI],
+  );
+
+  const handleNaturalisationRescan = useCallback(async () => {
+    if (!resolvedNaturalisation) return;
+
+    if (!isEditingIdentity) {
+      startEditing("identity");
+    }
+
+    try {
+      await naturalisationAI.processAIScan({
+        file: files.certificateNaturalisation ?? null,
+        documentId: resolvedNaturalisation._id,
+        currentForm: formState.identity ?? nd,
+      });
+    } catch (err) {
+      toast.error("Failed to rescan certificate of naturalisation");
+      console.error("Certificate of naturalisation rescan error:", err);
+    }
+  }, [
+    resolvedNaturalisation,
+    isEditingIdentity,
+    files.certificateNaturalisation,
+    formState.identity,
+    nd,
+    naturalisationAI,
+  ]);
+
+  const handleNaturalisationReuseSelect = useCallback(
+    (id) => {
+      setReuseDocIds((prev) => ({
+        ...prev,
+        certificateNaturalisation: id,
+      }));
+      if (id)
+        setFiles((f) => ({
+          ...f,
+          certificateNaturalisation: null,
+        }));
+      naturalisationAI.handleReuseSelect(id, userDocuments);
+    },
+    [userDocuments, naturalisationAI],
   );
 
   // ── Save handlers ──────────────────────────────────────────────────────────
@@ -378,10 +593,17 @@ export default function IdentityDetails() {
           JSON.stringify(
             buildDocumentAiExtraction(
               passportAI.aiRawFields,
-              data.passport,
+              data,
               "PASSPORT",
             ),
           ),
+        );
+      }
+
+      if (passportAI.aiRawVerification) {
+        fd.append(
+          "passportAiVerification",
+          JSON.stringify(passportAI.aiRawVerification),
         );
       }
     }
@@ -392,8 +614,44 @@ export default function IdentityDetails() {
       else if (reuseDocIds.birthCertificate)
         fd.append("birthCertificateId", reuseDocIds.birthCertificate);
 
+      if (birthCertificateAI.aiRawFields) {
+        fd.append(
+          "birthCertificateAiExtraction",
+          JSON.stringify(
+            buildDocumentAiExtraction(
+              birthCertificateAI.aiRawFields,
+              data,
+              "BIRTH_CERTIFICATE",
+            ),
+          ),
+        );
+      }
+
+      if (birthCertificateAI.aiRawVerification) {
+        fd.append(
+          "birthCertificateAiVerification",
+          JSON.stringify(birthCertificateAI.aiRawVerification),
+        );
+      }
+
       if (files.niProof) fd.append("niProof", files.niProof);
       else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
+
+      if (niProofAI.aiRawFields) {
+        fd.append(
+          "niProofAiExtraction",
+          JSON.stringify(
+            buildDocumentAiExtraction(niProofAI.aiRawFields, data, "NI_PROOF"),
+          ),
+        );
+      }
+
+      if (niProofAI.aiRawVerification) {
+        fd.append(
+          "niProofAiVerification",
+          JSON.stringify(niProofAI.aiRawVerification),
+        );
+      }
     }
 
     if (data.type === "CERTIFICATE_OF_NATURALISATION") {
@@ -405,8 +663,44 @@ export default function IdentityDetails() {
           reuseDocIds.certificateNaturalisation,
         );
 
+      if (naturalisationAI.aiRawFields) {
+        fd.append(
+          "certificateNaturalisationAiExtraction",
+          JSON.stringify(
+            buildDocumentAiExtraction(
+              naturalisationAI.aiRawFields,
+              data,
+              "CERTIFICATE_NATURALISATION",
+            ),
+          ),
+        );
+      }
+
+      if (naturalisationAI.aiRawVerification) {
+        fd.append(
+          "certificateNaturalisationAiVerification",
+          JSON.stringify(naturalisationAI.aiRawVerification),
+        );
+      }
+
       if (files.niProof) fd.append("niProof", files.niProof);
       else if (reuseDocIds.niProof) fd.append("niProofId", reuseDocIds.niProof);
+
+      if (niProofAI.aiRawFields) {
+        fd.append(
+          "niProofAiExtraction",
+          JSON.stringify(
+            buildDocumentAiExtraction(niProofAI.aiRawFields, data, "NI_PROOF"),
+          ),
+        );
+      }
+
+      if (niProofAI.aiRawVerification) {
+        fd.append(
+          "niProofAiVerification",
+          JSON.stringify(niProofAI.aiRawVerification),
+        );
+      }
     }
 
     try {
@@ -896,8 +1190,12 @@ export default function IdentityDetails() {
                 status={resolvedPassport?.verificationStatus || "Pending"}
                 secondaryBadges={[
                   {
-                    status: passportAIStatus,
-                    label: `AI Scan ${passportAIStatus}`,
+                    status: resolvedPassport?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: passportAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedPassport?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}
@@ -956,6 +1254,45 @@ export default function IdentityDetails() {
           {/* ── BIRTH CERTIFICATE ─────────────────────────────────────────── */}
           {nd?.type === "BIRTH_CERTIFICATE" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
+              {/* AI info + status banners — edit mode only */}
+              {isEditingIdentity && (
+                <>
+                  <InfoPanel
+                    icon={BrainCircuit}
+                    title="AI document scan"
+                    variant="info"
+                    dismissible
+                    storageKey="hide-ai-birth-cert-info"
+                  >
+                    <p>
+                      Upload your birth certificate to scan with AI and extract
+                      relevant information.
+                    </p>
+                    <p className="text-[11px] opacity-80">
+                      Please review all extracted details before saving, as AI
+                      may occasionally make mistakes.
+                    </p>
+                  </InfoPanel>
+
+                  <AIScanBanner
+                    status={birthCertificateAI.scan.status}
+                    error={birthCertificateAI.scan.error}
+                    autoFilledCount={birthCertificateAI.autoFilledCount}
+                    conflictCount={birthCertificateAI.aiConflicts.length}
+                  />
+                </>
+              )}
+
+              {/* Conflict resolution panel */}
+              {isEditingIdentity &&
+                birthCertificateAI.aiConflicts.length > 0 && (
+                  <AIConflictPanel
+                    conflicts={birthCertificateAI.aiConflicts}
+                    onAccept={birthCertificateAI.acceptAISuggestion}
+                    onReject={birthCertificateAI.rejectAISuggestion}
+                  />
+                )}
+
               <EditableDocumentField
                 label="BIRTH CERTIFICATE"
                 fileName={resolvedBirthCert?.originalName ?? "No file uploaded"}
@@ -964,10 +1301,7 @@ export default function IdentityDetails() {
                 isUploaded={!!resolvedBirthCert}
                 isEditing={isEditingIdentity}
                 isLoading={isFetchingDocs}
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, birthCertificate: file }));
-                  setReuseDocIds((f) => ({ ...f, birthCertificate: null }));
-                }}
+                onUpload={handleBirthCertificateUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -979,6 +1313,33 @@ export default function IdentityDetails() {
                 error={errors?.birthCertificate?._errors?.[0]}
                 disabled={isSavingIdentity}
                 infoPillDescription="Upload your birth certificate as proof of nationality."
+                secondaryActions={[
+                  {
+                    label: birthCertAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      birthCertAIStatus === "NOT_SCANNED" ||
+                      birthCertAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleBirthCertificateRescan,
+                    disabled:
+                      !resolvedBirthCert ||
+                      birthCertificateAI.scan.status === "scanning" ||
+                      isSavingIdentity,
+                  },
+                ]}
+                secondaryBadges={[
+                  {
+                    status: resolvedBirthCert?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: birthCertificateAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedBirthCert?.aiVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Brain",
+                  },
+                ]}
                 actionSlot={
                   isEditingIdentity &&
                   birthDocs?.length > 0 && (
@@ -986,14 +1347,8 @@ export default function IdentityDetails() {
                       label="birth certificate"
                       docs={birthDocs}
                       selectedId={reuseDocIds.birthCertificate}
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({
-                          ...prev,
-                          birthCertificate: id,
-                        }));
-                        if (id)
-                          setFiles((f) => ({ ...f, birthCertificate: null }));
-                      }}
+                      docType="BIRTH_CERTIFICATE"
+                      onSelect={handleBirthCertificateReuseSelect}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.birthCertificate}
                     />
@@ -1009,10 +1364,7 @@ export default function IdentityDetails() {
                 isEditing={isEditingIdentity}
                 isLoading={isFetchingDocs}
                 expiresAt={resolvedNiProof?.expiresAt}
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, niProof: file }));
-                  setReuseDocIds((f) => ({ ...f, niProof: null }));
-                }}
+                onUpload={handleNiProofUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -1024,6 +1376,33 @@ export default function IdentityDetails() {
                 error={errors?.niProof?._errors?.[0]}
                 disabled={isSavingIdentity}
                 infoPillDescription="Upload a valid NI document to support identity and employment verification."
+                secondaryActions={[
+                  {
+                    label: niProofAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      niProofAIStatus === "NOT_SCANNED" ||
+                      niProofAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleNiProofRescan,
+                    disabled:
+                      !resolvedNiProof ||
+                      niProofAI.scan.status === "scanning" ||
+                      isSavingIdentity,
+                  },
+                ]}
+                secondaryBadges={[
+                  {
+                    status: resolvedNiProof?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: niProofAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedNiProof?.aiVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Brain",
+                  },
+                ]}
                 actionSlot={
                   isEditingIdentity &&
                   niDocs?.length > 0 && (
@@ -1031,10 +1410,8 @@ export default function IdentityDetails() {
                       label="national insurance proof"
                       docs={niDocs}
                       selectedId={reuseDocIds.niProof}
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({ ...prev, niProof: id }));
-                        if (id) setFiles((f) => ({ ...f, niProof: null }));
-                      }}
+                      docType="NI_PROOF"
+                      onSelect={handleNiProofReuseSelect}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.niProof}
                     />
@@ -1047,6 +1424,44 @@ export default function IdentityDetails() {
           {/* ── CERTIFICATE OF NATURALISATION ─────────────────────────────── */}
           {nd?.type === "CERTIFICATE_OF_NATURALISATION" && (
             <div className="mt-6 grid grid-cols-1 gap-4">
+              {/* AI info + status banners — edit mode only */}
+              {isEditingIdentity && (
+                <>
+                  <InfoPanel
+                    icon={BrainCircuit}
+                    title="AI document scan"
+                    variant="info"
+                    dismissible
+                    storageKey="hide-ai-naturalisation-info"
+                  >
+                    <p>
+                      Upload your certificate of naturalisation to scan with AI
+                      and extract relevant information.
+                    </p>
+                    <p className="text-[11px] opacity-80">
+                      Please review all extracted details before saving, as AI
+                      may occasionally make mistakes.
+                    </p>
+                  </InfoPanel>
+
+                  <AIScanBanner
+                    status={naturalisationAI.scan.status}
+                    error={naturalisationAI.scan.error}
+                    autoFilledCount={naturalisationAI.autoFilledCount}
+                    conflictCount={naturalisationAI.aiConflicts.length}
+                  />
+                </>
+              )}
+
+              {/* Conflict resolution panel */}
+              {isEditingIdentity && naturalisationAI.aiConflicts.length > 0 && (
+                <AIConflictPanel
+                  conflicts={naturalisationAI.aiConflicts}
+                  onAccept={naturalisationAI.acceptAISuggestion}
+                  onReject={naturalisationAI.rejectAISuggestion}
+                />
+              )}
+
               <EditableDocumentField
                 label="CERTIFICATE OF NATURALISATION"
                 infoPillDescription="Upload your certificate of registration or naturalisation as proof of legal nationality."
@@ -1058,13 +1473,7 @@ export default function IdentityDetails() {
                 isUploaded={!!resolvedNaturalisation}
                 isEditing={isEditingIdentity}
                 isLoading={isFetchingDocs}
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, certificateNaturalisation: file }));
-                  setReuseDocIds((f) => ({
-                    ...f,
-                    certificateNaturalisation: null,
-                  }));
-                }}
+                onUpload={handleNaturalisationUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -1075,6 +1484,33 @@ export default function IdentityDetails() {
                 isRequired
                 error={errors?.certificateNaturalisation?._errors?.[0]}
                 disabled={isSavingIdentity}
+                secondaryActions={[
+                  {
+                    label: naturalisationAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      naturalisationAIStatus === "NOT_SCANNED" ||
+                      naturalisationAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleNaturalisationRescan,
+                    disabled:
+                      !resolvedNaturalisation ||
+                      naturalisationAI.scan.status === "scanning" ||
+                      isSavingIdentity,
+                  },
+                ]}
+                secondaryBadges={[
+                  {
+                    status: resolvedNaturalisation?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: naturalisationAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedNaturalisation?.aiVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Brain",
+                  },
+                ]}
                 actionSlot={
                   isEditingIdentity &&
                   naturalisationDocs?.length > 0 && (
@@ -1082,17 +1518,8 @@ export default function IdentityDetails() {
                       label="certificate of naturalisation"
                       docs={naturalisationDocs}
                       selectedId={reuseDocIds.certificateNaturalisation}
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({
-                          ...prev,
-                          certificateNaturalisation: id,
-                        }));
-                        if (id)
-                          setFiles((f) => ({
-                            ...f,
-                            certificateNaturalisation: null,
-                          }));
-                      }}
+                      docType="CERTIFICATE_NATURALISATION"
+                      onSelect={handleNaturalisationReuseSelect}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.certificateNaturalisation}
                     />
@@ -1109,10 +1536,7 @@ export default function IdentityDetails() {
                 expiresAt={resolvedNiProof?.expiresAt}
                 isEditing={isEditingIdentity}
                 isLoading={isFetchingDocs}
-                onUpload={(file) => {
-                  setFiles((f) => ({ ...f, niProof: file }));
-                  setReuseDocIds((f) => ({ ...f, niProof: null }));
-                }}
+                onUpload={handleNiProofUpload}
                 onView={(url) =>
                   handleViewDocument({
                     url,
@@ -1123,6 +1547,33 @@ export default function IdentityDetails() {
                 isRequired
                 error={errors?.niProof?._errors?.[0]}
                 disabled={isSavingIdentity}
+                secondaryActions={[
+                  {
+                    label: niProofAIScanLabel,
+                    icon: "Sparkles",
+                    variant:
+                      niProofAIStatus === "NOT_SCANNED" ||
+                      niProofAIStatus === "PROCESSING"
+                        ? "default"
+                        : "outline",
+                    onClick: handleNiProofRescan,
+                    disabled:
+                      !resolvedNiProof ||
+                      niProofAI.scan.status === "scanning" ||
+                      isSavingIdentity,
+                  },
+                ]}
+                secondaryBadges={[
+                  {
+                    status: resolvedNiProof?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: niProofAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedNiProof?.aiVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Brain",
+                  },
+                ]}
                 actionSlot={
                   isEditingIdentity &&
                   niDocs?.length > 0 && (
@@ -1130,10 +1581,8 @@ export default function IdentityDetails() {
                       label="national insurance proof"
                       docs={niDocs}
                       selectedId={reuseDocIds.niProof}
-                      onSelect={(id) => {
-                        setReuseDocIds((prev) => ({ ...prev, niProof: id }));
-                        if (id) setFiles((f) => ({ ...f, niProof: null }));
-                      }}
+                      docType="NI_PROOF"
+                      onSelect={handleNiProofReuseSelect}
                       disabled={isSavingIdentity}
                       existingDocId={initialDocIds.niProof}
                     />

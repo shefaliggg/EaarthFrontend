@@ -24,6 +24,7 @@ function EditableDateField({
   isRequired = true,
   error,
   showErrorDescription = true,
+  textCase = "upper", // pretty, upper, normal
   disabled = false,
 
   allowPast = true,
@@ -66,6 +67,8 @@ function EditableDateField({
         <div className="text-sm font-medium text-foreground">
           {!dateValue ? (
             <span className="text-muted-foreground">Not Available</span>
+          ) : textCase === "upper" ? (
+            format(dateValue, "dd MMM yyyy")?.toUpperCase()
           ) : (
             format(dateValue, "dd MMM yyyy")
           )}

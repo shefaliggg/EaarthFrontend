@@ -26,7 +26,8 @@ function formatConflictValue(value, conflict) {
   const isCountryField =
     conflict?.aiKey === "issuingCountry" ||
     conflict?.formPath?.includes("issuingCountry") ||
-    conflict?.formPath?.includes("country");
+    conflict?.formPath?.includes("country") ||
+    conflict.isCountryField;
 
   console.log("is country field:", isCountryField, conflict);
   if (isCountryField) {

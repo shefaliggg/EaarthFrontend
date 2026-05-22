@@ -1,15 +1,22 @@
-import { Eye, EyeOff, ArrowLeft, Info, Loader, CheckCircle } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import useSetPassword from '../hooks/useSetPassword';
-import eaarthLogo from '../../../assets/eaarth.webp';
+import {
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Info,
+  Loader,
+  CheckCircle,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import useSetPassword from "../hooks/useSetPassword";
+import eaarthLogo from "../../../assets/eaarth.webp";
 import { Input } from "../../../shared/components/ui/input";
 
 export const SetPasswordPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-const userId = location.state?.userId ?? location.state?.staffId
-  const email = location.state?.email || 'user@example.com';
+  const userId = location.state?.userId ?? location.state?.staffId;
+  const email = location.state?.email || "user@example.com";
 
   const {
     password,
@@ -32,7 +39,7 @@ const userId = location.state?.userId ?? location.state?.staffId
 
     if (result && result.success) {
       setTimeout(() => {
-        navigate('/auth/upload-id', {
+        navigate("/auth/upload-id", {
           replace: true,
           state: { email, userId },
         });
@@ -40,8 +47,8 @@ const userId = location.state?.userId ?? location.state?.staffId
     }
   };
 
-  const handleBackClick = () => navigate('/auth/temp-login');
-  const handleBackToLogin = () => navigate('/auth/login');
+  const handleBackClick = () => navigate("/auth/temp-login");
+  const handleBackToLogin = () => navigate("/auth/login");
 
   // SUCCESS SCREEN
   if (success) {
@@ -53,7 +60,9 @@ const userId = location.state?.userId ?? location.state?.staffId
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Password Set Successfully!
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">Redirecting to ID upload...</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Redirecting to ID upload...
+            </p>
           </div>
         </div>
       </div>
@@ -63,7 +72,6 @@ const userId = location.state?.userId ?? location.state?.staffId
   // MAIN PAGE UI
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 transition-colors">
-
       {/* Back Button - Top Left */}
       <button
         onClick={handleBackClick}
@@ -74,7 +82,6 @@ const userId = location.state?.userId ?? location.state?.staffId
       </button>
 
       <div className="w-full max-w-xl mx-auto">
-
         {/* Logo + Title */}
         <div className="text-center mb-6">
           <img
@@ -89,7 +96,6 @@ const userId = location.state?.userId ?? location.state?.staffId
 
         {/* Main Card */}
         <div className="bg-white dark:bg-gradient-to-b from-[#250149] via-[#200352] to-[#0e0021] rounded-3xl p-6 border border-gray-200 dark:border-gray-700 shadow-md transition-colors">
-
           {/* Header */}
           <div className="text-center mb-4">
             <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">
@@ -117,7 +123,6 @@ const userId = location.state?.userId ?? location.state?.staffId
 
           {/* FORM */}
           <form onSubmit={handleFormSubmit} className="space-y-5">
-
             {/* New Password */}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
@@ -125,7 +130,7 @@ const userId = location.state?.userId ?? location.state?.staffId
               </label>
               <div className="relative">
                 <Input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter new password"
@@ -151,7 +156,7 @@ const userId = location.state?.userId ?? location.state?.staffId
               </label>
               <div className="relative">
                 <Input
-                  type={showConfirm ? 'text' : 'password'}
+                  type={showConfirm ? "text" : "password"}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Re-enter password"
@@ -177,15 +182,21 @@ const userId = location.state?.userId ?? location.state?.staffId
               </p>
               <ul className="space-y-1 text-[10px] text-gray-700 dark:text-gray-300">
                 <li className="flex items-center gap-2">
-                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    •
+                  </span>
                   At least 8 characters long
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    •
+                  </span>
                   Contains uppercase & lowercase letters
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                  <span className="text-purple-600 dark:text-purple-400">
+                    •
+                  </span>
                   Includes numbers & special characters
                 </li>
               </ul>
@@ -203,7 +214,7 @@ const userId = location.state?.userId ?? location.state?.staffId
                   SETTING PASSWORD...
                 </>
               ) : (
-                'CONTINUE'
+                "CONTINUE"
               )}
             </button>
           </form>
@@ -218,7 +229,6 @@ const userId = location.state?.userId ?? location.state?.staffId
               Back to Login
             </button>
           </div>
-
         </div>
 
         {/* Footer */}
