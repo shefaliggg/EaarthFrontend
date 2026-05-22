@@ -1,47 +1,85 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import CardWrapper from "@/shared/components/wrappers/CardWrapper";
-import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
+import { toast } from "sonner";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
 import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
 import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
 import EditableSwitchField from "@/shared/components/wrappers/EditableSwitchField";
 import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProjectSettingsThunk } from "@/features/projects/settings/store/projectSettings.thunks.js";
+import { projectDetailsSchema } from "../../config/settingsValidationSchemas";
+import { updateProjectDetailsThunk } from "../../store/projectSettings.thunks";
+import SettingsCardErrorSkelton from "../../components/skeltons/SettingsCardErrorSkelton";
+
+// ─── Slug helper — must mirror DashboardLayout ────────────────────────────────
+const toSlug = (name = "") => name.toLowerCase().replace(/\s+/g, "-");
+const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 function DetailsSettings() {
+  const { projectName } = useParams();
+  const dispatch = useDispatch();
+  // ── Resolve real project _id from Redux ───────────────────────────────────
+  const currentProject = useSelector((s) => s.project?.currentProject ?? null);
+  const allProjects = useSelector((s) => s.project?.projects ?? []);
+
+  const resolvedProjectId = useMemo(() => {
+    // 1. currentProject already loaded in Redux
+    if (isObjectId(currentProject?._id)) return String(currentProject._id);
+
+    // 2. Match by :projectName slug against full projects list
+    if (projectName) {
+      const slug = projectName.toLowerCase();
+      const match = allProjects.find(
+        (p) => toSlug(p.productionName ?? "") === slug,
+      );
+      if (isObjectId(match?._id)) return String(match._id);
+    }
+    return null;
+  }, [currentProject, allProjects, projectName]);
+
+  const projectId = resolvedProjectId;
+
+  const { projectSettings, isFetching, isUpdating, error } = useSelector(
+    (state) => state.projectSettings,
+  );
+  console.log("projectId", projectId);
+  console.log("projectSettings", projectSettings);
+  console.log(currentProject);
   const [isEditing, setIsEditing] = useState({ section: null });
-  const [isLoading, setIsLoading] = useState(true);
   const [formState, setFormState] = useState({
     details: null,
-    projectSettings: null,
-    offerHandling: null,
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 3000);
-  }, []);
+    if (projectId) {
+      dispatch(fetchProjectSettingsThunk(projectId));
+    }
+  }, [dispatch, projectId]);
 
-  const detailsData =
-    isEditing.section === "details"
-      ? formState.details
-      : {
-          projectName: "AVATAR 1",
-          codeName: "AVATAR 1",
-          description: "",
-          locations: "",
-          additionalNotes: "",
-        };
+  // ── Derived flags ──────────────────────────────────────────────────────────
+  const isEditingDetails = isEditing.section === "details";
+  const isSavingDetails = isUpdating && isEditing.section === "details";
 
+  // ── Display data (read-mode fallback) ──────────────────────────────────────
+  const details = isEditingDetails
+    ? formState.details
+    : {
+        productionName: projectSettings?.productionName ?? "",
+        country: projectSettings?.country ?? "",
+      };
+
+  // ── Section editing ────────────────────────────────────────────────────────
   const startEditing = (section) => {
+    setErrors({});
     if (section === "details") {
       setFormState((prev) => ({
         ...prev,
         details: {
-          projectName: detailsData.projectName,
-          codeName: detailsData.codeName,
-          description: detailsData.description || "",
-          locations: detailsData.locations || "",
-          additionalNotes: detailsData.additionalNotes || "",
+          productionName: projectSettings?.productionName ?? "",
+          country: projectSettings?.country ?? "",
         },
       }));
     }
@@ -51,18 +89,59 @@ function DetailsSettings() {
 
   const cancelEditing = () => {
     setIsEditing({ section: null });
-    setFormState({ details: null });
+
+    setFormState({
+      details: null,
+    });
+    setErrors({});
   };
 
-  //   if (isLoading) {
-  //   return (
-  //     <>
-  //       <SettingsCardLoadingSkelton fields={6} columns={2} />
-  //       <SettingsCardLoadingSkelton fields={12} columns={2} />
-  //       <SettingsCardLoadingSkelton fields={6} columns={2} />
-  //     </>
-  //   );
-  // }
+  // ── Save handlers ──────────────────────────────────────────────────────────
+  const handleSaveDetails = async () => {
+    setErrors({});
+    const result = projectDetailsSchema.safeParse(formState.details);
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+    try {
+      await dispatch(
+        updateProjectDetailsThunk({
+          projectId,
+          payload: result.data,
+        }),
+      ).unwrap();
+      toast.success("Project details updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update project details");
+    }
+  };
+
+  // ── Loading / error states ─────────────────────────────────────────────────
+
+  if (!projectSettings || isFetching) {
+    return (
+      <>
+        <SettingsCardLoadingSkelton fields={5} columns={2} />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <SettingsCardErrorSkelton
+          message={
+            typeof error === "string"
+              ? error
+              : error?.message || "Something went wrong"
+          }
+          onRetry={() => dispatch(fetchProjectSettingsThunk(projectId))}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -83,9 +162,10 @@ function DetailsSettings() {
             </div>
             <div className="flex items-center gap-1 ">
               <EditToggleButtons
-                isEditing={isEditing.section === "details"}
+                isEditing={isEditingDetails}
+                isLoading={isSavingDetails}
                 onEdit={() => startEditing("details")}
-                onSave={() => setIsEditing({ section: null })}
+                onSave={handleSaveDetails}
                 onCancel={cancelEditing}
               />
             </div>
@@ -93,96 +173,56 @@ function DetailsSettings() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <EditableTextDataField
               label="Project Name"
-              value={detailsData?.projectName}
-              isEditing={isEditing.section === "details"}
+              value={details?.productionName}
+              isEditing={isEditingDetails}
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
                   details: {
                     ...prev.details,
-                    projectName: val,
+                    productionName: val,
                   },
                 }))
               }
+              error={errors?.productionName?.[0]}
+              disabled={isSavingDetails}
             />
 
             <div className="flex flex-col gap-1">
               <EditableTextDataField
+                isEditing={isEditingDetails}
                 label="Code Name"
-                value={detailsData?.codeName}
-                isEditing={isEditing.section === "details"}
-                infoPillDescription="If your project has an alternative name for secrecy, enter that. Otherwise enter the Project name. The Code name will be used in all emails and pages."
-                onChange={(val) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    details: {
-                      ...prev.details,
-                      codeName: val,
-                    },
-                  }))
-                }
               />
             </div>
           </div>
           <div className="flex flex-col gap-1 mt-4">
-            <EditableTextDataField
-              label="Description"
-              value={detailsData?.description}
-              isEditing={isEditing.section === "details"}
-              isRequired={false}
-              multiline={true}
-              infoPillDescription="A brief synopsis of the project which is helpful for crew joining the production."
-              placeholder="Enter description"
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    description: val,
-                  },
-                }))
-              }
-            />
+            <EditableTextDataField label="Description" />
           </div>
           <div className="flex flex-col gap-1 mt-4">
             <EditableTextDataField
               label="Locations"
-              value={detailsData?.locations}
-              isEditing={isEditing.section === "details"}
-              isRequired={false}
-              multiline={true}
-              infoPillDescription="Useful information, if known, which might help crew decide if they
-            can accept the job."
-              placeholder="Enter locations"
+              value={details?.country}
+              isEditing={isEditingDetails}
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
                   details: {
                     ...prev.details,
-                    locations: val,
+                    country: val,
                   },
                 }))
               }
+              error={errors?.country?.[0]}
+              disabled={isSavingDetails}
             />
           </div>
           <div className="flex flex-col gap-1 mt-4">
             <EditableTextDataField
               label="Additional Notes"
-              value={detailsData?.additionalNotes}
-              isEditing={isEditing.section === "details"}
               isRequired={false}
               multiline={true}
               infoPillDescription="Use this to convey general project-wide information to crew."
               placeholder="Enter additional notes"
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    additionalNotes: val,
-                  },
-                }))
-              }
             />
           </div>
         </CardWrapper>
