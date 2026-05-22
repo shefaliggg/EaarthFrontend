@@ -109,16 +109,16 @@ export default function EditableDocumentField({
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium mb-0.5">{fileName}</p>
-                <StatusBadge status={status.toLowerCase()} size="xs" />
+                <StatusBadge status={status?.toLowerCase()} size="sm" />
                 {secondaryBadges.map((badge, idx) => (
                   <StatusBadge
                     key={idx}
-                    status={badge?.status.toLowerCase()}
-                    label={badge?.label || badge?.status.toLowerCase()}
+                    status={badge?.status?.toLowerCase()}
+                    label={badge?.label || badge?.status?.toLowerCase()}
                     icon={badge?.icon || null}
                     showIcon={badge?.showIcon || true}
                     showLabel={badge?.showLabel || true}
-                    size={badge?.size ?? "xs"}
+                    size={badge?.size ?? "sm"}
                   />
                 ))}
               </div>

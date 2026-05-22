@@ -21,7 +21,7 @@ function EditableTextDataField({
   isRequired = true,
   error,
   showErrorDescription = true,
-  prettify = true,
+  textCase = "upper", // pretty, upper, normal
   disabled = false,
 }) {
   return (
@@ -52,8 +52,10 @@ function EditableTextDataField({
                 <li key={index}>{convertToPrettyText(item)}</li>
               ))}
             </ul>
-          ) : typeof value === "string" && prettify ? (
+          ) : typeof value === "string" && textCase === "pretty" ? (
             convertToPrettyText(value)
+          ) : typeof value === "string" && textCase === "upper" && type !== "email" ? (
+            value.toUpperCase()
           ) : (
             value
           )}
@@ -75,6 +77,7 @@ function EditableTextDataField({
                   inputClassName,
                 )}
                 disabled={disabled}
+                textCase={type === "email" ? "normal" : textCase}
               />
               {error && (
                 <span className="text-destructive text-xs pl-2">{error}</span>
@@ -95,6 +98,7 @@ function EditableTextDataField({
                   inputClassName,
                 )}
                 disabled={disabled}
+                textCase={type === "email" ? "normal" : textCase}
               />
               {error && showErrorDescription && (
                 <span className="text-xs text-destructive pl-2">{error}</span>

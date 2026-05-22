@@ -43,6 +43,7 @@ const STATUS_META = {
   enabled: "success",
   synced: "success",
   completed: "success",
+  passed: "success",
 
   information: "info",
 
@@ -61,6 +62,7 @@ const STATUS_META = {
   expiring: "warning",
   deleted: "warning",
   processing: "warning",
+  "needs_review": "warning",
 
   "not-started": "neutral",
   inactive: "neutral",
@@ -68,6 +70,7 @@ const STATUS_META = {
   archived: "neutral",
   unverified: "neutral",
   not_scanned: "neutral",
+  not_run: "neutral",
 
   rejected: "danger",
   suspended: "danger",
@@ -79,7 +82,7 @@ const STATUS_META = {
 };
 
 export function getStatusBadge(status, label) {
-  const group = STATUS_META[status];
+  const group = STATUS_META[status?.toLowerCase()] || "neutral";
 
   if (!group) {
     return {

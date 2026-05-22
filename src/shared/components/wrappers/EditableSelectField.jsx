@@ -2,6 +2,7 @@ import * as LucideIcons from "lucide-react";
 import { SelectMenu } from "../menus/SelectMenu";
 import { cn } from "@/shared/config/utils";
 import { InfoTooltip } from "../InfoTooltip";
+import { convertToPrettyText } from "../../config/utils";
 
 function EditableSelectField({
   label,
@@ -16,11 +17,12 @@ function EditableSelectField({
   isRequired = true,
   error,
   showErrorDescription = true,
+  textCase = "upper", // pretty, upper, normal
   disabled = false,
 }) {
   const Icon = icon && LucideIcons[icon];
   const selectedItem = items.find((i) => i.value === value);
-
+  const selectedItemLabel = selectedItem?.label;
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2 text-[11px] font-normal uppercase tracking-wider text-muted-foreground">
@@ -56,8 +58,17 @@ function EditableSelectField({
         </>
       ) : (
         <div className="text-sm font-medium text-foreground">
-          {selectedItem?.label ?? (
+          {/* {selectedItem?.label ?? (
             <span className="text-muted-foreground">Not Available</span>
+          )} */}
+          {selectedItemLabel === null || selectedItemLabel === undefined || selectedItemLabel === "" ? (
+            <span className="text-muted-foreground">Not Available</span>
+          ) : typeof selectedItemLabel === "string" && textCase === "pretty" ? (
+            convertToPrettyText(selectedItemLabel)
+          ) : typeof selectedItemLabel === "string" && textCase === "upper" ? (
+            selectedItemLabel.toUpperCase()
+          ) : (
+            selectedItemLabel
           )}
         </div>
       )}

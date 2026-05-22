@@ -11,44 +11,66 @@ export function useDocumentAIScan() {
   /**
    * Trigger a temporary AI scan. Returns extracted fields or null on failure.
    */
-  const triggerScan = useCallback(async ({ key, file, documentId, documentType }) => {
-    setScanStates((prev) => ({
-      ...prev,
-      [key]: { status: "scanning", fields: null, error: null },
-    }));
-
-    try {
-      const result = await scanTempDocument({ file, documentId, documentType });
-
-      console.log("response for ai document scan:", result)
-
+  const triggerScan = useCallback(
+    async ({ key, file, documentId, documentType }) => {
       setScanStates((prev) => ({
         ...prev,
-        [key]: { status: "done", fields: result.fields, error: null },
+        [key]: {
+          status: "scanning",
+          fields: null,
+          verification: null,
+          error: null,
+        },
       }));
 
-      return result.fields;
-    } catch (err) {
-      const message =
-        err?.response?.data?.message ?? err?.message ?? "AI scan failed.";
+      try {
+        const result = await scanTempDocument({
+          file,
+          documentId,
+          documentType,
+        });
 
-      setScanStates((prev) => ({
-        ...prev,
-        [key]: { status: "error", fields: null, error: message },
-      }));
+        console.log("response for ai document scan:", result);
 
-      throw new Error(message);
-    }
-  }, []);
+        setScanStates((prev) => ({
+          ...prev,
+          [key]: {
+            status: "done",
+            fields: result.fields,
+            verification: result.verification,
+            error: null,
+          },
+        }));
+
+        return{ fields: result.fields, verification: result.verification };
+      } catch (err) {
+        const message =
+          err?.response?.data?.message ?? err?.message ?? "AI scan failed.";
+
+        setScanStates((prev) => ({
+          ...prev,
+          [key]: {
+            status: "error",
+            fields: null,
+            verification: null,
+            error: message,
+          },
+        }));
+
+        throw new Error(message);
+      }
+    },
+    [],
+  );
 
   /**
    * Apply AI fields from a previously scanned & persisted document (reuse flow).
    * Mirrors `triggerScan` status so the same UI renders for both paths.
    */
-  const setReuseFields = useCallback(({ key, fields }) => {
+  const setReuseFields = useCallback(({ key, fields, verification }) => {
     setScanStates((prev) => ({
       ...prev,
-      [key]: { status: "done", fields, error: null },
+      [key]: { status: "done", fields, verification, error: null },
     }));
   }, []);
 

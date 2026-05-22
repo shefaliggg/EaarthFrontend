@@ -20,6 +20,7 @@ export function useDocumentSectionAI({
   const [aiConflicts, setAiConflicts] = useState([]);
   const [autoFilledCount, setAutoFilledCount] = useState(0);
   const [aiRawFields, setAiRawFields] = useState(null);
+  const [aiRawVerification, setAiRawVerification] = useState(null);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export function useDocumentSectionAI({
   const resetAIState = useCallback(() => {
     setAiConflicts([]);
     setAiRawFields(null);
+    setAiRawVerification(null);
     setAutoFilledCount(0);
     clearAllScans();
   }, [clearAllScans]);
@@ -64,10 +66,11 @@ export function useDocumentSectionAI({
         }),
       });
 
-      const fields = await scanPromise; // throws on error (caught by toast)
+      const {fields, verification} = await scanPromise; // throws on error (caught by toast)
       if (!fields) return;
 
       setAiRawFields(fields);
+      setAiRawVerification(verification);
 
       const result = mergeAIFields({
         currentForm: currentForm ?? getForm(),
@@ -138,6 +141,7 @@ export function useDocumentSectionAI({
     aiConflicts,
     autoFilledCount,
     aiRawFields,
+    aiRawVerification,
     processAIScan,
     handleReuseSelect,
     acceptAISuggestion,

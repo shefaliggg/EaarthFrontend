@@ -28,7 +28,10 @@ import {
   useModalStore,
 } from "../../../../shared/stores/useModalStore";
 import { InfoPanel } from "../../../../shared/components/panels/InfoPanel";
-import { buildDocumentAiExtraction } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import {
+  buildDocumentAiExtraction,
+  resolveAIVerificationStatusLabel,
+} from "../../../ai/documents/config/aiDocumentScanner.helper";
 import { useDocumentSectionAI } from "../../../ai/documents/hooks/useDocumentSectionAI";
 import {
   AIConflictPanel,
@@ -496,6 +499,13 @@ export default function FinanceDetails() {
       );
     }
 
+    if (fs4AI.aiRawVerification) {
+      formData.append(
+        "fs4AiVerification",
+        JSON.stringify(fs4AI.aiRawVerification),
+      );
+    }
+
     if (payslipAI.aiRawFields) {
       formData.append(
         "payslipAiExtraction",
@@ -506,6 +516,13 @@ export default function FinanceDetails() {
             "PAYSLIP",
           ),
         ),
+      );
+    }
+
+    if (payslipAI.aiRawVerification) {
+      formData.append(
+        "payslipAiVerification",
+        JSON.stringify(payslipAI.aiRawVerification),
       );
     }
 
@@ -522,6 +539,13 @@ export default function FinanceDetails() {
       );
     }
 
+    if (p45AI.aiRawVerification) {
+      formData.append(
+        "p45AiVerification",
+        JSON.stringify(p45AI.aiRawVerification),
+      );
+    }
+
     if (vatCertAI.aiRawFields) {
       formData.append(
         "vatCertAiExtraction",
@@ -532,6 +556,13 @@ export default function FinanceDetails() {
             "VAT_CERTIFICATE",
           ),
         ),
+      );
+    }
+
+    if (vatCertAI.aiRawVerification) {
+      formData.append(
+        "vatCertAiVerification",
+        JSON.stringify(vatCertAI.aiRawVerification),
       );
     }
 
@@ -865,8 +896,12 @@ export default function FinanceDetails() {
                 disabled={isSavingFinance}
                 secondaryBadges={[
                   {
-                    status: fs4AIStatus,
-                    label: `AI Scan ${fs4AIStatus}`,
+                    status: resolvedFs4?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: fs4AI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedFs4?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}
@@ -952,8 +987,12 @@ export default function FinanceDetails() {
                 disabled={isSavingFinance}
                 secondaryBadges={[
                   {
-                    status: payslipAIStatus,
-                    label: `AI Scan ${payslipAIStatus}`,
+                    status: resolvedPayslip?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: payslipAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedPayslip?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}
@@ -1039,8 +1078,12 @@ export default function FinanceDetails() {
                 disabled={isSavingFinance}
                 secondaryBadges={[
                   {
-                    status: p45AIStatus,
-                    label: `AI Scan ${p45AIStatus}`,
+                    status: resolvedP45?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: p45AI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedP45?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}
@@ -1126,8 +1169,12 @@ export default function FinanceDetails() {
                 disabled={isSavingFinance}
                 secondaryBadges={[
                   {
-                    status: vatCertAIStatus,
-                    label: `AI Scan ${vatCertAIStatus}`,
+                    status: resolvedVatCert?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: vatCertAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedVatCert?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}

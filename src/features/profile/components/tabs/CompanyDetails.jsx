@@ -47,6 +47,7 @@ import {
 import { InfoPanel } from "@/shared/components/panels/InfoPanel";
 import { BrainCircuit } from "lucide-react";
 import { is } from "zod/v4/locales";
+import { resolveAIVerificationStatusLabel } from "../../../ai/documents/config/aiDocumentScanner.helper";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -227,7 +228,7 @@ export default function CompanyDetails() {
       };
 
   const usesCompany = cd?.usesLoanOutCompany;
-  const conpanyisInIreland = cd?.countryOfIncorporation === "IE";
+  const companyIsInIreland = cd?.countryOfIncorporation === "IE";
   const companyIsInIceland = cd?.countryOfIncorporation === "IS";
 
   // ── Resolved documents ────────────────────────────────────────────────────
@@ -368,7 +369,7 @@ export default function CompanyDetails() {
 
   const handleCertOfIncorpRescan = useCallback(async () => {
     if (!resolvedCertOfIncorp) return;
-    if(!isEditingDetails) {
+    if (!isEditingDetails) {
       startEditing("companyDetails");
     }
     try {
@@ -415,7 +416,7 @@ export default function CompanyDetails() {
   const handleVatCertRescan = useCallback(async () => {
     if (!resolvedVatCert) return;
 
-    if(!isEditingTax) {
+    if (!isEditingTax) {
       startEditing("companyTax");
     }
     try {
@@ -535,6 +536,12 @@ export default function CompanyDetails() {
         ),
       );
     }
+    if (certOfIncorpAI.aiRawVerification) {
+      fd.append(
+        "certOfIncorpAiVerification",
+        JSON.stringify(certOfIncorpAI.aiRawVerification),
+      );
+    }
     if (vatCertAI.aiRawFields) {
       fd.append(
         "vatCertAiExtraction",
@@ -545,6 +552,12 @@ export default function CompanyDetails() {
             "VAT_CERTIFICATE",
           ),
         ),
+      );
+    }
+    if (vatCertAI.aiRawVerification) {
+      fd.append(
+        "vatCertAiVerification",
+        JSON.stringify(vatCertAI.aiRawVerification),
       );
     }
 
@@ -630,6 +643,12 @@ export default function CompanyDetails() {
         ),
       );
     }
+    if (certOfIncorpAI.aiRawVerification) {
+      fd.append(
+        "certOfIncorpAiVerification",
+        JSON.stringify(certOfIncorpAI.aiRawVerification),
+      );
+    }
 
     try {
       await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
@@ -705,6 +724,12 @@ export default function CompanyDetails() {
             "VAT_CERTIFICATE",
           ),
         ),
+      );
+    }
+    if (vatCertAI.aiRawVerification) {
+      fd.append(
+        "vatCertAiVerification",
+        JSON.stringify(vatCertAI.aiRawVerification),
       );
     }
 
@@ -949,8 +974,12 @@ export default function CompanyDetails() {
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
                 secondaryBadges={[
                   {
-                    status: certOfIncorpAIStatus,
-                    label: `AI Scan ${certOfIncorpAIStatus}`,
+                    status: resolvedCertOfIncorp?.aiVerification?.status,
+                    label: resolveAIVerificationStatusLabel({
+                      scanStatus: certOfIncorpAI.scan.status?.toUpperCase(),
+                      verificationStatus:
+                        resolvedCertOfIncorp?.aiVerification?.status?.toUpperCase(),
+                    }),
                     icon: "Brain",
                   },
                 ]}
@@ -1198,7 +1227,7 @@ export default function CompanyDetails() {
                 />
               </div>
 
-              {conpanyisInIreland && (
+              {companyIsInIreland && (
                 <>
                   <EditableTextDataField
                     label="TAX REGISTRATION NUMBER"
@@ -1240,8 +1269,6 @@ export default function CompanyDetails() {
 
               {ct?.isVATRegistered && (
                 <div className="xl:col-span-2 2xl:col-span-1">
-                  {/* VAT cert scan banner — no field conflicts since VAT_CERTIFICATE
-                      has no FIELD_MAPS entries, but status still reflects scan progress */}
                   {isEditingTax && vatCertAI.scan.status !== "idle" && (
                     <div className="mb-3">
                       <AIScanBanner
@@ -1265,8 +1292,12 @@ export default function CompanyDetails() {
                     status={resolvedVatCert?.verificationStatus || "Pending"}
                     secondaryBadges={[
                       {
-                        status: vatCertAIStatus,
-                        label: `AI Scan ${vatCertAIStatus}`,
+                        status: resolvedVatCert?.aiVerification?.status,
+                        label: resolveAIVerificationStatusLabel({
+                          scanStatus: vatCertAI.scan.status?.toUpperCase(),
+                          verificationStatus:
+                            resolvedVatCert?.aiVerification?.status?.toUpperCase(),
+                        }),
                         icon: "Brain",
                       },
                     ]}
