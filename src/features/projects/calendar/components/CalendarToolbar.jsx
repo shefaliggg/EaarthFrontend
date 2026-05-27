@@ -356,7 +356,7 @@ function CalendarToolbar({
           />
         </div>
 
-        {/* <InfoTooltip content="Shooting Calendar">
+        <InfoTooltip content="Shooting Calendar">
           <Button
             variant="default"
             size="icon"
@@ -366,7 +366,7 @@ function CalendarToolbar({
           >
             <Clapperboard className="w-4 h-4" />
           </Button>
-        </InfoTooltip> */}
+        </InfoTooltip>
 
         <InfoTooltip content="TMO">
           <Button
@@ -378,7 +378,7 @@ function CalendarToolbar({
           </Button>
         </InfoTooltip>
 
-        <InfoTooltip content="Settings">
+        {/* <InfoTooltip content="Settings">
           <Button
             variant="default"
             size="icon"
@@ -388,7 +388,7 @@ function CalendarToolbar({
           >
             <Settings className="w-4 h-4" />
           </Button>
-        </InfoTooltip>
+        </InfoTooltip> */}
 
         <InfoTooltip content="PDF Preview">
           <Button
