@@ -1,11 +1,9 @@
 import * as FramerMotion from "framer-motion";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Progress } from "@/shared/components/ui/progress";
 import { memo } from "react";
 
-const COLOR = "#9333ea";
 function getCircumference(radius) {
   return 2 * Math.PI * radius;
 }
@@ -14,7 +12,7 @@ function getDashOffset(circumference, percent) {
   return circumference - (percent / 100) * circumference;
 }
 
-const PageRing = memo(({ isActive, tabNumber, progress }) => {
+const PageRing = memo(({ isActive, tabNumber, progress, locked }) => {
   if (isActive) {
     const size = 32;
     const strokeWidth = 2.5;
@@ -30,7 +28,7 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
             cx={center}
             cy={center}
             r={radius}
-            stroke={`${COLOR}20`}
+            stroke="rgb(from var(--primary) r g b / 0.12)"
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -39,7 +37,7 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
             cx={center}
             cy={center}
             r={radius}
-            stroke={COLOR}
+            stroke={locked ? "var(--mint-500)" : "var(--primary)"}
             strokeWidth={strokeWidth}
             fill="none"
             strokeLinecap="round"
@@ -53,9 +51,17 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
         </svg>
         <div
           className="rounded-full flex items-center justify-center text-white text-[0.56rem] font-semibold"
-          style={{ width: 20, height: 20, backgroundColor: COLOR }}
+          style={{
+            width: 20,
+            height: 20,
+            backgroundColor: locked ? "var(--mint-500)" : "var(--primary)",
+          }}
         >
-          {tabNumber}
+          {locked ? (
+            <Check size={12} />
+          ) : (
+            <span className="text-[0.48rem]">{tabNumber}</span>
+          )}
         </div>
       </>
     );
@@ -76,7 +82,7 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
           cx={center}
           cy={center}
           r={radius}
-          stroke={`${COLOR}15`}
+          stroke="rgb(from var(--primary) r g b / 0.082)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -85,7 +91,7 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
           cx={center}
           cy={center}
           r={radius}
-          stroke={COLOR}
+          stroke={locked ? "var(--mint-500)" : "var(--primary)"}
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -98,15 +104,21 @@ const PageRing = memo(({ isActive, tabNumber, progress }) => {
         />
       </svg>
       <div
-        className="rounded-full flex items-center justify-center text-[0.48rem]"
+        className="rounded-full flex items-center justify-center"
         style={{
           width: 18,
           height: 18,
-          backgroundColor: `${COLOR}15`,
-          color: COLOR,
+          backgroundColor: locked
+            ? "var(--mint-500)"
+            : `rgb(from var(--primary) r g b / 0.082)`,
+          color: locked ? "#fff" : "var(--primary)",
         }}
       >
-        {tabNumber}
+        {locked ? (
+          <Check size={12} />
+        ) : (
+          <span className="text-[0.48rem]">{tabNumber}</span>
+        )}
       </div>
     </>
   );
@@ -134,14 +146,43 @@ function ProgressNavigator({ tabs, activeIndex, currentTab, goPrev, goNext }) {
               transition={{ duration: 0.15 }}
               className="flex items-center gap-2"
             >
-              <span className="flex items-center justify-center w-5 h-5 text-[0.55rem] font-semibold leading-none rounded-full bg-primary/15 text-primary">
-                {activeIndex + 1}
+              <span
+                style={{
+                  backgroundColor: currentTab.locked
+                    ? `var(--mint-500)`
+                    : `rgb(from var(--primary) r g b / 0.15)`,
+                  color: currentTab.locked ? "#fff" : "var(--primary)",
+                }}
+                className="flex items-center justify-center w-5 h-5 text-[0.55rem] font-semibold leading-none rounded-full"
+              >
+                {currentTab.locked ? (
+                  <Check size={11} />
+                ) : (
+                  <>{activeIndex + 1}</>
+                )}
               </span>
-              <span className="text-[0.8rem] text-primary">
+              <span
+                style={{
+                  color: currentTab.locked
+                    ? "var(--mint-500)"
+                    : "var(--primary)",
+                }}
+                className="text-[0.8rem] text-primary"
+              >
                 {currentTab.label}
               </span>
-              <span className="px-1.5 py-0.5 text-[0.6rem] rounded-md bg-primary/8 text-primary/90">
-                {currentTab.progress}%
+              <span
+                className="px-1.5 py-0.5 text-[0.6rem] rounded-md"
+                style={{
+                  backgroundColor: currentTab.locked
+                    ? `rgb(from var(--mint-500) r g b / 0.08)`
+                    : `rgb(from var(--primary) r g b / 0.08)`,
+                  color: currentTab.locked
+                    ? "rgb(from var(--mint-500) r g b / 0.90)"
+                    : "rgb(from var(--primary) r g b / 0.90)",
+                }}
+              >
+                {currentTab.locked ? "Locked" : currentTab.progress + "%"}
               </span>
               <span className="text-muted-foreground text-[0.55rem] mr-1">
                 {activeIndex + 1}/{tabs.length}
@@ -172,6 +213,7 @@ function ProgressNavigator({ tabs, activeIndex, currentTab, goPrev, goNext }) {
                       isActive={isActive}
                       tabNumber={index + 1}
                       progress={tab.progress}
+                      locked={tab.locked}
                     />
                   )}
                 </NavLink>

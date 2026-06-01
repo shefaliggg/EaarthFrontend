@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
+import { Check, CircleCheck } from "lucide-react";
 
 function AnimatedCircularProgress({
   progressPercentage,
   color = "var(--primary)",
-  size = 50
+  size = 50,
+  textSize = "text-xs",
+  locked = false,
 }) {
   const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
@@ -15,7 +18,6 @@ function AnimatedCircularProgress({
       className="relative inline-flex items-center justify-center"
     >
       <svg width={size} height={size} className="-rotate-90">
-        
         {/* Track */}
         <circle
           cx={size / 2}
@@ -44,9 +46,21 @@ function AnimatedCircularProgress({
         />
       </svg>
 
-      <span className="absolute text-xs font-medium tabular-nums">
-        {progressPercentage}%
-      </span>
+      {locked ? (
+        <div
+          className="absolute flex items-center justify-center rounded-full bg-mint-500 text-white"
+          style={{
+            width: size * 0.5,
+            height: size * 0.5,
+          }}
+        >
+          <Check  size={size * 0.3} />
+        </div>
+      ) : (
+        <span className={`absolute ${textSize} font-medium tabular-nums`}>
+          {progressPercentage}%
+        </span>
+      )}
     </div>
   );
 }

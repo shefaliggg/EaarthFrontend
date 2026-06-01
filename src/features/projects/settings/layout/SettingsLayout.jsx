@@ -2,16 +2,57 @@ import { Button } from "@/shared/components/ui/button";
 import * as FramerMotion from "framer-motion";
 import { PageHeader } from "@/shared/components/PageHeader";
 import AnimatedCircularProgress from "@/features/projects/settings/components/shared/AnimatedCircularProgress";
-import ProgressNavigator from "./ProgressNavigator";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import ProgressNavigator from "../components/ProgressNavigator";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import SettingsHeader from "@/features/projects/settings/components/SettingsHeader";
 import NavigationFooter from "@/features/projects/settings/components/NavigationFooter";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useMemo } from "react";
+import { fetchProjectSettingsThunk } from "../store/projectSettings.thunks";
+
+// ─── Slug helper — must mirror DashboardLayout ────────────────────────────────
+const toSlug = (name = "") => name.toLowerCase().replace(/\s+/g, "-");
+const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
 
 export default function SettingsLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { projectName } = useParams();
+  // ── Resolve real project _id from Redux ───────────────────────────────────
+  const currentProject = useSelector((s) => s.project?.currentProject ?? null);
+  const allProjects = useSelector((s) => s.project?.projects ?? []);
+
+  const resolvedProjectId = useMemo(() => {
+    // 1. currentProject already loaded in Redux
+    if (isObjectId(currentProject?._id)) return String(currentProject._id);
+
+    // 2. Match by :projectName slug against full projects list
+    if (projectName) {
+      const slug = projectName.toLowerCase();
+      const match = allProjects.find(
+        (p) => toSlug(p.productionName ?? "") === slug,
+      );
+      if (isObjectId(match?._id)) return String(match._id);
+    }
+    return null;
+  }, [currentProject, allProjects, projectName]);
+
+  const projectId = resolvedProjectId;
+  const { projectSettings } = useSelector((state) => state.projectSettings);
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchProjectSettingsThunk(projectId));
+    }
+  }, [dispatch, projectId]);
+
   const tabs = [
-    { path: "details", label: "Details", progress: 42 },
+    {
+      path: "details",
+      label: "Details",
+      progress: projectSettings?.sections?.details?.completionPercent ?? 0,
+      locked: projectSettings?.sections?.details?.locked ?? false,
+    },
     { path: "contacts", label: "Contacts", progress: 67 },
     { path: "dates", label: "Dates", progress: 15 },
     { path: "project", label: "Project", progress: 88 },
@@ -68,7 +109,11 @@ export default function SettingsLayout() {
           </span>
         }
         icon="Settings"
-        extraActions={<AnimatedCircularProgress progressPercentage={1} />}
+        extraActions={
+          <AnimatedCircularProgress
+            progressPercentage={projectSettings?.settingsCompletionPercent ?? 0}
+          />
+        }
       />
       <ProgressNavigator
         tabs={tabs}
@@ -84,6 +129,7 @@ export default function SettingsLayout() {
         goPrev={goPrev}
         goNext={goNext}
         tabs={tabs}
+        currentTab={currentTab}
       />
     </div>
   );
