@@ -69,6 +69,9 @@ function DetailsSettings() {
     : {
         productionName: projectSettings?.productionName ?? "",
         country: projectSettings?.country ?? "",
+        codeName: projectSettings?.codeName ?? "",
+        description: projectSettings?.description ?? "",
+        additionalNotes: projectSettings?.additionalNotes ?? "",
       };
 
   // ── Section editing ────────────────────────────────────────────────────────
@@ -80,6 +83,9 @@ function DetailsSettings() {
         details: {
           productionName: projectSettings?.productionName ?? "",
           country: projectSettings?.country ?? "",
+          codeName: projectSettings?.codeName ?? "",
+          description: projectSettings?.description ?? "",
+          additionalNotes: projectSettings?.additionalNotes ?? "",
         },
       }));
     }
@@ -161,13 +167,15 @@ function DetailsSettings() {
               </div>
             </div>
             <div className="flex items-center gap-1 ">
-              <EditToggleButtons
-                isEditing={isEditingDetails}
-                isLoading={isSavingDetails}
-                onEdit={() => startEditing("details")}
-                onSave={handleSaveDetails}
-                onCancel={cancelEditing}
-              />
+              {!projectSettings?.sections?.details?.locked && (
+                <EditToggleButtons
+                  isEditing={isEditingDetails}
+                  isLoading={isSavingDetails}
+                  onEdit={() => startEditing("details")}
+                  onSave={handleSaveDetails}
+                  onCancel={cancelEditing}
+                />
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -190,19 +198,50 @@ function DetailsSettings() {
 
             <div className="flex flex-col gap-1">
               <EditableTextDataField
-                isEditing={isEditingDetails}
                 label="Code Name"
+                value={details?.codeName}
+                isEditing={isEditingDetails}
+                onChange={(val) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    details: {
+                      ...prev.details,
+                      codeName: val,
+                    },
+                  }))
+                }
+                error={errors?.codeName?.[0]}
+                disabled={isSavingDetails}
+                infoPillDescription="If your project has an alternative name for secrecy, enter that. Otherwise enter the Project title. The Codename will be used in all emails and pages"
               />
             </div>
           </div>
           <div className="flex flex-col gap-1 mt-4">
-            <EditableTextDataField label="Description" />
+            <EditableTextDataField
+              label="Description"
+              multiline
+              value={details?.description}
+              isEditing={isEditingDetails}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  details: {
+                    ...prev.details,
+                    description: val,
+                  },
+                }))
+              }
+              error={errors?.description?.[0]}
+              disabled={isSavingDetails}
+              infoPillDescription="A brief synopsis of the project which is helpful for crew joining the production"
+            />
           </div>
           <div className="flex flex-col gap-1 mt-4">
             <EditableTextDataField
               label="Locations"
               value={details?.country}
               isEditing={isEditingDetails}
+              infoPillDescription="Useful information, if known, which might help crew decide if they can accept the job"
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
@@ -219,8 +258,21 @@ function DetailsSettings() {
           <div className="flex flex-col gap-1 mt-4">
             <EditableTextDataField
               label="Additional Notes"
+              multiline
               isRequired={false}
-              multiline={true}
+              value={details?.additionalNotes}
+              isEditing={isEditingDetails}
+              onChange={(val) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  details: {
+                    ...prev.details,
+                    additionalNotes: val,
+                  },
+                }))
+              }
+              error={errors?.additionalNotes?.[0]}
+              disabled={isSavingDetails}
               infoPillDescription="Use this to convey general project-wide information to crew."
               placeholder="Enter additional notes"
             />
