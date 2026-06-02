@@ -16,11 +16,21 @@ function NavigationFooter({ activeIndex, goPrev, goNext, tabs, currentTab }) {
           Previous
         </FramerMotion.motion.button>
         <div className="flex items-center gap-2">
-          {currentTab?.locked && (
+          {currentTab?.locked ? (
             <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.7rem] font-medium bg-mint-500/5 text-mint-700 border border-mint-500/20 dark:bg-mint-500/10 dark:text-mint-300 dark:border-mint-500/20 cursor-not-allowed">
               <Lock className="w-3.5 h-3.5" />
               Locked
             </button>
+          ) : (
+            <FramerMotion.motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.7rem] font-medium bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              Lock & Continue
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </FramerMotion.motion.button>
           )}
           <FramerMotion.motion.button
             onClick={goNext}
