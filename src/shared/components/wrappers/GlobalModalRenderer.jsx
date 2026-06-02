@@ -3,6 +3,7 @@ import ImagePreviewDialog from "../../../features/projects/project-chat/Dialogs/
 import { MODAL_TYPES, useModalStore } from "../../stores/useModalStore";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import DocumentPreviewDialog from "../modals/DocumentPreviewDialog";
+import { SaveStageDialog } from "../modals/SaveStageDialog";
 
 export default function GlobalModalRenderer() {
   const { type, isOpen, data, closeModal } = useModalStore();
@@ -49,6 +50,19 @@ export default function GlobalModalRenderer() {
           open={isOpen}
           onOpenChange={closeModal}
           document={data?.document}
+        />
+      );
+
+    case MODAL_TYPES.SAVE_STAGE_LOADER:
+      return (
+        <SaveStageDialog
+          title={data?.title || "Saving stage"}
+          description={data?.description}
+          currentMessage={data?.currentMessage}
+          stages={data?.stages || []}
+          errorMessage={data?.errorMessage}
+          open={isOpen}
+          onOpenChange={closeModal}
         />
       );
 

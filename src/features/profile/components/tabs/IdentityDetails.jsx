@@ -591,11 +591,7 @@ export default function IdentityDetails() {
         fd.append(
           "passportAiExtraction",
           JSON.stringify(
-            buildDocumentAiExtraction(
-              passportAI.aiRawFields,
-              data,
-              "PASSPORT",
-            ),
+            buildDocumentAiExtraction(passportAI.aiRawFields, data, "PASSPORT"),
           ),
         );
       }
@@ -1188,10 +1184,10 @@ export default function IdentityDetails() {
                 fileUrl={resolvedPassport?.url ?? null}
                 isUploaded={!!resolvedPassport}
                 status={resolvedPassport?.verificationStatus || "Pending"}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedPassport?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: passportAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedPassport?.aiVerification?.status?.toUpperCase(),
@@ -1199,6 +1195,8 @@ export default function IdentityDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedPassport?.createdAt}
+                verifiedAt={resolvedPassport?.verifiedAt}
                 expiresAt={resolvedPassport?.expiresAt}
                 meta={
                   resolvedPassport?.sizeBytes
@@ -1329,10 +1327,10 @@ export default function IdentityDetails() {
                       isSavingIdentity,
                   },
                 ]}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedBirthCert?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: birthCertificateAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedBirthCert?.aiVerification?.status?.toUpperCase(),
@@ -1354,6 +1352,8 @@ export default function IdentityDetails() {
                     />
                   )
                 }
+                uploadedOn={resolvedBirthCert?.createdAt}
+                verifiedAt={resolvedBirthCert?.verifiedAt}
               />
 
               <EditableDocumentField
@@ -1392,10 +1392,10 @@ export default function IdentityDetails() {
                       isSavingIdentity,
                   },
                 ]}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedNiProof?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: niProofAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedNiProof?.aiVerification?.status?.toUpperCase(),
@@ -1417,6 +1417,8 @@ export default function IdentityDetails() {
                     />
                   )
                 }
+                uploadedOn={resolvedNiProof?.createdAt}
+                verifiedAt={resolvedNiProof?.verifiedAt}
               />
             </div>
           )}
@@ -1500,10 +1502,10 @@ export default function IdentityDetails() {
                       isSavingIdentity,
                   },
                 ]}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedNaturalisation?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: naturalisationAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedNaturalisation?.aiVerification?.status?.toUpperCase(),
@@ -1525,6 +1527,8 @@ export default function IdentityDetails() {
                     />
                   )
                 }
+                uploadedOn={resolvedNaturalisation?.createdAt}
+                verifiedAt={resolvedNaturalisation?.verifiedAt}
               />
 
               <EditableDocumentField
@@ -1563,10 +1567,10 @@ export default function IdentityDetails() {
                       isSavingIdentity,
                   },
                 ]}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedNiProof?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: niProofAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedNiProof?.aiVerification?.status?.toUpperCase(),
@@ -1588,6 +1592,8 @@ export default function IdentityDetails() {
                     />
                   )
                 }
+                uploadedOn={resolvedNiProof?.createdAt}
+                verifiedAt={resolvedNiProof?.verifiedAt}
               />
             </div>
           )}

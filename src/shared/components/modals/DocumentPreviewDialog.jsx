@@ -61,7 +61,7 @@ export default function DocumentPreviewDialog({
           Preview and download the selected document
         </DialogDescription>
       </VisuallyHidden>
-      <DialogContent className="w-screen max-w-screen! h-screen! max-h-screen! m-0! p-0! bg-transparent border-0 shadow-none overflow-hidden rounded-none">
+      <DialogContent showCloseButton={false} className="w-screen max-w-screen! h-screen! max-h-screen! m-0! p-0! bg-transparent border-0 shadow-none overflow-hidden rounded-none">
         <div className="relative w-full h-full bg-black/75">
           {/* Controls */}
           <div className="absolute top-4 left-6 flex items-center gap-3 z-50 bg-black/40 backdrop-blur-md rounded-3xl px-3 py-1.5 text-white">

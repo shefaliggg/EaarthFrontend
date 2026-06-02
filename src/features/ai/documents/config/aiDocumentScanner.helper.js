@@ -359,7 +359,7 @@ export const buildDocumentAiExtraction = (
     }),
   );
 
-  console.log("mapped fields:", fields)
+  console.log("mapped fields:", fields);
 
   return {
     status: "COMPLETED",
@@ -374,16 +374,27 @@ export const resolveAIVerificationStatusLabel = ({
   verificationStatus,
 }) => {
   const labels = {
-    NOT_RUN: "AI Not Scanned",
-    PROCESSING: "AI Scanning Document",
-    PASSED: "AI Check Passed",
-    NEEDS_REVIEW: "Needs Admin Review",
-    FAILED: "AI Verification Failed",
+    NOT_RUN: "Scanned",
+    PROCESSING: "Scanning Document",
+    PASSED: "Passed",
+    NEEDS_REVIEW: "Found Issues - Needs Review",
+    FAILED: "Failed",
   };
 
   if (scanStatus === "scanning") {
     return labels["PROCESSING"];
   }
 
-  return labels[verificationStatus] || "Unknown Status";
+  return labels[verificationStatus] || "Not Available";
+};
+
+export const getGovtVerificationStatusLabel = ({ verificationStatus }) => {
+  const labels = {
+    NOT_RUN: "Not Run",
+    VERIFIED: "Passed",
+    NEEDS_REVIEW: "Found Issues - Needs Review",
+    FAILED: "Failed",
+  };
+
+  return labels[verificationStatus] || "Not Available";
 };

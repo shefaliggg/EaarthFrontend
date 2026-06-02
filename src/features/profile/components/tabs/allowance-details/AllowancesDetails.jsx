@@ -602,10 +602,10 @@ export default function AllowanceDetails() {
                   status={
                     resolvedDrivingLicence?.verificationStatus || "Pending"
                   }
-                  secondaryBadges={[
+                  secondaryStatuses={[
                     {
-                      status: resolvedDrivingLicence?.aiVerification?.status,
-                      label: resolveAIVerificationStatusLabel({
+                      label: "AI Verification :",
+                      value: resolveAIVerificationStatusLabel({
                         scanStatus: drivingLicenceAI.scan.status?.toUpperCase(),
                         verificationStatus:
                           resolvedDrivingLicence?.aiVerification?.status?.toUpperCase(),
@@ -613,6 +613,8 @@ export default function AllowanceDetails() {
                       icon: "Brain",
                     },
                   ]}
+                  uploadedOn={resolvedDrivingLicence?.createdAt}
+                  verifiedAt={resolvedDrivingLicence?.verifiedAt}
                   expiresAt={resolvedDrivingLicence?.expiresAt}
                   meta={formatFileSize(resolvedDrivingLicence?.sizeBytes)}
                   onUpload={async (file) => {
@@ -728,10 +730,10 @@ export default function AllowanceDetails() {
                   status={
                     resolvedVehicleInsurance?.verificationStatus || "Pending"
                   }
-                  secondaryBadges={[
+                  secondaryStatuses={[
                     {
-                      status: resolvedVehicleInsurance?.aiVerification?.status,
-                      label: resolveAIVerificationStatusLabel({
+                      label: "AI Verification :",
+                      value: resolveAIVerificationStatusLabel({
                         scanStatus:
                           vehicleInsuranceAI.scan.status?.toUpperCase(),
                         verificationStatus:
@@ -740,6 +742,8 @@ export default function AllowanceDetails() {
                       icon: "Brain",
                     },
                   ]}
+                  uploadedOn={resolvedVehicleInsurance?.createdAt}
+                  verifiedAt={resolvedVehicleInsurance?.verifiedAt}
                   expiresAt={resolvedVehicleInsurance?.expiresAt}
                   meta={formatFileSize(resolvedVehicleInsurance?.sizeBytes)}
                   onUpload={async (file) => {

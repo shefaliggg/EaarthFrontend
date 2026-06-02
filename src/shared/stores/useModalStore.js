@@ -5,6 +5,7 @@ export const MODAL_TYPES = {
   DOCUMENT_PREVIEW: "DOCUMENT_PREVIEW",
   CONFIRM_ACTION: "CONFIRM_ACTION",
   SHARE_DOCUMENT: "SHARE_DOCUMENT",
+  SAVE_STAGE_LOADER: "SAVE_STAGE",
 };
 
 export const useModalStore = create((set) => ({
@@ -18,6 +19,14 @@ export const useModalStore = create((set) => ({
       isOpen: true,
       data,
     }),
+
+  updateModalData: (updates) =>
+    set((state) => ({
+      data: {
+        ...state.data,
+        ...updates,
+      },
+    })),
 
   closeModal: () =>
     set({

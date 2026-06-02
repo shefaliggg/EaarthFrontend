@@ -894,10 +894,10 @@ export default function FinanceDetails() {
                 error={errors?.documents}
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedFs4?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: fs4AI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedFs4?.aiVerification?.status?.toUpperCase(),
@@ -905,6 +905,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedFs4?.createdAt}
+                verifiedAt={resolvedFs4?.verifiedAt}
                 secondaryActions={[
                   {
                     label: fs4AIScanLabel,
@@ -985,10 +987,10 @@ export default function FinanceDetails() {
                 }
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedPayslip?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: payslipAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedPayslip?.aiVerification?.status?.toUpperCase(),
@@ -996,6 +998,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedPayslip?.createdAt}
+                verifiedAt={resolvedPayslip?.verifiedAt}
                 secondaryActions={[
                   {
                     label: payslipAIScanLabel,
@@ -1076,10 +1080,10 @@ export default function FinanceDetails() {
                 }
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedP45?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: p45AI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedP45?.aiVerification?.status?.toUpperCase(),
@@ -1087,6 +1091,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedP45?.createdAt}
+                verifiedAt={resolvedP45?.verifiedAt}
                 secondaryActions={[
                   {
                     label: p45AIScanLabel,
@@ -1167,10 +1173,10 @@ export default function FinanceDetails() {
                 }
                 showErrorDescription={errors?.vatCert?.[0] ?? false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedVatCert?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: vatCertAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedVatCert?.aiVerification?.status?.toUpperCase(),
@@ -1178,6 +1184,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedVatCert?.createdAt}
+                verifiedAt={resolvedVatCert?.verifiedAt}
                 secondaryActions={[
                   {
                     label: vatCertAIScanLabel,

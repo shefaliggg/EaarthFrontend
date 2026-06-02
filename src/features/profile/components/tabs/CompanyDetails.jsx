@@ -36,7 +36,10 @@ import {
   companyTaxSchema,
   companyBankSchema,
 } from "../../config/profileValidationShemas";
-import { removeCompanyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
+import {
+  companyVerificationConfirmConfig,
+  removeCompanyDetailsConfig,
+} from "../../../../shared/config/ConfirmActionsConfig";
 import { formatFileSize } from "../../../../shared/config/utils";
 import { buildDocumentAiExtraction } from "@/features/ai/documents/config/aiDocumentScanner.helper";
 import { useDocumentSectionAI } from "@/features/ai/documents/hooks/useDocumentSectionAI";
@@ -47,7 +50,10 @@ import {
 import { InfoPanel } from "@/shared/components/panels/InfoPanel";
 import { BrainCircuit } from "lucide-react";
 import { is } from "zod/v4/locales";
-import { resolveAIVerificationStatusLabel } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import {
+  getGovtVerificationStatusLabel,
+  resolveAIVerificationStatusLabel,
+} from "../../../ai/documents/config/aiDocumentScanner.helper";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -123,9 +129,6 @@ export default function CompanyDetails() {
   );
   const { openModal, closeModal } = useModalStore();
 
-  // ── AI hooks ───────────────────────────────────────────────────────────────
-
-  // Cert of incorp — auto-fills: company name, registration number, country
   const certOfIncorpAI = useDocumentSectionAI({
     documentType: "CERTIFICATE_OF_INCORPORATION",
     scanKey: "certOfIncorp",
@@ -134,7 +137,6 @@ export default function CompanyDetails() {
       setFormState((prev) => ({ ...prev, companyDetails: updated })),
   });
 
-  // VAT cert — no form fields to fill yet, but scan is persisted on the doc
   const vatCertAI = useDocumentSectionAI({
     documentType: "VAT_CERTIFICATE",
     scanKey: "vatCert",
@@ -143,7 +145,6 @@ export default function CompanyDetails() {
       setFormState((prev) => ({ ...prev, companyTax: updated })),
   });
 
-  // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
   }, [crewProfile, isFetching]);
@@ -353,8 +354,6 @@ export default function CompanyDetails() {
     vatCertAI.resetAIState();
   };
 
-  // ── Cert of incorp handlers ───────────────────────────────────────────────
-
   const handleCertOfIncorpUpload = useCallback(
     async (file) => {
       setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
@@ -398,8 +397,6 @@ export default function CompanyDetails() {
     },
     [userDocuments, certOfIncorpAI],
   );
-
-  // ── VAT cert handlers ─────────────────────────────────────────────────────
 
   const handleVatCertUpload = useCallback(
     async (file) => {
@@ -446,7 +443,6 @@ export default function CompanyDetails() {
     [userDocuments, vatCertAI],
   );
 
-  // ── Build FormData helper ─────────────────────────────────────────────────
   const buildFormData = (fields, fileMap) => {
     const fd = new FormData();
     for (const [key, val] of Object.entries(fields)) {
@@ -463,8 +459,6 @@ export default function CompanyDetails() {
     }
     return fd;
   };
-
-  // ── Save handlers ─────────────────────────────────────────────────────────
 
   const handleSaveSetup = async () => {
     setErrors({});
@@ -523,7 +517,6 @@ export default function CompanyDetails() {
       },
     );
 
-    // Attach AI extractions if scans ran during this session
     if (certOfIncorpAI.aiRawFields) {
       fd.append(
         "certOfIncorpAiExtraction",
@@ -768,6 +761,12 @@ export default function CompanyDetails() {
     }
   };
 
+  const shouldShowVerificationModal =
+    !!files?.certificateOfIncorporation ||
+    formState?.companyDetails?.name !== company?.name ||
+    formState?.companyDetails?.registrationNumber !==
+      company?.registrationNumber;
+
   // ── Loading / Error states ────────────────────────────────────────────────
   if (isFetching) {
     return (
@@ -793,10 +792,8 @@ export default function CompanyDetails() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── Company Details ──────────────────────────────────────────────── */}
       <CardWrapper
         title="Company Details"
         icon="Building2"
@@ -807,7 +804,21 @@ export default function CompanyDetails() {
             onEdit={
               isSetupMode ? undefined : () => startEditing("companyDetails")
             }
-            onSave={isSetupMode ? handleSaveSetup : handleSaveDetails}
+            onSave={
+              isSetupMode
+                ? handleSaveSetup
+                : shouldShowVerificationModal
+                  ? () =>
+                      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                        config: companyVerificationConfirmConfig,
+                        onConfirm: async () => {
+                          closeModal();
+                          await handleSaveDetails();
+                        },
+                        autoClose: true,
+                      })
+                  : handleSaveDetails
+            }
             onCancel={cancelEditing}
           />
         }
@@ -972,17 +983,27 @@ export default function CompanyDetails() {
                 fileUrl={resolvedCertOfIncorp?.url ?? null}
                 isUploaded={!!resolvedCertOfIncorp}
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedCertOfIncorp?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: certOfIncorpAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedCertOfIncorp?.aiVerification?.status?.toUpperCase(),
                     }),
                     icon: "Brain",
                   },
+                  {
+                    label: "Government Verification :",
+                    value: getGovtVerificationStatusLabel({
+                      verificationStatus:
+                        resolvedCertOfIncorp?.governmentVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Landmark",
+                  },
                 ]}
+                uploadedOn={resolvedCertOfIncorp?.createdAt}
+                verifiedAt={resolvedCertOfIncorp?.verifiedAt}
                 expiresAt={resolvedCertOfIncorp?.expiresAt}
                 meta={formatFileSize(resolvedCertOfIncorp?.sizeBytes)}
                 isRequired
@@ -1268,7 +1289,7 @@ export default function CompanyDetails() {
               )}
 
               {ct?.isVATRegistered && (
-                <div className="xl:col-span-2 2xl:col-span-1">
+                <div className=" md:col-span-2 2xl:col-span-1">
                   {isEditingTax && vatCertAI.scan.status !== "idle" && (
                     <div className="mb-3">
                       <AIScanBanner
@@ -1290,17 +1311,27 @@ export default function CompanyDetails() {
                     fileUrl={resolvedVatCert?.url ?? null}
                     isUploaded={!!resolvedVatCert}
                     status={resolvedVatCert?.verificationStatus || "Pending"}
-                    secondaryBadges={[
+                    secondaryStatuses={[
                       {
-                        status: resolvedVatCert?.aiVerification?.status,
-                        label: resolveAIVerificationStatusLabel({
+                        label: "AI Verification :",
+                        value: resolveAIVerificationStatusLabel({
                           scanStatus: vatCertAI.scan.status?.toUpperCase(),
                           verificationStatus:
                             resolvedVatCert?.aiVerification?.status?.toUpperCase(),
                         }),
                         icon: "Brain",
                       },
+                      {
+                        label: "Government Verification :",
+                        value: getGovtVerificationStatusLabel({
+                          verificationStatus:
+                            resolvedVatCert?.governmentVerification?.status?.toUpperCase(),
+                        }),
+                        icon: "Landmark",
+                      },
                     ]}
+                    uploadedOn={resolvedVatCert?.createdAt}
+                    verifiedAt={resolvedVatCert?.verifiedAt}
                     expiresAt={resolvedVatCert?.expiresAt}
                     meta={formatFileSize(resolvedVatCert?.sizeBytes)}
                     onUpload={handleVatCertUpload}
