@@ -531,6 +531,7 @@ export const companySetupSchema = z
 
     // ── Tax ──────────────────────────────────────────────────────────────────
     isVATRegistered: z.boolean().default(false),
+    vatNumber: z.string().optional(),
     taxRegistrationNumberIreland: z.string().optional(),
     taxClearanceAccessNumberIreland: z.string().optional(),
 
@@ -622,6 +623,13 @@ export const companySetupSchema = z
     if (data.isVATRegistered) {
       const hasVatFile = data._meta?.files?.vatCertificate;
       const hasVatId = data._meta?.reuseDocIds?.vatCertificate;
+
+      if (!data.vatNumber || data.vatNumber.trim() === "") {
+        ctx.addIssue({
+          path: ["vatNumber"],
+          message: "VAT number is required",
+        });
+      }
 
       if (!hasVatFile && !hasVatId) {
         ctx.addIssue({
@@ -718,11 +726,44 @@ export const companyContactSchema = z
       });
   });
 
-export const companyTaxSchema = z.object({
-  isVATRegistered: z.boolean(),
-  taxRegistrationNumberIreland: z.string().optional(),
-  taxClearanceAccessNumberIreland: z.string().optional(),
-});
+export const companyTaxSchema = z
+  .object({
+    isVATRegistered: z.boolean(),
+    vatNumber: z.string().optional(),
+    taxRegistrationNumberIreland: z.string().optional(),
+    taxClearanceAccessNumberIreland: z.string().optional(),
+
+    _meta: z
+      .object({
+        files: z.object({
+          vatCertificate: z.any().optional(),
+        }),
+        reuseDocIds: z.object({
+          vatCertificate: z.string().nullable().optional(),
+        }),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isVATRegistered) {
+      const hasVatFile = data._meta?.files?.vatCertificate;
+      const hasVatId = data._meta?.reuseDocIds?.vatCertificate;
+
+      if (!data.vatNumber || data.vatNumber.trim() === "") {
+        ctx.addIssue({
+          path: ["vatNumber"],
+          message: "VAT number is required",
+        });
+      }
+
+      if (!hasVatFile && !hasVatId) {
+        ctx.addIssue({
+          path: ["vatCertificate"],
+          message: "VAT certificate is required",
+        });
+      }
+    }
+  });
 
 export const companyBankSchema = z
   .object({
@@ -790,12 +831,15 @@ export const financeDetailsSchema = z
           p45: z.string().nullable().optional(),
           vatCert: z.string().nullable().optional(),
         }),
+
+        isTaxRegisteredInCompany: z.boolean().nullable().optional(),
       })
       .optional(),
   })
   .superRefine((data, ctx) => {
     const files = data._meta?.files || {};
     const ids = data._meta?.reuseDocIds || {};
+    const isTaxRegisteredInCompany = data._meta?.isTaxRegisteredInCompany;
 
     // 🟡 1. At least one financial field
     const hasAnyField =
@@ -805,7 +849,7 @@ export const financeDetailsSchema = z
       data.nationalInsuranceNumber ||
       data.vatNumber;
 
-    if (!hasAnyField) {
+    if (!hasAnyField && !isTaxRegisteredInCompany) {
       ctx.addIssue({
         path: ["formFields"],
         message: "Please provide at least one financial detail",
@@ -823,7 +867,7 @@ export const financeDetailsSchema = z
       files.vatCert ||
       ids.vatCert;
 
-    if (!hasAnyDocument) {
+    if (!hasAnyDocument && !isTaxRegisteredInCompany) {
       ctx.addIssue({
         path: ["documents"],
         message: "Please upload at least one financial document",
@@ -831,14 +875,16 @@ export const financeDetailsSchema = z
     }
 
     // 🔴 3. VAT → requires VAT certificate
-    if (data.vatNumber && data.vatNumber.trim() !== "") {
-      const hasVatDoc = files.vatCert || ids.vatCert;
+    if (!isTaxRegisteredInCompany) {
+      if (data.vatNumber && data.vatNumber.trim() !== "") {
+        const hasVatDoc = files.vatCert || ids.vatCert;
 
-      if (!hasVatDoc) {
-        ctx.addIssue({
-          path: ["vatCert"],
-          message: "VAT certificate is required when VAT number is provided",
-        });
+        if (!hasVatDoc) {
+          ctx.addIssue({
+            path: ["vatCert"],
+            message: "VAT certificate is required when VAT number is provided",
+          });
+        }
       }
     }
 

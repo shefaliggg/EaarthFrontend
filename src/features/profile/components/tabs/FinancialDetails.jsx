@@ -37,7 +37,7 @@ import {
   AIConflictPanel,
   AIScanBanner,
 } from "../../../ai/documents/components/AIFieldSuggestion";
-import { BrainCircuit, XCircle } from "lucide-react";
+import { BrainCircuit, XCircle, Info } from "lucide-react";
 import { formatFileSize } from "../../../../shared/config/utils";
 
 export default function FinanceDetails() {
@@ -88,6 +88,9 @@ export default function FinanceDetails() {
   };
   const fin = crewProfile?.finance;
   const countryisIceland = crewProfile?.countryOfPermanentResidence === "IS";
+  const isTaxRegisteredInCompany =
+    crewProfile?.company?.usesLoanOutCompany &&
+    crewProfile?.company?.isVATRegistered;
 
   // ── Document pools from store ──────────────────────────────────────────────
   const fs4Docs = getDocumentsByType(userDocuments, "FS4");
@@ -115,7 +118,9 @@ export default function FinanceDetails() {
     userDocuments,
   );
   const resolvedVatCert = getDisplayDocument(
-    fin?.vatCertificateId,
+    isTaxRegisteredInCompany
+      ? crewProfile?.company?.vatCertificateId
+      : fin?.vatCertificateId,
     reuseDocIds.vatCert,
     files.vatCert,
     userDocuments,
@@ -434,6 +439,7 @@ export default function FinanceDetails() {
       _meta: {
         files,
         reuseDocIds,
+        isTaxRegisteredInCompany,
       },
     });
 
@@ -642,6 +648,21 @@ export default function FinanceDetails() {
         }
       >
         <div className="space-y-6">
+          {isEditingFinance && isTaxRegisteredInCompany && (
+            <InfoPanel
+              icon={Info}
+              title="Company VAT Registration Detected"
+              variant="info"
+              dismissible
+              storageKey="hide-company-vat-details-available-info"
+            >
+              Your VAT registration details are being provided through your
+              loan-out company profile. You may leave the financial details
+              section blank unless additional tax or payroll information is
+              required for your contracts.
+            </InfoPanel>
+          )}
+
           {/* Tax / NI numbers */}
           {errors?.formFields && (
             <InfoPanel variant="danger" title="Missing Details" icon={XCircle}>
@@ -727,22 +748,38 @@ export default function FinanceDetails() {
               disabled={isSavingFinance}
               isRequired={false}
             />
+
             <EditableTextDataField
               label="VAT NUMBER"
-              value={fd?.vatNumber}
+              value={
+                isTaxRegisteredInCompany
+                  ? crewProfile?.company?.vatNumber
+                  : fd?.vatNumber
+              }
               isEditing={isEditingFinance}
               prettify={false}
-              badge="Loan Out / Self-employed"
-              infoPillDescription="Needed if you operate as a company or are VAT registered. May be required for loan-out or invoicing contracts."
+              badge={
+                isTaxRegisteredInCompany
+                  ? "From Company Profile"
+                  : "Self-employed"
+              }
+              infoPillDescription={
+                isTaxRegisteredInCompany
+                  ? "This VAT registration is managed through your loan-out company profile and cannot be edited here."
+                  : "Required if you are self-employed or operating through a loan-out company for tax purposes in certain countries."
+              }
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
-                  finance: { ...prev.finance, vatNumber: val },
+                  finance: {
+                    ...prev.finance,
+                    vatNumber: isTaxRegisteredInCompany ? undefined : val,
+                  },
                 }))
               }
               error={errors?.formFields ? " " : undefined}
               showErrorDescription={false}
-              disabled={isSavingFinance}
+              disabled={isTaxRegisteredInCompany ? true : isSavingFinance}
               isRequired={false}
             />
 
@@ -1147,6 +1184,7 @@ export default function FinanceDetails() {
 
               <EditableDocumentField
                 label="VAT CERTIFICATE"
+                badge={isTaxRegisteredInCompany ? "From Company Profile" : ""}
                 isEditing={isEditingFinance}
                 isLoading={isFetchingDocs}
                 fileName={resolvedVatCert?.originalName ?? "No file uploaded"}
@@ -1172,7 +1210,7 @@ export default function FinanceDetails() {
                   errors?.vatCert?.[0] || (errors?.documents ? " " : undefined)
                 }
                 showErrorDescription={errors?.vatCert?.[0] ?? false}
-                disabled={isSavingFinance}
+                disabled={isTaxRegisteredInCompany ? true : isSavingFinance}
                 secondaryStatuses={[
                   {
                     label: "AI Verification :",
@@ -1196,16 +1234,22 @@ export default function FinanceDetails() {
                         ? "secondary"
                         : "outline",
                     onClick: handleVatCertRescan,
-                    disabled:
-                      (!resolvedVatCert && !files.vatCert) ||
-                      vatCertAI.scan.status === "scanning" ||
-                      isSavingFinance,
+                    disabled: isTaxRegisteredInCompany
+                      ? true
+                      : (!resolvedVatCert && !files.vatCert) ||
+                        vatCertAI.scan.status === "scanning" ||
+                        isSavingFinance,
                   },
                 ]}
-                infoPillDescription="Required if you provide a VAT number. Used to verify your VAT registration. AI scan is available for this document."
+                infoPillDescription={
+                  isTaxRegisteredInCompany
+                    ? "This VAT certificate is linked from your loan-out company profile and is shown here for reference only."
+                    : "Required if you provide a VAT number. Used to verify your VAT registration. AI scan is available for this document."
+                }
                 actionSlot={
                   isEditingFinance &&
-                  vatCertDocs?.length > 0 && (
+                  vatCertDocs?.length > 0 &&
+                  !isTaxRegisteredInCompany && (
                     <ReuseDocumentPromptPanel
                       label="VAT certificate"
                       docs={vatCertDocs}

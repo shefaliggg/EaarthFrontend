@@ -19,6 +19,7 @@ import { getStatusBadge } from "../../config/statusBadgeConfig";
 export default function EditableDocumentField({
   label,
   icon,
+  badge,
   isEditing = false,
   isLoading = false,
 
@@ -83,7 +84,7 @@ export default function EditableDocumentField({
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           {icon && <SmartIcon icon={icon} size="md" />}
           <span>{label}</span>
-
+          {badge && <span className="text-amber-600">({badge})</span>}
           {infoPillDescription && (
             <InfoTooltip content={infoPillDescription}>
               <CircleQuestionMark className="size-4" />
@@ -98,7 +99,7 @@ export default function EditableDocumentField({
 
       {/* VIEW MODE */}
       {isLoading ? (
-        <div className="border rounded-lg p-3 flex items-center gap-3 animate-pulse bg-card">
+        <div className="border rounded-xl p-3 flex items-center gap-3 animate-pulse bg-card">
           <Skeleton className="w-10 h-10 rounded-md" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-3 w-40 rounded" />
@@ -106,18 +107,16 @@ export default function EditableDocumentField({
           </div>
         </div>
       ) : !isLoading && isUploaded ? (
-        <div className="border rounded-lg p-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 bg-card">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="w-17 h-17 shrink-0 rounded-md bg-muted/80 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-primary" />
+        <div className="border rounded-xl p-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 bg-card">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-16 h-16 shrink-0 rounded-md bg-muted/80 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-primary" />
             </div>
 
             <div className="min-w-0 flex-1">
               {/* Added flex-wrap and gap to handle multiple badges cleanly */}
               <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                <p className="text-sm font-medium truncate max-w-[220px] sm:max-w-[360px]">
-                  {fileName}
-                </p>
+                <h5 className=" font-semibold truncate">{fileName}</h5>
 
                 {/* Primary Overall Status */}
                 <StatusBadge status={status?.toLowerCase()} size="sm" />

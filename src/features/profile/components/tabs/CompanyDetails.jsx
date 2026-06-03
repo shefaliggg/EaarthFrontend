@@ -78,6 +78,7 @@ const EMPTY_COMPANY_CONTACT = {
 
 const EMPTY_COMPANY_TAX = {
   isVATRegistered: false,
+  vatNumber: "",
   taxRegistrationNumberIreland: "",
   taxClearanceAccessNumberIreland: "",
 };
@@ -208,6 +209,7 @@ export default function CompanyDetails() {
     ? formState.companyTax
     : {
         isVATRegistered: company?.isVATRegistered ?? false,
+        vatNumber: company?.vatNumber ?? "",
         taxRegistrationNumberIreland:
           company?.taxRegistrationNumberIreland ?? "",
         taxClearanceAccessNumberIreland:
@@ -288,6 +290,7 @@ export default function CompanyDetails() {
       },
       companyTax: {
         isVATRegistered: company?.isVATRegistered ?? false,
+        vatNumber: company?.vatNumber ?? "",
         taxRegistrationNumberIreland:
           company?.taxRegistrationNumberIreland ?? "",
         taxClearanceAccessNumberIreland:
@@ -499,6 +502,7 @@ export default function CompanyDetails() {
         allowThirdPartyToSignContracts:
           formState.companyContact.allowThirdPartyToSignContracts,
         isVATRegistered: formState.companyTax.isVATRegistered,
+        vatNumber: formState.companyTax.vatNumber,
         taxRegistrationNumberIreland:
           formState.companyTax.taxRegistrationNumberIreland,
         taxClearanceAccessNumberIreland:
@@ -687,7 +691,10 @@ export default function CompanyDetails() {
 
   const handleSaveTax = async () => {
     setErrors({});
-    const result = companyTaxSchema.safeParse(formState.companyTax);
+    const result = companyTaxSchema.safeParse({
+      ...formState.companyTax,
+      _meta: { files, reuseDocIds },
+    });
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
       return;
@@ -696,6 +703,8 @@ export default function CompanyDetails() {
     const fd = buildFormData(
       {
         isVATRegistered: formState.companyTax.isVATRegistered,
+        companyName: cd?.name, //for government verification - in case company name was updated but not saved yet
+        vatNumber: formState.companyTax.vatNumber,
         taxRegistrationNumberIreland:
           formState.companyTax.taxRegistrationNumberIreland,
         taxClearanceAccessNumberIreland:
@@ -1248,6 +1257,28 @@ export default function CompanyDetails() {
                 />
               </div>
 
+              {ct?.isVATRegistered && (
+                <EditableTextDataField
+                  label="VAT NUMBER"
+                  value={ct?.vatNumber}
+                  isEditing={isEditingTax}
+                  prettify={false}
+                  onChange={(val) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      companyTax: {
+                        ...prev.companyTax,
+                        vatNumber: val,
+                      },
+                    }))
+                  }
+                  error={errors?.vatNumber?.[0]}
+                  showErrorDescription={false}
+                  disabled={isSavingTax}
+                  isRequired={ct?.isVATRegistered}
+                />
+              )}
+
               {companyIsInIreland && (
                 <>
                   <EditableTextDataField
@@ -1290,6 +1321,27 @@ export default function CompanyDetails() {
 
               {ct?.isVATRegistered && (
                 <div className=" md:col-span-2 2xl:col-span-1">
+                  {isEditingTax && (
+                    <div className="mb-3">
+                      <InfoPanel
+                        icon={BrainCircuit}
+                        title="AI document scan"
+                        variant="info"
+                        dismissible
+                        storageKey="hide-ai-vat-cert-info"
+                      >
+                        <p>
+                          Upload your VAT certificate to auto-fill the VAT
+                          details above using AI.
+                        </p>
+                        <p className="text-[11px] opacity-80">
+                          Please review all extracted details before saving, as
+                          AI may occasionally make mistakes.
+                        </p>
+                      </InfoPanel>
+                    </div>
+                  )}
+
                   {isEditingTax && vatCertAI.scan.status !== "idle" && (
                     <div className="mb-3">
                       <AIScanBanner
@@ -1299,6 +1351,15 @@ export default function CompanyDetails() {
                         conflictCount={vatCertAI.aiConflicts.length}
                       />
                     </div>
+                  )}
+
+                  {/* Conflict resolution */}
+                  {isEditingTax && vatCertAI.aiConflicts.length > 0 && (
+                    <AIConflictPanel
+                      conflicts={vatCertAI.aiConflicts}
+                      onAccept={vatCertAI.acceptAISuggestion}
+                      onReject={vatCertAI.rejectAISuggestion}
+                    />
                   )}
 
                   <EditableDocumentField
