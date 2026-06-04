@@ -9,7 +9,7 @@ function TimesheetLayout() {
 
     const renderTimsheetDashboard = () => {
         switch (crewUserRole) {
-            case "crew":
+            case "hod":
                 return <CrewTimesheetsAndExpensesOverview />;
 
             default:

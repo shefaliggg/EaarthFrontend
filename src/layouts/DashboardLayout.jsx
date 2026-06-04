@@ -36,7 +36,8 @@ const DASHBOARD_APPLICATIONS = [
   { id: "timesheets",  label: "TIMESHEETS",  icon: ClipboardList, route: "timesheets"  },
   { id: "calendar",    label: "CALENDAR",    icon: CalendarDays,  route: "calendar"    },
   { id: "chat",        label: "CHAT",        icon: MessageSquare, route: "chat"        },
-  { id: "call-sheets", label: "CALL SHEETS", icon: Video,         route: "call-sheets" },
+  { id: "call-sheets", label: "CALL SHEETs", icon: Video,         route: "call-sheets" },
+  { id: "settings",    label: "SETTINGS",    icon: Settings,      route: "settings"    },
 ];
 
 const PROJECT_ACCENT_PALETTE = [
@@ -93,8 +94,6 @@ function productionToSidebarProject(p, index) {
     id:             p._id,
     name:           p.productionName,
     accent:         resolveAccentColor(p, index),
-    // Crew projects always come back as "approved" (contract is complete)
-    // Studio admin projects can be any status
     approvalStatus: p.approvalStatus ?? "approved",
   };
 }
@@ -268,19 +267,15 @@ const DashboardLayout = () => {
   const { pathname } = useLocation();
   const navigate     = useNavigate();
   const dispatch     = useDispatch();
-  useScrollHeaderTracker(); // eslint-disable-line
+  useScrollHeaderTracker();
 
   // ── Role — affiliations[] is the source of truth ──────────────────────────
-  // This is the ONLY place that determines whether "Create Project" shows.
-  // Do NOT use user.userType here — it's deprecated.
   const canCreateProject = checkIsStudioAdmin(user);
 
   // ── Redux ─────────────────────────────────────────────────────────────────
   const reduxProjects  = useSelector((s) => s.project?.projects ?? []);
   const currentProject = useSelector((s) => s.project?.currentProject);
 
-  // Fetch on mount — thunk internally routes to /productions or /my-projects
-  // based on whether the user is a studio admin (reads affiliations[] from Redux)
   useEffect(() => {
     dispatch(getAllProjectsThunk({}));
   }, [dispatch]);
@@ -288,7 +283,6 @@ const DashboardLayout = () => {
   // ── Build sidebar project list ────────────────────────────────────────────
   const dynamicProjects = reduxProjects.map(productionToSidebarProject);
 
-  // Prepend a just-created project that may not be in the fetched list yet
   const mergedProjects = (() => {
     if (!currentProject) return dynamicProjects;
     const alreadyIn = dynamicProjects.some((p) => p.id === currentProject._id);
@@ -306,7 +300,6 @@ const DashboardLayout = () => {
 
   const { tabs: workspaceTabs, activeTabId } = workspaceState;
 
-  // Re-label tabs when project names resolve from Redux
   useEffect(() => {
     if (mergedProjects.length === 0) return;
     setWorkspaceState((prev) => ({
@@ -401,27 +394,6 @@ const DashboardLayout = () => {
             />
           </div>
 
-          {/* Create project — STUDIO ADMIN ONLY
-           *  canCreateProject uses affiliations[] not userType.
-           *  Crew users will NEVER see this button.
-           */}
-          {/* {canCreateProject && (
-            <>
-              <div className="px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenWorkspaceTab("/projects/create")}
-                  className="flex h-9 w-full items-center gap-2 rounded-md bg-sidebar-primary px-3 text-sm font-medium text-sidebar-primary-foreground transition-colors hover:bg-sidebar-primary/90"
-                  title="CREATE PROJECT"
-                >
-                  <Plus className="h-4 w-4 shrink-0" />
-                  <span>CREATE PROJECT</span>
-                </button>
-              </div>
-              <div className="border-b border-sidebar-border" />
-            </>
-          )} */}
-
           {/* Projects list */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
@@ -479,7 +451,6 @@ const DashboardLayout = () => {
                           <span className="flex-1 truncate text-left font-medium uppercase">
                             {project.name}
                           </span>
-                          {/* Amber dot — only for studio admin viewing unapproved projects */}
                           {isPending && canCreateProject && (
                             <span
                               className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full"
@@ -518,7 +489,6 @@ const DashboardLayout = () => {
                       {/* Expanded sub-nav */}
                       {isOpen && (
                         <div className="space-y-0.5">
-                          {/* Status badge — only shown to studio admin for non-approved projects */}
                           {canCreateProject && (
                             <ApprovalStatusBadge approvalStatus={project.approvalStatus} />
                           )}
@@ -529,9 +499,6 @@ const DashboardLayout = () => {
                             {DASHBOARD_APPLICATIONS.map((item) => {
                               const to = `/projects/${slug}/${item.route}`;
 
-                              // Gate navigation on approval — applies to both roles.
-                              // Crew projects are always approved so they'll always see links.
-                              // Studio admin's draft/pending/rejected projects stay locked.
                               if (!approved) {
                                 return (
                                   <LockedAppItem
@@ -543,7 +510,7 @@ const DashboardLayout = () => {
                               }
 
                               const ItemIcon    = item.icon;
-                              const isAppActive = pathname === to;
+                              const isAppActive = pathname.startsWith(to);
 
                               return (
                                 <div
@@ -555,7 +522,7 @@ const DashboardLayout = () => {
                                     type="button"
                                     onClick={() => handleOpenWorkspaceTab(to)}
                                     className={cn(
-                                      "relative flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                      "relative flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                                       isAppActive &&
                                         "bg-sidebar-primary text-sidebar-primary-foreground",
                                     )}
