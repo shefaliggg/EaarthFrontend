@@ -1,7 +1,7 @@
 import AnimatedCircularProgress from "@/features/projects/settings/components/shared/AnimatedCircularProgress";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
-import { StatusBadge } from "../../../../shared/components/badges/StatusBadge";
+import { StatusBadge } from "@/shared/components/badges/StatusBadge";
 
 export default function SettingsHeader({ currentTab }) {
   return (
