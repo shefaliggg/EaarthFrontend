@@ -5,7 +5,7 @@ import * as FramerMotion from "framer-motion";
 
 import { PageHeader }             from "@/shared/components/PageHeader";
 import AnimatedCircularProgress   from "@/features/projects/settings/components/shared/AnimatedCircularProgress";
-import ProgressNavigator          from "./ProgressNavigator";
+import ProgressNavigator          from "@/features/projects/settings/components/ProgressNavigator";
 import SettingsHeader             from "@/features/projects/settings/components/SettingsHeader";
 import NavigationFooter           from "@/features/projects/settings/components/NavigationFooter";
 
