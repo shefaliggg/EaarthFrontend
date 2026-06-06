@@ -37,8 +37,8 @@ import {
   AIConflictPanel,
   AIScanBanner,
 } from "../../../ai/documents/components/AIFieldSuggestion";
-import { BrainCircuit, XCircle } from "lucide-react";
-import { formatFileSize } from "../../../../shared/config/utils";
+import { BrainCircuit, XCircle, Info } from "lucide-react";
+import { formatFileSize, getFullName } from "../../../../shared/config/utils";
 
 export default function FinanceDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -71,6 +71,7 @@ export default function FinanceDetails() {
   const { userDocuments, isFetching: isFetchingDocs } = useSelector(
     (state) => state.userDocuments,
   );
+  const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
@@ -86,8 +87,13 @@ export default function FinanceDetails() {
     p45: null,
     vatCert: null,
   };
+
+  const currentUserFullName = getFullName(currentUser);
   const fin = crewProfile?.finance;
   const countryisIceland = crewProfile?.countryOfPermanentResidence === "IS";
+  const isTaxRegisteredInCompany =
+    crewProfile?.company?.usesLoanOutCompany &&
+    crewProfile?.company?.isVATRegistered;
 
   // ── Document pools from store ──────────────────────────────────────────────
   const fs4Docs = getDocumentsByType(userDocuments, "FS4");
@@ -115,7 +121,9 @@ export default function FinanceDetails() {
     userDocuments,
   );
   const resolvedVatCert = getDisplayDocument(
-    fin?.vatCertificateId,
+    isTaxRegisteredInCompany
+      ? crewProfile?.company?.vatCertificateId
+      : fin?.vatCertificateId,
     reuseDocIds.vatCert,
     files.vatCert,
     userDocuments,
@@ -434,6 +442,7 @@ export default function FinanceDetails() {
       _meta: {
         files,
         reuseDocIds,
+        isTaxRegisteredInCompany,
       },
     });
 
@@ -460,6 +469,12 @@ export default function FinanceDetails() {
         formData.append(key, data[key]);
       }
     });
+
+    formData.append("isTaxRegisteredInCompany", isTaxRegisteredInCompany);
+
+    if (currentUserFullName && data.vatNumber) {
+      formData.append("vatRegisteredName", currentUserFullName);
+    }
     // Boolean needs explicit string coercion over FormData
     if (
       data.hasOngoingStudentLoan !== null &&
@@ -567,11 +582,41 @@ export default function FinanceDetails() {
     }
 
     try {
-      await dispatch(updateFinanceDetailsThunk(formData)).unwrap();
-      toast.success("Financial details updated successfully");
+      const response = await dispatch(
+        updateFinanceDetailsThunk(formData),
+      ).unwrap();
+
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (!vatVerification) {
+        toast.success("Financial details updated", {
+          description:
+            "Your financial details have been saved. Any uploaded documents will be reviewed by our verification team.",
+        });
+      } else if (vatVerification.status === "VERIFIED") {
+        toast.success("Financial details updated", {
+          description:
+            "Your financial details have been saved and your VAT registration was successfully verified with HMRC.",
+        });
+      } else if (vatVerification.status === "NEEDS_REVIEW") {
+        toast.success("Financial details updated", {
+          description:
+            vatVerification.actionReason ||
+            "Your VAT registration was found, but some details require administrator review.",
+        });
+      } else {
+        toast.success("Financial details updated", {
+          description:
+            vatVerification.actionReason ||
+            "Your VAT registration has been submitted and is awaiting verification review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update financial details");
+      toast.error("Failed to update financial details", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -642,6 +687,21 @@ export default function FinanceDetails() {
         }
       >
         <div className="space-y-6">
+          {isEditingFinance && isTaxRegisteredInCompany && (
+            <InfoPanel
+              icon={Info}
+              title="Company VAT Registration Detected"
+              variant="info"
+              dismissible
+              storageKey="hide-company-vat-details-available-info"
+            >
+              Your VAT registration details are being provided through your
+              loan-out company profile. You may leave the financial details
+              section blank unless additional tax or payroll information is
+              required for your contracts.
+            </InfoPanel>
+          )}
+
           {/* Tax / NI numbers */}
           {errors?.formFields && (
             <InfoPanel variant="danger" title="Missing Details" icon={XCircle}>
@@ -727,22 +787,38 @@ export default function FinanceDetails() {
               disabled={isSavingFinance}
               isRequired={false}
             />
+
             <EditableTextDataField
               label="VAT NUMBER"
-              value={fd?.vatNumber}
+              value={
+                isTaxRegisteredInCompany
+                  ? crewProfile?.company?.vatNumber
+                  : fd?.vatNumber
+              }
               isEditing={isEditingFinance}
               prettify={false}
-              badge="Loan Out / Self-employed"
-              infoPillDescription="Needed if you operate as a company or are VAT registered. May be required for loan-out or invoicing contracts."
+              badge={
+                isTaxRegisteredInCompany
+                  ? "From Company Profile"
+                  : "Self-employed"
+              }
+              infoPillDescription={
+                isTaxRegisteredInCompany
+                  ? "This VAT registration is managed through your loan-out company profile and cannot be edited here."
+                  : "Required if you are self-employed for tax purposes in certain countries."
+              }
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
-                  finance: { ...prev.finance, vatNumber: val },
+                  finance: {
+                    ...prev.finance,
+                    vatNumber: isTaxRegisteredInCompany ? undefined : val,
+                  },
                 }))
               }
               error={errors?.formFields ? " " : undefined}
               showErrorDescription={false}
-              disabled={isSavingFinance}
+              disabled={isTaxRegisteredInCompany ? true : isSavingFinance}
               isRequired={false}
             />
 
@@ -894,10 +970,10 @@ export default function FinanceDetails() {
                 error={errors?.documents}
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedFs4?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: fs4AI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedFs4?.aiVerification?.status?.toUpperCase(),
@@ -905,6 +981,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedFs4?.createdAt}
+                verifiedAt={resolvedFs4?.verifiedAt}
                 secondaryActions={[
                   {
                     label: fs4AIScanLabel,
@@ -985,10 +1063,10 @@ export default function FinanceDetails() {
                 }
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedPayslip?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: payslipAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedPayslip?.aiVerification?.status?.toUpperCase(),
@@ -996,6 +1074,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedPayslip?.createdAt}
+                verifiedAt={resolvedPayslip?.verifiedAt}
                 secondaryActions={[
                   {
                     label: payslipAIScanLabel,
@@ -1076,10 +1156,10 @@ export default function FinanceDetails() {
                 }
                 showErrorDescription={false}
                 disabled={isSavingFinance}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedP45?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: p45AI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedP45?.aiVerification?.status?.toUpperCase(),
@@ -1087,6 +1167,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedP45?.createdAt}
+                verifiedAt={resolvedP45?.verifiedAt}
                 secondaryActions={[
                   {
                     label: p45AIScanLabel,
@@ -1141,6 +1223,7 @@ export default function FinanceDetails() {
 
               <EditableDocumentField
                 label="VAT CERTIFICATE"
+                badge={isTaxRegisteredInCompany ? "From Company Profile" : ""}
                 isEditing={isEditingFinance}
                 isLoading={isFetchingDocs}
                 fileName={resolvedVatCert?.originalName ?? "No file uploaded"}
@@ -1166,11 +1249,11 @@ export default function FinanceDetails() {
                   errors?.vatCert?.[0] || (errors?.documents ? " " : undefined)
                 }
                 showErrorDescription={errors?.vatCert?.[0] ?? false}
-                disabled={isSavingFinance}
-                secondaryBadges={[
+                disabled={isTaxRegisteredInCompany ? true : isSavingFinance}
+                secondaryStatuses={[
                   {
-                    status: resolvedVatCert?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: vatCertAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedVatCert?.aiVerification?.status?.toUpperCase(),
@@ -1178,6 +1261,8 @@ export default function FinanceDetails() {
                     icon: "Brain",
                   },
                 ]}
+                uploadedOn={resolvedVatCert?.createdAt}
+                verifiedAt={resolvedVatCert?.verifiedAt}
                 secondaryActions={[
                   {
                     label: vatCertAIScanLabel,
@@ -1188,16 +1273,22 @@ export default function FinanceDetails() {
                         ? "secondary"
                         : "outline",
                     onClick: handleVatCertRescan,
-                    disabled:
-                      (!resolvedVatCert && !files.vatCert) ||
-                      vatCertAI.scan.status === "scanning" ||
-                      isSavingFinance,
+                    disabled: isTaxRegisteredInCompany
+                      ? true
+                      : (!resolvedVatCert && !files.vatCert) ||
+                        vatCertAI.scan.status === "scanning" ||
+                        isSavingFinance,
                   },
                 ]}
-                infoPillDescription="Required if you provide a VAT number. Used to verify your VAT registration. AI scan is available for this document."
+                infoPillDescription={
+                  isTaxRegisteredInCompany
+                    ? "This VAT certificate is linked from your loan-out company profile and is shown here for reference only."
+                    : "Required if you provide a VAT number. Used to verify your VAT registration. AI scan is available for this document."
+                }
                 actionSlot={
                   isEditingFinance &&
-                  vatCertDocs?.length > 0 && (
+                  vatCertDocs?.length > 0 &&
+                  !isTaxRegisteredInCompany && (
                     <ReuseDocumentPromptPanel
                       label="VAT certificate"
                       docs={vatCertDocs}

@@ -58,7 +58,7 @@ export default function ImagePreviewDialog({ open, onOpenChange, imageFile }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-screen max-w-screen! h-screen p-0 bg-transparent border-0 shadow-none overflow-hidden rounded-none">
+      <DialogContent showCloseButton={false} className="w-screen max-w-screen! h-screen p-0 bg-transparent border-0 shadow-none overflow-hidden rounded-none">
         <div className="relative w-full h-full flex items-center justify-center bg-black/75">
           <div className="absolute top-4 left-6 flex items-center gap-3 z-50 bg-black/40 backdrop-blur-md rounded-3xl px-3 py-1.5 text-white">
             <button

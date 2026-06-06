@@ -18,6 +18,11 @@ function ViewToggleButton({
   variant = "outline",
 }) {
   const views = [
+    {
+      key: GridLabel,
+      icon: gridIcon,
+      label: GridLabel,
+    },
     ...(showTable
       ? [
           {
@@ -27,11 +32,6 @@ function ViewToggleButton({
           },
         ]
       : []),
-    {
-      key: GridLabel,
-      icon: gridIcon,
-      label: GridLabel,
-    },
     {
       key: listLabel,
       icon: listIcon,
@@ -43,7 +43,7 @@ function ViewToggleButton({
     <div className="flex gap-1 bg-background p-1 rounded-md">
       {views.map((item) =>
         !showLabel ? (
-          <InfoTooltip key={item.key} content={`Switch to ${item.label}`}>
+          <InfoTooltip key={item.key} content={`${item.label} view`}>
             <Button
               size="sm"
               onClick={() => onViewChange(item.key)}

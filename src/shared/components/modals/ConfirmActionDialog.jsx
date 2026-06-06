@@ -74,6 +74,7 @@ export default function ConfirmActionDialog({
         toast.success(successMessage);
       }
       if (autoClose) {
+        console.log("triggered auto close")
         onOpenChange();
       }
     } catch (err) {

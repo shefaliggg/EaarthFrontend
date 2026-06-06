@@ -1,7 +1,3 @@
-// Import the reasons if they exist in your project
-// If you don't have this file, you'll need to create it or define the reasons here
-
-// Temporary placeholder arrays - replace with actual imports if available
 const STUDIO_SUSPENSION_REASONS = [
   { value: "violation", label: "Policy Violation" },
   { value: "payment", label: "Payment Issues" },
@@ -138,6 +134,18 @@ export const deleteDocumentConfirmConfig = {
     "This document will be moved to trash.\n\nYou can restore it within 30 days. After that, it will be permanently deleted and cannot be recovered.",
   confirmText: "Move to Trash",
   variant: "danger",
+};
+
+export const companyVerificationConfirmConfig = {
+  variant: "info",
+
+  title: "Verify company details before saving?",
+
+  description:
+    "Before your company details are saved, Eaarth will verify the company name and registration number against official Companies House records.\n\nPlease ensure the information entered matches the registered company exactly. Incorrect details may cause verification to fail.",
+
+  confirmText: "Verify & Save",
+  cancelText: "Review Details",
 };
 
 export const statusConfigMap = {

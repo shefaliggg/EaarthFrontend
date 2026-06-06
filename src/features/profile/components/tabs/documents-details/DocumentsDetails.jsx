@@ -53,7 +53,7 @@ export default function DocumentsDetails({
   isEditing,
   setIsEditing,
 }) {
-  const [view, setView] = useState("table");
+  const [view, setView] = useState("grid");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("latest");
   const [viewMode, setViewMode] = useState("active");

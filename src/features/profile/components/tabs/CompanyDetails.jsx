@@ -36,7 +36,10 @@ import {
   companyTaxSchema,
   companyBankSchema,
 } from "../../config/profileValidationShemas";
-import { removeCompanyDetailsConfig } from "../../../../shared/config/ConfirmActionsConfig";
+import {
+  companyVerificationConfirmConfig,
+  removeCompanyDetailsConfig,
+} from "../../../../shared/config/ConfirmActionsConfig";
 import { formatFileSize } from "../../../../shared/config/utils";
 import { buildDocumentAiExtraction } from "@/features/ai/documents/config/aiDocumentScanner.helper";
 import { useDocumentSectionAI } from "@/features/ai/documents/hooks/useDocumentSectionAI";
@@ -47,7 +50,10 @@ import {
 import { InfoPanel } from "@/shared/components/panels/InfoPanel";
 import { BrainCircuit } from "lucide-react";
 import { is } from "zod/v4/locales";
-import { resolveAIVerificationStatusLabel } from "../../../ai/documents/config/aiDocumentScanner.helper";
+import {
+  getGovtVerificationStatusLabel,
+  resolveAIVerificationStatusLabel,
+} from "../../../ai/documents/config/aiDocumentScanner.helper";
 
 // ── Empty state constants ─────────────────────────────────────────────────────
 
@@ -72,6 +78,7 @@ const EMPTY_COMPANY_CONTACT = {
 
 const EMPTY_COMPANY_TAX = {
   isVATRegistered: false,
+  vatNumber: "",
   taxRegistrationNumberIreland: "",
   taxClearanceAccessNumberIreland: "",
 };
@@ -123,9 +130,6 @@ export default function CompanyDetails() {
   );
   const { openModal, closeModal } = useModalStore();
 
-  // ── AI hooks ───────────────────────────────────────────────────────────────
-
-  // Cert of incorp — auto-fills: company name, registration number, country
   const certOfIncorpAI = useDocumentSectionAI({
     documentType: "CERTIFICATE_OF_INCORPORATION",
     scanKey: "certOfIncorp",
@@ -134,7 +138,6 @@ export default function CompanyDetails() {
       setFormState((prev) => ({ ...prev, companyDetails: updated })),
   });
 
-  // VAT cert — no form fields to fill yet, but scan is persisted on the doc
   const vatCertAI = useDocumentSectionAI({
     documentType: "VAT_CERTIFICATE",
     scanKey: "vatCert",
@@ -143,7 +146,6 @@ export default function CompanyDetails() {
       setFormState((prev) => ({ ...prev, companyTax: updated })),
   });
 
-  // ── Fetch on mount ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
   }, [crewProfile, isFetching]);
@@ -207,6 +209,7 @@ export default function CompanyDetails() {
     ? formState.companyTax
     : {
         isVATRegistered: company?.isVATRegistered ?? false,
+        vatNumber: company?.vatNumber ?? "",
         taxRegistrationNumberIreland:
           company?.taxRegistrationNumberIreland ?? "",
         taxClearanceAccessNumberIreland:
@@ -287,6 +290,7 @@ export default function CompanyDetails() {
       },
       companyTax: {
         isVATRegistered: company?.isVATRegistered ?? false,
+        vatNumber: company?.vatNumber ?? "",
         taxRegistrationNumberIreland:
           company?.taxRegistrationNumberIreland ?? "",
         taxClearanceAccessNumberIreland:
@@ -353,8 +357,6 @@ export default function CompanyDetails() {
     vatCertAI.resetAIState();
   };
 
-  // ── Cert of incorp handlers ───────────────────────────────────────────────
-
   const handleCertOfIncorpUpload = useCallback(
     async (file) => {
       setFiles((f) => ({ ...f, certificateOfIncorporation: file }));
@@ -398,8 +400,6 @@ export default function CompanyDetails() {
     },
     [userDocuments, certOfIncorpAI],
   );
-
-  // ── VAT cert handlers ─────────────────────────────────────────────────────
 
   const handleVatCertUpload = useCallback(
     async (file) => {
@@ -446,7 +446,6 @@ export default function CompanyDetails() {
     [userDocuments, vatCertAI],
   );
 
-  // ── Build FormData helper ─────────────────────────────────────────────────
   const buildFormData = (fields, fileMap) => {
     const fd = new FormData();
     for (const [key, val] of Object.entries(fields)) {
@@ -463,8 +462,6 @@ export default function CompanyDetails() {
     }
     return fd;
   };
-
-  // ── Save handlers ─────────────────────────────────────────────────────────
 
   const handleSaveSetup = async () => {
     setErrors({});
@@ -505,6 +502,7 @@ export default function CompanyDetails() {
         allowThirdPartyToSignContracts:
           formState.companyContact.allowThirdPartyToSignContracts,
         isVATRegistered: formState.companyTax.isVATRegistered,
+        vatNumber: formState.companyTax.vatNumber,
         taxRegistrationNumberIreland:
           formState.companyTax.taxRegistrationNumberIreland,
         taxClearanceAccessNumberIreland:
@@ -523,7 +521,6 @@ export default function CompanyDetails() {
       },
     );
 
-    // Attach AI extractions if scans ran during this session
     if (certOfIncorpAI.aiRawFields) {
       fd.append(
         "certOfIncorpAiExtraction",
@@ -562,13 +559,41 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(setupCompanyThunk(fd)).unwrap();
-      toast.success("Company setup complete", {
-        description: "You can update each section individually anytime.",
-      });
+      const response = await dispatch(setupCompanyThunk(fd)).unwrap();
+
+      const incorpVerification =
+        response.governmentVerification?.CERTIFICATE_OF_INCORPORATION;
+
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (
+        incorpVerification?.status === "VERIFIED" &&
+        vatVerification?.status === "VERIFIED"
+      ) {
+        toast.success("Company setup complete", {
+          description:
+            "Your company details were verified against Companies House and HMRC records.",
+        });
+      } else if (
+        incorpVerification?.status === "NEEDS_REVIEW" ||
+        vatVerification?.status === "NEEDS_REVIEW"
+      ) {
+        toast.success("Company setup complete", {
+          description:
+            "Your company information was saved, but some verification checks require administrator review.",
+        });
+      } else {
+        toast.success("Company setup complete", {
+          description:
+            "Your company information was saved and verification checks are pending review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to complete company setup");
+      toast.error("Failed to complete company setup", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -596,7 +621,9 @@ export default function CompanyDetails() {
             });
             cancelEditing();
           } catch (err) {
-            toast.error(err?.message || "Failed to update company details");
+            toast.error("Failed to disable loan out company", {
+              description: err?.message || "An unknown error occurred",
+            });
           }
         },
         autoClose: true,
@@ -651,14 +678,40 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
-      toast.success("Loan company details updated", {
-        description:
-          "Your loan company and financial details have been successfully updated.",
-      });
+      const response = await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
+
+      const incorpVerification =
+        response.governmentVerification?.CERTIFICATE_OF_INCORPORATION;
+
+      if (!incorpVerification) {
+        toast.success("Company details updated", {
+          description:
+            "Your loan out company details have been successfully updated.",
+        });
+      } else if (incorpVerification.status === "VERIFIED") {
+        toast.success("Company details updated", {
+          description:
+            "Your company details were successfully verified against Companies House records.",
+        });
+      } else if (incorpVerification.status === "NEEDS_REVIEW") {
+        toast.success("Company details updated", {
+          description:
+            incorpVerification.actionReason ||
+            "Your company details were saved. Companies House found differences that require administrator review.",
+        });
+      } else {
+        toast.success("Company details updated", {
+          description:
+            incorpVerification.actionReason ||
+            "Your company details were saved and are awaiting verification review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company details");
+      toast.error("Failed to update company details", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -688,13 +741,18 @@ export default function CompanyDetails() {
       toast.success("Company contact updated successfully");
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company contact");
+      toast.error("Failed to update company contact", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
   const handleSaveTax = async () => {
     setErrors({});
-    const result = companyTaxSchema.safeParse(formState.companyTax);
+    const result = companyTaxSchema.safeParse({
+      ...formState.companyTax,
+      _meta: { files, reuseDocIds },
+    });
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
       return;
@@ -703,6 +761,8 @@ export default function CompanyDetails() {
     const fd = buildFormData(
       {
         isVATRegistered: formState.companyTax.isVATRegistered,
+        vatRegisteredName: cd?.name, //for government verification - in case company name was updated but not saved yet
+        vatNumber: formState.companyTax.vatNumber,
         taxRegistrationNumberIreland:
           formState.companyTax.taxRegistrationNumberIreland,
         taxClearanceAccessNumberIreland:
@@ -734,11 +794,37 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(updateCompanyTaxThunk(fd)).unwrap();
-      toast.success("Company tax updated successfully");
+      const response = await dispatch(updateCompanyTaxThunk(fd)).unwrap();
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (!vatVerification) {
+        toast.success("Company tax updated", {
+          description:
+            "Your loan company tax details have been successfully updated.",
+        });
+      } else if (vatVerification.status === "VERIFIED") {
+        toast.success("Company tax updated", {
+          description:
+            "Your VAT details were successfully verified against HMRC records.",
+        });
+      } else if (vatVerification.status === "NEEDS_REVIEW") {
+        toast.success("Company tax updated", {
+          description:
+            vatVerification?.actionReason ||
+            "Your VAT details were saved. HMRC found differences that require administrator review.",
+        });
+      } else {
+        toast.success("Company tax updated", {
+          description:
+            vatVerification?.actionReason ||
+            "Your VAT details were saved and are awaiting verification review.",
+        });
+      }
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company tax");
+      toast.error("Failed to update company tax", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -754,7 +840,9 @@ export default function CompanyDetails() {
       toast.success("Company bank updated successfully");
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company bank");
+      toast.error("Failed to update company bank", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -767,6 +855,12 @@ export default function CompanyDetails() {
       openModal(MODAL_TYPES.DOCUMENT_PREVIEW, { fileUrl: url, fileName });
     }
   };
+
+  const shouldShowVerificationModal =
+    !!files?.certificateOfIncorporation ||
+    formState?.companyDetails?.name !== company?.name ||
+    formState?.companyDetails?.registrationNumber !==
+      company?.registrationNumber;
 
   // ── Loading / Error states ────────────────────────────────────────────────
   if (isFetching) {
@@ -793,10 +887,8 @@ export default function CompanyDetails() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── Company Details ──────────────────────────────────────────────── */}
       <CardWrapper
         title="Company Details"
         icon="Building2"
@@ -807,7 +899,21 @@ export default function CompanyDetails() {
             onEdit={
               isSetupMode ? undefined : () => startEditing("companyDetails")
             }
-            onSave={isSetupMode ? handleSaveSetup : handleSaveDetails}
+            onSave={
+              isSetupMode
+                ? handleSaveSetup
+                : shouldShowVerificationModal
+                  ? () =>
+                      openModal(MODAL_TYPES.CONFIRM_ACTION, {
+                        config: companyVerificationConfirmConfig,
+                        onConfirm: async () => {
+                          closeModal();
+                          await handleSaveDetails();
+                        },
+                        autoClose: true,
+                      })
+                  : handleSaveDetails
+            }
             onCancel={cancelEditing}
           />
         }
@@ -972,17 +1078,27 @@ export default function CompanyDetails() {
                 fileUrl={resolvedCertOfIncorp?.url ?? null}
                 isUploaded={!!resolvedCertOfIncorp}
                 status={resolvedCertOfIncorp?.verificationStatus || "Pending"}
-                secondaryBadges={[
+                secondaryStatuses={[
                   {
-                    status: resolvedCertOfIncorp?.aiVerification?.status,
-                    label: resolveAIVerificationStatusLabel({
+                    label: "AI Verification :",
+                    value: resolveAIVerificationStatusLabel({
                       scanStatus: certOfIncorpAI.scan.status?.toUpperCase(),
                       verificationStatus:
                         resolvedCertOfIncorp?.aiVerification?.status?.toUpperCase(),
                     }),
                     icon: "Brain",
                   },
+                  {
+                    label: "Companies House Verification :",
+                    value: getGovtVerificationStatusLabel({
+                      verificationStatus:
+                        resolvedCertOfIncorp?.governmentVerification?.status?.toUpperCase(),
+                    }),
+                    icon: "Landmark",
+                  },
                 ]}
+                uploadedOn={resolvedCertOfIncorp?.createdAt}
+                verifiedAt={resolvedCertOfIncorp?.verifiedAt}
                 expiresAt={resolvedCertOfIncorp?.expiresAt}
                 meta={formatFileSize(resolvedCertOfIncorp?.sizeBytes)}
                 isRequired
@@ -1227,6 +1343,28 @@ export default function CompanyDetails() {
                 />
               </div>
 
+              {ct?.isVATRegistered && (
+                <EditableTextDataField
+                  label="VAT NUMBER"
+                  value={ct?.vatNumber}
+                  isEditing={isEditingTax}
+                  prettify={false}
+                  onChange={(val) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      companyTax: {
+                        ...prev.companyTax,
+                        vatNumber: val,
+                      },
+                    }))
+                  }
+                  error={errors?.vatNumber?.[0]}
+                  showErrorDescription={false}
+                  disabled={isSavingTax}
+                  isRequired={ct?.isVATRegistered}
+                />
+              )}
+
               {companyIsInIreland && (
                 <>
                   <EditableTextDataField
@@ -1268,7 +1406,28 @@ export default function CompanyDetails() {
               )}
 
               {ct?.isVATRegistered && (
-                <div className="xl:col-span-2 2xl:col-span-1">
+                <div className="col-span-2">
+                  {isEditingTax && (
+                    <div className="mb-3">
+                      <InfoPanel
+                        icon={BrainCircuit}
+                        title="AI document scan"
+                        variant="info"
+                        dismissible
+                        storageKey="hide-ai-vat-cert-info"
+                      >
+                        <p>
+                          Upload your VAT certificate to auto-fill the VAT
+                          details above using AI.
+                        </p>
+                        <p className="text-[11px] opacity-80">
+                          Please review all extracted details before saving, as
+                          AI may occasionally make mistakes.
+                        </p>
+                      </InfoPanel>
+                    </div>
+                  )}
+
                   {isEditingTax && vatCertAI.scan.status !== "idle" && (
                     <div className="mb-3">
                       <AIScanBanner
@@ -1278,6 +1437,15 @@ export default function CompanyDetails() {
                         conflictCount={vatCertAI.aiConflicts.length}
                       />
                     </div>
+                  )}
+
+                  {/* Conflict resolution */}
+                  {isEditingTax && vatCertAI.aiConflicts.length > 0 && (
+                    <AIConflictPanel
+                      conflicts={vatCertAI.aiConflicts}
+                      onAccept={vatCertAI.acceptAISuggestion}
+                      onReject={vatCertAI.rejectAISuggestion}
+                    />
                   )}
 
                   <EditableDocumentField
@@ -1290,17 +1458,32 @@ export default function CompanyDetails() {
                     fileUrl={resolvedVatCert?.url ?? null}
                     isUploaded={!!resolvedVatCert}
                     status={resolvedVatCert?.verificationStatus || "Pending"}
-                    secondaryBadges={[
+                    secondaryStatuses={[
                       {
-                        status: resolvedVatCert?.aiVerification?.status,
-                        label: resolveAIVerificationStatusLabel({
+                        label: "AI Verification :",
+                        value: resolveAIVerificationStatusLabel({
                           scanStatus: vatCertAI.scan.status?.toUpperCase(),
                           verificationStatus:
                             resolvedVatCert?.aiVerification?.status?.toUpperCase(),
                         }),
                         icon: "Brain",
                       },
+                      {
+                        label: "HMRC VAT Verification :",
+                        value: getGovtVerificationStatusLabel({
+                          verificationStatus:
+                            resolvedVatCert?.governmentVerification?.status?.toUpperCase(),
+                        }),
+                        icon: "Landmark",
+                        tooltip:
+                          resolvedVatCert?.governmentVerification?.status?.toUpperCase() !==
+                          "VERIFIED"
+                            ? `${resolvedVatCert?.governmentVerification?.actionReason} An administrator will review this verification.`
+                            : undefined,
+                      },
                     ]}
+                    uploadedOn={resolvedVatCert?.createdAt}
+                    verifiedAt={resolvedVatCert?.verifiedAt}
                     expiresAt={resolvedVatCert?.expiresAt}
                     meta={formatFileSize(resolvedVatCert?.sizeBytes)}
                     onUpload={handleVatCertUpload}

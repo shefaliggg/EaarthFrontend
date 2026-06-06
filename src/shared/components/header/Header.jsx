@@ -244,6 +244,7 @@ export default function Header({
     messages: () => setShowMessages(true),
     "display-mode": (value) => setDisplayMode(value),
     theme: (value) => handleThemeChange(value),
+    navigate: (route) => navigate(`/${route}`)
   };
 
   useEffect(() => {
