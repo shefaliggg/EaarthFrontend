@@ -1,6 +1,7 @@
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { CheckCircle2, CircleQuestionMark, XCircle } from "lucide-react";
 import { InfoTooltip } from "../InfoTooltip";
+import { cn } from "../../config/utils";
 
 function EditableCheckboxField({
   label,
@@ -11,11 +12,17 @@ function EditableCheckboxField({
   infoPillDescription,
   isRequired = true,
   disabled = false,
+  centered = false,
 }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl">
       {isEditing ? (
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            centered && "justify-center",
+          )}
+        >
           <Checkbox
             checked={checked}
             onCheckedChange={onChange}
@@ -42,7 +49,12 @@ function EditableCheckboxField({
               {label}
             </div>
           )}
-          <div className="text-sm font-medium text-foreground">
+          <div
+            className={cn(
+              "text-sm font-medium text-foreground",
+              centered && "flex justify-center",
+            )}
+          >
             {checked ? (
               <span className="flex items-center gap-1 text-green-500">
                 <CheckCircle2
