@@ -1,303 +1,347 @@
 import { createSlice } from "@reduxjs/toolkit";
+
+// ── Root ──────────────────────────────────────────────────────────────────────
 import {
   fetchProjectSettingsThunk,
   initialiseProjectSettingsThunk,
   deleteProjectSettingsThunk,
-  updateProjectDetailsThunk,
-  updateProjectDatesThunk,
-  fetchTimecardSettingsThunk,
-  updateTimecardSettingsThunk,
-  fetchCustomSettingsThunk,
-  addDayTypeThunk,
-  updateDayTypeThunk,
-  deleteDayTypeThunk,
-  addUpgradeRoleThunk,
-  updateUpgradeRoleThunk,
-  deleteUpgradeRoleThunk,
-  fetchPennyContractCrewThunk,
-  setPennyContractThunk,
-  addAllowanceOverrideThunk,
-  deleteAllowanceOverrideThunk,
 } from "./projectSettings.thunks";
 
-const initialState = {
-  // Full document
-  projectSettings: null,
+// ── Timecard ──────────────────────────────────────────────────────────────────
+import {
+  fetchTimecardSettingsThunk,
+  updateTimecardSettingsThunk,
+} from "./thunks/timecardSettings.thunks";
 
-  // Section slices (populated individually when fetched by section)
-  timecardSettings: null,
-  customSettings: null,
-  pennyContractCrew: null,
+// ── Custom ────────────────────────────────────────────────────────────────────
+import {
+  fetchCustomSettingsThunk,
+  addDayTypeThunk, updateDayTypeThunk, deleteDayTypeThunk,
+  addUpgradeRoleThunk, updateUpgradeRoleThunk, deleteUpgradeRoleThunk,
+  fetchPennyContractCrewThunk, setPennyContractThunk,
+  addAllowanceOverrideThunk, deleteAllowanceOverrideThunk,
+} from "./thunks/customSettings.thunks";
 
-  // Loading flags
-  isFetching:  false,
-  isUpdating:  false,
-  isSubmitting: false,
+// ── Places ────────────────────────────────────────────────────────────────────
+import {
+  fetchPlacesSettingsThunk,
+  addUnitThunk,
+  updateUnitThunk,
+  deleteUnitThunk,
+  addWorkplaceThunk,
+  updateWorkplaceThunk,
+  deleteWorkplaceThunk,
+} from "./thunks/placesSettings.thunks";
 
-  error: null,
+// ── Construction ──────────────────────────────────────────────────────────────
+import {
+  fetchConstructionSettingsThunk,
+  updateDailyRateThunk,
+  updateBreaksThunk,
+  updateSixthDayThunk,
+  updateSeventhDayThunk,
+  updateOvertimeThunk,
+  updateTravelTimeThunk,
+  updateBrokenTurnaroundThunk,
+} from "./thunks/constructionSettings.thunks";
+
+// ─── Default places ───────────────────────────────────────────────────────────
+
+const DEFAULT_PLACES = {
+  units: [
+    { _id: "default-1", name: "Main",            startDate: null, endDate: null, isPrimary: true,  isActive: true },
+    { _id: "default-2", name: "Splinter Camera", startDate: null, endDate: null, isPrimary: false, isActive: true },
+    { _id: "default-3", name: "VFX Elements",    startDate: null, endDate: null, isPrimary: false, isActive: true },
+  ],
+  workplaces: [],
+  sites: ["OFF SET", "ON SET"],
 };
+
+// ─── Initial state ────────────────────────────────────────────────────────────
+
+const initialState = {
+  projectSettings:      null,
+  timecardSettings:     null,
+  customSettings:       null,
+  placesSettings:       DEFAULT_PLACES,
+  constructionSettings: null,   // ← new
+  pennyContractCrew:    null,
+
+  isFetching:   false,
+  isUpdating:   false,
+  isSubmitting: false,
+  error:        null,
+};
+
+// ─── Slice ────────────────────────────────────────────────────────────────────
 
 const projectSettingsSlice = createSlice({
   name: "projectSettings",
   initialState,
   reducers: {
-    clearProjectSettingsError(state) {
-      state.error = null;
-    },
-    setProjectSettings(state, action) {
-      state.projectSettings = action.payload;
-    },
-    updateProjectSettingsLocal(state, action) {
-      if (state.projectSettings) {
-        state.projectSettings = { ...state.projectSettings, ...action.payload };
-      }
-    },
-    clearProjectSettings(state) {
-      state.projectSettings    = null;
-      state.timecardSettings   = null;
-      state.customSettings     = null;
-      state.pennyContractCrew  = null;
-      state.error              = null;
+    clearProjectSettingsError(state)           { state.error = null; },
+    clearProjectSettings(state)                { Object.assign(state, initialState); },
+    setProjectSettings(state, { payload })     { state.projectSettings = payload; },
+    updateProjectSettingsLocal(state, { payload }) {
+      if (state.projectSettings) state.projectSettings = { ...state.projectSettings, ...payload };
     },
   },
+
   extraReducers: (builder) => {
     builder
 
-      // ─── ROOT ───────────────────────────────────────────────────────────────
+      // ── ROOT ────────────────────────────────────────────────────────────────
 
       .addCase(fetchProjectSettingsThunk.pending, (state) => {
-        state.isFetching = true;
-        state.error      = null;
+        state.isFetching = true; state.error = null;
       })
-      .addCase(fetchProjectSettingsThunk.fulfilled, (state, action) => {
-        state.isFetching      = false;
-        state.projectSettings = action.payload;
-        // Hydrate section caches from the full document
-        state.timecardSettings  = action.payload?.timecardSettings  ?? null;
-        state.customSettings    = action.payload?.customSettings    ?? null;
+      .addCase(fetchProjectSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching          = false;
+        state.projectSettings     = payload;
+        state.timecardSettings    = payload?.timecardSettings    ?? null;
+        state.customSettings      = payload?.customSettings      ?? null;
+        state.constructionSettings = payload?.constructionSettings ?? null;
+        if (payload?.placesSettings?.units?.length) {
+          state.placesSettings = payload.placesSettings;
+        }
       })
-      .addCase(fetchProjectSettingsThunk.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error      = action.payload;
+      .addCase(fetchProjectSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
       })
 
-      .addCase(initialiseProjectSettingsThunk.fulfilled, (state, action) => {
-        state.projectSettings = action.payload;
+      .addCase(initialiseProjectSettingsThunk.fulfilled, (state, { payload }) => {
+        state.projectSettings = payload;
       })
 
       .addCase(deleteProjectSettingsThunk.fulfilled, (state) => {
-        state.projectSettings   = null;
-        state.timecardSettings  = null;
-        state.customSettings    = null;
-        state.pennyContractCrew = null;
+        Object.assign(state, initialState);
       })
 
-      // ─── DETAILS ────────────────────────────────────────────────────────────
-
-      .addCase(updateProjectDetailsThunk.pending, (state) => {
-        state.isUpdating = true;
-        state.error      = null;
-      })
-      .addCase(updateProjectDetailsThunk.fulfilled, (state, action) => {
-        state.isUpdating      = false;
-        state.projectSettings = { ...state.projectSettings, ...action.payload };
-      })
-      .addCase(updateProjectDetailsThunk.rejected, (state, action) => {
-        state.isUpdating = false;
-        state.error      = action.payload;
-      })
-
-      // ─── DATES ──────────────────────────────────────────────────────────────
-
-      .addCase(updateProjectDatesThunk.pending, (state) => {
-        state.isUpdating = true;
-        state.error      = null;
-      })
-      .addCase(updateProjectDatesThunk.fulfilled, (state, action) => {
-        state.isUpdating      = false;
-        state.projectSettings = { ...state.projectSettings, ...action.payload };
-      })
-      .addCase(updateProjectDatesThunk.rejected, (state, action) => {
-        state.isUpdating = false;
-        state.error      = action.payload;
-      })
-
-      // ─── TIMECARD ───────────────────────────────────────────────────────────
+      // ── TIMECARD ────────────────────────────────────────────────────────────
 
       .addCase(fetchTimecardSettingsThunk.pending, (state) => {
-        state.isFetching = true;
-        // FIX: clear stale data immediately so the previous project's form
-        // is never shown while the new fetch is in flight, and so
-        // seededRef in the component resets correctly on project switch.
-        state.timecardSettings = null;
-        state.error            = null;
+        state.isFetching = true; state.timecardSettings = null; state.error = null;
       })
-      .addCase(fetchTimecardSettingsThunk.fulfilled, (state, action) => {
-        state.isFetching = false;
-        // FIX: action.payload is null when the project has no settings doc yet
-        // (thunk returns null for 404).  null tells the component to use
-        // DEFAULT_STATE — the form seeds to clean defaults, not stale data.
-        state.timecardSettings = action.payload ?? null;
+      .addCase(fetchTimecardSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching      = false;
+        state.timecardSettings = payload ?? null;
       })
-      .addCase(fetchTimecardSettingsThunk.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error      = action.payload;
+      .addCase(fetchTimecardSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
       })
 
       .addCase(updateTimecardSettingsThunk.pending, (state) => {
-        state.isUpdating = true;
-        state.error      = null;
+        state.isUpdating = true; state.error = null;
       })
-      .addCase(updateTimecardSettingsThunk.fulfilled, (state, action) => {
-        state.isUpdating       = false;
-        state.timecardSettings = action.payload;
+      .addCase(updateTimecardSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isUpdating      = false;
+        state.timecardSettings = payload;
       })
-      .addCase(updateTimecardSettingsThunk.rejected, (state, action) => {
-        state.isUpdating = false;
-        state.error      = action.payload;
+      .addCase(updateTimecardSettingsThunk.rejected, (state, { payload }) => {
+        state.isUpdating = false; state.error = payload;
       })
 
-      // ─── CUSTOM — section ───────────────────────────────────────────────────
+      // ── CUSTOM ──────────────────────────────────────────────────────────────
 
       .addCase(fetchCustomSettingsThunk.pending, (state) => {
-        state.isFetching = true;
-        state.error      = null;
+        state.isFetching = true; state.error = null;
       })
-      .addCase(fetchCustomSettingsThunk.fulfilled, (state, action) => {
+      .addCase(fetchCustomSettingsThunk.fulfilled, (state, { payload }) => {
         state.isFetching     = false;
-        state.customSettings = action.payload;
+        state.customSettings = payload;
       })
-      .addCase(fetchCustomSettingsThunk.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error      = action.payload;
+      .addCase(fetchCustomSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
       })
 
-      // ─── DAY TYPES ──────────────────────────────────────────────────────────
-
-      .addCase(addDayTypeThunk.pending, (state) => {
-        state.isSubmitting = true;
-        state.error        = null;
-      })
-      .addCase(addDayTypeThunk.fulfilled, (state, action) => {
+      .addCase(addDayTypeThunk.pending,    (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addDayTypeThunk.fulfilled,  (state, { payload }) => {
         state.isSubmitting = false;
-        state.customSettings?.customDayTypes?.push(action.payload);
+        state.customSettings?.customDayTypes?.push(payload);
       })
-      .addCase(addDayTypeThunk.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error        = action.payload;
+      .addCase(addDayTypeThunk.rejected,   (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateDayTypeThunk.fulfilled, (state, { payload }) => {
+        if (!state.customSettings) return;
+        const idx = state.customSettings.customDayTypes.findIndex((d) => d._id === payload._id);
+        if (idx !== -1) state.customSettings.customDayTypes[idx] = payload;
       })
 
-      .addCase(updateDayTypeThunk.fulfilled, (state, action) => {
+      .addCase(deleteDayTypeThunk.fulfilled, (state, { payload }) => {
         if (!state.customSettings) return;
-        const idx = state.customSettings.customDayTypes.findIndex(
-          (d) => d._id === action.payload._id
-        );
-        if (idx !== -1) state.customSettings.customDayTypes[idx] = action.payload;
-      })
-
-      .addCase(deleteDayTypeThunk.fulfilled, (state, action) => {
-        if (!state.customSettings) return;
-        // Soft delete — set isActive false to match backend behaviour
-        const item = state.customSettings.customDayTypes.find(
-          (d) => d._id === action.payload.dayTypeId
-        );
+        const item = state.customSettings.customDayTypes.find((d) => d._id === payload.dayTypeId);
         if (item) item.isActive = false;
       })
 
-      // ─── UPGRADE ROLES ──────────────────────────────────────────────────────
-
-      .addCase(addUpgradeRoleThunk.pending, (state) => {
-        state.isSubmitting = true;
-        state.error        = null;
-      })
-      .addCase(addUpgradeRoleThunk.fulfilled, (state, action) => {
+      .addCase(addUpgradeRoleThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addUpgradeRoleThunk.fulfilled, (state, { payload }) => {
         state.isSubmitting = false;
-        state.customSettings?.upgradeRoles?.push(action.payload);
+        state.customSettings?.upgradeRoles?.push(payload);
       })
-      .addCase(addUpgradeRoleThunk.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error        = action.payload;
+      .addCase(addUpgradeRoleThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateUpgradeRoleThunk.fulfilled, (state, { payload }) => {
+        if (!state.customSettings) return;
+        const idx = state.customSettings.upgradeRoles.findIndex((r) => r._id === payload._id);
+        if (idx !== -1) state.customSettings.upgradeRoles[idx] = payload;
       })
 
-      .addCase(updateUpgradeRoleThunk.fulfilled, (state, action) => {
+      .addCase(deleteUpgradeRoleThunk.fulfilled, (state, { payload }) => {
         if (!state.customSettings) return;
-        const idx = state.customSettings.upgradeRoles.findIndex(
-          (r) => r._id === action.payload._id
-        );
-        if (idx !== -1) state.customSettings.upgradeRoles[idx] = action.payload;
-      })
-
-      .addCase(deleteUpgradeRoleThunk.fulfilled, (state, action) => {
-        if (!state.customSettings) return;
-        const item = state.customSettings.upgradeRoles.find(
-          (r) => r._id === action.payload.roleId
-        );
+        const item = state.customSettings.upgradeRoles.find((r) => r._id === payload.roleId);
         if (item) item.isActive = false;
       })
 
-      // ─── PENNY CONTRACTS ────────────────────────────────────────────────────
-
-      .addCase(fetchPennyContractCrewThunk.pending, (state) => {
-        state.isFetching = true;
-        state.error      = null;
-      })
-      .addCase(fetchPennyContractCrewThunk.fulfilled, (state, action) => {
+      .addCase(fetchPennyContractCrewThunk.pending,    (state) => { state.isFetching = true;  state.error = null; })
+      .addCase(fetchPennyContractCrewThunk.fulfilled,  (state, { payload }) => {
         state.isFetching        = false;
-        state.pennyContractCrew = action.payload;
+        state.pennyContractCrew = payload;
       })
-      .addCase(fetchPennyContractCrewThunk.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error      = action.payload;
-      })
+      .addCase(fetchPennyContractCrewThunk.rejected,   (state, { payload }) => { state.isFetching = false; state.error = payload; })
 
-      .addCase(setPennyContractThunk.fulfilled, (state, action) => {
+      .addCase(setPennyContractThunk.fulfilled, (state, { payload }) => {
         if (!state.customSettings) return;
-        const { crewMemberId, enabled } = action.payload;
+        const { crewMemberId, enabled } = payload;
         const crew = state.customSettings.pennyContractCrew;
         if (enabled) {
-          // Add if not already present
-          const exists = crew.some(
-            (e) => e.crewMemberId?._id === crewMemberId || e.crewMemberId === crewMemberId
-          );
+          const exists = crew.some((e) => e.crewMemberId?._id === crewMemberId || e.crewMemberId === crewMemberId);
           if (!exists) crew.push({ crewMemberId });
         } else {
-          // Remove
           state.customSettings.pennyContractCrew = crew.filter(
             (e) => e.crewMemberId?._id !== crewMemberId && e.crewMemberId !== crewMemberId
           );
         }
       })
 
-      // ─── ALLOWANCE OVERRIDES ────────────────────────────────────────────────
-
-      .addCase(addAllowanceOverrideThunk.pending, (state) => {
-        state.isSubmitting = true;
-        state.error        = null;
-      })
-      .addCase(addAllowanceOverrideThunk.fulfilled, (state, action) => {
+      .addCase(addAllowanceOverrideThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addAllowanceOverrideThunk.fulfilled, (state, { payload }) => {
         state.isSubmitting = false;
-        state.customSettings?.allowanceOverrides?.push(action.payload);
+        state.customSettings?.allowanceOverrides?.push(payload);
       })
-      .addCase(addAllowanceOverrideThunk.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error        = action.payload;
-      })
+      .addCase(addAllowanceOverrideThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
 
-      .addCase(deleteAllowanceOverrideThunk.fulfilled, (state, action) => {
+      .addCase(deleteAllowanceOverrideThunk.fulfilled, (state, { payload }) => {
         if (!state.customSettings) return;
         state.customSettings.allowanceOverrides =
-          state.customSettings.allowanceOverrides.filter(
-            (o) => o._id !== action.payload.overrideId
-          );
-      });
+          state.customSettings.allowanceOverrides.filter((o) => o._id !== payload.overrideId);
+      })
+
+      // ── PLACES ──────────────────────────────────────────────────────────────
+
+      .addCase(fetchPlacesSettingsThunk.pending, (state) => {
+        state.isFetching = true; state.error = null;
+      })
+      .addCase(fetchPlacesSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching     = false;
+        state.placesSettings = payload;
+      })
+      .addCase(fetchPlacesSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
+      })
+
+      .addCase(addUnitThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addUnitThunk.fulfilled, (state, { payload }) => {
+        state.isSubmitting = false;
+        if (!state.placesSettings) return;
+        if (payload.isPrimary) state.placesSettings.units.forEach((u) => { u.isPrimary = false; });
+        state.placesSettings.units.push(payload);
+      })
+      .addCase(addUnitThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateUnitThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateUnitThunk.fulfilled, (state, { payload }) => {
+        state.isUpdating = false;
+        if (!state.placesSettings) return;
+        if (payload.isPrimary) state.placesSettings.units.forEach((u) => { u.isPrimary = false; });
+        const idx = state.placesSettings.units.findIndex((u) => u._id === payload._id);
+        if (idx !== -1) state.placesSettings.units[idx] = payload;
+      })
+      .addCase(updateUnitThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(deleteUnitThunk.fulfilled, (state, { payload }) => {
+        if (!state.placesSettings) return;
+        const item = state.placesSettings.units.find((u) => u._id === payload.unitId);
+        if (item) {
+          const wasPrimary = item.isPrimary;
+          item.isActive = false; item.isPrimary = false;
+          if (wasPrimary) {
+            const next = state.placesSettings.units.find((u) => u._id !== payload.unitId && u.isActive);
+            if (next) next.isPrimary = true;
+          }
+        }
+      })
+
+      .addCase(addWorkplaceThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addWorkplaceThunk.fulfilled, (state, { payload }) => {
+        state.isSubmitting = false;
+        state.placesSettings?.workplaces?.push(payload);
+      })
+      .addCase(addWorkplaceThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateWorkplaceThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateWorkplaceThunk.fulfilled, (state, { payload }) => {
+        state.isUpdating = false;
+        if (!state.placesSettings) return;
+        const idx = state.placesSettings.workplaces.findIndex((w) => w._id === payload._id);
+        if (idx !== -1) state.placesSettings.workplaces[idx] = payload;
+      })
+      .addCase(updateWorkplaceThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(deleteWorkplaceThunk.fulfilled, (state, { payload }) => {
+        if (!state.placesSettings) return;
+        const item = state.placesSettings.workplaces.find((w) => w._id === payload.workplaceId);
+        if (item) item.isActive = false;
+      })
+
+      // ── CONSTRUCTION ────────────────────────────────────────────────────────
+
+      .addCase(fetchConstructionSettingsThunk.pending, (state) => {
+        state.isFetching = true; state.error = null;
+      })
+      .addCase(fetchConstructionSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching           = false;
+        state.constructionSettings = payload;
+      })
+      .addCase(fetchConstructionSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
+      })
+
+      // All section updates return the full constructionSettings subdocument
+      .addCase(updateDailyRateThunk.pending,          (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateDailyRateThunk.fulfilled,        (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateDailyRateThunk.rejected,         (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateBreaksThunk.pending,             (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateBreaksThunk.fulfilled,           (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateBreaksThunk.rejected,            (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateSixthDayThunk.pending,           (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateSixthDayThunk.fulfilled,         (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateSixthDayThunk.rejected,          (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateSeventhDayThunk.pending,         (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateSeventhDayThunk.fulfilled,       (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateSeventhDayThunk.rejected,        (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateOvertimeThunk.pending,           (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateOvertimeThunk.fulfilled,         (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateOvertimeThunk.rejected,          (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateTravelTimeThunk.pending,         (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateTravelTimeThunk.fulfilled,       (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateTravelTimeThunk.rejected,        (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateBrokenTurnaroundThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateBrokenTurnaroundThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
+      .addCase(updateBrokenTurnaroundThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; });
   },
 });
 
 export const {
   clearProjectSettingsError,
+  clearProjectSettings,
   setProjectSettings,
   updateProjectSettingsLocal,
-  clearProjectSettings,
 } = projectSettingsSlice.actions;
 
 export default projectSettingsSlice.reducer;
