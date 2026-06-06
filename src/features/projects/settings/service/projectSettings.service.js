@@ -55,3 +55,30 @@ export const updateSeventhDay        = (projectId, body) => axiosInstance.patch(
 export const updateOvertime          = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/construction/overtime`, body).then((r) => r.data.data);
 export const updateTravelTime        = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/construction/travel-time`, body).then((r) => r.data.data);
 export const updateBrokenTurnaround  = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/construction/broken-turnaround`, body).then((r) => r.data.data);
+
+
+export const getStandardCrewSettings = async (projectId) => {
+  const res = await axiosInstance.get(`${BASE(projectId)}/standard-crew`);
+  return res.data.data;
+};
+
+export const updateSixthSeventhDay = async (projectId, payload) => {
+  const res = await axiosInstance.patch(`${BASE(projectId)}/standard-crew/sixth-seventh-day`, payload);
+  return res.data.data;
+};
+
+export const updateStandardCrewOvertime = async (projectId, payload) => {
+  const res = await axiosInstance.patch(`${BASE(projectId)}/standard-crew/overtime`, payload);
+  return res.data.data;
+};
+
+export const updateStandardCrewDepartments = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/standard-crew/departments`, body).then((r) => r.data.data);
+
+// ─── Details ─────────────────────────────────────────────────────────────────
+export const getDetailsSettings       = (projectId)       => axiosInstance.get(`${BASE(projectId)}/details`).then((r) => r.data.data);
+export const updateBasic              = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/basic`, body).then((r) => r.data.data);
+export const updateProjectInformation = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/project-information`, body).then((r) => r.data.data);
+export const updateOfferHandling      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/offer-handling`, body).then((r) => r.data.data);
+export const updateAllowances         = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/allowances`, body).then((r) => r.data.data);
+export const updateMealPenalties      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/meal-penalties`, body).then((r) => r.data.data);
+export const updateNotice             = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/notice`, body).then((r) => r.data.data);

@@ -1,275 +1,151 @@
-import { useState } from "react";
-import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+/**
+ * DepartmentSettings.jsx
+ * Path: src/features/projects/settings/components/departments/DepartmentSettings.jsx
+ */
+
+import { useState, useEffect }  from "react";
+import { useOutletContext }      from "react-router-dom";
+import { Plus, Loader2 }        from "lucide-react";
+
+import CardWrapper       from "@/shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
-import DataTable from "@/shared/components/tables/DataTable/DataTable";
-import { DepartmentColumns } from "@/features/projects/settings/components/departments/DepartmentColumns";
-import { Plus } from "lucide-react";
+import DataTable         from "@/shared/components/tables/DataTable/DataTable";
+import { DepartmentColumns } from "./DepartmentColumns";
+import { useDepartmentSettings } from "./useDepartmentSettings";
 
 const emptyDepartment = () => ({
-  id: Date.now() + Math.random(),
-  department: "",
-  site: "On Set",
-  cameraOT: false,
-  otherOT: false,
-  minutesAcross: 0,
-  minutesBefore: 0,
-  minutesAfter: 0,
+  // no _id — Mongo assigns one on save
+  department:    "",
+  site:          "On Set",
+  cameraOT:      false,
+  otherOT:       false,
+  minutesAcross: null,
+  minutesBefore: null,
+  minutesAfter:  null,
 });
 
-const INITIAL_DEPARTMENTS = [
-  {
-    id: 1,
-    department: "All Depts",
-    site: "Off Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: 0,
-    minutesBefore: 0,
-    minutesAfter: "",
-  },
-
-  {
-    id: 2,
-    department: "All Depts",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: 0,
-    minutesBefore: "",
-    minutesAfter: "",
-  },
-
-  {
-    id: 3,
-    department: "Assistant Directors",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 32,
-  },
-
-  {
-    id: 4,
-    department: "Assistant Directors",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 5,
-    department: "Continuity",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 6,
-    department: "Continuity",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 7,
-    department: "Costume",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 0,
-    minutesAfter: 0,
-  },
-
-  {
-    id: 8,
-    department: "Costume",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 0,
-    minutesAfter: 0,
-  },
-
-  {
-    id: 9,
-    department: "Grip",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: 0,
-    minutesBefore: "",
-    minutesAfter: "",
-  },
-
-  {
-    id: 10,
-    department: "Hair and Makeup",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 11,
-    department: "Hair and Makeup",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 12,
-    department: "Locations",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 12,
-    department: "Locations",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 13,
-    department: "Script",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 14,
-    department: "Script",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 15,
-    department: "VFX",
-    site: "On Set",
-    cameraOT: true,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-
-  {
-    id: 16,
-    department: "VFX",
-    site: "Off Set",
-    cameraOT: false,
-    otherOT: true,
-    minutesAcross: "",
-    minutesBefore: 30,
-    minutesAfter: 30,
-  },
-];
-
 function DepartmentSettings() {
+  const { projectId } = useOutletContext();
+
+  const {
+    departments,
+    isFetching,
+    isUpdating,
+    error,
+    saveDepartments,
+  } = useDepartmentSettings(projectId);
+
   const [isEditing, setIsEditing] = useState(false);
+  const [draft,     setDraft]     = useState(null);
+  const [saveError, setSaveError] = useState(null);
 
-  const [departments, setDepartments] = useState(INITIAL_DEPARTMENTS);
+  // ── Edit / Save / Cancel ──────────────────────────────────────────────────
 
-  const handleDeleteDepartment = (id) => {
-    setDepartments((prev) => prev.filter((department) => department.id !== id));
+  const handleEdit = () => {
+    setDraft((departments ?? []).map((r) => ({ ...r })));
+    setSaveError(null);
+    setIsEditing(true);
   };
 
+  const handleCancel = () => {
+    setIsEditing(false);
+    setDraft(null);
+    setSaveError(null);
+  };
+
+  const handleSave = async () => {
+    setSaveError(null);
+    try {
+      await saveDepartments(draft).unwrap();
+      setIsEditing(false);
+      setDraft(null);
+    } catch (err) {
+      setSaveError(err?.message ?? "Save failed. Please try again.");
+    }
+  };
+
+  // ── Delete row (draft only — not committed until Save) ────────────────────
+
+  const handleDelete = (id) =>
+    setDraft((prev) => prev.filter((r) => (r._id ?? r.id) !== id));
+
+  // ── Display rows: draft while editing, Redux data otherwise ──────────────
+
+  const displayRows = isEditing ? (draft ?? []) : (departments ?? []);
+
+  // ── Loading state ─────────────────────────────────────────────────────────
+
+  if (isFetching && !departments) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground text-sm gap-2">
+        <Loader2 size={16} className="animate-spin" />
+        Loading department settings…
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <>
-      <div className="space-y-4">
-        <CardWrapper showLabel={false}>
-          <div className="flex items-center justify-between mb-7">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
-              <div>
-                <h3 className="text-foreground text-sm font-medium">
-                  Department Overtime & Wrap Time
-                </h3>
-                <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                  Configure camera/other overtime and reasonable prep & wrap
-                  minutes per department and site
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <EditToggleButtons
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={() => setIsEditing(false)}
-                onCancel={() => setIsEditing(false)}
-              />
+    <div className="space-y-4">
+      {(error || saveError) && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+          {saveError ?? error?.message ?? "Something went wrong. Please try again."}
+        </div>
+      )}
+
+      <CardWrapper showLabel={false}>
+        <div className="flex items-center justify-between mb-7">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
+            <div>
+              <h3 className="text-foreground text-sm font-medium">
+                Department Overtime &amp; Wrap Time
+              </h3>
+              <p className="text-muted-foreground text-[0.7rem] mt-0.5">
+                Configure camera/other overtime and reasonable prep &amp; wrap
+                minutes per department and site
+              </p>
             </div>
           </div>
-          <DataTable
-            data={departments}
-            columns={DepartmentColumns({
-              departments,
-              setDepartments,
-              isEditing,
-              onDelete: handleDeleteDepartment,
-            })}
-            currentPage={1}
-            ItemsPerPage={50}
-            totalItemsSize={departments.length}
-            onPageChange={() => {}}
-            setItemsPerPage={() => {}}
-            hidePagination
-            hideExport
+
+          <EditToggleButtons
+            isEditing={isEditing}
+            onEdit={handleEdit}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            isLoading={isUpdating}
           />
-          {isEditing && (
-            <button
-              onClick={() =>
-                setDepartments((prev) => [...prev, emptyDepartment()])
-              }
-              className="w-full border-2 border-dashed border-border text-primary mt-4 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-muted/20"
-            >
-              <Plus size={16} />
-              Add Department Row
-            </button>
-          )}
-        </CardWrapper>
-      </div>
-    </>
+        </div>
+
+        <DataTable
+          data={displayRows}
+          columns={DepartmentColumns({
+            departments: displayRows,
+            setDepartments: setDraft,
+            isEditing,
+            onDelete: handleDelete,
+          })}
+          currentPage={1}
+          ItemsPerPage={50}
+          totalItemsSize={displayRows.length}
+          onPageChange={() => {}}
+          setItemsPerPage={() => {}}
+          hidePagination
+          hideExport
+        />
+
+        {isEditing && (
+          <button
+            onClick={() => setDraft((prev) => [...(prev ?? []), emptyDepartment()])}
+            className="w-full border-2 border-dashed border-border text-primary mt-4 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-muted/20"
+          >
+            <Plus size={16} />
+            Add Department Row
+          </button>
+        )}
+      </CardWrapper>
+    </div>
   );
 }
 

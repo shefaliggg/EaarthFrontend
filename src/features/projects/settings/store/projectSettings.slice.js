@@ -45,6 +45,23 @@ import {
   updateBrokenTurnaroundThunk,
 } from "./thunks/constructionSettings.thunks";
 
+import {
+  fetchStandardCrewSettingsThunk,
+  updateSixthSeventhDayThunk,
+  updateStandardCrewOvertimeThunk,
+  updateStandardCrewDepartmentsThunk,  
+} from "./thunks/standardCrewSettings.thunks";
+
+import {
+  fetchDetailsSettingsThunk,
+  updateBasicThunk,
+  updateProjectInformationThunk,
+  updateOfferHandlingThunk,
+  updateAllowancesThunk,
+  updateMealPenaltiesThunk,
+  updateNoticeThunk,
+} from "./thunks/detailsSettings.thunks";
+
 // ─── Default places ───────────────────────────────────────────────────────────
 
 const DEFAULT_PLACES = {
@@ -66,6 +83,8 @@ const initialState = {
   placesSettings:       DEFAULT_PLACES,
   constructionSettings: null,   // ← new
   pennyContractCrew:    null,
+  standardCrewSettings: null,
+  detailsSettings: null,
 
   isFetching:   false,
   isUpdating:   false,
@@ -333,7 +352,79 @@ const projectSettingsSlice = createSlice({
 
       .addCase(updateBrokenTurnaroundThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
       .addCase(updateBrokenTurnaroundThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.constructionSettings = payload; })
-      .addCase(updateBrokenTurnaroundThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; });
+      .addCase(updateBrokenTurnaroundThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+// ── STANDARD CREW ─────────────────────────────────────────────────────────────
+
+.addCase(fetchStandardCrewSettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchStandardCrewSettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching           = false;
+  state.standardCrewSettings = payload;
+})
+.addCase(fetchStandardCrewSettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(updateSixthSeventhDayThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateSixthSeventhDayThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating           = false;
+  state.standardCrewSettings = payload;
+})
+.addCase(updateSixthSeventhDayThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateStandardCrewOvertimeThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateStandardCrewOvertimeThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating           = false;
+  state.standardCrewSettings = payload;
+})
+.addCase(updateStandardCrewOvertimeThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+// ── NEW ───────────────────────────────────────────────────────────────────────
+.addCase(updateStandardCrewDepartmentsThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateStandardCrewDepartmentsThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating           = false;
+  state.standardCrewSettings = payload;
+})
+.addCase(updateStandardCrewDepartmentsThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+// ── DETAILS ──────────────────────────────────────────────────────────────────
+
+.addCase(fetchDetailsSettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchDetailsSettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching      = false;
+  state.detailsSettings = payload;
+})
+.addCase(fetchDetailsSettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(updateBasicThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateBasicThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateBasicThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateProjectInformationThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateProjectInformationThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateProjectInformationThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateOfferHandlingThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateOfferHandlingThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateOfferHandlingThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateAllowancesThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateAllowancesThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateAllowancesThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateMealPenaltiesThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateMealPenaltiesThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateMealPenaltiesThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateNoticeThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateNoticeThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
+.addCase(updateNoticeThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
   },
 });
 
