@@ -38,7 +38,7 @@ import {
   AIScanBanner,
 } from "../../../ai/documents/components/AIFieldSuggestion";
 import { BrainCircuit, XCircle, Info } from "lucide-react";
-import { formatFileSize } from "../../../../shared/config/utils";
+import { formatFileSize, getFullName } from "../../../../shared/config/utils";
 
 export default function FinanceDetails() {
   const [isEditing, setIsEditing] = useState({ section: null });
@@ -71,6 +71,7 @@ export default function FinanceDetails() {
   const { userDocuments, isFetching: isFetchingDocs } = useSelector(
     (state) => state.userDocuments,
   );
+  const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
     if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
@@ -86,6 +87,8 @@ export default function FinanceDetails() {
     p45: null,
     vatCert: null,
   };
+
+  const currentUserFullName = getFullName(currentUser);
   const fin = crewProfile?.finance;
   const countryisIceland = crewProfile?.countryOfPermanentResidence === "IS";
   const isTaxRegisteredInCompany =
@@ -466,6 +469,12 @@ export default function FinanceDetails() {
         formData.append(key, data[key]);
       }
     });
+
+    formData.append("isTaxRegisteredInCompany", isTaxRegisteredInCompany);
+
+    if (currentUserFullName && data.vatNumber) {
+      formData.append("vatRegisteredName", currentUserFullName);
+    }
     // Boolean needs explicit string coercion over FormData
     if (
       data.hasOngoingStudentLoan !== null &&
@@ -573,11 +582,41 @@ export default function FinanceDetails() {
     }
 
     try {
-      await dispatch(updateFinanceDetailsThunk(formData)).unwrap();
-      toast.success("Financial details updated successfully");
+      const response = await dispatch(
+        updateFinanceDetailsThunk(formData),
+      ).unwrap();
+
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (!vatVerification) {
+        toast.success("Financial details updated", {
+          description:
+            "Your financial details have been saved. Any uploaded documents will be reviewed by our verification team.",
+        });
+      } else if (vatVerification.status === "VERIFIED") {
+        toast.success("Financial details updated", {
+          description:
+            "Your financial details have been saved and your VAT registration was successfully verified with HMRC.",
+        });
+      } else if (vatVerification.status === "NEEDS_REVIEW") {
+        toast.success("Financial details updated", {
+          description:
+            vatVerification.actionReason ||
+            "Your VAT registration was found, but some details require administrator review.",
+        });
+      } else {
+        toast.success("Financial details updated", {
+          description:
+            vatVerification.actionReason ||
+            "Your VAT registration has been submitted and is awaiting verification review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update financial details");
+      toast.error("Failed to update financial details", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -766,7 +805,7 @@ export default function FinanceDetails() {
               infoPillDescription={
                 isTaxRegisteredInCompany
                   ? "This VAT registration is managed through your loan-out company profile and cannot be edited here."
-                  : "Required if you are self-employed or operating through a loan-out company for tax purposes in certain countries."
+                  : "Required if you are self-employed for tax purposes in certain countries."
               }
               onChange={(val) =>
                 setFormState((prev) => ({

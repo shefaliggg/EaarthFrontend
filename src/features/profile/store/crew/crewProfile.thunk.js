@@ -300,7 +300,12 @@ export const updateFinanceDetailsThunk = createAsyncThunk(
   async (formData, { rejectWithValue, dispatch }) => {
     try {
       const response = await updateFinanceDetails(formData);
-      const { finance, profileCompletionPercent, documents } = response;
+      const {
+        finance,
+        profileCompletionPercent,
+        documents,
+        governmentVerification,
+      } = response;
 
       const docsArray = Array.isArray(documents)
         ? documents
@@ -309,7 +314,7 @@ export const updateFinanceDetailsThunk = createAsyncThunk(
           : [];
       docsArray.forEach((doc) => dispatch(AddOrUpdateDocument(doc)));
 
-      return { finance, profileCompletionPercent };
+      return { finance, profileCompletionPercent, governmentVerification };
     } catch (err) {
       return rejectWithValue({
         message: err.response?.data?.message || err.message,

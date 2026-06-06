@@ -152,6 +152,11 @@ export default function EditableDocumentField({
                         >
                           {item.value}
                         </span>
+                        {item.tooltip && (
+                          <InfoTooltip content={item.tooltip}>
+                            <CircleQuestionMark className="size-3" />
+                          </InfoTooltip>
+                        )}
                       </div>
                     );
                   })}
@@ -200,7 +205,7 @@ export default function EditableDocumentField({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 pr-2">
             {secondaryActions &&
               secondaryActions.map((action, idx) => (
                 <Button

@@ -559,13 +559,41 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(setupCompanyThunk(fd)).unwrap();
-      toast.success("Company setup complete", {
-        description: "You can update each section individually anytime.",
-      });
+      const response = await dispatch(setupCompanyThunk(fd)).unwrap();
+
+      const incorpVerification =
+        response.governmentVerification?.CERTIFICATE_OF_INCORPORATION;
+
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (
+        incorpVerification?.status === "VERIFIED" &&
+        vatVerification?.status === "VERIFIED"
+      ) {
+        toast.success("Company setup complete", {
+          description:
+            "Your company details were verified against Companies House and HMRC records.",
+        });
+      } else if (
+        incorpVerification?.status === "NEEDS_REVIEW" ||
+        vatVerification?.status === "NEEDS_REVIEW"
+      ) {
+        toast.success("Company setup complete", {
+          description:
+            "Your company information was saved, but some verification checks require administrator review.",
+        });
+      } else {
+        toast.success("Company setup complete", {
+          description:
+            "Your company information was saved and verification checks are pending review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to complete company setup");
+      toast.error("Failed to complete company setup", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -593,7 +621,9 @@ export default function CompanyDetails() {
             });
             cancelEditing();
           } catch (err) {
-            toast.error(err?.message || "Failed to update company details");
+            toast.error("Failed to disable loan out company", {
+              description: err?.message || "An unknown error occurred",
+            });
           }
         },
         autoClose: true,
@@ -648,14 +678,40 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
-      toast.success("Loan company details updated", {
-        description:
-          "Your loan company and financial details have been successfully updated.",
-      });
+      const response = await dispatch(updateCompanyDetailsThunk(fd)).unwrap();
+
+      const incorpVerification =
+        response.governmentVerification?.CERTIFICATE_OF_INCORPORATION;
+
+      if (!incorpVerification) {
+        toast.success("Company details updated", {
+          description:
+            "Your loan out company details have been successfully updated.",
+        });
+      } else if (incorpVerification.status === "VERIFIED") {
+        toast.success("Company details updated", {
+          description:
+            "Your company details were successfully verified against Companies House records.",
+        });
+      } else if (incorpVerification.status === "NEEDS_REVIEW") {
+        toast.success("Company details updated", {
+          description:
+            incorpVerification.actionReason ||
+            "Your company details were saved. Companies House found differences that require administrator review.",
+        });
+      } else {
+        toast.success("Company details updated", {
+          description:
+            incorpVerification.actionReason ||
+            "Your company details were saved and are awaiting verification review.",
+        });
+      }
+
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company details");
+      toast.error("Failed to update company details", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -685,7 +741,9 @@ export default function CompanyDetails() {
       toast.success("Company contact updated successfully");
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company contact");
+      toast.error("Failed to update company contact", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -703,7 +761,7 @@ export default function CompanyDetails() {
     const fd = buildFormData(
       {
         isVATRegistered: formState.companyTax.isVATRegistered,
-        companyName: cd?.name, //for government verification - in case company name was updated but not saved yet
+        vatRegisteredName: cd?.name, //for government verification - in case company name was updated but not saved yet
         vatNumber: formState.companyTax.vatNumber,
         taxRegistrationNumberIreland:
           formState.companyTax.taxRegistrationNumberIreland,
@@ -736,11 +794,37 @@ export default function CompanyDetails() {
     }
 
     try {
-      await dispatch(updateCompanyTaxThunk(fd)).unwrap();
-      toast.success("Company tax updated successfully");
+      const response = await dispatch(updateCompanyTaxThunk(fd)).unwrap();
+      const vatVerification = response.governmentVerification?.VAT_CERTIFICATE;
+
+      if (!vatVerification) {
+        toast.success("Company tax updated", {
+          description:
+            "Your loan company tax details have been successfully updated.",
+        });
+      } else if (vatVerification.status === "VERIFIED") {
+        toast.success("Company tax updated", {
+          description:
+            "Your VAT details were successfully verified against HMRC records.",
+        });
+      } else if (vatVerification.status === "NEEDS_REVIEW") {
+        toast.success("Company tax updated", {
+          description:
+            vatVerification?.actionReason ||
+            "Your VAT details were saved. HMRC found differences that require administrator review.",
+        });
+      } else {
+        toast.success("Company tax updated", {
+          description:
+            vatVerification?.actionReason ||
+            "Your VAT details were saved and are awaiting verification review.",
+        });
+      }
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company tax");
+      toast.error("Failed to update company tax", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -756,7 +840,9 @@ export default function CompanyDetails() {
       toast.success("Company bank updated successfully");
       cancelEditing();
     } catch (err) {
-      toast.error(err?.message || "Failed to update company bank");
+      toast.error("Failed to update company bank", {
+        description: err?.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -1003,7 +1089,7 @@ export default function CompanyDetails() {
                     icon: "Brain",
                   },
                   {
-                    label: "Government Verification :",
+                    label: "Companies House Verification :",
                     value: getGovtVerificationStatusLabel({
                       verificationStatus:
                         resolvedCertOfIncorp?.governmentVerification?.status?.toUpperCase(),
@@ -1320,7 +1406,7 @@ export default function CompanyDetails() {
               )}
 
               {ct?.isVATRegistered && (
-                <div className=" md:col-span-2 2xl:col-span-1">
+                <div className="col-span-2">
                   {isEditingTax && (
                     <div className="mb-3">
                       <InfoPanel
@@ -1383,12 +1469,17 @@ export default function CompanyDetails() {
                         icon: "Brain",
                       },
                       {
-                        label: "Government Verification :",
+                        label: "HMRC VAT Verification :",
                         value: getGovtVerificationStatusLabel({
                           verificationStatus:
                             resolvedVatCert?.governmentVerification?.status?.toUpperCase(),
                         }),
                         icon: "Landmark",
+                        tooltip:
+                          resolvedVatCert?.governmentVerification?.status?.toUpperCase() !==
+                          "VERIFIED"
+                            ? `${resolvedVatCert?.governmentVerification?.actionReason} An administrator will review this verification.`
+                            : undefined,
                       },
                     ]}
                     uploadedOn={resolvedVatCert?.createdAt}
