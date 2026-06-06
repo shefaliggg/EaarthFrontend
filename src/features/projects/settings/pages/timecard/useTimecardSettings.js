@@ -18,10 +18,8 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-  fetchTimecardSettingsThunk,
-  updateTimecardSettingsThunk,
-} from "../../store/projectSettings.thunks";
+import { fetchTimecardSettingsThunk, updateTimecardSettingsThunk }
+  from "../../store/thunks/timecardSettings.thunks";
 import { clearProjectSettingsError } from "../../store/projectSettings.slice";
 
 export function useTimecardSettings() {

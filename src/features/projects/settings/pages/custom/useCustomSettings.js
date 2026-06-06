@@ -38,7 +38,7 @@ import {
   setPennyContractThunk,
   addAllowanceOverrideThunk,
   deleteAllowanceOverrideThunk,
-} from "../../store/projectSettings.thunks";
+} from "../../store/thunks/customSettings.thunks";
 
 export function useCustomSettings() {
   const dispatch = useDispatch();
