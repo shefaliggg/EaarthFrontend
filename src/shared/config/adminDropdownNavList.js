@@ -56,6 +56,27 @@ const themeItem = {
   ],
 };
 
+const legalItems = {
+  id: "legal",
+  label: "Legal",
+  icon: Icon.Scale, // or Icon.FileText
+  type: "submenu",
+  children: [
+    {
+      id: "privacy-policy",
+      label: "Privacy Policy",
+      icon: Icon.ShieldCheck,
+      action: "navigate",
+    },
+    {
+      id: "terms-of-service",
+      label: "Terms of Use",
+      icon: Icon.FileText,
+      action: "navigate",
+    },
+  ],
+};
+
 const commonBottom = [
   {
     id: "settings",
@@ -72,6 +93,7 @@ const commonBottom = [
   },
   themeItem,
   displayModeItem,
+  legalItems,
   {
     id: "logout",
     label: "Logout",
