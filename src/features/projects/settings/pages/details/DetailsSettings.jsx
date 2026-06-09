@@ -1,6 +1,9 @@
 /**
  * DetailsSettings.jsx
  * Path: src/features/projects/settings/pages/DetailsSettings.jsx
+ *
+ * Merged: useDetailsIdentitySettings → useDetailsSettings (identity section)
+ * Deleted: useDetailsIdentitySettings.js
  */
 
 import { useState }        from "react";
@@ -8,12 +11,14 @@ import { useOutletContext } from "react-router-dom";
 import { toast }           from "sonner";
 import { z }               from "zod";
 
-import CardWrapper               from "@/shared/components/wrappers/CardWrapper";
-import EditableTextDataField     from "@/shared/components/wrappers/EditableTextDataField";
-import EditToggleButtons         from "@/shared/components/buttons/EditToggleButtons";
+import CardWrapper                from "@/shared/components/wrappers/CardWrapper";
+import EditableTextDataField      from "@/shared/components/wrappers/EditableTextDataField";
+import EditToggleButtons          from "@/shared/components/buttons/EditToggleButtons";
 import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
-import SettingsCardErrorSkelton  from "../../components/skeltons/SettingsCardErrorSkelton";
-import { useDetailsIdentitySettings } from "./useDetailsIdentitySettings";
+import SettingsCardErrorSkelton   from "../../components/skeltons/SettingsCardErrorSkelton";
+
+// Single hook — identity now lives at detailsSettings.identity
+import { useDetailsSettings } from "../project/useDetailsSettings";
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 const identitySchema = z.object({
@@ -27,21 +32,24 @@ const identitySchema = z.object({
 function DetailsSettings() {
   const { projectId } = useOutletContext();
 
+  // Pull identity + updateIdentity from the unified hook
   const { settings, isFetching, isUpdating, error, updateIdentity } =
-    useDetailsIdentitySettings(projectId);
+    useDetailsSettings(projectId);
+
+  const identityData = settings.identity;
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft,     setDraft]     = useState(null);
   const [errors,    setErrors]    = useState({});
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  const display = (key) => (isEditing ? draft?.[key] : settings?.[key]) ?? "";
+  const display = (key) => (isEditing ? draft?.[key] : identityData?.[key]) ?? "";
   const patch   = (key) => (val) => setDraft((prev) => ({ ...prev, [key]: val }));
 
   // ── Edit / Cancel ─────────────────────────────────────────────────────────
   const startEditing = () => {
     setErrors({});
-    setDraft({ ...settings });
+    setDraft({ ...identityData });
     setIsEditing(true);
   };
 
@@ -69,7 +77,7 @@ function DetailsSettings() {
   };
 
   // ── States ────────────────────────────────────────────────────────────────
-  if (!settings.productionName && isFetching) {
+  if (!identityData?.productionName && isFetching) {
     return <SettingsCardLoadingSkelton fields={5} columns={2} />;
   }
 
@@ -77,7 +85,6 @@ function DetailsSettings() {
     return (
       <SettingsCardErrorSkelton
         message={typeof error === "string" ? error : error?.message || "Something went wrong"}
-        onRetry={() => dispatch(fetchDetailsIdentitySettingsThunk(projectId))}
       />
     );
   }

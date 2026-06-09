@@ -1,6 +1,9 @@
 /**
  * useDetailsSettings.js
  * Path: src/features/projects/settings/hooks/useDetailsSettings.js
+ *
+ * Merged: useDetailsIdentitySettings.js → identity section
+ * Deleted: useDetailsIdentitySettings.js
  */
 
 import { useEffect, useCallback } from "react";
@@ -8,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import {
   fetchDetailsSettingsThunk,
+  updateIdentityThunk,
   updateBasicThunk,
   updateProjectInformationThunk,
   updateOfferHandlingThunk,
@@ -18,6 +22,15 @@ import {
 import { clearProjectSettingsError } from "../../store/projectSettings.slice";
 
 const DEFAULTS = {
+  // ── merged from useDetailsIdentitySettings ─────────────────────────────────
+  identity: {
+    productionName:  "",
+    codeName:        "",
+    description:     "",
+    country:         "",
+    additionalNotes: "",
+  },
+  // ──────────────────────────────────────────────────────────────────────────
   basic: {
     workingWeek:  "5_days",
     showPrepWrap: true,
@@ -52,9 +65,9 @@ const DEFAULTS = {
     mobile: false, vehicleAllowance: false, vehicleHire: false,
     perDiem: false, living: false,
   },
-  perDiemItems: [],
+  perDiemItems:  [],
   mealPenalties: { breakfast: 6, lunch: 5, dinner: 10 },
-  notice: { noticeDays: "2", emailWording: "" },
+  notice:        { noticeDays: "2", emailWording: "" },
 };
 
 export function useDetailsSettings(projectId) {
@@ -70,8 +83,9 @@ export function useDetailsSettings(projectId) {
     dispatch(fetchDetailsSettingsThunk(projectId));
   }, [projectId, dispatch]);
 
-  // Merge Redux data over defaults so UI always has a full shape
+  // Merge Redux data over defaults so the UI always has a full shape
   const settings = {
+    identity:           { ...DEFAULTS.identity,           ...(raw?.identity           ?? {}) },
     basic:              { ...DEFAULTS.basic,              ...(raw?.basic              ?? {}) },
     projectInformation: { ...DEFAULTS.projectInformation, ...(raw?.projectInformation ?? {}) },
     offerHandling:      { ...DEFAULTS.offerHandling,      ...(raw?.offerHandling      ?? {}) },
@@ -81,6 +95,10 @@ export function useDetailsSettings(projectId) {
     notice:             { ...DEFAULTS.notice,             ...(raw?.notice             ?? {}) },
   };
 
+  const updateIdentity = useCallback(
+  (updates) => dispatch(updateIdentityThunk({ projectId, updates })),
+  [dispatch, projectId]
+);
   const updateBasic              = useCallback((updates) => dispatch(updateBasicThunk({ projectId, updates })),              [dispatch, projectId]);
   const updateProjectInformation = useCallback((updates) => dispatch(updateProjectInformationThunk({ projectId, updates })), [dispatch, projectId]);
   const updateOfferHandling      = useCallback((updates) => dispatch(updateOfferHandlingThunk({ projectId, updates })),      [dispatch, projectId]);
@@ -94,6 +112,7 @@ export function useDetailsSettings(projectId) {
     isFetching,
     isUpdating,
     error,
+    updateIdentity,
     updateBasic,
     updateProjectInformation,
     updateOfferHandling,

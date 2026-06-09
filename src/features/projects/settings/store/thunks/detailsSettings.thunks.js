@@ -1,6 +1,9 @@
 /**
  * detailsSettings.thunks.js
  * Path: src/features/projects/settings/store/thunks/detailsSettings.thunks.js
+ *
+ * Merged: detailsIdentitySettings.thunks.js → updateIdentityThunk
+ * Deleted: detailsIdentitySettings.thunks.js
  */
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
@@ -14,6 +17,18 @@ export const fetchDetailsSettingsThunk = createAsyncThunk(
     catch (err) { return rejectWith(err, rejectWithValue); }
   }
 );
+
+// ── merged from detailsIdentitySettings.thunks.js ────────────────────────────
+
+export const updateIdentityThunk = createAsyncThunk(
+  "projectSettings/details/identity/update",
+  async ({ projectId, updates }, { rejectWithValue }) => {
+    try { return await api.updateIdentity(projectId, updates); }
+    catch (err) { return rejectWith(err, rejectWithValue); }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const updateBasicThunk = createAsyncThunk(
   "projectSettings/details/basic/update",

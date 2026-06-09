@@ -1,49 +1,49 @@
 /**
  * projectSettings.service.js
- *
  * Path: src/features/projects/settings/service/projectSettings.service.js
  *
- * All API calls for projectSettings — one function per endpoint.
+ * Change: getDetailsIdentitySettings / updateDetailsIdentitySettings removed.
+ *         Replaced with updateIdentity → PATCH /details/identity.
  */
 
-import axiosInstance from "../../../auth/config/axiosConfig"; // adjust path to your axios wrapper
+import axiosInstance from "../../../auth/config/axiosConfig";
 
 const BASE = (projectId) => `/settings/${projectId}`;
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
-export const getProjectSettings       = (projectId)           => axiosInstance.get(BASE(projectId)).then((r) => r.data.data);
+export const getProjectSettings        = (projectId)           => axiosInstance.get(BASE(projectId)).then((r) => r.data.data);
 export const initialiseProjectSettings = (projectId, studioId) => axiosInstance.post(`${BASE(projectId)}/initialise`, { studioId }).then((r) => r.data.data);
-export const deleteProjectSettings    = (projectId)           => axiosInstance.delete(BASE(projectId)).then((r) => r.data);
+export const deleteProjectSettings     = (projectId)           => axiosInstance.delete(BASE(projectId)).then((r) => r.data);
 
 // ─── Timecard ─────────────────────────────────────────────────────────────────
 
-export const getTimecardSettings    = (projectId)        => axiosInstance.get(`${BASE(projectId)}/timecard`).then((r) => r.data.data);
-export const updateTimecardSettings = (projectId, body)  => axiosInstance.patch(`${BASE(projectId)}/timecard`, body).then((r) => r.data.data);
+export const getTimecardSettings    = (projectId)       => axiosInstance.get(`${BASE(projectId)}/timecard`).then((r) => r.data.data);
+export const updateTimecardSettings = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/timecard`, body).then((r) => r.data.data);
 
 // ─── Custom ───────────────────────────────────────────────────────────────────
 
-export const getCustomSettings        = (projectId)                       => axiosInstance.get(`${BASE(projectId)}/custom`).then((r) => r.data.data);
-export const addDayType               = (projectId, body)                 => axiosInstance.post(`${BASE(projectId)}/custom/day-types`, body).then((r) => r.data.data);
-export const updateDayType            = (projectId, dayTypeId, body)      => axiosInstance.patch(`${BASE(projectId)}/custom/day-types/${dayTypeId}`, body).then((r) => r.data.data);
-export const deleteDayType            = (projectId, dayTypeId)            => axiosInstance.delete(`${BASE(projectId)}/custom/day-types/${dayTypeId}`).then((r) => r.data);
-export const addUpgradeRole           = (projectId, body)                 => axiosInstance.post(`${BASE(projectId)}/custom/upgrade-roles`, body).then((r) => r.data.data);
-export const updateUpgradeRole        = (projectId, roleId, body)         => axiosInstance.patch(`${BASE(projectId)}/custom/upgrade-roles/${roleId}`, body).then((r) => r.data.data);
-export const deleteUpgradeRole        = (projectId, roleId)               => axiosInstance.delete(`${BASE(projectId)}/custom/upgrade-roles/${roleId}`).then((r) => r.data);
-export const getPennyContractCrew     = (projectId)                       => axiosInstance.get(`${BASE(projectId)}/custom/penny-contracts`).then((r) => r.data.data);
-export const setPennyContract         = (projectId, crewMemberId, body)   => axiosInstance.patch(`${BASE(projectId)}/custom/penny-contracts/${crewMemberId}`, body).then((r) => r.data.data);
-export const addAllowanceOverride     = (projectId, body)                 => axiosInstance.post(`${BASE(projectId)}/custom/allowance-overrides`, body).then((r) => r.data.data);
-export const deleteAllowanceOverride  = (projectId, overrideId)           => axiosInstance.delete(`${BASE(projectId)}/custom/allowance-overrides/${overrideId}`).then((r) => r.data);
+export const getCustomSettings       = (projectId)                     => axiosInstance.get(`${BASE(projectId)}/custom`).then((r) => r.data.data);
+export const addDayType              = (projectId, body)               => axiosInstance.post(`${BASE(projectId)}/custom/day-types`, body).then((r) => r.data.data);
+export const updateDayType           = (projectId, dayTypeId, body)    => axiosInstance.patch(`${BASE(projectId)}/custom/day-types/${dayTypeId}`, body).then((r) => r.data.data);
+export const deleteDayType           = (projectId, dayTypeId)          => axiosInstance.delete(`${BASE(projectId)}/custom/day-types/${dayTypeId}`).then((r) => r.data);
+export const addUpgradeRole          = (projectId, body)               => axiosInstance.post(`${BASE(projectId)}/custom/upgrade-roles`, body).then((r) => r.data.data);
+export const updateUpgradeRole       = (projectId, roleId, body)       => axiosInstance.patch(`${BASE(projectId)}/custom/upgrade-roles/${roleId}`, body).then((r) => r.data.data);
+export const deleteUpgradeRole       = (projectId, roleId)             => axiosInstance.delete(`${BASE(projectId)}/custom/upgrade-roles/${roleId}`).then((r) => r.data);
+export const getPennyContractCrew    = (projectId)                     => axiosInstance.get(`${BASE(projectId)}/custom/penny-contracts`).then((r) => r.data.data);
+export const setPennyContract        = (projectId, crewMemberId, body) => axiosInstance.patch(`${BASE(projectId)}/custom/penny-contracts/${crewMemberId}`, body).then((r) => r.data.data);
+export const addAllowanceOverride    = (projectId, body)               => axiosInstance.post(`${BASE(projectId)}/custom/allowance-overrides`, body).then((r) => r.data.data);
+export const deleteAllowanceOverride = (projectId, overrideId)         => axiosInstance.delete(`${BASE(projectId)}/custom/allowance-overrides/${overrideId}`).then((r) => r.data);
 
 // ─── Places ───────────────────────────────────────────────────────────────────
 
-export const getPlacesSettings  = (projectId)                    => axiosInstance.get(`${BASE(projectId)}/places`).then((r) => r.data.data);
-export const addUnit             = (projectId, body)              => axiosInstance.post(`${BASE(projectId)}/places/units`, body).then((r) => r.data.data);
-export const updateUnit          = (projectId, unitId, body)      => axiosInstance.patch(`${BASE(projectId)}/places/units/${unitId}`, body).then((r) => r.data.data);
-export const deleteUnit          = (projectId, unitId)            => axiosInstance.delete(`${BASE(projectId)}/places/units/${unitId}`).then((r) => r.data);
-export const addWorkplace        = (projectId, body)              => axiosInstance.post(`${BASE(projectId)}/places/workplaces`, body).then((r) => r.data.data);
-export const updateWorkplace     = (projectId, workplaceId, body) => axiosInstance.patch(`${BASE(projectId)}/places/workplaces/${workplaceId}`, body).then((r) => r.data.data);
-export const deleteWorkplace     = (projectId, workplaceId)       => axiosInstance.delete(`${BASE(projectId)}/places/workplaces/${workplaceId}`).then((r) => r.data);
+export const getPlacesSettings = (projectId)                    => axiosInstance.get(`${BASE(projectId)}/places`).then((r) => r.data.data);
+export const addUnit           = (projectId, body)              => axiosInstance.post(`${BASE(projectId)}/places/units`, body).then((r) => r.data.data);
+export const updateUnit        = (projectId, unitId, body)      => axiosInstance.patch(`${BASE(projectId)}/places/units/${unitId}`, body).then((r) => r.data.data);
+export const deleteUnit        = (projectId, unitId)            => axiosInstance.delete(`${BASE(projectId)}/places/units/${unitId}`).then((r) => r.data);
+export const addWorkplace      = (projectId, body)              => axiosInstance.post(`${BASE(projectId)}/places/workplaces`, body).then((r) => r.data.data);
+export const updateWorkplace   = (projectId, workplaceId, body) => axiosInstance.patch(`${BASE(projectId)}/places/workplaces/${workplaceId}`, body).then((r) => r.data.data);
+export const deleteWorkplace   = (projectId, workplaceId)       => axiosInstance.delete(`${BASE(projectId)}/places/workplaces/${workplaceId}`).then((r) => r.data);
 
 // ─── Construction ─────────────────────────────────────────────────────────────
 
@@ -56,26 +56,17 @@ export const updateOvertime          = (projectId, body) => axiosInstance.patch(
 export const updateTravelTime        = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/construction/travel-time`, body).then((r) => r.data.data);
 export const updateBrokenTurnaround  = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/construction/broken-turnaround`, body).then((r) => r.data.data);
 
+// ─── Standard Crew ────────────────────────────────────────────────────────────
 
-export const getStandardCrewSettings = async (projectId) => {
-  const res = await axiosInstance.get(`${BASE(projectId)}/standard-crew`);
-  return res.data.data;
-};
-
-export const updateSixthSeventhDay = async (projectId, payload) => {
-  const res = await axiosInstance.patch(`${BASE(projectId)}/standard-crew/sixth-seventh-day`, payload);
-  return res.data.data;
-};
-
-export const updateStandardCrewOvertime = async (projectId, payload) => {
-  const res = await axiosInstance.patch(`${BASE(projectId)}/standard-crew/overtime`, payload);
-  return res.data.data;
-};
-
+export const getStandardCrewSettings       = (projectId)       => axiosInstance.get(`${BASE(projectId)}/standard-crew`).then((r) => r.data.data);
+export const updateSixthSeventhDay         = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/standard-crew/sixth-seventh-day`, body).then((r) => r.data.data);
+export const updateStandardCrewOvertime    = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/standard-crew/overtime`, body).then((r) => r.data.data);
 export const updateStandardCrewDepartments = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/standard-crew/departments`, body).then((r) => r.data.data);
 
 // ─── Details ─────────────────────────────────────────────────────────────────
+
 export const getDetailsSettings       = (projectId)       => axiosInstance.get(`${BASE(projectId)}/details`).then((r) => r.data.data);
+export const updateIdentity           = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/identity`, body).then((r) => r.data.data);  // ← replaces /details-identity
 export const updateBasic              = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/basic`, body).then((r) => r.data.data);
 export const updateProjectInformation = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/project-information`, body).then((r) => r.data.data);
 export const updateOfferHandling      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/offer-handling`, body).then((r) => r.data.data);
@@ -83,38 +74,33 @@ export const updateAllowances         = (projectId, body) => axiosInstance.patch
 export const updateMealPenalties      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/meal-penalties`, body).then((r) => r.data.data);
 export const updateNotice             = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/notice`, body).then((r) => r.data.data);
 
-
-export const getDetailsIdentitySettings    = (projectId)       =>
-  axiosInstance.get(`${BASE(projectId)}/details-identity`).then((r) => r.data.data);
-
-export const updateDetailsIdentitySettings = (projectId, body) =>
-  axiosInstance.patch(`${BASE(projectId)}/details-identity`, body).then((r) => r.data.data);
+// getDetailsIdentitySettings / updateDetailsIdentitySettings removed
+// — identity is now fetched as part of getDetailsSettings (detailsSettings.identity)
 
 // ─── Dates ────────────────────────────────────────────────────────────────────
-export const getDatesSettings    = (projectId)       =>
-  axiosInstance.get(`${BASE(projectId)}/dates`).then((r) => r.data.data);
 
-export const updateDatesSchedule = (projectId, body) =>
-  axiosInstance.patch(`${BASE(projectId)}/dates/schedule`, body).then((r) => r.data.data);
+export const getDatesSettings    = (projectId)       => axiosInstance.get(`${BASE(projectId)}/dates`).then((r) => r.data.data);
+export const updateDatesSchedule = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/dates/schedule`, body).then((r) => r.data.data);
 
 // ─── Contacts ─────────────────────────────────────────────────────────────────
-export const getContactsSettings         = (projectId)              =>
-  axiosInstance.get(`${BASE(projectId)}/contacts`).then((r) => r.data.data);
 
-export const addCompany                  = (projectId, body)        =>
-  axiosInstance.post(`${BASE(projectId)}/contacts/companies`, body).then((r) => r.data.data);
+export const getContactsSettings          = (projectId)                 => axiosInstance.get(`${BASE(projectId)}/contacts`).then((r) => r.data.data);
+export const addCompany                   = (projectId, body)           => axiosInstance.post(`${BASE(projectId)}/contacts/companies`, body).then((r) => r.data.data);
+export const updateCompany                = (projectId, companyId, body)=> axiosInstance.patch(`${BASE(projectId)}/contacts/companies/${companyId}`, body).then((r) => r.data.data);
+export const deleteCompany                = (projectId, companyId)      => axiosInstance.delete(`${BASE(projectId)}/contacts/companies/${companyId}`).then((r) => r.data);
+export const updateContactsProductionBase = (projectId, body)           => axiosInstance.patch(`${BASE(projectId)}/contacts/production-base`, body).then((r) => r.data.data);
+export const updateContactsProjectCreator = (projectId, body)           => axiosInstance.patch(`${BASE(projectId)}/contacts/project-creator`, body).then((r) => r.data.data);
+export const updateContactsBilling        = (projectId, body)           => axiosInstance.patch(`${BASE(projectId)}/contacts/billing`, body).then((r) => r.data.data);
 
-export const updateCompany               = (projectId, companyId, body) =>
-  axiosInstance.patch(`${BASE(projectId)}/contacts/companies/${companyId}`, body).then((r) => r.data.data);
+// ─── Chat ─────────────────────────────────────────────────────────────────────
 
-export const deleteCompany               = (projectId, companyId)   =>
-  axiosInstance.delete(`${BASE(projectId)}/contacts/companies/${companyId}`).then((r) => r.data);
+export const getChatSettings         = (projectId)       => axiosInstance.get(`${BASE(projectId)}/chat`).then((r) => r.data.data);
+export const updateChatGeneral       = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/chat/general`, body).then((r) => r.data.data);
+export const updateChatChannels      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/chat/channels`, body).then((r) => r.data.data);
+export const updateChatNotifications = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/chat/notifications`, body).then((r) => r.data.data);
+export const updateChatModeration    = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/chat/moderation`, body).then((r) => r.data.data);
 
-export const updateContactsProductionBase = (projectId, body)       =>
-  axiosInstance.patch(`${BASE(projectId)}/contacts/production-base`, body).then((r) => r.data.data);
+// ─── App Settings ─────────────────────────────────────────────────────────────
 
-export const updateContactsProjectCreator = (projectId, body)       =>
-  axiosInstance.patch(`${BASE(projectId)}/contacts/project-creator`, body).then((r) => r.data.data);
-
-export const updateContactsBilling        = (projectId, body)       =>
-  axiosInstance.patch(`${BASE(projectId)}/contacts/billing`, body).then((r) => r.data.data);
+export const getAppSettings = (projectId)       => axiosInstance.get(`${BASE(projectId)}/app-settings`).then((r) => r.data.data);
+export const updateApp      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/app-settings/app`, body).then((r) => r.data.data);
