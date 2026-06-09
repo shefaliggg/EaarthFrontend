@@ -3,17 +3,17 @@
  * Path: src/features/projects/settings/pages/DatesSettings.jsx
  */
 
-import { useState }        from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { toast }           from "sonner";
-import { Plus }            from "lucide-react";
+import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
-import CardWrapper               from "@/shared/components/wrappers/CardWrapper";
-import EditToggleButtons         from "@/shared/components/buttons/EditToggleButtons";
-import ScheduleList              from "../../components/dates/ScheduleList";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
+import ScheduleList from "../../components/dates/ScheduleList";
 import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
-import SettingsCardErrorSkelton  from "../../components/skeltons/SettingsCardErrorSkelton";
-import { useDatesSettings }      from "./useDatesSettings";
+import SettingsCardErrorSkelton from "../../components/skeltons/SettingsCardErrorSkelton";
+import { useDatesSettings } from "./useDatesSettings";
 
 // ── Hiatus auto-naming ─────────────────────────────────────────────────────
 const getNextHiatusName = (items) => {
@@ -32,7 +32,7 @@ function DatesSettings() {
     useDatesSettings(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [draft,     setDraft]     = useState(null);
+  const [draft, setDraft] = useState(null);
 
   // ── Edit / Cancel ─────────────────────────────────────────────────────────
   const startEditing = () => {
@@ -73,7 +73,11 @@ function DatesSettings() {
   if (error) {
     return (
       <SettingsCardErrorSkelton
-        message={typeof error === "string" ? error : error?.message || "Something went wrong"}
+        message={
+          typeof error === "string"
+            ? error
+            : error?.message || "Something went wrong"
+        }
         onRetry={() => dispatch(fetchDatesSettingsThunk(projectId))}
       />
     );
@@ -85,24 +89,26 @@ function DatesSettings() {
   return (
     <div className="space-y-4">
       <CardWrapper showLabel={false}>
-
         <div className="flex items-center justify-between mb-7">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
             <div>
               <h3 className="text-foreground text-sm font-medium">Schedule</h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                Manage full production timeline (prep, shoot, hiatus, wrap, etc.)
+                Manage full production timeline (prep, shoot, hiatus, wrap,
+                etc.)
               </p>
             </div>
           </div>
-          <EditToggleButtons
-            isEditing={isEditing}
-            isLoading={isUpdating}
-            onEdit={startEditing}
-            onSave={handleSave}
-            onCancel={cancelEditing}
-          />
+          <div className="flex items-center gap-1 ">
+            <EditToggleButtons
+              isEditing={isEditing}
+              isLoading={isUpdating}
+              onEdit={startEditing}
+              onSave={handleSave}
+              onCancel={cancelEditing}
+            />
+          </div>
         </div>
 
         <ScheduleList
@@ -114,15 +120,14 @@ function DatesSettings() {
         {/* Add Hiatus button — only visible while editing */}
         {isEditing && (
           <button
-  type="button"
-  onClick={addHiatus}
-  className="mt-4 flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors"
->
-  <Plus size={14} />
-  Add Schedule
-</button>
+            type="button"
+            onClick={addHiatus}
+            className="mt-4 flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            <Plus size={14} />
+            Add Schedule
+          </button>
         )}
-
       </CardWrapper>
     </div>
   );
