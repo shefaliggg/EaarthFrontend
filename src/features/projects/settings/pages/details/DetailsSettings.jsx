@@ -6,26 +6,26 @@
  * Deleted: useDetailsIdentitySettings.js
  */
 
-import { useState }        from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { toast }           from "sonner";
-import { z }               from "zod";
+import { toast } from "sonner";
+import { z } from "zod";
 
-import CardWrapper                from "@/shared/components/wrappers/CardWrapper";
-import EditableTextDataField      from "@/shared/components/wrappers/EditableTextDataField";
-import EditToggleButtons          from "@/shared/components/buttons/EditToggleButtons";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
+import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
 import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
-import SettingsCardErrorSkelton   from "../../components/skeltons/SettingsCardErrorSkelton";
+import SettingsCardErrorSkelton from "../../components/skeltons/SettingsCardErrorSkelton";
 
 // Single hook — identity now lives at detailsSettings.identity
 import { useDetailsSettings } from "../project/useDetailsSettings";
 
 // ── Zod schema ────────────────────────────────────────────────────────────────
 const identitySchema = z.object({
-  productionName:  z.string().min(1, "Project name is required").max(200),
-  codeName:        z.string().max(200).optional().or(z.literal("")),
-  description:     z.string().max(5000).optional().or(z.literal("")),
-  country:         z.string().max(500).optional().or(z.literal("")),
+  productionName: z.string().min(1, "Project name is required").max(200),
+  codeName: z.string().max(200).optional().or(z.literal("")),
+  description: z.string().max(5000).optional().or(z.literal("")),
+  country: z.string().max(500).optional().or(z.literal("")),
   additionalNotes: z.string().max(5000).optional().or(z.literal("")),
 });
 
@@ -39,12 +39,13 @@ function DetailsSettings() {
   const identityData = settings.identity;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [draft,     setDraft]     = useState(null);
-  const [errors,    setErrors]    = useState({});
+  const [draft, setDraft] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  const display = (key) => (isEditing ? draft?.[key] : identityData?.[key]) ?? "";
-  const patch   = (key) => (val) => setDraft((prev) => ({ ...prev, [key]: val }));
+  const display = (key) =>
+    (isEditing ? draft?.[key] : identityData?.[key]) ?? "";
+  const patch = (key) => (val) => setDraft((prev) => ({ ...prev, [key]: val }));
 
   // ── Edit / Cancel ─────────────────────────────────────────────────────────
   const startEditing = () => {
@@ -84,7 +85,11 @@ function DetailsSettings() {
   if (error) {
     return (
       <SettingsCardErrorSkelton
-        message={typeof error === "string" ? error : error?.message || "Something went wrong"}
+        message={
+          typeof error === "string"
+            ? error
+            : error?.message || "Something went wrong"
+        }
       />
     );
   }
@@ -93,24 +98,28 @@ function DetailsSettings() {
   return (
     <div className="space-y-4">
       <CardWrapper showLabel={false}>
-
         <div className="flex items-center justify-between mb-7">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
             <div>
-              <h3 className="text-foreground text-sm font-medium">Project Details</h3>
+              <h3 className="text-foreground text-sm font-medium">
+                Project Details
+              </h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                Helpful information shown to crew — can be updated any time
+                Helpful information which is shown to crew and can be updated
+                any time
               </p>
             </div>
           </div>
-          <EditToggleButtons
-            isEditing={isEditing}
-            isLoading={isUpdating}
-            onEdit={startEditing}
-            onSave={handleSave}
-            onCancel={cancelEditing}
-          />
+          <div className="flex items-center gap-1 ">
+            <EditToggleButtons
+              isEditing={isEditing}
+              isLoading={isUpdating}
+              onEdit={startEditing}
+              onSave={handleSave}
+              onCancel={cancelEditing}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -172,7 +181,6 @@ function DetailsSettings() {
             placeholder="Enter additional notes"
           />
         </div>
-
       </CardWrapper>
     </div>
   );

@@ -3,40 +3,35 @@
  * Path: src/features/projects/settings/components/departments/DepartmentSettings.jsx
  */
 
-import { useState, useEffect }  from "react";
-import { useOutletContext }      from "react-router-dom";
-import { Plus, Loader2 }        from "lucide-react";
+import { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
+import { Plus, Loader2 } from "lucide-react";
 
-import CardWrapper       from "@/shared/components/wrappers/CardWrapper";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
-import DataTable         from "@/shared/components/tables/DataTable/DataTable";
+import DataTable from "@/shared/components/tables/DataTable/DataTable";
 import { DepartmentColumns } from "./DepartmentColumns";
 import { useDepartmentSettings } from "./useDepartmentSettings";
 
 const emptyDepartment = () => ({
   // no _id — Mongo assigns one on save
-  department:    "",
-  site:          "On Set",
-  cameraOT:      false,
-  otherOT:       false,
+  department: "",
+  site: "On Set",
+  cameraOT: false,
+  otherOT: false,
   minutesAcross: null,
   minutesBefore: null,
-  minutesAfter:  null,
+  minutesAfter: null,
 });
 
 function DepartmentSettings() {
   const { projectId } = useOutletContext();
 
-  const {
-    departments,
-    isFetching,
-    isUpdating,
-    error,
-    saveDepartments,
-  } = useDepartmentSettings(projectId);
+  const { departments, isFetching, isUpdating, error, saveDepartments } =
+    useDepartmentSettings(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [draft,     setDraft]     = useState(null);
+  const [draft, setDraft] = useState(null);
   const [saveError, setSaveError] = useState(null);
 
   // ── Edit / Save / Cancel ──────────────────────────────────────────────────
@@ -90,7 +85,9 @@ function DepartmentSettings() {
     <div className="space-y-4">
       {(error || saveError) && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
-          {saveError ?? error?.message ?? "Something went wrong. Please try again."}
+          {saveError ??
+            error?.message ??
+            "Something went wrong. Please try again."}
         </div>
       )}
 
@@ -108,14 +105,15 @@ function DepartmentSettings() {
               </p>
             </div>
           </div>
-
-          <EditToggleButtons
-            isEditing={isEditing}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            isLoading={isUpdating}
-          />
+          <div className="flex items-center gap-1">
+            <EditToggleButtons
+              isEditing={isEditing}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              isLoading={isUpdating}
+            />
+          </div>
         </div>
 
         <DataTable
@@ -137,7 +135,9 @@ function DepartmentSettings() {
 
         {isEditing && (
           <button
-            onClick={() => setDraft((prev) => [...(prev ?? []), emptyDepartment()])}
+            onClick={() =>
+              setDraft((prev) => [...(prev ?? []), emptyDepartment()])
+            }
             className="w-full border-2 border-dashed border-border text-primary mt-4 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-muted/20"
           >
             <Plus size={16} />

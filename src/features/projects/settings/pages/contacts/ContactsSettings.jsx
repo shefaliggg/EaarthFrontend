@@ -3,26 +3,28 @@
  * Path: src/features/projects/settings/pages/ContactsSettings.jsx
  */
 
-import { useState, useCallback }   from "react";
-import { useOutletContext }        from "react-router-dom";
-import { toast }                   from "sonner";
+import { useState, useCallback } from "react";
+import { useOutletContext } from "react-router-dom";
+import { toast } from "sonner";
 import { Building2, Plus, Trash2 } from "lucide-react";
-import * as FramerMotion           from "framer-motion";
+import * as FramerMotion from "framer-motion";
 
-import CardWrapper               from "@/shared/components/wrappers/CardWrapper";
-import EditToggleButtons         from "@/shared/components/buttons/EditToggleButtons";
-import EditableTextDataField     from "@/shared/components/wrappers/EditableTextDataField";
-import EditableSelectField       from "@/shared/components/wrappers/EditableSelectField";
-import EditableSwitchField       from "@/shared/components/wrappers/EditableSwitchField";
-import EditableToggleGroupField  from "@/shared/components/wrappers/EditableToggleGroupField";
-import { Badge }                 from "@/shared/components/ui/badge";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
+import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
+import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
+import EditableSwitchField from "@/shared/components/wrappers/EditableSwitchField";
+import EditableToggleGroupField from "@/shared/components/wrappers/EditableToggleGroupField";
+import { Badge } from "@/shared/components/ui/badge";
 import {
-  Accordion, AccordionItem,
-  AccordionTrigger, AccordionContent,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
 } from "@/shared/components/ui/accordion";
 import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
-import SettingsCardErrorSkelton  from "../../components/skeltons/SettingsCardErrorSkelton";
-import { useContactsSettings }   from "./useContactsSettings";
+import SettingsCardErrorSkelton from "../../components/skeltons/SettingsCardErrorSkelton";
+import { useContactsSettings } from "./useContactsSettings";
 import {
   getCountryOptions,
   currencyOptions,
@@ -32,24 +34,41 @@ import {
 
 // ── Empty company draft ───────────────────────────────────────────────────────
 const EMPTY_COMPANY = {
-  companyName: "", registrationNumber: "", vatNumber: "",
-  addressLine1: "", addressLine2: "", city: "", postcode: "",
-  telephone: "", email: "", country: "GB", currencies: ["GBP"], isPrimary: false,
+  companyName: "",
+  registrationNumber: "",
+  vatNumber: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  postcode: "",
+  telephone: "",
+  email: "",
+  country: "GB",
+  currencies: ["GBP"],
+  isPrimary: false,
 };
 
 function ContactsSettings() {
   const { projectId } = useOutletContext();
 
   const {
-    settings, isFetching, isUpdating, isSubmitting, error,
-    addCompany, updateCompany, removeCompany,
-    updateProductionBase, updateProjectCreator, updateBilling,
+    settings,
+    isFetching,
+    isUpdating,
+    isSubmitting,
+    error,
+    addCompany,
+    updateCompany,
+    removeCompany,
+    updateProductionBase,
+    updateProjectCreator,
+    updateBilling,
   } = useContactsSettings(projectId);
 
   const [editingSection, setEditingSection] = useState(null);
-  const [drafts,         setDrafts]         = useState({});
-  const [companyDrafts,  setCompanyDrafts]  = useState({});
-  const [saveError,      setSaveError]      = useState(null);
+  const [drafts, setDrafts] = useState({});
+  const [companyDrafts, setCompanyDrafts] = useState({});
+  const [saveError, setSaveError] = useState(null);
 
   // ── Generic section edit/cancel ───────────────────────────────────────────
   const startEditing = (section, initialData) => {
@@ -65,7 +84,10 @@ function ContactsSettings() {
   };
 
   const patchDraft = (section, key) => (val) =>
-    setDrafts((prev) => ({ ...prev, [section]: { ...prev[section], [key]: val } }));
+    setDrafts((prev) => ({
+      ...prev,
+      [section]: { ...prev[section], [key]: val },
+    }));
 
   // ── Company edit/cancel ───────────────────────────────────────────────────
   const startEditingCompany = (companyId, data) => {
@@ -144,7 +166,11 @@ function ContactsSettings() {
   if (error) {
     return (
       <SettingsCardErrorSkelton
-        message={typeof error === "string" ? error : error?.message || "Something went wrong"}
+        message={
+          typeof error === "string"
+            ? error
+            : error?.message || "Something went wrong"
+        }
         onRetry={() => dispatch(fetchContactsSettingsThunk(projectId))}
       />
     );
@@ -155,7 +181,6 @@ function ContactsSettings() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-
       {saveError && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
           {saveError}
@@ -179,7 +204,9 @@ function ContactsSettings() {
 
         <div className="flex items-center justify-between mt-4">
           <p className="text-muted-foreground text-[11px]">
-            {settings.companies.length} {settings.companies.length === 1 ? "company" : "companies"} registered
+            {settings.companies.length}{" "}
+            {settings.companies.length === 1 ? "company" : "companies"}{" "}
+            registered
           </p>
           <FramerMotion.motion.button
             whileHover={{ scale: 1.02 }}
@@ -194,15 +221,18 @@ function ContactsSettings() {
         </div>
 
         {settings.companies.length > 0 && (
-          <Accordion type="single" collapsible className="mt-4 px-4 rounded-3xl border">
+          <Accordion
+            type="single"
+            collapsible
+            className="mt-4 px-4 rounded-3xl border"
+          >
             {settings.companies.map((company) => {
-              const cid        = String(company._id);
+              const cid = String(company._id);
               const isEditingC = Boolean(companyDrafts[cid]);
-              const data       = isEditingC ? companyDrafts[cid] : company;
+              const data = isEditingC ? companyDrafts[cid] : company;
 
               return (
                 <AccordionItem key={cid} value={cid} className="border-none">
-
                   {/* ── Trigger ── */}
                   <AccordionTrigger className="hover:no-underline w-full">
                     <div className="flex items-center justify-between gap-4 w-full pr-2">
@@ -224,13 +254,19 @@ function ContactsSettings() {
                           <div className="flex items-center gap-2 flex-wrap">
                             {(company.city || company.country) && (
                               <p className="text-[0.7rem] text-muted-foreground">
-                                {[company.city, getCountryLabel(company.country)]
-                                  .filter(Boolean).join(", ")}
+                                {[
+                                  company.city,
+                                  getCountryLabel(company.country),
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ")}
                               </p>
                             )}
                             {company.vatNumber && (
                               <>
-                                <span className="text-[0.7rem] text-muted-foreground">•</span>
+                                <span className="text-[0.7rem] text-muted-foreground">
+                                  •
+                                </span>
                                 <p className="text-[0.7rem] text-muted-foreground">
                                   VAT Number: {company.vatNumber}
                                 </p>
@@ -346,7 +382,9 @@ function ContactsSettings() {
                             [cid]: {
                               ...prev[cid],
                               country: val,
-                              currencies: [getCurrencyByCountry(val)].filter(Boolean),
+                              currencies: [getCurrencyByCountry(val)].filter(
+                                Boolean,
+                              ),
                             },
                           }))
                         }
@@ -373,14 +411,16 @@ function ContactsSettings() {
                       <EditableToggleGroupField
                         label="Currencies"
                         type="multiple"
-                        items={currencyOptions.map((code) => ({ label: code, value: code }))}
+                        items={currencyOptions.map((code) => ({
+                          label: code,
+                          value: code,
+                        }))}
                         value={data.currencies}
                         isEditing={isEditingC}
                         onChange={patchCompanyDraft(cid, "currencies")}
                       />
                     </div>
                   </AccordionContent>
-
                 </AccordionItem>
               );
             })}
@@ -394,24 +434,33 @@ function ContactsSettings() {
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
             <div>
-              <h3 className="text-foreground text-sm font-medium">Production Base</h3>
+              <h3 className="text-foreground text-sm font-medium">
+                Production Base
+              </h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
                 Shown to crew in their offer so they can contact you for help,
                 and possibly in documents regarding mileage
               </p>
             </div>
           </div>
-          <EditToggleButtons
-            isEditing={editingSection === "productionBase"}
-            isLoading={isUpdating && editingSection === "productionBase"}
-            onEdit={() => startEditing("productionBase", productionBase)}
-            onSave={() => handleSaveSection("productionBase", updateProductionBase)}
-            onCancel={cancelEditing}
-          />
+          <div className="flex items-center gap-1">
+            <EditToggleButtons
+              isEditing={editingSection === "productionBase"}
+              isLoading={isUpdating && editingSection === "productionBase"}
+              onEdit={() => startEditing("productionBase", productionBase)}
+              onSave={() =>
+                handleSaveSection("productionBase", updateProductionBase)
+              }
+              onCancel={cancelEditing}
+            />
+          </div>
         </div>
 
         {(() => {
-          const d  = editingSection === "productionBase" ? drafts.productionBase : productionBase;
+          const d =
+            editingSection === "productionBase"
+              ? drafts.productionBase
+              : productionBase;
           const isE = editingSection === "productionBase";
           return (
             <>
@@ -482,23 +531,32 @@ function ContactsSettings() {
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
             <div>
-              <h3 className="text-foreground text-sm font-medium">Project Creator</h3>
+              <h3 className="text-foreground text-sm font-medium">
+                Project Creator
+              </h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
                 Contact details of who created this project
               </p>
             </div>
           </div>
-          <EditToggleButtons
-            isEditing={editingSection === "projectCreator"}
-            isLoading={isUpdating && editingSection === "projectCreator"}
-            onEdit={() => startEditing("projectCreator", projectCreator)}
-            onSave={() => handleSaveSection("projectCreator", updateProjectCreator)}
-            onCancel={cancelEditing}
-          />
+          <div className="flex items-center gap-1">
+            <EditToggleButtons
+              isEditing={editingSection === "projectCreator"}
+              isLoading={isUpdating && editingSection === "projectCreator"}
+              onEdit={() => startEditing("projectCreator", projectCreator)}
+              onSave={() =>
+                handleSaveSection("projectCreator", updateProjectCreator)
+              }
+              onCancel={cancelEditing}
+            />
+          </div>
         </div>
 
         {(() => {
-          const d  = editingSection === "projectCreator" ? drafts.projectCreator : projectCreator;
+          const d =
+            editingSection === "projectCreator"
+              ? drafts.projectCreator
+              : projectCreator;
           const isE = editingSection === "projectCreator";
           return (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -532,17 +590,19 @@ function ContactsSettings() {
               </p>
             </div>
           </div>
-          <EditToggleButtons
-            isEditing={editingSection === "billing"}
-            isLoading={isUpdating && editingSection === "billing"}
-            onEdit={() => startEditing("billing", billing)}
-            onSave={() => handleSaveSection("billing", updateBilling)}
-            onCancel={cancelEditing}
-          />
+          <div className="flex items-center gap-1">
+            <EditToggleButtons
+              isEditing={editingSection === "billing"}
+              isLoading={isUpdating && editingSection === "billing"}
+              onEdit={() => startEditing("billing", billing)}
+              onSave={() => handleSaveSection("billing", updateBilling)}
+              onCancel={cancelEditing}
+            />
+          </div>
         </div>
 
         {(() => {
-          const d  = editingSection === "billing" ? drafts.billing : billing;
+          const d = editingSection === "billing" ? drafts.billing : billing;
           const isE = editingSection === "billing";
           return (
             <>
@@ -624,7 +684,6 @@ function ContactsSettings() {
           );
         })()}
       </CardWrapper>
-
     </div>
   );
 }

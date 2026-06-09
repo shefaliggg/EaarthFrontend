@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { useOutletContext }       from "react-router-dom";
-import { Loader2 }               from "lucide-react";
+import { useOutletContext } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
-import CardWrapper           from "@/shared/components/wrappers/CardWrapper";
-import EditableSelectField   from "@/shared/components/wrappers/EditableSelectField";
-import EditableSwitchField   from "@/shared/components/wrappers/EditableSwitchField";
+import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
+import EditableSwitchField from "@/shared/components/wrappers/EditableSwitchField";
 import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
-import EditToggleButtons     from "../../../../../shared/components/buttons/EditToggleButtons";   // ← import
+import EditToggleButtons from "../../../../../shared/components/buttons/EditToggleButtons"; // ← import
 import { useStandardCrewSettings } from "./useStandardCrewSettings";
 
 // ─── SectionCard ──────────────────────────────────────────────────────────────
@@ -19,7 +19,9 @@ function SectionCard({ title, description, isSaving, children }) {
           <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
           <div>
             <h3 className="text-foreground text-sm font-medium">{title}</h3>
-            <p className="text-muted-foreground text-[0.7rem] mt-0.5">{description}</p>
+            <p className="text-muted-foreground text-[0.7rem] mt-0.5">
+              {description}
+            </p>
           </div>
         </div>
         {isSaving && (
@@ -39,19 +41,14 @@ function SectionCard({ title, description, isSaving, children }) {
 function StandardCrewSettings() {
   const { projectId } = useOutletContext();
 
-  const {
-    settings,
-    isFetching,
-    error,
-    updateSixthSeventhDay,
-    updateOvertime,
-  } = useStandardCrewSettings(projectId);
+  const { settings, isFetching, error, updateSixthSeventhDay, updateOvertime } =
+    useStandardCrewSettings(projectId);
 
   const [savingSection, setSavingSection] = useState(null);
-  const [saveError,     setSaveError]     = useState(null);
+  const [saveError, setSaveError] = useState(null);
 
   const [isEditingOvertime, setIsEditingOvertime] = useState(false);
-  const [overtimeDraft,     setOvertimeDraft]     = useState(null);
+  const [overtimeDraft, setOvertimeDraft] = useState(null);
 
   // ── Save helper ───────────────────────────────────────────────────────────
 
@@ -71,7 +68,7 @@ function StandardCrewSettings() {
         setSavingSection(null);
       }
     },
-    [updateSixthSeventhDay, updateOvertime]
+    [updateSixthSeventhDay, updateOvertime],
   );
 
   // ── 6th/7th — instant save ────────────────────────────────────────────────
@@ -81,7 +78,7 @@ function StandardCrewSettings() {
       const updated = { ...settings[section], [field]: value };
       save(section, updated);
     },
-    [settings, save]
+    [settings, save],
   );
 
   // ── Overtime — Edit/Save/Cancel ───────────────────────────────────────────
@@ -123,7 +120,6 @@ function StandardCrewSettings() {
 
   return (
     <div className="space-y-4">
-
       {error && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
           {error?.message ?? "Something went wrong. Please try again."}
@@ -151,7 +147,9 @@ function StandardCrewSettings() {
               { label: "1.5x", value: "1.5" },
               { label: "2.0x", value: "2.0" },
             ]}
-            onChange={(val) => handleSelect("sixthSeventhDay", "sixthDayMultiplier", val)}
+            onChange={(val) =>
+              handleSelect("sixthSeventhDay", "sixthDayMultiplier", val)
+            }
             infoPillDescription="For projects using the Film PACT/BECTU MMPA, this multiplier will only apply to crew who are on deals outside of the agreement."
           />
           <EditableSelectField
@@ -163,7 +161,9 @@ function StandardCrewSettings() {
               { label: "1.5x", value: "1.5" },
               { label: "2.0x", value: "2.0" },
             ]}
-            onChange={(val) => handleSelect("sixthSeventhDay", "seventhDayMultiplier", val)}
+            onChange={(val) =>
+              handleSelect("sixthSeventhDay", "seventhDayMultiplier", val)
+            }
             infoPillDescription="For projects using the Film PACT/BECTU MMPA, this multiplier will only apply to crew who are on deals outside of the agreement."
           />
         </div>
@@ -172,7 +172,9 @@ function StandardCrewSettings() {
             label="Show minimum hours on 6th and 7th days in offers?"
             checked={d.sixthSeventhDay.showMinHours}
             isEditing={true}
-            onChange={(val) => handleSelect("sixthSeventhDay", "showMinHours", val)}
+            onChange={(val) =>
+              handleSelect("sixthSeventhDay", "showMinHours", val)
+            }
           />
         </div>
       </SectionCard>
@@ -185,20 +187,21 @@ function StandardCrewSettings() {
             <div>
               <h3 className="text-foreground text-sm font-medium">Overtime</h3>
               <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                Custom overtime rates which an offer will default to if you choose not to pay
-                overtime as 'Calculated per agreement'
+                Custom overtime rates which an offer will default to if you
+                choose not to pay overtime as 'Calculated per agreement'
               </p>
             </div>
           </div>
-
-          {/* ← replaced inline buttons with EditToggleButtons */}
-          <EditToggleButtons
-            isEditing={isEditingOvertime}
-            onEdit={startEditingOvertime}
-            onSave={saveOvertime}
-            onCancel={cancelEditingOvertime}
-            isLoading={savingSection === "overtime"}
-          />
+          <div className="flex items-center gap-1">
+            {/* ← replaced inline buttons with EditToggleButtons */}
+            <EditToggleButtons
+              isEditing={isEditingOvertime}
+              onEdit={startEditingOvertime}
+              onSave={saveOvertime}
+              onCancel={cancelEditingOvertime}
+              isLoading={savingSection === "overtime"}
+            />
+          </div>
         </div>
 
         <EditableTextDataField
@@ -214,7 +217,9 @@ function StandardCrewSettings() {
             value={overtimeData?.cameraStandard}
             isEditing={isEditingOvertime}
             isRequired={false}
-            onChange={(val) => setOvertimeDraft((p) => ({ ...p, cameraStandard: val }))}
+            onChange={(val) =>
+              setOvertimeDraft((p) => ({ ...p, cameraStandard: val }))
+            }
           />
         </div>
         <div className="mt-4">
@@ -223,7 +228,9 @@ function StandardCrewSettings() {
             value={overtimeData?.cameraContinuous}
             isEditing={isEditingOvertime}
             isRequired={false}
-            onChange={(val) => setOvertimeDraft((p) => ({ ...p, cameraContinuous: val }))}
+            onChange={(val) =>
+              setOvertimeDraft((p) => ({ ...p, cameraContinuous: val }))
+            }
           />
         </div>
         <div className="mt-4">
@@ -232,11 +239,12 @@ function StandardCrewSettings() {
             value={overtimeData?.cameraSemiContinuous}
             isEditing={isEditingOvertime}
             isRequired={false}
-            onChange={(val) => setOvertimeDraft((p) => ({ ...p, cameraSemiContinuous: val }))}
+            onChange={(val) =>
+              setOvertimeDraft((p) => ({ ...p, cameraSemiContinuous: val }))
+            }
           />
         </div>
       </CardWrapper>
-
     </div>
   );
 }
