@@ -62,6 +62,27 @@ import {
   updateNoticeThunk,
 } from "./thunks/detailsSettings.thunks";
 
+
+import {
+  fetchDetailsIdentitySettingsThunk,
+  updateDetailsIdentitySettingsThunk,
+} from "./thunks/detailsIdentitySettings.thunks";
+
+import {
+  fetchDatesSettingsThunk,
+  updateDatesScheduleThunk,
+} from "./thunks/datesSettings.thunks";
+
+import {
+  fetchContactsSettingsThunk,
+  addCompanyThunk,
+  updateCompanyThunk,
+  deleteCompanyThunk,
+  updateProductionBaseThunk,
+  updateProjectCreatorThunk,
+  updateBillingThunk,
+} from "./thunks/contactsSettings.thunks";
+
 // ─── Default places ───────────────────────────────────────────────────────────
 
 const DEFAULT_PLACES = {
@@ -85,6 +106,9 @@ const initialState = {
   pennyContractCrew:    null,
   standardCrewSettings: null,
   detailsSettings: null,
+  detailsIdentitySettings: null,
+  datesSettings: null,
+  contactsSettings: null,
 
   isFetching:   false,
   isUpdating:   false,
@@ -425,6 +449,98 @@ const projectSettingsSlice = createSlice({
 .addCase(updateNoticeThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
 .addCase(updateNoticeThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.detailsSettings = payload; })
 .addCase(updateNoticeThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(fetchDetailsIdentitySettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchDetailsIdentitySettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching               = false;
+  state.detailsIdentitySettings  = payload;
+})
+.addCase(fetchDetailsIdentitySettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(updateDetailsIdentitySettingsThunk.pending, (state) => {
+  state.isUpdating = true; state.error = null;
+})
+.addCase(updateDetailsIdentitySettingsThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating              = false;
+  state.detailsIdentitySettings = payload;
+})
+.addCase(updateDetailsIdentitySettingsThunk.rejected, (state, { payload }) => {
+  state.isUpdating = false; state.error = payload;
+})
+.addCase(fetchDatesSettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchDatesSettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching     = false;
+  state.datesSettings  = payload;
+})
+.addCase(fetchDatesSettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(updateDatesScheduleThunk.pending, (state) => {
+  state.isUpdating = true; state.error = null;
+})
+.addCase(updateDatesScheduleThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating    = false;
+  state.datesSettings = payload;
+})
+.addCase(updateDatesScheduleThunk.rejected, (state, { payload }) => {
+  state.isUpdating = false; state.error = payload;
+})
+.addCase(fetchContactsSettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchContactsSettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching       = false;
+  state.contactsSettings = payload;
+})
+.addCase(fetchContactsSettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(addCompanyThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+.addCase(addCompanyThunk.fulfilled, (state, { payload }) => {
+  state.isSubmitting     = false;
+  state.contactsSettings = payload;
+})
+.addCase(addCompanyThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+.addCase(updateCompanyThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateCompanyThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating       = false;
+  state.contactsSettings = payload;
+})
+.addCase(updateCompanyThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(deleteCompanyThunk.fulfilled, (state, { payload }) => {
+  state.contactsSettings = payload;
+})
+
+.addCase(updateProductionBaseThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateProductionBaseThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating       = false;
+  state.contactsSettings = payload;
+})
+.addCase(updateProductionBaseThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateProjectCreatorThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateProjectCreatorThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating       = false;
+  state.contactsSettings = payload;
+})
+.addCase(updateProjectCreatorThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(updateBillingThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateBillingThunk.fulfilled, (state, { payload }) => {
+  state.isUpdating       = false;
+  state.contactsSettings = payload;
+})
+.addCase(updateBillingThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
   },
 });
 

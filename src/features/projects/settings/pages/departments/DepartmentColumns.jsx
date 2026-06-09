@@ -1,8 +1,7 @@
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
-import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
-import EditableCheckboxField from "@/shared/components/wrappers/EditableCheckboxField";
-import ActionsMenu from "@/shared/components/menus/ActionsMenu";
+import EditableTextDataField  from "@/shared/components/wrappers/EditableTextDataField";
+import EditableSelectField    from "@/shared/components/wrappers/EditableSelectField";
+import EditableCheckboxField  from "@/shared/components/wrappers/EditableCheckboxField";
+import ActionsMenu            from "@/shared/components/menus/ActionsMenu";
 
 export const DepartmentColumns = ({
   departments,
@@ -10,14 +9,16 @@ export const DepartmentColumns = ({
   isEditing,
   onDelete,
 }) => {
+
+  // ── Key helper — handles both Mongo _id and temp local id ─────────────────
+  const rowKey = (row) => row._id ?? row.id;
+
+  // ── Row updater ───────────────────────────────────────────────────────────
   const updateRow = (id, field, value) => {
     setDepartments(
       departments.map((row) =>
-        row.id === id
-          ? {
-              ...row,
-              [field]: value,
-            }
+        rowKey(row) === id
+          ? { ...row, [field]: value }
           : row,
       ),
     );
@@ -25,9 +26,8 @@ export const DepartmentColumns = ({
 
   return [
     {
-      key: "department",
+      key:   "department",
       label: "Department",
-
       render: (row) => (
         <EditableTextDataField
           label=""
@@ -35,13 +35,13 @@ export const DepartmentColumns = ({
           isEditing={isEditing}
           isRequired={false}
           textCase="pretty"
-          onChange={(value) => updateRow(row.id, "department", value)}
+          onChange={(value) => updateRow(rowKey(row), "department", value)}
         />
       ),
     },
 
     {
-      key: "site",
+      key:   "site",
       label: "Site",
       align: "center",
       render: (row) => (
@@ -51,22 +51,16 @@ export const DepartmentColumns = ({
           isEditing={isEditing}
           isRequired={false}
           items={[
-            {
-              label: "ON SET",
-              value: "On Set",
-            },
-            {
-              label: "OFF SET",
-              value: "Off Set",
-            },
+            { label: "ON SET",  value: "On Set"  },
+            { label: "OFF SET", value: "Off Set" },
           ]}
-          onChange={(value) => updateRow(row.id, "site", value)}
+          onChange={(value) => updateRow(rowKey(row), "site", value)}
         />
       ),
     },
 
     {
-      key: "cameraOT",
+      key:   "cameraOT",
       label: "Camera OT",
       align: "center",
       render: (row) => (
@@ -75,34 +69,32 @@ export const DepartmentColumns = ({
           checked={row.cameraOT}
           isEditing={isEditing}
           isRequired={false}
-          onChange={(checked) => updateRow(row.id, "cameraOT", checked)}
+          onChange={(checked) => updateRow(rowKey(row), "cameraOT", checked)}
           centered
         />
       ),
     },
 
     {
-      key: "otherOT",
+      key:   "otherOT",
       label: "Other OT",
       align: "center",
-
       render: (row) => (
         <EditableCheckboxField
           label=""
           checked={row.otherOT}
           isEditing={isEditing}
           isRequired={false}
-          onChange={(checked) => updateRow(row.id, "otherOT", checked)}
+          onChange={(checked) => updateRow(rowKey(row), "otherOT", checked)}
           centered
         />
       ),
     },
 
     {
-      key: "minutesAcross",
+      key:   "minutesAcross",
       label: "Across",
       align: "center",
-
       render: (row) =>
         isEditing ? (
           <EditableTextDataField
@@ -111,20 +103,17 @@ export const DepartmentColumns = ({
             type="number"
             isEditing={isEditing}
             isRequired={false}
-            onChange={(value) =>
-              updateRow(row.id, "minutesAcross", Number(value))
-            }
+            onChange={(value) => updateRow(rowKey(row), "minutesAcross", Number(value))}
           />
         ) : (
-          row.minutesAcross
+          row.minutesAcross ?? "—"
         ),
     },
 
     {
-      key: "minutesBefore",
+      key:   "minutesBefore",
       label: "Before",
       align: "center",
-
       render: (row) =>
         isEditing ? (
           <EditableTextDataField
@@ -133,20 +122,17 @@ export const DepartmentColumns = ({
             type="number"
             isEditing={isEditing}
             isRequired={false}
-            onChange={(value) =>
-              updateRow(row.id, "minutesBefore", Number(value))
-            }
+            onChange={(value) => updateRow(rowKey(row), "minutesBefore", Number(value))}
           />
         ) : (
-          row.minutesBefore
+          row.minutesBefore ?? "—"
         ),
     },
 
     {
-      key: "minutesAfter",
+      key:   "minutesAfter",
       label: "After",
       align: "center",
-
       render: (row) =>
         isEditing ? (
           <EditableTextDataField
@@ -155,34 +141,28 @@ export const DepartmentColumns = ({
             type="number"
             isEditing={isEditing}
             isRequired={false}
-            onChange={(value) =>
-              updateRow(row.id, "minutesAfter", Number(value))
-            }
+            onChange={(value) => updateRow(rowKey(row), "minutesAfter", Number(value))}
           />
         ) : (
-          row.minutesAfter
+          row.minutesAfter ?? "—"
         ),
     },
+
     {
-      key: "actions",
+      key:   "actions",
       label: "",
       align: "right",
-
       render: (row) => {
         const isDefaultDepartment = row.department === "All Depts";
-
-        if (!isEditing || isDefaultDepartment) {
-          return null;
-        }
-
+        if (!isEditing || isDefaultDepartment) return null;
         return (
           <ActionsMenu
             actions={[
               {
-                label: "Delete",
-                icon: "Trash2",
+                label:       "Delete",
+                icon:        "Trash2",
                 destructive: true,
-                onClick: () => onDelete?.(row.id),
+                onClick:     () => onDelete?.(rowKey(row)),
               },
             ]}
           />

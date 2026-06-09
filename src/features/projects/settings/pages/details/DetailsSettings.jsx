@@ -1,122 +1,66 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import CardWrapper from "@/shared/components/wrappers/CardWrapper";
-import { toast } from "sonner";
-import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
-import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
-import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
-import EditableSwitchField from "@/shared/components/wrappers/EditableSwitchField";
-import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjectSettingsThunk } from "@/features/projects/settings/store/projectSettings.thunks.js";
-import { projectDetailsSchema } from "../../config/settingsValidationSchemas";
-import { updateProjectDetailsThunk } from "../../store/projectSettings.thunks";
-import SettingsCardErrorSkelton from "../../components/skeltons/SettingsCardErrorSkelton";
+/**
+ * DetailsSettings.jsx
+ * Path: src/features/projects/settings/pages/DetailsSettings.jsx
+ */
 
-// ─── Slug helper — must mirror DashboardLayout ────────────────────────────────
-const toSlug = (name = "") => name.toLowerCase().replace(/\s+/g, "-");
-const isObjectId = (str) => /^[a-f\d]{24}$/i.test(String(str ?? ""));
+import { useState }        from "react";
+import { useOutletContext } from "react-router-dom";
+import { toast }           from "sonner";
+import { z }               from "zod";
+
+import CardWrapper               from "@/shared/components/wrappers/CardWrapper";
+import EditableTextDataField     from "@/shared/components/wrappers/EditableTextDataField";
+import EditToggleButtons         from "@/shared/components/buttons/EditToggleButtons";
+import SettingsCardLoadingSkelton from "../../components/skeltons/SettingsCardLoadingSkelton";
+import SettingsCardErrorSkelton  from "../../components/skeltons/SettingsCardErrorSkelton";
+import { useDetailsIdentitySettings } from "./useDetailsIdentitySettings";
+
+// ── Zod schema ────────────────────────────────────────────────────────────────
+const identitySchema = z.object({
+  productionName:  z.string().min(1, "Project name is required").max(200),
+  codeName:        z.string().max(200).optional().or(z.literal("")),
+  description:     z.string().max(5000).optional().or(z.literal("")),
+  country:         z.string().max(500).optional().or(z.literal("")),
+  additionalNotes: z.string().max(5000).optional().or(z.literal("")),
+});
 
 function DetailsSettings() {
-  const { projectName } = useParams();
-  const dispatch = useDispatch();
-  // ── Resolve real project _id from Redux ───────────────────────────────────
-  const currentProject = useSelector((s) => s.project?.currentProject ?? null);
-  const allProjects = useSelector((s) => s.project?.projects ?? []);
+  const { projectId } = useOutletContext();
 
-  const resolvedProjectId = useMemo(() => {
-    // 1. currentProject already loaded in Redux
-    if (isObjectId(currentProject?._id)) return String(currentProject._id);
+  const { settings, isFetching, isUpdating, error, updateIdentity } =
+    useDetailsIdentitySettings(projectId);
 
-    // 2. Match by :projectName slug against full projects list
-    if (projectName) {
-      const slug = projectName.toLowerCase();
-      const match = allProjects.find(
-        (p) => toSlug(p.productionName ?? "") === slug,
-      );
-      if (isObjectId(match?._id)) return String(match._id);
-    }
-    return null;
-  }, [currentProject, allProjects, projectName]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft,     setDraft]     = useState(null);
+  const [errors,    setErrors]    = useState({});
 
-  const projectId = resolvedProjectId;
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const display = (key) => (isEditing ? draft?.[key] : settings?.[key]) ?? "";
+  const patch   = (key) => (val) => setDraft((prev) => ({ ...prev, [key]: val }));
 
-  const { projectSettings, isFetching, isUpdating, error } = useSelector(
-    (state) => state.projectSettings,
-  );
-  console.log("projectId", projectId);
-  console.log("projectSettings", projectSettings);
-  console.log(currentProject);
-  const [isEditing, setIsEditing] = useState({ section: null });
-  const [formState, setFormState] = useState({
-    details: null,
-  });
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    if (projectId) {
-      dispatch(fetchProjectSettingsThunk(projectId));
-    }
-  }, [dispatch, projectId]);
-
-  // ── Derived flags ──────────────────────────────────────────────────────────
-  const isEditingDetails = isEditing.section === "details";
-  const isSavingDetails = isUpdating && isEditing.section === "details";
-
-  // ── Display data (read-mode fallback) ──────────────────────────────────────
-  const details = isEditingDetails
-    ? formState.details
-    : {
-        productionName: projectSettings?.productionName ?? "",
-        country: projectSettings?.country ?? "",
-        codeName: projectSettings?.codeName ?? "",
-        description: projectSettings?.description ?? "",
-        additionalNotes: projectSettings?.additionalNotes ?? "",
-      };
-
-  // ── Section editing ────────────────────────────────────────────────────────
-  const startEditing = (section) => {
+  // ── Edit / Cancel ─────────────────────────────────────────────────────────
+  const startEditing = () => {
     setErrors({});
-    if (section === "details") {
-      setFormState((prev) => ({
-        ...prev,
-        details: {
-          productionName: projectSettings?.productionName ?? "",
-          country: projectSettings?.country ?? "",
-          codeName: projectSettings?.codeName ?? "",
-          description: projectSettings?.description ?? "",
-          additionalNotes: projectSettings?.additionalNotes ?? "",
-        },
-      }));
-    }
-
-    setIsEditing({ section });
+    setDraft({ ...settings });
+    setIsEditing(true);
   };
 
   const cancelEditing = () => {
-    setIsEditing({ section: null });
-
-    setFormState({
-      details: null,
-    });
+    setIsEditing(false);
+    setDraft(null);
     setErrors({});
   };
 
-  // ── Save handlers ──────────────────────────────────────────────────────────
-  const handleSaveDetails = async () => {
+  // ── Save ──────────────────────────────────────────────────────────────────
+  const handleSave = async () => {
     setErrors({});
-    const result = projectDetailsSchema.safeParse(formState.details);
+    const result = identitySchema.safeParse(draft);
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
       return;
     }
     try {
-      await dispatch(
-        updateProjectDetailsThunk({
-          projectId,
-          payload: result.data,
-        }),
-      ).unwrap();
+      await updateIdentity(result.data).unwrap();
       toast.success("Project details updated successfully");
       cancelEditing();
     } catch (err) {
@@ -124,162 +68,106 @@ function DetailsSettings() {
     }
   };
 
-  // ── Loading / error states ─────────────────────────────────────────────────
-
-  if (!projectSettings || isFetching) {
-    return (
-      <>
-        <SettingsCardLoadingSkelton fields={5} columns={2} />
-      </>
-    );
+  // ── States ────────────────────────────────────────────────────────────────
+  if (!settings.productionName && isFetching) {
+    return <SettingsCardLoadingSkelton fields={5} columns={2} />;
   }
 
   if (error) {
     return (
-      <>
-        <SettingsCardErrorSkelton
-          message={
-            typeof error === "string"
-              ? error
-              : error?.message || "Something went wrong"
-          }
-          onRetry={() => dispatch(fetchProjectSettingsThunk(projectId))}
-        />
-      </>
+      <SettingsCardErrorSkelton
+        message={typeof error === "string" ? error : error?.message || "Something went wrong"}
+        onRetry={() => dispatch(fetchDetailsIdentitySettingsThunk(projectId))}
+      />
     );
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <>
-      <div className="space-y-4">
-        <CardWrapper showLabel={false}>
-          <div className="flex items-center justify-between mb-7">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
-              <div>
-                <h3 className="text-foreground text-sm font-medium">
-                  Project Details
-                </h3>
-                <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                  Helpful information which is shown to crew and can be updated
-                  any time
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 ">
-              {!projectSettings?.sections?.details?.locked && (
-                <EditToggleButtons
-                  isEditing={isEditingDetails}
-                  isLoading={isSavingDetails}
-                  onEdit={() => startEditing("details")}
-                  onSave={handleSaveDetails}
-                  onCancel={cancelEditing}
-                />
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <EditableTextDataField
-              label="Project Name"
-              value={details?.productionName}
-              isEditing={isEditingDetails}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    productionName: val,
-                  },
-                }))
-              }
-              error={errors?.productionName?.[0]}
-              disabled={isSavingDetails}
-            />
+    <div className="space-y-4">
+      <CardWrapper showLabel={false}>
 
-            <div className="flex flex-col gap-1">
-              <EditableTextDataField
-                label="Code Name"
-                value={details?.codeName}
-                isEditing={isEditingDetails}
-                onChange={(val) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    details: {
-                      ...prev.details,
-                      codeName: val,
-                    },
-                  }))
-                }
-                error={errors?.codeName?.[0]}
-                disabled={isSavingDetails}
-                infoPillDescription="If your project has an alternative name for secrecy, enter that. Otherwise enter the Project title. The Codename will be used in all emails and pages"
-              />
+        <div className="flex items-center justify-between mb-7">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
+            <div>
+              <h3 className="text-foreground text-sm font-medium">Project Details</h3>
+              <p className="text-muted-foreground text-[0.7rem] mt-0.5">
+                Helpful information shown to crew — can be updated any time
+              </p>
             </div>
           </div>
-          <div className="flex flex-col gap-1 mt-4">
-            <EditableTextDataField
-              label="Description"
-              multiline
-              value={details?.description}
-              isEditing={isEditingDetails}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    description: val,
-                  },
-                }))
-              }
-              error={errors?.description?.[0]}
-              disabled={isSavingDetails}
-              infoPillDescription="A brief synopsis of the project which is helpful for crew joining the production"
-            />
-          </div>
-          <div className="flex flex-col gap-1 mt-4">
-            <EditableTextDataField
-              label="Locations"
-              value={details?.country}
-              isEditing={isEditingDetails}
-              infoPillDescription="Useful information, if known, which might help crew decide if they can accept the job"
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    country: val,
-                  },
-                }))
-              }
-              error={errors?.country?.[0]}
-              disabled={isSavingDetails}
-            />
-          </div>
-          <div className="flex flex-col gap-1 mt-4">
-            <EditableTextDataField
-              label="Additional Notes"
-              multiline
-              isRequired={false}
-              value={details?.additionalNotes}
-              isEditing={isEditingDetails}
-              onChange={(val) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  details: {
-                    ...prev.details,
-                    additionalNotes: val,
-                  },
-                }))
-              }
-              error={errors?.additionalNotes?.[0]}
-              disabled={isSavingDetails}
-              infoPillDescription="Use this to convey general project-wide information to crew."
-              placeholder="Enter additional notes"
-            />
-          </div>
-        </CardWrapper>
-      </div>
-    </>
+          <EditToggleButtons
+            isEditing={isEditing}
+            isLoading={isUpdating}
+            onEdit={startEditing}
+            onSave={handleSave}
+            onCancel={cancelEditing}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EditableTextDataField
+            label="Project Name"
+            value={display("productionName")}
+            isEditing={isEditing}
+            onChange={patch("productionName")}
+            error={errors?.productionName?.[0]}
+            disabled={isUpdating}
+          />
+          <EditableTextDataField
+            label="Code Name"
+            value={display("codeName")}
+            isEditing={isEditing}
+            onChange={patch("codeName")}
+            error={errors?.codeName?.[0]}
+            disabled={isUpdating}
+            infoPillDescription="If your project has an alternative name for secrecy, enter that. Otherwise enter the Project title. The Codename will be used in all emails and pages"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 mt-4">
+          <EditableTextDataField
+            label="Description"
+            multiline
+            value={display("description")}
+            isEditing={isEditing}
+            onChange={patch("description")}
+            error={errors?.description?.[0]}
+            disabled={isUpdating}
+            infoPillDescription="A brief synopsis of the project which is helpful for crew joining the production"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 mt-4">
+          <EditableTextDataField
+            label="Locations"
+            value={display("country")}
+            isEditing={isEditing}
+            onChange={patch("country")}
+            error={errors?.country?.[0]}
+            disabled={isUpdating}
+            infoPillDescription="Useful information, if known, which might help crew decide if they can accept the job"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 mt-4">
+          <EditableTextDataField
+            label="Additional Notes"
+            multiline
+            isRequired={false}
+            value={display("additionalNotes")}
+            isEditing={isEditing}
+            onChange={patch("additionalNotes")}
+            error={errors?.additionalNotes?.[0]}
+            disabled={isUpdating}
+            infoPillDescription="Use this to convey general project-wide information to crew."
+            placeholder="Enter additional notes"
+          />
+        </div>
+
+      </CardWrapper>
+    </div>
   );
 }
 

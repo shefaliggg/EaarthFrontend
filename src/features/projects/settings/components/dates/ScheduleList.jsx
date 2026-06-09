@@ -1,82 +1,120 @@
-import { Plus } from "lucide-react";
-import ScheduleItemCard from "./ScheduleItemCard";
-import { AutoHeight } from "@/shared/components/wrappers/AutoHeight";
+/**
+ * ScheduleList.jsx
+ * Path: src/features/projects/settings/components/dates/ScheduleList.jsx
+ */
 
-const emptyItem = () => ({
-  id: Date.now() + Math.random(),
-  description: "",
-  start: "",
-  end: "",
-});
+import { Trash2 } from "lucide-react";
 
-const hasGaps = (items) => {
-  if (!items.length) return false;
+// Assumes your existing date input / text input components
+// Adjust field component names to match your codebase
 
-  const sorted = [...items]
-    .filter((i) => i.start && i.end)
-    .sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const currentEnd = new Date(sorted[i].end);
-    const nextStart = new Date(sorted[i + 1].start);
-
-    const oneDay = 24 * 60 * 60 * 1000;
-    const diff = nextStart.getTime() - currentEnd.getTime();
-
-    if (diff > oneDay || diff < 0) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
-export default function ScheduleList({ items = [], onChange, isEditing }) {
-  const addItem = () => {
-    onChange([...(items || []), emptyItem()]);
-  };
-
-  const updateItem = (id, updated) => {
-    onChange(
-      items.map((item) => (item.id === id ? { ...item, ...updated } : item)),
-    );
-  };
-
-  const removeItem = (id) => {
-    onChange(items.filter((item) => item.id !== id));
-  };
-
-  const showGapError = hasGaps(items);
+function ScheduleItem({ item, index, isEditing, onChange, onDelete }) {
+  const patch = (key) => (val) => onChange({ ...item, [key]: val });
 
   return (
-    <div className="space-y-4">
-      <AutoHeight className="flex flex-col gap-3 p-2">
-        {items.map((item) => (
-          <ScheduleItemCard
-            key={item.id}
-            data={item}
-            isEditing={isEditing}
-            onChange={(data) => updateItem(item.id, data)}
-            onDelete={() => removeItem(item.id)}
-          />
-        ))}
-      </AutoHeight>
+    <div className="rounded-xl border border-border p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{item.description}</span>
+        {/* Only non-default (hiatus) items can be deleted */}
+        {isEditing && !item.isDefault && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-destructive hover:text-destructive/80 transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
 
-      {showGapError && (
-        <p className="text-sm text-destructive px-2">
-          ⚠ Schedule has gaps between dates. Please make them continuous.
-        </p>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Description — uppercase display */}
+        <div className="flex flex-col gap-1">
+          <label className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            Description <span className="text-destructive">*</span>
+          </label>
+          {isEditing ? (
+            <input
+              className="h-9 rounded-lg border border-input bg-background px-3 text-sm uppercase"
+              value={item.description}
+              onChange={(e) => patch("description")(e.target.value)}
+            />
+          ) : (
+            <span className="text-sm uppercase">{item.description || "—"}</span>
+          )}
+        </div>
 
-      {isEditing && (
-        <button
-          onClick={addItem}
-          className="w-full border-2 border-dashed border-border text-primary py-10 rounded-lg flex items-center justify-center gap-2 hover:bg-muted/20"
-        >
-          <Plus size={16} />
-          Add New Schedule
-        </button>
-      )}
+        {/* Start Date */}
+        <div className="flex flex-col gap-1">
+          <label className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            Start Date <span className="text-destructive">*</span>
+          </label>
+          {isEditing ? (
+            <input
+              type="date"
+              className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+              value={item.start ?? ""}
+              onChange={(e) => patch("start")(e.target.value || null)}
+            />
+          ) : (
+            <span className="text-sm">
+              {item.start
+                ? new Date(item.start).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                : "—"}
+            </span>
+          )}
+        </div>
+
+        {/* End Date */}
+        <div className="flex flex-col gap-1">
+          <label className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            End Date <span className="text-destructive">*</span>
+          </label>
+          {isEditing ? (
+            <input
+              type="date"
+              className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+              value={item.end ?? ""}
+              onChange={(e) => patch("end")(e.target.value || null)}
+            />
+          ) : (
+            <span className="text-sm">
+              {item.end
+                ? new Date(item.end).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                : "—"}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+function ScheduleList({ items = [], isEditing, onChange }) {
+  const handleChange = (index, updated) => {
+    const next = [...items];
+    next[index] = updated;
+    onChange(next);
+  };
+
+  const handleDelete = (index) => {
+    onChange(items.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, index) => (
+        <ScheduleItem
+          key={item._id ?? `${item.description}-${index}`}
+          item={item}
+          index={index}
+          isEditing={isEditing}
+          onChange={(updated) => handleChange(index, updated)}
+          onDelete={() => handleDelete(index)}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default ScheduleList;

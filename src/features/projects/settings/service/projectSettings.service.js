@@ -82,3 +82,39 @@ export const updateOfferHandling      = (projectId, body) => axiosInstance.patch
 export const updateAllowances         = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/allowances`, body).then((r) => r.data.data);
 export const updateMealPenalties      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/meal-penalties`, body).then((r) => r.data.data);
 export const updateNotice             = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/details/notice`, body).then((r) => r.data.data);
+
+
+export const getDetailsIdentitySettings    = (projectId)       =>
+  axiosInstance.get(`${BASE(projectId)}/details-identity`).then((r) => r.data.data);
+
+export const updateDetailsIdentitySettings = (projectId, body) =>
+  axiosInstance.patch(`${BASE(projectId)}/details-identity`, body).then((r) => r.data.data);
+
+// ─── Dates ────────────────────────────────────────────────────────────────────
+export const getDatesSettings    = (projectId)       =>
+  axiosInstance.get(`${BASE(projectId)}/dates`).then((r) => r.data.data);
+
+export const updateDatesSchedule = (projectId, body) =>
+  axiosInstance.patch(`${BASE(projectId)}/dates/schedule`, body).then((r) => r.data.data);
+
+// ─── Contacts ─────────────────────────────────────────────────────────────────
+export const getContactsSettings         = (projectId)              =>
+  axiosInstance.get(`${BASE(projectId)}/contacts`).then((r) => r.data.data);
+
+export const addCompany                  = (projectId, body)        =>
+  axiosInstance.post(`${BASE(projectId)}/contacts/companies`, body).then((r) => r.data.data);
+
+export const updateCompany               = (projectId, companyId, body) =>
+  axiosInstance.patch(`${BASE(projectId)}/contacts/companies/${companyId}`, body).then((r) => r.data.data);
+
+export const deleteCompany               = (projectId, companyId)   =>
+  axiosInstance.delete(`${BASE(projectId)}/contacts/companies/${companyId}`).then((r) => r.data);
+
+export const updateContactsProductionBase = (projectId, body)       =>
+  axiosInstance.patch(`${BASE(projectId)}/contacts/production-base`, body).then((r) => r.data.data);
+
+export const updateContactsProjectCreator = (projectId, body)       =>
+  axiosInstance.patch(`${BASE(projectId)}/contacts/project-creator`, body).then((r) => r.data.data);
+
+export const updateContactsBilling        = (projectId, body)       =>
+  axiosInstance.patch(`${BASE(projectId)}/contacts/billing`, body).then((r) => r.data.data);
