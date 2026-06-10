@@ -62,7 +62,7 @@ function NotificationsSettings() {
           dailySummary: false,
           weeklySummary: true,
           summaryDay: "monday",
-          summaryTime: null,
+          summaryTime: "06:01 PM",
           includeFinancials: true,
           includeCrewChanges: true,
           includeTimecardStatus: true,
@@ -560,9 +560,9 @@ function NotificationsSettings() {
             />
             <EditableTextDataField
               label="Summary Time"
+               type="time"
               value={summaryData.summaryTime}
               isEditing={isEditing.section === "summaryEmails"}
-              placeholder="09:00"
               onChange={(val) =>
                 setFormState((prev) => ({
                   ...prev,
