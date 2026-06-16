@@ -81,6 +81,33 @@ import {
   updateChatModerationThunk,
 } from "./thunks/chatSettings.thunks";
 
+import {
+  fetchNotificationsSettingsThunk,
+  updateNotificationsOffersThunk,
+  updateNotificationsTimecardsThunk,
+  updateNotificationsGeneralThunk,
+  updateNotificationsSummaryEmailsThunk,
+} from "./thunks/notificationsSettings.thunks";
+
+import {
+  fetchSignaturesWorkflowsSettingsThunk,
+  addSignerThunk,
+  updateSignerThunk,
+  deleteSignerThunk,
+  addWorkflowThunk,
+  updateWorkflowThunk,
+  deleteWorkflowThunk,
+} from "./thunks/signaturesWorkflowsSettings.thunks";
+import {
+  fetchAdminSettingsThunk,
+  updateAdminPresetThunk,
+  addRolePermissionThunk,
+  updateRolePermissionThunk,
+  deleteRolePermissionThunk,
+  bulkUpdateRolePermissionsThunk,
+  restoreDefaultRolePermissionsThunk,
+} from "./thunks/adminSettings.thunks";
+
 const DEFAULT_PLACES = {
   units: [
     { _id: "default-1", name: "Main",            startDate: null, endDate: null, isPrimary: true,  isActive: true },
@@ -92,21 +119,23 @@ const DEFAULT_PLACES = {
 };
 
 const initialState = {
-  projectSettings:      null,
-  timecardSettings:     null,
-  customSettings:       null,
-  placesSettings:       DEFAULT_PLACES,
-  constructionSettings: null,
-  pennyContractCrew:    null,
-  standardCrewSettings: null,
-  detailsSettings:      null,
-  datesSettings:        null,
-  contactsSettings:     null,
-  chatSettings:         null,
-  isFetching:           false,
-  isUpdating:           false,
-  isSubmitting:         false,
-  error:                null,
+  projectSettings:             null,
+  timecardSettings:            null,
+  customSettings:              null,
+  placesSettings:              DEFAULT_PLACES,
+  constructionSettings:        null,
+  pennyContractCrew:           null,
+  standardCrewSettings:        null,
+  detailsSettings:             null,
+  datesSettings:               null,
+  contactsSettings:            null,
+  chatSettings:                null,
+  notificationsSettings:       null,
+  signaturesWorkflowsSettings: null,
+  isFetching:                  false,
+  isUpdating:                  false,
+  isSubmitting:                false,
+  error:                       null,
 };
 
 const projectSettingsSlice = createSlice({
@@ -495,7 +524,103 @@ const projectSettingsSlice = createSlice({
 
       .addCase(updateChatModerationThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
       .addCase(updateChatModerationThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.chatSettings = payload; })
-      .addCase(updateChatModerationThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; });
+      .addCase(updateChatModerationThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(fetchNotificationsSettingsThunk.pending, (state) => {
+        state.isFetching = true; state.error = null;
+      })
+      .addCase(fetchNotificationsSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching            = false;
+        state.notificationsSettings = payload;
+      })
+      .addCase(fetchNotificationsSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
+      })
+
+      .addCase(updateNotificationsOffersThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateNotificationsOffersThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.notificationsSettings = payload; })
+      .addCase(updateNotificationsOffersThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateNotificationsTimecardsThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateNotificationsTimecardsThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.notificationsSettings = payload; })
+      .addCase(updateNotificationsTimecardsThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateNotificationsGeneralThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateNotificationsGeneralThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.notificationsSettings = payload; })
+      .addCase(updateNotificationsGeneralThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(updateNotificationsSummaryEmailsThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateNotificationsSummaryEmailsThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.notificationsSettings = payload; })
+      .addCase(updateNotificationsSummaryEmailsThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(fetchSignaturesWorkflowsSettingsThunk.pending, (state) => {
+        state.isFetching = true; state.error = null;
+      })
+      .addCase(fetchSignaturesWorkflowsSettingsThunk.fulfilled, (state, { payload }) => {
+        state.isFetching                     = false;
+        state.signaturesWorkflowsSettings    = payload;
+      })
+      .addCase(fetchSignaturesWorkflowsSettingsThunk.rejected, (state, { payload }) => {
+        state.isFetching = false; state.error = payload;
+      })
+
+      .addCase(addSignerThunk.pending,    (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addSignerThunk.fulfilled,  (state, { payload }) => { state.isSubmitting = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(addSignerThunk.rejected,   (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateSignerThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateSignerThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(updateSignerThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(deleteSignerThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(deleteSignerThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(deleteSignerThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(addWorkflowThunk.pending,    (state) => { state.isSubmitting = true;  state.error = null; })
+      .addCase(addWorkflowThunk.fulfilled,  (state, { payload }) => { state.isSubmitting = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(addWorkflowThunk.rejected,   (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+      .addCase(updateWorkflowThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(updateWorkflowThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(updateWorkflowThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+      .addCase(deleteWorkflowThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+      .addCase(deleteWorkflowThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.signaturesWorkflowsSettings = payload; })
+      .addCase(deleteWorkflowThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+      .addCase(fetchAdminSettingsThunk.pending, (state) => {
+  state.isFetching = true; state.error = null;
+})
+.addCase(fetchAdminSettingsThunk.fulfilled, (state, { payload }) => {
+  state.isFetching    = false;
+  state.adminSettings = payload;
+})
+.addCase(fetchAdminSettingsThunk.rejected, (state, { payload }) => {
+  state.isFetching = false; state.error = payload;
+})
+
+.addCase(updateAdminPresetThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateAdminPresetThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.adminSettings = payload; })
+.addCase(updateAdminPresetThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(addRolePermissionThunk.pending,   (state) => { state.isSubmitting = true;  state.error = null; })
+.addCase(addRolePermissionThunk.fulfilled, (state, { payload }) => { state.isSubmitting = false; state.adminSettings = payload; })
+.addCase(addRolePermissionThunk.rejected,  (state, { payload }) => { state.isSubmitting = false; state.error = payload; })
+
+.addCase(updateRolePermissionThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(updateRolePermissionThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.adminSettings = payload; })
+.addCase(updateRolePermissionThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(deleteRolePermissionThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(deleteRolePermissionThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.adminSettings = payload; })
+.addCase(deleteRolePermissionThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(bulkUpdateRolePermissionsThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(bulkUpdateRolePermissionsThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.adminSettings = payload; })
+.addCase(bulkUpdateRolePermissionsThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; })
+
+.addCase(restoreDefaultRolePermissionsThunk.pending,   (state) => { state.isUpdating = true;  state.error = null; })
+.addCase(restoreDefaultRolePermissionsThunk.fulfilled, (state, { payload }) => { state.isUpdating = false; state.adminSettings = payload; })
+.addCase(restoreDefaultRolePermissionsThunk.rejected,  (state, { payload }) => { state.isUpdating = false; state.error = payload; });
   },
 });
 

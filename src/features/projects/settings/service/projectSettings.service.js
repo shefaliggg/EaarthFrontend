@@ -104,3 +104,26 @@ export const updateChatModeration    = (projectId, body) => axiosInstance.patch(
 
 export const getAppSettings = (projectId)       => axiosInstance.get(`${BASE(projectId)}/app-settings`).then((r) => r.data.data);
 export const updateApp      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/app-settings/app`, body).then((r) => r.data.data);
+
+
+export const getNotificationsSettings        = (projectId)       => axiosInstance.get(`${BASE(projectId)}/notifications`).then((r) => r.data.data);
+export const updateNotificationsOffers       = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/notifications/offers`, body).then((r) => r.data.data);
+export const updateNotificationsTimecards    = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/notifications/timecards`, body).then((r) => r.data.data);
+export const updateNotificationsGeneral      = (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/notifications/general`, body).then((r) => r.data.data);
+export const updateNotificationsSummaryEmails= (projectId, body) => axiosInstance.patch(`${BASE(projectId)}/notifications/summary-emails`, body).then((r) => r.data.data);
+
+export const getSignaturesWorkflowsSettings = (projectId)              => axiosInstance.get(`${BASE(projectId)}/signatures-workflows`).then((r) => r.data.data);
+export const addSigner                       = (projectId, body)        => axiosInstance.post(`${BASE(projectId)}/signatures-workflows/signers`, body).then((r) => r.data.data);
+export const updateSigner                    = (projectId, id, body)    => axiosInstance.patch(`${BASE(projectId)}/signatures-workflows/signers/${id}`, body).then((r) => r.data.data);
+export const deleteSigner                    = (projectId, id)          => axiosInstance.delete(`${BASE(projectId)}/signatures-workflows/signers/${id}`).then((r) => r.data.data);
+export const addWorkflow                     = (projectId, body)        => axiosInstance.post(`${BASE(projectId)}/signatures-workflows/workflows`, body).then((r) => r.data.data);
+export const updateWorkflow                  = (projectId, id, body)    => axiosInstance.patch(`${BASE(projectId)}/signatures-workflows/workflows/${id}`, body).then((r) => r.data.data);
+export const deleteWorkflow                  = (projectId, id)          => axiosInstance.delete(`${BASE(projectId)}/signatures-workflows/workflows/${id}`).then((r) => r.data.data);
+
+export const getAdminSettings                = (projectId)           => axiosInstance.get(`${BASE(projectId)}/admin`).then((r) => r.data.data);
+export const updateAdminPreset               = (projectId, body)     => axiosInstance.patch(`${BASE(projectId)}/admin/preset`, body).then((r) => r.data.data);
+export const addRolePermission               = (projectId, body)     => axiosInstance.post(`${BASE(projectId)}/admin/role-permissions`, body).then((r) => r.data.data);
+export const updateRolePermission            = (projectId, id, body) => axiosInstance.patch(`${BASE(projectId)}/admin/role-permissions/${id}`, body).then((r) => r.data.data);
+export const deleteRolePermission            = (projectId, id)       => axiosInstance.delete(`${BASE(projectId)}/admin/role-permissions/${id}`).then((r) => r.data.data);
+export const bulkUpdateRolePermissions       = (projectId, body)     => axiosInstance.patch(`${BASE(projectId)}/admin/role-permissions/bulk`, body).then((r) => r.data.data);
+export const restoreDefaultRolePermissions   = (projectId)           => axiosInstance.post(`${BASE(projectId)}/admin/role-permissions/restore-defaults`).then((r) => r.data.data);

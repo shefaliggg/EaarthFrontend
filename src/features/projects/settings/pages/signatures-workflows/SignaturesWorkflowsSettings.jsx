@@ -1,281 +1,225 @@
-import CardWrapper from "@/shared/components/wrappers/CardWrapper";
+import { useState, useCallback }  from "react";
+import { useOutletContext }        from "react-router-dom";
+import { toast }                  from "sonner";
+import { Loader2 }                from "lucide-react";
+
+import CardWrapper       from "@/shared/components/wrappers/CardWrapper";
 import EditToggleButtons from "@/shared/components/buttons/EditToggleButtons";
-import SearchBar from "@/shared/components/SearchBar";
-import { SelectMenu } from "@/shared/components/menus/SelectMenu";
-import { StatusBadge } from "@/shared/components/badges/StatusBadge";
-import EditableTextDataField from "@/shared/components/wrappers/EditableTextDataField";
-import EditableSelectField from "@/shared/components/wrappers/EditableSelectField";
-import * as FramerMotion from "framer-motion";
-import { Button } from "@/shared/components/ui/button";
-import {
-  Mail,
-  Plus,
-  Check,
-  Clock3,
-  ChevronRight,
-  ShieldCheck,
-} from "lucide-react";
-import { useState } from "react";
-import SignerList from "@/features/projects/settings/components/signatures-workflows/SignerList";
-import WorkflowList from "../../components/signatures-workflows/WorkflowList";
+import SearchBar         from "@/shared/components/SearchBar";
+import { SelectMenu }    from "@/shared/components/menus/SelectMenu";
+import SignerList        from "../../components/signatures-workflows/SignerList";
+import WorkflowList      from "../../components/signatures-workflows/WorkflowList";
+
+import { useSignaturesWorkflowsSettings } from "./useSignaturesWorkflowsSettings";
+
+const DEPARTMENTS = [
+  { label: "ALL DEPARTMENTS",  value: "ALL DEPARTMENTS"  },
+  { label: "PRODUCTION",       value: "PRODUCTION"       },
+  { label: "ACCOUNTS",         value: "ACCOUNTS"         },
+  { label: "POST PRODUCTION",  value: "POST PRODUCTION"  },
+  { label: "CONSTRUCTION",     value: "CONSTRUCTION"     },
+];
 
 const emptySigner = () => ({
-  id: Date.now() + Math.random(),
-  name: "",
-  role: "",
-  email: "",
-  department: "PRODUCTION",
-  hasSignature: false,
+  name:                   "",
+  role:                   "",
+  email:                  "",
+  department:             "PRODUCTION",
+  hasSignature:           false,
   requiresSecondApproval: false,
-  permissions: [],
-  limit: "",
+  permissions:            [],
+  limit:                  "",
 });
 
 const emptyWorkflow = () => ({
-  id: Date.now() + Math.random(),
-  name: "",
-  department: "PRODUCTION",
+  name:        "",
+  department:  "PRODUCTION",
   requiresAll: true,
-  steps: [],
+  steps:       [],
 });
 
+function SectionHeader({ title, description, isEditing, isLoading, onEdit, onSave, onCancel }) {
+  return (
+    <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center gap-3">
+        <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
+        <div>
+          <h3 className="text-foreground text-sm font-medium">{title}</h3>
+          <p className="text-muted-foreground text-[0.7rem] mt-0.5">{description}</p>
+        </div>
+      </div>
+      <EditToggleButtons
+        isEditing={isEditing}
+        isLoading={isLoading}
+        onEdit={onEdit}
+        onSave={onSave}
+        onCancel={onCancel}
+      />
+    </div>
+  );
+}
+
 function SignaturesWorkflowsSettings() {
-  const [editingSection, setEditingSection] = useState(null);
-  const [formState, setFormState] = useState({
-    signers: [],
-    workflows: [],
-  });
+  const { projectId } = useOutletContext();
 
-  const signersData =
-    editingSection === "signers"
-      ? formState.signers
-      : [
-          {
-            id: 1,
-            name: "SHEERIN KHOSROWSHAHI",
-            role: "UPM - UNIT PRODUCTION MANAGER",
-            email: "sheerin@project.com",
-            department: "PRODUCTION",
-            hasSignature: true,
-            requiresSecondApproval: false,
-            permissions: ["Timesheets", "Expenses"],
-            limit: "$5000",
-            order: 1,
-          },
+  const {
+    settings,
+    isFetching,
+    isUpdating,
+    isSubmitting,
+    error,
+    addSigner,
+    updateSigner,
+    deleteSigner,
+    addWorkflow,
+    updateWorkflow,
+    deleteWorkflow,
+  } = useSignaturesWorkflowsSettings(projectId);
 
-          {
-            id: 2,
-            name: "JOHN ALFRED",
-            role: "FOCUS EXECUTIVE",
-            email: "john.alfred@focusfeatures.com",
-            department: "ACCOUNTS",
-            hasSignature: true,
-            requiresSecondApproval: false,
-            permissions: [
-              "Expenses",
-              "Invoices",
-              "Purchase Orders",
-              "Contracts",
-            ],
-            limit: "$50000",
-            order: 2,
-          },
+  const [editingSection,  setEditingSection]  = useState(null);
+  const [signersDraft,    setSignersDraft]    = useState([]);
+  const [workflowsDraft,  setWorkflowsDraft]  = useState([]);
+  const [signerFilter,    setSignerFilter]    = useState("ALL DEPARTMENTS");
+  const [signerSearch,    setSignerSearch]    = useState("");
 
-          {
-            id: 3,
-            name: "JASON LEIB",
-            role: "FOCUS EXECUTIVE",
-            email: "jason.leib@focusfeatures.com",
-            department: "POST PRODUCTION",
-            hasSignature: false,
-            requiresSecondApproval: true,
-            permissions: ["Timesheets", "Expenses", "Schedule Changes"],
-            limit: "$10000",
-            order: 3,
-          },
-
-          {
-            id: 4,
-            name: "DAN PALMER",
-            role: "FIRST AD",
-            email: "dan.palmer@project.com",
-            department: "PRODUCTION",
-            hasSignature: true,
-            requiresSecondApproval: false,
-            permissions: ["Timesheets", "Call Sheets", "Schedule Changes"],
-            limit: "$2500",
-            order: 4,
-          },
-
-          {
-            id: 5,
-            name: "PAYROLL REVIEW",
-            role: "PAYROLL REVIEW",
-            email: "payroll@project.com",
-            department: "ACCOUNTS",
-            hasSignature: true,
-            requiresSecondApproval: false,
-            permissions: ["Timesheets", "Expenses"],
-            limit: "$10000",
-            order: 5,
-          },
-        ];
-
-  const workflowsData =
-    editingSection === "workflows"
-      ? formState.workflows
-      : [
-          {
-            id: 1,
-            name: "EXPENSE APPROVAL - ACCOUNTS",
-            department: "ACCOUNTS",
-            requiresAll: false,
-            steps: [
-              {
-                signerId: 1,
-                required: true,
-              },
-              {
-                signerId: 2,
-                required: true,
-              },
-            ],
-          },
-
-          {
-            id: 2,
-            name: "INVOICE APPROVAL - ACCOUNTS",
-            department: "ACCOUNTS",
-            requiresAll: true,
-            steps: [
-              {
-                signerId: 2,
-                required: true,
-              },
-            ],
-          },
-        ];
-
-  const startEditing = (section) => {
-    if (section === "signers") {
-      setFormState((prev) => ({
-        ...prev,
-        signers: [...signersData],
-      }));
-    }
-
-    if (section === "workflows") {
-      setFormState((prev) => ({
-        ...prev,
-        workflows: [...workflowsData],
-      }));
-    }
+  const startEditing = useCallback((section) => {
+    if (section === "signers")   setSignersDraft([...settings.signers]);
+    if (section === "workflows") setWorkflowsDraft([...settings.workflows]);
     setEditingSection(section);
-  };
+  }, [settings]);
 
-  const cancelEditing = () => {
+  const cancelEditing = useCallback(() => {
     setEditingSection(null);
-    setFormState({
-      signers: [],
-    });
-  };
+    setSignersDraft([]);
+    setWorkflowsDraft([]);
+  }, []);
+
+  const saveSigners = useCallback(async () => {
+    try {
+      const existing = settings.signers;
+      for (const signer of signersDraft) {
+        if (!signer._id) {
+          await addSigner(signer).unwrap();
+        } else {
+          const orig = existing.find((s) => s._id === signer._id);
+          if (orig && JSON.stringify(orig) !== JSON.stringify(signer)) {
+            await updateSigner(signer._id, signer).unwrap();
+          }
+        }
+      }
+      for (const orig of existing) {
+        const stillExists = signersDraft.find((s) => s._id === orig._id);
+        if (!stillExists) await deleteSigner(orig._id).unwrap();
+      }
+      toast.success("Signers updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update signers");
+    }
+  }, [signersDraft, settings.signers, addSigner, updateSigner, deleteSigner, cancelEditing]);
+
+  const saveWorkflows = useCallback(async () => {
+    try {
+      const existing = settings.workflows;
+      for (const workflow of workflowsDraft) {
+        if (!workflow._id) {
+          await addWorkflow(workflow).unwrap();
+        } else {
+          const orig = existing.find((w) => w._id === workflow._id);
+          if (orig && JSON.stringify(orig) !== JSON.stringify(workflow)) {
+            await updateWorkflow(workflow._id, workflow).unwrap();
+          }
+        }
+      }
+      for (const orig of existing) {
+        const stillExists = workflowsDraft.find((w) => w._id === orig._id);
+        if (!stillExists) await deleteWorkflow(orig._id).unwrap();
+      }
+      toast.success("Workflows updated successfully");
+      cancelEditing();
+    } catch (err) {
+      toast.error(err?.message || "Failed to update workflows");
+    }
+  }, [workflowsDraft, settings.workflows, addWorkflow, updateWorkflow, deleteWorkflow, cancelEditing]);
+
+  const signersDisplay   = editingSection === "signers"    ? signersDraft   : settings.signers;
+  const workflowsDisplay = editingSection === "workflows"  ? workflowsDraft : settings.workflows;
+
+  const filteredSigners = signersDisplay
+    .filter((s) => s.isActive !== false)
+    .filter((s) => signerFilter === "ALL DEPARTMENTS" || s.department === signerFilter)
+    .filter((s) => !signerSearch || s.name.toLowerCase().includes(signerSearch.toLowerCase()));
+
+  if (isFetching && !settings.signers.length && !settings.workflows.length) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground text-sm gap-2">
+        <Loader2 size={16} className="animate-spin" />
+        Loading signatures & workflows…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+        {error?.message ?? "Something went wrong. Please try again."}
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="space-y-4">
-        <CardWrapper showLabel={false}>
-          <div className="flex items-center justify-between mb-7">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
-              <div>
-                <h3 className="text-foreground text-sm font-medium">
-                  Authorized Signers
-                </h3>
-                <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                  Manage who can approve timesheets, expenses, and other
-                  documents
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <EditToggleButtons
-                isEditing={editingSection === "signers"}
-                onEdit={() => startEditing("signers")}
-                onSave={() => {
-                  console.log(formState.signers);
-                  setEditingSection(null);
-                }}
-                onCancel={cancelEditing}
-              />
-            </div>
-          </div>
-          {/*✅ TOOLBAR */}
-          <div className="flex items-end justify-between gap-3 flex-wrap">
-            <SearchBar />
-            <div className="flex items-end gap-3 flex-wrap">
-              <SelectMenu
-                items={[
-                  { label: "ALL DEPARTMENTS", value: "ALL DEPARTMENTS" },
-                  { label: "PRODUCTION", value: "PRODUCTION" },
-                  { label: "ACCOUNTS", value: "ACCOUNTS" },
-                  { label: "POST PRODUCTION", value: "POST PRODUCTION" },
-                  { label: "CONSTRUCTION", value: "CONSTRUCTION" },
-                ]}
-              />
-            </div>
-          </div>
-          <SignerList
-            signers={signersData}
-            isEditing={editingSection === "signers"}
-            onChange={(updatedSigners) =>
-              setFormState((prev) => ({
-                ...prev,
-                signers: updatedSigners,
-              }))
-            }
-            emptySigner={emptySigner}
+    <div className="space-y-4">
+
+      <CardWrapper showLabel={false}>
+        <SectionHeader
+          title="Authorized Signers"
+          description="Manage who can approve timesheets, expenses, and other documents"
+          isEditing={editingSection === "signers"}
+          isLoading={(isUpdating || isSubmitting) && editingSection === "signers"}
+          onEdit={() => startEditing("signers")}
+          onSave={saveSigners}
+          onCancel={cancelEditing}
+        />
+        <div className="flex items-end justify-between gap-3 flex-wrap">
+          <SearchBar
+            value={signerSearch}
+            onChange={(e) => setSignerSearch(e.target.value)}
+            placeholder="Search signers..."
           />
-        </CardWrapper>
-        <CardWrapper showLabel={false}>
-          <div className="flex items-center justify-between mb-7">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-7 rounded-full bg-linear-to-b from-primary to-primary/40" />
-              <div>
-                <h3 className="text-foreground text-sm font-medium">
-                  Approval Workflows
-                </h3>
-                <p className="text-muted-foreground text-[0.7rem] mt-0.5">
-                  Configure approval chains for timesheets, expenses, and more
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <EditToggleButtons
-                isEditing={editingSection === "workflows"}
-                onEdit={() => startEditing("workflows")}
-                onSave={() => {
-                  console.log(formState.workflows);
-                  setEditingSection(null);
-                }}
-                onCancel={cancelEditing}
-              />
-            </div>
-          </div>
-          <WorkflowList
-            workflows={workflowsData}
-            signers={signersData}
-            isEditing={editingSection === "workflows"}
-            emptyWorkflow={emptyWorkflow}
-            onChange={(updatedWorkflows) =>
-              setFormState((prev) => ({
-                ...prev,
-                workflows: updatedWorkflows,
-              }))
-            }
+          <SelectMenu
+            value={signerFilter}
+            items={DEPARTMENTS}
+            onChange={(val) => setSignerFilter(val)}
           />
-        </CardWrapper>
-      </div>
-    </>
+        </div>
+        <SignerList
+          signers={filteredSigners}
+          isEditing={editingSection === "signers"}
+          onChange={setSignersDraft}
+          emptySigner={emptySigner}
+        />
+      </CardWrapper>
+
+      <CardWrapper showLabel={false}>
+        <SectionHeader
+          title="Approval Workflows"
+          description="Configure approval chains for timesheets, expenses, and more"
+          isEditing={editingSection === "workflows"}
+          isLoading={(isUpdating || isSubmitting) && editingSection === "workflows"}
+          onEdit={() => startEditing("workflows")}
+          onSave={saveWorkflows}
+          onCancel={cancelEditing}
+        />
+        <WorkflowList
+          workflows={workflowsDisplay.filter((w) => w.isActive !== false)}
+          signers={settings.signers.filter((s) => s.isActive !== false)}
+          isEditing={editingSection === "workflows"}
+          emptyWorkflow={emptyWorkflow}
+          onChange={setWorkflowsDraft}
+        />
+      </CardWrapper>
+
+    </div>
   );
 }
 
