@@ -855,57 +855,59 @@ function TermsAndConditions() {
   return (
     <div className="font-light text-foreground min-h-screen">
       {/* Hero */}
-      <div className="pt-12 px-12 pb-6 mx-auto  max-w-[1180px]">
-        <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-primary mb-6">
-          Eaarth Ltd · Legal
-        </p>
-        <h1
-          className="font-normal leading-[1.05] tracking-[-0.02em] text-foreground mb-6"
-          style={{ fontSize: "clamp(42px, 6vw, 72px)" }}
-        >
-          Terms <em className="italic text-primary">of Use</em>
-        </h1>
-        <span className="text-[13px] text-[#888] tracking-[0.02em]">
-          Last updated: June 2026 &nbsp;·&nbsp; Governing law: England &amp;
-          Wales &nbsp;·&nbsp;{" "}
+      <div className=" max-w-[1180px] px-8 space-y-6 pb-12 border-b">
+        <div className="pt-12 mx-auto  max-w-[1180px]">
+          <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-primary mb-6">
+            Eaarth Ltd · Legal
+          </p>
+          <h1
+            className="font-normal leading-[1.05] tracking-[-0.02em] text-foreground mb-6"
+            style={{ fontSize: "clamp(42px, 6vw, 72px)" }}
+          >
+            Terms <em className="italic text-primary">of Use</em>
+          </h1>
+          <span className="text-[13px] text-[#888] tracking-[0.02em]">
+            Last updated: June 2026 &nbsp;·&nbsp; Governing law: England &amp;
+            Wales &nbsp;·&nbsp;{" "}
+            <a
+              href="https://www.eaarth.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary no-underline border-b  hover:border-[#888] transition-colors"
+            >
+              eaarth.app
+            </a>
+          </span>
+        </div>
+
+        <p className="text-muted-foreground leading-7">
+          These <strong>Terms of Use</strong> (the <strong>Terms</strong>)
+          govern your access to and use of the Eaarth Ltd online platform and
+          services available at{" "}
           <a
             href="https://www.eaarth.app"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary no-underline border-b  hover:border-[#888] transition-colors"
+            className="font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
           >
-            eaarth.app
-          </a>
-        </span>
+            https://www.eaarth.app
+          </a>{" "}
+          (the <strong>Online Service</strong>). By registering, creating an
+          account, or using the Online Service, you agree to be bound by these
+          Terms. If you do not agree, do not use the Online Service.
+        </p>
       </div>
-
-      <p className="border-b pb-12 px-12 text-muted-foreground leading-7">
-        These <strong>Terms of Use</strong> (the <strong>Terms</strong>) govern
-        your access to and use of the Eaarth Ltd online platform and services
-        available at{" "}
-        <a
-          href="https://www.eaarth.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
-        >
-          https://www.eaarth.app
-        </a>{" "}
-        (the <strong>Online Service</strong>). By registering, creating an
-        account, or using the Online Service, you agree to be bound by these
-        Terms. If you do not agree, do not use the Online Service.
-      </p>
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] max-w-[1180px] mx-auto pb-[120px]">
         {/* Sticky sidebar nav — hidden on mobile */}
-        <nav className="hidden md:block px-6 pt-12 pb-12 sticky top-6 h-fit">
-          <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-[#aaa] mb-4">
+        <nav className="hidden md:block px-1 pl-2 pt-12 pb-12 sticky top-6 h-fit">
+          <p className="text-[10px] pl-4 font-medium tracking-[0.14em] uppercase text-muted-foreground mb-4">
             Contents
           </p>
           <div
             ref={navContainerRef}
-            className="overflow-y-auto max-h-[83svh] scrollbar-none"
+            className="overflow-y-auto max-h-[83svh] scrollbar-thin px-3"
           >
             {sections.map((s) => (
               <div ref={(el) => (navItemRefs.current[s.id] = el)}>
@@ -1035,7 +1037,7 @@ function NavButton({ id, label, active, accent }) {
           ?.scrollIntoView({ behavior: "smooth", block: "start" })
       }
       className={`block w-full text-left text-[12.5px] py-1.5 pl-3 border-l-[1.5px] transition-all duration-200 leading-snug bg-transparent border-t-0 border-r-0 border-b-0 cursor-pointer
-        ${active ? "font-normal" : "text-[#999] border-transparent hover:text-[#333] hover: font-light"}`}
+        ${active ? "font-normal" : "text-muted-foreground border-transparent hover:text-[#333] hover: font-light"}`}
       style={{
         color: active ? accent : undefined,
         borderLeftColor: active ? accent : undefined,

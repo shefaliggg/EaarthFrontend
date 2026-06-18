@@ -18,6 +18,7 @@ import {
   initNotificationSocket,
 } from "../../../shared/config/socketConfig";
 import useChatStore from "../../projects/project-chat/store/chat.store";
+import useNotificationStore from "../../notifications/stores/notification.store";
 
 const AuthContext = createContext(null);
 
@@ -53,6 +54,7 @@ export const AuthProvider = ({ children }) => {
       useChatStore.getState().attachSocketListeners();
 
       initNotificationSocket(currentUser._id);
+      useNotificationStore.getState().attachSocketListeners(navigate);
     }
   }, [currentUser?._id]);
 

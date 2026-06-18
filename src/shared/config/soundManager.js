@@ -7,6 +7,11 @@ class SoundManager {
       incoming: new Audio("/sounds/incoming-call-ringtone.mp3"),
       connecting: new Audio("/sounds/call-connecting-tone.mp3"),
       ringing: new Audio("/sounds/outgoing-call-ringtone.mp3"),
+
+      notificationLow: new Audio("/sounds/notification-tone-low.mp3"),
+      notificationNormal: new Audio("/sounds/notification-tone-normal.mp3"),
+      notificationHigh: new Audio("/sounds/notification-tone-high.mp3"),
+      notificationCritical: new Audio("/sounds/notification-tone-high.mp3"),
     };
 
     // channel → currently playing sound
@@ -24,6 +29,11 @@ class SoundManager {
     this.sounds.incoming.volume = 0.9;
     this.sounds.connecting.volume = 0.1;
     this.sounds.ringing.volume = 0.6;
+
+    this.sounds.notificationLow.volume = 0.8;
+    this.sounds.notificationNormal.volume = 0.8;
+    this.sounds.notificationHigh.volume = 0.8;
+    this.sounds.notificationCritical.volume = 0.8;
 
     Object.values(this.sounds).forEach((a) => {
       a.preload = "auto";
@@ -48,6 +58,30 @@ class SoundManager {
     await fadeIn(audio, volume, duration);
 
     this.channels[channel] = name;
+  }
+
+  playNotification(priority = "NORMAL") {
+    const map = {
+      LOW: "notificationLow",
+      NORMAL: "notificationNormal",
+      HIGH: "notificationHigh",
+      CRITICAL: "notificationCritical",
+    };
+
+    const soundName = map[priority] || map.NORMAL;
+
+    const audio = this.sounds[soundName];
+
+    if (!audio) return;
+    if (document.visibilityState !== "visible") {
+      return;
+    }
+
+    audio.currentTime = 0;
+
+    audio.play().catch((err) => {
+      console.warn("Failed to play notification sound:", err);
+    });
   }
 
   async stop(name) {

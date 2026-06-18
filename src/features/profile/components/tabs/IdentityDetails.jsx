@@ -124,15 +124,6 @@ export default function IdentityDetails() {
       setFormState((prev) => ({ ...prev, identity: updated })),
   });
 
-  // ── Fetch on mount ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!crewProfile && !isFetching) dispatch(fetchProfileThunk());
-  }, []);
-
-  useEffect(() => {
-    if (!userDocuments && !isFetchingDocs) dispatch(fetchDocumentsThunk());
-  }, []);
-
   // ── Document selectors ─────────────────────────────────────────────────────
   const passportDocs = getDocumentsByType(userDocuments, "PASSPORT");
   const birthDocs = getDocumentsByType(userDocuments, "BIRTH_CERTIFICATE");
