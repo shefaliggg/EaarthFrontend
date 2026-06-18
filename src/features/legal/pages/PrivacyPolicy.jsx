@@ -591,7 +591,8 @@ function PrivacyPolicy() {
   return (
     <div className="font-light text-foreground min-h-screen">
       {/* Hero */}
-      <div className="pt-12 px-12 pb-6 mx-auto">
+      <div className=" max-w-[1180px] px-8 space-y-6">
+        <div className="pt-12 mx-auto">
         <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-primary mb-6">
           Eaarth Ltd · Legal
         </p>
@@ -607,7 +608,7 @@ function PrivacyPolicy() {
         </span>
       </div>
 
-      <p className="px-12 pb-6 text-muted-foreground leading-7">
+      <p className="text-muted-foreground leading-7">
         This Privacy and Cookies Policy (“<strong>Policy</strong>”) explains how
         Eaarth Ltd (“<strong>Eaarth</strong>”, “<strong>we</strong>”, “
         <strong>us</strong>” or “<strong>our</strong>”) collects, uses, stores
@@ -630,7 +631,7 @@ function PrivacyPolicy() {
         </a>
       </p>
 
-      <p className="border-b pb-12 px-12 text-muted-foreground leading-7">
+      <p className="border-b pb-12 text-muted-foreground leading-7">
         We collect and process information about you in accordance with this
         Policy and use information collected about you in accordance with
         applicable data protection laws including the EU/UK General Data
@@ -639,17 +640,19 @@ function PrivacyPolicy() {
         including where your personal data is being processed for direct
         marketing purposes.
       </p>
+      </div>
+      
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] max-w-[1180px] mx-auto pb-6">
+      <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] max-w-[1180px] mx-auto pb-0">
         {/* Sticky sidebar nav — hidden on mobile */}
-        <nav className="hidden md:block px-6 pt-12 pb-12 sticky top-6 h-fit">
-          <h4 className="text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground mb-4">
+        <nav className="hidden md:block px-1 pl-2 pt-12 pb-12 sticky top-6 h-fit">
+          <h4 className="text-[10px] pl-4 font-medium tracking-[0.14em] uppercase text-muted-foreground mb-4">
             Contents
           </h4>
           <div
             ref={navContainerRef}
-            className="overflow-y-auto max-h-[83svh] scrollbar-none"
+            className="overflow-y-auto max-h-[83svh] scrollbar-thin px-3"
           >
             {sections.map((s) => (
               <div ref={(el) => (navItemRefs.current[s.id] = el)}>

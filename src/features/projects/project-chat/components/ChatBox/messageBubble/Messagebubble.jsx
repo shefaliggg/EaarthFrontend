@@ -469,7 +469,7 @@ export default function MessageBubble({
                     </span>
                   )}
                   {isFavorited && (
-                    <Heart fill="red" className="w-3 h-3 text-red-500" />
+                    <Heart className="w-3 h-3 text-red-500 fill-red-500" />
                   )}
                   <span
                     className={cn(

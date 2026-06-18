@@ -1,15 +1,18 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
+  Calendar,
   Check,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Layers3,
   LayoutGrid,
   Search,
   Settings,
   UserPlus,
   Users,
+  Users2,
   X,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -46,6 +49,7 @@ import { adminDropdownConfig } from "../../config/adminDropdownNavList";
 import { useScrollHeaderTracker } from "../../hooks/useScrollHeaderTracker";
 import useChatStore from "../../../features/projects/project-chat/store/chat.store";
 import { projects as projectCatalog } from "@/constants/data.js";
+import useNotificationStore from "../../../features/notifications/stores/notification.store";
 
 const getInitialTheme = () => {
   if (typeof window === "undefined") return "system";
@@ -74,7 +78,6 @@ export default function Header({
   const [appLauncherView, setAppLauncherView] = useState("grid");
   const [displayMode, setDisplayMode] = useState("text-icon");
   const [currentTheme, setCurrentTheme] = useState(getInitialTheme);
-  const [notificationCount] = useState(5);
   const [messageCount] = useState(3);
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(false);
@@ -84,6 +87,8 @@ export default function Header({
   const showHeader = useScrollHeaderTracker();
   const navigate = useNavigate();
   const params = useParams();
+
+  const { unreadCount } = useNotificationStore();
 
   const projectId = params.projectId || "avatar-1";
   const routeProjectKey = params.projectName || params.projectId || "avatar-1";
@@ -149,7 +154,9 @@ export default function Header({
   };
   const currentProjectApps = [
     onboardingApp,
-    ...(currentProject?.apps || []).filter((app) => SIDEBAR_APP_IDS.has(app.id)),
+    ...(currentProject?.apps || []).filter((app) =>
+      SIDEBAR_APP_IDS.has(app.id),
+    ),
   ];
   const filteredLauncherApps = currentProjectApps.filter((app) => {
     const query = appLauncherQuery.trim().toLowerCase();
@@ -244,7 +251,7 @@ export default function Header({
     messages: () => setShowMessages(true),
     "display-mode": (value) => setDisplayMode(value),
     theme: (value) => handleThemeChange(value),
-    navigate: (route) => navigate(`/${route}`)
+    navigate: (route) => navigate(`/${route}`),
   };
 
   useEffect(() => {
@@ -295,9 +302,7 @@ export default function Header({
   }, []);
   return (
     <>
-      <div
-        className="sticky top-0 z-40 bg-background/40 backdrop-blur-xs"
-      >
+      <div className="sticky top-0 z-40 bg-background/40 backdrop-blur-xs">
         <div className="">
           <div className="flex h-12 items-end gap-3 px-6 pl-0 border border-border/60 border-l-0 bg-background/40">
             {workspaceTabs.length > 0 && (
@@ -381,17 +386,28 @@ export default function Header({
                       <span className="font-medium">{onlineCount} online</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 p-0" sideOffset={8}>
+                  <PopoverContent
+                    align="end"
+                    className="w-72 p-0"
+                    sideOffset={8}
+                  >
                     <div className="flex items-center gap-2 border-b px-4 py-3">
                       <Users className="h-4 w-4 text-emerald-500" />
-                      <span className="text-sm font-semibold">{onlineCount} people online</span>
+                      <span className="text-sm font-semibold">
+                        {onlineCount} people online
+                      </span>
                     </div>
                     <div className="max-h-72 overflow-y-auto">
                       {onlineUserDetails.length === 0 ? (
-                        <p className="px-4 py-6 text-center text-xs text-muted-foreground">No user details available</p>
+                        <p className="px-4 py-6 text-center text-xs text-muted-foreground">
+                          No user details available
+                        </p>
                       ) : (
                         onlineUserDetails.map((u) => (
-                          <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50">
+                          <div
+                            key={u.id}
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50"
+                          >
                             <div className="relative flex-shrink-0">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
                                 {u.initials}
@@ -399,9 +415,13 @@ export default function Header({
                               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{u.name}</p>
+                              <p className="truncate text-sm font-medium">
+                                {u.name}
+                              </p>
                               <p className="truncate text-[11px] text-muted-foreground">
-                                {[u.role, u.department].filter(Boolean).join(" · ") || "Online"}
+                                {[u.role, u.department]
+                                  .filter(Boolean)
+                                  .join(" · ") || "Online"}
                               </p>
                             </div>
                           </div>
@@ -423,9 +443,9 @@ export default function Header({
               >
                 <span className="relative inline-flex h-5 w-5 items-center justify-center">
                   <Bell className="h-5 w-5" />
-                  {notificationCount > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-purple-600 px-1 text-[9px] leading-none text-background">
-                      {notificationCount}
+                      {unreadCount}
                     </span>
                   )}
                 </span>
@@ -772,11 +792,11 @@ export default function Header({
 
                                   <div className="flex shrink-0 items-center gap-1">
                                     {projectNotifications > 0 && (
-                                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-none text-white shadow-sm">
-                                      {projectNotifications > 99
-                                        ? "99+"
-                                        : projectNotifications}
-                                    </span>
+                                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-none text-white shadow-sm">
+                                        {projectNotifications > 99
+                                          ? "99+"
+                                          : projectNotifications}
+                                      </span>
                                     )}
 
                                     {isSelected ? (
@@ -946,13 +966,11 @@ export default function Header({
         </div>
       </div>
 
-      {showNotifications && (
-        <NotificationsPanel
-          isOpen={showNotifications}
-          onClose={() => setShowNotifications(false)}
-          projectId={projectId}
-        />
-      )}
+      <NotificationsPanel
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        projectId={projectId}
+      />
 
       {showMessages && (
         <ChatPanel

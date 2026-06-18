@@ -15,6 +15,7 @@ import {
   Users,
   Video,
   LifeBuoy,
+  TriangleAlert,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -28,16 +29,30 @@ import { cn, convertToPrettyText } from "../shared/config/utils";
 import { useAuth } from "../features/auth/context/AuthContext";
 import { useScrollHeaderTracker } from "../shared/hooks/useScrollHeaderTracker.js";
 import { getAllProjectsThunk } from "../features/projects/store/project.thunks";
+import { AlertBanner } from "../shared/components/banners/AlertBanner.jsx";
+import { fetchProfileThunk } from "../features/profile/store/crew/crewProfile.thunk.js";
+import { fetchDocumentsThunk } from "../features/user-documents/store/document.thunk.js";
+import { Skeleton } from "../shared/components/ui/skeleton.jsx";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const DASHBOARD_APPLICATIONS = [
-  { id: "onboarding",  label: "ONBOARDING",  icon: Users,         route: "onboarding"  },
-  { id: "timesheets",  label: "TIMESHEETS",  icon: ClipboardList, route: "timesheets"  },
-  { id: "calendar",    label: "CALENDAR",    icon: CalendarDays,  route: "calendar"    },
-  { id: "chat",        label: "CHAT",        icon: MessageSquare, route: "chat"        },
-  { id: "call-sheets", label: "CALL SHEETs", icon: Video,         route: "call-sheets" },
-  { id: "settings",    label: "SETTINGS",    icon: Settings,      route: "settings"    },
+  { id: "onboarding", label: "ONBOARDING", icon: Users, route: "onboarding" },
+  {
+    id: "timesheets",
+    label: "TIMESHEETS",
+    icon: ClipboardList,
+    route: "timesheets",
+  },
+  { id: "calendar", label: "CALENDAR", icon: CalendarDays, route: "calendar" },
+  { id: "chat", label: "CHAT", icon: MessageSquare, route: "chat" },
+  {
+    id: "call-sheets",
+    label: "CALL SHEETs",
+    icon: Video,
+    route: "call-sheets",
+  },
+  { id: "settings", label: "SETTINGS", icon: Settings, route: "settings" },
 ];
 
 const PROJECT_ACCENT_PALETTE = [
@@ -61,7 +76,10 @@ const PROJECT_ACCENT_PALETTE = [
 function checkIsStudioAdmin(user) {
   if (!Array.isArray(user?.affiliations)) return false;
   return user.affiliations.some(
-    (a) => a.orgType === "studio" && a.role === "studio_admin" && a.status === "active"
+    (a) =>
+      a.orgType === "studio" &&
+      a.role === "studio_admin" &&
+      a.status === "active",
   );
 }
 
@@ -73,10 +91,14 @@ function isProjectApproved(approvalStatus) {
 
 function approvalStatusMeta(approvalStatus) {
   switch (approvalStatus) {
-    case "pending":  return { label: "Awaiting approval",    color: "#fbbf24" };
-    case "rejected": return { label: "Rejected — resubmit",  color: "#fb7185" };
-    case "draft":    return { label: "Draft — not submitted", color: "#94a3b8" };
-    default:         return null;
+    case "pending":
+      return { label: "Awaiting approval", color: "#fbbf24" };
+    case "rejected":
+      return { label: "Rejected — resubmit", color: "#fb7185" };
+    case "draft":
+      return { label: "Draft — not submitted", color: "#94a3b8" };
+    default:
+      return null;
   }
 }
 
@@ -91,9 +113,9 @@ function resolveAccentColor(production, index) {
 
 function productionToSidebarProject(p, index) {
   return {
-    id:             p._id,
-    name:           p.productionName,
-    accent:         resolveAccentColor(p, index),
+    id: p._id,
+    name: p.productionName,
+    accent: resolveAccentColor(p, index),
     approvalStatus: p.approvalStatus ?? "approved",
   };
 }
@@ -122,11 +144,15 @@ function resolveWorkspaceTabMeta(path, dynamicProjects) {
   const normalizedPath = normalizeDashboardPath(path);
   const segments = normalizedPath.split("/").filter(Boolean);
 
-  if (normalizedPath === "/home")            return { label: "HOME",           icon: Home      };
-  if (normalizedPath === "/projects")        return { label: "PROJECTS",       icon: Briefcase };
-  if (normalizedPath === "/projects/create") return { label: "CREATE PROJECT", icon: Briefcase };
-  if (normalizedPath === "/support")         return { label: "SUPPORT",        icon: LifeBuoy  };
-  if (normalizedPath === "/profile")         return { label: "PROFILE",        icon: UserRound };
+  if (normalizedPath === "/home") return { label: "HOME", icon: Home };
+  if (normalizedPath === "/projects")
+    return { label: "PROJECTS", icon: Briefcase };
+  if (normalizedPath === "/projects/create")
+    return { label: "CREATE PROJECT", icon: Briefcase };
+  if (normalizedPath === "/support")
+    return { label: "SUPPORT", icon: LifeBuoy };
+  if (normalizedPath === "/profile")
+    return { label: "PROFILE", icon: UserRound };
 
   if (segments[0] === "settings") {
     return segments.length === 1
@@ -153,7 +179,7 @@ function resolveWorkspaceTabMeta(path, dynamicProjects) {
     }
 
     const appSlug = segments[2];
-    const app     = DASHBOARD_APPLICATIONS.find((item) => item.route === appSlug);
+    const app = DASHBOARD_APPLICATIONS.find((item) => item.route === appSlug);
     return app
       ? { label: app.label, icon: app.icon, accent: project?.accent ?? null }
       : {
@@ -222,7 +248,10 @@ function LockedAppItem({ item, statusMeta }) {
           className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-md border border-sidebar-border bg-sidebar px-2.5 py-1.5 shadow-lg pointer-events-none"
           role="tooltip"
         >
-          <p className="text-[11px] font-medium" style={{ color: statusMeta.color }}>
+          <p
+            className="text-[11px] font-medium"
+            style={{ color: statusMeta.color }}
+          >
             {statusMeta.label}
           </p>
           <p className="text-[10px] text-sidebar-foreground/50 mt-0.5">
@@ -250,7 +279,10 @@ function ApprovalStatusBadge({ approvalStatus }) {
       }}
     >
       <Lock className="w-2.5 h-2.5 shrink-0" style={{ color: meta.color }} />
-      <span className="text-[10px] font-medium leading-tight" style={{ color: meta.color }}>
+      <span
+        className="text-[10px] font-medium leading-tight"
+        style={{ color: meta.color }}
+      >
         {meta.label}
       </span>
     </div>
@@ -265,20 +297,37 @@ const DashboardLayout = () => {
 
   const { user } = useAuth();
   const { pathname } = useLocation();
-  const navigate     = useNavigate();
-  const dispatch     = useDispatch();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   useScrollHeaderTracker();
 
   // ── Role — affiliations[] is the source of truth ──────────────────────────
   const canCreateProject = checkIsStudioAdmin(user);
 
   // ── Redux ─────────────────────────────────────────────────────────────────
-  const reduxProjects  = useSelector((s) => s.project?.projects ?? []);
-  const currentProject = useSelector((s) => s.project?.currentProject);
+  const {
+    projects: reduxProjects,
+    currentProject,
+    isFetching: isFetchingProjects,
+  } = useSelector((s) => s.project);
+  const { crewProfile, isFetching: isFetchingProfile } = useSelector(
+    (state) => state.crewProfile,
+  );
+  const { userDocuments, isFetching: isFetchingDocs } = useSelector(
+    (state) => state.userDocuments,
+  );
 
   useEffect(() => {
     dispatch(getAllProjectsThunk({}));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!crewProfile && !isFetchingProfile) dispatch(fetchProfileThunk());
+  }, []);
+
+  useEffect(() => {
+    if (!userDocuments && !isFetchingDocs) dispatch(fetchDocumentsThunk());
+  }, []);
 
   // ── Build sidebar project list ────────────────────────────────────────────
   const dynamicProjects = reduxProjects.map(productionToSidebarProject);
@@ -341,27 +390,32 @@ const DashboardLayout = () => {
     [workspaceTabs, mergedProjects, pathname, navigate],
   );
 
-  const handleCloseWorkspaceTab = useCallback((tabId) => {
-    let nextPath = null;
-    setWorkspaceState((prev) => {
-      const tabIndex = prev.tabs.findIndex((t) => t.id === tabId);
-      if (tabIndex === -1) return prev;
-      const nextTabs = prev.tabs.filter((t) => t.id !== tabId);
-      if (!nextTabs.length) {
-        const fallback = createWorkspaceTab("/home", mergedProjects);
-        nextPath = fallback.path;
-        return { tabs: [fallback], activeTabId: fallback.id };
-      }
-      if (prev.activeTabId === tabId) {
-        const fallback = nextTabs[Math.min(tabIndex, nextTabs.length - 1)];
-        nextPath = fallback.path;
-        return { tabs: nextTabs, activeTabId: fallback.id };
-      }
-      return { ...prev, tabs: nextTabs };
-    });
-    setExpandedProjectId(nextPath ? getProjectIdFromPath(nextPath, mergedProjects) : null);
-    if (nextPath && nextPath !== pathname) navigate(nextPath);
-  }, [mergedProjects, pathname, navigate]);
+  const handleCloseWorkspaceTab = useCallback(
+    (tabId) => {
+      let nextPath = null;
+      setWorkspaceState((prev) => {
+        const tabIndex = prev.tabs.findIndex((t) => t.id === tabId);
+        if (tabIndex === -1) return prev;
+        const nextTabs = prev.tabs.filter((t) => t.id !== tabId);
+        if (!nextTabs.length) {
+          const fallback = createWorkspaceTab("/home", mergedProjects);
+          nextPath = fallback.path;
+          return { tabs: [fallback], activeTabId: fallback.id };
+        }
+        if (prev.activeTabId === tabId) {
+          const fallback = nextTabs[Math.min(tabIndex, nextTabs.length - 1)];
+          nextPath = fallback.path;
+          return { tabs: nextTabs, activeTabId: fallback.id };
+        }
+        return { ...prev, tabs: nextTabs };
+      });
+      setExpandedProjectId(
+        nextPath ? getProjectIdFromPath(nextPath, mergedProjects) : null,
+      );
+      if (nextPath && nextPath !== pathname) navigate(nextPath);
+    },
+    [mergedProjects, pathname, navigate],
+  );
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -391,6 +445,7 @@ const DashboardLayout = () => {
               src={eaarthLogo}
               alt="EAARTH"
               className="h-12 w-auto object-contain"
+              onClick={() => navigate("/")}
             />
           </div>
 
@@ -398,23 +453,50 @@ const DashboardLayout = () => {
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <div className="space-y-3">
-                {mergedProjects.length === 0 && (
+                {isFetchingProjects && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 p-2">
+                      <Skeleton className={"size-6 rounded-[5px]"} />
+                      <Skeleton className={"w-26 h-5 rounded-xl"} />
+                      <ChevronDown
+                        className={"w-4 h-4 ml-auto text-muted-foreground"}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 p-2">
+                      <Skeleton className={"size-6 rounded-[5px]"} />
+                      <Skeleton className={"w-26 h-5 rounded-xl"} />
+                      <ChevronDown
+                        className={"w-4 h-4 ml-auto text-muted-foreground"}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 p-2">
+                      <Skeleton className={"size-6 rounded-[5px]"} />
+                      <Skeleton className={"w-26 h-5 rounded-xl"} />
+                      <ChevronDown
+                        className={"w-4 h-4 ml-auto text-muted-foreground"}
+                      />
+                    </div>
+                  </div>
+                )}
+                {mergedProjects.length === 0 && !isFetchingProjects && (
                   <p className="px-2 text-[11px] text-sidebar-foreground/40">
-                    {canCreateProject ? "NO PROJECTS YET." : "NO PROJECTS ASSIGNED YET."}
+                    {canCreateProject
+                      ? "NO PROJECTS YET."
+                      : "NO PROJECTS ASSIGNED YET."}
                   </p>
                 )}
 
                 {mergedProjects.map((project) => {
-                  const slug        = toSlug(project.name);
+                  const slug = toSlug(project.name);
                   const projectPath = `/projects/${slug}`;
                   const isActive = pathname.startsWith(`/projects/${slug}`);
                   const isOpen =
                     activeProjectId === project.id ||
                     expandedProjectId === project.id;
 
-                  const approved   = isProjectApproved(project.approvalStatus);
+                  const approved = isProjectApproved(project.approvalStatus);
                   const statusMeta = approvalStatusMeta(project.approvalStatus);
-                  const isPending  = !approved;
+                  const isPending = !approved;
 
                   const projectInitials = project.name
                     .split(" ")
@@ -490,7 +572,9 @@ const DashboardLayout = () => {
                       {isOpen && (
                         <div className="space-y-0.5">
                           {canCreateProject && (
-                            <ApprovalStatusBadge approvalStatus={project.approvalStatus} />
+                            <ApprovalStatusBadge
+                              approvalStatus={project.approvalStatus}
+                            />
                           )}
 
                           <div className="relative ml-5 pl-3 pt-0 space-y-1">
@@ -509,7 +593,7 @@ const DashboardLayout = () => {
                                 );
                               }
 
-                              const ItemIcon    = item.icon;
+                              const ItemIcon = item.icon;
                               const isAppActive = pathname.startsWith(to);
 
                               return (
@@ -564,6 +648,25 @@ const DashboardLayout = () => {
             onWorkspaceTabOpen={handleOpenWorkspaceTab}
             projectCount={mergedProjects.length}
           />
+
+
+          { crewProfile && !crewProfile?.profileCompleted && !isFetchingProfile && (
+            <div className="sticky top-12 z-40 p-2">
+              <AlertBanner
+                icon={<TriangleAlert className="h-5 w-5" />}
+                title="Complete your profile"
+                description="Complete your profile to complete onboarding and unlock all platform features."
+                progress={crewProfile?.profileCompletionPercent}
+                progressVariant="bar"
+                action={
+                  pathname !== "/profile" && {
+                    label: "Complete Profile",
+                    onClick: () => navigate("/profile"),
+                  }
+                }
+              />
+            </div>
+          )}
 
           <div className="p-6 pl-3 min-h-[calc(100svh-68px-29px)]">
             <SuspenseOutlet />

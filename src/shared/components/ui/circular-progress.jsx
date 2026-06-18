@@ -6,6 +6,7 @@ export function CircularProgress({
   strokeWidth = 6,
   className,
   labelClass = "text-xs",
+  showLabel = true,
   color,
 }) {
   const radius = (size - strokeWidth) / 2;
@@ -48,10 +49,16 @@ export function CircularProgress({
         />
       </svg>
 
-      {/* Center label */}
-      <span className={cn("absolute font-medium tabular-nums text-xs", labelClass)}>
-        {progress}%
-      </span>
+      {showLabel && (
+        <span
+          className={cn(
+            "absolute font-medium tabular-nums text-xs",
+            labelClass,
+          )}
+        >
+          {progress}%
+        </span>
+      )}
     </div>
   );
 }
